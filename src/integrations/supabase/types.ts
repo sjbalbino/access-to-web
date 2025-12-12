@@ -14,11 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      analises_solo: {
+        Row: {
+          calcio: number | null
+          controle_lavoura_id: string
+          created_at: string
+          data_coleta: string | null
+          fosforo: number | null
+          id: string
+          laboratorio: string | null
+          magnesio: number | null
+          materia_organica: number | null
+          observacoes: string | null
+          ph: number | null
+          potassio: number | null
+          updated_at: string
+        }
+        Insert: {
+          calcio?: number | null
+          controle_lavoura_id: string
+          created_at?: string
+          data_coleta?: string | null
+          fosforo?: number | null
+          id?: string
+          laboratorio?: string | null
+          magnesio?: number | null
+          materia_organica?: number | null
+          observacoes?: string | null
+          ph?: number | null
+          potassio?: number | null
+          updated_at?: string
+        }
+        Update: {
+          calcio?: number | null
+          controle_lavoura_id?: string
+          created_at?: string
+          data_coleta?: string | null
+          fosforo?: number | null
+          id?: string
+          laboratorio?: string | null
+          magnesio?: number | null
+          materia_organica?: number | null
+          observacoes?: string | null
+          ph?: number | null
+          potassio?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analises_solo_controle_lavoura_id_fkey"
+            columns: ["controle_lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "controle_lavouras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aplicacoes: {
         Row: {
           aplicador: string | null
           area_aplicada: number | null
           condicao_climatica: string | null
+          controle_lavoura_id: string | null
           created_at: string
           data_aplicacao: string | null
           dose_ha: number | null
@@ -38,6 +95,7 @@ export type Database = {
           aplicador?: string | null
           area_aplicada?: number | null
           condicao_climatica?: string | null
+          controle_lavoura_id?: string | null
           created_at?: string
           data_aplicacao?: string | null
           dose_ha?: number | null
@@ -57,6 +115,7 @@ export type Database = {
           aplicador?: string | null
           area_aplicada?: number | null
           condicao_climatica?: string | null
+          controle_lavoura_id?: string | null
           created_at?: string
           data_aplicacao?: string | null
           dose_ha?: number | null
@@ -73,6 +132,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "aplicacoes_controle_lavoura_id_fkey"
+            columns: ["controle_lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "controle_lavouras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "aplicacoes_lavoura_id_fkey"
             columns: ["lavoura_id"]
@@ -106,6 +172,47 @@ export type Database = {
             columns: ["unidade_medida_id"]
             isOneToOne: false
             referencedRelation: "unidades_medida"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chuvas: {
+        Row: {
+          controle_lavoura_id: string
+          created_at: string
+          data_chuva: string | null
+          duracao_horas: number | null
+          id: string
+          observacoes: string | null
+          quantidade_mm: number | null
+          updated_at: string
+        }
+        Insert: {
+          controle_lavoura_id: string
+          created_at?: string
+          data_chuva?: string | null
+          duracao_horas?: number | null
+          id?: string
+          observacoes?: string | null
+          quantidade_mm?: number | null
+          updated_at?: string
+        }
+        Update: {
+          controle_lavoura_id?: string
+          created_at?: string
+          data_chuva?: string | null
+          duracao_horas?: number | null
+          id?: string
+          observacoes?: string | null
+          quantidade_mm?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chuvas_controle_lavoura_id_fkey"
+            columns: ["controle_lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "controle_lavouras"
             referencedColumns: ["id"]
           },
         ]
@@ -202,6 +309,7 @@ export type Database = {
       colheitas: {
         Row: {
           area_colhida: number | null
+          controle_lavoura_id: string | null
           created_at: string
           data_colheita: string | null
           id: string
@@ -221,6 +329,7 @@ export type Database = {
         }
         Insert: {
           area_colhida?: number | null
+          controle_lavoura_id?: string | null
           created_at?: string
           data_colheita?: string | null
           id?: string
@@ -240,6 +349,7 @@ export type Database = {
         }
         Update: {
           area_colhida?: number | null
+          controle_lavoura_id?: string | null
           created_at?: string
           data_colheita?: string | null
           id?: string
@@ -258,6 +368,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "colheitas_controle_lavoura_id_fkey"
+            columns: ["controle_lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "controle_lavouras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "colheitas_lavoura_id_fkey"
             columns: ["lavoura_id"]
@@ -291,6 +408,57 @@ export type Database = {
             columns: ["silo_id"]
             isOneToOne: false
             referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      controle_lavouras: {
+        Row: {
+          area_total: number | null
+          cobertura_solo: number | null
+          codigo: string | null
+          created_at: string
+          ha_plantado: number | null
+          id: string
+          lavoura_id: string
+          safra_id: string
+          updated_at: string
+        }
+        Insert: {
+          area_total?: number | null
+          cobertura_solo?: number | null
+          codigo?: string | null
+          created_at?: string
+          ha_plantado?: number | null
+          id?: string
+          lavoura_id: string
+          safra_id: string
+          updated_at?: string
+        }
+        Update: {
+          area_total?: number | null
+          cobertura_solo?: number | null
+          codigo?: string | null
+          created_at?: string
+          ha_plantado?: number | null
+          id?: string
+          lavoura_id?: string
+          safra_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "controle_lavouras_lavoura_id_fkey"
+            columns: ["lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "lavouras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "controle_lavouras_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
             referencedColumns: ["id"]
           },
         ]
@@ -397,6 +565,47 @@ export type Database = {
         }
         Relationships: []
       }
+      floracoes: {
+        Row: {
+          controle_lavoura_id: string
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          id: string
+          observacoes: string | null
+          percentual_floracao: number | null
+          updated_at: string
+        }
+        Insert: {
+          controle_lavoura_id: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          id?: string
+          observacoes?: string | null
+          percentual_floracao?: number | null
+          updated_at?: string
+        }
+        Update: {
+          controle_lavoura_id?: string
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          id?: string
+          observacoes?: string | null
+          percentual_floracao?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floracoes_controle_lavoura_id_fkey"
+            columns: ["controle_lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "controle_lavouras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inscricoes_produtor: {
         Row: {
           ativa: boolean | null
@@ -446,6 +655,50 @@ export type Database = {
             columns: ["produtor_id"]
             isOneToOne: false
             referencedRelation: "produtores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insetos: {
+        Row: {
+          area_afetada: number | null
+          controle_lavoura_id: string
+          created_at: string
+          data_registro: string | null
+          id: string
+          nivel_infestacao: string | null
+          observacoes: string | null
+          tipo_inseto: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_afetada?: number | null
+          controle_lavoura_id: string
+          created_at?: string
+          data_registro?: string | null
+          id?: string
+          nivel_infestacao?: string | null
+          observacoes?: string | null
+          tipo_inseto?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_afetada?: number | null
+          controle_lavoura_id?: string
+          created_at?: string
+          data_registro?: string | null
+          id?: string
+          nivel_infestacao?: string | null
+          observacoes?: string | null
+          tipo_inseto?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insetos_controle_lavoura_id_fkey"
+            columns: ["controle_lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "controle_lavouras"
             referencedColumns: ["id"]
           },
         ]
@@ -502,6 +755,50 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pivos: {
+        Row: {
+          controle_lavoura_id: string
+          created_at: string
+          data_irrigacao: string | null
+          duracao_horas: number | null
+          energia_kwh: number | null
+          id: string
+          lamina_mm: number | null
+          observacoes: string | null
+          updated_at: string
+        }
+        Insert: {
+          controle_lavoura_id: string
+          created_at?: string
+          data_irrigacao?: string | null
+          duracao_horas?: number | null
+          energia_kwh?: number | null
+          id?: string
+          lamina_mm?: number | null
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          controle_lavoura_id?: string
+          created_at?: string
+          data_irrigacao?: string | null
+          duracao_horas?: number | null
+          energia_kwh?: number | null
+          id?: string
+          lamina_mm?: number | null
+          observacoes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pivos_controle_lavoura_id_fkey"
+            columns: ["controle_lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "controle_lavouras"
             referencedColumns: ["id"]
           },
         ]
@@ -565,9 +862,54 @@ export type Database = {
           },
         ]
       }
+      plantas_invasoras: {
+        Row: {
+          area_afetada: number | null
+          controle_lavoura_id: string
+          created_at: string
+          data_registro: string | null
+          id: string
+          nivel_infestacao: string | null
+          observacoes: string | null
+          tipo_planta: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_afetada?: number | null
+          controle_lavoura_id: string
+          created_at?: string
+          data_registro?: string | null
+          id?: string
+          nivel_infestacao?: string | null
+          observacoes?: string | null
+          tipo_planta?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_afetada?: number | null
+          controle_lavoura_id?: string
+          created_at?: string
+          data_registro?: string | null
+          id?: string
+          nivel_infestacao?: string | null
+          observacoes?: string | null
+          tipo_planta?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plantas_invasoras_controle_lavoura_id_fkey"
+            columns: ["controle_lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "controle_lavouras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plantios: {
         Row: {
           area_plantada: number | null
+          controle_lavoura_id: string | null
           created_at: string
           cultura_id: string | null
           data_plantio: string | null
@@ -583,6 +925,7 @@ export type Database = {
         }
         Insert: {
           area_plantada?: number | null
+          controle_lavoura_id?: string | null
           created_at?: string
           cultura_id?: string | null
           data_plantio?: string | null
@@ -598,6 +941,7 @@ export type Database = {
         }
         Update: {
           area_plantada?: number | null
+          controle_lavoura_id?: string | null
           created_at?: string
           cultura_id?: string | null
           data_plantio?: string | null
@@ -612,6 +956,13 @@ export type Database = {
           variedade_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "plantios_controle_lavoura_id_fkey"
+            columns: ["controle_lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "controle_lavouras"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "plantios_cultura_id_fkey"
             columns: ["cultura_id"]
