@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,27 +8,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { useAplicacoes, useCreateAplicacao, useUpdateAplicacao, useDeleteAplicacao, AplicacaoInput, TipoAplicacao, TIPOS_APLICACAO } from '@/hooks/useAplicacoes';
-import { useSafras } from '@/hooks/useSafras';
-import { useLavouras } from '@/hooks/useLavouras';
 import { usePlantios } from '@/hooks/usePlantios';
 import { useProdutos } from '@/hooks/useProdutos';
 import { useUnidadesMedida } from '@/hooks/useUnidadesMedida';
 import { format } from 'date-fns';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AplicacoesTabProps {
   tipo: TipoAplicacao;
-  safraId: string | null;
-  lavouraId: string | null;
+  controleLavouraId: string | null;
+  canEdit: boolean;
 }
 
-export function AplicacoesTab({ tipo, safraId, lavouraId }: AplicacoesTabProps) {
-  const { canEdit } = useAuth();
-  const { data: aplicacoes, isLoading } = useAplicacoes(tipo, safraId, lavouraId);
-  const { data: safras } = useSafras();
-  const { data: lavouras } = useLavouras();
-  const { data: plantios } = usePlantios(safraId, lavouraId);
+export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTabProps) {
+  const { data: aplicacoes, isLoading } = useAplicacoes(tipo, controleLavouraId);
+  const { data: plantios } = usePlantios(controleLavouraId);
   const { data: produtos } = useProdutos();
   const { data: unidades } = useUnidadesMedida();
 
@@ -37,8 +32,7 @@ export function AplicacoesTab({ tipo, safraId, lavouraId }: AplicacoesTabProps) 
 
   const emptyAplicacao: AplicacaoInput = {
     tipo,
-    safra_id: safraId,
-    lavoura_id: lavouraId || '',
+    controle_lavoura_id: controleLavouraId || '',
     plantio_id: null,
     produto_id: null,
     data_aplicacao: null,
@@ -60,11 +54,21 @@ export function AplicacoesTab({ tipo, safraId, lavouraId }: AplicacoesTabProps) 
   const updateMutation = useUpdateAplicacao();
   const deleteMutation = useDeleteAplicacao();
 
+  if (!controleLavouraId) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Selecione uma Safra e Lavoura no cabeçalho e clique em "Criar Registro" para habilitar o cadastro de {tipoLabel.toLowerCase()}.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   const handleNew = () => {
     setFormData({
       ...emptyAplicacao,
-      safra_id: safraId,
-      lavoura_id: lavouraId || '',
+      controle_lavoura_id: controleLavouraId,
     });
     setEditingId(null);
     setIsDialogOpen(true);
@@ -73,8 +77,7 @@ export function AplicacoesTab({ tipo, safraId, lavouraId }: AplicacoesTabProps) 
   const handleEdit = (aplicacao: any) => {
     setFormData({
       tipo: aplicacao.tipo,
-      safra_id: aplicacao.safra_id,
-      lavoura_id: aplicacao.lavoura_id,
+      controle_lavoura_id: aplicacao.controle_lavoura_id || controleLavouraId,
       plantio_id: aplicacao.plantio_id,
       produto_id: aplicacao.produto_id,
       data_aplicacao: aplicacao.data_aplicacao,
@@ -135,7 +138,6 @@ export function AplicacoesTab({ tipo, safraId, lavouraId }: AplicacoesTabProps) 
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
-                <TableHead>Lavoura</TableHead>
                 <TableHead>Produto</TableHead>
                 <TableHead className="text-right">Área (ha)</TableHead>
                 <TableHead className="text-right">Dose/ha</TableHead>
@@ -146,7 +148,7 @@ export function AplicacoesTab({ tipo, safraId, lavouraId }: AplicacoesTabProps) 
             <TableBody>
               {aplicacoes?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 7 : 6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={canEdit ? 6 : 5} className="text-center text-muted-foreground py-8">
                     Nenhuma {tipoLabel.toLowerCase()} cadastrada
                   </TableCell>
                 </TableRow>
@@ -156,7 +158,6 @@ export function AplicacoesTab({ tipo, safraId, lavouraId }: AplicacoesTabProps) 
                     <TableCell>
                       {aplicacao.data_aplicacao ? format(new Date(aplicacao.data_aplicacao), 'dd/MM/yyyy') : '-'}
                     </TableCell>
-                    <TableCell>{aplicacao.lavouras?.nome || '-'}</TableCell>
                     <TableCell>{aplicacao.produtos?.nome || '-'}</TableCell>
                     <TableCell className="text-right">{aplicacao.area_aplicada?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{aplicacao.dose_ha?.toLocaleString('pt-BR') || '0'}</TableCell>
@@ -190,42 +191,6 @@ export function AplicacoesTab({ tipo, safraId, lavouraId }: AplicacoesTabProps) 
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Safra</Label>
-                <Select
-                  value={formData.safra_id || "none"}
-                  onValueChange={(value) => setFormData({ ...formData, safra_id: value === "none" ? null : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
-                    {safras?.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Lavoura *</Label>
-                <Select
-                  value={formData.lavoura_id || ""}
-                  onValueChange={(value) => setFormData({ ...formData, lavoura_id: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lavouras?.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="space-y-2">
                 <Label>Plantio</Label>
                 <Select

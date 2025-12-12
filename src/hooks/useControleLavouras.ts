@@ -4,7 +4,6 @@ import { toast } from '@/hooks/use-toast';
 
 export interface ControleLavoura {
   id: string;
-  codigo: string | null;
   lavoura_id: string;
   safra_id: string;
   area_total: number | null;
@@ -25,7 +24,13 @@ export interface ControleLavoura {
   };
 }
 
-export type ControleLavouraInput = Omit<ControleLavoura, 'id' | 'created_at' | 'updated_at' | 'lavouras' | 'safras'>;
+export type ControleLavouraInput = {
+  lavoura_id: string;
+  safra_id: string;
+  area_total: number | null;
+  ha_plantado: number | null;
+  cobertura_solo: number | null;
+};
 
 export function useControleLavouras(safraId?: string | null, lavouraId?: string | null) {
   return useQuery({

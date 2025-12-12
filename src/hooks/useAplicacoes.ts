@@ -7,6 +7,7 @@ export type TipoAplicacao = 'adubacao' | 'herbicida' | 'fungicida' | 'inseticida
 export interface Aplicacao {
   id: string;
   tipo: TipoAplicacao;
+  controle_lavoura_id: string | null;
   safra_id: string | null;
   lavoura_id: string;
   plantio_id: string | null;
@@ -29,7 +30,21 @@ export interface Aplicacao {
   unidades_medida?: { id: string; sigla: string } | null;
 }
 
-export type AplicacaoInput = Omit<Aplicacao, "id" | "created_at" | "updated_at" | "safras" | "lavouras" | "plantios" | "produtos" | "unidades_medida">;
+export type AplicacaoInput = {
+  tipo: TipoAplicacao;
+  controle_lavoura_id: string;
+  plantio_id: string | null;
+  produto_id: string | null;
+  data_aplicacao: string | null;
+  area_aplicada: number | null;
+  dose_ha: number | null;
+  quantidade_total: number | null;
+  unidade_medida_id: string | null;
+  aplicador: string | null;
+  equipamento: string | null;
+  condicao_climatica: string | null;
+  observacoes: string | null;
+};
 
 export const TIPOS_APLICACAO: { value: TipoAplicacao; label: string }[] = [
   { value: 'adubacao', label: 'Adubação' },
@@ -43,11 +58,13 @@ export const TIPOS_APLICACAO: { value: TipoAplicacao; label: string }[] = [
   { value: 'calcario', label: 'Calcário' },
 ];
 
-export function useAplicacoes(tipo: TipoAplicacao, safraId?: string | null, lavouraId?: string | null) {
+export function useAplicacoes(tipo: TipoAplicacao, controleLavouraId: string | null) {
   return useQuery({
-    queryKey: ["aplicacoes", tipo, safraId, lavouraId],
+    queryKey: ["aplicacoes", tipo, controleLavouraId],
     queryFn: async () => {
-      let query = supabase
+      if (!controleLavouraId) return [];
+      
+      const { data, error } = await supabase
         .from("aplicacoes")
         .select(`
           *,
@@ -58,19 +75,13 @@ export function useAplicacoes(tipo: TipoAplicacao, safraId?: string | null, lavo
           unidades_medida (id, sigla)
         `)
         .eq("tipo", tipo)
+        .eq("controle_lavoura_id", controleLavouraId)
         .order("data_aplicacao", { ascending: false });
       
-      if (safraId) {
-        query = query.eq("safra_id", safraId);
-      }
-      if (lavouraId) {
-        query = query.eq("lavoura_id", lavouraId);
-      }
-      
-      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
+    enabled: !!controleLavouraId,
   });
 }
 
@@ -79,9 +90,22 @@ export function useCreateAplicacao() {
   
   return useMutation({
     mutationFn: async (aplicacao: AplicacaoInput) => {
+      // Buscar o controle_lavoura para obter safra_id e lavoura_id
+      const { data: controle, error: controleError } = await supabase
+        .from("controle_lavouras")
+        .select("safra_id, lavoura_id")
+        .eq("id", aplicacao.controle_lavoura_id)
+        .single();
+      
+      if (controleError) throw controleError;
+      
       const { data, error } = await supabase
         .from("aplicacoes")
-        .insert(aplicacao)
+        .insert({
+          ...aplicacao,
+          safra_id: controle.safra_id,
+          lavoura_id: controle.lavoura_id,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -102,7 +126,7 @@ export function useUpdateAplicacao() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...aplicacao }: Partial<Aplicacao> & { id: string }) => {
+    mutationFn: async ({ id, ...aplicacao }: Partial<AplicacaoInput> & { id: string }) => {
       const { data, error } = await supabase
         .from("aplicacoes")
         .update(aplicacao)
@@ -112,7 +136,7 @@ export function useUpdateAplicacao() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["aplicacoes"] });
       toast.success("Aplicação atualizada com sucesso!");
     },
