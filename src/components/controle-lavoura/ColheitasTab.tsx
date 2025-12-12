@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,23 +8,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { useColheitas, useCreateColheita, useUpdateColheita, useDeleteColheita, ColheitaInput } from '@/hooks/useColheitas';
-import { useSafras } from '@/hooks/useSafras';
-import { useLavouras } from '@/hooks/useLavouras';
 import { usePlantios } from '@/hooks/usePlantios';
 import { useSilos } from '@/hooks/useSilos';
 import { usePlacas } from '@/hooks/usePlacas';
 import { format } from 'date-fns';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ColheitasTabProps {
-  safraId: string | null;
-  lavouraId: string | null;
+  controleLavouraId: string | null;
+  canEdit: boolean;
 }
 
 const emptyColheita: ColheitaInput = {
-  safra_id: null,
-  lavoura_id: '',
+  controle_lavoura_id: '',
   plantio_id: null,
   data_colheita: null,
   area_colhida: 0,
@@ -40,12 +37,9 @@ const emptyColheita: ColheitaInput = {
   observacoes: null,
 };
 
-export function ColheitasTab({ safraId, lavouraId }: ColheitasTabProps) {
-  const { canEdit } = useAuth();
-  const { data: colheitas, isLoading } = useColheitas(safraId, lavouraId);
-  const { data: safras } = useSafras();
-  const { data: lavouras } = useLavouras();
-  const { data: plantios } = usePlantios(safraId, lavouraId);
+export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) {
+  const { data: colheitas, isLoading } = useColheitas(controleLavouraId);
+  const { data: plantios } = usePlantios(controleLavouraId);
   const { data: silos } = useSilos();
   const { data: placas } = usePlacas();
 
@@ -57,11 +51,21 @@ export function ColheitasTab({ safraId, lavouraId }: ColheitasTabProps) {
   const updateMutation = useUpdateColheita();
   const deleteMutation = useDeleteColheita();
 
+  if (!controleLavouraId) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Selecione uma Safra e Lavoura no cabeçalho e clique em "Criar Registro" para habilitar o cadastro de colheitas.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   const handleNew = () => {
     setFormData({
       ...emptyColheita,
-      safra_id: safraId,
-      lavoura_id: lavouraId || '',
+      controle_lavoura_id: controleLavouraId,
     });
     setEditingId(null);
     setIsDialogOpen(true);
@@ -69,8 +73,7 @@ export function ColheitasTab({ safraId, lavouraId }: ColheitasTabProps) {
 
   const handleEdit = (colheita: any) => {
     setFormData({
-      safra_id: colheita.safra_id,
-      lavoura_id: colheita.lavoura_id,
+      controle_lavoura_id: colheita.controle_lavoura_id || controleLavouraId,
       plantio_id: colheita.plantio_id,
       data_colheita: colheita.data_colheita,
       area_colhida: colheita.area_colhida || 0,
@@ -132,7 +135,6 @@ export function ColheitasTab({ safraId, lavouraId }: ColheitasTabProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
-                <TableHead>Lavoura</TableHead>
                 <TableHead className="text-right">Área (ha)</TableHead>
                 <TableHead className="text-right">Produção (kg)</TableHead>
                 <TableHead className="text-right">Umidade %</TableHead>
@@ -144,7 +146,7 @@ export function ColheitasTab({ safraId, lavouraId }: ColheitasTabProps) {
             <TableBody>
               {colheitas?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={canEdit ? 7 : 6} className="text-center text-muted-foreground py-8">
                     Nenhuma colheita cadastrada
                   </TableCell>
                 </TableRow>
@@ -154,7 +156,6 @@ export function ColheitasTab({ safraId, lavouraId }: ColheitasTabProps) {
                     <TableCell>
                       {colheita.data_colheita ? format(new Date(colheita.data_colheita), 'dd/MM/yyyy') : '-'}
                     </TableCell>
-                    <TableCell>{colheita.lavouras?.nome || '-'}</TableCell>
                     <TableCell className="text-right">{colheita.area_colhida?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{colheita.producao_kg?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{colheita.umidade?.toLocaleString('pt-BR', { minimumFractionDigits: 1 }) || '0'}</TableCell>
@@ -187,42 +188,6 @@ export function ColheitasTab({ safraId, lavouraId }: ColheitasTabProps) {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Safra</Label>
-                <Select
-                  value={formData.safra_id || "none"}
-                  onValueChange={(value) => setFormData({ ...formData, safra_id: value === "none" ? null : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
-                    {safras?.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Lavoura *</Label>
-                <Select
-                  value={formData.lavoura_id || ""}
-                  onValueChange={(value) => setFormData({ ...formData, lavoura_id: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lavouras?.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="space-y-2">
                 <Label>Plantio</Label>
                 <Select

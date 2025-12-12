@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,22 +8,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { usePlantios, useCreatePlantio, useUpdatePlantio, useDeletePlantio, PlantioInput } from '@/hooks/usePlantios';
-import { useSafras } from '@/hooks/useSafras';
-import { useLavouras } from '@/hooks/useLavouras';
 import { useCulturas } from '@/hooks/useCulturas';
 import { useVariedades } from '@/hooks/useVariedades';
 import { format } from 'date-fns';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PlantiosTabProps {
-  safraId: string | null;
-  lavouraId: string | null;
+  controleLavouraId: string | null;
+  canEdit: boolean;
 }
 
 const emptyPlantio: PlantioInput = {
-  safra_id: null,
-  lavoura_id: '',
+  controle_lavoura_id: '',
   cultura_id: null,
   variedade_id: null,
   data_plantio: null,
@@ -35,11 +32,8 @@ const emptyPlantio: PlantioInput = {
   observacoes: null,
 };
 
-export function PlantiosTab({ safraId, lavouraId }: PlantiosTabProps) {
-  const { canEdit } = useAuth();
-  const { data: plantios, isLoading } = usePlantios(safraId, lavouraId);
-  const { data: safras } = useSafras();
-  const { data: lavouras } = useLavouras();
+export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
+  const { data: plantios, isLoading } = usePlantios(controleLavouraId);
   const { data: culturas } = useCulturas();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -52,11 +46,21 @@ export function PlantiosTab({ safraId, lavouraId }: PlantiosTabProps) {
   const updateMutation = useUpdatePlantio();
   const deleteMutation = useDeletePlantio();
 
+  if (!controleLavouraId) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Selecione uma Safra e Lavoura no cabeçalho e clique em "Criar Registro" para habilitar o cadastro de plantios.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   const handleNew = () => {
     setFormData({
       ...emptyPlantio,
-      safra_id: safraId,
-      lavoura_id: lavouraId || '',
+      controle_lavoura_id: controleLavouraId,
     });
     setEditingId(null);
     setIsDialogOpen(true);
@@ -64,8 +68,7 @@ export function PlantiosTab({ safraId, lavouraId }: PlantiosTabProps) {
 
   const handleEdit = (plantio: any) => {
     setFormData({
-      safra_id: plantio.safra_id,
-      lavoura_id: plantio.lavoura_id,
+      controle_lavoura_id: plantio.controle_lavoura_id || controleLavouraId,
       cultura_id: plantio.cultura_id,
       variedade_id: plantio.variedade_id,
       data_plantio: plantio.data_plantio,
@@ -123,11 +126,11 @@ export function PlantiosTab({ safraId, lavouraId }: PlantiosTabProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
-                <TableHead>Lavoura</TableHead>
                 <TableHead>Cultura</TableHead>
                 <TableHead>Variedade</TableHead>
                 <TableHead className="text-right">Área (ha)</TableHead>
                 <TableHead className="text-right">Qtd Semente</TableHead>
+                <TableHead className="text-right">Pop./ha</TableHead>
                 {canEdit && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
@@ -144,11 +147,11 @@ export function PlantiosTab({ safraId, lavouraId }: PlantiosTabProps) {
                     <TableCell>
                       {plantio.data_plantio ? format(new Date(plantio.data_plantio), 'dd/MM/yyyy') : '-'}
                     </TableCell>
-                    <TableCell>{plantio.lavouras?.nome || '-'}</TableCell>
                     <TableCell>{plantio.culturas?.nome || '-'}</TableCell>
                     <TableCell>{plantio.variedades?.nome || '-'}</TableCell>
                     <TableCell className="text-right">{plantio.area_plantada?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{plantio.quantidade_semente?.toLocaleString('pt-BR') || '0'}</TableCell>
+                    <TableCell className="text-right">{plantio.populacao_ha?.toLocaleString('pt-BR') || '0'}</TableCell>
                     {canEdit && (
                       <TableCell>
                         <div className="flex gap-1">
@@ -176,42 +179,6 @@ export function PlantiosTab({ safraId, lavouraId }: PlantiosTabProps) {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Safra</Label>
-                <Select
-                  value={formData.safra_id || "none"}
-                  onValueChange={(value) => setFormData({ ...formData, safra_id: value === "none" ? null : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
-                    {safras?.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Lavoura *</Label>
-                <Select
-                  value={formData.lavoura_id || ""}
-                  onValueChange={(value) => setFormData({ ...formData, lavoura_id: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lavouras?.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="space-y-2">
                 <Label>Data do Plantio</Label>
                 <Input

@@ -122,34 +122,34 @@ export default function ControleLavoura() {
 
           <div className="mt-4">
             <TabsContent value="colheita">
-              <ColheitasTab safraId={safraId} lavouraId={lavouraId} />
+              <ColheitasTab controleLavouraId={controleLavouraId} canEdit={canEdit} />
             </TabsContent>
             <TabsContent value="plantios">
-              <PlantiosTab safraId={safraId} lavouraId={lavouraId} />
+              <PlantiosTab controleLavouraId={controleLavouraId} canEdit={canEdit} />
             </TabsContent>
             <TabsContent value="adubacao">
-              <AplicacoesTab tipo="adubacao" safraId={safraId} lavouraId={lavouraId} />
+              <AplicacoesTab tipo="adubacao" controleLavouraId={controleLavouraId} canEdit={canEdit} />
             </TabsContent>
             <TabsContent value="herbicidas">
-              <AplicacoesTab tipo="herbicida" safraId={safraId} lavouraId={lavouraId} />
+              <AplicacoesTab tipo="herbicida" controleLavouraId={controleLavouraId} canEdit={canEdit} />
             </TabsContent>
             <TabsContent value="fungicidas">
-              <AplicacoesTab tipo="fungicida" safraId={safraId} lavouraId={lavouraId} />
+              <AplicacoesTab tipo="fungicida" controleLavouraId={controleLavouraId} canEdit={canEdit} />
             </TabsContent>
             <TabsContent value="inseticidas">
-              <AplicacoesTab tipo="inseticida" safraId={safraId} lavouraId={lavouraId} />
+              <AplicacoesTab tipo="inseticida" controleLavouraId={controleLavouraId} canEdit={canEdit} />
             </TabsContent>
             <TabsContent value="adjuvantes">
-              <AplicacoesTab tipo="adjuvante" safraId={safraId} lavouraId={lavouraId} />
+              <AplicacoesTab tipo="adjuvante" controleLavouraId={controleLavouraId} canEdit={canEdit} />
             </TabsContent>
             <TabsContent value="micronutrientes">
-              <AplicacoesTab tipo="micronutriente" safraId={safraId} lavouraId={lavouraId} />
+              <AplicacoesTab tipo="micronutriente" controleLavouraId={controleLavouraId} canEdit={canEdit} />
             </TabsContent>
             <TabsContent value="inoculantes">
-              <AplicacoesTab tipo="inoculante" safraId={safraId} lavouraId={lavouraId} />
+              <AplicacoesTab tipo="inoculante" controleLavouraId={controleLavouraId} canEdit={canEdit} />
             </TabsContent>
             <TabsContent value="calcarios">
-              <AplicacoesTab tipo="calcario" safraId={safraId} lavouraId={lavouraId} />
+              <AplicacoesTab tipo="calcario" controleLavouraId={controleLavouraId} canEdit={canEdit} />
             </TabsContent>
             <TabsContent value="insetos">
               <InsetosTab controleLavouraId={controleLavouraId} canEdit={canEdit} />

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export interface Colheita {
   id: string;
+  controle_lavoura_id: string | null;
   safra_id: string | null;
   lavoura_id: string;
   plantio_id: string | null;
@@ -27,13 +28,29 @@ export interface Colheita {
   placas?: { id: string; placa: string } | null;
 }
 
-export type ColheitaInput = Omit<Colheita, "id" | "created_at" | "updated_at" | "safras" | "lavouras" | "plantios" | "silos" | "placas">;
+export type ColheitaInput = {
+  controle_lavoura_id: string;
+  plantio_id: string | null;
+  data_colheita: string | null;
+  area_colhida: number | null;
+  producao_kg: number | null;
+  umidade: number | null;
+  impureza: number | null;
+  producao_liquida_kg: number | null;
+  produtividade_sacas_ha: number | null;
+  silo_id: string | null;
+  placa_id: string | null;
+  motorista: string | null;
+  observacoes: string | null;
+};
 
-export function useColheitas(safraId?: string | null, lavouraId?: string | null) {
+export function useColheitas(controleLavouraId: string | null) {
   return useQuery({
-    queryKey: ["colheitas", safraId, lavouraId],
+    queryKey: ["colheitas", controleLavouraId],
     queryFn: async () => {
-      let query = supabase
+      if (!controleLavouraId) return [];
+      
+      const { data, error } = await supabase
         .from("colheitas")
         .select(`
           *,
@@ -43,19 +60,13 @@ export function useColheitas(safraId?: string | null, lavouraId?: string | null)
           silos (id, nome),
           placas (id, placa)
         `)
+        .eq("controle_lavoura_id", controleLavouraId)
         .order("data_colheita", { ascending: false });
       
-      if (safraId) {
-        query = query.eq("safra_id", safraId);
-      }
-      if (lavouraId) {
-        query = query.eq("lavoura_id", lavouraId);
-      }
-      
-      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
+    enabled: !!controleLavouraId,
   });
 }
 
@@ -64,9 +75,22 @@ export function useCreateColheita() {
   
   return useMutation({
     mutationFn: async (colheita: ColheitaInput) => {
+      // Buscar o controle_lavoura para obter safra_id e lavoura_id
+      const { data: controle, error: controleError } = await supabase
+        .from("controle_lavouras")
+        .select("safra_id, lavoura_id")
+        .eq("id", colheita.controle_lavoura_id)
+        .single();
+      
+      if (controleError) throw controleError;
+      
       const { data, error } = await supabase
         .from("colheitas")
-        .insert(colheita)
+        .insert({
+          ...colheita,
+          safra_id: controle.safra_id,
+          lavoura_id: controle.lavoura_id,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -86,7 +110,7 @@ export function useUpdateColheita() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...colheita }: Partial<Colheita> & { id: string }) => {
+    mutationFn: async ({ id, ...colheita }: Partial<ColheitaInput> & { id: string }) => {
       const { data, error } = await supabase
         .from("colheitas")
         .update(colheita)

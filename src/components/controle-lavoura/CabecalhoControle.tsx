@@ -4,11 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Plus } from 'lucide-react';
 import { useSafras } from '@/hooks/useSafras';
 import { useLavouras } from '@/hooks/useLavouras';
 import { ControleLavoura, useControleLavouraBySafraLavoura, useCreateControleLavoura, useUpdateControleLavoura } from '@/hooks/useControleLavouras';
 import { Spinner } from '@/components/ui/spinner';
+import { Badge } from '@/components/ui/badge';
 
 interface CabecalhoControleProps {
   safraId: string | null;
@@ -45,30 +46,29 @@ export function CabecalhoControle({
     }
   }, [existingControle, safraId, lavouraId, loadingControle]);
 
-  const handleCreateOrUpdate = async () => {
+  const handleCreate = async () => {
     if (!safraId || !lavouraId) return;
 
     const lavoura = lavouras.find(l => l.id === lavouraId);
     
-    if (controleLavoura) {
-      // Atualizar existente
-      await updateMutation.mutateAsync({
-        id: controleLavoura.id,
-        ha_plantado: controleLavoura.ha_plantado,
-        cobertura_solo: controleLavoura.cobertura_solo,
-      });
-    } else {
-      // Criar novo
-      const result = await createMutation.mutateAsync({
-        safra_id: safraId,
-        lavoura_id: lavouraId,
-        codigo: lavoura?.codigo || null,
-        area_total: lavoura?.total_hectares || 0,
-        ha_plantado: 0,
-        cobertura_solo: 0,
-      });
-      onControleLavouraChange(result as ControleLavoura);
-    }
+    const result = await createMutation.mutateAsync({
+      safra_id: safraId,
+      lavoura_id: lavouraId,
+      area_total: lavoura?.total_hectares || 0,
+      ha_plantado: 0,
+      cobertura_solo: 0,
+    });
+    onControleLavouraChange(result as ControleLavoura);
+  };
+
+  const handleUpdate = async () => {
+    if (!controleLavoura) return;
+    
+    await updateMutation.mutateAsync({
+      id: controleLavoura.id,
+      ha_plantado: controleLavoura.ha_plantado,
+      cobertura_solo: controleLavoura.cobertura_solo,
+    });
   };
 
   const handleFieldChange = (field: keyof ControleLavoura, value: number) => {
@@ -100,19 +100,26 @@ export function CabecalhoControle({
     <Card className="border-primary/20 bg-card/50">
       <CardContent className="pt-4 pb-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
-          {/* Código */}
+          {/* Safra */}
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Código</Label>
-            <Input
-              value={controleLavoura?.codigo || selectedLavoura?.codigo || ''}
-              readOnly
-              className="bg-muted/50 h-9"
-            />
+            <Label className="text-xs text-muted-foreground">Safra *</Label>
+            <Select value={safraId || ''} onValueChange={(v) => onSafraChange(v || null)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {safras.map((safra) => (
+                  <SelectItem key={safra.id} value={safra.id}>
+                    {safra.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Lavoura */}
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Lavoura</Label>
+            <Label className="text-xs text-muted-foreground">Lavoura *</Label>
             <Select value={lavouraId || ''} onValueChange={(v) => onLavouraChange(v || null)}>
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Selecione..." />
@@ -138,23 +145,6 @@ export function CabecalhoControle({
             />
           </div>
 
-          {/* Safra */}
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Safra</Label>
-            <Select value={safraId || ''} onValueChange={(v) => onSafraChange(v || null)}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {safras.map((safra) => (
-                  <SelectItem key={safra.id} value={safra.id}>
-                    {safra.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Ha. Plantado */}
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Ha. Plantado</Label>
@@ -165,12 +155,13 @@ export function CabecalhoControle({
               onChange={(e) => handleFieldChange('ha_plantado', parseFloat(e.target.value) || 0)}
               disabled={!canEdit || !controleLavoura}
               className="h-9"
+              placeholder={controleLavoura ? '' : 'Crie o registro primeiro'}
             />
           </div>
 
           {/* Cobertura do Solo */}
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Cobertura Solo</Label>
+            <Label className="text-xs text-muted-foreground">Cobertura Solo (%)</Label>
             <Input
               type="number"
               step="0.01"
@@ -178,7 +169,24 @@ export function CabecalhoControle({
               onChange={(e) => handleFieldChange('cobertura_solo', parseFloat(e.target.value) || 0)}
               disabled={!canEdit || !controleLavoura}
               className="h-9"
+              placeholder={controleLavoura ? '' : 'Crie o registro primeiro'}
             />
+          </div>
+
+          {/* Status */}
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Status</Label>
+            <div className="h-9 flex items-center">
+              {loadingControle ? (
+                <Spinner className="h-4 w-4" />
+              ) : controleLavoura ? (
+                <Badge variant="default" className="bg-green-600">Registro Ativo</Badge>
+              ) : safraId && lavouraId ? (
+                <Badge variant="secondary">Sem Registro</Badge>
+              ) : (
+                <Badge variant="outline">Selecione Safra/Lavoura</Badge>
+              )}
+            </div>
           </div>
         </div>
 
@@ -208,16 +216,27 @@ export function CabecalhoControle({
           </div>
 
           <div className="flex items-center gap-2">
-            {loadingControle && <Spinner className="h-4 w-4" />}
-            {safraId && lavouraId && canEdit && (
+            {safraId && lavouraId && canEdit && !controleLavoura && (
               <Button
                 size="sm"
-                onClick={handleCreateOrUpdate}
-                disabled={createMutation.isPending || updateMutation.isPending}
+                onClick={handleCreate}
+                disabled={createMutation.isPending}
+                className="gap-1 bg-green-600 hover:bg-green-700"
+              >
+                <Plus className="h-4 w-4" />
+                Criar Registro
+              </Button>
+            )}
+            {controleLavoura && canEdit && (
+              <Button
+                size="sm"
+                onClick={handleUpdate}
+                disabled={updateMutation.isPending}
+                variant="secondary"
                 className="gap-1"
               >
                 <Save className="h-4 w-4" />
-                {controleLavoura ? 'Salvar' : 'Criar Registro'}
+                Salvar
               </Button>
             )}
           </div>
