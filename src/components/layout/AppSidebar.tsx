@@ -13,6 +13,11 @@ import {
   LogOut,
   User,
   Shield,
+  Package,
+  Ruler,
+  Warehouse,
+  Truck,
+  Droplets,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,42 +38,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const menuItems = [
-  {
-    title: "Dashboard",
-    icon: LayoutDashboard,
-    path: "/",
-    color: "text-primary",
-  },
-  {
-    title: "Empresas",
-    icon: Building2,
-    path: "/empresas",
-    color: "text-info",
-  },
-  {
-    title: "Culturas",
-    icon: Leaf,
-    path: "/culturas",
-    color: "text-success",
-  },
-  {
-    title: "Safras",
-    icon: Calendar,
-    path: "/safras",
-    color: "text-warning",
-  },
-  {
-    title: "Produtores",
-    icon: Users,
-    path: "/produtores",
-    color: "text-accent",
-  },
-  {
-    title: "Lavouras",
-    icon: Map,
-    path: "/lavouras",
-    color: "text-chart-5",
-  },
+  { title: "Dashboard", icon: LayoutDashboard, path: "/", color: "text-primary" },
+  { title: "Empresas", icon: Building2, path: "/empresas", color: "text-info" },
+  { title: "Culturas", icon: Leaf, path: "/culturas", color: "text-success" },
+  { title: "Safras", icon: Calendar, path: "/safras", color: "text-warning" },
+  { title: "Produtores", icon: Users, path: "/produtores", color: "text-accent" },
+  { title: "Lavouras", icon: Map, path: "/lavouras", color: "text-chart-5" },
+  { title: "Clientes/Forn.", icon: Users, path: "/clientes-fornecedores", color: "text-info" },
+  { title: "Produtos", icon: Package, path: "/produtos", color: "text-amber-500" },
+  { title: "Unidades", icon: Ruler, path: "/unidades-medida", color: "text-sky-500" },
+  { title: "Silos", icon: Warehouse, path: "/silos", color: "text-emerald-500" },
+  { title: "Placas", icon: Truck, path: "/placas", color: "text-orange-500" },
+  { title: "Tab. Umidades", icon: Droplets, path: "/tabela-umidades", color: "text-cyan-500" },
 ];
 
 const roleLabels: Record<string, string> = {

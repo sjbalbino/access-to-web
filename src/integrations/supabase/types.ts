@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      clientes_fornecedores: {
+        Row: {
+          ativo: boolean | null
+          bairro: string | null
+          celular: string | null
+          cep: string | null
+          cidade: string | null
+          codigo: string | null
+          complemento: string | null
+          contato: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          email: string | null
+          empresa_id: string | null
+          id: string
+          inscricao_estadual: string | null
+          logradouro: string | null
+          nome: string
+          nome_fantasia: string | null
+          numero: string | null
+          observacoes: string | null
+          telefone: string | null
+          tipo: string
+          tipo_pessoa: string | null
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          bairro?: string | null
+          celular?: string | null
+          cep?: string | null
+          cidade?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          contato?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          empresa_id?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          logradouro?: string | null
+          nome: string
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          telefone?: string | null
+          tipo?: string
+          tipo_pessoa?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          bairro?: string | null
+          celular?: string | null
+          cep?: string | null
+          cidade?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          contato?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          empresa_id?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          logradouro?: string | null
+          nome?: string
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          telefone?: string | null
+          tipo?: string
+          tipo_pessoa?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       culturas: {
         Row: {
           ativa: boolean | null
@@ -225,6 +314,65 @@ export type Database = {
           },
         ]
       }
+      placas: {
+        Row: {
+          ano: number | null
+          ativa: boolean | null
+          capacidade_kg: number | null
+          cor: string | null
+          created_at: string
+          empresa_id: string | null
+          id: string
+          marca: string | null
+          modelo: string | null
+          observacoes: string | null
+          placa: string
+          proprietario: string | null
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          ano?: number | null
+          ativa?: boolean | null
+          capacidade_kg?: number | null
+          cor?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          observacoes?: string | null
+          placa: string
+          proprietario?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ano?: number | null
+          ativa?: boolean | null
+          capacidade_kg?: number | null
+          cor?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          marca?: string | null
+          modelo?: string | null
+          observacoes?: string | null
+          placa?: string
+          proprietario?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produtores: {
         Row: {
           ativo: boolean | null
@@ -298,6 +446,82 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          ativo: boolean | null
+          codigo: string | null
+          created_at: string
+          descricao: string | null
+          empresa_id: string | null
+          estoque_atual: number | null
+          estoque_minimo: number | null
+          fornecedor_id: string | null
+          id: string
+          nome: string
+          preco_custo: number | null
+          preco_venda: number | null
+          tipo: string
+          unidade_medida_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          codigo?: string | null
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string | null
+          estoque_atual?: number | null
+          estoque_minimo?: number | null
+          fornecedor_id?: string | null
+          id?: string
+          nome: string
+          preco_custo?: number | null
+          preco_venda?: number | null
+          tipo?: string
+          unidade_medida_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          codigo?: string | null
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string | null
+          estoque_atual?: number | null
+          estoque_minimo?: number | null
+          fornecedor_id?: string | null
+          id?: string
+          nome?: string
+          preco_custo?: number | null
+          preco_venda?: number | null
+          tipo?: string
+          unidade_medida_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_unidade_medida_id_fkey"
+            columns: ["unidade_medida_id"]
+            isOneToOne: false
+            referencedRelation: "unidades_medida"
             referencedColumns: ["id"]
           },
         ]
@@ -378,6 +602,133 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      silos: {
+        Row: {
+          ativo: boolean | null
+          capacidade_kg: number | null
+          capacidade_sacas: number | null
+          codigo: string | null
+          created_at: string
+          empresa_id: string | null
+          id: string
+          localizacao: string | null
+          nome: string
+          observacoes: string | null
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          capacidade_kg?: number | null
+          capacidade_sacas?: number | null
+          codigo?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          localizacao?: string | null
+          nome: string
+          observacoes?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          capacidade_kg?: number | null
+          capacidade_sacas?: number | null
+          codigo?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          localizacao?: string | null
+          nome?: string
+          observacoes?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "silos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tabela_umidades: {
+        Row: {
+          ativa: boolean | null
+          created_at: string
+          cultura_id: string | null
+          desconto_percentual: number | null
+          id: string
+          observacoes: string | null
+          umidade_maxima: number
+          umidade_minima: number
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean | null
+          created_at?: string
+          cultura_id?: string | null
+          desconto_percentual?: number | null
+          id?: string
+          observacoes?: string | null
+          umidade_maxima: number
+          umidade_minima: number
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean | null
+          created_at?: string
+          cultura_id?: string | null
+          desconto_percentual?: number | null
+          id?: string
+          observacoes?: string | null
+          umidade_maxima?: number
+          umidade_minima?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tabela_umidades_cultura_id_fkey"
+            columns: ["cultura_id"]
+            isOneToOne: false
+            referencedRelation: "culturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unidades_medida: {
+        Row: {
+          ativa: boolean | null
+          codigo: string
+          created_at: string
+          descricao: string
+          id: string
+          sigla: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean | null
+          codigo: string
+          created_at?: string
+          descricao: string
+          id?: string
+          sigla?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean | null
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          id?: string
+          sigla?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
