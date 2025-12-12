@@ -11,6 +11,7 @@ import Culturas from "./pages/Culturas";
 import Safras from "./pages/Safras";
 import Produtores from "./pages/Produtores";
 import Lavouras from "./pages/Lavouras";
+import ControleLavoura from "./pages/ControleLavoura";
 import Auth from "./pages/Auth";
 import Usuarios from "./pages/Usuarios";
 import ClientesFornecedores from "./pages/ClientesFornecedores";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/safras" element={<ProtectedRoute><Safras /></ProtectedRoute>} />
             <Route path="/produtores" element={<ProtectedRoute><Produtores /></ProtectedRoute>} />
             <Route path="/lavouras" element={<ProtectedRoute><Lavouras /></ProtectedRoute>} />
+            <Route path="/controle-lavoura" element={<ProtectedRoute><ControleLavoura /></ProtectedRoute>} />
             <Route path="/clientes-fornecedores" element={<ProtectedRoute><ClientesFornecedores /></ProtectedRoute>} />
             <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
             <Route path="/unidades-medida" element={<ProtectedRoute><UnidadesMedida /></ProtectedRoute>} />
