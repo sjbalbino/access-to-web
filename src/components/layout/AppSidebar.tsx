@@ -44,6 +44,7 @@ const menuItems = [
   { title: "Safras", icon: Calendar, path: "/safras", color: "text-warning" },
   { title: "Produtores", icon: Users, path: "/produtores", color: "text-accent" },
   { title: "Lavouras", icon: Map, path: "/lavouras", color: "text-chart-5" },
+  { title: "Controle Lavoura", icon: Wheat, path: "/controle-lavoura", color: "text-lime-600" },
   { title: "Clientes/Forn.", icon: Users, path: "/clientes-fornecedores", color: "text-info" },
   { title: "Produtos", icon: Package, path: "/produtos", color: "text-amber-500" },
   { title: "Unidades", icon: Ruler, path: "/unidades-medida", color: "text-sky-500" },

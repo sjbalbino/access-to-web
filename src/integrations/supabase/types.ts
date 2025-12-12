@@ -14,6 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      aplicacoes: {
+        Row: {
+          aplicador: string | null
+          area_aplicada: number | null
+          condicao_climatica: string | null
+          created_at: string
+          data_aplicacao: string | null
+          dose_ha: number | null
+          equipamento: string | null
+          id: string
+          lavoura_id: string
+          observacoes: string | null
+          plantio_id: string | null
+          produto_id: string | null
+          quantidade_total: number | null
+          safra_id: string | null
+          tipo: string
+          unidade_medida_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          aplicador?: string | null
+          area_aplicada?: number | null
+          condicao_climatica?: string | null
+          created_at?: string
+          data_aplicacao?: string | null
+          dose_ha?: number | null
+          equipamento?: string | null
+          id?: string
+          lavoura_id: string
+          observacoes?: string | null
+          plantio_id?: string | null
+          produto_id?: string | null
+          quantidade_total?: number | null
+          safra_id?: string | null
+          tipo: string
+          unidade_medida_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aplicador?: string | null
+          area_aplicada?: number | null
+          condicao_climatica?: string | null
+          created_at?: string
+          data_aplicacao?: string | null
+          dose_ha?: number | null
+          equipamento?: string | null
+          id?: string
+          lavoura_id?: string
+          observacoes?: string | null
+          plantio_id?: string | null
+          produto_id?: string | null
+          quantidade_total?: number | null
+          safra_id?: string | null
+          tipo?: string
+          unidade_medida_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aplicacoes_lavoura_id_fkey"
+            columns: ["lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "lavouras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aplicacoes_plantio_id_fkey"
+            columns: ["plantio_id"]
+            isOneToOne: false
+            referencedRelation: "plantios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aplicacoes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aplicacoes_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aplicacoes_unidade_medida_id_fkey"
+            columns: ["unidade_medida_id"]
+            isOneToOne: false
+            referencedRelation: "unidades_medida"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes_fornecedores: {
         Row: {
           ativo: boolean | null
@@ -99,6 +195,102 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      colheitas: {
+        Row: {
+          area_colhida: number | null
+          created_at: string
+          data_colheita: string | null
+          id: string
+          impureza: number | null
+          lavoura_id: string
+          motorista: string | null
+          observacoes: string | null
+          placa_id: string | null
+          plantio_id: string | null
+          producao_kg: number | null
+          producao_liquida_kg: number | null
+          produtividade_sacas_ha: number | null
+          safra_id: string | null
+          silo_id: string | null
+          umidade: number | null
+          updated_at: string
+        }
+        Insert: {
+          area_colhida?: number | null
+          created_at?: string
+          data_colheita?: string | null
+          id?: string
+          impureza?: number | null
+          lavoura_id: string
+          motorista?: string | null
+          observacoes?: string | null
+          placa_id?: string | null
+          plantio_id?: string | null
+          producao_kg?: number | null
+          producao_liquida_kg?: number | null
+          produtividade_sacas_ha?: number | null
+          safra_id?: string | null
+          silo_id?: string | null
+          umidade?: number | null
+          updated_at?: string
+        }
+        Update: {
+          area_colhida?: number | null
+          created_at?: string
+          data_colheita?: string | null
+          id?: string
+          impureza?: number | null
+          lavoura_id?: string
+          motorista?: string | null
+          observacoes?: string | null
+          placa_id?: string | null
+          plantio_id?: string | null
+          producao_kg?: number | null
+          producao_liquida_kg?: number | null
+          produtividade_sacas_ha?: number | null
+          safra_id?: string | null
+          silo_id?: string | null
+          umidade?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colheitas_lavoura_id_fkey"
+            columns: ["lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "lavouras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colheitas_placa_id_fkey"
+            columns: ["placa_id"]
+            isOneToOne: false
+            referencedRelation: "placas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colheitas_plantio_id_fkey"
+            columns: ["plantio_id"]
+            isOneToOne: false
+            referencedRelation: "plantios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colheitas_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colheitas_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
             referencedColumns: ["id"]
           },
         ]
@@ -369,6 +561,83 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plantios: {
+        Row: {
+          area_plantada: number | null
+          created_at: string
+          cultura_id: string | null
+          data_plantio: string | null
+          espacamento_linha: number | null
+          id: string
+          lavoura_id: string
+          observacoes: string | null
+          populacao_ha: number | null
+          quantidade_semente: number | null
+          safra_id: string | null
+          updated_at: string
+          variedade_id: string | null
+        }
+        Insert: {
+          area_plantada?: number | null
+          created_at?: string
+          cultura_id?: string | null
+          data_plantio?: string | null
+          espacamento_linha?: number | null
+          id?: string
+          lavoura_id: string
+          observacoes?: string | null
+          populacao_ha?: number | null
+          quantidade_semente?: number | null
+          safra_id?: string | null
+          updated_at?: string
+          variedade_id?: string | null
+        }
+        Update: {
+          area_plantada?: number | null
+          created_at?: string
+          cultura_id?: string | null
+          data_plantio?: string | null
+          espacamento_linha?: number | null
+          id?: string
+          lavoura_id?: string
+          observacoes?: string | null
+          populacao_ha?: number | null
+          quantidade_semente?: number | null
+          safra_id?: string | null
+          updated_at?: string
+          variedade_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plantios_cultura_id_fkey"
+            columns: ["cultura_id"]
+            isOneToOne: false
+            referencedRelation: "culturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plantios_lavoura_id_fkey"
+            columns: ["lavoura_id"]
+            isOneToOne: false
+            referencedRelation: "lavouras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plantios_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plantios_variedade_id_fkey"
+            columns: ["variedade_id"]
+            isOneToOne: false
+            referencedRelation: "variedades"
             referencedColumns: ["id"]
           },
         ]
