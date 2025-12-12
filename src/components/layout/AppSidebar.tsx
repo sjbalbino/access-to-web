@@ -66,10 +66,37 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
+        "relative flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >
+      {/* Floating Toggle Button - Always Visible */}
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCollapsed(!collapsed)}
+            className={cn(
+              "absolute -right-3 top-20 z-50",
+              "h-6 w-6 rounded-full",
+              "bg-background border-2 border-border shadow-lg",
+              "hover:bg-primary hover:text-primary-foreground hover:border-primary",
+              "transition-all duration-200"
+            )}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-3 w-3" />
+            ) : (
+              <ChevronLeft className="h-3 w-3" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          {collapsed ? "Expandir menu" : "Recolher menu"}
+        </TooltipContent>
+      </Tooltip>
+
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
         {!collapsed && (
@@ -219,25 +246,6 @@ export function AppSidebar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-
-      {/* Collapse Button */}
-      <div className="p-2 border-t border-sidebar-border">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full justify-center text-sidebar-foreground hover:bg-sidebar-accent"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <>
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              <span>Recolher</span>
-            </>
-          )}
-        </Button>
       </div>
     </aside>
   );
