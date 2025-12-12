@@ -2,95 +2,140 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Sistema de Gerenciamento Agropecuário - Design System Agrícola
+   Paleta: Verde agrícola, Azul céu, Tons terrosos
+   All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Background & Foreground */
+    --background: 60 30% 98%;
+    --foreground: 150 30% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Cards com tom creme suave */
+    --card: 45 40% 97%;
+    --card-foreground: 150 30% 15%;
 
+    /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 150 30% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Verde Agrícola */
+    --primary: 142 70% 35%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Azul Céu */
+    --secondary: 200 80% 50%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted - Tom Neutro */
+    --muted: 45 20% 92%;
+    --muted-foreground: 150 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Laranja Terra */
+    --accent: 30 85% 55%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive */
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Borders & Inputs */
+    --border: 150 15% 85%;
+    --input: 150 15% 90%;
+    --ring: 142 70% 35%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Sidebar */
+    --sidebar-background: 142 40% 20%;
+    --sidebar-foreground: 60 30% 95%;
+    --sidebar-primary: 142 70% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 142 35% 28%;
+    --sidebar-accent-foreground: 60 30% 95%;
+    --sidebar-border: 142 30% 25%;
+    --sidebar-ring: 142 70% 45%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Custom Colors - Agro */
+    --success: 142 70% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 90% 50%;
+    --warning-foreground: 45 90% 15%;
+    --info: 200 80% 50%;
+    --info-foreground: 0 0% 100%;
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Chart Colors */
+    --chart-1: 142 70% 35%;
+    --chart-2: 200 80% 50%;
+    --chart-3: 30 85% 55%;
+    --chart-4: 45 90% 50%;
+    --chart-5: 280 60% 50%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Background & Foreground */
+    --background: 150 25% 8%;
+    --foreground: 60 30% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    /* Cards */
+    --card: 150 20% 12%;
+    --card-foreground: 60 30% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    /* Popover */
+    --popover: 150 20% 10%;
+    --popover-foreground: 60 30% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary - Verde Agrícola */
+    --primary: 142 65% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary - Azul Céu */
+    --secondary: 200 70% 45%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Muted */
+    --muted: 150 15% 18%;
+    --muted-foreground: 60 15% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent - Laranja Terra */
+    --accent: 30 75% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive */
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    /* Borders & Inputs */
+    --border: 150 15% 22%;
+    --input: 150 15% 18%;
+    --ring: 142 65% 45%;
+
+    /* Sidebar */
+    --sidebar-background: 150 30% 6%;
+    --sidebar-foreground: 60 30% 95%;
+    --sidebar-primary: 142 65% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 150 25% 15%;
+    --sidebar-accent-foreground: 60 30% 95%;
+    --sidebar-border: 150 20% 15%;
+    --sidebar-ring: 142 65% 45%;
+
+    /* Custom Colors - Agro */
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 85% 45%;
+    --warning-foreground: 0 0% 10%;
+    --info: 200 70% 50%;
+    --info-foreground: 0 0% 100%;
+
+    /* Chart Colors */
+    --chart-1: 142 65% 45%;
+    --chart-2: 200 70% 50%;
+    --chart-3: 30 75% 50%;
+    --chart-4: 45 85% 45%;
+    --chart-5: 280 55% 55%;
   }
 }
 
@@ -101,5 +146,20 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-gradient-agro {
+    @apply bg-gradient-to-r from-primary via-success to-secondary bg-clip-text text-transparent;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  .icon-badge {
+    @apply inline-flex items-center justify-center rounded-xl p-3 shadow-md;
   }
 }
