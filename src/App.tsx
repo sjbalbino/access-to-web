@@ -13,6 +13,12 @@ import Produtores from "./pages/Produtores";
 import Lavouras from "./pages/Lavouras";
 import Auth from "./pages/Auth";
 import Usuarios from "./pages/Usuarios";
+import ClientesFornecedores from "./pages/ClientesFornecedores";
+import Produtos from "./pages/Produtos";
+import UnidadesMedida from "./pages/UnidadesMedida";
+import Silos from "./pages/Silos";
+import Placas from "./pages/Placas";
+import TabelaUmidades from "./pages/TabelaUmidades";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,63 +32,19 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/empresas"
-              element={
-                <ProtectedRoute>
-                  <Empresas />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/culturas"
-              element={
-                <ProtectedRoute>
-                  <Culturas />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/safras"
-              element={
-                <ProtectedRoute>
-                  <Safras />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/produtores"
-              element={
-                <ProtectedRoute>
-                  <Produtores />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/lavouras"
-              element={
-                <ProtectedRoute>
-                  <Lavouras />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/usuarios"
-              element={
-                <ProtectedRoute requireAdmin>
-                  <Usuarios />
-                </ProtectedRoute>
-              }
-            />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/empresas" element={<ProtectedRoute><Empresas /></ProtectedRoute>} />
+            <Route path="/culturas" element={<ProtectedRoute><Culturas /></ProtectedRoute>} />
+            <Route path="/safras" element={<ProtectedRoute><Safras /></ProtectedRoute>} />
+            <Route path="/produtores" element={<ProtectedRoute><Produtores /></ProtectedRoute>} />
+            <Route path="/lavouras" element={<ProtectedRoute><Lavouras /></ProtectedRoute>} />
+            <Route path="/clientes-fornecedores" element={<ProtectedRoute><ClientesFornecedores /></ProtectedRoute>} />
+            <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
+            <Route path="/unidades-medida" element={<ProtectedRoute><UnidadesMedida /></ProtectedRoute>} />
+            <Route path="/silos" element={<ProtectedRoute><Silos /></ProtectedRoute>} />
+            <Route path="/placas" element={<ProtectedRoute><Placas /></ProtectedRoute>} />
+            <Route path="/tabela-umidades" element={<ProtectedRoute><TabelaUmidades /></ProtectedRoute>} />
+            <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
