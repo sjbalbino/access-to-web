@@ -118,7 +118,7 @@ export default function Placas() {
       <PageHeader
         title="Placas / Veículos"
         description="Gerencie as placas de veículos e carretas"
-        icon={Truck}
+        icon={<Truck className="h-6 w-6" />}
       />
 
       <Card>

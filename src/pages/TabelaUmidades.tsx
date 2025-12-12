@@ -90,7 +90,7 @@ export default function TabelaUmidades() {
       <PageHeader
         title="Tabela de Umidades"
         description="Gerencie as faixas de umidade e descontos aplicáveis"
-        icon={Droplets}
+        icon={<Droplets className="h-6 w-6" />}
       />
 
       <Card>
