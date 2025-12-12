@@ -141,7 +141,7 @@ export default function ClientesFornecedores() {
       <PageHeader
         title="Clientes / Fornecedores"
         description="Gerencie os clientes e fornecedores da empresa"
-        icon={Users}
+        icon={<Users className="h-6 w-6" />}
       />
 
       <Card>

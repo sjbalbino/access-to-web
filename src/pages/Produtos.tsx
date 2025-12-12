@@ -125,7 +125,7 @@ export default function Produtos() {
       <PageHeader
         title="Produtos / Insumos"
         description="Gerencie os produtos e insumos utilizados nas operações"
-        icon={Package}
+        icon={<Package className="h-6 w-6" />}
       />
 
       <Card>

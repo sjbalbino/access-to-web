@@ -75,7 +75,7 @@ export default function UnidadesMedida() {
       <PageHeader
         title="Unidades de Medida"
         description="Gerencie as unidades de medida utilizadas no sistema"
-        icon={Ruler}
+        icon={<Ruler className="h-6 w-6" />}
       />
 
       <Card>

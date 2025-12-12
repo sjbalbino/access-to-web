@@ -112,7 +112,7 @@ export default function Silos() {
       <PageHeader
         title="Silos"
         description="Gerencie os silos e armazéns da empresa"
-        icon={Warehouse}
+        icon={<Warehouse className="h-6 w-6" />}
       />
 
       <Card>
