@@ -46,6 +46,7 @@ import {
 } from "@/hooks/useProdutores";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 const emptyProdutor: ProdutorInput = {
   codigo: "",
@@ -73,6 +74,7 @@ export default function Produtores() {
   const createProdutor = useCreateProdutor();
   const updateProdutor = useUpdateProdutor();
   const deleteProdutor = useDeleteProdutor();
+  const { canEdit } = useAuth();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -142,10 +144,12 @@ export default function Produtores() {
         icon={<Users className="h-6 w-6" />}
         iconColor="bg-accent/10 text-accent"
         actions={
-          <Button onClick={handleNew} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Novo Produtor
-          </Button>
+          canEdit && (
+            <Button onClick={handleNew} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Novo Produtor
+            </Button>
+          )
         }
       />
 
@@ -205,25 +209,27 @@ export default function Produtores() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(produtor)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedProdutor(produtor);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                        {canEdit && (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(produtor)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setSelectedProdutor(produtor);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -237,7 +243,7 @@ export default function Produtores() {
               <p className="text-muted-foreground mb-4">
                 {search ? "Tente ajustar sua busca" : "Comece cadastrando um produtor"}
               </p>
-              {!search && (
+              {!search && canEdit && (
                 <Button onClick={handleNew}>
                   <Plus className="h-4 w-4 mr-2" />
                   Cadastrar Produtor

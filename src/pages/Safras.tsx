@@ -46,6 +46,7 @@ import {
 } from "@/hooks/useSafras";
 import { useCulturas } from "@/hooks/useCulturas";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 const emptySafra: SafraInput = {
   codigo: "",
@@ -63,6 +64,7 @@ export default function Safras() {
   const createSafra = useCreateSafra();
   const updateSafra = useUpdateSafra();
   const deleteSafra = useDeleteSafra();
+  const { canEdit } = useAuth();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -134,10 +136,12 @@ export default function Safras() {
         icon={<Calendar className="h-6 w-6" />}
         iconColor="bg-warning/10 text-warning"
         actions={
-          <Button onClick={handleNew} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Safra
-          </Button>
+          canEdit && (
+            <Button onClick={handleNew} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Safra
+            </Button>
+          )
         }
       />
 
@@ -191,25 +195,27 @@ export default function Safras() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(safra)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedSafra(safra);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                        {canEdit && (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(safra)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setSelectedSafra(safra);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -223,7 +229,7 @@ export default function Safras() {
               <p className="text-muted-foreground mb-4">
                 {search ? "Tente ajustar sua busca" : "Comece cadastrando uma safra"}
               </p>
-              {!search && (
+              {!search && canEdit && (
                 <Button onClick={handleNew}>
                   <Plus className="h-4 w-4 mr-2" />
                   Cadastrar Safra

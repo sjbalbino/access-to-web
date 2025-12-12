@@ -7,11 +7,12 @@ import {
   Users,
   Map,
   LayoutDashboard,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Wheat,
-  Menu,
+  LogOut,
+  User,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const menuItems = [
   {
@@ -60,9 +71,16 @@ const menuItems = [
   },
 ];
 
+const roleLabels: Record<string, string> = {
+  admin: "Administrador",
+  operador: "Operador",
+  visualizador: "Visualizador",
+};
+
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { profile, role, isAdmin, signOut } = useAuth();
 
   return (
     <aside
@@ -132,10 +150,97 @@ export function AppSidebar() {
               </li>
             );
           })}
+
+          {/* Users Management - Admin Only */}
+          {isAdmin && (
+            <li>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/usuarios"
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                      "hover:bg-sidebar-accent",
+                      location.pathname === "/usuarios"
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                        : "text-sidebar-foreground"
+                    )}
+                  >
+                    <Shield
+                      className={cn(
+                        "h-5 w-5 flex-shrink-0",
+                        location.pathname === "/usuarios" ? "text-sidebar-primary-foreground" : "text-destructive"
+                      )}
+                    />
+                    {!collapsed && (
+                      <span className="font-medium">Usuários</span>
+                    )}
+                  </Link>
+                </TooltipTrigger>
+                {collapsed && (
+                  <TooltipContent side="right" className="bg-popover">
+                    Usuários
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </li>
+          )}
         </ul>
       </nav>
 
-      {/* Footer */}
+      {/* User Menu */}
+      <div className="p-2 border-t border-sidebar-border">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent",
+                collapsed && "justify-center"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center">
+                  <User className="h-4 w-4 text-sidebar-primary" />
+                </div>
+                {!collapsed && (
+                  <div className="flex flex-col items-start text-left">
+                    <span className="text-sm font-medium truncate max-w-[140px]">
+                      {profile?.nome || "Usuário"}
+                    </span>
+                    <span className="text-xs text-sidebar-foreground/60">
+                      {role && roleLabels[role]}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="flex flex-col">
+                <span>{profile?.nome || "Usuário"}</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  {profile?.email}
+                </span>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <Badge variant="outline" className="mr-2">
+                {role && roleLabels[role]}
+              </Badge>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut} className="text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Collapse Button */}
       <div className="p-2 border-t border-sidebar-border">
         <Button
           variant="ghost"

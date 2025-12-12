@@ -18,7 +18,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -40,6 +39,7 @@ import {
   EmpresaInput,
 } from "@/hooks/useEmpresas";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 const emptyEmpresa: EmpresaInput = {
   codigo: "",
@@ -65,6 +65,7 @@ export default function Empresas() {
   const createEmpresa = useCreateEmpresa();
   const updateEmpresa = useUpdateEmpresa();
   const deleteEmpresa = useDeleteEmpresa();
+  const { canEdit } = useAuth();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -133,10 +134,12 @@ export default function Empresas() {
         icon={<Building2 className="h-6 w-6" />}
         iconColor="bg-info/10 text-info"
         actions={
-          <Button onClick={handleNew} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Empresa
-          </Button>
+          canEdit && (
+            <Button onClick={handleNew} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Empresa
+            </Button>
+          )
         }
       />
 
@@ -209,25 +212,27 @@ export default function Empresas() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(empresa)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedEmpresa(empresa);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                        {canEdit && (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(empresa)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setSelectedEmpresa(empresa);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -241,7 +246,7 @@ export default function Empresas() {
               <p className="text-muted-foreground mb-4">
                 {search ? "Tente ajustar sua busca" : "Comece cadastrando uma empresa"}
               </p>
-              {!search && (
+              {!search && canEdit && (
                 <Button onClick={handleNew}>
                   <Plus className="h-4 w-4 mr-2" />
                   Cadastrar Empresa

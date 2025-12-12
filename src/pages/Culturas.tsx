@@ -40,6 +40,7 @@ import {
   CulturaInput,
 } from "@/hooks/useCulturas";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 const emptyCultura: CulturaInput = {
   codigo: "",
@@ -55,6 +56,7 @@ export default function Culturas() {
   const createCultura = useCreateCultura();
   const updateCultura = useUpdateCultura();
   const deleteCultura = useDeleteCultura();
+  const { canEdit } = useAuth();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -112,10 +114,12 @@ export default function Culturas() {
         icon={<Leaf className="h-6 w-6" />}
         iconColor="bg-success/10 text-success"
         actions={
-          <Button onClick={handleNew} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Cultura
-          </Button>
+          canEdit && (
+            <Button onClick={handleNew} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Cultura
+            </Button>
+          )
         }
       />
 
@@ -185,25 +189,27 @@ export default function Culturas() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(cultura)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedCultura(cultura);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                        {canEdit && (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(cultura)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setSelectedCultura(cultura);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -217,7 +223,7 @@ export default function Culturas() {
               <p className="text-muted-foreground mb-4">
                 {search ? "Tente ajustar sua busca" : "Comece cadastrando uma cultura"}
               </p>
-              {!search && (
+              {!search && canEdit && (
                 <Button onClick={handleNew}>
                   <Plus className="h-4 w-4 mr-2" />
                   Cadastrar Cultura
