@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export type TipoAplicacao = 'adubacao' | 'herbicida' | 'fungicida' | 'inseticida' | 'dessecacao';
+export type TipoAplicacao = 'adubacao' | 'herbicida' | 'fungicida' | 'inseticida' | 'dessecacao' | 'adjuvante' | 'micronutriente' | 'inoculante' | 'calcario';
 
 export interface Aplicacao {
   id: string;
@@ -37,6 +37,10 @@ export const TIPOS_APLICACAO: { value: TipoAplicacao; label: string }[] = [
   { value: 'fungicida', label: 'Fungicida' },
   { value: 'inseticida', label: 'Inseticida' },
   { value: 'dessecacao', label: 'Dessecação' },
+  { value: 'adjuvante', label: 'Adjuvante' },
+  { value: 'micronutriente', label: 'Micronutriente' },
+  { value: 'inoculante', label: 'Inoculante' },
+  { value: 'calcario', label: 'Calcário' },
 ];
 
 export function useAplicacoes(tipo: TipoAplicacao, safraId?: string | null, lavouraId?: string | null) {
