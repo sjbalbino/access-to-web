@@ -19,13 +19,29 @@ export interface Colheita {
   placa_id: string | null;
   motorista: string | null;
   observacoes: string | null;
+  // Novos campos
+  peso_bruto: number | null;
+  peso_tara: number | null;
+  kg_impureza: number | null;
+  percentual_desconto: number | null;
+  kg_umidade: number | null;
+  percentual_avariados: number | null;
+  kg_avariados: number | null;
+  percentual_outros: number | null;
+  kg_outros: number | null;
+  kg_desconto_total: number | null;
+  total_sacos: number | null;
+  ph: number | null;
+  variedade_id: string | null;
+  tipo_colheita: string | null;
   created_at: string;
   updated_at: string;
-  safras?: { id: string; nome: string } | null;
+  safras?: { id: string; nome: string; cultura_id: string | null } | null;
   lavouras?: { id: string; nome: string } | null;
   plantios?: { id: string; data_plantio: string } | null;
   silos?: { id: string; nome: string } | null;
   placas?: { id: string; placa: string } | null;
+  variedades?: { id: string; nome: string } | null;
 }
 
 export type ColheitaInput = {
@@ -42,6 +58,21 @@ export type ColheitaInput = {
   placa_id: string | null;
   motorista: string | null;
   observacoes: string | null;
+  // Novos campos
+  peso_bruto: number | null;
+  peso_tara: number | null;
+  kg_impureza: number | null;
+  percentual_desconto: number | null;
+  kg_umidade: number | null;
+  percentual_avariados: number | null;
+  kg_avariados: number | null;
+  percentual_outros: number | null;
+  kg_outros: number | null;
+  kg_desconto_total: number | null;
+  total_sacos: number | null;
+  ph: number | null;
+  variedade_id: string | null;
+  tipo_colheita: string | null;
 };
 
 export function useColheitas(controleLavouraId: string | null) {
@@ -54,11 +85,12 @@ export function useColheitas(controleLavouraId: string | null) {
         .from("colheitas")
         .select(`
           *,
-          safras (id, nome),
+          safras (id, nome, cultura_id),
           lavouras (id, nome),
           plantios (id, data_plantio),
           silos (id, nome),
-          placas (id, placa)
+          placas (id, placa),
+          variedades (id, nome)
         `)
         .eq("controle_lavoura_id", controleLavouraId)
         .order("data_colheita", { ascending: false });
