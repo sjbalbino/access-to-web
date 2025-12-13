@@ -655,45 +655,63 @@ export type Database = {
       inscricoes_produtor: {
         Row: {
           ativa: boolean | null
+          bairro: string | null
+          cep: string | null
           cidade: string | null
+          complemento: string | null
           cpf_cnpj: string | null
           created_at: string
+          email: string | null
           empresa_id: string | null
           granja: string | null
           id: string
           inscricao_estadual: string | null
           logradouro: string | null
+          numero: string | null
           produtor_id: string | null
+          telefone: string | null
           tipo: string | null
           uf: string | null
           updated_at: string
         }
         Insert: {
           ativa?: boolean | null
+          bairro?: string | null
+          cep?: string | null
           cidade?: string | null
+          complemento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
+          email?: string | null
           empresa_id?: string | null
           granja?: string | null
           id?: string
           inscricao_estadual?: string | null
           logradouro?: string | null
+          numero?: string | null
           produtor_id?: string | null
+          telefone?: string | null
           tipo?: string | null
           uf?: string | null
           updated_at?: string
         }
         Update: {
           ativa?: boolean | null
+          bairro?: string | null
+          cep?: string | null
           cidade?: string | null
+          complemento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
+          email?: string | null
           empresa_id?: string | null
           granja?: string | null
           id?: string
           inscricao_estadual?: string | null
           logradouro?: string | null
+          numero?: string | null
           produtor_id?: string | null
+          telefone?: string | null
           tipo?: string | null
           uf?: string | null
           updated_at?: string

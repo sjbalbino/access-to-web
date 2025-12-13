@@ -8,9 +8,15 @@ export interface InscricaoProdutor {
   tipo: string | null;
   inscricao_estadual: string | null;
   cpf_cnpj: string | null;
+  cep: string | null;
   logradouro: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
   cidade: string | null;
   uf: string | null;
+  telefone: string | null;
+  email: string | null;
   granja: string | null;
   empresa_id: string | null;
   ativa: boolean | null;
