@@ -658,6 +658,7 @@ export type Database = {
           cidade: string | null
           cpf_cnpj: string | null
           created_at: string
+          empresa_id: string | null
           granja: string | null
           id: string
           inscricao_estadual: string | null
@@ -672,6 +673,7 @@ export type Database = {
           cidade?: string | null
           cpf_cnpj?: string | null
           created_at?: string
+          empresa_id?: string | null
           granja?: string | null
           id?: string
           inscricao_estadual?: string | null
@@ -686,6 +688,7 @@ export type Database = {
           cidade?: string | null
           cpf_cnpj?: string | null
           created_at?: string
+          empresa_id?: string | null
           granja?: string | null
           id?: string
           inscricao_estadual?: string | null
@@ -696,6 +699,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "inscricoes_produtor_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inscricoes_produtor_produtor_id_fkey"
             columns: ["produtor_id"]

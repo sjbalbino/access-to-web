@@ -12,6 +12,7 @@ export interface InscricaoProdutor {
   cidade: string | null;
   uf: string | null;
   granja: string | null;
+  empresa_id: string | null;
   ativa: boolean | null;
   created_at: string;
   updated_at: string;

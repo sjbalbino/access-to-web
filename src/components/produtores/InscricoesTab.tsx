@@ -45,6 +45,7 @@ import {
 } from "@/hooks/useInscricoesProdutor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmpresas } from "@/hooks/useEmpresas";
 
 const TIPOS_INSCRICAO = [
   { value: "parceria", label: "Parceria" },
@@ -65,11 +66,13 @@ const emptyInscricao: InscricaoInput = {
   cidade: "",
   uf: "",
   granja: "",
+  empresa_id: null,
   ativa: true,
 };
 
 export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const { data: inscricoes, isLoading } = useInscricoesByProdutor(produtorId);
+  const { data: empresas } = useEmpresas();
   const createInscricao = useCreateInscricao();
   const updateInscricao = useUpdateInscricao();
   const deleteInscricao = useDeleteInscricao();
@@ -97,6 +100,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       cidade: inscricao.cidade || "",
       uf: inscricao.uf || "",
       granja: inscricao.granja || "",
+      empresa_id: inscricao.empresa_id || null,
       ativa: inscricao.ativa ?? true,
     });
     setDialogOpen(true);
@@ -167,7 +171,13 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                       ? `${inscricao.cidade}/${inscricao.uf}`
                       : inscricao.cidade || inscricao.uf || "-"}
                   </TableCell>
-                  <TableCell>{inscricao.granja || "-"}</TableCell>
+                  <TableCell>
+                    {inscricao.empresa_id
+                      ? empresas?.find(e => e.id === inscricao.empresa_id)?.nome_fantasia 
+                        || empresas?.find(e => e.id === inscricao.empresa_id)?.razao_social 
+                        || "-"
+                      : inscricao.granja || "-"}
+                  </TableCell>
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -266,13 +276,22 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="granja">Granja</Label>
-              <Input
-                id="granja"
-                value={formData.granja || ""}
-                onChange={(e) => setFormData({ ...formData, granja: e.target.value })}
-                placeholder="Nome da propriedade"
-              />
+              <Label htmlFor="empresa_id">Granja (Empresa)</Label>
+              <Select
+                value={formData.empresa_id || ""}
+                onValueChange={(value) => setFormData({ ...formData, empresa_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a empresa/granja" />
+                </SelectTrigger>
+                <SelectContent>
+                  {empresas?.filter(e => e.ativa).map((empresa) => (
+                    <SelectItem key={empresa.id} value={empresa.id}>
+                      {empresa.nome_fantasia || empresa.razao_social}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="logradouro">Logradouro</Label>
