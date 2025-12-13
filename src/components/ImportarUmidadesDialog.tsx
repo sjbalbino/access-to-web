@@ -16,6 +16,7 @@ import * as XLSX from 'xlsx';
 
 interface CulturaInfo {
   codigo: string;
+  nome: string;
   existingId: string | null;
   existingName: string | null;
   willCreate: boolean;
@@ -23,6 +24,7 @@ interface CulturaInfo {
 
 interface ImportRow {
   cultura_codigo: string;
+  cultura_nome: string;
   umidade_minima: number;
   umidade_maxima: number;
   desconto_percentual: number;
@@ -66,9 +68,10 @@ export function ImportarUmidadesDialog({ open, onOpenChange }: ImportarUmidadesD
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
 
-      // Parse rows
+      // Parse rows - now including culture name from varnome column
       const rows: ImportRow[] = jsonData.map((row) => ({
         cultura_codigo: String(row['um_produto'] || row['UM_PRODUTO'] || ''),
+        cultura_nome: String(row['varnome'] || row['VARNOME'] || ''),
         umidade_minima: parseFloat(row['um_umid1'] || row['UM_UMID1'] || 0),
         umidade_maxima: parseFloat(row['um_umid2'] || row['UM_UMID2'] || 0),
         desconto_percentual: parseFloat(row['um_desc'] || row['UM_DESC'] || 0),
@@ -77,8 +80,14 @@ export function ImportarUmidadesDialog({ open, onOpenChange }: ImportarUmidadesD
 
       setParsedData(rows);
 
-      // Get unique culture codes
-      const uniqueCodes = [...new Set(rows.map((r) => r.cultura_codigo).filter(Boolean))];
+      // Get unique culture codes and their names (first occurrence)
+      const codeNameMap: Record<string, string> = {};
+      rows.forEach((r) => {
+        if (r.cultura_codigo && !codeNameMap[r.cultura_codigo]) {
+          codeNameMap[r.cultura_codigo] = r.cultura_nome || `Cultura (Código ${r.cultura_codigo})`;
+        }
+      });
+      const uniqueCodes = Object.keys(codeNameMap);
 
       // Check existing cultures
       const { data: existingCulturas } = await supabase
@@ -89,6 +98,7 @@ export function ImportarUmidadesDialog({ open, onOpenChange }: ImportarUmidadesD
         const existing = existingCulturas?.find((c) => c.codigo === codigo);
         return {
           codigo,
+          nome: codeNameMap[codigo],
           existingId: existing?.id || null,
           existingName: existing?.nome || null,
           willCreate: !existing,
@@ -122,13 +132,13 @@ export function ImportarUmidadesDialog({ open, onOpenChange }: ImportarUmidadesD
         if (c.existingId) culturaIdMap[c.codigo] = c.existingId;
       });
 
-      // Create new cultures
+      // Create new cultures with their real names from Excel
       for (const cultura of culturasToCreate) {
         const { data: newCultura, error } = await supabase
           .from('culturas')
           .insert({
             codigo: cultura.codigo,
-            nome: `Cultura (Código ${cultura.codigo})`,
+            nome: cultura.nome,
             ativa: true,
           })
           .select('id')
@@ -240,7 +250,7 @@ export function ImportarUmidadesDialog({ open, onOpenChange }: ImportarUmidadesD
                       <div key={c.codigo} className="flex items-center justify-between text-sm p-2 rounded bg-muted/50">
                         <div className="flex items-center gap-2">
                           <Badge variant="secondary">Código: {c.codigo}</Badge>
-                          <span>{c.existingName || `Cultura (Código ${c.codigo})`}</span>
+                          <span className="font-medium">{c.willCreate ? c.nome : c.existingName}</span>
                         </div>
                         {c.willCreate ? (
                           <Badge variant="outline" className="text-amber-600 border-amber-600">
