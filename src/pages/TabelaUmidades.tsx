@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Droplets, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Droplets, Upload, Filter } from 'lucide-react';
 import { useTabelaUmidades, useCreateTabelaUmidade, useUpdateTabelaUmidade, useDeleteTabelaUmidade, TabelaUmidadeInsert } from '@/hooks/useTabelaUmidades';
 import { useCulturas } from '@/hooks/useCulturas';
 import { ImportarUmidadesDialog } from '@/components/ImportarUmidadesDialog';
@@ -28,6 +28,7 @@ export default function TabelaUmidades() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [filtroCultura, setFiltroCultura] = useState<string>('all');
   const [formData, setFormData] = useState<TabelaUmidadeInsert>({
     cultura_id: null,
     umidade_minima: 0,
@@ -86,6 +87,12 @@ export default function TabelaUmidades() {
     if (value === null || value === undefined) return '-';
     return `${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
   };
+
+  // Filtragem por cultura
+  const umidadesFiltradas = umidades?.filter((item: any) => {
+    if (filtroCultura === 'all') return true;
+    return item.cultura_id === filtroCultura;
+  });
 
   if (isLoading) {
     return <div className="p-8">Carregando...</div>;
@@ -200,7 +207,31 @@ export default function TabelaUmidades() {
             </div>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Filtro por Cultura */}
+          <div className="flex items-center gap-3 pb-2">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Filter className="h-4 w-4" />
+              <span className="text-sm font-medium">Filtrar:</span>
+            </div>
+            <Select value={filtroCultura} onValueChange={setFiltroCultura}>
+              <SelectTrigger className="w-[250px]">
+                <SelectValue placeholder="Todas as culturas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as culturas</SelectItem>
+                {culturas?.filter(c => c.ativa).map((cultura) => (
+                  <SelectItem key={cultura.id} value={cultura.id}>{cultura.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {filtroCultura !== 'all' && (
+              <span className="text-sm text-muted-foreground">
+                Exibindo {umidadesFiltradas?.length || 0} de {umidades?.length || 0} registros
+              </span>
+            )}
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -215,7 +246,7 @@ export default function TabelaUmidades() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {umidades?.map((item: any) => (
+              {umidadesFiltradas?.map((item: any) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.cultura?.nome || 'Todas'}</TableCell>
                   <TableCell className="text-center">
@@ -260,7 +291,7 @@ export default function TabelaUmidades() {
                   )}
                 </TableRow>
               ))}
-              {(!umidades || umidades.length === 0) && (
+              {(!umidadesFiltradas || umidadesFiltradas.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground py-8">
                     Nenhuma faixa de umidade cadastrada
