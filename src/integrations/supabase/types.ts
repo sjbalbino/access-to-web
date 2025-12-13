@@ -1059,6 +1059,7 @@ export type Database = {
           numero: string | null
           telefone: string | null
           tipo_pessoa: string | null
+          tipo_produtor: string | null
           uf: string | null
           updated_at: string
         }
@@ -1081,6 +1082,7 @@ export type Database = {
           numero?: string | null
           telefone?: string | null
           tipo_pessoa?: string | null
+          tipo_produtor?: string | null
           uf?: string | null
           updated_at?: string
         }
@@ -1103,6 +1105,7 @@ export type Database = {
           numero?: string | null
           telefone?: string | null
           tipo_pessoa?: string | null
+          tipo_produtor?: string | null
           uf?: string | null
           updated_at?: string
         }

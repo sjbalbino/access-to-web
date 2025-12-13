@@ -7,6 +7,7 @@ export interface Produtor {
   codigo: string | null;
   nome: string;
   tipo_pessoa: string | null;
+  tipo_produtor: string | null;
   cpf_cnpj: string | null;
   identidade: string | null;
   empresa_id: string | null;

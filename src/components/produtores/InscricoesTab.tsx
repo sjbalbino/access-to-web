@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -121,110 +120,107 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Inscrições Estaduais
-          </CardTitle>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium flex items-center gap-2">
+          <FileText className="h-4 w-4" />
+          Inscrições Estaduais
+        </h4>
+        {canEdit && (
+          <Button onClick={handleNew} size="sm" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nova Inscrição
+          </Button>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      ) : inscricoes && inscricoes.length > 0 ? (
+        <div className="overflow-x-auto border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Inscrição Estadual</TableHead>
+                <TableHead>CPF/CNPJ</TableHead>
+                <TableHead>Cidade/UF</TableHead>
+                <TableHead>Granja</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {inscricoes.map((inscricao) => (
+                <TableRow key={inscricao.id}>
+                  <TableCell>
+                    {TIPOS_INSCRICAO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
+                  </TableCell>
+                  <TableCell className="font-medium">{inscricao.inscricao_estadual || "-"}</TableCell>
+                  <TableCell>{inscricao.cpf_cnpj || "-"}</TableCell>
+                  <TableCell>
+                    {inscricao.cidade && inscricao.uf
+                      ? `${inscricao.cidade}/${inscricao.uf}`
+                      : inscricao.cidade || inscricao.uf || "-"}
+                  </TableCell>
+                  <TableCell>{inscricao.granja || "-"}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        inscricao.ativa
+                          ? "bg-success/10 text-success"
+                          : "bg-destructive/10 text-destructive"
+                      }`}
+                    >
+                      {inscricao.ativa ? "Ativa" : "Inativa"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {canEdit && (
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(inscricao)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedInscricao(inscricao);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="text-center py-6 border rounded-md">
+          <FileText className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground mb-3">
+            Nenhuma inscrição estadual cadastrada
+          </p>
           {canEdit && (
-            <Button onClick={handleNew} size="sm" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nova Inscrição
+            <Button onClick={handleNew} variant="outline" size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Inscrição
             </Button>
           )}
         </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : inscricoes && inscricoes.length > 0 ? (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Inscrição Estadual</TableHead>
-                  <TableHead>CPF/CNPJ</TableHead>
-                  <TableHead>Cidade/UF</TableHead>
-                  <TableHead>Granja</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {inscricoes.map((inscricao) => (
-                  <TableRow key={inscricao.id}>
-                    <TableCell>
-                      {TIPOS_INSCRICAO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
-                    </TableCell>
-                    <TableCell className="font-medium">{inscricao.inscricao_estadual || "-"}</TableCell>
-                    <TableCell>{inscricao.cpf_cnpj || "-"}</TableCell>
-                    <TableCell>
-                      {inscricao.cidade && inscricao.uf
-                        ? `${inscricao.cidade}/${inscricao.uf}`
-                        : inscricao.cidade || inscricao.uf || "-"}
-                    </TableCell>
-                    <TableCell>{inscricao.granja || "-"}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          inscricao.ativa
-                            ? "bg-success/10 text-success"
-                            : "bg-destructive/10 text-destructive"
-                        }`}
-                      >
-                        {inscricao.ativa ? "Ativa" : "Inativa"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {canEdit && (
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(inscricao)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedInscricao(inscricao);
-                              setDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <FileText className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-            <p className="text-muted-foreground mb-4">
-              Nenhuma inscrição estadual cadastrada
-            </p>
-            {canEdit && (
-              <Button onClick={handleNew} variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Inscrição
-              </Button>
-            )}
-          </div>
-        )}
-      </CardContent>
+      )}
 
       {/* Form Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -347,6 +343,6 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </div>
   );
 }
