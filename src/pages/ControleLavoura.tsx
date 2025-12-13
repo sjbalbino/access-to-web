@@ -1,33 +1,91 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CabecalhoControle } from '@/components/controle-lavoura/CabecalhoControle';
-import { PlantiosTab } from '@/components/controle-lavoura/PlantiosTab';
-import { AplicacoesTab } from '@/components/controle-lavoura/AplicacoesTab';
-import { ColheitasTab } from '@/components/controle-lavoura/ColheitasTab';
-import { InsetosTab } from '@/components/controle-lavoura/InsetosTab';
-import { ChuvasTab } from '@/components/controle-lavoura/ChuvasTab';
-import { PlantasInvasorasTab } from '@/components/controle-lavoura/PlantasInvasorasTab';
-import { FloracaoTab } from '@/components/controle-lavoura/FloracaoTab';
-import { AnaliseTab } from '@/components/controle-lavoura/AnaliseTab';
-import { PivosTab } from '@/components/controle-lavoura/PivosTab';
-import { ControleLavoura as ControleLavouraType } from '@/hooks/useControleLavouras';
+import { ControleLavouraList } from '@/components/controle-lavoura/ControleLavouraList';
+import { ControleLavouraForm } from '@/components/controle-lavoura/ControleLavouraForm';
+import { ControleLavouraDetalhe } from '@/components/controle-lavoura/ControleLavouraDetalhe';
+import { useControleLavoura } from '@/hooks/useControleLavouras';
 import { useAuth } from '@/contexts/AuthContext';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { 
-  Wheat, Sprout, Droplets, Leaf, Bug, Skull, SprayCan, 
-  Beaker, Pill, FlaskConical, Mountain, BugOff, CloudRain, 
-  TreeDeciduous, Flower2, TestTube, CircleDot 
-} from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+
+type ViewMode = 'list' | 'create' | 'edit';
 
 export default function ControleLavoura() {
   const { canEdit } = useAuth();
-  const [safraId, setSafraId] = useState<string | null>(null);
-  const [lavouraId, setLavouraId] = useState<string | null>(null);
-  const [controleLavoura, setControleLavoura] = useState<ControleLavouraType | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const controleLavouraId = controleLavoura?.id || null;
+  const { data: selectedControle, isLoading: loadingControle } = useControleLavoura(selectedId);
+
+  const handleNew = () => {
+    setSelectedId(null);
+    setViewMode('create');
+  };
+
+  const handleEdit = (id: string) => {
+    setSelectedId(id);
+    setViewMode('edit');
+  };
+
+  const handleBack = () => {
+    setSelectedId(null);
+    setViewMode('list');
+  };
+
+  const handleSaved = (id: string) => {
+    setSelectedId(id);
+    setViewMode('edit');
+  };
+
+  const renderContent = () => {
+    if (viewMode === 'list') {
+      return (
+        <ControleLavouraList
+          onNew={handleNew}
+          onEdit={handleEdit}
+          canEdit={canEdit}
+        />
+      );
+    }
+
+    if (viewMode === 'create') {
+      return (
+        <ControleLavouraForm
+          mode="create"
+          onBack={handleBack}
+          onSaved={handleSaved}
+        />
+      );
+    }
+
+    if (viewMode === 'edit') {
+      if (loadingControle) {
+        return (
+          <div className="flex items-center justify-center h-64">
+            <Spinner className="h-8 w-8" />
+          </div>
+        );
+      }
+
+      if (!selectedControle) {
+        return (
+          <div className="text-center text-muted-foreground py-8">
+            Registro não encontrado.
+          </div>
+        );
+      }
+
+      return (
+        <ControleLavouraDetalhe
+          controleLavoura={selectedControle}
+          onBack={handleBack}
+          canEdit={canEdit}
+        />
+      );
+    }
+
+    return null;
+  };
 
   return (
     <AppLayout>
@@ -36,141 +94,7 @@ export default function ControleLavoura() {
           title="Controle de Lavoura"
           description="Gerencie plantios, aplicações e colheitas por safra e lavoura"
         />
-
-        {/* Cabeçalho Mestre */}
-        <CabecalhoControle
-          safraId={safraId}
-          lavouraId={lavouraId}
-          onSafraChange={setSafraId}
-          onLavouraChange={setLavouraId}
-          controleLavoura={controleLavoura}
-          onControleLavouraChange={setControleLavoura}
-          canEdit={canEdit}
-        />
-
-        {/* Abas de Detalhes */}
-        <Tabs defaultValue="colheita" className="w-full">
-          <ScrollArea className="w-full whitespace-nowrap">
-            <TabsList className="inline-flex h-10 w-max">
-              <TabsTrigger value="colheita" className="gap-1.5 text-xs">
-                <Wheat className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Colheita</span>
-              </TabsTrigger>
-              <TabsTrigger value="plantios" className="gap-1.5 text-xs">
-                <Sprout className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Plantios</span>
-              </TabsTrigger>
-              <TabsTrigger value="adubacao" className="gap-1.5 text-xs">
-                <Droplets className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Adubos</span>
-              </TabsTrigger>
-              <TabsTrigger value="herbicidas" className="gap-1.5 text-xs">
-                <Leaf className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Herbicidas</span>
-              </TabsTrigger>
-              <TabsTrigger value="fungicidas" className="gap-1.5 text-xs">
-                <Bug className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Fungicidas</span>
-              </TabsTrigger>
-              <TabsTrigger value="inseticidas" className="gap-1.5 text-xs">
-                <Skull className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Inseticidas</span>
-              </TabsTrigger>
-              <TabsTrigger value="adjuvantes" className="gap-1.5 text-xs">
-                <Beaker className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Adjuvantes</span>
-              </TabsTrigger>
-              <TabsTrigger value="micronutrientes" className="gap-1.5 text-xs">
-                <Pill className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Micronut.</span>
-              </TabsTrigger>
-              <TabsTrigger value="inoculantes" className="gap-1.5 text-xs">
-                <FlaskConical className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Inoculantes</span>
-              </TabsTrigger>
-              <TabsTrigger value="calcarios" className="gap-1.5 text-xs">
-                <Mountain className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Calcários</span>
-              </TabsTrigger>
-              <TabsTrigger value="insetos" className="gap-1.5 text-xs">
-                <BugOff className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Insetos</span>
-              </TabsTrigger>
-              <TabsTrigger value="chuvas" className="gap-1.5 text-xs">
-                <CloudRain className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Chuvas</span>
-              </TabsTrigger>
-              <TabsTrigger value="invasoras" className="gap-1.5 text-xs">
-                <TreeDeciduous className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Pl.Invasoras</span>
-              </TabsTrigger>
-              <TabsTrigger value="floracao" className="gap-1.5 text-xs">
-                <Flower2 className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Floração</span>
-              </TabsTrigger>
-              <TabsTrigger value="analise" className="gap-1.5 text-xs">
-                <TestTube className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Análise</span>
-              </TabsTrigger>
-              <TabsTrigger value="pivos" className="gap-1.5 text-xs">
-                <CircleDot className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Pivôs</span>
-              </TabsTrigger>
-            </TabsList>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-
-          <div className="mt-4">
-            <TabsContent value="colheita">
-              <ColheitasTab controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="plantios">
-              <PlantiosTab controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="adubacao">
-              <AplicacoesTab tipo="adubacao" controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="herbicidas">
-              <AplicacoesTab tipo="herbicida" controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="fungicidas">
-              <AplicacoesTab tipo="fungicida" controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="inseticidas">
-              <AplicacoesTab tipo="inseticida" controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="adjuvantes">
-              <AplicacoesTab tipo="adjuvante" controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="micronutrientes">
-              <AplicacoesTab tipo="micronutriente" controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="inoculantes">
-              <AplicacoesTab tipo="inoculante" controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="calcarios">
-              <AplicacoesTab tipo="calcario" controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="insetos">
-              <InsetosTab controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="chuvas">
-              <ChuvasTab controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="invasoras">
-              <PlantasInvasorasTab controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="floracao">
-              <FloracaoTab controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="analise">
-              <AnaliseTab controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-            <TabsContent value="pivos">
-              <PivosTab controleLavouraId={controleLavouraId} canEdit={canEdit} />
-            </TabsContent>
-          </div>
-        </Tabs>
+        {renderContent()}
       </div>
     </AppLayout>
   );
