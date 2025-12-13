@@ -235,21 +235,6 @@ export default function ClientesFornecedores() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>Logradouro</Label>
-                      <Input value={formData.logradouro || ''} onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Número</Label>
-                      <Input value={formData.numero || ''} onChange={(e) => setFormData({ ...formData, numero: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Complemento</Label>
-                      <Input value={formData.complemento || ''} onChange={(e) => setFormData({ ...formData, complemento: e.target.value })} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <Label>CEP</Label>
                       <div className="relative">
@@ -264,6 +249,21 @@ export default function ClientesFornecedores() {
                           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
                         )}
                       </div>
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Logradouro</Label>
+                      <Input value={formData.logradouro || ''} onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Número</Label>
+                      <Input value={formData.numero || ''} onChange={(e) => setFormData({ ...formData, numero: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Complemento</Label>
+                      <Input value={formData.complemento || ''} onChange={(e) => setFormData({ ...formData, complemento: e.target.value })} />
                     </div>
                     <div className="space-y-2">
                       <Label>Bairro</Label>

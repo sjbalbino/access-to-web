@@ -311,15 +311,6 @@ export default function Empresas() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="total_hectares">Total de Hectares</Label>
-              <Input
-                id="total_hectares"
-                type="number"
-                value={formData.total_hectares || 0}
-                onChange={(e) => setFormData({ ...formData, total_hectares: parseFloat(e.target.value) || 0 })}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="cep">CEP</Label>
               <div className="relative">
                 <Input
@@ -382,6 +373,15 @@ export default function Empresas() {
                 value={formData.uf || ""}
                 onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
                 maxLength={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="total_hectares">Total de Hectares</Label>
+              <Input
+                id="total_hectares"
+                type="number"
+                value={formData.total_hectares || 0}
+                onChange={(e) => setFormData({ ...formData, total_hectares: parseFloat(e.target.value) || 0 })}
               />
             </div>
             <div className="space-y-2">
