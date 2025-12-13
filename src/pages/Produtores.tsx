@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -26,21 +26,40 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Users, Plus, Pencil, Search, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Users, Plus, Search, Loader2, Trash2, Save } from "lucide-react";
 import {
   useProdutores,
   useCreateProdutor,
+  useUpdateProdutor,
+  useDeleteProdutor,
   ProdutorInput,
 } from "@/hooks/useProdutores";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
-import { ProdutorDetalhe } from "@/components/produtores/ProdutorDetalhe";
+import { InscricoesTab } from "@/components/produtores/InscricoesTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const TIPOS_PRODUTOR = [
+  { value: "produtor", label: "Produtor" },
+  { value: "socio", label: "Sócio" },
+];
 
 const emptyProdutor: ProdutorInput = {
   nome: "",
   tipo_pessoa: "fisica",
+  tipo_produtor: "produtor",
   cpf_cnpj: "",
   identidade: "",
   empresa_id: null,
@@ -61,19 +80,70 @@ export default function Produtores() {
   const { data: produtores, isLoading } = useProdutores();
   const { data: empresas } = useEmpresas();
   const createProdutor = useCreateProdutor();
+  const updateProdutor = useUpdateProdutor();
+  const deleteProdutor = useDeleteProdutor();
   const { canEdit } = useAuth();
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
 
-  const [view, setView] = useState<'list' | 'detail'>('list');
-  const [selectedProdutor, setSelectedProdutor] = useState<any>(null);
+  const [selectedProdutorId, setSelectedProdutorId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [filterTipo, setFilterTipo] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<ProdutorInput>(emptyProdutor);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [newFormData, setNewFormData] = useState<ProdutorInput>(emptyProdutor);
+  const [editFormData, setEditFormData] = useState<ProdutorInput>(emptyProdutor);
 
-  const handleCepBlur = async (cep: string) => {
+  // Filtra produtores pela busca e tipo
+  const filteredProdutores = useMemo(() => {
+    return produtores?.filter((p: any) => {
+      const matchesSearch =
+        p.nome.toLowerCase().includes(search.toLowerCase()) ||
+        p.cpf_cnpj?.includes(search);
+      const matchesTipo =
+        filterTipo === "todos" || p.tipo_produtor === filterTipo;
+      return matchesSearch && matchesTipo;
+    });
+  }, [produtores, search, filterTipo]);
+
+  // Produtor selecionado
+  const selectedProdutor = useMemo(() => {
+    return produtores?.find((p: any) => p.id === selectedProdutorId);
+  }, [produtores, selectedProdutorId]);
+
+  // Índice do produtor selecionado na lista filtrada
+  const selectedIndex = useMemo(() => {
+    if (!selectedProdutorId || !filteredProdutores) return -1;
+    return filteredProdutores.findIndex((p: any) => p.id === selectedProdutorId);
+  }, [filteredProdutores, selectedProdutorId]);
+
+  // Atualiza o formulário de edição quando muda a seleção
+  const handleSelect = (produtor: any) => {
+    setSelectedProdutorId(produtor.id);
+    setEditFormData({
+      nome: produtor.nome,
+      tipo_pessoa: produtor.tipo_pessoa || "fisica",
+      tipo_produtor: produtor.tipo_produtor || "produtor",
+      cpf_cnpj: produtor.cpf_cnpj || "",
+      identidade: produtor.identidade || "",
+      empresa_id: produtor.empresa_id,
+      logradouro: produtor.logradouro || "",
+      numero: produtor.numero || "",
+      complemento: produtor.complemento || "",
+      bairro: produtor.bairro || "",
+      cidade: produtor.cidade || "",
+      uf: produtor.uf || "",
+      cep: produtor.cep || "",
+      telefone: produtor.telefone || "",
+      celular: produtor.celular || "",
+      email: produtor.email || "",
+      ativo: produtor.ativo ?? true,
+    });
+  };
+
+  const handleCepBlurNew = async (cep: string) => {
     const data = await fetchCep(cep);
     if (data) {
-      setFormData((prev) => ({
+      setNewFormData((prev) => ({
         ...prev,
         logradouro: data.logradouro || prev.logradouro,
         bairro: data.bairro || prev.bairro,
@@ -83,106 +153,144 @@ export default function Produtores() {
     }
   };
 
-  const filteredProdutores = produtores?.filter(
-    (p: any) =>
-      p.nome.toLowerCase().includes(search.toLowerCase()) ||
-      p.cpf_cnpj?.includes(search)
-  );
-
-  const handleEdit = (produtor: any) => {
-    setSelectedProdutor(produtor);
-    setView('detail');
-  };
-
-  const handleNew = () => {
-    setFormData(emptyProdutor);
-    setDialogOpen(true);
-  };
-
-  const handleSave = async () => {
-    const newProdutor = await createProdutor.mutateAsync(formData);
-    setDialogOpen(false);
-    // Após criar, abre o detalhe do novo produtor
-    if (newProdutor) {
-      setSelectedProdutor(newProdutor);
-      setView('detail');
+  const handleCepBlurEdit = async (cep: string) => {
+    const data = await fetchCep(cep);
+    if (data) {
+      setEditFormData((prev) => ({
+        ...prev,
+        logradouro: data.logradouro || prev.logradouro,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.localidade || prev.cidade,
+        uf: data.uf || prev.uf,
+      }));
     }
   };
 
-  const handleBack = () => {
-    setSelectedProdutor(null);
-    setView('list');
+  const handleNew = () => {
+    setNewFormData(emptyProdutor);
+    setDialogOpen(true);
   };
 
-  // Renderiza detalhe do produtor
-  if (view === 'detail' && selectedProdutor) {
-    return (
-      <AppLayout>
-        <ProdutorDetalhe produtor={selectedProdutor} onBack={handleBack} />
-      </AppLayout>
-    );
-  }
+  const handleSaveNew = async () => {
+    const newProdutor = await createProdutor.mutateAsync(newFormData);
+    setDialogOpen(false);
+    if (newProdutor) {
+      setSelectedProdutorId(newProdutor.id);
+      handleSelect(newProdutor);
+    }
+  };
 
-  // Renderiza lista de produtores
+  const handleSaveEdit = async () => {
+    if (!selectedProdutorId) return;
+    await updateProdutor.mutateAsync({ id: selectedProdutorId, ...editFormData });
+  };
+
+  const handleDelete = async () => {
+    if (!selectedProdutorId) return;
+    await deleteProdutor.mutateAsync(selectedProdutorId);
+    setDeleteDialogOpen(false);
+    setSelectedProdutorId(null);
+  };
+
   return (
     <AppLayout>
       <PageHeader
-        title="Produtores"
-        description="Gerencie os produtores, sócios e proprietários"
+        title="Cadastro de Sócios/Proprietários/Produtores"
+        description="Produtores depositam produção para devolução/compra. Sócios são parceiros na Granja."
         icon={<Users className="h-6 w-6" />}
         iconColor="bg-accent/10 text-accent"
         actions={
           canEdit && (
             <Button onClick={handleNew} className="gap-2">
               <Plus className="h-4 w-4" />
-              Novo Produtor
+              Novo
             </Button>
           )
         }
       />
 
-      <Card>
-        <CardHeader>
+      {/* Lista de Produtores/Sócios */}
+      <Card className="mb-4">
+        <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle>Lista de Produtores</CardTitle>
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar produtor..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex items-center gap-4">
+              <CardTitle className="text-lg">Lista de Produtores/Sócios</CardTitle>
+              {filteredProdutores && (
+                <span className="text-sm text-muted-foreground">
+                  {selectedIndex >= 0
+                    ? `Reg: ${selectedIndex + 1} de ${filteredProdutores.length}`
+                    : `${filteredProdutores.length} registros`}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Select value={filterTipo} onValueChange={setFilterTipo}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="produtor">Produtores</SelectItem>
+                  <SelectItem value="socio">Sócios</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome/CPF..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
           ) : filteredProdutores && filteredProdutores.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-[280px] overflow-y-auto border rounded-md">
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 bg-background z-10">
                   <TableRow>
+                    <TableHead className="w-24">Tipo</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>CPF/CNPJ</TableHead>
                     <TableHead>Empresa</TableHead>
-                    <TableHead>Telefone</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProdutores.map((produtor: any) => (
-                    <TableRow key={produtor.id}>
+                    <TableRow
+                      key={produtor.id}
+                      onClick={() => handleSelect(produtor)}
+                      className={`cursor-pointer transition-colors ${
+                        selectedProdutorId === produtor.id
+                          ? "bg-primary/10 hover:bg-primary/15"
+                          : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <TableCell>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            produtor.tipo_produtor === "socio"
+                              ? "bg-secondary text-secondary-foreground"
+                              : "bg-accent/10 text-accent"
+                          }`}
+                        >
+                          {TIPOS_PRODUTOR.find((t) => t.value === produtor.tipo_produtor)?.label ||
+                            "Produtor"}
+                        </span>
+                      </TableCell>
                       <TableCell className="font-medium">{produtor.nome}</TableCell>
                       <TableCell>{produtor.cpf_cnpj || "-"}</TableCell>
                       <TableCell>{produtor.empresas?.razao_social || "-"}</TableCell>
-                      <TableCell>{produtor.telefone || produtor.celular || "-"}</TableCell>
                       <TableCell>
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -194,50 +302,329 @@ export default function Produtores() {
                           {produtor.ativo ? "Ativo" : "Inativo"}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(produtor)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
           ) : (
-            <div className="text-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Nenhum produtor encontrado</h3>
-              <p className="text-muted-foreground mb-4">
-                {search ? "Tente ajustar sua busca" : "Comece cadastrando um produtor"}
+            <div className="text-center py-8">
+              <Users className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
+              <p className="text-muted-foreground">
+                {search || filterTipo !== "todos"
+                  ? "Nenhum registro encontrado com os filtros aplicados"
+                  : "Nenhum produtor/sócio cadastrado"}
               </p>
-              {!search && canEdit && (
-                <Button onClick={handleNew}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Cadastrar Produtor
-                </Button>
-              )}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Create Dialog - Apenas para criação, edição vai para o detalhe */}
+      {/* Dados do Selecionado */}
+      {selectedProdutor && (
+        <>
+          <Card className="mb-4">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">
+                  Dados: {selectedProdutor.nome}
+                </CardTitle>
+                {canEdit && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setDeleteDialogOpen(true)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Excluir
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveEdit}
+                      disabled={!editFormData.nome || updateProdutor.isPending}
+                    >
+                      <Save className="h-4 w-4 mr-1" />
+                      {updateProdutor.isPending ? "Salvando..." : "Salvar"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Select
+                    value={editFormData.tipo_produtor || "produtor"}
+                    onValueChange={(value) =>
+                      setEditFormData({ ...editFormData, tipo_produtor: value })
+                    }
+                    disabled={!canEdit}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIPOS_PRODUTOR.map((tipo) => (
+                        <SelectItem key={tipo.value} value={tipo.value}>
+                          {tipo.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo Pessoa</Label>
+                  <Select
+                    value={editFormData.tipo_pessoa || "fisica"}
+                    onValueChange={(value) =>
+                      setEditFormData({ ...editFormData, tipo_pessoa: value })
+                    }
+                    disabled={!canEdit}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fisica">Pessoa Física</SelectItem>
+                      <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 lg:col-span-2">
+                  <Label>Nome *</Label>
+                  <Input
+                    value={editFormData.nome}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, nome: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{editFormData.tipo_pessoa === "fisica" ? "CPF" : "CNPJ"}</Label>
+                  <Input
+                    value={editFormData.cpf_cnpj || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, cpf_cnpj: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Identidade</Label>
+                  <Input
+                    value={editFormData.identidade || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, identidade: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2 lg:col-span-2">
+                  <Label>Empresa Consolidada</Label>
+                  <Select
+                    value={editFormData.empresa_id || ""}
+                    onValueChange={(value) =>
+                      setEditFormData({ ...editFormData, empresa_id: value || null })
+                    }
+                    disabled={!canEdit}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {empresas?.map((empresa) => (
+                        <SelectItem key={empresa.id} value={empresa.id}>
+                          {empresa.razao_social}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>CEP</Label>
+                  <div className="relative">
+                    <Input
+                      value={editFormData.cep || ""}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, cep: formatCep(e.target.value) })
+                      }
+                      onBlur={(e) => handleCepBlurEdit(e.target.value)}
+                      placeholder="00000-000"
+                      maxLength={9}
+                      disabled={!canEdit}
+                    />
+                    {cepLoading && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2 lg:col-span-2">
+                  <Label>Logradouro</Label>
+                  <Input
+                    value={editFormData.logradouro || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, logradouro: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Número</Label>
+                  <Input
+                    value={editFormData.numero || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, numero: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Complemento</Label>
+                  <Input
+                    value={editFormData.complemento || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, complemento: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Bairro</Label>
+                  <Input
+                    value={editFormData.bairro || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, bairro: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cidade</Label>
+                  <Input
+                    value={editFormData.cidade || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, cidade: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>UF</Label>
+                  <Input
+                    value={editFormData.uf || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, uf: e.target.value.toUpperCase() })
+                    }
+                    maxLength={2}
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Telefone</Label>
+                  <Input
+                    value={editFormData.telefone || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, telefone: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Celular</Label>
+                  <Input
+                    value={editFormData.celular || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, celular: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2 lg:col-span-2">
+                  <Label>E-mail</Label>
+                  <Input
+                    type="email"
+                    value={editFormData.email || ""}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, email: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tabs de Detalhe */}
+          <Card>
+            <Tabs defaultValue="inscricoes">
+              <CardHeader className="pb-0">
+                <TabsList>
+                  <TabsTrigger value="inscricoes">Inscrições Estaduais</TabsTrigger>
+                  <TabsTrigger value="nfe" disabled>
+                    Emitente NFe
+                  </TabsTrigger>
+                  <TabsTrigger value="conta" disabled>
+                    Conta Bancária
+                  </TabsTrigger>
+                </TabsList>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <TabsContent value="inscricoes" className="mt-0">
+                  <InscricoesTab produtorId={selectedProdutor.id} />
+                </TabsContent>
+                <TabsContent value="nfe" className="mt-0">
+                  <p className="text-muted-foreground text-center py-8">
+                    Funcionalidade em desenvolvimento
+                  </p>
+                </TabsContent>
+                <TabsContent value="conta" className="mt-0">
+                  <p className="text-muted-foreground text-center py-8">
+                    Funcionalidade em desenvolvimento
+                  </p>
+                </TabsContent>
+              </CardContent>
+            </Tabs>
+          </Card>
+        </>
+      )}
+
+      {/* Create Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Novo Produtor</DialogTitle>
+            <DialogTitle>Novo Produtor/Sócio</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="tipo_pessoa">Tipo de Pessoa</Label>
+              <Label>Tipo</Label>
               <Select
-                value={formData.tipo_pessoa || "fisica"}
-                onValueChange={(value) => setFormData({ ...formData, tipo_pessoa: value })}
+                value={newFormData.tipo_produtor || "produtor"}
+                onValueChange={(value) =>
+                  setNewFormData({ ...newFormData, tipo_produtor: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_PRODUTOR.map((tipo) => (
+                    <SelectItem key={tipo.value} value={tipo.value}>
+                      {tipo.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Tipo de Pessoa</Label>
+              <Select
+                value={newFormData.tipo_pessoa || "fisica"}
+                onValueChange={(value) =>
+                  setNewFormData({ ...newFormData, tipo_pessoa: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -249,37 +636,34 @@ export default function Produtores() {
               </Select>
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="nome">Nome Completo *</Label>
+              <Label>Nome Completo *</Label>
               <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                value={newFormData.nome}
+                onChange={(e) => setNewFormData({ ...newFormData, nome: e.target.value })}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cpf_cnpj">
-                {formData.tipo_pessoa === "fisica" ? "CPF" : "CNPJ"}
-              </Label>
+              <Label>{newFormData.tipo_pessoa === "fisica" ? "CPF" : "CNPJ"}</Label>
               <Input
-                id="cpf_cnpj"
-                value={formData.cpf_cnpj || ""}
-                onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value })}
+                value={newFormData.cpf_cnpj || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, cpf_cnpj: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="identidade">Identidade</Label>
+              <Label>Identidade</Label>
               <Input
-                id="identidade"
-                value={formData.identidade || ""}
-                onChange={(e) => setFormData({ ...formData, identidade: e.target.value })}
+                value={newFormData.identidade || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, identidade: e.target.value })}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="empresa_id">Empresa Consolidada</Label>
+              <Label>Empresa Consolidada</Label>
               <Select
-                value={formData.empresa_id || ""}
-                onValueChange={(value) => setFormData({ ...formData, empresa_id: value || null })}
+                value={newFormData.empresa_id || ""}
+                onValueChange={(value) =>
+                  setNewFormData({ ...newFormData, empresa_id: value || null })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma empresa" />
@@ -294,13 +678,12 @@ export default function Produtores() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cep">CEP</Label>
+              <Label>CEP</Label>
               <div className="relative">
                 <Input
-                  id="cep"
-                  value={formData.cep || ""}
-                  onChange={(e) => setFormData({ ...formData, cep: formatCep(e.target.value) })}
-                  onBlur={(e) => handleCepBlur(e.target.value)}
+                  value={newFormData.cep || ""}
+                  onChange={(e) => setNewFormData({ ...newFormData, cep: formatCep(e.target.value) })}
+                  onBlur={(e) => handleCepBlurNew(e.target.value)}
                   placeholder="00000-000"
                   maxLength={9}
                 />
@@ -309,78 +692,69 @@ export default function Produtores() {
                 )}
               </div>
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="logradouro">Logradouro</Label>
+            <div className="space-y-2">
+              <Label>Logradouro</Label>
               <Input
-                id="logradouro"
-                value={formData.logradouro || ""}
-                onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })}
+                value={newFormData.logradouro || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, logradouro: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="numero">Número</Label>
+              <Label>Número</Label>
               <Input
-                id="numero"
-                value={formData.numero || ""}
-                onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+                value={newFormData.numero || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, numero: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="complemento">Complemento</Label>
+              <Label>Complemento</Label>
               <Input
-                id="complemento"
-                value={formData.complemento || ""}
-                onChange={(e) => setFormData({ ...formData, complemento: e.target.value })}
+                value={newFormData.complemento || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, complemento: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="bairro">Bairro</Label>
+              <Label>Bairro</Label>
               <Input
-                id="bairro"
-                value={formData.bairro || ""}
-                onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
+                value={newFormData.bairro || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, bairro: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cidade">Cidade</Label>
+              <Label>Cidade</Label>
               <Input
-                id="cidade"
-                value={formData.cidade || ""}
-                onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                value={newFormData.cidade || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, cidade: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="uf">UF</Label>
+              <Label>UF</Label>
               <Input
-                id="uf"
-                value={formData.uf || ""}
-                onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
+                value={newFormData.uf || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, uf: e.target.value.toUpperCase() })}
                 maxLength={2}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone</Label>
+              <Label>Telefone</Label>
               <Input
-                id="telefone"
-                value={formData.telefone || ""}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                value={newFormData.telefone || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, telefone: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="celular">Celular</Label>
+              <Label>Celular</Label>
               <Input
-                id="celular"
-                value={formData.celular || ""}
-                onChange={(e) => setFormData({ ...formData, celular: e.target.value })}
+                value={newFormData.celular || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, celular: e.target.value })}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label>E-mail</Label>
               <Input
-                id="email"
                 type="email"
-                value={formData.email || ""}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                value={newFormData.email || ""}
+                onChange={(e) => setNewFormData({ ...newFormData, email: e.target.value })}
               />
             </div>
           </div>
@@ -389,14 +763,37 @@ export default function Produtores() {
               Cancelar
             </Button>
             <Button
-              onClick={handleSave}
-              disabled={!formData.nome || createProdutor.isPending}
+              onClick={handleSaveNew}
+              disabled={!newFormData.nome || createProdutor.isPending}
             >
               {createProdutor.isPending ? "Salvando..." : "Salvar e Continuar"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir "{selectedProdutor?.nome}"? Todas as
+              inscrições estaduais vinculadas também serão excluídas. Esta ação não
+              pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
