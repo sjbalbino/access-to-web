@@ -21,6 +21,7 @@ export interface ControleLavoura {
     id: string;
     nome: string;
     codigo: string | null;
+    cultura_id: string | null;
   };
 }
 
@@ -41,7 +42,7 @@ export function useControleLavouras(safraId?: string | null, lavouraId?: string 
         .select(`
           *,
           lavouras:lavoura_id(id, nome, codigo, total_hectares),
-          safras:safra_id(id, nome, codigo)
+          safras:safra_id(id, nome, codigo, cultura_id)
         `)
         .order('created_at', { ascending: false });
 
@@ -69,7 +70,7 @@ export function useControleLavoura(id: string | null) {
         .select(`
           *,
           lavouras:lavoura_id(id, nome, codigo, total_hectares),
-          safras:safra_id(id, nome, codigo)
+          safras:safra_id(id, nome, codigo, cultura_id)
         `)
         .eq('id', id)
         .maybeSingle();
@@ -90,7 +91,7 @@ export function useControleLavouraBySafraLavoura(safraId: string | null, lavoura
         .select(`
           *,
           lavouras:lavoura_id(id, nome, codigo, total_hectares),
-          safras:safra_id(id, nome, codigo)
+          safras:safra_id(id, nome, codigo, cultura_id)
         `)
         .eq('safra_id', safraId)
         .eq('lavoura_id', lavouraId)

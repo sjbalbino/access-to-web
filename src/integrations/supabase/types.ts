@@ -314,9 +314,20 @@ export type Database = {
           data_colheita: string | null
           id: string
           impureza: number | null
+          kg_avariados: number | null
+          kg_desconto_total: number | null
+          kg_impureza: number | null
+          kg_outros: number | null
+          kg_umidade: number | null
           lavoura_id: string
           motorista: string | null
           observacoes: string | null
+          percentual_avariados: number | null
+          percentual_desconto: number | null
+          percentual_outros: number | null
+          peso_bruto: number | null
+          peso_tara: number | null
+          ph: number | null
           placa_id: string | null
           plantio_id: string | null
           producao_kg: number | null
@@ -324,8 +335,11 @@ export type Database = {
           produtividade_sacas_ha: number | null
           safra_id: string | null
           silo_id: string | null
+          tipo_colheita: string | null
+          total_sacos: number | null
           umidade: number | null
           updated_at: string
+          variedade_id: string | null
         }
         Insert: {
           area_colhida?: number | null
@@ -334,9 +348,20 @@ export type Database = {
           data_colheita?: string | null
           id?: string
           impureza?: number | null
+          kg_avariados?: number | null
+          kg_desconto_total?: number | null
+          kg_impureza?: number | null
+          kg_outros?: number | null
+          kg_umidade?: number | null
           lavoura_id: string
           motorista?: string | null
           observacoes?: string | null
+          percentual_avariados?: number | null
+          percentual_desconto?: number | null
+          percentual_outros?: number | null
+          peso_bruto?: number | null
+          peso_tara?: number | null
+          ph?: number | null
           placa_id?: string | null
           plantio_id?: string | null
           producao_kg?: number | null
@@ -344,8 +369,11 @@ export type Database = {
           produtividade_sacas_ha?: number | null
           safra_id?: string | null
           silo_id?: string | null
+          tipo_colheita?: string | null
+          total_sacos?: number | null
           umidade?: number | null
           updated_at?: string
+          variedade_id?: string | null
         }
         Update: {
           area_colhida?: number | null
@@ -354,9 +382,20 @@ export type Database = {
           data_colheita?: string | null
           id?: string
           impureza?: number | null
+          kg_avariados?: number | null
+          kg_desconto_total?: number | null
+          kg_impureza?: number | null
+          kg_outros?: number | null
+          kg_umidade?: number | null
           lavoura_id?: string
           motorista?: string | null
           observacoes?: string | null
+          percentual_avariados?: number | null
+          percentual_desconto?: number | null
+          percentual_outros?: number | null
+          peso_bruto?: number | null
+          peso_tara?: number | null
+          ph?: number | null
           placa_id?: string | null
           plantio_id?: string | null
           producao_kg?: number | null
@@ -364,8 +403,11 @@ export type Database = {
           produtividade_sacas_ha?: number | null
           safra_id?: string | null
           silo_id?: string | null
+          tipo_colheita?: string | null
+          total_sacos?: number | null
           umidade?: number | null
           updated_at?: string
+          variedade_id?: string | null
         }
         Relationships: [
           {
@@ -408,6 +450,13 @@ export type Database = {
             columns: ["silo_id"]
             isOneToOne: false
             referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colheitas_variedade_id_fkey"
+            columns: ["variedade_id"]
+            isOneToOne: false
+            referencedRelation: "variedades"
             referencedColumns: ["id"]
           },
         ]
