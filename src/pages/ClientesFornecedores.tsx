@@ -12,9 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Users, Building, Phone, Mail } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2 } from 'lucide-react';
 import { useClientesFornecedores, useCreateClienteFornecedor, useUpdateClienteFornecedor, useDeleteClienteFornecedor, ClienteFornecedorInsert } from '@/hooks/useClientesFornecedores';
 import { useEmpresas } from '@/hooks/useEmpresas';
+import { useCepLookup, formatCep } from '@/hooks/useCepLookup';
 
 export default function ClientesFornecedores() {
   const { canEdit } = useAuth();
@@ -23,6 +24,7 @@ export default function ClientesFornecedores() {
   const createMutation = useCreateClienteFornecedor();
   const updateMutation = useUpdateClienteFornecedor();
   const deleteMutation = useDeleteClienteFornecedor();
+  const { isLoading: cepLoading, fetchCep } = useCepLookup();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -30,7 +32,6 @@ export default function ClientesFornecedores() {
     empresa_id: null,
     tipo: 'ambos',
     tipo_pessoa: 'juridica',
-    codigo: '',
     nome: '',
     nome_fantasia: '',
     cpf_cnpj: '',
@@ -50,12 +51,24 @@ export default function ClientesFornecedores() {
     ativo: true,
   });
 
+  const handleCepBlur = async (cep: string) => {
+    const data = await fetchCep(cep);
+    if (data) {
+      setFormData((prev) => ({
+        ...prev,
+        logradouro: data.logradouro || prev.logradouro,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.localidade || prev.cidade,
+        uf: data.uf || prev.uf,
+      }));
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       empresa_id: null,
       tipo: 'ambos',
       tipo_pessoa: 'juridica',
-      codigo: '',
       nome: '',
       nome_fantasia: '',
       cpf_cnpj: '',
@@ -94,7 +107,6 @@ export default function ClientesFornecedores() {
       empresa_id: item.empresa_id,
       tipo: item.tipo,
       tipo_pessoa: item.tipo_pessoa,
-      codigo: item.codigo || '',
       nome: item.nome,
       nome_fantasia: item.nome_fantasia || '',
       cpf_cnpj: item.cpf_cnpj || '',
@@ -200,11 +212,7 @@ export default function ClientesFornecedores() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Código</Label>
-                      <Input value={formData.codigo || ''} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} />
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2 md:col-span-2">
                       <Label>Nome / Razão Social *</Label>
                       <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
@@ -243,6 +251,21 @@ export default function ClientesFornecedores() {
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
+                      <Label>CEP</Label>
+                      <div className="relative">
+                        <Input 
+                          value={formData.cep || ''} 
+                          onChange={(e) => setFormData({ ...formData, cep: formatCep(e.target.value) })} 
+                          onBlur={(e) => handleCepBlur(e.target.value)}
+                          placeholder="00000-000"
+                          maxLength={9}
+                        />
+                        {cepLoading && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
                       <Label>Bairro</Label>
                       <Input value={formData.bairro || ''} onChange={(e) => setFormData({ ...formData, bairro: e.target.value })} />
                     </div>
@@ -252,11 +275,7 @@ export default function ClientesFornecedores() {
                     </div>
                     <div className="space-y-2">
                       <Label>UF</Label>
-                      <Input value={formData.uf || ''} onChange={(e) => setFormData({ ...formData, uf: e.target.value })} maxLength={2} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>CEP</Label>
-                      <Input value={formData.cep || ''} onChange={(e) => setFormData({ ...formData, cep: e.target.value })} />
+                      <Input value={formData.uf || ''} onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })} maxLength={2} />
                     </div>
                   </div>
 
@@ -302,7 +321,6 @@ export default function ClientesFornecedores() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Código</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>CPF/CNPJ</TableHead>
@@ -315,7 +333,6 @@ export default function ClientesFornecedores() {
             <TableBody>
               {clientesFornecedores?.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-mono">{item.codigo || '-'}</TableCell>
                   <TableCell className="font-medium">{item.nome}</TableCell>
                   <TableCell>{getTipoBadge(item.tipo)}</TableCell>
                   <TableCell>{item.cpf_cnpj || '-'}</TableCell>
@@ -347,7 +364,7 @@ export default function ClientesFornecedores() {
               ))}
               {(!clientesFornecedores || clientesFornecedores.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={canEdit ? 7 : 6} className="text-center text-muted-foreground py-8">
                     Nenhum cliente/fornecedor cadastrado
                   </TableCell>
                 </TableRow>

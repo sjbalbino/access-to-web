@@ -36,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Users, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
 import {
   useProdutores,
   useCreateProdutor,
@@ -47,9 +47,9 @@ import {
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 
 const emptyProdutor: ProdutorInput = {
-  codigo: "",
   nome: "",
   tipo_pessoa: "fisica",
   cpf_cnpj: "",
@@ -75,6 +75,7 @@ export default function Produtores() {
   const updateProdutor = useUpdateProdutor();
   const deleteProdutor = useDeleteProdutor();
   const { canEdit } = useAuth();
+  const { isLoading: cepLoading, fetchCep } = useCepLookup();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -82,17 +83,28 @@ export default function Produtores() {
   const [selectedProdutor, setSelectedProdutor] = useState<any>(null);
   const [formData, setFormData] = useState<ProdutorInput>(emptyProdutor);
 
+  const handleCepBlur = async (cep: string) => {
+    const data = await fetchCep(cep);
+    if (data) {
+      setFormData((prev) => ({
+        ...prev,
+        logradouro: data.logradouro || prev.logradouro,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.localidade || prev.cidade,
+        uf: data.uf || prev.uf,
+      }));
+    }
+  };
+
   const filteredProdutores = produtores?.filter(
     (p: any) =>
       p.nome.toLowerCase().includes(search.toLowerCase()) ||
-      p.cpf_cnpj?.includes(search) ||
-      p.codigo?.toLowerCase().includes(search.toLowerCase())
+      p.cpf_cnpj?.includes(search)
   );
 
   const handleEdit = (produtor: any) => {
     setSelectedProdutor(produtor);
     setFormData({
-      codigo: produtor.codigo || "",
       nome: produtor.nome,
       tipo_pessoa: produtor.tipo_pessoa || "fisica",
       cpf_cnpj: produtor.cpf_cnpj || "",
@@ -180,7 +192,6 @@ export default function Produtores() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Código</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>CPF/CNPJ</TableHead>
                     <TableHead>Empresa</TableHead>
@@ -192,7 +203,6 @@ export default function Produtores() {
                 <TableBody>
                   {filteredProdutores.map((produtor: any) => (
                     <TableRow key={produtor.id}>
-                      <TableCell className="font-medium">{produtor.codigo || "-"}</TableCell>
                       <TableCell className="font-medium">{produtor.nome}</TableCell>
                       <TableCell>{produtor.cpf_cnpj || "-"}</TableCell>
                       <TableCell>{produtor.empresas?.razao_social || "-"}</TableCell>
@@ -263,14 +273,6 @@ export default function Produtores() {
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="codigo">Código</Label>
-              <Input
-                id="codigo"
-                value={formData.codigo || ""}
-                onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="tipo_pessoa">Tipo de Pessoa</Label>
               <Select
@@ -356,19 +358,27 @@ export default function Produtores() {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="cep">CEP</Label>
+              <div className="relative">
+                <Input
+                  id="cep"
+                  value={formData.cep || ""}
+                  onChange={(e) => setFormData({ ...formData, cep: formatCep(e.target.value) })}
+                  onBlur={(e) => handleCepBlur(e.target.value)}
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+                {cepLoading && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="bairro">Bairro</Label>
               <Input
                 id="bairro"
                 value={formData.bairro || ""}
                 onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cep">CEP</Label>
-              <Input
-                id="cep"
-                value={formData.cep || ""}
-                onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
               />
             </div>
             <div className="space-y-2">

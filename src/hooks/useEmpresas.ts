@@ -24,7 +24,7 @@ export interface Empresa {
   updated_at: string;
 }
 
-export type EmpresaInput = Omit<Empresa, "id" | "created_at" | "updated_at">;
+export type EmpresaInput = Partial<Omit<Empresa, "id" | "created_at" | "updated_at">> & { razao_social: string };
 
 export function useEmpresas() {
   return useQuery({

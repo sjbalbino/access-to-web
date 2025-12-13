@@ -29,7 +29,7 @@ export type ClienteFornecedor = {
   updated_at: string;
 };
 
-export type ClienteFornecedorInsert = Omit<ClienteFornecedor, 'id' | 'created_at' | 'updated_at'>;
+export type ClienteFornecedorInsert = Partial<Omit<ClienteFornecedor, 'id' | 'created_at' | 'updated_at'>> & { nome: string; tipo: string };
 
 export function useClientesFornecedores() {
   return useQuery({

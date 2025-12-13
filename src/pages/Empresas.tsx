@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Building2, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
 import {
   useEmpresas,
   useCreateEmpresa,
@@ -40,9 +40,9 @@ import {
 } from "@/hooks/useEmpresas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 
 const emptyEmpresa: EmpresaInput = {
-  codigo: "",
   razao_social: "",
   nome_fantasia: "",
   cnpj: "",
@@ -66,12 +66,26 @@ export default function Empresas() {
   const updateEmpresa = useUpdateEmpresa();
   const deleteEmpresa = useDeleteEmpresa();
   const { canEdit } = useAuth();
+  const { isLoading: cepLoading, fetchCep } = useCepLookup();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedEmpresa, setSelectedEmpresa] = useState<Empresa | null>(null);
   const [formData, setFormData] = useState<EmpresaInput>(emptyEmpresa);
+
+  const handleCepBlur = async (cep: string) => {
+    const data = await fetchCep(cep);
+    if (data) {
+      setFormData((prev) => ({
+        ...prev,
+        logradouro: data.logradouro || prev.logradouro,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.localidade || prev.cidade,
+        uf: data.uf || prev.uf,
+      }));
+    }
+  };
 
   const filteredEmpresas = empresas?.filter(
     (e) =>
@@ -83,7 +97,6 @@ export default function Empresas() {
   const handleEdit = (empresa: Empresa) => {
     setSelectedEmpresa(empresa);
     setFormData({
-      codigo: empresa.codigo || "",
       razao_social: empresa.razao_social,
       nome_fantasia: empresa.nome_fantasia || "",
       cnpj: empresa.cnpj || "",
@@ -170,7 +183,6 @@ export default function Empresas() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Código</TableHead>
                     <TableHead>Razão Social</TableHead>
                     <TableHead>CNPJ</TableHead>
                     <TableHead>Cidade/UF</TableHead>
@@ -182,7 +194,6 @@ export default function Empresas() {
                 <TableBody>
                   {filteredEmpresas.map((empresa) => (
                     <TableRow key={empresa.id}>
-                      <TableCell className="font-medium">{empresa.codigo || "-"}</TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{empresa.razao_social}</p>
@@ -267,19 +278,19 @@ export default function Empresas() {
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="codigo">Código</Label>
-              <Input
-                id="codigo"
-                value={formData.codigo || ""}
-                onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="cnpj">CNPJ</Label>
               <Input
                 id="cnpj"
                 value={formData.cnpj || ""}
                 onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+              <Input
+                id="inscricao_estadual"
+                value={formData.inscricao_estadual || ""}
+                onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -300,14 +311,6 @@ export default function Empresas() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-              <Input
-                id="inscricao_estadual"
-                value={formData.inscricao_estadual || ""}
-                onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="total_hectares">Total de Hectares</Label>
               <Input
                 id="total_hectares"
@@ -315,6 +318,22 @@ export default function Empresas() {
                 value={formData.total_hectares || 0}
                 onChange={(e) => setFormData({ ...formData, total_hectares: parseFloat(e.target.value) || 0 })}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cep">CEP</Label>
+              <div className="relative">
+                <Input
+                  id="cep"
+                  value={formData.cep || ""}
+                  onChange={(e) => setFormData({ ...formData, cep: formatCep(e.target.value) })}
+                  onBlur={(e) => handleCepBlur(e.target.value)}
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+                {cepLoading && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="logradouro">Logradouro</Label>
@@ -346,14 +365,6 @@ export default function Empresas() {
                 id="bairro"
                 value={formData.bairro || ""}
                 onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cep">CEP</Label>
-              <Input
-                id="cep"
-                value={formData.cep || ""}
-                onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
               />
             </div>
             <div className="space-y-2">
