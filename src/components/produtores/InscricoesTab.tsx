@@ -46,6 +46,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEmpresas } from "@/hooks/useEmpresas";
+import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 
 const TIPOS_INSCRICAO = [
   { value: "parceria", label: "Parceria" },
@@ -62,9 +63,15 @@ const emptyInscricao: InscricaoInput = {
   tipo: "",
   inscricao_estadual: "",
   cpf_cnpj: "",
+  cep: "",
   logradouro: "",
+  numero: "",
+  complemento: "",
+  bairro: "",
   cidade: "",
   uf: "",
+  telefone: "",
+  email: "",
   granja: "",
   empresa_id: null,
   ativa: true,
@@ -77,6 +84,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const updateInscricao = useUpdateInscricao();
   const deleteInscricao = useDeleteInscricao();
   const { canEdit } = useAuth();
+  const { isLoading: isLoadingCep, fetchCep } = useCepLookup();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -96,14 +104,36 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       tipo: inscricao.tipo || "",
       inscricao_estadual: inscricao.inscricao_estadual || "",
       cpf_cnpj: inscricao.cpf_cnpj || "",
+      cep: inscricao.cep || "",
       logradouro: inscricao.logradouro || "",
+      numero: inscricao.numero || "",
+      complemento: inscricao.complemento || "",
+      bairro: inscricao.bairro || "",
       cidade: inscricao.cidade || "",
       uf: inscricao.uf || "",
+      telefone: inscricao.telefone || "",
+      email: inscricao.email || "",
       granja: inscricao.granja || "",
       empresa_id: inscricao.empresa_id || null,
       ativa: inscricao.ativa ?? true,
     });
     setDialogOpen(true);
+  };
+
+  const handleCepBlur = async () => {
+    const cep = formData.cep?.replace(/\D/g, "") || "";
+    if (cep.length === 8) {
+      const data = await fetchCep(cep);
+      if (data) {
+        setFormData({
+          ...formData,
+          logradouro: data.logradouro || formData.logradouro,
+          bairro: data.bairro || formData.bairro,
+          cidade: data.localidade || formData.cidade,
+          uf: data.uf || formData.uf,
+        });
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -234,91 +264,169 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
       {/* Form Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedInscricao ? "Editar Inscrição" : "Nova Inscrição"}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="tipo">Tipo</Label>
-              <Select
-                value={formData.tipo || ""}
-                onValueChange={(value) => setFormData({ ...formData, tipo: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIPOS_INSCRICAO.map((tipo) => (
-                    <SelectItem key={tipo.value} value={tipo.value}>
-                      {tipo.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          
+          <div className="space-y-6 py-4">
+            {/* Dados da Inscrição */}
+            <div className="space-y-4">
+              <h5 className="text-sm font-medium text-muted-foreground border-b pb-2">Dados da Inscrição</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tipo">Tipo</Label>
+                  <Select
+                    value={formData.tipo || ""}
+                    onValueChange={(value) => setFormData({ ...formData, tipo: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIPOS_INSCRICAO.map((tipo) => (
+                        <SelectItem key={tipo.value} value={tipo.value}>
+                          {tipo.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="empresa_id">Granja (Empresa)</Label>
+                  <Select
+                    value={formData.empresa_id || ""}
+                    onValueChange={(value) => setFormData({ ...formData, empresa_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a empresa/granja" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {empresas?.filter(e => e.ativa).map((empresa) => (
+                        <SelectItem key={empresa.id} value={empresa.id}>
+                          {empresa.nome_fantasia || empresa.razao_social}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                  <Input
+                    id="inscricao_estadual"
+                    value={formData.inscricao_estadual || ""}
+                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cpf_cnpj">CPF/CNPJ</Label>
+                  <Input
+                    id="cpf_cnpj"
+                    value={formData.cpf_cnpj || ""}
+                    onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value })}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-              <Input
-                id="inscricao_estadual"
-                value={formData.inscricao_estadual || ""}
-                onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
-              />
+
+            {/* Endereço */}
+            <div className="space-y-4">
+              <h5 className="text-sm font-medium text-muted-foreground border-b pb-2">Endereço</h5>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cep">CEP</Label>
+                  <Input
+                    id="cep"
+                    value={formData.cep ? formatCep(formData.cep) : ""}
+                    onChange={(e) => setFormData({ ...formData, cep: e.target.value.replace(/\D/g, "") })}
+                    onBlur={handleCepBlur}
+                    placeholder="00000-000"
+                    maxLength={9}
+                    disabled={isLoadingCep}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="logradouro">Logradouro</Label>
+                  <Input
+                    id="logradouro"
+                    value={formData.logradouro || ""}
+                    onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numero">Número</Label>
+                  <Input
+                    id="numero"
+                    value={formData.numero || ""}
+                    onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="complemento">Complemento</Label>
+                  <Input
+                    id="complemento"
+                    value={formData.complemento || ""}
+                    onChange={(e) => setFormData({ ...formData, complemento: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="bairro">Bairro</Label>
+                  <Input
+                    id="bairro"
+                    value={formData.bairro || ""}
+                    onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-3">
+                  <Label htmlFor="cidade">Cidade</Label>
+                  <Input
+                    id="cidade"
+                    value={formData.cidade || ""}
+                    onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="uf">UF</Label>
+                  <Input
+                    id="uf"
+                    value={formData.uf || ""}
+                    onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
+                    maxLength={2}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="cpf_cnpj">CPF/CNPJ</Label>
-              <Input
-                id="cpf_cnpj"
-                value={formData.cpf_cnpj || ""}
-                onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value })}
-              />
+
+            {/* Contato */}
+            <div className="space-y-4">
+              <h5 className="text-sm font-medium text-muted-foreground border-b pb-2">Contato</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">Telefone</Label>
+                  <Input
+                    id="telefone"
+                    value={formData.telefone || ""}
+                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                    placeholder="(00) 0000-0000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email || ""}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="empresa_id">Granja (Empresa)</Label>
-              <Select
-                value={formData.empresa_id || ""}
-                onValueChange={(value) => setFormData({ ...formData, empresa_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a empresa/granja" />
-                </SelectTrigger>
-                <SelectContent>
-                  {empresas?.filter(e => e.ativa).map((empresa) => (
-                    <SelectItem key={empresa.id} value={empresa.id}>
-                      {empresa.nome_fantasia || empresa.razao_social}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="logradouro">Logradouro</Label>
-              <Input
-                id="logradouro"
-                value={formData.logradouro || ""}
-                onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cidade">Cidade</Label>
-              <Input
-                id="cidade"
-                value={formData.cidade || ""}
-                onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="uf">UF</Label>
-              <Input
-                id="uf"
-                value={formData.uf || ""}
-                onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
-                maxLength={2}
-              />
-            </div>
-            <div className="flex items-center space-x-2 md:col-span-2">
+
+            {/* Status */}
+            <div className="flex items-center space-x-2 pt-2">
               <Switch
                 id="ativa"
                 checked={formData.ativa ?? true}
@@ -327,6 +435,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               <Label htmlFor="ativa">Inscrição Ativa</Label>
             </div>
           </div>
+
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
