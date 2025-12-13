@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -39,6 +46,12 @@ import {
 } from "@/hooks/useInscricoesProdutor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+
+const TIPOS_INSCRICAO = [
+  { value: "parceria", label: "Parceria" },
+  { value: "arrendamento", label: "Arrendamento" },
+  { value: "terceiros", label: "Terceiros" },
+];
 
 interface InscricoesTabProps {
   produtorId: string;
@@ -147,7 +160,9 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               <TableBody>
                 {inscricoes.map((inscricao) => (
                   <TableRow key={inscricao.id}>
-                    <TableCell>{inscricao.tipo || "-"}</TableCell>
+                    <TableCell>
+                      {TIPOS_INSCRICAO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
+                    </TableCell>
                     <TableCell className="font-medium">{inscricao.inscricao_estadual || "-"}</TableCell>
                     <TableCell>{inscricao.cpf_cnpj || "-"}</TableCell>
                     <TableCell>
@@ -222,12 +237,21 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="tipo">Tipo</Label>
-              <Input
-                id="tipo"
+              <Select
                 value={formData.tipo || ""}
-                onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-                placeholder="Ex: Produtor Rural"
-              />
+                onValueChange={(value) => setFormData({ ...formData, tipo: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_INSCRICAO.map((tipo) => (
+                    <SelectItem key={tipo.value} value={tipo.value}>
+                      {tipo.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
