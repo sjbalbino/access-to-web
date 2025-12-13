@@ -1329,6 +1329,7 @@ export type Database = {
           cultura_id: string | null
           desconto_percentual: number | null
           id: string
+          melhoria_ph: number | null
           observacoes: string | null
           umidade_maxima: number
           umidade_minima: number
@@ -1340,6 +1341,7 @@ export type Database = {
           cultura_id?: string | null
           desconto_percentual?: number | null
           id?: string
+          melhoria_ph?: number | null
           observacoes?: string | null
           umidade_maxima: number
           umidade_minima: number
@@ -1351,6 +1353,7 @@ export type Database = {
           cultura_id?: string | null
           desconto_percentual?: number | null
           id?: string
+          melhoria_ph?: number | null
           observacoes?: string | null
           umidade_maxima?: number
           umidade_minima?: number

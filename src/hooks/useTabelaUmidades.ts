@@ -8,6 +8,7 @@ export type TabelaUmidade = {
   umidade_minima: number;
   umidade_maxima: number;
   desconto_percentual: number | null;
+  melhoria_ph: number | null;
   observacoes: string | null;
   ativa: boolean | null;
   created_at: string;
