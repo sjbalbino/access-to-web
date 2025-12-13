@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
@@ -12,7 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Droplets, Upload, Filter } from 'lucide-react';
+import { Plus, Pencil, Trash2, Droplets, Upload, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import { useTabelaUmidades, useCreateTabelaUmidade, useUpdateTabelaUmidade, useDeleteTabelaUmidade, TabelaUmidadeInsert } from '@/hooks/useTabelaUmidades';
 import { useCulturas } from '@/hooks/useCulturas';
 import { ImportarUmidadesDialog } from '@/components/ImportarUmidadesDialog';
@@ -29,6 +36,8 @@ export default function TabelaUmidades() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [filtroCultura, setFiltroCultura] = useState<string>('all');
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [itensPorPagina, setItensPorPagina] = useState(10);
   const [formData, setFormData] = useState<TabelaUmidadeInsert>({
     cultura_id: null,
     umidade_minima: 0,
@@ -93,6 +102,35 @@ export default function TabelaUmidades() {
     if (filtroCultura === 'all') return true;
     return item.cultura_id === filtroCultura;
   });
+
+  // Paginação
+  const totalRegistros = umidadesFiltradas?.length || 0;
+  const totalPaginas = Math.ceil(totalRegistros / itensPorPagina);
+  const indiceInicio = (paginaAtual - 1) * itensPorPagina;
+  const indiceFim = indiceInicio + itensPorPagina;
+  const umidadesPaginadas = umidadesFiltradas?.slice(indiceInicio, indiceFim);
+
+  // Reset página ao mudar filtro ou itens por página
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [filtroCultura, itensPorPagina]);
+
+  // Gerar números de páginas para exibição
+  const gerarNumerosPaginas = () => {
+    const paginas: (number | 'ellipsis')[] = [];
+    if (totalPaginas <= 7) {
+      for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+    } else {
+      paginas.push(1);
+      if (paginaAtual > 3) paginas.push('ellipsis');
+      for (let i = Math.max(2, paginaAtual - 1); i <= Math.min(totalPaginas - 1, paginaAtual + 1); i++) {
+        paginas.push(i);
+      }
+      if (paginaAtual < totalPaginas - 2) paginas.push('ellipsis');
+      paginas.push(totalPaginas);
+    }
+    return paginas;
+  };
 
   if (isLoading) {
     return <div className="p-8">Carregando...</div>;
@@ -225,11 +263,10 @@ export default function TabelaUmidades() {
                 ))}
               </SelectContent>
             </Select>
-            {filtroCultura !== 'all' && (
-              <span className="text-sm text-muted-foreground">
-                Exibindo {umidadesFiltradas?.length || 0} de {umidades?.length || 0} registros
-              </span>
-            )}
+            <span className="text-sm text-muted-foreground">
+              Exibindo {Math.min(indiceFim, totalRegistros)} de {totalRegistros} registros
+              {filtroCultura !== 'all' && ` (filtrado de ${umidades?.length || 0})`}
+            </span>
           </div>
 
           <Table>
@@ -246,7 +283,7 @@ export default function TabelaUmidades() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {umidadesFiltradas?.map((item: any) => (
+              {umidadesPaginadas?.map((item: any) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.cultura?.nome || 'Todas'}</TableCell>
                   <TableCell className="text-center">
@@ -291,7 +328,7 @@ export default function TabelaUmidades() {
                   )}
                 </TableRow>
               ))}
-              {(!umidadesFiltradas || umidadesFiltradas.length === 0) && (
+              {(!umidadesPaginadas || umidadesPaginadas.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground py-8">
                     Nenhuma faixa de umidade cadastrada
@@ -300,6 +337,76 @@ export default function TabelaUmidades() {
               )}
             </TableBody>
           </Table>
+
+          {/* Paginação */}
+          {totalPaginas > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Itens por página:</span>
+                <Select value={itensPorPagina.toString()} onValueChange={(value) => setItensPorPagina(parseInt(value))}>
+                  <SelectTrigger className="w-[80px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                      disabled={paginaAtual === 1}
+                      className="gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Anterior
+                    </Button>
+                  </PaginationItem>
+
+                  {gerarNumerosPaginas().map((pagina, index) => (
+                    <PaginationItem key={index}>
+                      {pagina === 'ellipsis' ? (
+                        <PaginationEllipsis />
+                      ) : (
+                        <PaginationLink
+                          onClick={() => setPaginaAtual(pagina)}
+                          isActive={paginaAtual === pagina}
+                          className="cursor-pointer"
+                        >
+                          {pagina}
+                        </PaginationLink>
+                      )}
+                    </PaginationItem>
+                  ))}
+
+                  <PaginationItem>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                      disabled={paginaAtual === totalPaginas}
+                      className="gap-1"
+                    >
+                      Próximo
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+
+              <span className="text-sm text-muted-foreground">
+                Página {paginaAtual} de {totalPaginas}
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
