@@ -26,28 +26,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Users, Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
+import { Users, Plus, Pencil, Search, Loader2 } from "lucide-react";
 import {
   useProdutores,
   useCreateProdutor,
-  useUpdateProdutor,
-  useDeleteProdutor,
   ProdutorInput,
 } from "@/hooks/useProdutores";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
+import { ProdutorDetalhe } from "@/components/produtores/ProdutorDetalhe";
 
 const emptyProdutor: ProdutorInput = {
   nome: "",
@@ -72,15 +61,13 @@ export default function Produtores() {
   const { data: produtores, isLoading } = useProdutores();
   const { data: empresas } = useEmpresas();
   const createProdutor = useCreateProdutor();
-  const updateProdutor = useUpdateProdutor();
-  const deleteProdutor = useDeleteProdutor();
   const { canEdit } = useAuth();
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
 
+  const [view, setView] = useState<'list' | 'detail'>('list');
+  const [selectedProdutor, setSelectedProdutor] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedProdutor, setSelectedProdutor] = useState<any>(null);
   const [formData, setFormData] = useState<ProdutorInput>(emptyProdutor);
 
   const handleCepBlur = async (cep: string) => {
@@ -104,50 +91,39 @@ export default function Produtores() {
 
   const handleEdit = (produtor: any) => {
     setSelectedProdutor(produtor);
-    setFormData({
-      nome: produtor.nome,
-      tipo_pessoa: produtor.tipo_pessoa || "fisica",
-      cpf_cnpj: produtor.cpf_cnpj || "",
-      identidade: produtor.identidade || "",
-      empresa_id: produtor.empresa_id,
-      logradouro: produtor.logradouro || "",
-      numero: produtor.numero || "",
-      complemento: produtor.complemento || "",
-      bairro: produtor.bairro || "",
-      cidade: produtor.cidade || "",
-      uf: produtor.uf || "",
-      cep: produtor.cep || "",
-      telefone: produtor.telefone || "",
-      celular: produtor.celular || "",
-      email: produtor.email || "",
-      ativo: produtor.ativo ?? true,
-    });
-    setDialogOpen(true);
+    setView('detail');
   };
 
   const handleNew = () => {
-    setSelectedProdutor(null);
     setFormData(emptyProdutor);
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (selectedProdutor) {
-      await updateProdutor.mutateAsync({ id: selectedProdutor.id, ...formData });
-    } else {
-      await createProdutor.mutateAsync(formData);
-    }
+    const newProdutor = await createProdutor.mutateAsync(formData);
     setDialogOpen(false);
-  };
-
-  const handleDelete = async () => {
-    if (selectedProdutor) {
-      await deleteProdutor.mutateAsync(selectedProdutor.id);
-      setDeleteDialogOpen(false);
-      setSelectedProdutor(null);
+    // Após criar, abre o detalhe do novo produtor
+    if (newProdutor) {
+      setSelectedProdutor(newProdutor);
+      setView('detail');
     }
   };
 
+  const handleBack = () => {
+    setSelectedProdutor(null);
+    setView('list');
+  };
+
+  // Renderiza detalhe do produtor
+  if (view === 'detail' && selectedProdutor) {
+    return (
+      <AppLayout>
+        <ProdutorDetalhe produtor={selectedProdutor} onBack={handleBack} />
+      </AppLayout>
+    );
+  }
+
+  // Renderiza lista de produtores
   return (
     <AppLayout>
       <PageHeader
@@ -219,27 +195,13 @@ export default function Produtores() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        {canEdit && (
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(produtor)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setSelectedProdutor(produtor);
-                                setDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(produtor)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -264,13 +226,11 @@ export default function Produtores() {
         </CardContent>
       </Card>
 
-      {/* Form Dialog */}
+      {/* Create Dialog - Apenas para criação, edição vai para o detalhe */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {selectedProdutor ? "Editar Produtor" : "Novo Produtor"}
-            </DialogTitle>
+            <DialogTitle>Novo Produtor</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
@@ -430,35 +390,13 @@ export default function Produtores() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={!formData.nome || createProdutor.isPending || updateProdutor.isPending}
+              disabled={!formData.nome || createProdutor.isPending}
             >
-              {createProdutor.isPending || updateProdutor.isPending ? "Salvando..." : "Salvar"}
+              {createProdutor.isPending ? "Salvando..." : "Salvar e Continuar"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o produtor "{selectedProdutor?.nome}"?
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AppLayout>
   );
 }
