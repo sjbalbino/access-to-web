@@ -25,7 +25,7 @@ export interface Produtor {
   updated_at: string;
 }
 
-export type ProdutorInput = Omit<Produtor, "id" | "created_at" | "updated_at">;
+export type ProdutorInput = Partial<Omit<Produtor, "id" | "created_at" | "updated_at">> & { nome: string };
 
 export function useProdutores() {
   return useQuery({
