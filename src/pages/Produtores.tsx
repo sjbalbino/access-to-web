@@ -333,6 +333,22 @@ export default function Produtores() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="cep">CEP</Label>
+              <div className="relative">
+                <Input
+                  id="cep"
+                  value={formData.cep || ""}
+                  onChange={(e) => setFormData({ ...formData, cep: formatCep(e.target.value) })}
+                  onBlur={(e) => handleCepBlur(e.target.value)}
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+                {cepLoading && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+            </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="logradouro">Logradouro</Label>
               <Input
@@ -356,22 +372,6 @@ export default function Produtores() {
                 value={formData.complemento || ""}
                 onChange={(e) => setFormData({ ...formData, complemento: e.target.value })}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cep">CEP</Label>
-              <div className="relative">
-                <Input
-                  id="cep"
-                  value={formData.cep || ""}
-                  onChange={(e) => setFormData({ ...formData, cep: formatCep(e.target.value) })}
-                  onBlur={(e) => handleCepBlur(e.target.value)}
-                  placeholder="00000-000"
-                  maxLength={9}
-                />
-                {cepLoading && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                )}
-              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="bairro">Bairro</Label>
