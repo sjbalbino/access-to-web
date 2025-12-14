@@ -44,7 +44,7 @@ import {
   useDeleteProdutor,
   ProdutorInput,
 } from "@/hooks/useProdutores";
-import { useEmpresas } from "@/hooks/useEmpresas";
+import { useGranjas } from "@/hooks/useGranjas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
@@ -62,7 +62,7 @@ const emptyProdutor: ProdutorInput = {
   tipo_produtor: "produtor",
   cpf_cnpj: "",
   identidade: "",
-  empresa_id: null,
+  granja_id: null,
   logradouro: "",
   numero: "",
   complemento: "",
@@ -78,7 +78,7 @@ const emptyProdutor: ProdutorInput = {
 
 export default function Produtores() {
   const { data: produtores, isLoading } = useProdutores();
-  const { data: empresas } = useEmpresas();
+  const { data: granjas } = useGranjas();
   const createProdutor = useCreateProdutor();
   const updateProdutor = useUpdateProdutor();
   const deleteProdutor = useDeleteProdutor();
@@ -125,7 +125,7 @@ export default function Produtores() {
       tipo_produtor: produtor.tipo_produtor || "produtor",
       cpf_cnpj: produtor.cpf_cnpj || "",
       identidade: produtor.identidade || "",
-      empresa_id: produtor.empresa_id,
+      granja_id: produtor.granja_id,
       logradouro: produtor.logradouro || "",
       numero: produtor.numero || "",
       complemento: produtor.complemento || "",
@@ -290,7 +290,7 @@ export default function Produtores() {
                       </TableCell>
                       <TableCell className="font-medium">{produtor.nome}</TableCell>
                       <TableCell>{produtor.cpf_cnpj || "-"}</TableCell>
-                      <TableCell>{produtor.empresas?.razao_social || "-"}</TableCell>
+                      <TableCell>{produtor.granja?.razao_social || "-"}</TableCell>
                       <TableCell>
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -423,11 +423,11 @@ export default function Produtores() {
                   />
                 </div>
                 <div className="space-y-2 lg:col-span-2">
-                  <Label>Empresa Consolidada</Label>
+                  <Label>Granja</Label>
                   <Select
-                    value={editFormData.empresa_id || ""}
+                    value={editFormData.granja_id || ""}
                     onValueChange={(value) =>
-                      setEditFormData({ ...editFormData, empresa_id: value || null })
+                      setEditFormData({ ...editFormData, granja_id: value || null })
                     }
                     disabled={!canEdit}
                   >
@@ -435,9 +435,9 @@ export default function Produtores() {
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
-                      {empresas?.map((empresa) => (
-                        <SelectItem key={empresa.id} value={empresa.id}>
-                          {empresa.razao_social}
+                      {granjas?.map((granja) => (
+                        <SelectItem key={granja.id} value={granja.id}>
+                          {granja.razao_social}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -658,20 +658,20 @@ export default function Produtores() {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>Empresa Consolidada</Label>
+              <Label>Granja</Label>
               <Select
-                value={newFormData.empresa_id || ""}
+                value={newFormData.granja_id || ""}
                 onValueChange={(value) =>
-                  setNewFormData({ ...newFormData, empresa_id: value || null })
+                  setNewFormData({ ...newFormData, granja_id: value || null })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma empresa" />
+                  <SelectValue placeholder="Selecione uma granja" />
                 </SelectTrigger>
                 <SelectContent>
-                  {empresas?.map((empresa) => (
-                    <SelectItem key={empresa.id} value={empresa.id}>
-                      {empresa.razao_social}
+                  {granjas?.map((granja) => (
+                    <SelectItem key={granja.id} value={granja.id}>
+                      {granja.razao_social}
                     </SelectItem>
                   ))}
                 </SelectContent>

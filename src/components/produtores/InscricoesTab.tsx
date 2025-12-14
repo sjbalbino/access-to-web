@@ -45,7 +45,7 @@ import {
 } from "@/hooks/useInscricoesProdutor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEmpresas } from "@/hooks/useEmpresas";
+import { useGranjas } from "@/hooks/useGranjas";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 
 const TIPOS_INSCRICAO = [
@@ -73,13 +73,13 @@ const emptyInscricao: InscricaoInput = {
   telefone: "",
   email: "",
   granja: "",
-  empresa_id: null,
+  granja_id: null,
   ativa: true,
 };
 
 export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const { data: inscricoes, isLoading } = useInscricoesByProdutor(produtorId);
-  const { data: empresas } = useEmpresas();
+  const { data: granjas } = useGranjas();
   const createInscricao = useCreateInscricao();
   const updateInscricao = useUpdateInscricao();
   const deleteInscricao = useDeleteInscricao();
@@ -114,7 +114,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       telefone: inscricao.telefone || "",
       email: inscricao.email || "",
       granja: inscricao.granja || "",
-      empresa_id: inscricao.empresa_id || null,
+      granja_id: inscricao.granja_id || null,
       ativa: inscricao.ativa ?? true,
     });
     setDialogOpen(true);
@@ -202,9 +202,9 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                       : inscricao.cidade || inscricao.uf || "-"}
                   </TableCell>
                   <TableCell>
-                    {inscricao.empresa_id
-                      ? empresas?.find(e => e.id === inscricao.empresa_id)?.nome_fantasia 
-                        || empresas?.find(e => e.id === inscricao.empresa_id)?.razao_social 
+                    {inscricao.granja_id
+                      ? granjas?.find(e => e.id === inscricao.granja_id)?.nome_fantasia 
+                        || granjas?.find(e => e.id === inscricao.granja_id)?.razao_social 
                         || "-"
                       : inscricao.granja || "-"}
                   </TableCell>
@@ -295,18 +295,18 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="empresa_id">Granja (Empresa)</Label>
+                  <Label htmlFor="granja_id">Granja</Label>
                   <Select
-                    value={formData.empresa_id || ""}
-                    onValueChange={(value) => setFormData({ ...formData, empresa_id: value })}
+                    value={formData.granja_id || ""}
+                    onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a empresa/granja" />
+                      <SelectValue placeholder="Selecione a granja" />
                     </SelectTrigger>
                     <SelectContent>
-                      {empresas?.filter(e => e.ativa).map((empresa) => (
-                        <SelectItem key={empresa.id} value={empresa.id}>
-                          {empresa.nome_fantasia || empresa.razao_social}
+                      {granjas?.filter(e => e.ativa).map((granja) => (
+                        <SelectItem key={granja.id} value={granja.id}>
+                          {granja.nome_fantasia || granja.razao_social}
                         </SelectItem>
                       ))}
                     </SelectContent>

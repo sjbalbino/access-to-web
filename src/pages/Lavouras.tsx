@@ -45,14 +45,14 @@ import {
   useDeleteLavoura,
   LavouraInput,
 } from "@/hooks/useLavouras";
-import { useEmpresas } from "@/hooks/useEmpresas";
+import { useGranjas } from "@/hooks/useGranjas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 
 const emptyLavoura: LavouraInput = {
   codigo: "",
   nome: "",
-  empresa_id: null,
+  granja_id: null,
   total_hectares: 0,
   area_nao_aproveitavel: 0,
   area_plantio: 0,
@@ -64,7 +64,7 @@ const emptyLavoura: LavouraInput = {
 
 export default function Lavouras() {
   const { data: lavouras, isLoading } = useLavouras();
-  const { data: empresas } = useEmpresas();
+  const { data: granjas } = useGranjas();
   const createLavoura = useCreateLavoura();
   const updateLavoura = useUpdateLavoura();
   const deleteLavoura = useDeleteLavoura();
@@ -87,7 +87,7 @@ export default function Lavouras() {
     setFormData({
       codigo: lavoura.codigo || "",
       nome: lavoura.nome,
-      empresa_id: lavoura.empresa_id,
+      granja_id: lavoura.granja_id,
       total_hectares: lavoura.total_hectares || 0,
       area_nao_aproveitavel: lavoura.area_nao_aproveitavel || 0,
       area_plantio: lavoura.area_plantio || 0,
@@ -189,7 +189,7 @@ export default function Lavouras() {
                     <TableRow key={lavoura.id}>
                       <TableCell className="font-medium">{lavoura.codigo || "-"}</TableCell>
                       <TableCell className="font-medium">{lavoura.nome}</TableCell>
-                      <TableCell>{lavoura.empresas?.razao_social || "-"}</TableCell>
+                      <TableCell>{lavoura.granja?.razao_social || "-"}</TableCell>
                       <TableCell>{lavoura.total_hectares?.toLocaleString("pt-BR") || 0}</TableCell>
                       <TableCell>{lavoura.area_plantio?.toLocaleString("pt-BR") || 0}</TableCell>
                       <TableCell>
@@ -276,18 +276,18 @@ export default function Lavouras() {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="empresa_id">Empresa/Granja</Label>
+              <Label htmlFor="granja_id">Granja</Label>
               <Select
-                value={formData.empresa_id || ""}
-                onValueChange={(value) => setFormData({ ...formData, empresa_id: value || null })}
+                value={formData.granja_id || ""}
+                onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma empresa" />
+                  <SelectValue placeholder="Selecione uma granja" />
                 </SelectTrigger>
                 <SelectContent>
-                  {empresas?.map((empresa) => (
-                    <SelectItem key={empresa.id} value={empresa.id}>
-                      {empresa.razao_social}
+                  {granjas?.map((granja) => (
+                    <SelectItem key={granja.id} value={granja.id}>
+                      {granja.razao_social}
                     </SelectItem>
                   ))}
                 </SelectContent>

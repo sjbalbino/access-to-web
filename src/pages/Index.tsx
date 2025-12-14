@@ -15,7 +15,7 @@ import {
   TrendingUp,
   Wheat,
 } from "lucide-react";
-import { useEmpresas } from "@/hooks/useEmpresas";
+import { useGranjas } from "@/hooks/useGranjas";
 import { useCulturas } from "@/hooks/useCulturas";
 import { useSafras } from "@/hooks/useSafras";
 import { useProdutores } from "@/hooks/useProdutores";
@@ -23,10 +23,10 @@ import { useLavouras } from "@/hooks/useLavouras";
 
 const quickAccessItems = [
   {
-    title: "Nova Empresa",
-    description: "Cadastrar granja ou empresa",
+    title: "Nova Granja",
+    description: "Cadastrar granja",
     icon: Building2,
-    path: "/empresas",
+    path: "/granjas",
     color: "bg-info/10 text-info",
   },
   {
@@ -53,7 +53,7 @@ const quickAccessItems = [
 ];
 
 export default function Index() {
-  const { data: empresas, isLoading: loadingEmpresas } = useEmpresas();
+  const { data: granjas, isLoading: loadingGranjas } = useGranjas();
   const { data: culturas, isLoading: loadingCulturas } = useCulturas();
   const { data: safras, isLoading: loadingSafras } = useSafras();
   const { data: produtores, isLoading: loadingProdutores } = useProdutores();
@@ -74,8 +74,8 @@ export default function Index() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <DataCard
-          title="Empresas/Granjas"
-          value={loadingEmpresas ? "..." : empresas?.length || 0}
+          title="Granjas"
+          value={loadingGranjas ? "..." : granjas?.length || 0}
           description="Cadastradas no sistema"
           icon={<Building2 className="h-5 w-5" />}
           iconColor="bg-info/10 text-info"
@@ -207,7 +207,7 @@ export default function Index() {
                     <div>
                       <p className="font-medium">{lavoura.nome}</p>
                       <p className="text-sm text-muted-foreground">
-                        {lavoura.empresas?.razao_social || "Sem empresa vinculada"}
+                        {lavoura.granja?.razao_social || "Sem granja vinculada"}
                       </p>
                     </div>
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
