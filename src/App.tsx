@@ -14,6 +14,7 @@ import Lavouras from "./pages/Lavouras";
 import ControleLavoura from "./pages/ControleLavoura";
 import Auth from "./pages/Auth";
 import Usuarios from "./pages/Usuarios";
+import Tenants from "./pages/Tenants";
 import ClientesFornecedores from "./pages/ClientesFornecedores";
 import Produtos from "./pages/Produtos";
 import UnidadesMedida from "./pages/UnidadesMedida";
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/placas" element={<ProtectedRoute><Placas /></ProtectedRoute>} />
             <Route path="/tabela-umidades" element={<ProtectedRoute><TabelaUmidades /></ProtectedRoute>} />
             <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />
+            <Route path="/tenants" element={<ProtectedRoute requireSuperAdmin><Tenants /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
