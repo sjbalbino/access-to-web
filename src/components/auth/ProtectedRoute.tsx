@@ -5,10 +5,15 @@ import { Spinner } from "@/components/ui/spinner";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
+  requireSuperAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, isLoading, isAdmin } = useAuth();
+export function ProtectedRoute({ 
+  children, 
+  requireAdmin = false,
+  requireSuperAdmin = false 
+}: ProtectedRouteProps) {
+  const { user, isLoading, isAdmin, isSuperAdmin } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -24,6 +29,10 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
 
   if (!user) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  if (requireSuperAdmin && !isSuperAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   if (requireAdmin && !isAdmin) {

@@ -18,6 +18,7 @@ import {
   Warehouse,
   Truck,
   Droplets,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,7 @@ const roleLabels: Record<string, string> = {
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { profile, role, isAdmin, signOut } = useAuth();
+  const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
 
   return (
     <aside
@@ -189,6 +190,41 @@ export function AppSidebar() {
                 {collapsed && (
                   <TooltipContent side="right" className="bg-popover">
                     Usuários
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </li>
+          )}
+
+          {/* Tenants Management - Super Admin Only */}
+          {isSuperAdmin && (
+            <li>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/tenants"
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                      "hover:bg-sidebar-accent",
+                      location.pathname === "/tenants"
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                        : "text-sidebar-foreground"
+                    )}
+                  >
+                    <Crown
+                      className={cn(
+                        "h-5 w-5 flex-shrink-0",
+                        location.pathname === "/tenants" ? "text-sidebar-primary-foreground" : "text-amber-500"
+                      )}
+                    />
+                    {!collapsed && (
+                      <span className="font-medium">Empresas Contratantes</span>
+                    )}
+                  </Link>
+                </TooltipTrigger>
+                {collapsed && (
+                  <TooltipContent side="right" className="bg-popover">
+                    Empresas Contratantes
                   </TooltipContent>
                 )}
               </Tooltip>

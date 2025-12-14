@@ -10,6 +10,7 @@ interface Profile {
   email: string | null;
   avatar_url: string | null;
   ativo: boolean | null;
+  tenant_id: string | null;
 }
 
 interface AuthContextType {
@@ -18,6 +19,7 @@ interface AuthContextType {
   profile: Profile | null;
   role: AppRole | null;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   canEdit: boolean;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -32,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
@@ -45,17 +48,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileData) {
         setProfile(profileData);
-      }
+        
+        // Super admin = admin role + no tenant
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .single();
 
-      // Fetch role
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .single();
-
-      if (roleData) {
-        setRole(roleData.role as AppRole);
+        if (roleData) {
+          setRole(roleData.role as AppRole);
+          // Super admin is an admin without a tenant
+          setIsSuperAdmin(roleData.role === "admin" && profileData.tenant_id === null);
+        }
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -77,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
           setRole(null);
+          setIsSuperAdmin(false);
         }
       }
     );
@@ -128,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRole(null);
+    setIsSuperAdmin(false);
   };
 
   const isAdmin = role === "admin";
@@ -141,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         role,
         isAdmin,
+        isSuperAdmin,
         canEdit,
         isLoading,
         signIn,
