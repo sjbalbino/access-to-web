@@ -14,13 +14,13 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2 } from 'lucide-react';
 import { useClientesFornecedores, useCreateClienteFornecedor, useUpdateClienteFornecedor, useDeleteClienteFornecedor, ClienteFornecedorInsert } from '@/hooks/useClientesFornecedores';
-import { useEmpresas } from '@/hooks/useEmpresas';
+import { useGranjas } from '@/hooks/useGranjas';
 import { useCepLookup, formatCep } from '@/hooks/useCepLookup';
 
 export default function ClientesFornecedores() {
   const { canEdit } = useAuth();
   const { data: clientesFornecedores, isLoading } = useClientesFornecedores();
-  const { data: empresas } = useEmpresas();
+  const { data: granjas } = useGranjas();
   const createMutation = useCreateClienteFornecedor();
   const updateMutation = useUpdateClienteFornecedor();
   const deleteMutation = useDeleteClienteFornecedor();
@@ -29,7 +29,7 @@ export default function ClientesFornecedores() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<ClienteFornecedorInsert>({
-    empresa_id: null,
+    granja_id: null,
     tipo: 'ambos',
     tipo_pessoa: 'juridica',
     nome: '',
@@ -66,7 +66,7 @@ export default function ClientesFornecedores() {
 
   const resetForm = () => {
     setFormData({
-      empresa_id: null,
+      granja_id: null,
       tipo: 'ambos',
       tipo_pessoa: 'juridica',
       nome: '',
@@ -104,7 +104,7 @@ export default function ClientesFornecedores() {
   const handleEdit = (item: any) => {
     setEditingItem(item);
     setFormData({
-      empresa_id: item.empresa_id,
+      granja_id: item.granja_id,
       tipo: item.tipo,
       tipo_pessoa: item.tipo_pessoa,
       nome: item.nome,
@@ -200,12 +200,12 @@ export default function ClientesFornecedores() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Empresa</Label>
-                      <Select value={formData.empresa_id || ''} onValueChange={(value) => setFormData({ ...formData, empresa_id: value || null })}>
+                      <Label>Granja</Label>
+                      <Select value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
                         <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                         <SelectContent>
-                          {empresas?.map((emp) => (
-                            <SelectItem key={emp.id} value={emp.id}>{emp.razao_social}</SelectItem>
+                          {granjas?.map((granja) => (
+                            <SelectItem key={granja.id} value={granja.id}>{granja.razao_social}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

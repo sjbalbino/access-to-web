@@ -29,7 +29,7 @@ export default function Produtos() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<ProdutoInsert>({
-    empresa_id: null,
+    granja_id: null,
     tipo: 'insumo',
     codigo: '',
     nome: '',
@@ -45,7 +45,7 @@ export default function Produtos() {
 
   const resetForm = () => {
     setFormData({
-      empresa_id: null,
+      granja_id: null,
       tipo: 'insumo',
       codigo: '',
       nome: '',
@@ -75,7 +75,7 @@ export default function Produtos() {
   const handleEdit = (item: any) => {
     setEditingItem(item);
     setFormData({
-      empresa_id: item.empresa_id,
+      granja_id: item.granja_id,
       tipo: item.tipo,
       codigo: item.codigo || '',
       nome: item.nome,

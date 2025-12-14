@@ -39,7 +39,7 @@ import {
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, path: "/", color: "text-primary" },
-  { title: "Empresas", icon: Building2, path: "/empresas", color: "text-info" },
+  { title: "Granjas", icon: Building2, path: "/granjas", color: "text-info" },
   { title: "Culturas", icon: Leaf, path: "/culturas", color: "text-success" },
   { title: "Safras", icon: Calendar, path: "/safras", color: "text-warning" },
   { title: "Produtores", icon: Users, path: "/produtores", color: "text-accent" },

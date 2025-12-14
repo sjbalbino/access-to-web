@@ -14,12 +14,12 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Truck, Car, User } from 'lucide-react';
 import { usePlacas, useCreatePlaca, useUpdatePlaca, useDeletePlaca, PlacaInsert } from '@/hooks/usePlacas';
-import { useEmpresas } from '@/hooks/useEmpresas';
+import { useGranjas } from '@/hooks/useGranjas';
 
 export default function Placas() {
   const { canEdit } = useAuth();
   const { data: placas, isLoading } = usePlacas();
-  const { data: empresas } = useEmpresas();
+  const { data: granjas } = useGranjas();
   const createMutation = useCreatePlaca();
   const updateMutation = useUpdatePlaca();
   const deleteMutation = useDeletePlaca();
@@ -27,7 +27,7 @@ export default function Placas() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<PlacaInsert>({
-    empresa_id: null,
+    granja_id: null,
     placa: '',
     tipo: 'veiculo',
     marca: '',
@@ -42,7 +42,7 @@ export default function Placas() {
 
   const resetForm = () => {
     setFormData({
-      empresa_id: null,
+      granja_id: null,
       placa: '',
       tipo: 'veiculo',
       marca: '',
@@ -71,7 +71,7 @@ export default function Placas() {
   const handleEdit = (item: any) => {
     setEditingItem(item);
     setFormData({
-      empresa_id: item.empresa_id,
+      granja_id: item.granja_id,
       placa: item.placa,
       tipo: item.tipo || 'veiculo',
       marca: item.marca || '',
@@ -159,12 +159,12 @@ export default function Placas() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Empresa</Label>
-                      <Select value={formData.empresa_id || ''} onValueChange={(value) => setFormData({ ...formData, empresa_id: value || null })}>
+                      <Label>Granja</Label>
+                      <Select value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
                         <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                         <SelectContent>
-                          {empresas?.map((emp) => (
-                            <SelectItem key={emp.id} value={emp.id}>{emp.razao_social}</SelectItem>
+                          {granjas?.map((granja) => (
+                            <SelectItem key={granja.id} value={granja.id}>{granja.razao_social}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

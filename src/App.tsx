@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
-import Empresas from "./pages/Empresas";
+import Granjas from "./pages/Granjas";
 import Culturas from "./pages/Culturas";
 import Safras from "./pages/Safras";
 import Produtores from "./pages/Produtores";
@@ -34,7 +34,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/empresas" element={<ProtectedRoute><Empresas /></ProtectedRoute>} />
+            <Route path="/granjas" element={<ProtectedRoute><Granjas /></ProtectedRoute>} />
             <Route path="/culturas" element={<ProtectedRoute><Culturas /></ProtectedRoute>} />
             <Route path="/safras" element={<ProtectedRoute><Safras /></ProtectedRoute>} />
             <Route path="/produtores" element={<ProtectedRoute><Produtores /></ProtectedRoute>} />
