@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 export type Produto = {
   id: string;
-  empresa_id: string | null;
+  granja_id: string | null;
   tipo: string;
   codigo: string | null;
   nome: string;

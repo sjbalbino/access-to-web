@@ -18,7 +18,7 @@ export interface InscricaoProdutor {
   telefone: string | null;
   email: string | null;
   granja: string | null;
-  empresa_id: string | null;
+  granja_id: string | null;
   ativa: boolean | null;
   created_at: string;
   updated_at: string;

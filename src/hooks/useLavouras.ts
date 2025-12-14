@@ -6,7 +6,7 @@ export interface Lavoura {
   id: string;
   codigo: string | null;
   nome: string;
-  empresa_id: string | null;
+  granja_id: string | null;
   total_hectares: number | null;
   area_nao_aproveitavel: number | null;
   area_plantio: number | null;
@@ -28,7 +28,7 @@ export function useLavouras() {
         .from("lavouras")
         .select(`
           *,
-          empresas (id, razao_social)
+          granja:granjas (id, razao_social)
         `)
         .order("nome");
       if (error) throw error;
@@ -46,7 +46,7 @@ export function useLavoura(id: string | undefined) {
         .from("lavouras")
         .select(`
           *,
-          empresas (id, razao_social)
+          granja:granjas (id, razao_social)
         `)
         .eq("id", id)
         .maybeSingle();
