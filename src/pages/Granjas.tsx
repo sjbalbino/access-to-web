@@ -31,18 +31,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Building2, Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
 import {
-  useEmpresas,
-  useCreateEmpresa,
-  useUpdateEmpresa,
-  useDeleteEmpresa,
-  Empresa,
-  EmpresaInput,
-} from "@/hooks/useEmpresas";
+  useGranjas,
+  useCreateGranja,
+  useUpdateGranja,
+  useDeleteGranja,
+  Granja,
+  GranjaInput,
+} from "@/hooks/useGranjas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 
-const emptyEmpresa: EmpresaInput = {
+const emptyGranja: GranjaInput = {
   razao_social: "",
   nome_fantasia: "",
   cnpj: "",
@@ -60,19 +60,19 @@ const emptyEmpresa: EmpresaInput = {
   ativa: true,
 };
 
-export default function Empresas() {
-  const { data: empresas, isLoading } = useEmpresas();
-  const createEmpresa = useCreateEmpresa();
-  const updateEmpresa = useUpdateEmpresa();
-  const deleteEmpresa = useDeleteEmpresa();
+export default function Granjas() {
+  const { data: granjas, isLoading } = useGranjas();
+  const createGranja = useCreateGranja();
+  const updateGranja = useUpdateGranja();
+  const deleteGranja = useDeleteGranja();
   const { canEdit } = useAuth();
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedEmpresa, setSelectedEmpresa] = useState<Empresa | null>(null);
-  const [formData, setFormData] = useState<EmpresaInput>(emptyEmpresa);
+  const [selectedGranja, setSelectedGranja] = useState<Granja | null>(null);
+  const [formData, setFormData] = useState<GranjaInput>(emptyGranja);
 
   const handleCepBlur = async (cep: string) => {
     const data = await fetchCep(cep);
@@ -87,70 +87,70 @@ export default function Empresas() {
     }
   };
 
-  const filteredEmpresas = empresas?.filter(
-    (e) =>
-      e.razao_social.toLowerCase().includes(search.toLowerCase()) ||
-      e.nome_fantasia?.toLowerCase().includes(search.toLowerCase()) ||
-      e.cnpj?.includes(search)
+  const filteredGranjas = granjas?.filter(
+    (g) =>
+      g.razao_social.toLowerCase().includes(search.toLowerCase()) ||
+      g.nome_fantasia?.toLowerCase().includes(search.toLowerCase()) ||
+      g.cnpj?.includes(search)
   );
 
-  const handleEdit = (empresa: Empresa) => {
-    setSelectedEmpresa(empresa);
+  const handleEdit = (granja: Granja) => {
+    setSelectedGranja(granja);
     setFormData({
-      razao_social: empresa.razao_social,
-      nome_fantasia: empresa.nome_fantasia || "",
-      cnpj: empresa.cnpj || "",
-      inscricao_estadual: empresa.inscricao_estadual || "",
-      logradouro: empresa.logradouro || "",
-      numero: empresa.numero || "",
-      complemento: empresa.complemento || "",
-      bairro: empresa.bairro || "",
-      cidade: empresa.cidade || "",
-      uf: empresa.uf || "",
-      cep: empresa.cep || "",
-      telefone: empresa.telefone || "",
-      email: empresa.email || "",
-      total_hectares: empresa.total_hectares || 0,
-      ativa: empresa.ativa ?? true,
+      razao_social: granja.razao_social,
+      nome_fantasia: granja.nome_fantasia || "",
+      cnpj: granja.cnpj || "",
+      inscricao_estadual: granja.inscricao_estadual || "",
+      logradouro: granja.logradouro || "",
+      numero: granja.numero || "",
+      complemento: granja.complemento || "",
+      bairro: granja.bairro || "",
+      cidade: granja.cidade || "",
+      uf: granja.uf || "",
+      cep: granja.cep || "",
+      telefone: granja.telefone || "",
+      email: granja.email || "",
+      total_hectares: granja.total_hectares || 0,
+      ativa: granja.ativa ?? true,
     });
     setDialogOpen(true);
   };
 
   const handleNew = () => {
-    setSelectedEmpresa(null);
-    setFormData(emptyEmpresa);
+    setSelectedGranja(null);
+    setFormData(emptyGranja);
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (selectedEmpresa) {
-      await updateEmpresa.mutateAsync({ id: selectedEmpresa.id, ...formData });
+    if (selectedGranja) {
+      await updateGranja.mutateAsync({ id: selectedGranja.id, ...formData });
     } else {
-      await createEmpresa.mutateAsync(formData);
+      await createGranja.mutateAsync(formData);
     }
     setDialogOpen(false);
   };
 
   const handleDelete = async () => {
-    if (selectedEmpresa) {
-      await deleteEmpresa.mutateAsync(selectedEmpresa.id);
+    if (selectedGranja) {
+      await deleteGranja.mutateAsync(selectedGranja.id);
       setDeleteDialogOpen(false);
-      setSelectedEmpresa(null);
+      setSelectedGranja(null);
     }
   };
 
   return (
     <AppLayout>
       <PageHeader
-        title="Empresas / Granjas"
-        description="Gerencie as empresas e granjas cadastradas"
+        title="Granjas"
+        description="Gerencie as granjas e propriedades rurais"
         icon={<Building2 className="h-6 w-6" />}
         iconColor="bg-info/10 text-info"
         actions={
           canEdit && (
             <Button onClick={handleNew} className="gap-2">
               <Plus className="h-4 w-4" />
-              Nova Empresa
+              Nova Granja
             </Button>
           )
         }
@@ -159,11 +159,11 @@ export default function Empresas() {
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle>Lista de Empresas</CardTitle>
+            <CardTitle>Lista de Granjas</CardTitle>
             <div className="relative w-full md:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar empresa..."
+                placeholder="Buscar granja..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -178,7 +178,7 @@ export default function Empresas() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
-          ) : filteredEmpresas && filteredEmpresas.length > 0 ? (
+          ) : filteredGranjas && filteredGranjas.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -192,34 +192,34 @@ export default function Empresas() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredEmpresas.map((empresa) => (
-                    <TableRow key={empresa.id}>
+                  {filteredGranjas.map((granja) => (
+                    <TableRow key={granja.id}>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{empresa.razao_social}</p>
-                          {empresa.nome_fantasia && (
-                            <p className="text-sm text-muted-foreground">{empresa.nome_fantasia}</p>
+                          <p className="font-medium">{granja.razao_social}</p>
+                          {granja.nome_fantasia && (
+                            <p className="text-sm text-muted-foreground">{granja.nome_fantasia}</p>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{empresa.cnpj || "-"}</TableCell>
+                      <TableCell>{granja.cnpj || "-"}</TableCell>
                       <TableCell>
-                        {empresa.cidade && empresa.uf
-                          ? `${empresa.cidade}/${empresa.uf}`
+                        {granja.cidade && granja.uf
+                          ? `${granja.cidade}/${granja.uf}`
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        {empresa.total_hectares?.toLocaleString("pt-BR") || 0}
+                        {granja.total_hectares?.toLocaleString("pt-BR") || 0}
                       </TableCell>
                       <TableCell>
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            empresa.ativa
+                            granja.ativa
                               ? "bg-success/10 text-success"
                               : "bg-destructive/10 text-destructive"
                           }`}
                         >
-                          {empresa.ativa ? "Ativa" : "Inativa"}
+                          {granja.ativa ? "Ativa" : "Inativa"}
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
@@ -228,7 +228,7 @@ export default function Empresas() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleEdit(empresa)}
+                              onClick={() => handleEdit(granja)}
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -236,7 +236,7 @@ export default function Empresas() {
                               variant="ghost"
                               size="icon"
                               onClick={() => {
-                                setSelectedEmpresa(empresa);
+                                setSelectedGranja(granja);
                                 setDeleteDialogOpen(true);
                               }}
                             >
@@ -253,14 +253,14 @@ export default function Empresas() {
           ) : (
             <div className="text-center py-12">
               <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Nenhuma empresa encontrada</h3>
+              <h3 className="text-lg font-medium mb-2">Nenhuma granja encontrada</h3>
               <p className="text-muted-foreground mb-4">
-                {search ? "Tente ajustar sua busca" : "Comece cadastrando uma empresa"}
+                {search ? "Tente ajustar sua busca" : "Comece cadastrando uma granja"}
               </p>
               {!search && canEdit && (
                 <Button onClick={handleNew}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Cadastrar Empresa
+                  Cadastrar Granja
                 </Button>
               )}
             </div>
@@ -273,7 +273,7 @@ export default function Empresas() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedEmpresa ? "Editar Empresa" : "Nova Empresa"}
+              {selectedGranja ? "Editar Granja" : "Nova Granja"}
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
@@ -408,9 +408,9 @@ export default function Empresas() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={!formData.razao_social || createEmpresa.isPending || updateEmpresa.isPending}
+              disabled={!formData.razao_social || createGranja.isPending || updateGranja.isPending}
             >
-              {createEmpresa.isPending || updateEmpresa.isPending ? "Salvando..." : "Salvar"}
+              {createGranja.isPending || updateGranja.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </div>
         </DialogContent>
@@ -422,7 +422,7 @@ export default function Empresas() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir a empresa "{selectedEmpresa?.razao_social}"?
+              Tem certeza que deseja excluir a granja "{selectedGranja?.razao_social}"?
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>

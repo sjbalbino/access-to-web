@@ -10,7 +10,7 @@ export interface Produtor {
   tipo_produtor: string | null;
   cpf_cnpj: string | null;
   identidade: string | null;
-  empresa_id: string | null;
+  granja_id: string | null;
   logradouro: string | null;
   numero: string | null;
   complemento: string | null;
@@ -36,7 +36,7 @@ export function useProdutores() {
         .from("produtores")
         .select(`
           *,
-          empresas (id, razao_social)
+          granja:granjas (id, razao_social)
         `)
         .order("nome");
       if (error) throw error;
@@ -54,7 +54,7 @@ export function useProdutor(id: string | undefined) {
         .from("produtores")
         .select(`
           *,
-          empresas (id, razao_social)
+          granja:granjas (id, razao_social)
         `)
         .eq("id", id)
         .maybeSingle();

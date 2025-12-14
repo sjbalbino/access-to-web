@@ -230,7 +230,7 @@ export type Database = {
           cpf_cnpj: string | null
           created_at: string
           email: string | null
-          empresa_id: string | null
+          granja_id: string | null
           id: string
           inscricao_estadual: string | null
           logradouro: string | null
@@ -256,7 +256,7 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
-          empresa_id?: string | null
+          granja_id?: string | null
           id?: string
           inscricao_estadual?: string | null
           logradouro?: string | null
@@ -282,7 +282,7 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
-          empresa_id?: string | null
+          granja_id?: string | null
           id?: string
           inscricao_estadual?: string | null
           logradouro?: string | null
@@ -299,9 +299,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "clientes_fornecedores_empresa_id_fkey"
-            columns: ["empresa_id"]
+            columns: ["granja_id"]
             isOneToOne: false
-            referencedRelation: "empresas"
+            referencedRelation: "granjas"
             referencedColumns: ["id"]
           },
         ]
@@ -545,72 +545,6 @@ export type Database = {
         }
         Relationships: []
       }
-      empresas: {
-        Row: {
-          ativa: boolean | null
-          bairro: string | null
-          cep: string | null
-          cidade: string | null
-          cnpj: string | null
-          codigo: string | null
-          complemento: string | null
-          created_at: string
-          email: string | null
-          id: string
-          inscricao_estadual: string | null
-          logradouro: string | null
-          nome_fantasia: string | null
-          numero: string | null
-          razao_social: string
-          telefone: string | null
-          total_hectares: number | null
-          uf: string | null
-          updated_at: string
-        }
-        Insert: {
-          ativa?: boolean | null
-          bairro?: string | null
-          cep?: string | null
-          cidade?: string | null
-          cnpj?: string | null
-          codigo?: string | null
-          complemento?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          inscricao_estadual?: string | null
-          logradouro?: string | null
-          nome_fantasia?: string | null
-          numero?: string | null
-          razao_social: string
-          telefone?: string | null
-          total_hectares?: number | null
-          uf?: string | null
-          updated_at?: string
-        }
-        Update: {
-          ativa?: boolean | null
-          bairro?: string | null
-          cep?: string | null
-          cidade?: string | null
-          cnpj?: string | null
-          codigo?: string | null
-          complemento?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          inscricao_estadual?: string | null
-          logradouro?: string | null
-          nome_fantasia?: string | null
-          numero?: string | null
-          razao_social?: string
-          telefone?: string | null
-          total_hectares?: number | null
-          uf?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       floracoes: {
         Row: {
           controle_lavoura_id: string
@@ -652,6 +586,83 @@ export type Database = {
           },
         ]
       }
+      granjas: {
+        Row: {
+          ativa: boolean | null
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          codigo: string | null
+          complemento: string | null
+          created_at: string
+          email: string | null
+          id: string
+          inscricao_estadual: string | null
+          logradouro: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          razao_social: string
+          telefone: string | null
+          tenant_id: string | null
+          total_hectares: number | null
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          razao_social: string
+          telefone?: string | null
+          tenant_id?: string | null
+          total_hectares?: number | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          razao_social?: string
+          telefone?: string | null
+          tenant_id?: string | null
+          total_hectares?: number | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "granjas_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inscricoes_produtor: {
         Row: {
           ativa: boolean | null
@@ -662,8 +673,8 @@ export type Database = {
           cpf_cnpj: string | null
           created_at: string
           email: string | null
-          empresa_id: string | null
           granja: string | null
+          granja_id: string | null
           id: string
           inscricao_estadual: string | null
           logradouro: string | null
@@ -683,8 +694,8 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
-          empresa_id?: string | null
           granja?: string | null
+          granja_id?: string | null
           id?: string
           inscricao_estadual?: string | null
           logradouro?: string | null
@@ -704,8 +715,8 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
-          empresa_id?: string | null
           granja?: string | null
+          granja_id?: string | null
           id?: string
           inscricao_estadual?: string | null
           logradouro?: string | null
@@ -719,9 +730,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "inscricoes_produtor_empresa_id_fkey"
-            columns: ["empresa_id"]
+            columns: ["granja_id"]
             isOneToOne: false
-            referencedRelation: "empresas"
+            referencedRelation: "granjas"
             referencedColumns: ["id"]
           },
           {
@@ -784,7 +795,7 @@ export type Database = {
           ativa: boolean | null
           codigo: string | null
           created_at: string
-          empresa_id: string | null
+          granja_id: string | null
           id: string
           latitude: number | null
           longitude: number | null
@@ -799,7 +810,7 @@ export type Database = {
           ativa?: boolean | null
           codigo?: string | null
           created_at?: string
-          empresa_id?: string | null
+          granja_id?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
@@ -814,7 +825,7 @@ export type Database = {
           ativa?: boolean | null
           codigo?: string | null
           created_at?: string
-          empresa_id?: string | null
+          granja_id?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
@@ -826,9 +837,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "lavouras_empresa_id_fkey"
-            columns: ["empresa_id"]
+            columns: ["granja_id"]
             isOneToOne: false
-            referencedRelation: "empresas"
+            referencedRelation: "granjas"
             referencedColumns: ["id"]
           },
         ]
@@ -884,7 +895,7 @@ export type Database = {
           capacidade_kg: number | null
           cor: string | null
           created_at: string
-          empresa_id: string | null
+          granja_id: string | null
           id: string
           marca: string | null
           modelo: string | null
@@ -900,7 +911,7 @@ export type Database = {
           capacidade_kg?: number | null
           cor?: string | null
           created_at?: string
-          empresa_id?: string | null
+          granja_id?: string | null
           id?: string
           marca?: string | null
           modelo?: string | null
@@ -916,7 +927,7 @@ export type Database = {
           capacidade_kg?: number | null
           cor?: string | null
           created_at?: string
-          empresa_id?: string | null
+          granja_id?: string | null
           id?: string
           marca?: string | null
           modelo?: string | null
@@ -929,9 +940,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "placas_empresa_id_fkey"
-            columns: ["empresa_id"]
+            columns: ["granja_id"]
             isOneToOne: false
-            referencedRelation: "empresas"
+            referencedRelation: "granjas"
             referencedColumns: ["id"]
           },
         ]
@@ -1079,7 +1090,7 @@ export type Database = {
           cpf_cnpj: string | null
           created_at: string
           email: string | null
-          empresa_id: string | null
+          granja_id: string | null
           id: string
           identidade: string | null
           logradouro: string | null
@@ -1102,7 +1113,7 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
-          empresa_id?: string | null
+          granja_id?: string | null
           id?: string
           identidade?: string | null
           logradouro?: string | null
@@ -1125,7 +1136,7 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
-          empresa_id?: string | null
+          granja_id?: string | null
           id?: string
           identidade?: string | null
           logradouro?: string | null
@@ -1140,9 +1151,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "produtores_empresa_id_fkey"
-            columns: ["empresa_id"]
+            columns: ["granja_id"]
             isOneToOne: false
-            referencedRelation: "empresas"
+            referencedRelation: "granjas"
             referencedColumns: ["id"]
           },
         ]
@@ -1153,10 +1164,10 @@ export type Database = {
           codigo: string | null
           created_at: string
           descricao: string | null
-          empresa_id: string | null
           estoque_atual: number | null
           estoque_minimo: number | null
           fornecedor_id: string | null
+          granja_id: string | null
           id: string
           nome: string
           preco_custo: number | null
@@ -1170,10 +1181,10 @@ export type Database = {
           codigo?: string | null
           created_at?: string
           descricao?: string | null
-          empresa_id?: string | null
           estoque_atual?: number | null
           estoque_minimo?: number | null
           fornecedor_id?: string | null
+          granja_id?: string | null
           id?: string
           nome: string
           preco_custo?: number | null
@@ -1187,10 +1198,10 @@ export type Database = {
           codigo?: string | null
           created_at?: string
           descricao?: string | null
-          empresa_id?: string | null
           estoque_atual?: number | null
           estoque_minimo?: number | null
           fornecedor_id?: string | null
+          granja_id?: string | null
           id?: string
           nome?: string
           preco_custo?: number | null
@@ -1202,9 +1213,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "produtos_empresa_id_fkey"
-            columns: ["empresa_id"]
+            columns: ["granja_id"]
             isOneToOne: false
-            referencedRelation: "empresas"
+            referencedRelation: "granjas"
             referencedColumns: ["id"]
           },
           {
@@ -1231,6 +1242,7 @@ export type Database = {
           email: string | null
           id: string
           nome: string | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1240,6 +1252,7 @@ export type Database = {
           email?: string | null
           id: string
           nome?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1249,9 +1262,18 @@ export type Database = {
           email?: string | null
           id?: string
           nome?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       safras: {
         Row: {
@@ -1307,7 +1329,7 @@ export type Database = {
           capacidade_sacas: number | null
           codigo: string | null
           created_at: string
-          empresa_id: string | null
+          granja_id: string | null
           id: string
           localizacao: string | null
           nome: string
@@ -1321,7 +1343,7 @@ export type Database = {
           capacidade_sacas?: number | null
           codigo?: string | null
           created_at?: string
-          empresa_id?: string | null
+          granja_id?: string | null
           id?: string
           localizacao?: string | null
           nome: string
@@ -1335,7 +1357,7 @@ export type Database = {
           capacidade_sacas?: number | null
           codigo?: string | null
           created_at?: string
-          empresa_id?: string | null
+          granja_id?: string | null
           id?: string
           localizacao?: string | null
           nome?: string
@@ -1346,9 +1368,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "silos_empresa_id_fkey"
-            columns: ["empresa_id"]
+            columns: ["granja_id"]
             isOneToOne: false
-            referencedRelation: "empresas"
+            referencedRelation: "granjas"
             referencedColumns: ["id"]
           },
         ]
@@ -1399,6 +1421,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tenants: {
+        Row: {
+          ativo: boolean | null
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          codigo: string | null
+          complemento: string | null
+          created_at: string
+          email: string | null
+          id: string
+          inscricao_estadual: string | null
+          logradouro: string | null
+          nome_fantasia: string | null
+          numero: string | null
+          razao_social: string
+          telefone: string | null
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          razao_social: string
+          telefone?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          logradouro?: string | null
+          nome_fantasia?: string | null
+          numero?: string | null
+          razao_social?: string
+          telefone?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       unidades_medida: {
         Row: {
@@ -1495,6 +1580,11 @@ export type Database = {
     }
     Functions: {
       can_edit: { Args: { _user_id: string }; Returns: boolean }
+      get_user_tenant_id: { Args: never; Returns: string }
+      granja_belongs_to_tenant: {
+        Args: { _granja_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1502,6 +1592,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "operador" | "visualizador"

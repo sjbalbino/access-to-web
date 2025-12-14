@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 export type Silo = {
   id: string;
-  empresa_id: string | null;
+  granja_id: string | null;
   codigo: string | null;
   nome: string;
   capacidade_kg: number | null;
@@ -27,7 +27,7 @@ export function useSilos() {
         .from('silos')
         .select(`
           *,
-          empresa:empresas(id, razao_social)
+          granja:granjas(id, razao_social)
         `)
         .order('nome');
       if (error) throw error;

@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 export type Placa = {
   id: string;
-  empresa_id: string | null;
+  granja_id: string | null;
   placa: string;
   tipo: string | null;
   marca: string | null;
@@ -29,7 +29,7 @@ export function usePlacas() {
         .from('placas')
         .select(`
           *,
-          empresa:empresas(id, razao_social)
+          granja:granjas(id, razao_social)
         `)
         .order('placa');
       if (error) throw error;
