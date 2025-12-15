@@ -1160,7 +1160,7 @@ export type Database = {
             foreignKeyName: "plantios_variedade_id_fkey"
             columns: ["variedade_id"]
             isOneToOne: false
-            referencedRelation: "variedades"
+            referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
         ]
