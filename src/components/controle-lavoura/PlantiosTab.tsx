@@ -42,6 +42,16 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
   const updateMutation = useUpdatePlantio();
   const deleteMutation = useDeletePlantio();
 
+  // Calcular Kgs/HA automaticamente
+  useEffect(() => {
+    if (formData.area_plantada && formData.area_plantada > 0) {
+      const kgsHa = formData.quantidade_semente / formData.area_plantada;
+      setFormData(prev => ({ ...prev, populacao_ha: parseFloat(kgsHa.toFixed(2)) }));
+    } else {
+      setFormData(prev => ({ ...prev, populacao_ha: 0 }));
+    }
+  }, [formData.quantidade_semente, formData.area_plantada]);
+
   if (!controleLavouraId) {
     return (
       <Alert>
@@ -124,7 +134,7 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
                 <TableHead>Variedade</TableHead>
                 <TableHead className="text-right">Área (ha)</TableHead>
                 <TableHead className="text-right">Qtd Semente</TableHead>
-                <TableHead className="text-right">Pop./ha</TableHead>
+                <TableHead className="text-right">Kgs/HA</TableHead>
                 {canEdit && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
@@ -223,12 +233,13 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>População/ha</Label>
+                <Label>Kgs/HA</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={formData.populacao_ha || ''}
-                  onChange={(e) => setFormData({ ...formData, populacao_ha: parseFloat(e.target.value) || 0 })}
+                  readOnly
+                  className="bg-muted"
                 />
               </div>
 
