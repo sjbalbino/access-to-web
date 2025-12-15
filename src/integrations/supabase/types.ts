@@ -1160,52 +1160,103 @@ export type Database = {
       }
       produtos: {
         Row: {
+          artigo_nfe: string | null
           ativo: boolean | null
+          cod_fornecedor: string | null
           codigo: string | null
+          codigo_barras: string | null
           created_at: string
+          cst_cofins: string | null
+          cst_icms: string | null
+          cst_ipi: string | null
+          cst_pis: string | null
           descricao: string | null
           estoque_atual: number | null
+          estoque_maximo: number | null
           estoque_minimo: number | null
           fornecedor_id: string | null
           granja_id: string | null
+          grupo: string | null
           id: string
+          natureza_receita: string | null
+          ncm: string | null
           nome: string
+          observacao_tributaria: string | null
+          peso_saco: number | null
           preco_custo: number | null
+          preco_prazo: number | null
           preco_venda: number | null
+          produto_residuo_id: string | null
+          qtd_venda: number | null
+          tempo_maximo: number | null
           tipo: string
           unidade_medida_id: string | null
           updated_at: string
         }
         Insert: {
+          artigo_nfe?: string | null
           ativo?: boolean | null
+          cod_fornecedor?: string | null
           codigo?: string | null
+          codigo_barras?: string | null
           created_at?: string
+          cst_cofins?: string | null
+          cst_icms?: string | null
+          cst_ipi?: string | null
+          cst_pis?: string | null
           descricao?: string | null
           estoque_atual?: number | null
+          estoque_maximo?: number | null
           estoque_minimo?: number | null
           fornecedor_id?: string | null
           granja_id?: string | null
+          grupo?: string | null
           id?: string
+          natureza_receita?: string | null
+          ncm?: string | null
           nome: string
+          observacao_tributaria?: string | null
+          peso_saco?: number | null
           preco_custo?: number | null
+          preco_prazo?: number | null
           preco_venda?: number | null
+          produto_residuo_id?: string | null
+          qtd_venda?: number | null
+          tempo_maximo?: number | null
           tipo?: string
           unidade_medida_id?: string | null
           updated_at?: string
         }
         Update: {
+          artigo_nfe?: string | null
           ativo?: boolean | null
+          cod_fornecedor?: string | null
           codigo?: string | null
+          codigo_barras?: string | null
           created_at?: string
+          cst_cofins?: string | null
+          cst_icms?: string | null
+          cst_ipi?: string | null
+          cst_pis?: string | null
           descricao?: string | null
           estoque_atual?: number | null
+          estoque_maximo?: number | null
           estoque_minimo?: number | null
           fornecedor_id?: string | null
           granja_id?: string | null
+          grupo?: string | null
           id?: string
+          natureza_receita?: string | null
+          ncm?: string | null
           nome?: string
+          observacao_tributaria?: string | null
+          peso_saco?: number | null
           preco_custo?: number | null
+          preco_prazo?: number | null
           preco_venda?: number | null
+          produto_residuo_id?: string | null
+          qtd_venda?: number | null
+          tempo_maximo?: number | null
           tipo?: string
           unidade_medida_id?: string | null
           updated_at?: string
@@ -1223,6 +1274,13 @@ export type Database = {
             columns: ["fornecedor_id"]
             isOneToOne: false
             referencedRelation: "clientes_fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_produto_residuo_id_fkey"
+            columns: ["produto_residuo_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
           {

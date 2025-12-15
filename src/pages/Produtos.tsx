@@ -12,10 +12,49 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Package, DollarSign } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Plus, Pencil, Trash2, Package, DollarSign, Warehouse, FileText, Building2 } from 'lucide-react';
 import { useProdutos, useCreateProduto, useUpdateProduto, useDeleteProduto, ProdutoInsert } from '@/hooks/useProdutos';
 import { useUnidadesMedida } from '@/hooks/useUnidadesMedida';
 import { useClientesFornecedores } from '@/hooks/useClientesFornecedores';
+
+const GRUPOS = [
+  'SEMENTES',
+  'INSUMOS',
+  'DEFENSIVOS',
+  'FERTILIZANTES',
+  'COMBUSTÍVEIS',
+  'PEÇAS',
+  'CEREAIS',
+  'OUTROS',
+];
+
+const CST_PIS_COFINS = [
+  { value: '01', label: '01 - Tributável (Alíquota Básica)' },
+  { value: '04', label: '04 - Tributável (Monofásica)' },
+  { value: '06', label: '06 - Alíquota Zero' },
+  { value: '07', label: '07 - Isenta' },
+  { value: '08', label: '08 - Sem Incidência' },
+  { value: '09', label: '09 - Com Suspensão' },
+];
+
+const CST_ICMS = [
+  { value: '00', label: '00 - Tributada integralmente' },
+  { value: '20', label: '20 - Redução base de cálculo' },
+  { value: '40', label: '40 - Isenta' },
+  { value: '41', label: '41 - Não tributada' },
+  { value: '51', label: '51 - Diferimento' },
+  { value: '60', label: '60 - ICMS cobrado anteriormente por ST' },
+];
+
+const CST_IPI = [
+  { value: '50', label: '50 - Saída Tributada' },
+  { value: '51', label: '51 - Saída Tributada com Alíquota Zero' },
+  { value: '52', label: '52 - Saída Isenta' },
+  { value: '53', label: '53 - Saída Não-Tributada' },
+  { value: '54', label: '54 - Saída Imune' },
+  { value: '55', label: '55 - Saída com Suspensão' },
+];
 
 export default function Produtos() {
   const { canEdit } = useAuth();
@@ -41,6 +80,24 @@ export default function Produtos() {
     preco_venda: 0,
     fornecedor_id: null,
     ativo: true,
+    // Novos campos
+    codigo_barras: '',
+    grupo: null,
+    artigo_nfe: '',
+    preco_prazo: 0,
+    estoque_maximo: 0,
+    tempo_maximo: 0,
+    qtd_venda: 1,
+    cod_fornecedor: '',
+    peso_saco: 60,
+    produto_residuo_id: null,
+    ncm: '',
+    cst_pis: '',
+    cst_cofins: '',
+    cst_icms: '',
+    cst_ipi: '',
+    natureza_receita: '',
+    observacao_tributaria: '',
   });
 
   const resetForm = () => {
@@ -57,6 +114,23 @@ export default function Produtos() {
       preco_venda: 0,
       fornecedor_id: null,
       ativo: true,
+      codigo_barras: '',
+      grupo: null,
+      artigo_nfe: '',
+      preco_prazo: 0,
+      estoque_maximo: 0,
+      tempo_maximo: 0,
+      qtd_venda: 1,
+      cod_fornecedor: '',
+      peso_saco: 60,
+      produto_residuo_id: null,
+      ncm: '',
+      cst_pis: '',
+      cst_cofins: '',
+      cst_icms: '',
+      cst_ipi: '',
+      natureza_receita: '',
+      observacao_tributaria: '',
     });
     setEditingItem(null);
   };
@@ -87,6 +161,23 @@ export default function Produtos() {
       preco_venda: item.preco_venda || 0,
       fornecedor_id: item.fornecedor_id,
       ativo: item.ativo,
+      codigo_barras: item.codigo_barras || '',
+      grupo: item.grupo || null,
+      artigo_nfe: item.artigo_nfe || '',
+      preco_prazo: item.preco_prazo || 0,
+      estoque_maximo: item.estoque_maximo || 0,
+      tempo_maximo: item.tempo_maximo || 0,
+      qtd_venda: item.qtd_venda || 1,
+      cod_fornecedor: item.cod_fornecedor || '',
+      peso_saco: item.peso_saco || 60,
+      produto_residuo_id: item.produto_residuo_id || null,
+      ncm: item.ncm || '',
+      cst_pis: item.cst_pis || '',
+      cst_cofins: item.cst_cofins || '',
+      cst_icms: item.cst_icms || '',
+      cst_ipi: item.cst_ipi || '',
+      natureza_receita: item.natureza_receita || '',
+      observacao_tributaria: item.observacao_tributaria || '',
     });
     setIsDialogOpen(true);
   };
@@ -117,6 +208,9 @@ export default function Produtos() {
 
   const fornecedoresFiltrados = fornecedores?.filter(f => f.tipo === 'fornecedor' || f.tipo === 'ambos');
 
+  // Produtos ativos para seleção de produto resíduo
+  const produtosAtivos = produtos?.filter((p: any) => p.ativo && p.id !== editingItem?.id);
+
   if (isLoading) {
     return <div className="p-8">Carregando...</div>;
   }
@@ -144,82 +238,245 @@ export default function Produtos() {
                   Novo Produto
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{editingItem ? 'Editar' : 'Novo'} Produto</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Tipo *</Label>
-                      <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="insumo">Insumo</SelectItem>
-                          <SelectItem value="produto">Produto</SelectItem>
-                          <SelectItem value="semente">Semente</SelectItem>
-                        </SelectContent>
-                      </Select>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Seção: Dados Básicos */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-primary font-semibold">
+                      <Package className="h-4 w-4" />
+                      Dados Básicos
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Código</Label>
+                        <Input value={formData.codigo || ''} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Cód. de Barras</Label>
+                        <Input value={formData.codigo_barras || ''} onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Unidade de Medida</Label>
+                        <Select value={formData.unidade_medida_id || ''} onValueChange={(value) => setFormData({ ...formData, unidade_medida_id: value || null })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            {unidades?.filter(u => u.ativa).map((und) => (
+                              <SelectItem key={und.id} value={und.id}>{und.codigo} - {und.descricao}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Grupo</Label>
+                        <Select value={formData.grupo || ''} onValueChange={(value) => setFormData({ ...formData, grupo: value || null })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            {GRUPOS.map((grupo) => (
+                              <SelectItem key={grupo} value={grupo}>{grupo}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Nome / Descrição *</Label>
+                        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Tipo *</Label>
+                        <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="insumo">Insumo</SelectItem>
+                            <SelectItem value="produto">Produto</SelectItem>
+                            <SelectItem value="semente">Semente</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>Código</Label>
-                      <Input value={formData.codigo || ''} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} />
+                      <Label>Artigo NFe (nome para nota fiscal)</Label>
+                      <Input value={formData.artigo_nfe || ''} onChange={(e) => setFormData({ ...formData, artigo_nfe: e.target.value })} />
                     </div>
                     <div className="space-y-2">
-                      <Label>Unidade de Medida</Label>
-                      <Select value={formData.unidade_medida_id || ''} onValueChange={(value) => setFormData({ ...formData, unidade_medida_id: value || null })}>
-                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                        <SelectContent>
-                          {unidades?.filter(u => u.ativa).map((und) => (
-                            <SelectItem key={und.id} value={und.id}>{und.codigo} - {und.descricao}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Nome *</Label>
-                    <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Descrição</Label>
-                    <Textarea value={formData.descricao || ''} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Fornecedor Principal</Label>
-                    <Select value={formData.fornecedor_id || ''} onValueChange={(value) => setFormData({ ...formData, fornecedor_id: value || null })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                      <SelectContent>
-                        {fornecedoresFiltrados?.map((forn) => (
-                          <SelectItem key={forn.id} value={forn.id}>{forn.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>Estoque Mínimo</Label>
-                      <Input type="number" step="0.01" value={formData.estoque_minimo || ''} onChange={(e) => setFormData({ ...formData, estoque_minimo: parseFloat(e.target.value) || 0 })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Estoque Atual</Label>
-                      <Input type="number" step="0.01" value={formData.estoque_atual || ''} onChange={(e) => setFormData({ ...formData, estoque_atual: parseFloat(e.target.value) || 0 })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Preço Custo (R$)</Label>
-                      <Input type="number" step="0.01" value={formData.preco_custo || ''} onChange={(e) => setFormData({ ...formData, preco_custo: parseFloat(e.target.value) || 0 })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Preço Venda (R$)</Label>
-                      <Input type="number" step="0.01" value={formData.preco_venda || ''} onChange={(e) => setFormData({ ...formData, preco_venda: parseFloat(e.target.value) || 0 })} />
+                      <Label>Descrição Detalhada</Label>
+                      <Textarea value={formData.descricao || ''} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} rows={2} />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  {/* Seção: Preços */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-primary font-semibold">
+                      <DollarSign className="h-4 w-4" />
+                      Preços
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Preço Custo (R$)</Label>
+                        <Input type="number" step="0.01" value={formData.preco_custo || ''} onChange={(e) => setFormData({ ...formData, preco_custo: parseFloat(e.target.value) || 0 })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Preço à Vista (R$)</Label>
+                        <Input type="number" step="0.01" value={formData.preco_venda || ''} onChange={(e) => setFormData({ ...formData, preco_venda: parseFloat(e.target.value) || 0 })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Preço à Prazo (R$)</Label>
+                        <Input type="number" step="0.01" value={formData.preco_prazo || ''} onChange={(e) => setFormData({ ...formData, preco_prazo: parseFloat(e.target.value) || 0 })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Seção: Estoque e Venda */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-primary font-semibold">
+                      <Warehouse className="h-4 w-4" />
+                      Estoque e Venda
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      <div className="space-y-2">
+                        <Label>Estoque Atual</Label>
+                        <Input type="number" step="0.01" value={formData.estoque_atual || ''} onChange={(e) => setFormData({ ...formData, estoque_atual: parseFloat(e.target.value) || 0 })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Estoque Mínimo</Label>
+                        <Input type="number" step="0.01" value={formData.estoque_minimo || ''} onChange={(e) => setFormData({ ...formData, estoque_minimo: parseFloat(e.target.value) || 0 })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Estoque Máximo</Label>
+                        <Input type="number" step="0.01" value={formData.estoque_maximo || ''} onChange={(e) => setFormData({ ...formData, estoque_maximo: parseFloat(e.target.value) || 0 })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Tempo Máximo (dias)</Label>
+                        <Input type="number" value={formData.tempo_maximo || ''} onChange={(e) => setFormData({ ...formData, tempo_maximo: parseInt(e.target.value) || 0 })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Qtd. Venda</Label>
+                        <Input type="number" step="0.01" value={formData.qtd_venda || ''} onChange={(e) => setFormData({ ...formData, qtd_venda: parseFloat(e.target.value) || 1 })} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Peso do Saco (kg)</Label>
+                        <Input type="number" step="0.01" value={formData.peso_saco || ''} onChange={(e) => setFormData({ ...formData, peso_saco: parseFloat(e.target.value) || 60 })} placeholder="Ex: 60 para indústria, 50 para semente" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Produto Resíduo</Label>
+                        <Select value={formData.produto_residuo_id || ''} onValueChange={(value) => setFormData({ ...formData, produto_residuo_id: value || null })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione o produto resultante..." /></SelectTrigger>
+                          <SelectContent>
+                            {produtosAtivos?.map((prod: any) => (
+                              <SelectItem key={prod.id} value={prod.id}>{prod.nome}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Seção: Dados Fiscais (NFe) */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-primary font-semibold">
+                      <FileText className="h-4 w-4" />
+                      Dados Fiscais (NFe)
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>NCM</Label>
+                        <Input value={formData.ncm || ''} onChange={(e) => setFormData({ ...formData, ncm: e.target.value })} placeholder="Ex: 12019000" maxLength={10} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Natureza Receita</Label>
+                        <Input value={formData.natureza_receita || ''} onChange={(e) => setFormData({ ...formData, natureza_receita: e.target.value })} placeholder="Ex: 213" maxLength={10} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>CST PIS</Label>
+                        <Select value={formData.cst_pis || ''} onValueChange={(value) => setFormData({ ...formData, cst_pis: value || null })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            {CST_PIS_COFINS.map((cst) => (
+                              <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>CST COFINS</Label>
+                        <Select value={formData.cst_cofins || ''} onValueChange={(value) => setFormData({ ...formData, cst_cofins: value || null })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            {CST_PIS_COFINS.map((cst) => (
+                              <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>CST ICMS</Label>
+                        <Select value={formData.cst_icms || ''} onValueChange={(value) => setFormData({ ...formData, cst_icms: value || null })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            {CST_ICMS.map((cst) => (
+                              <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>CST IPI</Label>
+                        <Select value={formData.cst_ipi || ''} onValueChange={(value) => setFormData({ ...formData, cst_ipi: value || null })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            {CST_IPI.map((cst) => (
+                              <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Observação Tributária</Label>
+                      <Textarea value={formData.observacao_tributaria || ''} onChange={(e) => setFormData({ ...formData, observacao_tributaria: e.target.value })} rows={2} />
+                    </div>
+                  </div>
+
+                  {/* Seção: Fornecedor */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-primary font-semibold">
+                      <Building2 className="h-4 w-4" />
+                      Fornecedor
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Fornecedor Principal</Label>
+                        <Select value={formData.fornecedor_id || ''} onValueChange={(value) => setFormData({ ...formData, fornecedor_id: value || null })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            {fornecedoresFiltrados?.map((forn) => (
+                              <SelectItem key={forn.id} value={forn.id}>{forn.nome}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Código no Fornecedor</Label>
+                        <Input value={formData.cod_fornecedor || ''} onChange={(e) => setFormData({ ...formData, cod_fornecedor: e.target.value })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="flex items-center gap-2 pt-4 border-t">
                     <Switch checked={formData.ativo ?? true} onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })} />
                     <Label>Ativo</Label>
                   </div>
@@ -240,6 +497,7 @@ export default function Produtos() {
                 <TableHead>Código</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Tipo</TableHead>
+                <TableHead>Grupo</TableHead>
                 <TableHead>Unidade</TableHead>
                 <TableHead className="text-right">Estoque</TableHead>
                 <TableHead className="text-right">Preço Venda</TableHead>
@@ -253,6 +511,7 @@ export default function Produtos() {
                   <TableCell className="font-mono">{item.codigo || '-'}</TableCell>
                   <TableCell className="font-medium">{item.nome}</TableCell>
                   <TableCell>{getTipoBadge(item.tipo)}</TableCell>
+                  <TableCell>{item.grupo || '-'}</TableCell>
                   <TableCell>{item.unidade_medida?.sigla || item.unidade_medida?.codigo || '-'}</TableCell>
                   <TableCell className="text-right">{item.estoque_atual?.toLocaleString('pt-BR') || '0'}</TableCell>
                   <TableCell className="text-right">
@@ -279,7 +538,7 @@ export default function Produtos() {
               ))}
               {(!produtos || produtos.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={canEdit ? 9 : 8} className="text-center text-muted-foreground py-8">
                     Nenhum produto cadastrado
                   </TableCell>
                 </TableRow>
