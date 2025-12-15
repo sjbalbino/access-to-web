@@ -7,7 +7,7 @@ export function useProdutosSementes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("produtos")
-        .select("id, nome, codigo")
+        .select("id, nome, codigo, preco_custo")
         .or("grupo.ilike.%semente%,grupo_id.eq.09c5674b-a9aa-4215-aab5-202761b980bb")
         .eq("ativo", true)
         .order("nome");

@@ -1087,6 +1087,8 @@ export type Database = {
           quantidade_semente: number | null
           safra_id: string | null
           updated_at: string
+          valor_total: number | null
+          valor_unitario: number | null
           variedade_id: string | null
         }
         Insert: {
@@ -1103,6 +1105,8 @@ export type Database = {
           quantidade_semente?: number | null
           safra_id?: string | null
           updated_at?: string
+          valor_total?: number | null
+          valor_unitario?: number | null
           variedade_id?: string | null
         }
         Update: {
@@ -1119,6 +1123,8 @@ export type Database = {
           quantidade_semente?: number | null
           safra_id?: string | null
           updated_at?: string
+          valor_total?: number | null
+          valor_unitario?: number | null
           variedade_id?: string | null
         }
         Relationships: [

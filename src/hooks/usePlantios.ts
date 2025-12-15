@@ -14,6 +14,8 @@ export interface Plantio {
   quantidade_semente: number | null;
   populacao_ha: number | null;
   espacamento_linha: number | null;
+  valor_unitario: number | null;
+  valor_total: number | null;
   observacoes: string | null;
   created_at: string;
   updated_at: string;
@@ -30,6 +32,8 @@ export type PlantioInput = {
   quantidade_semente: number | null;
   populacao_ha: number | null;
   espacamento_linha: number | null;
+  valor_unitario: number | null;
+  valor_total: number | null;
   observacoes: string | null;
 };
 
