@@ -18,6 +18,24 @@ export type Produto = {
   ativo: boolean | null;
   created_at: string;
   updated_at: string;
+  // Novos campos NFe
+  codigo_barras: string | null;
+  grupo: string | null;
+  artigo_nfe: string | null;
+  preco_prazo: number | null;
+  estoque_maximo: number | null;
+  tempo_maximo: number | null;
+  qtd_venda: number | null;
+  cod_fornecedor: string | null;
+  peso_saco: number | null;
+  produto_residuo_id: string | null;
+  ncm: string | null;
+  cst_pis: string | null;
+  cst_cofins: string | null;
+  cst_icms: string | null;
+  cst_ipi: string | null;
+  natureza_receita: string | null;
+  observacao_tributaria: string | null;
 };
 
 export type ProdutoInsert = Omit<Produto, 'id' | 'created_at' | 'updated_at'>;
