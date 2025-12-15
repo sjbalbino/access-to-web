@@ -25,7 +25,6 @@ export interface Plantio {
 
 export type PlantioInput = {
   controle_lavoura_id: string;
-  cultura_id: string | null;
   variedade_id: string | null;
   data_plantio: string | null;
   area_plantada: number | null;
@@ -65,10 +64,14 @@ export function useCreatePlantio() {
   
   return useMutation({
     mutationFn: async (plantio: PlantioInput) => {
-      // Buscar o controle_lavoura para obter safra_id e lavoura_id
+      // Buscar o controle_lavoura para obter safra_id, lavoura_id e cultura_id
       const { data: controle, error: controleError } = await supabase
         .from("controle_lavouras")
-        .select("safra_id, lavoura_id")
+        .select(`
+          safra_id, 
+          lavoura_id,
+          safras:safra_id(cultura_id)
+        `)
         .eq("id", plantio.controle_lavoura_id)
         .single();
       
@@ -80,6 +83,7 @@ export function useCreatePlantio() {
           ...plantio,
           safra_id: controle.safra_id,
           lavoura_id: controle.lavoura_id,
+          cultura_id: controle.safras?.cultura_id || null,
         })
         .select()
         .single();

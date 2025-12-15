@@ -464,7 +464,7 @@ export type Database = {
       controle_lavouras: {
         Row: {
           area_total: number | null
-          cobertura_solo: number | null
+          cobertura_solo: string | null
           created_at: string
           ha_plantado: number | null
           id: string
@@ -474,7 +474,7 @@ export type Database = {
         }
         Insert: {
           area_total?: number | null
-          cobertura_solo?: number | null
+          cobertura_solo?: string | null
           created_at?: string
           ha_plantado?: number | null
           id?: string
@@ -484,7 +484,7 @@ export type Database = {
         }
         Update: {
           area_total?: number | null
-          cobertura_solo?: number | null
+          cobertura_solo?: string | null
           created_at?: string
           ha_plantado?: number | null
           id?: string
@@ -544,6 +544,60 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      estoque_produtos: {
+        Row: {
+          created_at: string | null
+          custo_unitario: number | null
+          data_validade: string | null
+          granja_id: string
+          id: string
+          localizacao: string | null
+          lote: string | null
+          produto_id: string
+          quantidade: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custo_unitario?: number | null
+          data_validade?: string | null
+          granja_id: string
+          id?: string
+          localizacao?: string | null
+          lote?: string | null
+          produto_id: string
+          quantidade?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custo_unitario?: number | null
+          data_validade?: string | null
+          granja_id?: string
+          id?: string
+          localizacao?: string | null
+          lote?: string | null
+          produto_id?: string
+          quantidade?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_produtos_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_produtos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       floracoes: {
         Row: {
@@ -662,6 +716,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      grupos_produtos: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       inscricoes_produtor: {
         Row: {
@@ -1177,6 +1258,7 @@ export type Database = {
           fornecedor_id: string | null
           granja_id: string | null
           grupo: string | null
+          grupo_id: string | null
           id: string
           natureza_receita: string | null
           ncm: string | null
@@ -1211,6 +1293,7 @@ export type Database = {
           fornecedor_id?: string | null
           granja_id?: string | null
           grupo?: string | null
+          grupo_id?: string | null
           id?: string
           natureza_receita?: string | null
           ncm?: string | null
@@ -1245,6 +1328,7 @@ export type Database = {
           fornecedor_id?: string | null
           granja_id?: string | null
           grupo?: string | null
+          grupo_id?: string | null
           id?: string
           natureza_receita?: string | null
           ncm?: string | null
@@ -1274,6 +1358,13 @@ export type Database = {
             columns: ["fornecedor_id"]
             isOneToOne: false
             referencedRelation: "clientes_fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_produtos"
             referencedColumns: ["id"]
           },
           {

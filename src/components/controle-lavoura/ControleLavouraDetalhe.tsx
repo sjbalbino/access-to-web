@@ -27,18 +27,19 @@ interface ControleLavouraDetalheProps {
 
 export function ControleLavouraDetalhe({ controleLavoura, onBack, canEdit }: ControleLavouraDetalheProps) {
   const [haPlantado, setHaPlantado] = useState<number>(controleLavoura.ha_plantado || 0);
-  const [coberturaSolo, setCoberturaSolo] = useState<number>(controleLavoura.cobertura_solo || 0);
+  const [coberturaSolo, setCoberturaSolo] = useState<string>(controleLavoura.cobertura_solo || '');
   const [hasChanges, setHasChanges] = useState(false);
 
   const updateMutation = useUpdateControleLavoura();
   const deleteMutation = useDeleteControleLavoura();
 
-  const handleFieldChange = (field: 'ha_plantado' | 'cobertura_solo', value: number) => {
-    if (field === 'ha_plantado') {
-      setHaPlantado(value);
-    } else {
-      setCoberturaSolo(value);
-    }
+  const handleHaPlantadoChange = (value: number) => {
+    setHaPlantado(value);
+    setHasChanges(true);
+  };
+
+  const handleCoberturaChange = (value: string) => {
+    setCoberturaSolo(value);
     setHasChanges(true);
   };
 
@@ -145,7 +146,7 @@ export function ControleLavouraDetalhe({ controleLavoura, onBack, canEdit }: Con
                 type="number"
                 step="0.01"
                 value={haPlantado || ''}
-                onChange={(e) => handleFieldChange('ha_plantado', parseFloat(e.target.value) || 0)}
+                onChange={(e) => handleHaPlantadoChange(parseFloat(e.target.value) || 0)}
                 disabled={!canEdit}
                 className="h-9"
               />
@@ -153,15 +154,15 @@ export function ControleLavouraDetalhe({ controleLavoura, onBack, canEdit }: Con
 
             {/* Cobertura Solo */}
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Cobertura Solo (%)</Label>
+              <Label className="text-xs text-muted-foreground">Cobertura do Solo</Label>
               <div className="flex gap-2">
                 <Input
-                  type="number"
-                  step="0.01"
-                  value={coberturaSolo || ''}
-                  onChange={(e) => handleFieldChange('cobertura_solo', parseFloat(e.target.value) || 0)}
+                  type="text"
+                  value={coberturaSolo}
+                  onChange={(e) => handleCoberturaChange(e.target.value)}
                   disabled={!canEdit}
                   className="h-9"
+                  placeholder="Ex: Palhada, Nabo..."
                 />
                 {canEdit && hasChanges && (
                   <Button size="sm" onClick={handleSave} disabled={updateMutation.isPending} className="h-9">

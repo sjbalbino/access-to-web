@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
@@ -13,21 +13,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Pencil, Trash2, Package, DollarSign, Warehouse, FileText, Building2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Plus, Pencil, Trash2, Package, DollarSign, Warehouse, FileText, Building2, Search, Check } from 'lucide-react';
 import { useProdutos, useCreateProduto, useUpdateProduto, useDeleteProduto, ProdutoInsert } from '@/hooks/useProdutos';
 import { useUnidadesMedida } from '@/hooks/useUnidadesMedida';
 import { useClientesFornecedores } from '@/hooks/useClientesFornecedores';
-
-const GRUPOS = [
-  'SEMENTES',
-  'INSUMOS',
-  'DEFENSIVOS',
-  'FERTILIZANTES',
-  'COMBUSTÍVEIS',
-  'PEÇAS',
-  'CEREAIS',
-  'OUTROS',
-];
+import { useGruposProdutos } from '@/hooks/useGruposProdutos';
+import { useNcmSearch } from '@/hooks/useNcmSearch';
+import { cn } from '@/lib/utils';
 
 const CST_PIS_COFINS = [
   { value: '01', label: '01 - Tributável (Alíquota Básica)' },
@@ -61,9 +55,14 @@ export default function Produtos() {
   const { data: produtos, isLoading } = useProdutos();
   const { data: unidades } = useUnidadesMedida();
   const { data: fornecedores } = useClientesFornecedores();
+  const { data: grupos } = useGruposProdutos();
+  const { results: ncmResults, isLoading: ncmLoading, searchNcm } = useNcmSearch();
   const createMutation = useCreateProduto();
   const updateMutation = useUpdateProduto();
   const deleteMutation = useDeleteProduto();
+
+  const [ncmOpen, setNcmOpen] = useState(false);
+  const [ncmSearch, setNcmSearch] = useState('');
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -211,6 +210,19 @@ export default function Produtos() {
   // Produtos ativos para seleção de produto resíduo
   const produtosAtivos = produtos?.filter((p: any) => p.ativo && p.id !== editingItem?.id);
 
+  // Grupos ativos para seleção
+  const gruposAtivos = grupos?.filter(g => g.ativo);
+
+  // Handler para busca de NCM
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (ncmSearch.length >= 2) {
+        searchNcm(ncmSearch);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [ncmSearch]);
+
   if (isLoading) {
     return <div className="p-8">Carregando...</div>;
   }
@@ -275,8 +287,8 @@ export default function Produtos() {
                         <Select value={formData.grupo || ''} onValueChange={(value) => setFormData({ ...formData, grupo: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
-                            {GRUPOS.map((grupo) => (
-                              <SelectItem key={grupo} value={grupo}>{grupo}</SelectItem>
+                            {gruposAtivos?.map((grupo) => (
+                              <SelectItem key={grupo.id} value={grupo.nome}>{grupo.nome}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -390,7 +402,57 @@ export default function Produtos() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label>NCM</Label>
-                        <Input value={formData.ncm || ''} onChange={(e) => setFormData({ ...formData, ncm: e.target.value })} placeholder="Ex: 12019000" maxLength={10} />
+                        <Popover open={ncmOpen} onOpenChange={setNcmOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={ncmOpen}
+                              className="w-full justify-between font-normal"
+                            >
+                              {formData.ncm || "Buscar NCM..."}
+                              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[400px] p-0" align="start">
+                            <Command>
+                              <CommandInput
+                                placeholder="Digite código ou descrição..."
+                                value={ncmSearch}
+                                onValueChange={setNcmSearch}
+                              />
+                              <CommandList>
+                                <CommandEmpty>
+                                  {ncmLoading ? 'Buscando...' : 'Nenhum NCM encontrado.'}
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {ncmResults.map((ncm) => (
+                                    <CommandItem
+                                      key={ncm.codigo}
+                                      value={ncm.codigo}
+                                      onSelect={() => {
+                                        setFormData({ ...formData, ncm: ncm.codigo });
+                                        setNcmOpen(false);
+                                        setNcmSearch('');
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          formData.ncm === ncm.codigo ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      <div className="flex flex-col">
+                                        <span className="font-mono">{ncm.codigo}</span>
+                                        <span className="text-xs text-muted-foreground">{ncm.descricao}</span>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div className="space-y-2">
                         <Label>Natureza Receita</Label>

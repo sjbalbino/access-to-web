@@ -8,7 +8,7 @@ export interface ControleLavoura {
   safra_id: string;
   area_total: number | null;
   ha_plantado: number | null;
-  cobertura_solo: number | null;
+  cobertura_solo: string | null;
   created_at: string;
   updated_at: string;
   lavouras?: {
@@ -30,7 +30,7 @@ export type ControleLavouraInput = {
   safra_id: string;
   area_total: number | null;
   ha_plantado: number | null;
-  cobertura_solo: number | null;
+  cobertura_solo: string | null;
 };
 
 export function useControleLavouras(safraId?: string | null, lavouraId?: string | null) {
