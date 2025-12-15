@@ -10,8 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { usePlantios, useCreatePlantio, useUpdatePlantio, useDeletePlantio, PlantioInput } from '@/hooks/usePlantios';
-import { useVariedades } from '@/hooks/useVariedades';
-import { useControleLavoura } from '@/hooks/useControleLavouras';
+import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { format } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -33,17 +32,11 @@ const emptyPlantio: PlantioInput = {
 
 export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
   const { data: plantios, isLoading } = usePlantios(controleLavouraId);
-  const { data: controleLavoura } = useControleLavoura(controleLavouraId);
-  
-  // Obtém cultura_id da safra vinculada ao controle de lavoura
-  const culturaId = controleLavoura?.safras?.cultura_id || null;
+  const { data: produtosSementes } = useProdutosSementes();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<PlantioInput>(emptyPlantio);
-  
-  // Variedades filtradas pela cultura da safra
-  const { data: variedades } = useVariedades(culturaId);
 
   const createMutation = useCreatePlantio();
   const updateMutation = useUpdatePlantio();
@@ -143,12 +136,14 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                plantios?.map((plantio) => (
+                plantios?.map((plantio) => {
+                  const sementeNome = produtosSementes?.find(p => p.id === plantio.variedade_id)?.nome;
+                  return (
                   <TableRow key={plantio.id}>
                     <TableCell>
                       {plantio.data_plantio ? format(new Date(plantio.data_plantio), 'dd/MM/yyyy') : '-'}
                     </TableCell>
-                    <TableCell>{plantio.variedades?.nome || '-'}</TableCell>
+                    <TableCell>{sementeNome || '-'}</TableCell>
                     <TableCell className="text-right">{plantio.area_plantada?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{plantio.quantidade_semente?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{plantio.populacao_ha?.toLocaleString('pt-BR') || '0'}</TableCell>
@@ -165,7 +160,8 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
                       </TableCell>
                     )}
                   </TableRow>
-                ))
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -189,19 +185,18 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Variedade</Label>
+                <Label>Semente</Label>
                 <Select
                   value={formData.variedade_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, variedade_id: value === "none" ? null : value })}
-                  disabled={!culturaId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={culturaId ? "Selecione" : "Cultura não definida na safra"} />
+                    <SelectValue placeholder="Selecione a semente" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhuma</SelectItem>
-                    {variedades?.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
+                    {produtosSementes?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

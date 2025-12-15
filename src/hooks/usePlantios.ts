@@ -20,7 +20,6 @@ export interface Plantio {
   safras?: { id: string; nome: string } | null;
   lavouras?: { id: string; nome: string } | null;
   culturas?: { id: string; nome: string } | null;
-  variedades?: { id: string; nome: string } | null;
 }
 
 export type PlantioInput = {
@@ -46,8 +45,7 @@ export function usePlantios(controleLavouraId: string | null) {
           *,
           safras (id, nome),
           lavouras (id, nome),
-          culturas (id, nome),
-          variedades (id, nome)
+          culturas (id, nome)
         `)
         .eq("controle_lavoura_id", controleLavouraId)
         .order("data_plantio", { ascending: false });
