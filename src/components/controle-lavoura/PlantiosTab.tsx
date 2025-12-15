@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
@@ -27,6 +27,8 @@ const emptyPlantio: PlantioInput = {
   quantidade_semente: 0,
   populacao_ha: 0,
   espacamento_linha: 0,
+  valor_unitario: 0,
+  valor_total: 0,
   observacoes: null,
 };
 
@@ -42,6 +44,16 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
   const updateMutation = useUpdatePlantio();
   const deleteMutation = useDeletePlantio();
 
+  // Preencher valor unitário ao selecionar semente
+  useEffect(() => {
+    if (formData.variedade_id && !editingId) {
+      const semente = produtosSementes?.find(p => p.id === formData.variedade_id);
+      if (semente?.preco_custo) {
+        setFormData(prev => ({ ...prev, valor_unitario: semente.preco_custo }));
+      }
+    }
+  }, [formData.variedade_id, produtosSementes, editingId]);
+
   // Calcular Kgs/HA automaticamente
   useEffect(() => {
     if (formData.area_plantada && formData.area_plantada > 0) {
@@ -51,6 +63,12 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
       setFormData(prev => ({ ...prev, populacao_ha: 0 }));
     }
   }, [formData.quantidade_semente, formData.area_plantada]);
+
+  // Calcular Total automaticamente
+  useEffect(() => {
+    const total = (formData.quantidade_semente || 0) * (formData.valor_unitario || 0);
+    setFormData(prev => ({ ...prev, valor_total: parseFloat(total.toFixed(2)) }));
+  }, [formData.quantidade_semente, formData.valor_unitario]);
 
   if (!controleLavouraId) {
     return (
@@ -81,6 +99,8 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
       quantidade_semente: plantio.quantidade_semente || 0,
       populacao_ha: plantio.populacao_ha || 0,
       espacamento_linha: plantio.espacamento_linha || 0,
+      valor_unitario: plantio.valor_unitario || 0,
+      valor_total: plantio.valor_total || 0,
       observacoes: plantio.observacoes,
     });
     setEditingId(plantio.id);
@@ -104,6 +124,19 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
         onSuccess: () => setIsDialogOpen(false),
       });
     }
+  };
+
+  // Cálculos do resumo totalizador
+  const totais = plantios?.reduce((acc, p) => ({
+    area_plantada: acc.area_plantada + (p.area_plantada || 0),
+    quantidade_semente: acc.quantidade_semente + (p.quantidade_semente || 0),
+    valor_total: acc.valor_total + (p.valor_total || 0),
+  }), { area_plantada: 0, quantidade_semente: 0, valor_total: 0 }) || { area_plantada: 0, quantidade_semente: 0, valor_total: 0 };
+
+  const mediaKgsHa = totais.area_plantada > 0 ? totais.quantidade_semente / totais.area_plantada : 0;
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
   if (isLoading) {
@@ -131,17 +164,19 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
-                <TableHead>Variedade</TableHead>
+                <TableHead>Semente</TableHead>
                 <TableHead className="text-right">Área (ha)</TableHead>
-                <TableHead className="text-right">Qtd Semente</TableHead>
+                <TableHead className="text-right">Qtd Semente (kg)</TableHead>
                 <TableHead className="text-right">Kgs/HA</TableHead>
+                <TableHead className="text-right">Vlr Unit.</TableHead>
+                <TableHead className="text-right">Total</TableHead>
                 {canEdit && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {plantios?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 6 : 5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground py-8">
                     Nenhum plantio cadastrado
                   </TableCell>
                 </TableRow>
@@ -157,6 +192,8 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
                     <TableCell className="text-right">{plantio.area_plantada?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{plantio.quantidade_semente?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{plantio.populacao_ha?.toLocaleString('pt-BR') || '0'}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(plantio.valor_unitario || 0)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(plantio.valor_total || 0)}</TableCell>
                     {canEdit && (
                       <TableCell>
                         <div className="flex gap-1">
@@ -174,6 +211,19 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
                 })
               )}
             </TableBody>
+            {plantios && plantios.length > 0 && (
+              <TableFooter>
+                <TableRow className="bg-muted/50 font-semibold">
+                  <TableCell colSpan={2}>TOTAIS</TableCell>
+                  <TableCell className="text-right">{totais.area_plantada.toLocaleString('pt-BR')}</TableCell>
+                  <TableCell className="text-right">{totais.quantidade_semente.toLocaleString('pt-BR')}</TableCell>
+                  <TableCell className="text-right">{mediaKgsHa.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">-</TableCell>
+                  <TableCell className="text-right">{formatCurrency(totais.valor_total)}</TableCell>
+                  {canEdit && <TableCell></TableCell>}
+                </TableRow>
+              </TableFooter>
+            )}
           </Table>
         </CardContent>
       </Card>
@@ -250,6 +300,27 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
                   step="0.01"
                   value={formData.espacamento_linha || ''}
                   onChange={(e) => setFormData({ ...formData, espacamento_linha: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Valor Unitário (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.valor_unitario || ''}
+                  onChange={(e) => setFormData({ ...formData, valor_unitario: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Total (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.valor_total || ''}
+                  readOnly
+                  className="bg-muted"
                 />
               </div>
             </div>
