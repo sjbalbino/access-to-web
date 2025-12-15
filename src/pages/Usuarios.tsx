@@ -31,8 +31,9 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Shield, ShieldCheck, Eye, UserPlus, Search } from "lucide-react";
+import { Users, Shield, ShieldCheck, Eye, UserPlus, Search, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTenants } from "@/hooks/useTenants";
 
 type AppRole = "admin" | "operador" | "visualizador";
 
@@ -43,6 +44,8 @@ interface UserWithRole {
   ativo: boolean | null;
   created_at: string;
   role: AppRole;
+  tenant_id: string | null;
+  tenant_nome?: string | null;
 }
 
 const roleLabels: Record<AppRole, string> = {
@@ -66,10 +69,21 @@ const roleIcons: Record<AppRole, React.ReactNode> = {
 export default function Usuarios() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isAdmin, isSuperAdmin, profile } = useAuth();
+  const { data: tenants } = useTenants();
+  
   const [search, setSearch] = useState("");
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
+  const [editingRole, setEditingRole] = useState<AppRole>("operador");
+  const [editingTenantId, setEditingTenantId] = useState<string | null>(null);
+  
+  // Create user dialog state
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserNome, setNewUserNome] = useState("");
+  const [newUserRole, setNewUserRole] = useState<AppRole>("operador");
+  const [newUserTenantId, setNewUserTenantId] = useState<string | null>(null);
 
   // Fetch users with roles
   const { data: users, isLoading } = useQuery({
@@ -88,11 +102,17 @@ export default function Usuarios() {
 
       if (rolesError) throw rolesError;
 
-      const usersWithRoles: UserWithRole[] = profiles.map((profile) => {
-        const userRole = roles.find((r) => r.user_id === profile.id);
+      const { data: tenantsData } = await supabase
+        .from("tenants")
+        .select("id, razao_social, nome_fantasia");
+
+      const usersWithRoles: UserWithRole[] = profiles.map((userProfile) => {
+        const userRole = roles.find((r) => r.user_id === userProfile.id);
+        const tenant = tenantsData?.find((t) => t.id === userProfile.tenant_id);
         return {
-          ...profile,
+          ...userProfile,
           role: (userRole?.role as AppRole) || "visualizador",
+          tenant_nome: tenant?.nome_fantasia || tenant?.razao_social || null,
         };
       });
 
@@ -100,10 +120,52 @@ export default function Usuarios() {
     },
   });
 
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: {
+      email: string;
+      password: string;
+      nome: string;
+      role: AppRole;
+      tenant_id: string | null;
+    }) => {
+      const { data: session } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("create-user", {
+        body: userData,
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Erro ao criar usuário");
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users-with-roles"] });
+      toast({
+        title: "Sucesso",
+        description: "Usuário criado com sucesso!",
+      });
+      resetCreateForm();
+      setIsCreateDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Update role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: AppRole }) => {
-      // First check if role exists
       const { data: existingRole } = await supabase
         .from("user_roles")
         .select("*")
@@ -111,14 +173,12 @@ export default function Usuarios() {
         .single();
 
       if (existingRole) {
-        // Update existing role
         const { error } = await supabase
           .from("user_roles")
           .update({ role: newRole })
           .eq("user_id", userId);
         if (error) throw error;
       } else {
-        // Insert new role
         const { error } = await supabase
           .from("user_roles")
           .insert({ user_id: userId, role: newRole });
@@ -131,12 +191,36 @@ export default function Usuarios() {
         title: "Sucesso",
         description: "Nível de acesso atualizado com sucesso!",
       });
-      setEditingUser(null);
     },
     onError: (error) => {
       toast({
         title: "Erro",
         description: "Erro ao atualizar nível de acesso: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update tenant mutation
+  const updateTenantMutation = useMutation({
+    mutationFn: async ({ userId, tenantId }: { userId: string; tenantId: string | null }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ tenant_id: tenantId })
+        .eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users-with-roles"] });
+      toast({
+        title: "Sucesso",
+        description: "Empresa atualizada com sucesso!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar empresa: " + error.message,
         variant: "destructive",
       });
     },
@@ -167,11 +251,59 @@ export default function Usuarios() {
     },
   });
 
-  const filteredUsers = users?.filter(
-    (user) =>
+  const resetCreateForm = () => {
+    setNewUserEmail("");
+    setNewUserPassword("");
+    setNewUserNome("");
+    setNewUserRole("operador");
+    setNewUserTenantId(null);
+  };
+
+  const handleCreateUser = () => {
+    const tenantId = isSuperAdmin ? newUserTenantId : profile?.tenant_id;
+    createUserMutation.mutate({
+      email: newUserEmail,
+      password: newUserPassword,
+      nome: newUserNome,
+      role: newUserRole,
+      tenant_id: tenantId || null,
+    });
+  };
+
+  const handleEditUser = (user: UserWithRole) => {
+    setEditingUser(user);
+    setEditingRole(user.role);
+    setEditingTenantId(user.tenant_id);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingUser) return;
+
+    // Update role if changed
+    if (editingRole !== editingUser.role) {
+      updateRoleMutation.mutate({ userId: editingUser.id, newRole: editingRole });
+    }
+
+    // Update tenant if changed (super admin only)
+    if (isSuperAdmin && editingTenantId !== editingUser.tenant_id) {
+      updateTenantMutation.mutate({ userId: editingUser.id, tenantId: editingTenantId });
+    }
+
+    setEditingUser(null);
+  };
+
+  // Filter users based on tenant (non-super admins only see their tenant's users)
+  const filteredUsers = users?.filter((user) => {
+    const matchesSearch =
       user.nome?.toLowerCase().includes(search.toLowerCase()) ||
-      user.email?.toLowerCase().includes(search.toLowerCase())
-  );
+      user.email?.toLowerCase().includes(search.toLowerCase());
+
+    // Super admins see all users
+    if (isSuperAdmin) return matchesSearch;
+
+    // Regular admins only see users from their tenant
+    return matchesSearch && user.tenant_id === profile?.tenant_id;
+  });
 
   return (
     <AppLayout>
@@ -191,6 +323,12 @@ export default function Usuarios() {
             className="pl-10"
           />
         </div>
+        {isAdmin && (
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Novo Usuário
+          </Button>
+        )}
       </div>
 
       {/* Role Legend */}
@@ -227,6 +365,7 @@ export default function Usuarios() {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Email</TableHead>
+              {isSuperAdmin && <TableHead>Empresa</TableHead>}
               <TableHead>Nível de Acesso</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -235,13 +374,13 @@ export default function Usuarios() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={isSuperAdmin ? 6 : 5} className="text-center py-8 text-muted-foreground">
                   Carregando usuários...
                 </TableCell>
               </TableRow>
             ) : filteredUsers?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={isSuperAdmin ? 6 : 5} className="text-center py-8 text-muted-foreground">
                   Nenhum usuário encontrado
                 </TableCell>
               </TableRow>
@@ -250,6 +389,18 @@ export default function Usuarios() {
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.nome || "-"}</TableCell>
                   <TableCell>{user.email}</TableCell>
+                  {isSuperAdmin && (
+                    <TableCell>
+                      {user.tenant_id === null ? (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                          <Building2 className="h-3 w-3 mr-1" />
+                          Super Admin
+                        </Badge>
+                      ) : (
+                        <span className="text-sm">{user.tenant_nome || "-"}</span>
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Badge className={roleColors[user.role]}>
                       {roleIcons[user.role]}
@@ -266,10 +417,10 @@ export default function Usuarios() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditingUser(user)}
+                        onClick={() => handleEditUser(user)}
                         disabled={user.id === currentUser?.id}
                       >
-                        Alterar Nível
+                        Alterar
                       </Button>
                       <Button
                         variant={user.ativo ? "destructive" : "default"}
@@ -293,29 +444,48 @@ export default function Usuarios() {
         </Table>
       </div>
 
-      {/* Edit Role Dialog */}
-      <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-        <DialogContent>
+      {/* Create User Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Alterar Nível de Acesso</DialogTitle>
+            <DialogTitle>Novo Usuário</DialogTitle>
             <DialogDescription>
-              Altere o nível de acesso do usuário {editingUser?.nome || editingUser?.email}
+              Crie um novo usuário para o sistema
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Novo Nível de Acesso</Label>
-              <Select
-                value={editingUser?.role}
-                onValueChange={(value: AppRole) => {
-                  if (editingUser) {
-                    updateRoleMutation.mutate({
-                      userId: editingUser.id,
-                      newRole: value,
-                    });
-                  }
-                }}
-              >
+              <Label htmlFor="nome">Nome *</Label>
+              <Input
+                id="nome"
+                value={newUserNome}
+                onChange={(e) => setNewUserNome(e.target.value)}
+                placeholder="Nome completo"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                placeholder="email@exemplo.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha *</Label>
+              <Input
+                id="password"
+                type="password"
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Nível de Acesso *</Label>
+              <Select value={newUserRole} onValueChange={(value: AppRole) => setNewUserRole(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -341,10 +511,121 @@ export default function Usuarios() {
                 </SelectContent>
               </Select>
             </div>
+            {isSuperAdmin && (
+              <div className="space-y-2">
+                <Label>Empresa Contratante</Label>
+                <Select
+                  value={newUserTenantId || "none"}
+                  onValueChange={(value) => setNewUserTenantId(value === "none" ? null : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-amber-600" />
+                        Super Admin (sem empresa)
+                      </div>
+                    </SelectItem>
+                    {tenants?.map((tenant) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>
+                        {tenant.nome_fantasia || tenant.razao_social}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Deixe vazio para criar um Super Admin
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateUser}
+              disabled={!newUserEmail || !newUserPassword || !newUserNome || createUserMutation.isPending}
+            >
+              {createUserMutation.isPending ? "Criando..." : "Criar Usuário"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              {editingUser?.nome || editingUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nível de Acesso</Label>
+              <Select value={editingRole} onValueChange={(value: AppRole) => setEditingRole(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-red-600" />
+                      Administrador
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="operador">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-blue-600" />
+                      Operador
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="visualizador">
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-4 w-4 text-gray-600" />
+                      Visualizador
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {isSuperAdmin && (
+              <div className="space-y-2">
+                <Label>Empresa Contratante</Label>
+                <Select
+                  value={editingTenantId || "none"}
+                  onValueChange={(value) => setEditingTenantId(value === "none" ? null : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-amber-600" />
+                        Super Admin (sem empresa)
+                      </div>
+                    </SelectItem>
+                    {tenants?.map((tenant) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>
+                        {tenant.nome_fantasia || tenant.razao_social}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingUser(null)}>
               Cancelar
+            </Button>
+            <Button onClick={handleSaveEdit}>
+              Salvar Alterações
             </Button>
           </DialogFooter>
         </DialogContent>
