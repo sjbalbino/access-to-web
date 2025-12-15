@@ -77,9 +77,7 @@ export default function Lavouras() {
   const [formData, setFormData] = useState<LavouraInput>(emptyLavoura);
 
   const filteredLavouras = lavouras?.filter(
-    (l: any) =>
-      l.nome.toLowerCase().includes(search.toLowerCase()) ||
-      l.codigo?.toLowerCase().includes(search.toLowerCase())
+    (l: any) => l.nome.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleEdit = (lavoura: any) => {
@@ -175,9 +173,8 @@ export default function Lavouras() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Código</TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Empresa/Granja</TableHead>
+                    <TableHead>Granja</TableHead>
                     <TableHead>Total Ha</TableHead>
                     <TableHead>Área Plantio</TableHead>
                     <TableHead>Status</TableHead>
@@ -187,7 +184,6 @@ export default function Lavouras() {
                 <TableBody>
                   {filteredLavouras.map((lavoura: any) => (
                     <TableRow key={lavoura.id}>
-                      <TableCell className="font-medium">{lavoura.codigo || "-"}</TableCell>
                       <TableCell className="font-medium">{lavoura.nome}</TableCell>
                       <TableCell>{lavoura.granja?.razao_social || "-"}</TableCell>
                       <TableCell>{lavoura.total_hectares?.toLocaleString("pt-BR") || 0}</TableCell>
@@ -258,15 +254,7 @@ export default function Lavouras() {
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="codigo">Código</Label>
-              <Input
-                id="codigo"
-                value={formData.codigo || ""}
-                onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="nome">Nome da Lavoura *</Label>
               <Input
                 id="nome"

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +10,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { usePlantios, useCreatePlantio, useUpdatePlantio, useDeletePlantio, PlantioInput } from '@/hooks/usePlantios';
-import { useCulturas } from '@/hooks/useCulturas';
 import { useVariedades } from '@/hooks/useVariedades';
+import { useControleLavoura } from '@/hooks/useControleLavouras';
 import { format } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -22,7 +22,6 @@ interface PlantiosTabProps {
 
 const emptyPlantio: PlantioInput = {
   controle_lavoura_id: '',
-  cultura_id: null,
   variedade_id: null,
   data_plantio: null,
   area_plantada: 0,
@@ -34,13 +33,17 @@ const emptyPlantio: PlantioInput = {
 
 export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
   const { data: plantios, isLoading } = usePlantios(controleLavouraId);
-  const { data: culturas } = useCulturas();
+  const { data: controleLavoura } = useControleLavoura(controleLavouraId);
+  
+  // Obtém cultura_id da safra vinculada ao controle de lavoura
+  const culturaId = controleLavoura?.safras?.cultura_id || null;
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<PlantioInput>(emptyPlantio);
   
-  const { data: variedades } = useVariedades(formData.cultura_id);
+  // Variedades filtradas pela cultura da safra
+  const { data: variedades } = useVariedades(culturaId);
 
   const createMutation = useCreatePlantio();
   const updateMutation = useUpdatePlantio();
@@ -69,7 +72,6 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
   const handleEdit = (plantio: any) => {
     setFormData({
       controle_lavoura_id: plantio.controle_lavoura_id || controleLavouraId,
-      cultura_id: plantio.cultura_id,
       variedade_id: plantio.variedade_id,
       data_plantio: plantio.data_plantio,
       area_plantada: plantio.area_plantada || 0,
@@ -126,7 +128,6 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
-                <TableHead>Cultura</TableHead>
                 <TableHead>Variedade</TableHead>
                 <TableHead className="text-right">Área (ha)</TableHead>
                 <TableHead className="text-right">Qtd Semente</TableHead>
@@ -137,7 +138,7 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
             <TableBody>
               {plantios?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 7 : 6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={canEdit ? 6 : 5} className="text-center text-muted-foreground py-8">
                     Nenhum plantio cadastrado
                   </TableCell>
                 </TableRow>
@@ -147,7 +148,6 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
                     <TableCell>
                       {plantio.data_plantio ? format(new Date(plantio.data_plantio), 'dd/MM/yyyy') : '-'}
                     </TableCell>
-                    <TableCell>{plantio.culturas?.nome || '-'}</TableCell>
                     <TableCell>{plantio.variedades?.nome || '-'}</TableCell>
                     <TableCell className="text-right">{plantio.area_plantada?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{plantio.quantidade_semente?.toLocaleString('pt-BR') || '0'}</TableCell>
@@ -189,36 +189,14 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Cultura</Label>
-                <Select
-                  value={formData.cultura_id || "none"}
-                  onValueChange={(value) => setFormData({ 
-                    ...formData, 
-                    cultura_id: value === "none" ? null : value,
-                    variedade_id: null 
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
-                    {culturas?.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label>Variedade</Label>
                 <Select
                   value={formData.variedade_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, variedade_id: value === "none" ? null : value })}
-                  disabled={!formData.cultura_id}
+                  disabled={!culturaId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={formData.cultura_id ? "Selecione" : "Selecione a cultura primeiro"} />
+                    <SelectValue placeholder={culturaId ? "Selecione" : "Cultura não definida na safra"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhuma</SelectItem>

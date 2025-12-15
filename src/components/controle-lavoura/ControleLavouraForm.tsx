@@ -21,7 +21,7 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
   const [safraId, setSafraId] = useState<string>(controleLavoura?.safra_id || '');
   const [lavouraId, setLavouraId] = useState<string>(controleLavoura?.lavoura_id || '');
   const [haPlantado, setHaPlantado] = useState<number>(controleLavoura?.ha_plantado || 0);
-  const [coberturaSolo, setCoberturaSolo] = useState<number>(controleLavoura?.cobertura_solo || 0);
+  const [coberturaSolo, setCoberturaSolo] = useState<string>(controleLavoura?.cobertura_solo || '');
 
   const { data: safras = [] } = useSafras();
   const { data: lavouras = [] } = useLavouras();
@@ -42,7 +42,7 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
       setSafraId(controleLavoura.safra_id);
       setLavouraId(controleLavoura.lavoura_id);
       setHaPlantado(controleLavoura.ha_plantado || 0);
-      setCoberturaSolo(controleLavoura.cobertura_solo || 0);
+      setCoberturaSolo(controleLavoura.cobertura_solo || '');
     }
   }, [controleLavoura, mode]);
 
@@ -179,13 +179,12 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
 
           {/* Cobertura Solo */}
           <div className="space-y-2">
-            <Label>Cobertura Solo (%)</Label>
+            <Label>Cobertura do Solo</Label>
             <Input
-              type="number"
-              step="0.01"
-              value={coberturaSolo || ''}
-              onChange={(e) => setCoberturaSolo(parseFloat(e.target.value) || 0)}
-              placeholder="0.00"
+              type="text"
+              value={coberturaSolo}
+              onChange={(e) => setCoberturaSolo(e.target.value)}
+              placeholder="Ex: Palhada, Nabo Forrageiro..."
             />
           </div>
         </div>

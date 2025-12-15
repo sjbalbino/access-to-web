@@ -116,7 +116,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
                   <TableHead>Lavoura</TableHead>
                   <TableHead className="text-right">Área Total (ha)</TableHead>
                   <TableHead className="text-right">Ha Plantado</TableHead>
-                  <TableHead className="text-right">Cobertura (%)</TableHead>
+                  <TableHead>Cobertura do Solo</TableHead>
                   {canEdit && <TableHead className="w-24 text-center">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -131,7 +131,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
                     <TableCell>{controle.lavouras?.nome || '-'}</TableCell>
                     <TableCell className="text-right">{controle.area_total?.toFixed(2) || '0.00'}</TableCell>
                     <TableCell className="text-right">{controle.ha_plantado?.toFixed(2) || '0.00'}</TableCell>
-                    <TableCell className="text-right">{controle.cobertura_solo?.toFixed(2) || '0.00'}</TableCell>
+                    <TableCell>{controle.cobertura_solo || '-'}</TableCell>
                     {canEdit && (
                       <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1">
