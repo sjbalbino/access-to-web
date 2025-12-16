@@ -32,6 +32,8 @@ export interface Colheita {
   ph: number | null;
   variedade_id: string | null;
   tipo_colheita: string | null;
+  inscricao_produtor_id: string | null;
+  local_entrega_terceiro_id: string | null;
   created_at: string;
   updated_at: string;
   safras?: { id: string; nome: string; cultura_id: string | null } | null;
@@ -39,6 +41,12 @@ export interface Colheita {
   silos?: { id: string; nome: string } | null;
   placas?: { id: string; placa: string } | null;
   semente?: { id: string; nome: string } | null;
+  inscricao_produtor?: { 
+    id: string; 
+    inscricao_estadual: string | null;
+    produtores?: { nome: string; tipo_produtor: string | null } | null;
+  } | null;
+  local_entrega_terceiro?: { id: string; nome: string } | null;
 }
 
 export type ColheitaInput = {
@@ -68,6 +76,8 @@ export type ColheitaInput = {
   ph: number | null;
   variedade_id: string | null;
   tipo_colheita: string | null;
+  inscricao_produtor_id: string | null;
+  local_entrega_terceiro_id: string | null;
 };
 
 export function useColheitas(controleLavouraId: string | null) {
@@ -84,7 +94,9 @@ export function useColheitas(controleLavouraId: string | null) {
           lavouras (id, nome),
           silos (id, nome),
           placas (id, placa),
-          semente:produtos!colheitas_variedade_id_fkey (id, nome)
+          semente:produtos!colheitas_variedade_id_fkey (id, nome),
+          inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey (id, inscricao_estadual, produtores:produtor_id(nome, tipo_produtor)),
+          local_entrega_terceiro:clientes_fornecedores!colheitas_local_entrega_terceiro_id_fkey (id, nome)
         `)
         .eq("controle_lavoura_id", controleLavouraId)
         .order("data_colheita", { ascending: false });

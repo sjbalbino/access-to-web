@@ -15,6 +15,8 @@ import { usePlacas } from '@/hooks/usePlacas';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { useTabelaUmidades } from '@/hooks/useTabelaUmidades';
 import { useControleLavoura } from '@/hooks/useControleLavouras';
+import { useAllInscricoes } from '@/hooks/useAllInscricoes';
+import { useClientesFornecedores } from '@/hooks/useClientesFornecedores';
 import { format } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -51,6 +53,8 @@ const emptyColheita: ColheitaInput = {
   ph: 0,
   variedade_id: null,
   tipo_colheita: 'industria',
+  inscricao_produtor_id: null,
+  local_entrega_terceiro_id: null,
 };
 
 export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) {
@@ -60,6 +64,8 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   const { data: placas } = usePlacas();
   const { data: sementes } = useProdutosSementes();
   const { data: tabelaUmidades } = useTabelaUmidades();
+  const { data: inscricoes } = useAllInscricoes();
+  const { data: clientesFornecedores } = useClientesFornecedores();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -71,19 +77,23 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
 
   // Obter cultura_id da safra do controle
   const culturaId = controleLavoura?.safras?.cultura_id;
+  const informarPh = controleLavoura?.safras?.culturas?.informar_ph ?? false;
 
   // Função para buscar percentual de desconto na tabela de umidades
   const getPercentualDesconto = (umidade: number): number => {
-    if (!tabelaUmidades || !culturaId) return 0;
+    if (!tabelaUmidades || !culturaId) {
+      console.log('[% Desconto Debug] tabelaUmidades:', tabelaUmidades?.length, 'culturaId:', culturaId);
+      return 0;
+    }
     
-    const faixa = tabelaUmidades.find(
-      (t) =>
-        t.cultura_id === culturaId &&
-        t.ativa &&
-        umidade >= t.umidade_minima &&
-        umidade <= t.umidade_maxima
+    const faixasParaCultura = tabelaUmidades.filter(t => t.cultura_id === culturaId && t.ativa);
+    console.log('[% Desconto Debug] Faixas para cultura', culturaId, ':', faixasParaCultura.length, faixasParaCultura);
+    
+    const faixa = faixasParaCultura.find(
+      (t) => umidade >= t.umidade_minima && umidade <= t.umidade_maxima
     );
     
+    console.log('[% Desconto Debug] Umidade:', umidade, 'Faixa encontrada:', faixa);
     return faixa?.desconto_percentual || 0;
   };
 
@@ -229,6 +239,8 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
       ph: colheita.ph || 0,
       variedade_id: colheita.variedade_id,
       tipo_colheita: colheita.tipo_colheita || 'industria',
+      inscricao_produtor_id: colheita.inscricao_produtor_id,
+      local_entrega_terceiro_id: colheita.local_entrega_terceiro_id,
     });
     setEditingId(colheita.id);
     setIsDialogOpen(true);
@@ -298,15 +310,15 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                     <TableHead className="text-right w-20">Líquido</TableHead>
                     <TableHead className="text-right w-16">Sacos</TableHead>
                     <TableHead className="text-right w-16">Sc/Ha</TableHead>
-                    <TableHead className="text-right w-12">PH</TableHead>
-                    <TableHead className="w-20">Destino</TableHead>
+                    {informarPh && <TableHead className="text-right w-12">PH</TableHead>}
+                    <TableHead className="w-24">Destino</TableHead>
                     {canEdit && <TableHead className="w-20">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {colheitas?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={canEdit ? 17 : 16} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={canEdit ? (informarPh ? 17 : 16) : (informarPh ? 16 : 15)} className="text-center text-muted-foreground py-8">
                         Nenhuma colheita cadastrada
                       </TableCell>
                     </TableRow>
@@ -329,8 +341,10 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                         <TableCell className="text-right text-sm font-medium">{formatNumber(colheita.producao_liquida_kg, 0)}</TableCell>
                         <TableCell className="text-right text-sm font-medium">{formatNumber(colheita.total_sacos, 2)}</TableCell>
                         <TableCell className="text-right text-sm">{formatNumber(colheita.produtividade_sacas_ha, 2)}</TableCell>
-                        <TableCell className="text-right text-sm">{formatNumber(colheita.ph, 1)}</TableCell>
-                        <TableCell className="text-sm">{colheita.silos?.nome || '-'}</TableCell>
+                        {informarPh && <TableCell className="text-right text-sm">{formatNumber(colheita.ph, 1)}</TableCell>}
+                        <TableCell className="text-sm">
+                          {colheita.local_entrega_terceiro?.nome || colheita.silos?.nome || '-'}
+                        </TableCell>
                         {canEdit && (
                           <TableCell>
                             <div className="flex gap-1">
@@ -389,10 +403,12 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                 <span className="text-muted-foreground">Média Umidade:</span>
                 <p className="font-semibold">{formatNumber(totais.mediaUmidade, 2)}%</p>
               </div>
-              <div className="space-y-1">
-                <span className="text-muted-foreground">Média PH:</span>
-                <p className="font-semibold">{formatNumber(totais.mediaPh, 2)}</p>
-              </div>
+              {informarPh && (
+                <div className="space-y-1">
+                  <span className="text-muted-foreground">Média PH:</span>
+                  <p className="font-semibold">{formatNumber(totais.mediaPh, 2)}</p>
+                </div>
+              )}
               <div className="space-y-1">
                 <span className="text-muted-foreground">Área Colhida:</span>
                 <p className="font-semibold">{formatNumber(totais.totalAreaColhida, 2)} ha</p>
@@ -648,17 +664,60 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               </div>
             </div>
 
-            {/* Linha 6: PH, Semente, Silo */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Linha 6: Inscrição (Sócio/Produtor), Local Entrega Terceiros */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>PH</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={formData.ph || ''}
-                  onChange={(e) => setFormData({ ...formData, ph: parseFloat(e.target.value) || 0 })}
-                />
+                <Label>Inscrição (Sócio/Produtor)</Label>
+                <Select
+                  value={formData.inscricao_produtor_id || "none"}
+                  onValueChange={(value) => setFormData({ ...formData, inscricao_produtor_id: value === "none" ? null : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma</SelectItem>
+                    {inscricoes?.map((insc) => (
+                      <SelectItem key={insc.id} value={insc.id}>
+                        {insc.produtores?.nome || 'Sem nome'} - IE: {insc.inscricao_estadual || 'N/A'} ({insc.produtores?.tipo_produtor === 'socio' ? 'Sócio' : 'Produtor'})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label>Local Entrega (Terceiros)</Label>
+                <Select
+                  value={formData.local_entrega_terceiro_id || "none"}
+                  onValueChange={(value) => setFormData({ ...formData, local_entrega_terceiro_id: value === "none" ? null : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum (Silo próprio)</SelectItem>
+                    {clientesFornecedores?.filter(cf => cf.ativo).map((cf) => (
+                      <SelectItem key={cf.id} value={cf.id}>{cf.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Linha 7: PH (condicional), Semente, Silo */}
+            <div className={`grid ${informarPh ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>
+              {informarPh && (
+                <div className="space-y-2">
+                  <Label>PH</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={formData.ph || ''}
+                    onChange={(e) => setFormData({ ...formData, ph: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Semente</Label>
@@ -679,10 +738,11 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               </div>
 
               <div className="space-y-2">
-                <Label>Destino (Silo)</Label>
+                <Label>Destino (Silo Próprio)</Label>
                 <Select
                   value={formData.silo_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, silo_id: value === "none" ? null : value })}
+                  disabled={!!formData.local_entrega_terceiro_id}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
