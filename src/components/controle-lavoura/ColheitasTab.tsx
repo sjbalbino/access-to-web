@@ -517,7 +517,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <div className="space-y-2">
                 <Label>Total (kg)</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={formatNumber(formData.producao_kg, 0)}
                   disabled
                   className="bg-muted"
@@ -540,7 +540,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <div className="space-y-2">
                 <Label>Kg Impureza</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={formatNumber(formData.kg_impureza, 0)}
                   disabled
                   className="bg-muted"
@@ -560,7 +560,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <div className="space-y-2">
                 <Label>% Desconto (auto)</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={formatNumber(formData.percentual_desconto, 2)}
                   disabled
                   className="bg-muted"
@@ -573,7 +573,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <div className="space-y-2">
                 <Label>Kg Umidade</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={formatNumber(formData.kg_umidade, 0)}
                   disabled
                   className="bg-muted"
@@ -593,7 +593,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <div className="space-y-2">
                 <Label>Kg Avariados</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={formatNumber(formData.kg_avariados, 0)}
                   disabled
                   className="bg-muted"
@@ -616,7 +616,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <div className="space-y-2">
                 <Label>Kg Outros</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={formatNumber(formData.kg_outros, 0)}
                   disabled
                   className="bg-muted"
@@ -626,7 +626,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <div className="space-y-2">
                 <Label>Kg Desc. Total</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={formatNumber(formData.kg_desconto_total, 0)}
                   disabled
                   className="bg-muted"
@@ -636,7 +636,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <div className="space-y-2">
                 <Label>Líquido (kg)</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={formatNumber(formData.producao_liquida_kg, 0)}
                   disabled
                   className="bg-muted font-semibold"
@@ -646,7 +646,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <div className="space-y-2">
                 <Label>Total Sacos</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={formatNumber(formData.total_sacos, 2)}
                   disabled
                   className="bg-muted font-semibold"
@@ -656,7 +656,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <div className="space-y-2">
                 <Label>Produtividade (sc/ha)</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={formatNumber(formData.produtividade_sacas_ha, 2)}
                   disabled
                   className="bg-muted font-semibold"
