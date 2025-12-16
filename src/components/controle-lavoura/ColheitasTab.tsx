@@ -10,10 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { useColheitas, useCreateColheita, useUpdateColheita, useDeleteColheita, ColheitaInput } from '@/hooks/useColheitas';
-import { usePlantios } from '@/hooks/usePlantios';
 import { useSilos } from '@/hooks/useSilos';
 import { usePlacas } from '@/hooks/usePlacas';
-import { useVariedades } from '@/hooks/useVariedades';
+import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { useTabelaUmidades } from '@/hooks/useTabelaUmidades';
 import { useControleLavoura } from '@/hooks/useControleLavouras';
 import { format } from 'date-fns';
@@ -27,7 +26,6 @@ interface ColheitasTabProps {
 
 const emptyColheita: ColheitaInput = {
   controle_lavoura_id: '',
-  plantio_id: null,
   data_colheita: null,
   area_colhida: 0,
   producao_kg: 0,
@@ -58,10 +56,9 @@ const emptyColheita: ColheitaInput = {
 export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) {
   const { data: colheitas, isLoading } = useColheitas(controleLavouraId);
   const { data: controleLavoura } = useControleLavoura(controleLavouraId);
-  const { data: plantios } = usePlantios(controleLavouraId);
   const { data: silos } = useSilos();
   const { data: placas } = usePlacas();
-  const { data: variedades } = useVariedades();
+  const { data: sementes } = useProdutosSementes();
   const { data: tabelaUmidades } = useTabelaUmidades();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -207,7 +204,6 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   const handleEdit = (colheita: any) => {
     setFormData({
       controle_lavoura_id: colheita.controle_lavoura_id || controleLavouraId,
-      plantio_id: colheita.plantio_id,
       data_colheita: colheita.data_colheita,
       area_colhida: colheita.area_colhida || 0,
       producao_kg: colheita.producao_kg || 0,
@@ -652,8 +648,8 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               </div>
             </div>
 
-            {/* Linha 6: PH, Variedade, Plantio, Silo */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Linha 6: PH, Semente, Silo */}
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>PH</Label>
                 <Input
@@ -665,7 +661,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               </div>
 
               <div className="space-y-2">
-                <Label>Variedade</Label>
+                <Label>Semente</Label>
                 <Select
                   value={formData.variedade_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, variedade_id: value === "none" ? null : value })}
@@ -675,28 +671,8 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhuma</SelectItem>
-                    {variedades?.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Plantio</Label>
-                <Select
-                  value={formData.plantio_id || "none"}
-                  onValueChange={(value) => setFormData({ ...formData, plantio_id: value === "none" ? null : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {plantios?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.data_plantio ? format(new Date(p.data_plantio), 'dd/MM/yyyy') : 'Sem data'} - {p.culturas?.nome || 'Sem cultura'}
-                      </SelectItem>
+                    {sementes?.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
