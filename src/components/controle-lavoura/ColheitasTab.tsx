@@ -21,7 +21,7 @@ import { useProdutores } from '@/hooks/useProdutores';
 import { useClientesFornecedores } from '@/hooks/useClientesFornecedores';
 import { format } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface ColheitasTabProps {
   controleLavouraId: string | null;
@@ -60,9 +60,6 @@ const emptyColheita: ColheitaInput = {
 };
 
 export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) {
-  // Debug log
-  console.log('[ColheitasTab] canEdit prop:', canEdit);
-  
   const { data: colheitas, isLoading } = useColheitas(controleLavouraId);
   const { data: controleLavoura } = useControleLavoura(controleLavouraId);
   const { data: silos } = useSilos();
@@ -316,11 +313,12 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
 
       <Card>
         <CardContent className="p-0">
-          <ScrollArea className="w-full">
-            <div className="min-w-[1400px]">
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="min-w-[1600px]">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {canEdit && <TableHead className="w-20">Ações</TableHead>}
                     <TableHead className="w-24">Data</TableHead>
                     <TableHead className="w-20">Placa</TableHead>
                     <TableHead className="text-right w-20">Bruto</TableHead>
@@ -337,7 +335,6 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                     <TableHead className="text-right w-16">Sc/Ha</TableHead>
                     {informarPh && <TableHead className="text-right w-12">PH</TableHead>}
                     <TableHead className="w-24">Destino</TableHead>
-                    {canEdit && <TableHead className="w-20">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -350,6 +347,18 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   ) : (
                     colheitas?.map((colheita) => (
                       <TableRow key={colheita.id}>
+                        {canEdit && (
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => handleEdit(colheita)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleDelete(colheita.id)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
                         <TableCell className="text-sm">
                           {colheita.data_colheita ? format(new Date(colheita.data_colheita), 'dd/MM/yy') : '-'}
                         </TableCell>
@@ -370,24 +379,13 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                         <TableCell className="text-sm">
                           {colheita.local_entrega_terceiro?.nome || colheita.silos?.nome || '-'}
                         </TableCell>
-                        {canEdit && (
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => handleEdit(colheita)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDelete(colheita.id)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        )}
                       </TableRow>
                     ))
                   )}
                 </TableBody>
               </Table>
             </div>
+            <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </CardContent>
       </Card>

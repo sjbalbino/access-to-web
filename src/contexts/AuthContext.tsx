@@ -141,9 +141,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = role === "admin";
   const isGerente = role === "gerente";
   const canEdit = role === "admin" || role === "operador" || role === "gerente";
-  
-  // Debug log
-  console.log('[AuthContext] user:', user?.email, 'role:', role, 'canEdit:', canEdit, 'isLoading:', isLoading);
 
   return (
     <AuthContext.Provider
