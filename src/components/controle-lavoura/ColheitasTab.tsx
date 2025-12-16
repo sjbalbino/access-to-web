@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle, Search } from 'lucide-react';
 import { useColheitas, useCreateColheita, useUpdateColheita, useDeleteColheita, ColheitaInput } from '@/hooks/useColheitas';
 import { useSilos } from '@/hooks/useSilos';
 import { usePlacas } from '@/hooks/usePlacas';
@@ -16,6 +16,8 @@ import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { useTabelaUmidades } from '@/hooks/useTabelaUmidades';
 import { useControleLavoura } from '@/hooks/useControleLavouras';
 import { useAllInscricoes } from '@/hooks/useAllInscricoes';
+import { useInscricoesByProdutor } from '@/hooks/useInscricoesProdutor';
+import { useProdutores } from '@/hooks/useProdutores';
 import { useClientesFornecedores } from '@/hooks/useClientesFornecedores';
 import { format } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -65,7 +67,12 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   const { data: sementes } = useProdutosSementes();
   const { data: tabelaUmidades } = useTabelaUmidades();
   const { data: inscricoes } = useAllInscricoes();
+  const { data: produtores } = useProdutores();
   const { data: clientesFornecedores } = useClientesFornecedores();
+
+  // Estado para seleção de produtor em duas etapas
+  const [selectedProdutorId, setSelectedProdutorId] = useState<string | null>(null);
+  const { data: inscricoesPorProdutor } = useInscricoesByProdutor(selectedProdutorId || undefined);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -97,7 +104,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
     return faixa?.desconto_percentual || 0;
   };
 
-  // Calcular campos automaticamente quando valores mudam
+  // Calcular campos automaticamente quando valores mudam (cálculos em cascata)
   useEffect(() => {
     const pesoBruto = formData.peso_bruto || 0;
     const pesoTara = formData.peso_tara || 0;
@@ -109,10 +116,14 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
     const percAvariados = formData.percentual_avariados || 0;
     const percOutros = formData.percentual_outros || 0;
     
+    // Cálculos em cascata (descontando do saldo anterior)
     const kgImpureza = total * (percImpureza / 100);
-    const kgUmidade = total * (percDesconto / 100);
-    const kgAvariados = total * (percAvariados / 100);
-    const kgOutros = total * (percOutros / 100);
+    const baseUmidade = total - kgImpureza;
+    const kgUmidade = baseUmidade * (percDesconto / 100);
+    const baseAvariados = baseUmidade - kgUmidade;
+    const kgAvariados = baseAvariados * (percAvariados / 100);
+    const baseOutros = baseAvariados - kgAvariados;
+    const kgOutros = baseOutros * (percOutros / 100);
     const kgDescontoTotal = kgImpureza + kgUmidade + kgAvariados + kgOutros;
     
     const liquido = total - kgDescontoTotal;
@@ -207,11 +218,22 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
       ...emptyColheita,
       controle_lavoura_id: controleLavouraId,
     });
+    setSelectedProdutorId(null);
     setEditingId(null);
     setIsDialogOpen(true);
   };
 
   const handleEdit = (colheita: any) => {
+    // Encontrar o produtor associado à inscrição
+    if (colheita.inscricao_produtor_id) {
+      const inscricao = inscricoes?.find(i => i.id === colheita.inscricao_produtor_id);
+      if (inscricao?.produtor_id) {
+        setSelectedProdutorId(inscricao.produtor_id);
+      }
+    } else {
+      setSelectedProdutorId(null);
+    }
+    
     setFormData({
       controle_lavoura_id: colheita.controle_lavoura_id || controleLavouraId,
       data_colheita: colheita.data_colheita,
@@ -664,22 +686,46 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               </div>
             </div>
 
-            {/* Linha 6: Inscrição (Sócio/Produtor), Local Entrega Terceiros */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Linha 6: Sócio/Produtor (duas etapas) e Inscrição */}
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Inscrição (Sócio/Produtor)</Label>
+                <Label>Sócio/Produtor</Label>
+                <Select
+                  value={selectedProdutorId || "none"}
+                  onValueChange={(value) => {
+                    setSelectedProdutorId(value === "none" ? null : value);
+                    setFormData({ ...formData, inscricao_produtor_id: null }); // Limpa inscrição ao mudar produtor
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o produtor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {produtores?.filter(p => p.ativo).map((prod) => (
+                      <SelectItem key={prod.id} value={prod.id}>
+                        {prod.nome} ({prod.tipo_produtor === 'socio' ? 'Sócio' : 'Produtor'})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Inscrição Estadual</Label>
                 <Select
                   value={formData.inscricao_produtor_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, inscricao_produtor_id: value === "none" ? null : value })}
+                  disabled={!selectedProdutorId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                    <SelectValue placeholder={selectedProdutorId ? "Selecione a inscrição" : "Selecione o produtor primeiro"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhuma</SelectItem>
-                    {inscricoes?.map((insc) => (
+                    {inscricoesPorProdutor?.filter(i => i.ativa).map((insc) => (
                       <SelectItem key={insc.id} value={insc.id}>
-                        {insc.produtores?.nome || 'Sem nome'} - IE: {insc.inscricao_estadual || 'N/A'} ({insc.produtores?.tipo_produtor === 'socio' ? 'Sócio' : 'Produtor'})
+                        IE: {insc.inscricao_estadual || 'N/A'} - {insc.tipo || 'Sem tipo'} ({insc.cidade}/{insc.uf})
                       </SelectItem>
                     ))}
                   </SelectContent>

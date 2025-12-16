@@ -31,11 +31,11 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Shield, ShieldCheck, Eye, UserPlus, Search, Building2 } from "lucide-react";
+import { Users, Shield, ShieldCheck, Eye, UserPlus, Search, Building2, Briefcase } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenants } from "@/hooks/useTenants";
 
-type AppRole = "admin" | "operador" | "visualizador";
+type AppRole = "admin" | "operador" | "visualizador" | "gerente";
 
 interface UserWithRole {
   id: string;
@@ -51,18 +51,21 @@ interface UserWithRole {
 const roleLabels: Record<AppRole, string> = {
   admin: "Administrador",
   operador: "Operador",
+  gerente: "Gerente",
   visualizador: "Visualizador",
 };
 
 const roleColors: Record<AppRole, string> = {
   admin: "bg-red-100 text-red-800 border-red-200",
   operador: "bg-blue-100 text-blue-800 border-blue-200",
+  gerente: "bg-green-100 text-green-800 border-green-200",
   visualizador: "bg-gray-100 text-gray-800 border-gray-200",
 };
 
 const roleIcons: Record<AppRole, React.ReactNode> = {
   admin: <ShieldCheck className="h-3 w-3" />,
   operador: <Shield className="h-3 w-3" />,
+  gerente: <Briefcase className="h-3 w-3" />,
   visualizador: <Eye className="h-3 w-3" />,
 };
 
@@ -343,6 +346,13 @@ export default function Usuarios() {
             <span className="text-xs text-muted-foreground">Acesso total</span>
           </div>
           <div className="flex items-center gap-2">
+            <Badge className={roleColors.gerente}>
+              {roleIcons.gerente}
+              <span className="ml-1">Gerente</span>
+            </Badge>
+            <span className="text-xs text-muted-foreground">Gerenciar colheitas</span>
+          </div>
+          <div className="flex items-center gap-2">
             <Badge className={roleColors.operador}>
               {roleIcons.operador}
               <span className="ml-1">Operador</span>
@@ -502,6 +512,12 @@ export default function Usuarios() {
                       Operador
                     </div>
                   </SelectItem>
+                  <SelectItem value="gerente">
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 text-green-600" />
+                      Gerente
+                    </div>
+                  </SelectItem>
                   <SelectItem value="visualizador">
                     <div className="flex items-center gap-2">
                       <Eye className="h-4 w-4 text-gray-600" />
@@ -582,6 +598,12 @@ export default function Usuarios() {
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-blue-600" />
                       Operador
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="gerente">
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 text-green-600" />
+                      Gerente
                     </div>
                   </SelectItem>
                   <SelectItem value="visualizador">
