@@ -724,9 +724,11 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhuma</SelectItem>
-                    {inscricoesPorProdutor?.filter(i => i.ativa).map((insc) => (
+                    {inscricoesPorProdutor
+                      ?.sort((a, b) => (b.ativa ? 1 : 0) - (a.ativa ? 1 : 0))
+                      .map((insc) => (
                       <SelectItem key={insc.id} value={insc.id}>
-                        IE: {insc.inscricao_estadual || 'N/A'} - {insc.tipo || 'Sem tipo'} ({insc.cidade}/{insc.uf})
+                        IE: {insc.inscricao_estadual || 'N/A'} - {insc.tipo || 'Sem tipo'} ({insc.cidade}/{insc.uf}){!insc.ativa && ' (Inativa)'}
                       </SelectItem>
                     ))}
                   </SelectContent>
