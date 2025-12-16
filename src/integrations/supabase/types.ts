@@ -329,7 +329,6 @@ export type Database = {
           peso_tara: number | null
           ph: number | null
           placa_id: string | null
-          plantio_id: string | null
           producao_kg: number | null
           producao_liquida_kg: number | null
           produtividade_sacas_ha: number | null
@@ -363,7 +362,6 @@ export type Database = {
           peso_tara?: number | null
           ph?: number | null
           placa_id?: string | null
-          plantio_id?: string | null
           producao_kg?: number | null
           producao_liquida_kg?: number | null
           produtividade_sacas_ha?: number | null
@@ -397,7 +395,6 @@ export type Database = {
           peso_tara?: number | null
           ph?: number | null
           placa_id?: string | null
-          plantio_id?: string | null
           producao_kg?: number | null
           producao_liquida_kg?: number | null
           produtividade_sacas_ha?: number | null
@@ -432,13 +429,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "colheitas_plantio_id_fkey"
-            columns: ["plantio_id"]
-            isOneToOne: false
-            referencedRelation: "plantios"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "colheitas_safra_id_fkey"
             columns: ["safra_id"]
             isOneToOne: false
@@ -456,7 +446,7 @@ export type Database = {
             foreignKeyName: "colheitas_variedade_id_fkey"
             columns: ["variedade_id"]
             isOneToOne: false
-            referencedRelation: "variedades"
+            referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
         ]
@@ -1690,44 +1680,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      variedades: {
-        Row: {
-          ativa: boolean | null
-          codigo: string | null
-          created_at: string
-          cultura_id: string | null
-          id: string
-          nome: string
-          updated_at: string
-        }
-        Insert: {
-          ativa?: boolean | null
-          codigo?: string | null
-          created_at?: string
-          cultura_id?: string | null
-          id?: string
-          nome: string
-          updated_at?: string
-        }
-        Update: {
-          ativa?: boolean | null
-          codigo?: string | null
-          created_at?: string
-          cultura_id?: string | null
-          id?: string
-          nome?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "variedades_cultura_id_fkey"
-            columns: ["cultura_id"]
-            isOneToOne: false
-            referencedRelation: "culturas"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {

@@ -7,7 +7,6 @@ export interface Colheita {
   controle_lavoura_id: string | null;
   safra_id: string | null;
   lavoura_id: string;
-  plantio_id: string | null;
   data_colheita: string | null;
   area_colhida: number | null;
   producao_kg: number | null;
@@ -19,7 +18,6 @@ export interface Colheita {
   placa_id: string | null;
   motorista: string | null;
   observacoes: string | null;
-  // Novos campos
   peso_bruto: number | null;
   peso_tara: number | null;
   kg_impureza: number | null;
@@ -38,15 +36,13 @@ export interface Colheita {
   updated_at: string;
   safras?: { id: string; nome: string; cultura_id: string | null } | null;
   lavouras?: { id: string; nome: string } | null;
-  plantios?: { id: string; data_plantio: string } | null;
   silos?: { id: string; nome: string } | null;
   placas?: { id: string; placa: string } | null;
-  variedades?: { id: string; nome: string } | null;
+  semente?: { id: string; nome: string } | null;
 }
 
 export type ColheitaInput = {
   controle_lavoura_id: string;
-  plantio_id: string | null;
   data_colheita: string | null;
   area_colhida: number | null;
   producao_kg: number | null;
@@ -58,7 +54,6 @@ export type ColheitaInput = {
   placa_id: string | null;
   motorista: string | null;
   observacoes: string | null;
-  // Novos campos
   peso_bruto: number | null;
   peso_tara: number | null;
   kg_impureza: number | null;
@@ -87,10 +82,9 @@ export function useColheitas(controleLavouraId: string | null) {
           *,
           safras (id, nome, cultura_id),
           lavouras (id, nome),
-          plantios (id, data_plantio),
           silos (id, nome),
           placas (id, placa),
-          variedades (id, nome)
+          semente:produtos!colheitas_variedade_id_fkey (id, nome)
         `)
         .eq("controle_lavoura_id", controleLavouraId)
         .order("data_colheita", { ascending: false });
