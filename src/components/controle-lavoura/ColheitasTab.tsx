@@ -60,6 +60,9 @@ const emptyColheita: ColheitaInput = {
 };
 
 export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) {
+  // Debug log
+  console.log('[ColheitasTab] canEdit prop:', canEdit);
+  
   const { data: colheitas, isLoading } = useColheitas(controleLavouraId);
   const { data: controleLavoura } = useControleLavoura(controleLavouraId);
   const { data: silos } = useSilos();
