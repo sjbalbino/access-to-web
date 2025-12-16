@@ -195,7 +195,7 @@ export default function Produtores() {
   return (
     <AppLayout>
       <PageHeader
-        title="Cadastro de Sócios/Proprietários/Produtores"
+        title="Cadastro de Sócios e Produtores"
         description="Produtores depositam produção para devolução/compra. Sócios são parceiros na Granja."
         icon={<Users className="h-6 w-6" />}
         iconColor="bg-accent/10 text-accent"
@@ -214,7 +214,7 @@ export default function Produtores() {
         <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <CardTitle className="text-lg">Lista de Produtores/Sócios</CardTitle>
+              <CardTitle className="text-lg">Lista de Sócios e Produtores</CardTitle>
               {filteredProdutores && (
                 <span className="text-sm text-muted-foreground">
                   {selectedIndex >= 0

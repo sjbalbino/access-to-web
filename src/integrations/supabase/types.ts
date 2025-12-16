@@ -314,12 +314,14 @@ export type Database = {
           data_colheita: string | null
           id: string
           impureza: number | null
+          inscricao_produtor_id: string | null
           kg_avariados: number | null
           kg_desconto_total: number | null
           kg_impureza: number | null
           kg_outros: number | null
           kg_umidade: number | null
           lavoura_id: string
+          local_entrega_terceiro_id: string | null
           motorista: string | null
           observacoes: string | null
           percentual_avariados: number | null
@@ -347,12 +349,14 @@ export type Database = {
           data_colheita?: string | null
           id?: string
           impureza?: number | null
+          inscricao_produtor_id?: string | null
           kg_avariados?: number | null
           kg_desconto_total?: number | null
           kg_impureza?: number | null
           kg_outros?: number | null
           kg_umidade?: number | null
           lavoura_id: string
+          local_entrega_terceiro_id?: string | null
           motorista?: string | null
           observacoes?: string | null
           percentual_avariados?: number | null
@@ -380,12 +384,14 @@ export type Database = {
           data_colheita?: string | null
           id?: string
           impureza?: number | null
+          inscricao_produtor_id?: string | null
           kg_avariados?: number | null
           kg_desconto_total?: number | null
           kg_impureza?: number | null
           kg_outros?: number | null
           kg_umidade?: number | null
           lavoura_id?: string
+          local_entrega_terceiro_id?: string | null
           motorista?: string | null
           observacoes?: string | null
           percentual_avariados?: number | null
@@ -415,10 +421,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "colheitas_inscricao_produtor_id_fkey"
+            columns: ["inscricao_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "colheitas_lavoura_id_fkey"
             columns: ["lavoura_id"]
             isOneToOne: false
             referencedRelation: "lavouras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colheitas_local_entrega_terceiro_id_fkey"
+            columns: ["local_entrega_terceiro_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_fornecedores"
             referencedColumns: ["id"]
           },
           {
