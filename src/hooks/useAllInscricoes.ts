@@ -35,7 +35,6 @@ export function useAllInscricoes() {
           produtores:produtor_id(id, nome, tipo_produtor),
           granjas:granja_id(id, razao_social)
         `)
-        .eq('ativa', true)
         .order('inscricao_estadual');
       
       if (error) throw error;
