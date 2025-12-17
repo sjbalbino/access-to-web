@@ -20,6 +20,7 @@ import {
   Truck,
   Droplets,
   Crown,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ const menuItems = [
   { title: "Silos", icon: Warehouse, path: "/silos", color: "text-emerald-500" },
   { title: "Placas", icon: Truck, path: "/placas", color: "text-orange-500" },
   { title: "Tab. Umidades", icon: Droplets, path: "/tabela-umidades", color: "text-cyan-500" },
+  { title: "NCM", icon: FileText, path: "/ncm", color: "text-slate-500" },
 ];
 
 const roleLabels: Record<string, string> = {
