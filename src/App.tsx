@@ -22,6 +22,7 @@ import UnidadesMedida from "./pages/UnidadesMedida";
 import Silos from "./pages/Silos";
 import Placas from "./pages/Placas";
 import TabelaUmidades from "./pages/TabelaUmidades";
+import Ncm from "./pages/Ncm";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/silos" element={<ProtectedRoute><Silos /></ProtectedRoute>} />
             <Route path="/placas" element={<ProtectedRoute><Placas /></ProtectedRoute>} />
             <Route path="/tabela-umidades" element={<ProtectedRoute><TabelaUmidades /></ProtectedRoute>} />
+            <Route path="/ncm" element={<ProtectedRoute><Ncm /></ProtectedRoute>} />
             <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />
             <Route path="/tenants" element={<ProtectedRoute requireSuperAdmin><Tenants /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

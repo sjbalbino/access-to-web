@@ -941,6 +941,33 @@ export type Database = {
           },
         ]
       }
+      ncm: {
+        Row: {
+          ativo: boolean | null
+          codigo: string
+          created_at: string
+          descricao: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          codigo: string
+          created_at?: string
+          descricao: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pivos: {
         Row: {
           controle_lavoura_id: string
