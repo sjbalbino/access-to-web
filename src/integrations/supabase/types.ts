@@ -182,6 +182,42 @@ export type Database = {
           },
         ]
       }
+      cfops: {
+        Row: {
+          aplicacao: string | null
+          ativo: boolean | null
+          codigo: string
+          created_at: string
+          descricao: string
+          id: string
+          natureza_operacao: string | null
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          aplicacao?: string | null
+          ativo?: boolean | null
+          codigo: string
+          created_at?: string
+          descricao: string
+          id?: string
+          natureza_operacao?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aplicacao?: string | null
+          ativo?: boolean | null
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          id?: string
+          natureza_operacao?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chuvas: {
         Row: {
           controle_lavoura_id: string
@@ -560,6 +596,98 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      emitentes_nfe: {
+        Row: {
+          aliq_cbs_padrao: number | null
+          aliq_cofins_padrao: number | null
+          aliq_ibs_padrao: number | null
+          aliq_icms_padrao: number | null
+          aliq_is_padrao: number | null
+          aliq_pis_padrao: number | null
+          ambiente: number | null
+          api_access_token: string | null
+          api_access_token_secret: string | null
+          api_configurada: boolean | null
+          api_consumer_key: string | null
+          api_consumer_secret: string | null
+          api_provider: string | null
+          ativo: boolean | null
+          certificado_nome: string | null
+          certificado_validade: string | null
+          created_at: string
+          crt: number | null
+          granja_id: string | null
+          id: string
+          numero_atual_nfce: number | null
+          numero_atual_nfe: number | null
+          serie_nfce: number | null
+          serie_nfe: number | null
+          updated_at: string
+        }
+        Insert: {
+          aliq_cbs_padrao?: number | null
+          aliq_cofins_padrao?: number | null
+          aliq_ibs_padrao?: number | null
+          aliq_icms_padrao?: number | null
+          aliq_is_padrao?: number | null
+          aliq_pis_padrao?: number | null
+          ambiente?: number | null
+          api_access_token?: string | null
+          api_access_token_secret?: string | null
+          api_configurada?: boolean | null
+          api_consumer_key?: string | null
+          api_consumer_secret?: string | null
+          api_provider?: string | null
+          ativo?: boolean | null
+          certificado_nome?: string | null
+          certificado_validade?: string | null
+          created_at?: string
+          crt?: number | null
+          granja_id?: string | null
+          id?: string
+          numero_atual_nfce?: number | null
+          numero_atual_nfe?: number | null
+          serie_nfce?: number | null
+          serie_nfe?: number | null
+          updated_at?: string
+        }
+        Update: {
+          aliq_cbs_padrao?: number | null
+          aliq_cofins_padrao?: number | null
+          aliq_ibs_padrao?: number | null
+          aliq_icms_padrao?: number | null
+          aliq_is_padrao?: number | null
+          aliq_pis_padrao?: number | null
+          ambiente?: number | null
+          api_access_token?: string | null
+          api_access_token_secret?: string | null
+          api_configurada?: boolean | null
+          api_consumer_key?: string | null
+          api_consumer_secret?: string | null
+          api_provider?: string | null
+          ativo?: boolean | null
+          certificado_nome?: string | null
+          certificado_validade?: string | null
+          created_at?: string
+          crt?: number | null
+          granja_id?: string | null
+          id?: string
+          numero_atual_nfce?: number | null
+          numero_atual_nfe?: number | null
+          serie_nfce?: number | null
+          serie_nfe?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emitentes_nfe_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: true
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       estoque_produtos: {
         Row: {
@@ -967,6 +1095,573 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      notas_fiscais: {
+        Row: {
+          cfop_id: string | null
+          chave_acesso: string | null
+          cliente_fornecedor_id: string | null
+          colheita_id: string | null
+          created_at: string
+          danfe_url: string | null
+          data_emissao: string | null
+          data_saida_entrada: string | null
+          dest_bairro: string | null
+          dest_cep: string | null
+          dest_cidade: string | null
+          dest_codigo_municipio: string | null
+          dest_codigo_pais: string | null
+          dest_complemento: string | null
+          dest_cpf_cnpj: string | null
+          dest_email: string | null
+          dest_ie: string | null
+          dest_im: string | null
+          dest_isuf: string | null
+          dest_logradouro: string | null
+          dest_nome: string | null
+          dest_nome_pais: string | null
+          dest_numero: string | null
+          dest_telefone: string | null
+          dest_tipo: string | null
+          dest_uf: string | null
+          emitente_id: string | null
+          finalidade: number | null
+          forma_pagamento: number | null
+          granja_id: string | null
+          id: string
+          ind_consumidor_final: number | null
+          ind_presenca: number | null
+          info_complementar: string | null
+          info_fisco: string | null
+          inscricao_produtor_id: string | null
+          modalidade_frete: number | null
+          modelo: string | null
+          motivo_status: string | null
+          natureza_operacao: string
+          nfe_referenciada: string | null
+          numero: number | null
+          numero_fatura: string | null
+          observacoes: string | null
+          operacao: number | null
+          produtor_id: string | null
+          protocolo: string | null
+          serie: number | null
+          status: string | null
+          tenant_id: string | null
+          tipo_pagamento: string | null
+          total_bc_cbs: number | null
+          total_bc_cofins: number | null
+          total_bc_ibs: number | null
+          total_bc_icms: number | null
+          total_bc_icms_st: number | null
+          total_bc_ipi: number | null
+          total_bc_is: number | null
+          total_bc_pis: number | null
+          total_cbs: number | null
+          total_cofins: number | null
+          total_desconto: number | null
+          total_fcp: number | null
+          total_frete: number | null
+          total_ibs: number | null
+          total_icms: number | null
+          total_icms_st: number | null
+          total_ii: number | null
+          total_ipi: number | null
+          total_is: number | null
+          total_nota: number | null
+          total_outros: number | null
+          total_pis: number | null
+          total_produtos: number | null
+          total_seguro: number | null
+          transp_cidade: string | null
+          transp_cpf_cnpj: string | null
+          transp_endereco: string | null
+          transp_ie: string | null
+          transp_nome: string | null
+          transp_uf: string | null
+          updated_at: string
+          uuid_api: string | null
+          valor_desconto_fatura: number | null
+          valor_liquido_fatura: number | null
+          valor_original: number | null
+          valor_pagamento: number | null
+          veiculo_placa: string | null
+          veiculo_rntc: string | null
+          veiculo_uf: string | null
+          volumes_especie: string | null
+          volumes_marca: string | null
+          volumes_numeracao: string | null
+          volumes_peso_bruto: number | null
+          volumes_peso_liquido: number | null
+          volumes_quantidade: number | null
+          xml_cancelamento_url: string | null
+          xml_url: string | null
+        }
+        Insert: {
+          cfop_id?: string | null
+          chave_acesso?: string | null
+          cliente_fornecedor_id?: string | null
+          colheita_id?: string | null
+          created_at?: string
+          danfe_url?: string | null
+          data_emissao?: string | null
+          data_saida_entrada?: string | null
+          dest_bairro?: string | null
+          dest_cep?: string | null
+          dest_cidade?: string | null
+          dest_codigo_municipio?: string | null
+          dest_codigo_pais?: string | null
+          dest_complemento?: string | null
+          dest_cpf_cnpj?: string | null
+          dest_email?: string | null
+          dest_ie?: string | null
+          dest_im?: string | null
+          dest_isuf?: string | null
+          dest_logradouro?: string | null
+          dest_nome?: string | null
+          dest_nome_pais?: string | null
+          dest_numero?: string | null
+          dest_telefone?: string | null
+          dest_tipo?: string | null
+          dest_uf?: string | null
+          emitente_id?: string | null
+          finalidade?: number | null
+          forma_pagamento?: number | null
+          granja_id?: string | null
+          id?: string
+          ind_consumidor_final?: number | null
+          ind_presenca?: number | null
+          info_complementar?: string | null
+          info_fisco?: string | null
+          inscricao_produtor_id?: string | null
+          modalidade_frete?: number | null
+          modelo?: string | null
+          motivo_status?: string | null
+          natureza_operacao: string
+          nfe_referenciada?: string | null
+          numero?: number | null
+          numero_fatura?: string | null
+          observacoes?: string | null
+          operacao?: number | null
+          produtor_id?: string | null
+          protocolo?: string | null
+          serie?: number | null
+          status?: string | null
+          tenant_id?: string | null
+          tipo_pagamento?: string | null
+          total_bc_cbs?: number | null
+          total_bc_cofins?: number | null
+          total_bc_ibs?: number | null
+          total_bc_icms?: number | null
+          total_bc_icms_st?: number | null
+          total_bc_ipi?: number | null
+          total_bc_is?: number | null
+          total_bc_pis?: number | null
+          total_cbs?: number | null
+          total_cofins?: number | null
+          total_desconto?: number | null
+          total_fcp?: number | null
+          total_frete?: number | null
+          total_ibs?: number | null
+          total_icms?: number | null
+          total_icms_st?: number | null
+          total_ii?: number | null
+          total_ipi?: number | null
+          total_is?: number | null
+          total_nota?: number | null
+          total_outros?: number | null
+          total_pis?: number | null
+          total_produtos?: number | null
+          total_seguro?: number | null
+          transp_cidade?: string | null
+          transp_cpf_cnpj?: string | null
+          transp_endereco?: string | null
+          transp_ie?: string | null
+          transp_nome?: string | null
+          transp_uf?: string | null
+          updated_at?: string
+          uuid_api?: string | null
+          valor_desconto_fatura?: number | null
+          valor_liquido_fatura?: number | null
+          valor_original?: number | null
+          valor_pagamento?: number | null
+          veiculo_placa?: string | null
+          veiculo_rntc?: string | null
+          veiculo_uf?: string | null
+          volumes_especie?: string | null
+          volumes_marca?: string | null
+          volumes_numeracao?: string | null
+          volumes_peso_bruto?: number | null
+          volumes_peso_liquido?: number | null
+          volumes_quantidade?: number | null
+          xml_cancelamento_url?: string | null
+          xml_url?: string | null
+        }
+        Update: {
+          cfop_id?: string | null
+          chave_acesso?: string | null
+          cliente_fornecedor_id?: string | null
+          colheita_id?: string | null
+          created_at?: string
+          danfe_url?: string | null
+          data_emissao?: string | null
+          data_saida_entrada?: string | null
+          dest_bairro?: string | null
+          dest_cep?: string | null
+          dest_cidade?: string | null
+          dest_codigo_municipio?: string | null
+          dest_codigo_pais?: string | null
+          dest_complemento?: string | null
+          dest_cpf_cnpj?: string | null
+          dest_email?: string | null
+          dest_ie?: string | null
+          dest_im?: string | null
+          dest_isuf?: string | null
+          dest_logradouro?: string | null
+          dest_nome?: string | null
+          dest_nome_pais?: string | null
+          dest_numero?: string | null
+          dest_telefone?: string | null
+          dest_tipo?: string | null
+          dest_uf?: string | null
+          emitente_id?: string | null
+          finalidade?: number | null
+          forma_pagamento?: number | null
+          granja_id?: string | null
+          id?: string
+          ind_consumidor_final?: number | null
+          ind_presenca?: number | null
+          info_complementar?: string | null
+          info_fisco?: string | null
+          inscricao_produtor_id?: string | null
+          modalidade_frete?: number | null
+          modelo?: string | null
+          motivo_status?: string | null
+          natureza_operacao?: string
+          nfe_referenciada?: string | null
+          numero?: number | null
+          numero_fatura?: string | null
+          observacoes?: string | null
+          operacao?: number | null
+          produtor_id?: string | null
+          protocolo?: string | null
+          serie?: number | null
+          status?: string | null
+          tenant_id?: string | null
+          tipo_pagamento?: string | null
+          total_bc_cbs?: number | null
+          total_bc_cofins?: number | null
+          total_bc_ibs?: number | null
+          total_bc_icms?: number | null
+          total_bc_icms_st?: number | null
+          total_bc_ipi?: number | null
+          total_bc_is?: number | null
+          total_bc_pis?: number | null
+          total_cbs?: number | null
+          total_cofins?: number | null
+          total_desconto?: number | null
+          total_fcp?: number | null
+          total_frete?: number | null
+          total_ibs?: number | null
+          total_icms?: number | null
+          total_icms_st?: number | null
+          total_ii?: number | null
+          total_ipi?: number | null
+          total_is?: number | null
+          total_nota?: number | null
+          total_outros?: number | null
+          total_pis?: number | null
+          total_produtos?: number | null
+          total_seguro?: number | null
+          transp_cidade?: string | null
+          transp_cpf_cnpj?: string | null
+          transp_endereco?: string | null
+          transp_ie?: string | null
+          transp_nome?: string | null
+          transp_uf?: string | null
+          updated_at?: string
+          uuid_api?: string | null
+          valor_desconto_fatura?: number | null
+          valor_liquido_fatura?: number | null
+          valor_original?: number | null
+          valor_pagamento?: number | null
+          veiculo_placa?: string | null
+          veiculo_rntc?: string | null
+          veiculo_uf?: string | null
+          volumes_especie?: string | null
+          volumes_marca?: string | null
+          volumes_numeracao?: string | null
+          volumes_peso_bruto?: number | null
+          volumes_peso_liquido?: number | null
+          volumes_quantidade?: number | null
+          xml_cancelamento_url?: string | null
+          xml_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_cfop_id_fkey"
+            columns: ["cfop_id"]
+            isOneToOne: false
+            referencedRelation: "cfops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_cliente_fornecedor_id_fkey"
+            columns: ["cliente_fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_colheita_id_fkey"
+            columns: ["colheita_id"]
+            isOneToOne: false
+            referencedRelation: "colheitas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_emitente_id_fkey"
+            columns: ["emitente_id"]
+            isOneToOne: false
+            referencedRelation: "emitentes_nfe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_inscricao_produtor_id_fkey"
+            columns: ["inscricao_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_produtor_id_fkey"
+            columns: ["produtor_id"]
+            isOneToOne: false
+            referencedRelation: "produtores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notas_fiscais_itens: {
+        Row: {
+          aliq_cbs: number | null
+          aliq_cofins: number | null
+          aliq_fcp: number | null
+          aliq_ibs: number | null
+          aliq_icms: number | null
+          aliq_icms_st: number | null
+          aliq_ipi: number | null
+          aliq_is: number | null
+          aliq_pis: number | null
+          base_cbs: number | null
+          base_cofins: number | null
+          base_fcp: number | null
+          base_ibs: number | null
+          base_icms: number | null
+          base_icms_st: number | null
+          base_ipi: number | null
+          base_is: number | null
+          base_pis: number | null
+          cclass_trib_cbs: string | null
+          cclass_trib_ibs: string | null
+          cest: string | null
+          cfop: string | null
+          codigo: string | null
+          created_at: string
+          cst_cbs: string | null
+          cst_cofins: string | null
+          cst_ibs: string | null
+          cst_icms: string | null
+          cst_ipi: string | null
+          cst_is: string | null
+          cst_pis: string | null
+          descricao: string
+          id: string
+          info_adicional: string | null
+          modalidade_bc_icms: number | null
+          modalidade_bc_icms_st: number | null
+          mva_icms_st: number | null
+          ncm: string | null
+          nota_fiscal_id: string
+          numero_item: number
+          origem: number | null
+          produto_id: string | null
+          quantidade: number
+          reducao_bc_icms: number | null
+          reducao_bc_icms_st: number | null
+          unidade: string
+          valor_cbs: number | null
+          valor_cofins: number | null
+          valor_desconto: number | null
+          valor_fcp: number | null
+          valor_frete: number | null
+          valor_ibs: number | null
+          valor_icms: number | null
+          valor_icms_st: number | null
+          valor_ipi: number | null
+          valor_is: number | null
+          valor_outros: number | null
+          valor_pis: number | null
+          valor_seguro: number | null
+          valor_total: number
+          valor_unitario: number
+        }
+        Insert: {
+          aliq_cbs?: number | null
+          aliq_cofins?: number | null
+          aliq_fcp?: number | null
+          aliq_ibs?: number | null
+          aliq_icms?: number | null
+          aliq_icms_st?: number | null
+          aliq_ipi?: number | null
+          aliq_is?: number | null
+          aliq_pis?: number | null
+          base_cbs?: number | null
+          base_cofins?: number | null
+          base_fcp?: number | null
+          base_ibs?: number | null
+          base_icms?: number | null
+          base_icms_st?: number | null
+          base_ipi?: number | null
+          base_is?: number | null
+          base_pis?: number | null
+          cclass_trib_cbs?: string | null
+          cclass_trib_ibs?: string | null
+          cest?: string | null
+          cfop?: string | null
+          codigo?: string | null
+          created_at?: string
+          cst_cbs?: string | null
+          cst_cofins?: string | null
+          cst_ibs?: string | null
+          cst_icms?: string | null
+          cst_ipi?: string | null
+          cst_is?: string | null
+          cst_pis?: string | null
+          descricao: string
+          id?: string
+          info_adicional?: string | null
+          modalidade_bc_icms?: number | null
+          modalidade_bc_icms_st?: number | null
+          mva_icms_st?: number | null
+          ncm?: string | null
+          nota_fiscal_id: string
+          numero_item: number
+          origem?: number | null
+          produto_id?: string | null
+          quantidade: number
+          reducao_bc_icms?: number | null
+          reducao_bc_icms_st?: number | null
+          unidade: string
+          valor_cbs?: number | null
+          valor_cofins?: number | null
+          valor_desconto?: number | null
+          valor_fcp?: number | null
+          valor_frete?: number | null
+          valor_ibs?: number | null
+          valor_icms?: number | null
+          valor_icms_st?: number | null
+          valor_ipi?: number | null
+          valor_is?: number | null
+          valor_outros?: number | null
+          valor_pis?: number | null
+          valor_seguro?: number | null
+          valor_total: number
+          valor_unitario: number
+        }
+        Update: {
+          aliq_cbs?: number | null
+          aliq_cofins?: number | null
+          aliq_fcp?: number | null
+          aliq_ibs?: number | null
+          aliq_icms?: number | null
+          aliq_icms_st?: number | null
+          aliq_ipi?: number | null
+          aliq_is?: number | null
+          aliq_pis?: number | null
+          base_cbs?: number | null
+          base_cofins?: number | null
+          base_fcp?: number | null
+          base_ibs?: number | null
+          base_icms?: number | null
+          base_icms_st?: number | null
+          base_ipi?: number | null
+          base_is?: number | null
+          base_pis?: number | null
+          cclass_trib_cbs?: string | null
+          cclass_trib_ibs?: string | null
+          cest?: string | null
+          cfop?: string | null
+          codigo?: string | null
+          created_at?: string
+          cst_cbs?: string | null
+          cst_cofins?: string | null
+          cst_ibs?: string | null
+          cst_icms?: string | null
+          cst_ipi?: string | null
+          cst_is?: string | null
+          cst_pis?: string | null
+          descricao?: string
+          id?: string
+          info_adicional?: string | null
+          modalidade_bc_icms?: number | null
+          modalidade_bc_icms_st?: number | null
+          mva_icms_st?: number | null
+          ncm?: string | null
+          nota_fiscal_id?: string
+          numero_item?: number
+          origem?: number | null
+          produto_id?: string | null
+          quantidade?: number
+          reducao_bc_icms?: number | null
+          reducao_bc_icms_st?: number | null
+          unidade?: string
+          valor_cbs?: number | null
+          valor_cofins?: number | null
+          valor_desconto?: number | null
+          valor_fcp?: number | null
+          valor_frete?: number | null
+          valor_ibs?: number | null
+          valor_icms?: number | null
+          valor_icms_st?: number | null
+          valor_ipi?: number | null
+          valor_is?: number | null
+          valor_outros?: number | null
+          valor_pis?: number | null
+          valor_seguro?: number | null
+          valor_total?: number
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_itens_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pivos: {
         Row: {
