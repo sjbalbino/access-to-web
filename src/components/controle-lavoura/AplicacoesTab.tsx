@@ -1,18 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { useAplicacoes, useCreateAplicacao, useUpdateAplicacao, useDeleteAplicacao, AplicacaoInput, TipoAplicacao, TIPOS_APLICACAO } from '@/hooks/useAplicacoes';
-import { usePlantios } from '@/hooks/usePlantios';
-import { useProdutos } from '@/hooks/useProdutos';
-import { useUnidadesMedida } from '@/hooks/useUnidadesMedida';
+import { useProdutosByGrupo, TIPO_GRUPO_MAP } from '@/hooks/useProdutosByGrupo';
 import { format } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -24,22 +22,21 @@ interface AplicacoesTabProps {
 
 export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTabProps) {
   const { data: aplicacoes, isLoading } = useAplicacoes(tipo, controleLavouraId);
-  const { data: plantios } = usePlantios(controleLavouraId);
-  const { data: produtos } = useProdutos();
-  const { data: unidades } = useUnidadesMedida();
+  const { data: produtosFiltrados } = useProdutosByGrupo(tipo);
 
   const tipoLabel = TIPOS_APLICACAO.find(t => t.value === tipo)?.label || 'Aplicação';
+  const grupoNome = TIPO_GRUPO_MAP[tipo];
 
   const emptyAplicacao: AplicacaoInput = {
     tipo,
     controle_lavoura_id: controleLavouraId || '',
-    plantio_id: null,
     produto_id: null,
     data_aplicacao: null,
     area_aplicada: 0,
     dose_ha: 0,
     quantidade_total: 0,
-    unidade_medida_id: null,
+    valor_unitario: 0,
+    valor_total: 0,
     aplicador: null,
     equipamento: null,
     condicao_climatica: null,
@@ -49,10 +46,36 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<AplicacaoInput>(emptyAplicacao);
+  const [unidadeSigla, setUnidadeSigla] = useState<string>('');
 
   const createMutation = useCreateAplicacao();
   const updateMutation = useUpdateAplicacao();
   const deleteMutation = useDeleteAplicacao();
+
+  // Preencher valor unitário quando selecionar produto
+  useEffect(() => {
+    if (formData.produto_id && produtosFiltrados) {
+      const produto = produtosFiltrados.find(p => p.id === formData.produto_id);
+      if (produto) {
+        setFormData(prev => ({
+          ...prev,
+          valor_unitario: produto.preco_custo || 0,
+        }));
+        setUnidadeSigla(produto.unidades_medida?.sigla || '');
+      }
+    } else {
+      setUnidadeSigla('');
+    }
+  }, [formData.produto_id, produtosFiltrados]);
+
+  // Calcular valor total quando quantidade ou valor unitário mudar
+  useEffect(() => {
+    const total = (formData.quantidade_total || 0) * (formData.valor_unitario || 0);
+    setFormData(prev => ({
+      ...prev,
+      valor_total: total,
+    }));
+  }, [formData.quantidade_total, formData.valor_unitario]);
 
   if (!controleLavouraId) {
     return (
@@ -70,6 +93,7 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
       ...emptyAplicacao,
       controle_lavoura_id: controleLavouraId,
     });
+    setUnidadeSigla('');
     setEditingId(null);
     setIsDialogOpen(true);
   };
@@ -78,18 +102,19 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
     setFormData({
       tipo: aplicacao.tipo,
       controle_lavoura_id: aplicacao.controle_lavoura_id || controleLavouraId,
-      plantio_id: aplicacao.plantio_id,
       produto_id: aplicacao.produto_id,
       data_aplicacao: aplicacao.data_aplicacao,
       area_aplicada: aplicacao.area_aplicada || 0,
       dose_ha: aplicacao.dose_ha || 0,
       quantidade_total: aplicacao.quantidade_total || 0,
-      unidade_medida_id: aplicacao.unidade_medida_id,
+      valor_unitario: aplicacao.valor_unitario || 0,
+      valor_total: aplicacao.valor_total || 0,
       aplicador: aplicacao.aplicador,
       equipamento: aplicacao.equipamento,
       condicao_climatica: aplicacao.condicao_climatica,
       observacoes: aplicacao.observacoes,
     });
+    setUnidadeSigla(aplicacao.produtos?.unidades_medida?.sigla || '');
     setEditingId(aplicacao.id);
     setIsDialogOpen(true);
   };
@@ -113,6 +138,13 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
     }
   };
 
+  // Calcular totais do rodapé
+  const totais = aplicacoes?.reduce((acc, a) => ({
+    area: acc.area + (a.area_aplicada || 0),
+    quantidade: acc.quantidade + (a.quantidade_total || 0),
+    valorTotal: acc.valorTotal + (a.valor_total || 0),
+  }), { area: 0, quantidade: 0, valorTotal: 0 }) || { area: 0, quantidade: 0, valorTotal: 0 };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -124,7 +156,10 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
   return (
     <div className="space-y-4">
       {canEdit && (
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-muted-foreground">
+            Produtos do grupo: <strong>{grupoNome}</strong>
+          </span>
           <Button onClick={handleNew} className="gap-2">
             <Plus className="h-4 w-4" />
             Nova {tipoLabel}
@@ -139,16 +174,19 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
               <TableRow>
                 <TableHead>Data</TableHead>
                 <TableHead>Produto</TableHead>
+                <TableHead>Unidade</TableHead>
                 <TableHead className="text-right">Área (ha)</TableHead>
                 <TableHead className="text-right">Dose/ha</TableHead>
                 <TableHead className="text-right">Qtd Total</TableHead>
+                <TableHead className="text-right">Vlr Unit.</TableHead>
+                <TableHead className="text-right">Total (R$)</TableHead>
                 {canEdit && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {aplicacoes?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 6 : 5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={canEdit ? 9 : 8} className="text-center text-muted-foreground py-8">
                     Nenhuma {tipoLabel.toLowerCase()} cadastrada
                   </TableCell>
                 </TableRow>
@@ -159,11 +197,12 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
                       {aplicacao.data_aplicacao ? format(new Date(aplicacao.data_aplicacao), 'dd/MM/yyyy') : '-'}
                     </TableCell>
                     <TableCell>{aplicacao.produtos?.nome || '-'}</TableCell>
+                    <TableCell>{aplicacao.produtos?.unidades_medida?.sigla || '-'}</TableCell>
                     <TableCell className="text-right">{aplicacao.area_aplicada?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{aplicacao.dose_ha?.toLocaleString('pt-BR') || '0'}</TableCell>
-                    <TableCell className="text-right">
-                      {aplicacao.quantidade_total?.toLocaleString('pt-BR') || '0'} {aplicacao.unidades_medida?.sigla || ''}
-                    </TableCell>
+                    <TableCell className="text-right">{aplicacao.quantidade_total?.toLocaleString('pt-BR') || '0'}</TableCell>
+                    <TableCell className="text-right">{aplicacao.valor_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</TableCell>
+                    <TableCell className="text-right">{aplicacao.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</TableCell>
                     {canEdit && (
                       <TableCell>
                         <div className="flex gap-1">
@@ -180,6 +219,19 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
                 ))
               )}
             </TableBody>
+            {aplicacoes && aplicacoes.length > 0 && (
+              <TableFooter>
+                <TableRow className="bg-muted/50 font-medium">
+                  <TableCell colSpan={3}>Totais</TableCell>
+                  <TableCell className="text-right">{totais.area.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell className="text-right">{totais.quantidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell className="text-right font-bold">{totais.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  {canEdit && <TableCell></TableCell>}
+                </TableRow>
+              </TableFooter>
+            )}
           </Table>
         </CardContent>
       </Card>
@@ -192,26 +244,6 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Plantio</Label>
-                <Select
-                  value={formData.plantio_id || "none"}
-                  onValueChange={(value) => setFormData({ ...formData, plantio_id: value === "none" ? null : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {plantios?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.data_plantio ? format(new Date(p.data_plantio), 'dd/MM/yyyy') : 'Sem data'} - {p.culturas?.nome || 'Sem cultura'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label>Data da Aplicação</Label>
                 <Input
                   type="date"
@@ -221,7 +253,7 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
               </div>
 
               <div className="space-y-2">
-                <Label>Produto</Label>
+                <Label>Produto ({grupoNome})</Label>
                 <Select
                   value={formData.produto_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, produto_id: value === "none" ? null : value })}
@@ -231,11 +263,22 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum</SelectItem>
-                    {produtos?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                    {produtosFiltrados?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.nome} {p.unidades_medida?.sigla ? `(${p.unidades_medida.sigla})` : ''}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Unidade de Medida</Label>
+                <Input
+                  value={unidadeSigla || '-'}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
 
               <div className="space-y-2">
@@ -269,21 +312,23 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
               </div>
 
               <div className="space-y-2">
-                <Label>Unidade de Medida</Label>
-                <Select
-                  value={formData.unidade_medida_id || "none"}
-                  onValueChange={(value) => setFormData({ ...formData, unidade_medida_id: value === "none" ? null : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
-                    {unidades?.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>{u.descricao} ({u.sigla})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Valor Unitário (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.valor_unitario || ''}
+                  onChange={(e) => setFormData({ ...formData, valor_unitario: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Valor Total (R$)</Label>
+                <Input
+                  type="text"
+                  value={formData.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
 
               <div className="space-y-2">

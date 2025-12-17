@@ -90,6 +90,8 @@ export type Database = {
           tipo: string
           unidade_medida_id: string | null
           updated_at: string
+          valor_total: number | null
+          valor_unitario: number | null
         }
         Insert: {
           aplicador?: string | null
@@ -110,6 +112,8 @@ export type Database = {
           tipo: string
           unidade_medida_id?: string | null
           updated_at?: string
+          valor_total?: number | null
+          valor_unitario?: number | null
         }
         Update: {
           aplicador?: string | null
@@ -130,6 +134,8 @@ export type Database = {
           tipo?: string
           unidade_medida_id?: string | null
           updated_at?: string
+          valor_total?: number | null
+          valor_unitario?: number | null
         }
         Relationships: [
           {

@@ -10,13 +10,13 @@ export interface Aplicacao {
   controle_lavoura_id: string | null;
   safra_id: string | null;
   lavoura_id: string;
-  plantio_id: string | null;
   produto_id: string | null;
   data_aplicacao: string | null;
   area_aplicada: number | null;
   dose_ha: number | null;
   quantidade_total: number | null;
-  unidade_medida_id: string | null;
+  valor_unitario: number | null;
+  valor_total: number | null;
   aplicador: string | null;
   equipamento: string | null;
   condicao_climatica: string | null;
@@ -25,21 +25,24 @@ export interface Aplicacao {
   updated_at: string;
   safras?: { id: string; nome: string } | null;
   lavouras?: { id: string; nome: string } | null;
-  plantios?: { id: string; data_plantio: string } | null;
-  produtos?: { id: string; nome: string } | null;
-  unidades_medida?: { id: string; sigla: string } | null;
+  produtos?: { 
+    id: string; 
+    nome: string;
+    preco_custo: number | null;
+    unidades_medida: { id: string; sigla: string | null } | null;
+  } | null;
 }
 
 export type AplicacaoInput = {
   tipo: TipoAplicacao;
   controle_lavoura_id: string;
-  plantio_id: string | null;
   produto_id: string | null;
   data_aplicacao: string | null;
   area_aplicada: number | null;
   dose_ha: number | null;
   quantidade_total: number | null;
-  unidade_medida_id: string | null;
+  valor_unitario: number | null;
+  valor_total: number | null;
   aplicador: string | null;
   equipamento: string | null;
   condicao_climatica: string | null;
@@ -70,9 +73,7 @@ export function useAplicacoes(tipo: TipoAplicacao, controleLavouraId: string | n
           *,
           safras (id, nome),
           lavouras (id, nome),
-          plantios (id, data_plantio),
-          produtos (id, nome),
-          unidades_medida (id, sigla)
+          produtos (id, nome, preco_custo, unidades_medida:unidade_medida_id (id, sigla))
         `)
         .eq("tipo", tipo)
         .eq("controle_lavoura_id", controleLavouraId)
