@@ -21,6 +21,7 @@ import {
   Droplets,
   Crown,
   FileText,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,9 @@ const menuItems = [
   { title: "Placas", icon: Truck, path: "/placas", color: "text-orange-500" },
   { title: "Tab. Umidades", icon: Droplets, path: "/tabela-umidades", color: "text-cyan-500" },
   { title: "NCM", icon: FileText, path: "/ncm", color: "text-slate-500" },
+  { title: "CFOPs", icon: FileText, path: "/cfops", color: "text-indigo-500" },
+  { title: "Emitentes NF-e", icon: Building2, path: "/emitentes-nfe", color: "text-teal-500" },
+  { title: "Notas Fiscais", icon: Receipt, path: "/notas-fiscais", color: "text-rose-500" },
 ];
 
 const roleLabels: Record<string, string> = {

@@ -23,6 +23,10 @@ import Silos from "./pages/Silos";
 import Placas from "./pages/Placas";
 import TabelaUmidades from "./pages/TabelaUmidades";
 import Ncm from "./pages/Ncm";
+import Cfops from "./pages/Cfops";
+import EmitentesNfe from "./pages/EmitentesNfe";
+import NotasFiscais from "./pages/NotasFiscais";
+import NotaFiscalForm from "./pages/NotaFiscalForm";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +55,11 @@ const App = () => (
             <Route path="/placas" element={<ProtectedRoute><Placas /></ProtectedRoute>} />
             <Route path="/tabela-umidades" element={<ProtectedRoute><TabelaUmidades /></ProtectedRoute>} />
             <Route path="/ncm" element={<ProtectedRoute><Ncm /></ProtectedRoute>} />
+            <Route path="/cfops" element={<ProtectedRoute><Cfops /></ProtectedRoute>} />
+            <Route path="/emitentes-nfe" element={<ProtectedRoute><EmitentesNfe /></ProtectedRoute>} />
+            <Route path="/notas-fiscais" element={<ProtectedRoute><NotasFiscais /></ProtectedRoute>} />
+            <Route path="/notas-fiscais/nova" element={<ProtectedRoute><NotaFiscalForm /></ProtectedRoute>} />
+            <Route path="/notas-fiscais/:id" element={<ProtectedRoute><NotaFiscalForm /></ProtectedRoute>} />
             <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />
             <Route path="/tenants" element={<ProtectedRoute requireSuperAdmin><Tenants /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
