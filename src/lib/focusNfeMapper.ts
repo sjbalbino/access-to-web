@@ -3,6 +3,7 @@
 
 export interface FocusNfeNota {
   natureza_operacao: string;
+  data_emissao: string;
   tipo_documento: number; // 0=Entrada, 1=Saída
   finalidade_emissao: number; // 1=Normal, 2=Complementar, 3=Ajuste, 4=Devolução
   consumidor_final: number; // 0=Normal, 1=Consumidor Final
@@ -118,6 +119,7 @@ function mapCstIcms(cstOriginal: string | null, crt: number | null): string {
 
 export interface NotaFiscalData {
   id: string;
+  data_emissao: string | null;
   natureza_operacao: string;
   operacao: number | null; // 0=Entrada, 1=Saída
   finalidade: number | null;
@@ -229,6 +231,7 @@ export function mapNotaToFocusNfe(
   
   const focusNota: FocusNfeNota = {
     natureza_operacao: nota.natureza_operacao,
+    data_emissao: nota.data_emissao || "",
     tipo_documento: nota.operacao ?? 1, // Default: Saída
     finalidade_emissao: nota.finalidade ?? 1, // Default: Normal
     consumidor_final: nota.ind_consumidor_final ?? 0,
@@ -337,6 +340,10 @@ function mapItemToFocusNfe(
 // Validação de dados antes do envio
 export function validateNotaForEmission(nota: NotaFiscalData, itens: NotaFiscalItemData[]): string[] {
   const errors: string[] = [];
+  
+  if (!nota.data_emissao) {
+    errors.push("Data de emissão é obrigatória");
+  }
   
   // Validar emitente (inscrição do produtor) - aceitar CPF ou CNPJ
   if (!nota.inscricaoProdutor?.cpf_cnpj) {
