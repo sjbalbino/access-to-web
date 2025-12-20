@@ -126,8 +126,11 @@ serve(async (req) => {
       throw new Error(`URL do ${tipo} não disponível. Status da nota: ${consultaData.status}`);
     }
 
-    // Baixar o arquivo
-    const downloadResponse = await fetch(downloadUrl, {
+    // Baixar o arquivo - usar URL completa
+    const fullDownloadUrl = downloadUrl.startsWith('http') ? downloadUrl : `${baseUrl}${downloadUrl}`;
+    console.log("URL de download:", fullDownloadUrl);
+    
+    const downloadResponse = await fetch(fullDownloadUrl, {
       headers: {
         Authorization: `Basic ${btoa(`${emitenteToken}:`)}`,
       },
