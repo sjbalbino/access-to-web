@@ -21,6 +21,8 @@ import { useUnidadesMedida } from '@/hooks/useUnidadesMedida';
 import { useClientesFornecedores } from '@/hooks/useClientesFornecedores';
 import { useGruposProdutos } from '@/hooks/useGruposProdutos';
 import { useNcmSearch } from '@/hooks/useNcmSearch';
+import { CurrencyInput } from '@/components/ui/currency-input';
+import { QuantityInput } from '@/components/ui/quantity-input';
 import { cn } from '@/lib/utils';
 
 const CST_PIS_COFINS = [
@@ -330,16 +332,16 @@ export default function Produtos() {
                     <Separator />
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label>Preço Custo (R$)</Label>
-                        <Input type="number" step="0.01" value={formData.preco_custo || ''} onChange={(e) => setFormData({ ...formData, preco_custo: parseFloat(e.target.value) || 0 })} />
+                        <Label>Preço Custo</Label>
+                        <CurrencyInput value={formData.preco_custo} onChange={(value) => setFormData({ ...formData, preco_custo: value })} prefix="R$" />
                       </div>
                       <div className="space-y-2">
-                        <Label>Preço à Vista (R$)</Label>
-                        <Input type="number" step="0.01" value={formData.preco_venda || ''} onChange={(e) => setFormData({ ...formData, preco_venda: parseFloat(e.target.value) || 0 })} />
+                        <Label>Preço à Vista</Label>
+                        <CurrencyInput value={formData.preco_venda} onChange={(value) => setFormData({ ...formData, preco_venda: value })} prefix="R$" />
                       </div>
                       <div className="space-y-2">
-                        <Label>Preço à Prazo (R$)</Label>
-                        <Input type="number" step="0.01" value={formData.preco_prazo || ''} onChange={(e) => setFormData({ ...formData, preco_prazo: parseFloat(e.target.value) || 0 })} />
+                        <Label>Preço à Prazo</Label>
+                        <CurrencyInput value={formData.preco_prazo} onChange={(value) => setFormData({ ...formData, preco_prazo: value })} prefix="R$" />
                       </div>
                     </div>
                   </div>
@@ -354,15 +356,15 @@ export default function Produtos() {
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                       <div className="space-y-2">
                         <Label>Estoque Atual</Label>
-                        <Input type="number" step="0.01" value={formData.estoque_atual || ''} onChange={(e) => setFormData({ ...formData, estoque_atual: parseFloat(e.target.value) || 0 })} />
+                        <QuantityInput value={formData.estoque_atual} onChange={(value) => setFormData({ ...formData, estoque_atual: value })} decimals={3} />
                       </div>
                       <div className="space-y-2">
                         <Label>Estoque Mínimo</Label>
-                        <Input type="number" step="0.01" value={formData.estoque_minimo || ''} onChange={(e) => setFormData({ ...formData, estoque_minimo: parseFloat(e.target.value) || 0 })} />
+                        <QuantityInput value={formData.estoque_minimo} onChange={(value) => setFormData({ ...formData, estoque_minimo: value })} decimals={3} />
                       </div>
                       <div className="space-y-2">
                         <Label>Estoque Máximo</Label>
-                        <Input type="number" step="0.01" value={formData.estoque_maximo || ''} onChange={(e) => setFormData({ ...formData, estoque_maximo: parseFloat(e.target.value) || 0 })} />
+                        <QuantityInput value={formData.estoque_maximo} onChange={(value) => setFormData({ ...formData, estoque_maximo: value })} decimals={3} />
                       </div>
                       <div className="space-y-2">
                         <Label>Tempo Máximo (dias)</Label>
@@ -370,13 +372,13 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Qtd. Venda</Label>
-                        <Input type="number" step="0.01" value={formData.qtd_venda || ''} onChange={(e) => setFormData({ ...formData, qtd_venda: parseFloat(e.target.value) || 1 })} />
+                        <QuantityInput value={formData.qtd_venda} onChange={(value) => setFormData({ ...formData, qtd_venda: value ?? 1 })} decimals={3} />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Peso do Saco (kg)</Label>
-                        <Input type="number" step="0.01" value={formData.peso_saco || ''} onChange={(e) => setFormData({ ...formData, peso_saco: parseFloat(e.target.value) || 60 })} placeholder="Ex: 60 para indústria, 50 para semente" />
+                        <QuantityInput value={formData.peso_saco} onChange={(value) => setFormData({ ...formData, peso_saco: value ?? 60 })} decimals={2} placeholder="Ex: 60 para indústria, 50 para semente" />
                       </div>
                       <div className="space-y-2">
                         <Label>Produto Resíduo</Label>
