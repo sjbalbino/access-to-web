@@ -188,8 +188,17 @@ export type Database = {
           ativo: boolean | null
           codigo: string
           created_at: string
+          cst_cbs_padrao: string | null
+          cst_cofins_padrao: string | null
+          cst_ibs_padrao: string | null
+          cst_icms_padrao: string | null
+          cst_is_padrao: string | null
+          cst_pis_padrao: string | null
           descricao: string
           id: string
+          incidencia_ibs_cbs: boolean | null
+          incidencia_icms: boolean | null
+          incidencia_pis_cofins: boolean | null
           natureza_operacao: string | null
           tipo: string | null
           updated_at: string
@@ -199,8 +208,17 @@ export type Database = {
           ativo?: boolean | null
           codigo: string
           created_at?: string
+          cst_cbs_padrao?: string | null
+          cst_cofins_padrao?: string | null
+          cst_ibs_padrao?: string | null
+          cst_icms_padrao?: string | null
+          cst_is_padrao?: string | null
+          cst_pis_padrao?: string | null
           descricao: string
           id?: string
+          incidencia_ibs_cbs?: boolean | null
+          incidencia_icms?: boolean | null
+          incidencia_pis_cofins?: boolean | null
           natureza_operacao?: string | null
           tipo?: string | null
           updated_at?: string
@@ -210,8 +228,17 @@ export type Database = {
           ativo?: boolean | null
           codigo?: string
           created_at?: string
+          cst_cbs_padrao?: string | null
+          cst_cofins_padrao?: string | null
+          cst_ibs_padrao?: string | null
+          cst_icms_padrao?: string | null
+          cst_is_padrao?: string | null
+          cst_pis_padrao?: string | null
           descricao?: string
           id?: string
+          incidencia_ibs_cbs?: boolean | null
+          incidencia_icms?: boolean | null
+          incidencia_pis_cofins?: boolean | null
           natureza_operacao?: string | null
           tipo?: string | null
           updated_at?: string

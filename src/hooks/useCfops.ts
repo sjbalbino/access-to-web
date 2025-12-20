@@ -10,6 +10,15 @@ export interface Cfop {
   tipo: string | null;
   aplicacao: string | null;
   ativo: boolean | null;
+  incidencia_icms: boolean | null;
+  incidencia_pis_cofins: boolean | null;
+  incidencia_ibs_cbs: boolean | null;
+  cst_icms_padrao: string | null;
+  cst_pis_padrao: string | null;
+  cst_cofins_padrao: string | null;
+  cst_ibs_padrao: string | null;
+  cst_cbs_padrao: string | null;
+  cst_is_padrao: string | null;
   created_at: string;
   updated_at: string;
 }

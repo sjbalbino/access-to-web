@@ -29,6 +29,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { Plus, Pencil, Trash2, Search, FileText } from "lucide-react";
 import { useCfops, Cfop, CfopInsert } from "@/hooks/useCfops";
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,6 +68,15 @@ export default function Cfops() {
     tipo: "saida",
     aplicacao: "",
     ativo: true,
+    incidencia_icms: true,
+    incidencia_pis_cofins: true,
+    incidencia_ibs_cbs: false,
+    cst_icms_padrao: null,
+    cst_pis_padrao: null,
+    cst_cofins_padrao: null,
+    cst_ibs_padrao: null,
+    cst_cbs_padrao: null,
+    cst_is_padrao: null,
   });
 
   const resetForm = () => {
@@ -77,6 +87,15 @@ export default function Cfops() {
       tipo: "saida",
       aplicacao: "",
       ativo: true,
+      incidencia_icms: true,
+      incidencia_pis_cofins: true,
+      incidencia_ibs_cbs: false,
+      cst_icms_padrao: null,
+      cst_pis_padrao: null,
+      cst_cofins_padrao: null,
+      cst_ibs_padrao: null,
+      cst_cbs_padrao: null,
+      cst_is_padrao: null,
     });
     setSelectedCfop(null);
   };
@@ -91,6 +110,15 @@ export default function Cfops() {
         tipo: cfop.tipo || "saida",
         aplicacao: cfop.aplicacao || "",
         ativo: cfop.ativo ?? true,
+        incidencia_icms: cfop.incidencia_icms ?? true,
+        incidencia_pis_cofins: cfop.incidencia_pis_cofins ?? true,
+        incidencia_ibs_cbs: cfop.incidencia_ibs_cbs ?? false,
+        cst_icms_padrao: cfop.cst_icms_padrao,
+        cst_pis_padrao: cfop.cst_pis_padrao,
+        cst_cofins_padrao: cfop.cst_cofins_padrao,
+        cst_ibs_padrao: cfop.cst_ibs_padrao,
+        cst_cbs_padrao: cfop.cst_cbs_padrao,
+        cst_is_padrao: cfop.cst_is_padrao,
       });
     } else {
       resetForm();
@@ -361,6 +389,122 @@ export default function Cfops() {
                   />
                 </div>
               </div>
+
+              <Separator className="my-4" />
+              <h4 className="font-medium text-sm">Configuração de Impostos</h4>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="incidencia_icms"
+                    checked={formData.incidencia_icms ?? true}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, incidencia_icms: checked })
+                    }
+                  />
+                  <Label htmlFor="incidencia_icms">Incide ICMS</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="incidencia_pis_cofins"
+                    checked={formData.incidencia_pis_cofins ?? true}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, incidencia_pis_cofins: checked })
+                    }
+                  />
+                  <Label htmlFor="incidencia_pis_cofins">Incide PIS/COFINS</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="incidencia_ibs_cbs"
+                    checked={formData.incidencia_ibs_cbs ?? false}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, incidencia_ibs_cbs: checked })
+                    }
+                  />
+                  <Label htmlFor="incidencia_ibs_cbs">Incide IBS/CBS/IS</Label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cst_icms_padrao">CST ICMS Padrão</Label>
+                  <Input
+                    id="cst_icms_padrao"
+                    value={formData.cst_icms_padrao || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cst_icms_padrao: e.target.value || null })
+                    }
+                    placeholder="Ex: 00"
+                    maxLength={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cst_pis_padrao">CST PIS Padrão</Label>
+                  <Input
+                    id="cst_pis_padrao"
+                    value={formData.cst_pis_padrao || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cst_pis_padrao: e.target.value || null })
+                    }
+                    placeholder="Ex: 01"
+                    maxLength={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cst_cofins_padrao">CST COFINS Padrão</Label>
+                  <Input
+                    id="cst_cofins_padrao"
+                    value={formData.cst_cofins_padrao || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cst_cofins_padrao: e.target.value || null })
+                    }
+                    placeholder="Ex: 01"
+                    maxLength={2}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cst_ibs_padrao">CST IBS Padrão</Label>
+                  <Input
+                    id="cst_ibs_padrao"
+                    value={formData.cst_ibs_padrao || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cst_ibs_padrao: e.target.value || null })
+                    }
+                    placeholder="Ex: 000"
+                    maxLength={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cst_cbs_padrao">CST CBS Padrão</Label>
+                  <Input
+                    id="cst_cbs_padrao"
+                    value={formData.cst_cbs_padrao || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cst_cbs_padrao: e.target.value || null })
+                    }
+                    placeholder="Ex: 000"
+                    maxLength={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cst_is_padrao">CST IS Padrão</Label>
+                  <Input
+                    id="cst_is_padrao"
+                    value={formData.cst_is_padrao || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cst_is_padrao: e.target.value || null })
+                    }
+                    placeholder="Ex: 000"
+                    maxLength={3}
+                  />
+                </div>
+              </div>
+
+              <Separator className="my-4" />
 
               <div className="flex items-center space-x-2">
                 <Switch

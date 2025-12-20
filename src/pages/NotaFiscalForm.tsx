@@ -35,7 +35,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loader2, CheckCircle2, XCircle, Download, Check, ChevronRight, ChevronLeft, Package, Truck, CreditCard, FileEdit, User, Building2 } from "lucide-react";
+import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loader2, CheckCircle2, XCircle, Download, Check, ChevronRight, ChevronLeft, Package, Truck, CreditCard, FileEdit, User, Building2, Calculator } from "lucide-react";
 import { useNotasFiscais, useNotaFiscalItens, NotaFiscalInsert, NotaFiscalItemInsert } from "@/hooks/useNotasFiscais";
 import { useCfops } from "@/hooks/useCfops";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
@@ -53,6 +53,7 @@ import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { CurrencyInput, formatBrazilianNumber } from "@/components/ui/currency-input";
 import { QuantityInput, formatBrazilianQuantity } from "@/components/ui/quantity-input";
 import { cn } from "@/lib/utils";
+import { calculateTaxes, type TaxCalculatorInput } from "@/lib/taxCalculator";
 
 const OPERACOES = [
   { value: 0, label: "Entrada" },
@@ -963,6 +964,75 @@ export default function NotaFiscalForm() {
       await createItem.mutateAsync(itemData);
     }
     setIsItemDialogOpen(false);
+  };
+
+  // Função para calcular impostos automaticamente
+  const handleCalculateTaxes = () => {
+    // Buscar dados necessários
+    const emitente = emitentes.find((e) => e.id === formData.emitente_id);
+    const cfop = cfops.find((c) => c.id === formData.cfop_id);
+    const produto = produtos.find((p) => p.id === itemFormData.produto_id);
+    const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
+    
+    if (!emitente || !cfop) {
+      toast.error("Selecione um emitente e CFOP para calcular os impostos");
+      return;
+    }
+
+    // Buscar UF do emitente através da granja
+    const granjaEmitente = inscricao?.granja_id 
+      ? clientesFornecedores.find((c) => c.granja_id === inscricao.granja_id) 
+      : null;
+    
+    const ufEmitente = granjaEmitente?.uf || inscricao?.uf || "SP";
+    
+    const input: TaxCalculatorInput = {
+      valorTotal: itemFormData.valor_total || 0,
+      crt: emitente.crt,
+      aliqIcmsPadrao: emitente.aliq_icms_padrao,
+      aliqPisPadrao: emitente.aliq_pis_padrao,
+      aliqCofinsPadrao: emitente.aliq_cofins_padrao,
+      aliqIbsPadrao: emitente.aliq_ibs_padrao,
+      aliqCbsPadrao: emitente.aliq_cbs_padrao,
+      aliqIsPadrao: emitente.aliq_is_padrao,
+      ufEmitente: ufEmitente,
+      cfopCodigo: itemFormData.cfop || cfop.codigo,
+      incidenciaIcms: cfop.incidencia_icms ?? true,
+      incidenciaPisCofins: cfop.incidencia_pis_cofins ?? true,
+      incidenciaIbsCbs: cfop.incidencia_ibs_cbs ?? false,
+      cstIcmsPadrao: cfop.cst_icms_padrao,
+      cstPisPadrao: cfop.cst_pis_padrao,
+      cstCofinsPadrao: cfop.cst_cofins_padrao,
+      cstIbsPadrao: cfop.cst_ibs_padrao,
+      cstCbsPadrao: cfop.cst_cbs_padrao,
+      cstIsPadrao: cfop.cst_is_padrao,
+      produtoCstIcms: produto?.cst_icms || null,
+      produtoCstPis: produto?.cst_pis || null,
+      produtoCstCofins: produto?.cst_cofins || null,
+      ufDestinatario: formData.dest_uf || "SP",
+      origemProduto: itemFormData.origem || 0,
+    };
+
+    const result = calculateTaxes(input);
+
+    setItemFormData((prev) => ({
+      ...prev,
+      cst_icms: result.cstIcms,
+      aliq_icms: result.aliqIcms,
+      cst_pis: result.cstPis,
+      aliq_pis: result.aliqPis,
+      cst_cofins: result.cstCofins,
+      aliq_cofins: result.aliqCofins,
+      cst_ibs: result.cstIbs,
+      aliq_ibs: result.aliqIbs,
+      cst_cbs: result.cstCbs,
+      aliq_cbs: result.aliqCbs,
+      cst_is: result.cstIs,
+      aliq_is: result.aliqIs,
+      origem: result.origem,
+    }));
+
+    toast.success("Impostos calculados automaticamente");
   };
 
   const goToNextTab = () => {
@@ -2440,7 +2510,19 @@ export default function NotaFiscalForm() {
               </div>
 
               <Separator />
-              <p className="text-sm font-medium">Tributação</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Tributação</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCalculateTaxes}
+                  className="gap-2"
+                >
+                  <Calculator className="h-4 w-4" />
+                  Calcular Impostos
+                </Button>
+              </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
