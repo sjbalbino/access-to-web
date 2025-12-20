@@ -407,32 +407,32 @@ function mapItemToFocusNfe(
     valor_outras_despesas: item.valor_outros || undefined,
   };
   
-  // Reforma Tributária (NT 2025.002) - Só adiciona se tiver dados preenchidos
-  // IBS - requer cClassTribIBS antes de vBCIBS
-  if (temIbs) {
-    focusItem.ibs_situacao_tributaria = formatCst3Digits(item.cst_ibs);
-    focusItem.cclass_trib_ibs = item.cclass_trib_ibs || undefined;
-    focusItem.ibs_base_calculo = item.base_ibs || undefined;
-    focusItem.ibs_aliquota = item.aliq_ibs || undefined;
-    focusItem.ibs_valor = item.valor_ibs || undefined;
-  }
+  // Reforma Tributária (NT 2025.002) - IBS/CBS/IS
+  // IMPORTANTE: A API Focus NFe ainda não suporta esses campos (schema não aceita gIBSCBS)
+  // Os campos são mantidos no banco de dados mas não são enviados para a API até que seja suportado
+  // Quando a Focus NFe liberar suporte, descomentar o código abaixo:
   
-  // CBS - requer cClassTribCBS antes de vBCCBS
-  if (temCbs) {
-    focusItem.cbs_situacao_tributaria = formatCst3Digits(item.cst_cbs);
-    focusItem.cclass_trib_cbs = item.cclass_trib_cbs || undefined;
-    focusItem.cbs_base_calculo = item.base_cbs || undefined;
-    focusItem.cbs_aliquota = item.aliq_cbs || undefined;
-    focusItem.cbs_valor = item.valor_cbs || undefined;
-  }
-  
-  // IS - requer cClassTribIS antes de vBCIS (CST deve ter 3 dígitos)
-  if (temIs) {
-    focusItem.is_situacao_tributaria = formatCst3Digits(item.cst_is);
-    focusItem.is_base_calculo = item.base_is || undefined;
-    focusItem.is_aliquota = item.aliq_is || undefined;
-    focusItem.is_valor = item.valor_is || undefined;
-  }
+  // TODO: Descomentar quando Focus NFe suportar NT 2025.002
+  // if (temIbs) {
+  //   focusItem.ibs_situacao_tributaria = formatCst3Digits(item.cst_ibs);
+  //   focusItem.cclass_trib_ibs = item.cclass_trib_ibs || undefined;
+  //   focusItem.ibs_base_calculo = item.base_ibs || undefined;
+  //   focusItem.ibs_aliquota = item.aliq_ibs || undefined;
+  //   focusItem.ibs_valor = item.valor_ibs || undefined;
+  // }
+  // if (temCbs) {
+  //   focusItem.cbs_situacao_tributaria = formatCst3Digits(item.cst_cbs);
+  //   focusItem.cclass_trib_cbs = item.cclass_trib_cbs || undefined;
+  //   focusItem.cbs_base_calculo = item.base_cbs || undefined;
+  //   focusItem.cbs_aliquota = item.aliq_cbs || undefined;
+  //   focusItem.cbs_valor = item.valor_cbs || undefined;
+  // }
+  // if (temIs) {
+  //   focusItem.is_situacao_tributaria = formatCst3Digits(item.cst_is);
+  //   focusItem.is_base_calculo = item.base_is || undefined;
+  //   focusItem.is_aliquota = item.aliq_is || undefined;
+  //   focusItem.is_valor = item.valor_is || undefined;
+  // }
   
   return focusItem;
 }
