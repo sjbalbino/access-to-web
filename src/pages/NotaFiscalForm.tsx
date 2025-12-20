@@ -374,9 +374,9 @@ export default function NotaFiscalForm() {
       return;
     }
 
-    if (!granja?.cnpj || !granja?.inscricao_estadual) {
+    if ((!granja?.cnpj && !granja?.cpf) || !granja?.inscricao_estadual) {
       toast.error("Dados do emitente incompletos", {
-        description: "Preencha CNPJ e Inscrição Estadual no cadastro da Granja do emitente.",
+        description: "Preencha CPF/CNPJ e Inscrição Estadual no cadastro da Granja do emitente.",
       });
       return;
     }
@@ -414,6 +414,7 @@ export default function NotaFiscalForm() {
         dest_email: formData.dest_email || null,
         dest_telefone: formData.dest_telefone || null,
         granja: granja ? {
+          cpf: granja.cpf || null,
           cnpj: granja.cnpj || null,
           razao_social: granja.razao_social,
           nome_fantasia: granja.nome_fantasia || null,
