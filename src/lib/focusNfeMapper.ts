@@ -97,6 +97,7 @@ export interface FocusNfeItem {
 }
 
 // Formatar data para o padrão ISO 8601 com timezone do Brasil
+// Usa a hora atual do computador do usuário (navegador/Windows)
 function formatDateForFocusNfe(dateStr: string | null): string {
   if (!dateStr) return "";
   
@@ -105,10 +106,15 @@ function formatDateForFocusNfe(dateStr: string | null): string {
     return dateStr;
   }
   
-  // Converter para formato ISO 8601 com timezone do Brasil (-03:00)
-  // Formato esperado: "2025-12-20T00:00:00-03:00"
+  // Capturar a hora ATUAL do computador do usuário (Windows/navegador)
+  const agora = new Date();
+  const hours = String(agora.getHours()).padStart(2, '0');
+  const minutes = String(agora.getMinutes()).padStart(2, '0');
+  const seconds = String(agora.getSeconds()).padStart(2, '0');
+  
+  // Usar a data do formulário com a hora atual do computador
   const datePart = dateStr.split("T")[0];
-  return `${datePart}T12:00:00-03:00`;
+  return `${datePart}T${hours}:${minutes}:${seconds}-03:00`;
 }
 
 // Mapeamento do indicador de IE do destinatário
