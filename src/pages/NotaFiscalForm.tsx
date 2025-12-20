@@ -33,7 +33,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send } from "lucide-react";
+import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loader2, CheckCircle2, XCircle, Download } from "lucide-react";
 import { useNotasFiscais, useNotaFiscalItens, NotaFiscalInsert, NotaFiscalItemInsert } from "@/hooks/useNotasFiscais";
 import { useCfops } from "@/hooks/useCfops";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
@@ -45,6 +45,8 @@ import { useUnidadesMedida } from "@/hooks/useUnidadesMedida";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { useFocusNfe } from "@/hooks/useFocusNfe";
+import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 
 const OPERACOES = [
   { value: 0, label: "Entrada" },
@@ -123,10 +125,12 @@ export default function NotaFiscalForm() {
   const unidadesQuery = useUnidadesMedida();
   const unidadesMedida = unidadesQuery.data || [];
   const { user } = useAuth();
+  const focusNfe = useFocusNfe();
 
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEmitting, setIsEmitting] = useState(false);
 
   const existingNota = isEditing ? notasFiscais.find((n) => n.id === id) : null;
 
@@ -328,6 +332,107 @@ export default function NotaFiscalForm() {
     }
   };
 
+  const handleEmitirNfe = async () => {
+    if (!id || itens.length === 0) {
+      toast.error("Salve o rascunho e adicione itens antes de emitir");
+      return;
+    }
+
+    const emitente = emitentes.find((e) => e.id === formData.emitente_id);
+    const granja = granjas.find((g) => g.id === formData.granja_id);
+
+    if (!emitente?.api_configurada) {
+      toast.error("Configure a API do emitente antes de emitir");
+      return;
+    }
+
+    setIsEmitting(true);
+    try {
+      const notaData: NotaFiscalData = {
+        id,
+        natureza_operacao: formData.natureza_operacao || "",
+        operacao: formData.operacao ?? 1,
+        finalidade: formData.finalidade ?? 1,
+        ind_consumidor_final: formData.ind_consumidor_final ?? 0,
+        ind_presenca: formData.ind_presenca ?? 9,
+        modalidade_frete: formData.modalidade_frete ?? 9,
+        forma_pagamento: formData.forma_pagamento ?? 0,
+        info_complementar: formData.info_complementar || null,
+        info_fisco: null,
+        dest_cpf_cnpj: formData.dest_cpf_cnpj || null,
+        dest_nome: formData.dest_nome || null,
+        dest_ie: formData.dest_ie || null,
+        dest_logradouro: formData.dest_logradouro || null,
+        dest_numero: formData.dest_numero || null,
+        dest_bairro: formData.dest_bairro || null,
+        dest_cidade: formData.dest_cidade || null,
+        dest_uf: formData.dest_uf || null,
+        dest_cep: formData.dest_cep || null,
+        dest_tipo: formData.dest_tipo || null,
+        dest_email: formData.dest_email || null,
+        dest_telefone: formData.dest_telefone || null,
+        granja: granja ? {
+          cnpj: granja.cnpj || null,
+          razao_social: granja.razao_social,
+          nome_fantasia: granja.nome_fantasia || null,
+          inscricao_estadual: granja.inscricao_estadual || null,
+          logradouro: granja.logradouro || null,
+          numero: granja.numero || null,
+          bairro: granja.bairro || null,
+          cidade: granja.cidade || null,
+          uf: granja.uf || null,
+          cep: granja.cep || null,
+        } : undefined,
+        emitente: emitente ? { crt: emitente.crt } : undefined,
+      };
+
+      const itensData: NotaFiscalItemData[] = itens.map((item) => ({
+        numero_item: item.numero_item,
+        codigo: item.codigo,
+        descricao: item.descricao,
+        cfop: item.cfop,
+        unidade: item.unidade,
+        quantidade: item.quantidade,
+        valor_unitario: item.valor_unitario,
+        valor_total: item.valor_total,
+        ncm: item.ncm,
+        origem: item.origem,
+        cst_icms: item.cst_icms,
+        modalidade_bc_icms: item.modalidade_bc_icms,
+        base_icms: item.base_icms,
+        aliq_icms: item.aliq_icms,
+        valor_icms: item.valor_icms,
+        cst_pis: item.cst_pis,
+        base_pis: item.base_pis,
+        aliq_pis: item.aliq_pis,
+        valor_pis: item.valor_pis,
+        cst_cofins: item.cst_cofins,
+        base_cofins: item.base_cofins,
+        aliq_cofins: item.aliq_cofins,
+        valor_cofins: item.valor_cofins,
+        cst_ipi: item.cst_ipi,
+        base_ipi: item.base_ipi,
+        aliq_ipi: item.aliq_ipi,
+        valor_ipi: item.valor_ipi,
+        valor_desconto: item.valor_desconto,
+        valor_frete: item.valor_frete,
+        valor_seguro: item.valor_seguro,
+        valor_outros: item.valor_outros,
+      }));
+
+      const result = await focusNfe.emitirNfe(id, notaData, itensData);
+
+      if (result.success && result.ref) {
+        // Start polling for status updates
+        focusNfe.pollStatus(result.ref as string, id);
+      }
+    } catch (error) {
+      console.error("Erro ao emitir:", error);
+    } finally {
+      setIsEmitting(false);
+    }
+  };
+
   const calculateTotals = () => {
     const totalProdutos = itens.reduce((acc, item) => acc + (item.valor_total || 0), 0);
     const totalDesconto = itens.reduce((acc, item) => acc + (item.valor_desconto || 0), 0);
@@ -458,19 +563,63 @@ export default function NotaFiscalForm() {
           />
         </div>
 
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Integração com API não configurada</AlertTitle>
-          <AlertDescription>
-            A emissão real de NF-e está desabilitada. Você pode criar e salvar rascunhos para uso futuro.
-          </AlertDescription>
-        </Alert>
+        {/* Alert based on API configuration */}
+        {(() => {
+          const emitente = emitentes.find((e) => e.id === formData.emitente_id);
+          const apiConfigurada = emitente?.api_configurada;
+          
+          if (apiConfigurada) {
+            return (
+              <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertTitle className="text-green-600">API Configurada</AlertTitle>
+                <AlertDescription>
+                  Você pode emitir NF-e para a SEFAZ. Clique em "Emitir NF-e" quando estiver pronto.
+                </AlertDescription>
+              </Alert>
+            );
+          }
+          return (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>API não configurada</AlertTitle>
+              <AlertDescription>
+                Configure a API Focus NFe no emitente para emitir NF-e reais.
+              </AlertDescription>
+            </Alert>
+          );
+        })()}
 
-        {/* Status Badge */}
+        {/* Status Badge and Actions */}
         {existingNota && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Status:</span>
-            <Badge variant="secondary">{existingNota.status}</Badge>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Status:</span>
+              <Badge variant={
+                existingNota.status === "autorizada" ? "default" :
+                existingNota.status === "rejeitada" || existingNota.status === "cancelada" ? "destructive" :
+                "secondary"
+              }>
+                {existingNota.status}
+              </Badge>
+              {existingNota.chave_acesso && (
+                <span className="text-xs text-muted-foreground font-mono ml-2">
+                  Chave: {existingNota.chave_acesso}
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {existingNota.danfe_url && (
+                <Button variant="outline" size="sm" onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "danfe")}>
+                  <Download className="h-4 w-4 mr-1" /> DANFE
+                </Button>
+              )}
+              {existingNota.xml_url && (
+                <Button variant="outline" size="sm" onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "xml")}>
+                  <Download className="h-4 w-4 mr-1" /> XML
+                </Button>
+              )}
+            </div>
           </div>
         )}
 

@@ -2,3 +2,18 @@ project_id = "diglhmfoypouwhzgmeep"
 
 [functions.create-user]
 verify_jwt = false
+
+[functions.focus-nfe-emitir]
+verify_jwt = true
+
+[functions.focus-nfe-consultar]
+verify_jwt = true
+
+[functions.focus-nfe-cancelar]
+verify_jwt = true
+
+[functions.focus-nfe-carta-correcao]
+verify_jwt = true
+
+[functions.focus-nfe-download]
+verify_jwt = true
