@@ -123,14 +123,17 @@ export interface NotaFiscalItem {
   base_ipi: number | null;
   aliq_ipi: number | null;
   valor_ipi: number | null;
+  // Reforma Tributária (NT 2025.002)
   cst_ibs: string | null;
   base_ibs: number | null;
   aliq_ibs: number | null;
   valor_ibs: number | null;
+  cclass_trib_ibs: string | null;
   cst_cbs: string | null;
   base_cbs: number | null;
   aliq_cbs: number | null;
   valor_cbs: number | null;
+  cclass_trib_cbs: string | null;
   cst_is: string | null;
   base_is: number | null;
   aliq_is: number | null;
