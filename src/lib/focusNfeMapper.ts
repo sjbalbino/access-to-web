@@ -142,22 +142,22 @@ export interface NotaFiscalData {
   dest_email: string | null;
   dest_telefone: string | null;
   
-  // Granja (emitente)
-  granja?: {
-    cpf: string | null;
-    cnpj: string | null;
-    razao_social: string;
-    nome_fantasia: string | null;
+  // Inscrição do Produtor (emitente) - dados fiscais vêm daqui
+  inscricaoProdutor?: {
+    cpf_cnpj: string | null;
     inscricao_estadual: string | null;
     logradouro: string | null;
     numero: string | null;
+    complemento: string | null;
     bairro: string | null;
     cidade: string | null;
     uf: string | null;
     cep: string | null;
+    produtorNome: string | null;
+    granjaNome: string | null;
   };
   
-  // Emitente config
+  // Emitente config (configurações da API)
   emitente?: {
     crt: number | null;
   };
@@ -201,11 +201,11 @@ export function mapNotaToFocusNfe(
   nota: NotaFiscalData,
   itens: NotaFiscalItemData[]
 ): FocusNfeNota {
-  const granja = nota.granja;
+  const inscricao = nota.inscricaoProdutor;
   const emitente = nota.emitente;
   
-  if (!granja) {
-    throw new Error("Dados da granja (emitente) são obrigatórios");
+  if (!inscricao) {
+    throw new Error("Dados da inscrição do produtor (emitente) são obrigatórios");
   }
   
   if (!nota.dest_nome || !nota.dest_cpf_cnpj) {
@@ -216,12 +216,16 @@ export function mapNotaToFocusNfe(
     throw new Error("A nota deve ter pelo menos um item");
   }
   
-  // Determinar se é CPF ou CNPJ
+  // Determinar se é CPF ou CNPJ do destinatário
   const cpfCnpjLimpo = nota.dest_cpf_cnpj.replace(/\D/g, "");
   const isCpf = cpfCnpjLimpo.length === 11;
+  
   // Determinar se emitente é CPF ou CNPJ
-  const emitenteCpfCnpj = granja.cpf || granja.cnpj || "";
-  const emitenteIsCpf = granja.cpf && granja.cpf.replace(/\D/g, "").length === 11;
+  const emitenteCpfCnpjLimpo = inscricao.cpf_cnpj?.replace(/\D/g, "") || "";
+  const emitenteIsCpf = emitenteCpfCnpjLimpo.length === 11;
+  
+  // Nome do emitente: usar nome do produtor ou nome da granja
+  const nomeEmitente = inscricao.produtorNome || inscricao.granjaNome || "Produtor Rural";
   
   const focusNota: FocusNfeNota = {
     natureza_operacao: nota.natureza_operacao,
@@ -232,17 +236,17 @@ export function mapNotaToFocusNfe(
     
     // Emitente - usar CPF ou CNPJ conforme disponível
     ...(emitenteIsCpf
-      ? { cpf_emitente: granja.cpf?.replace(/\D/g, "") || "" }
-      : { cnpj_emitente: granja.cnpj?.replace(/\D/g, "") || "" }),
-    nome_emitente: granja.razao_social,
-    nome_fantasia_emitente: granja.nome_fantasia || undefined,
-    inscricao_estadual_emitente: granja.inscricao_estadual?.replace(/\D/g, "") || "",
-    logradouro_emitente: granja.logradouro || "",
-    numero_emitente: granja.numero || "S/N",
-    bairro_emitente: granja.bairro || "",
-    municipio_emitente: granja.cidade || "",
-    uf_emitente: granja.uf || "",
-    cep_emitente: granja.cep?.replace(/\D/g, "") || "",
+      ? { cpf_emitente: emitenteCpfCnpjLimpo }
+      : { cnpj_emitente: emitenteCpfCnpjLimpo }),
+    nome_emitente: nomeEmitente,
+    nome_fantasia_emitente: inscricao.granjaNome || undefined,
+    inscricao_estadual_emitente: inscricao.inscricao_estadual?.replace(/\D/g, "") || "",
+    logradouro_emitente: inscricao.logradouro || "",
+    numero_emitente: inscricao.numero || "S/N",
+    bairro_emitente: inscricao.bairro || "",
+    municipio_emitente: inscricao.cidade || "",
+    uf_emitente: inscricao.uf || "",
+    cep_emitente: inscricao.cep?.replace(/\D/g, "") || "",
     regime_tributario_emitente: emitente?.crt ?? 3, // Default: Normal
     
     // Destinatário
@@ -334,14 +338,14 @@ function mapItemToFocusNfe(
 export function validateNotaForEmission(nota: NotaFiscalData, itens: NotaFiscalItemData[]): string[] {
   const errors: string[] = [];
   
-  // Validar emitente - aceitar CPF ou CNPJ
-  if (!nota.granja?.cnpj && !nota.granja?.cpf) {
+  // Validar emitente (inscrição do produtor) - aceitar CPF ou CNPJ
+  if (!nota.inscricaoProdutor?.cpf_cnpj) {
     errors.push("CPF ou CNPJ do emitente é obrigatório");
   }
-  if (!nota.granja?.inscricao_estadual) {
+  if (!nota.inscricaoProdutor?.inscricao_estadual) {
     errors.push("Inscrição Estadual do emitente é obrigatória");
   }
-  if (!nota.granja?.logradouro || !nota.granja?.cidade || !nota.granja?.uf) {
+  if (!nota.inscricaoProdutor?.logradouro || !nota.inscricaoProdutor?.cidade || !nota.inscricaoProdutor?.uf) {
     errors.push("Endereço completo do emitente é obrigatório");
   }
   

@@ -37,7 +37,7 @@ import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loa
 import { useNotasFiscais, useNotaFiscalItens, NotaFiscalInsert, NotaFiscalItemInsert } from "@/hooks/useNotasFiscais";
 import { useCfops } from "@/hooks/useCfops";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
-import { useGranjas } from "@/hooks/useGranjas";
+import { useInscricoesParceria } from "@/hooks/useInscricoesParceria";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useProdutores } from "@/hooks/useProdutores";
 import { useProdutos } from "@/hooks/useProdutos";
@@ -114,8 +114,8 @@ export default function NotaFiscalForm() {
   const { itens, createItem, updateItem, deleteItem, isLoading: isLoadingItens } = useNotaFiscalItens(id || null);
   const { cfops } = useCfops();
   const { emitentes } = useEmitentesNfe();
-  const granjasQuery = useGranjas();
-  const granjas = granjasQuery.data || [];
+  const inscricoesParceriaQuery = useInscricoesParceria();
+  const inscricoesParceria = inscricoesParceriaQuery.data || [];
   const clientesQuery = useClientesFornecedores();
   const clientesFornecedores = clientesQuery.data || [];
   const produtoresQuery = useProdutores();
@@ -137,6 +137,7 @@ export default function NotaFiscalForm() {
   const [formData, setFormData] = useState<Partial<NotaFiscalInsert>>({
     emitente_id: "",
     granja_id: "",
+    inscricao_produtor_id: "",
     operacao: 1,
     natureza_operacao: "",
     finalidade: 1,
@@ -189,6 +190,7 @@ export default function NotaFiscalForm() {
       setFormData({
         emitente_id: existingNota.emitente_id || "",
         granja_id: existingNota.granja_id || "",
+        inscricao_produtor_id: existingNota.inscricao_produtor_id || "",
         operacao: existingNota.operacao || 1,
         natureza_operacao: existingNota.natureza_operacao || "",
         finalidade: existingNota.finalidade || 1,
@@ -313,10 +315,16 @@ export default function NotaFiscalForm() {
     }
 
     const emitente = emitentes.find((e) => e.id === formData.emitente_id);
-    const granjaId = formData.granja_id || emitente?.granja_id || "";
+    const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
+    const granjaId = formData.granja_id || inscricao?.granja_id || emitente?.granja_id || "";
 
-    if (!formData.emitente_id || !granjaId) {
-      toast.error("Selecione um emitente");
+    if (!formData.inscricao_produtor_id) {
+      toast.error("Selecione uma Inscrição do Produtor");
+      return;
+    }
+
+    if (!formData.emitente_id) {
+      toast.error("Selecione uma configuração de API (Emitente)");
       return;
     }
 
@@ -327,6 +335,7 @@ export default function NotaFiscalForm() {
         ...formData,
         emitente_id: formData.emitente_id,
         granja_id: granjaId,
+        inscricao_produtor_id: formData.inscricao_produtor_id,
         dest_cpf_cnpj: cleanDigits(formData.dest_cpf_cnpj, 14),
         dest_ie: cleanDigits(formData.dest_ie, 14),
         dest_telefone: cleanDigits(formData.dest_telefone, 14),
@@ -362,10 +371,10 @@ export default function NotaFiscalForm() {
     }
 
     const emitente = emitentes.find((e) => e.id === formData.emitente_id);
-    const granja = granjas.find((g) => g.id === formData.granja_id);
+    const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
 
     if (!emitente) {
-      toast.error("Selecione um emitente");
+      toast.error("Selecione um emitente (configuração API)");
       return;
     }
 
@@ -374,16 +383,21 @@ export default function NotaFiscalForm() {
       return;
     }
 
-    if ((!granja?.cnpj && !granja?.cpf) || !granja?.inscricao_estadual) {
+    if (!inscricao) {
+      toast.error("Selecione uma Inscrição do Produtor (Parceria)");
+      return;
+    }
+
+    if (!inscricao.cpf_cnpj || !inscricao.inscricao_estadual) {
       toast.error("Dados do emitente incompletos", {
-        description: "Preencha CPF/CNPJ e Inscrição Estadual no cadastro da Granja do emitente.",
+        description: "Preencha CPF/CNPJ e Inscrição Estadual na Inscrição do Produtor.",
       });
       return;
     }
 
-    if (!granja?.logradouro || !granja?.cidade || !granja?.uf) {
+    if (!inscricao.logradouro || !inscricao.cidade || !inscricao.uf) {
       toast.error("Endereço do emitente incompleto", {
-        description: "Preencha logradouro, cidade e UF no cadastro da Granja do emitente.",
+        description: "Preencha logradouro, cidade e UF na Inscrição do Produtor.",
       });
       return;
     }
@@ -413,19 +427,19 @@ export default function NotaFiscalForm() {
         dest_tipo: formData.dest_tipo || null,
         dest_email: formData.dest_email || null,
         dest_telefone: formData.dest_telefone || null,
-        granja: granja ? {
-          cpf: granja.cpf || null,
-          cnpj: granja.cnpj || null,
-          razao_social: granja.razao_social,
-          nome_fantasia: granja.nome_fantasia || null,
-          inscricao_estadual: granja.inscricao_estadual || null,
-          logradouro: granja.logradouro || null,
-          numero: granja.numero || null,
-          bairro: granja.bairro || null,
-          cidade: granja.cidade || null,
-          uf: granja.uf || null,
-          cep: granja.cep || null,
-        } : undefined,
+        inscricaoProdutor: {
+          cpf_cnpj: inscricao.cpf_cnpj,
+          inscricao_estadual: inscricao.inscricao_estadual,
+          logradouro: inscricao.logradouro,
+          numero: inscricao.numero,
+          complemento: inscricao.complemento,
+          bairro: inscricao.bairro,
+          cidade: inscricao.cidade,
+          uf: inscricao.uf,
+          cep: inscricao.cep,
+          produtorNome: inscricao.produtores?.nome || null,
+          granjaNome: inscricao.granjas?.razao_social || inscricao.granjas?.nome_fantasia || null,
+        },
         emitente: emitente ? { crt: emitente.crt } : undefined,
       };
 
@@ -606,18 +620,31 @@ export default function NotaFiscalForm() {
           />
         </div>
 
-        {/* Alert based on API configuration */}
+        {/* Alert based on API configuration and inscription */}
         {(() => {
           const emitente = emitentes.find((e) => e.id === formData.emitente_id);
+          const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
           const apiConfigurada = emitente?.api_configurada;
+          const inscricaoSelecionada = !!inscricao;
           
-          if (apiConfigurada) {
+          if (apiConfigurada && inscricaoSelecionada) {
             return (
               <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertTitle className="text-green-600">API Configurada</AlertTitle>
+                <AlertTitle className="text-green-600">Pronto para Emitir</AlertTitle>
                 <AlertDescription>
-                  Você pode emitir NF-e para a SEFAZ. Clique em "Emitir NF-e" quando estiver pronto.
+                  Emitente: {inscricao.produtores?.nome} - IE: {inscricao.inscricao_estadual}. Clique em "Emitir NF-e" quando estiver pronto.
+                </AlertDescription>
+              </Alert>
+            );
+          }
+          if (!inscricaoSelecionada) {
+            return (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Selecione uma Inscrição do Produtor</AlertTitle>
+                <AlertDescription>
+                  Escolha uma inscrição do produtor (tipo Parceria) para definir os dados fiscais do emitente.
                 </AlertDescription>
               </Alert>
             );
@@ -670,11 +697,39 @@ export default function NotaFiscalForm() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Emitente</CardTitle>
+            <CardDescription>
+              Selecione a inscrição do produtor (tipo Parceria) como emitente fiscal e a configuração de API
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="emitente_id">Emitente NF-e *</Label>
+                <Label htmlFor="inscricao_produtor_id">Inscrição do Produtor (Parceria) *</Label>
+                <Select
+                  value={formData.inscricao_produtor_id || ""}
+                  onValueChange={(value) => {
+                    const inscricao = inscricoesParceria.find((i) => i.id === value);
+                    setFormData({ 
+                      ...formData, 
+                      inscricao_produtor_id: value,
+                      granja_id: inscricao?.granja_id || "",
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a inscrição" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {inscricoesParceria.map((inscricao) => (
+                      <SelectItem key={inscricao.id} value={inscricao.id}>
+                        {inscricao.produtores?.nome} - IE: {inscricao.inscricao_estadual} ({inscricao.granjas?.razao_social || inscricao.granja})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="emitente_id">Configuração API (Emitente NF-e) *</Label>
                 <Select
                   value={formData.emitente_id || ""}
                   onValueChange={(value) => setFormData({ ...formData, emitente_id: value })}
