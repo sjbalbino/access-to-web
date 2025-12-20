@@ -311,7 +311,11 @@ export default function NotaFiscalForm() {
       toast.error("Natureza da operação é obrigatória");
       return;
     }
-    if (!formData.granja_id) {
+
+    const emitente = emitentes.find((e) => e.id === formData.emitente_id);
+    const granjaId = formData.granja_id || emitente?.granja_id || "";
+
+    if (!formData.emitente_id || !granjaId) {
       toast.error("Selecione um emitente");
       return;
     }
@@ -321,6 +325,8 @@ export default function NotaFiscalForm() {
       const totals = calculateTotals();
       const notaData: NotaFiscalInsert = {
         ...formData,
+        emitente_id: formData.emitente_id,
+        granja_id: granjaId,
         dest_cpf_cnpj: cleanDigits(formData.dest_cpf_cnpj, 14),
         dest_ie: cleanDigits(formData.dest_ie, 14),
         dest_telefone: cleanDigits(formData.dest_telefone, 14),
@@ -358,8 +364,27 @@ export default function NotaFiscalForm() {
     const emitente = emitentes.find((e) => e.id === formData.emitente_id);
     const granja = granjas.find((g) => g.id === formData.granja_id);
 
-    if (!emitente?.api_configurada) {
+    if (!emitente) {
+      toast.error("Selecione um emitente");
+      return;
+    }
+
+    if (!emitente.api_configurada) {
       toast.error("Configure a API do emitente antes de emitir");
+      return;
+    }
+
+    if (!granja?.cnpj || !granja?.inscricao_estadual) {
+      toast.error("Dados do emitente incompletos", {
+        description: "Preencha CNPJ e Inscrição Estadual no cadastro da Granja do emitente.",
+      });
+      return;
+    }
+
+    if (!granja?.logradouro || !granja?.cidade || !granja?.uf) {
+      toast.error("Endereço do emitente incompleto", {
+        description: "Preencha logradouro, cidade e UF no cadastro da Granja do emitente.",
+      });
       return;
     }
 
