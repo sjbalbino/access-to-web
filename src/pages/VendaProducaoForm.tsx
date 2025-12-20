@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Table,
   TableBody,
@@ -319,12 +320,6 @@ export default function VendaProducaoForm() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {isEditing && (vendaEntregaFutura || aFixar) && (
-              <Button type="button" variant="outline" onClick={handleEmitirNfe} className="flex-1 sm:flex-none">
-                <FileText className="h-4 w-4 mr-2" />
-                Emitir NFe
-              </Button>
-            )}
             {isEditing && (
               <Button type="button" variant="outline" onClick={() => navigate(`/vendas-producao/${id}/remessas`)} className="flex-1 sm:flex-none">
                 <Truck className="h-4 w-4 mr-2" />
@@ -585,10 +580,88 @@ export default function VendaProducaoForm() {
           </Card>
         </Collapsible>
 
-        {/* Flags e Observações */}
+        {/* Tipo de Contrato e Condição de Venda - 2 Cards lado a lado */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Card 1: Tipo de Contrato (seleção única) */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Tipo de Contrato</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={
+                  watch("exportacao") ? "exportacao" :
+                  watch("remessa_deposito") ? "remessa" :
+                  watch("retorno_deposito") ? "retorno" :
+                  "normal"
+                }
+                onValueChange={(value) => {
+                  setValue("exportacao", value === "exportacao");
+                  setValue("remessa_deposito", value === "remessa");
+                  setValue("retorno_deposito", value === "retorno");
+                }}
+                className="space-y-3"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="normal" id="tipo_normal" />
+                  <Label htmlFor="tipo_normal" className="font-normal cursor-pointer">Venda Normal</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="exportacao" id="tipo_exportacao" />
+                  <Label htmlFor="tipo_exportacao" className="font-normal cursor-pointer">Exportação</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="remessa" id="tipo_remessa" />
+                  <Label htmlFor="tipo_remessa" className="font-normal cursor-pointer">Remessa p/ Depósito</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="retorno" id="tipo_retorno" />
+                  <Label htmlFor="tipo_retorno" className="font-normal cursor-pointer">Retorno de Depósito</Label>
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
+          {/* Card 2: Condição de Venda (múltipla seleção) */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Condição de Venda</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="venda_entrega_futura"
+                    checked={watch("venda_entrega_futura")}
+                    onCheckedChange={(c) => setValue("venda_entrega_futura", !!c)}
+                  />
+                  <Label htmlFor="venda_entrega_futura" className="font-normal cursor-pointer">Venda para Entrega Futura</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="a_fixar"
+                    checked={watch("a_fixar")}
+                    onCheckedChange={(c) => setValue("a_fixar", !!c)}
+                  />
+                  <Label htmlFor="a_fixar" className="font-normal cursor-pointer">Preço a Fixar</Label>
+                </div>
+              </div>
+              
+              {/* Botão Emitir NFe - aparece se marcou uma das opções */}
+              {isEditing && (vendaEntregaFutura || aFixar) && (
+                <Button type="button" variant="outline" onClick={handleEmitirNfe} className="w-full mt-4">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Emitir NFe
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Frete e Observações */}
         <Card>
           <CardHeader>
-            <CardTitle>Opções e Observações</CardTitle>
+            <CardTitle>Frete e Observações</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -608,48 +681,6 @@ export default function VendaProducaoForm() {
                     <SelectItem value="9">9 - Sem Frete</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-4 pt-6">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="venda_entrega_futura"
-                    checked={watch("venda_entrega_futura")}
-                    onCheckedChange={(c) => setValue("venda_entrega_futura", !!c)}
-                  />
-                  <Label htmlFor="venda_entrega_futura">Venda para Entrega Futura</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="a_fixar"
-                    checked={watch("a_fixar")}
-                    onCheckedChange={(c) => setValue("a_fixar", !!c)}
-                  />
-                  <Label htmlFor="a_fixar">Preço a Fixar</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="exportacao"
-                    checked={watch("exportacao")}
-                    onCheckedChange={(c) => setValue("exportacao", !!c)}
-                  />
-                  <Label htmlFor="exportacao">Exportação</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remessa_deposito"
-                    checked={watch("remessa_deposito")}
-                    onCheckedChange={(c) => setValue("remessa_deposito", !!c)}
-                  />
-                  <Label htmlFor="remessa_deposito">Remessa para Depósito</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="retorno_deposito"
-                    checked={watch("retorno_deposito")}
-                    onCheckedChange={(c) => setValue("retorno_deposito", !!c)}
-                  />
-                  <Label htmlFor="retorno_deposito">Retorno de Depósito</Label>
-                </div>
               </div>
             </div>
             <div className="space-y-2">
