@@ -138,6 +138,7 @@ export default function NotaFiscalForm() {
     emitente_id: "",
     granja_id: "",
     inscricao_produtor_id: "",
+    data_emissao: new Date().toISOString().slice(0, 10),
     operacao: 1,
     natureza_operacao: "",
     finalidade: 1,
@@ -191,6 +192,7 @@ export default function NotaFiscalForm() {
         emitente_id: existingNota.emitente_id || "",
         granja_id: existingNota.granja_id || "",
         inscricao_produtor_id: existingNota.inscricao_produtor_id || "",
+        data_emissao: existingNota.data_emissao ? existingNota.data_emissao.slice(0, 10) : "",
         operacao: existingNota.operacao || 1,
         natureza_operacao: existingNota.natureza_operacao || "",
         finalidade: existingNota.finalidade || 1,
@@ -336,6 +338,7 @@ export default function NotaFiscalForm() {
         emitente_id: formData.emitente_id,
         granja_id: granjaId,
         inscricao_produtor_id: formData.inscricao_produtor_id,
+        data_emissao: formData.data_emissao || null,
         dest_cpf_cnpj: cleanDigits(formData.dest_cpf_cnpj, 14),
         dest_ie: cleanDigits(formData.dest_ie, 14),
         dest_telefone: cleanDigits(formData.dest_telefone, 14),
@@ -388,60 +391,66 @@ export default function NotaFiscalForm() {
       return;
     }
 
-    if (!inscricao.cpf_cnpj || !inscricao.inscricao_estadual) {
-      toast.error("Dados do emitente incompletos", {
-        description: "Preencha CPF/CNPJ e Inscrição Estadual na Inscrição do Produtor.",
-      });
-      return;
-    }
-
-    if (!inscricao.logradouro || !inscricao.cidade || !inscricao.uf) {
-      toast.error("Endereço do emitente incompleto", {
-        description: "Preencha logradouro, cidade e UF na Inscrição do Produtor.",
-      });
-      return;
-    }
-
-    setIsEmitting(true);
+     if (!inscricao.cpf_cnpj || !inscricao.inscricao_estadual) {
+       toast.error("Dados do emitente incompletos", {
+         description: "Preencha CPF/CNPJ e Inscrição Estadual na Inscrição do Produtor.",
+       });
+       return;
+     }
+ 
+     if (!formData.data_emissao) {
+       toast.error("Data de emissão é obrigatória");
+       return;
+     }
+ 
+     if (!inscricao.logradouro || !inscricao.cidade || !inscricao.uf) {
+       toast.error("Endereço do emitente incompleto", {
+         description: "Preencha logradouro, cidade e UF na Inscrição do Produtor.",
+       });
+       return;
+     }
+ 
+     setIsEmitting(true);
     try {
-      const notaData: NotaFiscalData = {
-        id,
-        natureza_operacao: formData.natureza_operacao || "",
-        operacao: formData.operacao ?? 1,
-        finalidade: formData.finalidade ?? 1,
-        ind_consumidor_final: formData.ind_consumidor_final ?? 0,
-        ind_presenca: formData.ind_presenca ?? 9,
-        modalidade_frete: formData.modalidade_frete ?? 9,
-        forma_pagamento: formData.forma_pagamento ?? 0,
-        info_complementar: formData.info_complementar || null,
-        info_fisco: null,
-        dest_cpf_cnpj: formData.dest_cpf_cnpj || null,
-        dest_nome: formData.dest_nome || null,
-        dest_ie: formData.dest_ie || null,
-        dest_logradouro: formData.dest_logradouro || null,
-        dest_numero: formData.dest_numero || null,
-        dest_bairro: formData.dest_bairro || null,
-        dest_cidade: formData.dest_cidade || null,
-        dest_uf: formData.dest_uf || null,
-        dest_cep: formData.dest_cep || null,
-        dest_tipo: formData.dest_tipo || null,
-        dest_email: formData.dest_email || null,
-        dest_telefone: formData.dest_telefone || null,
-        inscricaoProdutor: {
-          cpf_cnpj: inscricao.cpf_cnpj,
-          inscricao_estadual: inscricao.inscricao_estadual,
-          logradouro: inscricao.logradouro,
-          numero: inscricao.numero,
-          complemento: inscricao.complemento,
-          bairro: inscricao.bairro,
-          cidade: inscricao.cidade,
-          uf: inscricao.uf,
-          cep: inscricao.cep,
-          produtorNome: inscricao.produtores?.nome || null,
-          granjaNome: inscricao.granjas?.razao_social || inscricao.granjas?.nome_fantasia || null,
-        },
-        emitente: emitente ? { crt: emitente.crt } : undefined,
-      };
+       const notaData: NotaFiscalData = {
+         id,
+         data_emissao: formData.data_emissao || null,
+         natureza_operacao: formData.natureza_operacao || "",
+         operacao: formData.operacao ?? 1,
+         finalidade: formData.finalidade ?? 1,
+         ind_consumidor_final: formData.ind_consumidor_final ?? 0,
+         ind_presenca: formData.ind_presenca ?? 9,
+         modalidade_frete: formData.modalidade_frete ?? 9,
+         forma_pagamento: formData.forma_pagamento ?? 0,
+         info_complementar: formData.info_complementar || null,
+         info_fisco: null,
+         dest_cpf_cnpj: formData.dest_cpf_cnpj || null,
+         dest_nome: formData.dest_nome || null,
+         dest_ie: formData.dest_ie || null,
+         dest_logradouro: formData.dest_logradouro || null,
+         dest_numero: formData.dest_numero || null,
+         dest_bairro: formData.dest_bairro || null,
+         dest_cidade: formData.dest_cidade || null,
+         dest_uf: formData.dest_uf || null,
+         dest_cep: formData.dest_cep || null,
+         dest_tipo: formData.dest_tipo || null,
+         dest_email: formData.dest_email || null,
+         dest_telefone: formData.dest_telefone || null,
+         inscricaoProdutor: {
+           cpf_cnpj: inscricao.cpf_cnpj,
+           inscricao_estadual: inscricao.inscricao_estadual,
+           logradouro: inscricao.logradouro,
+           numero: inscricao.numero,
+           complemento: inscricao.complemento,
+           bairro: inscricao.bairro,
+           cidade: inscricao.cidade,
+           uf: inscricao.uf,
+           cep: inscricao.cep,
+           produtorNome: inscricao.produtores?.nome || null,
+           granjaNome: inscricao.granjas?.razao_social || inscricao.granjas?.nome_fantasia || null,
+         },
+         emitente: emitente ? { crt: emitente.crt } : undefined,
+       };
 
       const itensData: NotaFiscalItemData[] = itens.map((item) => ({
         numero_item: item.numero_item,
@@ -812,6 +821,18 @@ export default function NotaFiscalForm() {
                       ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="data_emissao">Data de Emissão *</Label>
+                <Input
+                  id="data_emissao"
+                  type="date"
+                  value={formData.data_emissao || ""}
+                  onChange={(e) => setFormData({ ...formData, data_emissao: e.target.value })}
+                />
               </div>
             </div>
             <div className="space-y-2">
