@@ -8,6 +8,7 @@ export interface FocusNfeResult {
   data?: Record<string, unknown>;
   error?: string;
   details?: Record<string, unknown>;
+  ref?: string;
 }
 
 export function useFocusNfe() {

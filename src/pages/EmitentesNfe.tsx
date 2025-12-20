@@ -59,10 +59,7 @@ const REGIMES_TRIBUTARIOS = [
 ];
 
 const API_PROVIDERS = [
-  { value: "webmania", label: "WebmaniaBR" },
   { value: "focusnfe", label: "Focus NFe" },
-  { value: "nfe.io", label: "NFe.io" },
-  { value: "enotas", label: "eNotas" },
 ];
 
 export default function EmitentesNfe() {
@@ -204,12 +201,12 @@ export default function EmitentesNfe() {
           description="Configuração de emitentes de Nota Fiscal Eletrônica por granja"
         />
 
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Integração com API</AlertTitle>
+        <Alert className="border-green-600 bg-green-50 dark:bg-green-950">
+          <AlertCircle className="h-4 w-4 text-green-600" />
+          <AlertTitle className="text-green-700">Focus NFe Integrada</AlertTitle>
           <AlertDescription>
-            Para emitir NF-e reais, você precisa configurar uma API de integração (WebmaniaBR, Focus NFe, etc.) 
-            e um certificado digital A1. Até lá, você pode criar rascunhos de notas fiscais.
+            O token da API Focus NFe está configurado. Certifique-se de que o certificado A1 foi 
+            enviado no painel da Focus NFe e marque a opção "API Configurada" no emitente.
           </AlertDescription>
         </Alert>
 
@@ -546,12 +543,12 @@ export default function EmitentesNfe() {
                 </CardContent>
               </Card>
 
-              {/* API de Integração */}
+              {/* API de Integração - Focus NFe */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">API de Integração</CardTitle>
+                  <CardTitle className="text-base">API Focus NFe</CardTitle>
                   <CardDescription>
-                    Configure quando tiver uma conta em um provedor de NF-e
+                    O token foi configurado globalmente. Marque como configurada após enviar o certificado A1 no painel Focus NFe.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -559,9 +556,9 @@ export default function EmitentesNfe() {
                     <div className="space-y-2">
                       <Label htmlFor="api_provider">Provedor</Label>
                       <Select
-                        value={formData.api_provider || ""}
+                        value={formData.api_provider || "focusnfe"}
                         onValueChange={(value) =>
-                          setFormData({ ...formData, api_provider: value || null })
+                          setFormData({ ...formData, api_provider: value || "focusnfe" })
                         }
                       >
                         <SelectTrigger>
@@ -587,60 +584,19 @@ export default function EmitentesNfe() {
                       <Label htmlFor="api_configurada">API Configurada e Testada</Label>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="api_consumer_key">Consumer Key</Label>
-                      <Input
-                        id="api_consumer_key"
-                        type="password"
-                        value={formData.api_consumer_key || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, api_consumer_key: e.target.value || null })
-                        }
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="api_consumer_secret">Consumer Secret</Label>
-                      <Input
-                        id="api_consumer_secret"
-                        type="password"
-                        value={formData.api_consumer_secret || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, api_consumer_secret: e.target.value || null })
-                        }
-                        placeholder="••••••••"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="api_access_token">Access Token</Label>
-                      <Input
-                        id="api_access_token"
-                        type="password"
-                        value={formData.api_access_token || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, api_access_token: e.target.value || null })
-                        }
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="api_access_token_secret">Access Token Secret</Label>
-                      <Input
-                        id="api_access_token_secret"
-                        type="password"
-                        value={formData.api_access_token_secret || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, api_access_token_secret: e.target.value || null })
-                        }
-                        placeholder="••••••••"
-                      />
-                    </div>
-                  </div>
+                  
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Passos para ativar:</strong>
+                      <ol className="list-decimal ml-4 mt-2 space-y-1">
+                        <li>Acesse o painel da Focus NFe</li>
+                        <li>Faça upload do certificado A1 desta granja</li>
+                        <li>Teste uma emissão em homologação</li>
+                        <li>Marque "API Configurada e Testada" acima</li>
+                      </ol>
+                    </AlertDescription>
+                  </Alert>
                 </CardContent>
               </Card>
 
