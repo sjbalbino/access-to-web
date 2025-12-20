@@ -540,6 +540,162 @@ export type Database = {
           },
         ]
       }
+      contratos_venda: {
+        Row: {
+          a_fixar: boolean | null
+          comprador_id: string | null
+          corretor: string | null
+          created_at: string
+          data_contrato: string
+          data_pagamento_comissao: string | null
+          data_recebimento: string | null
+          fechada: boolean | null
+          granja_id: string | null
+          id: string
+          inscricao_produtor_id: string | null
+          local_entrega_bairro: string | null
+          local_entrega_cep: string | null
+          local_entrega_cidade: string | null
+          local_entrega_cnpj_cpf: string | null
+          local_entrega_complemento: string | null
+          local_entrega_ie: string | null
+          local_entrega_logradouro: string | null
+          local_entrega_nome: string | null
+          local_entrega_numero: string | null
+          local_entrega_uf: string | null
+          modalidade_frete: number | null
+          nota_venda: string | null
+          numero: number
+          numero_contrato_comprador: string | null
+          observacoes: string | null
+          percentual_comissao: number | null
+          preco_kg: number | null
+          produto_id: string | null
+          quantidade_kg: number | null
+          quantidade_sacos: number | null
+          safra_id: string | null
+          tipo_venda: string | null
+          updated_at: string
+          valor_comissao: number | null
+          valor_total: number | null
+          venda_entrega_futura: boolean | null
+        }
+        Insert: {
+          a_fixar?: boolean | null
+          comprador_id?: string | null
+          corretor?: string | null
+          created_at?: string
+          data_contrato: string
+          data_pagamento_comissao?: string | null
+          data_recebimento?: string | null
+          fechada?: boolean | null
+          granja_id?: string | null
+          id?: string
+          inscricao_produtor_id?: string | null
+          local_entrega_bairro?: string | null
+          local_entrega_cep?: string | null
+          local_entrega_cidade?: string | null
+          local_entrega_cnpj_cpf?: string | null
+          local_entrega_complemento?: string | null
+          local_entrega_ie?: string | null
+          local_entrega_logradouro?: string | null
+          local_entrega_nome?: string | null
+          local_entrega_numero?: string | null
+          local_entrega_uf?: string | null
+          modalidade_frete?: number | null
+          nota_venda?: string | null
+          numero: number
+          numero_contrato_comprador?: string | null
+          observacoes?: string | null
+          percentual_comissao?: number | null
+          preco_kg?: number | null
+          produto_id?: string | null
+          quantidade_kg?: number | null
+          quantidade_sacos?: number | null
+          safra_id?: string | null
+          tipo_venda?: string | null
+          updated_at?: string
+          valor_comissao?: number | null
+          valor_total?: number | null
+          venda_entrega_futura?: boolean | null
+        }
+        Update: {
+          a_fixar?: boolean | null
+          comprador_id?: string | null
+          corretor?: string | null
+          created_at?: string
+          data_contrato?: string
+          data_pagamento_comissao?: string | null
+          data_recebimento?: string | null
+          fechada?: boolean | null
+          granja_id?: string | null
+          id?: string
+          inscricao_produtor_id?: string | null
+          local_entrega_bairro?: string | null
+          local_entrega_cep?: string | null
+          local_entrega_cidade?: string | null
+          local_entrega_cnpj_cpf?: string | null
+          local_entrega_complemento?: string | null
+          local_entrega_ie?: string | null
+          local_entrega_logradouro?: string | null
+          local_entrega_nome?: string | null
+          local_entrega_numero?: string | null
+          local_entrega_uf?: string | null
+          modalidade_frete?: number | null
+          nota_venda?: string | null
+          numero?: number
+          numero_contrato_comprador?: string | null
+          observacoes?: string | null
+          percentual_comissao?: number | null
+          preco_kg?: number | null
+          produto_id?: string | null
+          quantidade_kg?: number | null
+          quantidade_sacos?: number | null
+          safra_id?: string | null
+          tipo_venda?: string | null
+          updated_at?: string
+          valor_comissao?: number | null
+          valor_total?: number | null
+          venda_entrega_futura?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_venda_comprador_id_fkey"
+            columns: ["comprador_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_venda_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_venda_inscricao_produtor_id_fkey"
+            columns: ["inscricao_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_venda_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_venda_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       controle_lavouras: {
         Row: {
           area_total: number | null
@@ -2209,6 +2365,148 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      remessas_venda: {
+        Row: {
+          balanceiro: string | null
+          codigo: number | null
+          contrato_venda_id: string
+          created_at: string
+          data_remessa: string
+          id: string
+          impureza: number | null
+          kg_desconto_impureza: number | null
+          kg_desconto_umidade: number | null
+          kg_nota: number | null
+          kg_remessa: number | null
+          motorista: string | null
+          nota_fiscal_id: string | null
+          observacoes: string | null
+          peso_bruto: number | null
+          peso_liquido: number | null
+          peso_tara: number | null
+          ph: number | null
+          placa_id: string | null
+          preco_kg: number | null
+          romaneio: number | null
+          sacos: number | null
+          silo_id: string | null
+          status: string | null
+          transportadora_id: string | null
+          umidade: number | null
+          updated_at: string
+          valor_nota: number | null
+          valor_remessa: number | null
+          variedade_id: string | null
+        }
+        Insert: {
+          balanceiro?: string | null
+          codigo?: number | null
+          contrato_venda_id: string
+          created_at?: string
+          data_remessa: string
+          id?: string
+          impureza?: number | null
+          kg_desconto_impureza?: number | null
+          kg_desconto_umidade?: number | null
+          kg_nota?: number | null
+          kg_remessa?: number | null
+          motorista?: string | null
+          nota_fiscal_id?: string | null
+          observacoes?: string | null
+          peso_bruto?: number | null
+          peso_liquido?: number | null
+          peso_tara?: number | null
+          ph?: number | null
+          placa_id?: string | null
+          preco_kg?: number | null
+          romaneio?: number | null
+          sacos?: number | null
+          silo_id?: string | null
+          status?: string | null
+          transportadora_id?: string | null
+          umidade?: number | null
+          updated_at?: string
+          valor_nota?: number | null
+          valor_remessa?: number | null
+          variedade_id?: string | null
+        }
+        Update: {
+          balanceiro?: string | null
+          codigo?: number | null
+          contrato_venda_id?: string
+          created_at?: string
+          data_remessa?: string
+          id?: string
+          impureza?: number | null
+          kg_desconto_impureza?: number | null
+          kg_desconto_umidade?: number | null
+          kg_nota?: number | null
+          kg_remessa?: number | null
+          motorista?: string | null
+          nota_fiscal_id?: string | null
+          observacoes?: string | null
+          peso_bruto?: number | null
+          peso_liquido?: number | null
+          peso_tara?: number | null
+          ph?: number | null
+          placa_id?: string | null
+          preco_kg?: number | null
+          romaneio?: number | null
+          sacos?: number | null
+          silo_id?: string | null
+          status?: string | null
+          transportadora_id?: string | null
+          umidade?: number | null
+          updated_at?: string
+          valor_nota?: number | null
+          valor_remessa?: number | null
+          variedade_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remessas_venda_contrato_venda_id_fkey"
+            columns: ["contrato_venda_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_venda"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_venda_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_venda_placa_id_fkey"
+            columns: ["placa_id"]
+            isOneToOne: false
+            referencedRelation: "placas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_venda_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_venda_transportadora_id_fkey"
+            columns: ["transportadora_id"]
+            isOneToOne: false
+            referencedRelation: "transportadoras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_venda_variedade_id_fkey"
+            columns: ["variedade_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
         ]
