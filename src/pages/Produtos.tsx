@@ -431,7 +431,7 @@ export default function Produtos() {
                                   {ncmResults.map((ncm) => (
                                     <CommandItem
                                       key={ncm.codigo}
-                                      value={ncm.codigo}
+                                      value={`${ncm.codigo} ${ncm.descricao}`}
                                       onSelect={() => {
                                         setFormData({ ...formData, ncm: ncm.codigo });
                                         setNcmOpen(false);
