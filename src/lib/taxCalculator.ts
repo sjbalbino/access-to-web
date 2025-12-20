@@ -33,6 +33,11 @@ export interface TaxCalculatorInput {
   produtoCstIcms: string | null;
   produtoCstPis: string | null;
   produtoCstCofins: string | null;
+  produtoCstIbs: string | null;
+  produtoCstCbs: string | null;
+  produtoCstIs: string | null;
+  produtoCclassTribIbs: string | null;
+  produtoCclassTribCbs: string | null;
   
   // Destinatário
   ufDestinatario: string;
@@ -242,24 +247,24 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
   
   // ========== IBS/CBS/IS (Reforma Tributária) ==========
   if (input.incidenciaIbsCbs) {
-    // IBS
-    resultado.cstIbs = input.cstIbsPadrao || "000";
+    // IBS - prioridade: produto > CFOP > padrão
+    resultado.cstIbs = input.produtoCstIbs || input.cstIbsPadrao || "000";
     if (input.aliqIbsPadrao && input.aliqIbsPadrao > 0) {
       resultado.baseIbs = input.valorTotal;
       resultado.aliqIbs = input.aliqIbsPadrao;
       resultado.valorIbs = Number(((resultado.baseIbs * resultado.aliqIbs) / 100).toFixed(2));
     }
     
-    // CBS
-    resultado.cstCbs = input.cstCbsPadrao || "000";
+    // CBS - prioridade: produto > CFOP > padrão
+    resultado.cstCbs = input.produtoCstCbs || input.cstCbsPadrao || "000";
     if (input.aliqCbsPadrao && input.aliqCbsPadrao > 0) {
       resultado.baseCbs = input.valorTotal;
       resultado.aliqCbs = input.aliqCbsPadrao;
       resultado.valorCbs = Number(((resultado.baseCbs * resultado.aliqCbs) / 100).toFixed(2));
     }
     
-    // IS
-    resultado.cstIs = input.cstIsPadrao || "000";
+    // IS - prioridade: produto > CFOP > padrão
+    resultado.cstIs = input.produtoCstIs || input.cstIsPadrao || "000";
     if (input.aliqIsPadrao && input.aliqIsPadrao > 0) {
       resultado.baseIs = input.valorTotal;
       resultado.aliqIs = input.aliqIsPadrao;

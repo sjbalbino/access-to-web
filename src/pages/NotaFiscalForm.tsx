@@ -1009,6 +1009,11 @@ export default function NotaFiscalForm() {
       produtoCstIcms: produto?.cst_icms || null,
       produtoCstPis: produto?.cst_pis || null,
       produtoCstCofins: produto?.cst_cofins || null,
+      produtoCstIbs: produto?.cst_ibs || null,
+      produtoCstCbs: produto?.cst_cbs || null,
+      produtoCstIs: produto?.cst_is || null,
+      produtoCclassTribIbs: produto?.cclass_trib_ibs || null,
+      produtoCclassTribCbs: produto?.cclass_trib_cbs || null,
       ufDestinatario: formData.dest_uf || "SP",
       origemProduto: itemFormData.origem || 0,
     };
