@@ -102,7 +102,38 @@ serve(async (req) => {
       body: JSON.stringify(notaData),
     });
 
-    const responseData = await response.json();
+    // Verificar se a resposta é JSON válido
+    const responseText = await response.text();
+    console.log("Resposta bruta Focus NFe:", responseText);
+    
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch {
+      // Resposta não é JSON válido - provavelmente erro de autenticação
+      console.error("Resposta não é JSON válido:", responseText);
+      
+      await supabase
+        .from("notas_fiscais")
+        .update({
+          status: "rejeitada",
+          motivo_status: `Erro de comunicação com Focus NFe: ${responseText.substring(0, 200)}`,
+        })
+        .eq("id", notaFiscalId);
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Erro de autenticação ou comunicação com Focus NFe",
+          details: responseText.substring(0, 500),
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    
     console.log("Resposta Focus NFe:", JSON.stringify(responseData, null, 2));
 
     if (!response.ok) {
