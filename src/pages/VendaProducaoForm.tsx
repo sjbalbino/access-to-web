@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -28,7 +29,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, ArrowLeft, Save, Truck } from "lucide-react";
+import { ChevronDown, ChevronUp, ArrowLeft, Save, Truck, FileText } from "lucide-react";
 import {
   useContratoVenda,
   useCreateContratoVenda,
@@ -43,6 +44,8 @@ import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { useGranjas } from "@/hooks/useGranjas";
 import { Spinner } from "@/components/ui/spinner";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { QuantityInput } from "@/components/ui/quantity-input";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -56,10 +59,10 @@ interface FormData {
   inscricao_produtor_id: string;
   comprador_id: string;
   tipo_venda: string;
-  quantidade_kg: number;
-  quantidade_sacos: number;
-  preco_kg: number;
-  valor_total: number;
+  quantidade_kg: number | null;
+  quantidade_sacos: number | null;
+  preco_kg: number | null;
+  valor_total: number | null;
   local_entrega_nome: string;
   local_entrega_cnpj_cpf: string;
   local_entrega_ie: string;
@@ -71,13 +74,15 @@ interface FormData {
   local_entrega_uf: string;
   local_entrega_cep: string;
   corretor: string;
-  percentual_comissao: number;
-  valor_comissao: number;
+  percentual_comissao: number | null;
+  valor_comissao: number | null;
   data_pagamento_comissao: string;
   modalidade_frete: number;
   venda_entrega_futura: boolean;
   a_fixar: boolean;
-  fechada: boolean;
+  exportacao: boolean;
+  remessa_deposito: boolean;
+  retorno_deposito: boolean;
   observacoes: string;
   granja_id: string;
 }
@@ -100,20 +105,22 @@ export default function VendaProducaoForm() {
   const createContrato = useCreateContratoVenda();
   const updateContrato = useUpdateContratoVenda();
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, setValue, reset } = useForm<FormData>({
     defaultValues: {
       numero: 0,
       tipo_venda: "industria",
       modalidade_frete: 0,
       venda_entrega_futura: false,
       a_fixar: false,
-      fechada: false,
-      quantidade_kg: 0,
-      quantidade_sacos: 0,
-      preco_kg: 0,
-      valor_total: 0,
-      percentual_comissao: 0,
-      valor_comissao: 0,
+      exportacao: false,
+      remessa_deposito: false,
+      retorno_deposito: false,
+      quantidade_kg: null,
+      quantidade_sacos: null,
+      preco_kg: null,
+      valor_total: null,
+      percentual_comissao: null,
+      valor_comissao: null,
     },
   });
 
@@ -126,17 +133,22 @@ export default function VendaProducaoForm() {
   const compradorId = watch("comprador_id");
   const percentualComissao = watch("percentual_comissao");
   const valorTotal = watch("valor_total");
+  const vendaEntregaFutura = watch("venda_entrega_futura");
+  const aFixar = watch("a_fixar");
+
+  // Calculate if contract is closed (saldo <= 0)
+  const isContratoFechado = contrato && (contrato.saldo_kg || 0) <= 0;
 
   // Auto-calculate valor_total
   useEffect(() => {
     const total = (quantidadeKg || 0) * (precoKg || 0);
-    setValue("valor_total", total);
+    setValue("valor_total", total > 0 ? total : null);
   }, [quantidadeKg, precoKg, setValue]);
 
   // Auto-calculate valor_comissao
   useEffect(() => {
     const comissao = (valorTotal || 0) * ((percentualComissao || 0) / 100);
-    setValue("valor_comissao", comissao);
+    setValue("valor_comissao", comissao > 0 ? comissao : null);
   }, [valorTotal, percentualComissao, setValue]);
 
   // Auto-fill local_entrega when comprador changes
@@ -171,10 +183,10 @@ export default function VendaProducaoForm() {
         inscricao_produtor_id: contrato.inscricao_produtor_id || "",
         comprador_id: contrato.comprador_id || "",
         tipo_venda: contrato.tipo_venda || "industria",
-        quantidade_kg: contrato.quantidade_kg || 0,
-        quantidade_sacos: contrato.quantidade_sacos || 0,
-        preco_kg: contrato.preco_kg || 0,
-        valor_total: contrato.valor_total || 0,
+        quantidade_kg: contrato.quantidade_kg,
+        quantidade_sacos: contrato.quantidade_sacos,
+        preco_kg: contrato.preco_kg,
+        valor_total: contrato.valor_total,
         local_entrega_nome: contrato.local_entrega_nome || "",
         local_entrega_cnpj_cpf: contrato.local_entrega_cnpj_cpf || "",
         local_entrega_ie: contrato.local_entrega_ie || "",
@@ -186,13 +198,15 @@ export default function VendaProducaoForm() {
         local_entrega_uf: contrato.local_entrega_uf || "",
         local_entrega_cep: contrato.local_entrega_cep || "",
         corretor: contrato.corretor || "",
-        percentual_comissao: contrato.percentual_comissao || 0,
-        valor_comissao: contrato.valor_comissao || 0,
+        percentual_comissao: contrato.percentual_comissao,
+        valor_comissao: contrato.valor_comissao,
         data_pagamento_comissao: contrato.data_pagamento_comissao || "",
         modalidade_frete: contrato.modalidade_frete || 0,
         venda_entrega_futura: contrato.venda_entrega_futura || false,
         a_fixar: contrato.a_fixar || false,
-        fechada: contrato.fechada || false,
+        exportacao: contrato.exportacao || false,
+        remessa_deposito: contrato.remessa_deposito || false,
+        retorno_deposito: contrato.retorno_deposito || false,
         observacoes: contrato.observacoes || "",
         granja_id: contrato.granja_id || "",
       });
@@ -205,7 +219,40 @@ export default function VendaProducaoForm() {
 
   const onSubmit = async (data: FormData) => {
     const payload: ContratoVendaInsert = {
-      ...data,
+      numero: data.numero,
+      data_contrato: data.data_contrato,
+      safra_id: data.safra_id || null,
+      produto_id: data.produto_id || null,
+      nota_venda: data.nota_venda || null,
+      numero_contrato_comprador: data.numero_contrato_comprador || null,
+      inscricao_produtor_id: data.inscricao_produtor_id || null,
+      comprador_id: data.comprador_id || null,
+      tipo_venda: data.tipo_venda || null,
+      quantidade_kg: data.quantidade_kg,
+      quantidade_sacos: data.quantidade_sacos,
+      preco_kg: data.preco_kg,
+      valor_total: data.valor_total,
+      local_entrega_nome: data.local_entrega_nome || null,
+      local_entrega_cnpj_cpf: data.local_entrega_cnpj_cpf || null,
+      local_entrega_ie: data.local_entrega_ie || null,
+      local_entrega_logradouro: data.local_entrega_logradouro || null,
+      local_entrega_numero: data.local_entrega_numero || null,
+      local_entrega_complemento: data.local_entrega_complemento || null,
+      local_entrega_bairro: data.local_entrega_bairro || null,
+      local_entrega_cidade: data.local_entrega_cidade || null,
+      local_entrega_uf: data.local_entrega_uf || null,
+      local_entrega_cep: data.local_entrega_cep || null,
+      corretor: data.corretor || null,
+      percentual_comissao: data.percentual_comissao,
+      valor_comissao: data.valor_comissao,
+      data_pagamento_comissao: data.data_pagamento_comissao || null,
+      modalidade_frete: data.modalidade_frete,
+      venda_entrega_futura: data.venda_entrega_futura,
+      a_fixar: data.a_fixar,
+      exportacao: data.exportacao,
+      remessa_deposito: data.remessa_deposito,
+      retorno_deposito: data.retorno_deposito,
+      observacoes: data.observacoes || null,
       granja_id: data.granja_id || granjas?.[0]?.id || null,
     };
 
@@ -221,7 +268,7 @@ export default function VendaProducaoForm() {
     if (value === null || value === undefined) return "-";
     return new Intl.NumberFormat("pt-BR", {
       minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
+      maximumFractionDigits: 3,
     }).format(value);
   };
 
@@ -231,6 +278,11 @@ export default function VendaProducaoForm() {
       style: "currency",
       currency: "BRL",
     }).format(value);
+  };
+
+  const handleEmitirNfe = () => {
+    // Navigate to NFe form or open dialog
+    navigate(`/notas-fiscais/nova?contrato=${id}`);
   };
 
   if (loadingContrato && isEditing) {
@@ -253,15 +305,26 @@ export default function VendaProducaoForm() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                {isEditing ? `Contrato #${contrato?.numero}` : "Novo Contrato de Venda"}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-foreground">
+                  {isEditing ? `Contrato #${contrato?.numero}` : "Novo Contrato de Venda"}
+                </h1>
+                {isEditing && isContratoFechado && (
+                  <Badge variant="default" className="bg-green-600">Fechado</Badge>
+                )}
+              </div>
               <p className="text-muted-foreground">
                 {isEditing ? "Editar contrato de venda" : "Cadastrar novo contrato"}
               </p>
             </div>
           </div>
           <div className="flex gap-2">
+            {isEditing && (vendaEntregaFutura || aFixar) && (
+              <Button type="button" variant="outline" onClick={handleEmitirNfe}>
+                <FileText className="h-4 w-4 mr-2" />
+                Emitir NFe
+              </Button>
+            )}
             {isEditing && (
               <Button type="button" variant="outline" onClick={() => navigate(`/vendas-producao/${id}/remessas`)}>
                 <Truck className="h-4 w-4 mr-2" />
@@ -383,19 +446,37 @@ export default function VendaProducaoForm() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Quantidade (kg)</Label>
-                <Input type="number" step="0.01" {...register("quantidade_kg", { valueAsNumber: true })} />
+                <QuantityInput
+                  value={watch("quantidade_kg")}
+                  onChange={(v) => setValue("quantidade_kg", v)}
+                  decimals={3}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Quantidade (sacos)</Label>
-                <Input type="number" step="0.01" {...register("quantidade_sacos", { valueAsNumber: true })} />
+                <QuantityInput
+                  value={watch("quantidade_sacos")}
+                  onChange={(v) => setValue("quantidade_sacos", v)}
+                  decimals={3}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Preço/kg (R$)</Label>
-                <Input type="number" step="0.0000000001" {...register("preco_kg", { valueAsNumber: true })} />
+                <CurrencyInput
+                  value={watch("preco_kg")}
+                  onChange={(v) => setValue("preco_kg", v)}
+                  decimals={10}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Valor Total (R$)</Label>
-                <Input type="number" step="0.01" {...register("valor_total", { valueAsNumber: true })} readOnly className="bg-muted font-bold" />
+                <CurrencyInput
+                  value={watch("valor_total")}
+                  onChange={(v) => setValue("valor_total", v)}
+                  decimals={2}
+                  disabled
+                  className="bg-muted font-bold"
+                />
               </div>
             </div>
           </CardContent>
@@ -478,11 +559,21 @@ export default function VendaProducaoForm() {
                   </div>
                   <div className="space-y-2">
                     <Label>% Comissão</Label>
-                    <Input type="number" step="0.01" {...register("percentual_comissao", { valueAsNumber: true })} />
+                    <QuantityInput
+                      value={watch("percentual_comissao")}
+                      onChange={(v) => setValue("percentual_comissao", v)}
+                      decimals={2}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Valor Comissão</Label>
-                    <Input type="number" step="0.01" {...register("valor_comissao", { valueAsNumber: true })} readOnly className="bg-muted" />
+                    <CurrencyInput
+                      value={watch("valor_comissao")}
+                      onChange={(v) => setValue("valor_comissao", v)}
+                      decimals={2}
+                      disabled
+                      className="bg-muted"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2 sm:w-1/4">
@@ -537,11 +628,27 @@ export default function VendaProducaoForm() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
-                    id="fechada"
-                    checked={watch("fechada")}
-                    onCheckedChange={(c) => setValue("fechada", !!c)}
+                    id="exportacao"
+                    checked={watch("exportacao")}
+                    onCheckedChange={(c) => setValue("exportacao", !!c)}
                   />
-                  <Label htmlFor="fechada">Contrato Fechado</Label>
+                  <Label htmlFor="exportacao">Exportação</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remessa_deposito"
+                    checked={watch("remessa_deposito")}
+                    onCheckedChange={(c) => setValue("remessa_deposito", !!c)}
+                  />
+                  <Label htmlFor="remessa_deposito">Remessa para Depósito</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="retorno_deposito"
+                    checked={watch("retorno_deposito")}
+                    onCheckedChange={(c) => setValue("retorno_deposito", !!c)}
+                  />
+                  <Label htmlFor="retorno_deposito">Retorno de Depósito</Label>
                 </div>
               </div>
             </div>
@@ -586,7 +693,7 @@ export default function VendaProducaoForm() {
                         <TableCell className="text-right">{formatNumber(r.peso_bruto)}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.peso_tara)}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.kg_nota)}</TableCell>
-                        <TableCell className="text-right">{formatNumber(r.preco_kg)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(r.preco_kg)}</TableCell>
                         <TableCell className="text-right">{formatCurrency(r.valor_nota)}</TableCell>
                         <TableCell>{r.silo?.nome || "-"}</TableCell>
                         <TableCell>{r.status}</TableCell>
@@ -617,13 +724,13 @@ export default function VendaProducaoForm() {
             <Card>
               <CardContent className="pt-6 text-center">
                 <p className="text-sm text-muted-foreground">Carregado</p>
-                <p className="text-xl font-bold text-success">{formatNumber(contrato.total_carregado_kg)} kg</p>
+                <p className="text-xl font-bold text-green-600">{formatNumber(contrato.total_carregado_kg)} kg</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
                 <p className="text-sm text-muted-foreground">Saldo</p>
-                <p className="text-xl font-bold text-warning">{formatNumber(contrato.saldo_kg)} kg</p>
+                <p className="text-xl font-bold text-orange-600">{formatNumber(contrato.saldo_kg)} kg</p>
               </CardContent>
             </Card>
           </div>

@@ -38,6 +38,9 @@ export interface ContratoVenda {
   fechada: boolean | null;
   data_recebimento: string | null;
   observacoes: string | null;
+  exportacao: boolean | null;
+  remessa_deposito: boolean | null;
+  retorno_deposito: boolean | null;
   created_at: string;
   updated_at: string;
   // Joins

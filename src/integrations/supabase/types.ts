@@ -549,6 +549,7 @@ export type Database = {
           data_contrato: string
           data_pagamento_comissao: string | null
           data_recebimento: string | null
+          exportacao: boolean | null
           fechada: boolean | null
           granja_id: string | null
           id: string
@@ -573,6 +574,8 @@ export type Database = {
           produto_id: string | null
           quantidade_kg: number | null
           quantidade_sacos: number | null
+          remessa_deposito: boolean | null
+          retorno_deposito: boolean | null
           safra_id: string | null
           tipo_venda: string | null
           updated_at: string
@@ -588,6 +591,7 @@ export type Database = {
           data_contrato: string
           data_pagamento_comissao?: string | null
           data_recebimento?: string | null
+          exportacao?: boolean | null
           fechada?: boolean | null
           granja_id?: string | null
           id?: string
@@ -612,6 +616,8 @@ export type Database = {
           produto_id?: string | null
           quantidade_kg?: number | null
           quantidade_sacos?: number | null
+          remessa_deposito?: boolean | null
+          retorno_deposito?: boolean | null
           safra_id?: string | null
           tipo_venda?: string | null
           updated_at?: string
@@ -627,6 +633,7 @@ export type Database = {
           data_contrato?: string
           data_pagamento_comissao?: string | null
           data_recebimento?: string | null
+          exportacao?: boolean | null
           fechada?: boolean | null
           granja_id?: string | null
           id?: string
@@ -651,6 +658,8 @@ export type Database = {
           produto_id?: string | null
           quantidade_kg?: number | null
           quantidade_sacos?: number | null
+          remessa_deposito?: boolean | null
+          retorno_deposito?: boolean | null
           safra_id?: string | null
           tipo_venda?: string | null
           updated_at?: string
