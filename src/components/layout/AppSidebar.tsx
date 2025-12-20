@@ -22,6 +22,7 @@ import {
   Crown,
   FileText,
   Receipt,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ const menuItems = [
   { title: "Emitentes NF-e", icon: Building2, path: "/emitentes-nfe", color: "text-teal-500" },
   { title: "Transportadoras", icon: Truck, path: "/transportadoras", color: "text-purple-500" },
   { title: "Notas Fiscais", icon: Receipt, path: "/notas-fiscais", color: "text-rose-500" },
+  { title: "Vendas Produção", icon: ShoppingCart, path: "/vendas-producao", color: "text-green-600" },
 ];
 
 const roleLabels: Record<string, string> = {
