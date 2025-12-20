@@ -12,10 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2, Search } from 'lucide-react';
 import { useClientesFornecedores, useCreateClienteFornecedor, useUpdateClienteFornecedor, useDeleteClienteFornecedor, ClienteFornecedorInsert } from '@/hooks/useClientesFornecedores';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useCepLookup, formatCep } from '@/hooks/useCepLookup';
+import { useCnpjLookup, formatCnpj } from '@/hooks/useCnpjLookup';
 
 export default function ClientesFornecedores() {
   const { canEdit } = useAuth();
@@ -25,6 +26,7 @@ export default function ClientesFornecedores() {
   const updateMutation = useUpdateClienteFornecedor();
   const deleteMutation = useDeleteClienteFornecedor();
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
+  const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -60,6 +62,29 @@ export default function ClientesFornecedores() {
         bairro: data.bairro || prev.bairro,
         cidade: data.localidade || prev.cidade,
         uf: data.uf || prev.uf,
+      }));
+    }
+  };
+
+  const handleCnpjLookup = async () => {
+    if (formData.tipo_pessoa !== 'juridica' || !formData.cpf_cnpj) return;
+    
+    const data = await fetchCnpj(formData.cpf_cnpj);
+    if (data) {
+      setFormData((prev) => ({
+        ...prev,
+        cpf_cnpj: data.cnpj || prev.cpf_cnpj,
+        nome: data.razao_social || prev.nome,
+        nome_fantasia: data.nome_fantasia || prev.nome_fantasia,
+        logradouro: data.logradouro || prev.logradouro,
+        numero: data.numero || prev.numero,
+        complemento: data.complemento || prev.complemento,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.cidade || prev.cidade,
+        uf: data.uf || prev.uf,
+        cep: data.cep || prev.cep,
+        telefone: data.telefone || prev.telefone,
+        email: data.email || prev.email,
       }));
     }
   };
@@ -226,7 +251,33 @@ export default function ClientesFornecedores() {
                     </div>
                     <div className="space-y-2">
                       <Label>{formData.tipo_pessoa === 'fisica' ? 'CPF' : 'CNPJ'}</Label>
-                      <Input value={formData.cpf_cnpj || ''} onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value })} />
+                      <div className="flex gap-2">
+                        <Input 
+                          value={formData.cpf_cnpj || ''} 
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            cpf_cnpj: formData.tipo_pessoa === 'juridica' ? formatCnpj(e.target.value) : e.target.value 
+                          })}
+                          placeholder={formData.tipo_pessoa === 'juridica' ? '00.000.000/0000-00' : '000.000.000-00'}
+                          maxLength={formData.tipo_pessoa === 'juridica' ? 18 : 14}
+                        />
+                        {formData.tipo_pessoa === 'juridica' && (
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="icon"
+                            onClick={handleCnpjLookup}
+                            disabled={cnpjLoading || !formData.cpf_cnpj}
+                            title="Buscar dados na Receita Federal"
+                          >
+                            {cnpjLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Search className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Inscrição Estadual</Label>
