@@ -398,7 +398,7 @@ export default function NotaFiscalForm() {
         ncm: item.ncm,
         origem: item.origem,
         cst_icms: item.cst_icms,
-        modalidade_bc_icms: item.modalidade_bc_icms,
+        modalidade_bc_icms: (item as any).modalidade_bc_icms ?? null,
         base_icms: item.base_icms,
         aliq_icms: item.aliq_icms,
         valor_icms: item.valor_icms,
@@ -415,9 +415,9 @@ export default function NotaFiscalForm() {
         aliq_ipi: item.aliq_ipi,
         valor_ipi: item.valor_ipi,
         valor_desconto: item.valor_desconto,
-        valor_frete: item.valor_frete,
-        valor_seguro: item.valor_seguro,
-        valor_outros: item.valor_outros,
+        valor_frete: (item as any).valor_frete ?? null,
+        valor_seguro: (item as any).valor_seguro ?? null,
+        valor_outros: (item as any).valor_outros ?? null,
       }));
 
       const result = await focusNfe.emitirNfe(id, notaData, itensData);
@@ -1141,10 +1141,25 @@ export default function NotaFiscalForm() {
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? "Salvando..." : "Salvar Rascunho"}
           </Button>
-          <Button disabled title="Integração com API não configurada">
-            <Send className="h-4 w-4 mr-2" />
-            Emitir NF-e
-          </Button>
+          {(() => {
+            const emitente = emitentes.find((e) => e.id === formData.emitente_id);
+            const canEmit = isEditing && itens.length > 0 && emitente?.api_configurada && existingNota?.status === "rascunho";
+            
+            return (
+              <Button 
+                onClick={handleEmitirNfe} 
+                disabled={!canEmit || isEmitting || focusNfe.isLoading}
+                variant={canEmit ? "default" : "secondary"}
+              >
+                {isEmitting || focusNfe.isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                {isEmitting ? "Emitindo..." : focusNfe.status === "processando" ? "Processando..." : "Emitir NF-e"}
+              </Button>
+            );
+          })()}
         </div>
 
         {/* Item Dialog */}

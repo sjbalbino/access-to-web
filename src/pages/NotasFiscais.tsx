@@ -4,6 +4,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -19,8 +21,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, FileText, Eye, Trash2, Download, XCircle } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit } from "lucide-react";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
@@ -36,30 +46,57 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useFocusNfe } from "@/hooks/useFocusNfe";
+import { toast } from "sonner";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },
   { value: "rascunho", label: "Rascunho" },
   { value: "processando", label: "Processando" },
-  { value: "aprovada", label: "Aprovada" },
+  { value: "autorizado", label: "Autorizada" },
+  { value: "autorizada", label: "Autorizada" },
+  { value: "rejeitado", label: "Rejeitada" },
   { value: "rejeitada", label: "Rejeitada" },
+  { value: "cancelado", label: "Cancelada" },
   { value: "cancelada", label: "Cancelada" },
 ];
 
 const getStatusBadgeVariant = (status: string | null) => {
   switch (status) {
-    case "aprovada":
+    case "autorizado":
+    case "autorizada":
       return "default";
     case "rascunho":
       return "secondary";
     case "processando":
       return "outline";
+    case "rejeitado":
     case "rejeitada":
-      return "destructive";
+    case "cancelado":
     case "cancelada":
       return "destructive";
     default:
       return "outline";
+  }
+};
+
+const getStatusLabel = (status: string | null) => {
+  switch (status) {
+    case "autorizado":
+    case "autorizada":
+      return "Autorizada";
+    case "rascunho":
+      return "Rascunho";
+    case "processando":
+      return "Processando";
+    case "rejeitado":
+    case "rejeitada":
+      return "Rejeitada";
+    case "cancelado":
+    case "cancelada":
+      return "Cancelada";
+    default:
+      return status || "-";
   }
 };
 
@@ -75,10 +112,16 @@ export default function NotasFiscais() {
   const navigate = useNavigate();
   const { notasFiscais, isLoading, deleteNotaFiscal } = useNotasFiscais();
   const { canEdit } = useAuth();
+  const focusNfe = useFocusNfe();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedNota, setSelectedNota] = useState<string | null>(null);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [isCartaCorrecaoDialogOpen, setIsCartaCorrecaoDialogOpen] = useState(false);
+  const [selectedNota, setSelectedNota] = useState<any>(null);
+  const [justificativa, setJustificativa] = useState("");
+  const [correcao, setCorrecao] = useState("");
 
   const filteredNotas = notasFiscais.filter((nota) => {
     const matchesSearch =
@@ -93,10 +136,39 @@ export default function NotasFiscais() {
 
   const handleDelete = async () => {
     if (selectedNota) {
-      await deleteNotaFiscal.mutateAsync(selectedNota);
+      await deleteNotaFiscal.mutateAsync(selectedNota.id);
       setIsDeleteDialogOpen(false);
       setSelectedNota(null);
     }
+  };
+
+  const handleCancelar = async () => {
+    if (selectedNota && justificativa.length >= 15) {
+      const ref = selectedNota.uuid_api || `nfe_${selectedNota.id}`;
+      await focusNfe.cancelarNfe(ref, selectedNota.id, justificativa);
+      setIsCancelDialogOpen(false);
+      setSelectedNota(null);
+      setJustificativa("");
+    } else {
+      toast.error("Justificativa deve ter no mínimo 15 caracteres");
+    }
+  };
+
+  const handleCartaCorrecao = async () => {
+    if (selectedNota && correcao.length >= 15) {
+      const ref = selectedNota.uuid_api || `nfe_${selectedNota.id}`;
+      await focusNfe.emitirCartaCorrecao(ref, selectedNota.id, correcao);
+      setIsCartaCorrecaoDialogOpen(false);
+      setSelectedNota(null);
+      setCorrecao("");
+    } else {
+      toast.error("Correção deve ter no mínimo 15 caracteres");
+    }
+  };
+
+  const handleDownload = async (nota: any, tipo: "xml" | "danfe") => {
+    const ref = nota.uuid_api || `nfe_${nota.id}`;
+    await focusNfe.downloadArquivo(ref, tipo);
   };
 
   if (isLoading) {
@@ -133,11 +205,12 @@ export default function NotasFiscais() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                {STATUS_OPTIONS.map((status) => (
-                  <SelectItem key={status.value} value={status.value}>
-                    {status.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="rascunho">Rascunho</SelectItem>
+                <SelectItem value="processando">Processando</SelectItem>
+                <SelectItem value="autorizada">Autorizada</SelectItem>
+                <SelectItem value="rejeitada">Rejeitada</SelectItem>
+                <SelectItem value="cancelada">Cancelada</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -164,7 +237,7 @@ export default function NotasFiscais() {
                 <TableHead className="w-32">Data Emissão</TableHead>
                 <TableHead className="text-right w-32">Valor Total</TableHead>
                 <TableHead className="w-28">Status</TableHead>
-                {canEdit && <TableHead className="w-32">Ações</TableHead>}
+                {canEdit && <TableHead className="w-40">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -201,8 +274,7 @@ export default function NotasFiscais() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(nota.status)}>
-                      {STATUS_OPTIONS.find((s) => s.value === nota.status)?.label ||
-                        nota.status}
+                      {getStatusLabel(nota.status)}
                     </Badge>
                   </TableCell>
                   {canEdit && (
@@ -216,37 +288,73 @@ export default function NotasFiscais() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {nota.danfe_url && (
+                        
+                        {/* Download DANFE */}
+                        {(nota.status === "autorizado" || nota.status === "autorizada") && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => window.open(nota.danfe_url!, "_blank")}
+                            onClick={() => handleDownload(nota, "danfe")}
                             title="Download DANFE"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
                         )}
+                        
+                        {/* Download XML */}
+                        {(nota.status === "autorizado" || nota.status === "autorizada") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDownload(nota, "xml")}
+                            title="Download XML"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {/* Carta de Correção */}
+                        {(nota.status === "autorizado" || nota.status === "autorizada") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setSelectedNota(nota);
+                              setIsCartaCorrecaoDialogOpen(true);
+                            }}
+                            title="Carta de Correção"
+                          >
+                            <FileEdit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {/* Cancelar NF-e */}
+                        {(nota.status === "autorizado" || nota.status === "autorizada") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setSelectedNota(nota);
+                              setIsCancelDialogOpen(true);
+                            }}
+                            title="Cancelar NF-e"
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        {/* Excluir Rascunho */}
                         {nota.status === "rascunho" && (
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => {
-                              setSelectedNota(nota.id);
+                              setSelectedNota(nota);
                               setIsDeleteDialogOpen(true);
                             }}
                             title="Excluir"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {nota.status === "aprovada" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Cancelar NF-e"
-                            disabled
-                          >
-                            <XCircle className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
@@ -292,6 +400,85 @@ export default function NotasFiscais() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Dialog de Cancelamento */}
+        <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cancelar NF-e</DialogTitle>
+              <DialogDescription>
+                Informe a justificativa para o cancelamento (mínimo 15 caracteres).
+                O cancelamento só pode ser feito em até 24h após a autorização.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="justificativa">Justificativa *</Label>
+                <Textarea
+                  id="justificativa"
+                  value={justificativa}
+                  onChange={(e) => setJustificativa(e.target.value)}
+                  placeholder="Informe o motivo do cancelamento..."
+                  rows={4}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {justificativa.length}/15 caracteres mínimos
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCancelDialogOpen(false)}>
+                Voltar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleCancelar}
+                disabled={justificativa.length < 15 || focusNfe.isLoading}
+              >
+                Cancelar NF-e
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Carta de Correção */}
+        <Dialog open={isCartaCorrecaoDialogOpen} onOpenChange={setIsCartaCorrecaoDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Carta de Correção (CC-e)</DialogTitle>
+              <DialogDescription>
+                A carta de correção permite corrigir erros em dados da NF-e, exceto valores e impostos.
+                Limite: 20 cartas por NF-e.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="correcao">Texto da Correção *</Label>
+                <Textarea
+                  id="correcao"
+                  value={correcao}
+                  onChange={(e) => setCorrecao(e.target.value)}
+                  placeholder="Descreva a correção a ser feita..."
+                  rows={4}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {correcao.length}/15 caracteres mínimos
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCartaCorrecaoDialogOpen(false)}>
+                Voltar
+              </Button>
+              <Button
+                onClick={handleCartaCorrecao}
+                disabled={correcao.length < 15 || focusNfe.isLoading}
+              >
+                Emitir CC-e
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
