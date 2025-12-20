@@ -6,11 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const FOCUSNFE_TOKEN = Deno.env.get("FOCUSNFE_TOKEN");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-// Determina ambiente baseado no cadastro do emitente (não mais pelo token)
+// Determina ambiente baseado no cadastro do emitente
 const getBaseUrl = (ambiente: number | null | undefined) => {
   const isHomologacao = ambiente === 2;
   console.log("Ambiente do emitente:", isHomologacao ? "HOMOLOGAÇÃO" : "PRODUÇÃO");
@@ -26,10 +25,6 @@ serve(async (req) => {
   }
 
   try {
-    if (!FOCUSNFE_TOKEN) {
-      throw new Error("FOCUSNFE_TOKEN não configurado");
-    }
-
     const { ref, notaFiscalId, justificativa } = await req.json();
 
     if (!ref) {
@@ -42,8 +37,9 @@ serve(async (req) => {
 
     console.log("Cancelando NF-e:", ref);
 
-    // Buscar ambiente do emitente
+    // Buscar ambiente e token do emitente
     let ambiente: number | null | undefined;
+    let emitenteToken: string | null | undefined;
     // deno-lint-ignore no-explicit-any
     let supabase: any = null;
 
@@ -54,14 +50,28 @@ serve(async (req) => {
         .from("notas_fiscais")
         .select(`
           emitente_id,
-          emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente)
+          emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, api_access_token)
         `)
         .eq("id", notaFiscalId)
         .maybeSingle();
 
-      // Cast para unknown primeiro para evitar erros de tipo
-      const emitenteData = (notaData as unknown as { emitentes_nfe?: { ambiente: number | null } })?.emitentes_nfe;
+      const emitenteData = (notaData as unknown as { emitentes_nfe?: { ambiente: number | null; api_access_token: string | null } })?.emitentes_nfe;
       ambiente = emitenteData?.ambiente;
+      emitenteToken = emitenteData?.api_access_token;
+    }
+
+    // Verificar se o token do emitente está configurado
+    if (!emitenteToken) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Token da Focus NFe não configurado para este emitente. Configure o token no cadastro do emitente.",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     const baseUrl = getBaseUrl(ambiente);
@@ -70,7 +80,7 @@ serve(async (req) => {
     const response = await fetch(`${baseUrl}/v2/nfe/${ref}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Basic ${btoa(`${FOCUSNFE_TOKEN}:`)}`,
+        Authorization: `Basic ${btoa(`${emitenteToken}:`)}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ justificativa }),
