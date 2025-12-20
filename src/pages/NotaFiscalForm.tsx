@@ -293,6 +293,12 @@ export default function NotaFiscalForm() {
     }
   };
 
+  // Remove mask from CEP (keep only digits)
+  const cleanCep = (cep: string | null | undefined): string | null => {
+    if (!cep) return null;
+    return cep.replace(/\D/g, '').slice(0, 8);
+  };
+
   const handleSaveDraft = async () => {
     if (!formData.natureza_operacao) {
       toast.error("Natureza da operação é obrigatória");
@@ -308,6 +314,7 @@ export default function NotaFiscalForm() {
       const totals = calculateTotals();
       const notaData: NotaFiscalInsert = {
         ...formData,
+        dest_cep: cleanCep(formData.dest_cep),
         status: "rascunho",
         total_produtos: totals.totalProdutos,
         total_nota: totals.totalNota,
