@@ -264,7 +264,7 @@ export default function NotasFiscais() {
                   </TableCell>
                   <TableCell>
                     {nota.data_emissao
-                      ? format(new Date(nota.data_emissao), "dd/MM/yyyy HH:mm", {
+                      ? format(new Date(nota.data_emissao.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", {
                           locale: ptBR,
                         })
                       : "-"}
