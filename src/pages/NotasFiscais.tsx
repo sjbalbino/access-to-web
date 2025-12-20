@@ -168,7 +168,7 @@ export default function NotasFiscais() {
 
   const handleDownload = async (nota: any, tipo: "xml" | "danfe") => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
-    await focusNfe.downloadArquivo(ref, tipo);
+    await focusNfe.downloadArquivo(ref, tipo, nota.id);
   };
 
   if (isLoading) {

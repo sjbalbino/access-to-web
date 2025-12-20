@@ -2016,7 +2016,7 @@ export default function NotaFiscalForm() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "xml")}
+                    onClick={() => focusNfe.downloadArquivo(nota?.uuid_api || `nfe_${id}`, "xml", id!)}
                   >
                     <Download className="h-4 w-4 mr-1" /> Download XML
                   </Button>
@@ -2025,7 +2025,7 @@ export default function NotaFiscalForm() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "danfe")}
+                    onClick={() => focusNfe.downloadArquivo(nota?.uuid_api || `nfe_${id}`, "danfe", id!)}
                   >
                     <Download className="h-4 w-4 mr-1" /> Download DANFE
                   </Button>
@@ -2094,12 +2094,12 @@ export default function NotaFiscalForm() {
               </div>
               <div className="flex gap-2">
                 {existingNota.danfe_url && (
-                  <Button variant="outline" size="sm" onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "danfe")}>
+                  <Button variant="outline" size="sm" onClick={() => focusNfe.downloadArquivo(existingNota?.uuid_api || `nfe_${id}`, "danfe", id!)}>
                     <Download className="h-4 w-4 mr-1" /> DANFE
                   </Button>
                 )}
                 {existingNota.xml_url && (
-                  <Button variant="outline" size="sm" onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "xml")}>
+                  <Button variant="outline" size="sm" onClick={() => focusNfe.downloadArquivo(existingNota?.uuid_api || `nfe_${id}`, "xml", id!)}>
                     <Download className="h-4 w-4 mr-1" /> XML
                   </Button>
                 )}

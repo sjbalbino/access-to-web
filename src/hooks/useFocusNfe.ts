@@ -199,13 +199,14 @@ export function useFocusNfe() {
 
   const downloadArquivo = async (
     ref: string,
-    tipo: "xml" | "danfe" | "xml_cancelamento"
+    tipo: "xml" | "danfe" | "xml_cancelamento",
+    notaFiscalId: string
   ): Promise<void> => {
     setIsLoading(true);
 
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
-        body: { ref, tipo },
+        body: { ref, tipo, notaFiscalId },
       });
 
       if (error) {
