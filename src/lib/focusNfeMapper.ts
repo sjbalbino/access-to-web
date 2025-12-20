@@ -96,6 +96,21 @@ export interface FocusNfeItem {
   valor_outras_despesas?: number;
 }
 
+// Formatar data para o padrão ISO 8601 com timezone do Brasil
+function formatDateForFocusNfe(dateStr: string | null): string {
+  if (!dateStr) return "";
+  
+  // Se já está no formato ISO completo com timezone, retorna
+  if (dateStr.includes("T") && (dateStr.includes("+") || dateStr.includes("-03"))) {
+    return dateStr;
+  }
+  
+  // Converter para formato ISO 8601 com timezone do Brasil (-03:00)
+  // Formato esperado: "2025-12-20T00:00:00-03:00"
+  const datePart = dateStr.split("T")[0];
+  return `${datePart}T12:00:00-03:00`;
+}
+
 // Mapeamento do indicador de IE do destinatário
 function mapIndicadorIE(destTipo: string | null, destIe: string | null): number {
   if (destIe && destIe.toUpperCase() !== "ISENTO" && destIe.trim() !== "") {
@@ -231,7 +246,7 @@ export function mapNotaToFocusNfe(
   
   const focusNota: FocusNfeNota = {
     natureza_operacao: nota.natureza_operacao,
-    data_emissao: nota.data_emissao || "",
+    data_emissao: formatDateForFocusNfe(nota.data_emissao),
     tipo_documento: nota.operacao ?? 1, // Default: Saída
     finalidade_emissao: nota.finalidade ?? 1, // Default: Normal
     consumidor_final: nota.ind_consumidor_final ?? 0,
