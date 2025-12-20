@@ -110,6 +110,7 @@ const TABS = [
   { id: "itens", label: "Itens", icon: Package },
   { id: "transporte", label: "Transporte", icon: Truck },
   { id: "pagamento", label: "Pagamento", icon: CreditCard },
+  { id: "dados_nota", label: "Dados da Nota", icon: FileText },
 ];
 
 type EmissionStep = "idle" | "validating" | "mapping" | "sending" | "processing" | "success" | "error";
@@ -243,6 +244,7 @@ export default function NotaFiscalForm() {
     itens: itens.length > 0,
     transporte: true,
     pagamento: true,
+    dados_nota: true,
   });
 
   const tabProgress = getTabProgress();
@@ -1647,6 +1649,374 @@ export default function NotaFiscalForm() {
     </div>
   );
 
+  const renderDadosNota = () => {
+    const getOperacaoLabel = (op: number | null) => OPERACOES.find(o => o.value === op)?.label || "-";
+    const getFinalidadeLabel = (fin: number | null) => FINALIDADES.find(f => f.value === fin)?.label || "-";
+    const getModalidadeFreteLabel = (mod: number | null) => MODALIDADES_FRETE.find(m => m.value === mod)?.label || "-";
+    const getFormaPagamentoLabel = (forma: number | null) => FORMAS_PAGAMENTO.find(f => f.value === forma)?.label || "-";
+    const getTipoPagamentoLabel = (tipo: string | null) => TIPOS_PAGAMENTO.find(t => t.value === tipo)?.label || "-";
+    
+    const getIndPresencaLabel = (ind: number | null) => {
+      const labels: Record<number, string> = {
+        0: "Não se aplica",
+        1: "Operação presencial",
+        2: "Operação não presencial, Internet",
+        3: "Operação não presencial, Teleatendimento",
+        4: "NFC-e em operação com entrega em domicílio",
+        5: "Operação presencial, fora do estabelecimento",
+        9: "Operação não presencial, outros",
+      };
+      return labels[ind || 0] || "-";
+    };
+
+    const nota = existingNota;
+    const cfop = cfops.find(c => c.id === formData.cfop_id);
+
+    return (
+      <div className="space-y-4">
+        {/* Identificação da NF-e */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Identificação da NF-e</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Modelo</p>
+                <p className="font-medium">{nota?.modelo || "55"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Série</p>
+                <p className="font-medium">{nota?.serie || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Número</p>
+                <p className="font-medium">{nota?.numero || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Status</p>
+                <Badge variant={
+                  nota?.status === "autorizada" ? "default" :
+                  nota?.status === "rejeitada" || nota?.status === "cancelada" || nota?.status === "erro_autorizacao" ? "destructive" :
+                  "secondary"
+                }>
+                  {nota?.status || "rascunho"}
+                </Badge>
+              </div>
+            </div>
+            
+            {nota?.chave_acesso && (
+              <div className="mt-4 p-3 bg-muted/50 rounded">
+                <p className="text-muted-foreground text-xs mb-1">Chave de Acesso</p>
+                <p className="font-mono text-sm break-all">{nota.chave_acesso}</p>
+              </div>
+            )}
+            
+            {nota?.protocolo && (
+              <div className="mt-2 p-3 bg-muted/50 rounded">
+                <p className="text-muted-foreground text-xs mb-1">Protocolo de Autorização</p>
+                <p className="font-mono text-sm">{nota.protocolo}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Datas */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Datas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Data de Emissão</p>
+                <p className="font-medium">
+                  {nota?.data_emissao 
+                    ? new Date(nota.data_emissao).toLocaleString("pt-BR")
+                    : formData.data_emissao || "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Data Saída/Entrada</p>
+                <p className="font-medium">
+                  {nota?.data_saida_entrada 
+                    ? new Date(nota.data_saida_entrada).toLocaleString("pt-BR")
+                    : "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Última Atualização</p>
+                <p className="font-medium">
+                  {nota?.updated_at 
+                    ? new Date(nota.updated_at).toLocaleString("pt-BR")
+                    : "-"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Operação e Finalidade */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Operação e Finalidade</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Tipo de Operação</p>
+                <p className="font-medium">{getOperacaoLabel(formData.operacao)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Finalidade</p>
+                <p className="font-medium">{getFinalidadeLabel(formData.finalidade)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Consumidor Final</p>
+                <p className="font-medium">{formData.ind_consumidor_final === 1 ? "Sim" : "Não"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Ind. Presença</p>
+                <p className="font-medium text-xs">{getIndPresencaLabel(formData.ind_presenca)}</p>
+              </div>
+            </div>
+            <Separator className="my-4" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Natureza da Operação</p>
+                <p className="font-medium">{formData.natureza_operacao || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">CFOP</p>
+                <p className="font-medium">{cfop ? `${cfop.codigo} - ${cfop.descricao}` : "-"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Totalizadores */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Totalizadores</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Valor Produtos</p>
+                <p className="font-medium">{formatCurrency(nota?.total_produtos || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Valor Frete</p>
+                <p className="font-medium">{formatCurrency(nota?.total_frete || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Valor Seguro</p>
+                <p className="font-medium">{formatCurrency(nota?.total_seguro || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Valor Desconto</p>
+                <p className="font-medium">{formatCurrency(nota?.total_desconto || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Outras Despesas</p>
+                <p className="font-medium">{formatCurrency(nota?.total_outros || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Total Nota</p>
+                <p className="font-bold text-primary">{formatCurrency(nota?.total_nota || 0)}</p>
+              </div>
+            </div>
+            
+            <Separator className="my-4" />
+            <p className="text-sm font-medium mb-3">Impostos</p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Valor ICMS</p>
+                <p className="font-medium">{formatCurrency(nota?.total_icms || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Valor PIS</p>
+                <p className="font-medium">{formatCurrency(nota?.total_pis || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Valor COFINS</p>
+                <p className="font-medium">{formatCurrency(nota?.total_cofins || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Valor IPI</p>
+                <p className="font-medium">{formatCurrency(nota?.total_ipi || 0)}</p>
+              </div>
+            </div>
+
+            {/* Reforma Tributária */}
+            <Separator className="my-4" />
+            <p className="text-sm font-medium mb-3">Reforma Tributária (NT 2025.002)</p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Valor IBS</p>
+                <p className="font-medium">{formatCurrency(nota?.total_ibs || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Valor CBS</p>
+                <p className="font-medium">{formatCurrency(nota?.total_cbs || 0)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Valor IS</p>
+                <p className="font-medium">{formatCurrency(nota?.total_is || 0)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Transporte Resumo */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Transporte</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Modalidade Frete</p>
+                <p className="font-medium">{getModalidadeFreteLabel(formData.modalidade_frete)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Transportadora</p>
+                <p className="font-medium">{nota?.transp_nome || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">CNPJ Transp.</p>
+                <p className="font-medium">{nota?.transp_cpf_cnpj || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Placa</p>
+                <p className="font-medium">{nota?.veiculo_placa || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Qtd Volumes</p>
+                <p className="font-medium">{nota?.volumes_quantidade || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Peso Bruto</p>
+                <p className="font-medium">{nota?.volumes_peso_bruto || "-"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Peso Líquido</p>
+                <p className="font-medium">{nota?.volumes_peso_liquido || "-"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pagamento Resumo */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Pagamento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Forma Pagamento</p>
+                <p className="font-medium">{getFormaPagamentoLabel(formData.forma_pagamento)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Tipo Pagamento</p>
+                <p className="font-medium">{getTipoPagamentoLabel(formData.tipo_pagamento)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Valor Pagamento</p>
+                <p className="font-medium">{formatCurrency(nota?.valor_pagamento || 0)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Informações Adicionais */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Informações Adicionais</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {nota?.info_complementar && (
+              <div>
+                <p className="text-muted-foreground text-sm">Informações Complementares (DANFE)</p>
+                <p className="text-sm mt-1 p-3 bg-muted/50 rounded whitespace-pre-wrap">
+                  {nota.info_complementar}
+                </p>
+              </div>
+            )}
+            {nota?.info_fisco && (
+              <div>
+                <p className="text-muted-foreground text-sm">Informações ao Fisco</p>
+                <p className="text-sm mt-1 p-3 bg-muted/50 rounded whitespace-pre-wrap">
+                  {nota.info_fisco}
+                </p>
+              </div>
+            )}
+            {nota?.observacoes && (
+              <div>
+                <p className="text-muted-foreground text-sm">Observações Internas</p>
+                <p className="text-sm mt-1 p-3 bg-muted/50 rounded whitespace-pre-wrap">
+                  {nota.observacoes}
+                </p>
+              </div>
+            )}
+            {nota?.motivo_status && (
+              <div>
+                <p className="text-muted-foreground text-sm">Retorno SEFAZ</p>
+                <Alert variant={
+                  nota.status === "autorizada" ? "default" : 
+                  nota.status === "rejeitada" || nota.status === "erro_autorizacao" ? "destructive" : 
+                  "default"
+                } className="mt-1">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="font-mono text-sm whitespace-pre-wrap">
+                    {nota.motivo_status}
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
+            {!nota?.info_complementar && !nota?.info_fisco && !nota?.observacoes && !nota?.motivo_status && (
+              <p className="text-muted-foreground text-sm">Nenhuma informação adicional</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* URLs e Downloads */}
+        {(nota?.xml_url || nota?.danfe_url) && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Arquivos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {nota?.xml_url && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "xml")}
+                  >
+                    <Download className="h-4 w-4 mr-1" /> Download XML
+                  </Button>
+                )}
+                {nota?.danfe_url && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "danfe")}
+                  >
+                    <Download className="h-4 w-4 mr-1" /> Download DANFE
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  };
+
   const renderCurrentTab = () => {
     switch (currentTab) {
       case "emitente":
@@ -1661,6 +2031,8 @@ export default function NotaFiscalForm() {
         return renderTransporte();
       case "pagamento":
         return renderPagamento();
+      case "dados_nota":
+        return renderDadosNota();
       default:
         return null;
     }
