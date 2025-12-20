@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.focus-nfe-download]
 verify_jwt = true
+
+[functions.consulta-cnpj]
+verify_jwt = true
