@@ -264,12 +264,13 @@ export function useFocusNfe() {
 
       const currentStatus = (result.data as Record<string, unknown>)?.status as string;
 
-      // Status finais
-      if (["autorizado", "autorizada", "cancelado", "cancelada", "rejeitado", "rejeitada"].includes(currentStatus)) {
+      // Status finais (incluindo erro_autorizacao)
+      if (["autorizado", "autorizada", "cancelado", "cancelada", "rejeitado", "rejeitada", "erro_autorizacao"].includes(currentStatus)) {
         if (currentStatus === "autorizado" || currentStatus === "autorizada") {
           toast.success("NF-e autorizada pela SEFAZ!");
-        } else if (currentStatus === "rejeitado" || currentStatus === "rejeitada") {
-          const motivo = (result.data as Record<string, unknown>)?.mensagem_sefaz as string;
+        } else if (currentStatus === "rejeitado" || currentStatus === "rejeitada" || currentStatus === "erro_autorizacao") {
+          const motivo = (result.data as Record<string, unknown>)?.mensagem_sefaz as string || 
+                         (result.data as Record<string, unknown>)?.motivo_status as string;
           toast.error("NF-e rejeitada pela SEFAZ", { description: motivo });
         }
         return result;
