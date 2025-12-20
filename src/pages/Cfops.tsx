@@ -34,6 +34,7 @@ import { Plus, Pencil, Trash2, Search, FileText } from "lucide-react";
 import { useCfops, Cfop, CfopInsert } from "@/hooks/useCfops";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
+import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -468,39 +469,63 @@ export default function Cfops() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="cst_ibs_padrao">CST IBS Padrão</Label>
-                  <Input
-                    id="cst_ibs_padrao"
+                  <Select
                     value={formData.cst_ibs_padrao || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, cst_ibs_padrao: e.target.value || null })
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, cst_ibs_padrao: value || null })
                     }
-                    placeholder="Ex: 000"
-                    maxLength={3}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CST_IBS_CBS.map((cst) => (
+                        <SelectItem key={cst.value} value={cst.value}>
+                          {cst.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cst_cbs_padrao">CST CBS Padrão</Label>
-                  <Input
-                    id="cst_cbs_padrao"
+                  <Select
                     value={formData.cst_cbs_padrao || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, cst_cbs_padrao: e.target.value || null })
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, cst_cbs_padrao: value || null })
                     }
-                    placeholder="Ex: 000"
-                    maxLength={3}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CST_IBS_CBS.map((cst) => (
+                        <SelectItem key={cst.value} value={cst.value}>
+                          {cst.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cst_is_padrao">CST IS Padrão</Label>
-                  <Input
-                    id="cst_is_padrao"
+                  <Select
                     value={formData.cst_is_padrao || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, cst_is_padrao: e.target.value || null })
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, cst_is_padrao: value || null })
                     }
-                    placeholder="Ex: 000"
-                    maxLength={3}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CST_IS.map((cst) => (
+                        <SelectItem key={cst.value} value={cst.value}>
+                          {cst.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
