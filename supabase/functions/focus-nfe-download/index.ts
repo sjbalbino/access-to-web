@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,9 +7,14 @@ const corsHeaders = {
 };
 
 const FOCUSNFE_TOKEN = Deno.env.get("FOCUSNFE_TOKEN");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-const getBaseUrl = () => {
-  if (FOCUSNFE_TOKEN?.startsWith("T")) {
+// Determina ambiente baseado no cadastro do emitente (não mais pelo token)
+const getBaseUrl = (ambiente: number | null | undefined) => {
+  const isHomologacao = ambiente === 2;
+  console.log("Ambiente do emitente:", isHomologacao ? "HOMOLOGAÇÃO" : "PRODUÇÃO");
+  if (isHomologacao) {
     return "https://homologacao.focusnfe.com.br";
   }
   return "https://api.focusnfe.com.br";
@@ -24,7 +30,7 @@ serve(async (req) => {
       throw new Error("FOCUSNFE_TOKEN não configurado");
     }
 
-    const { ref, tipo } = await req.json();
+    const { ref, tipo, notaFiscalId } = await req.json();
 
     if (!ref) {
       throw new Error("ref é obrigatório");
@@ -36,8 +42,30 @@ serve(async (req) => {
 
     console.log("Baixando", tipo, "para NF-e:", ref);
 
+    // Buscar ambiente do emitente
+    let ambiente: number | null | undefined;
+
+    if (notaFiscalId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
+      const { data: notaData } = await supabase
+        .from("notas_fiscais")
+        .select(`
+          emitente_id,
+          emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente)
+        `)
+        .eq("id", notaFiscalId)
+        .maybeSingle();
+
+      // Cast para unknown primeiro para evitar erros de tipo
+      const emitenteData = (notaData as unknown as { emitentes_nfe?: { ambiente: number | null } })?.emitentes_nfe;
+      ambiente = emitenteData?.ambiente;
+    }
+
     // Primeiro consultar a nota para obter as URLs
-    const baseUrl = getBaseUrl();
+    const baseUrl = getBaseUrl(ambiente);
+    console.log("URL Base:", baseUrl);
+
     const consultaResponse = await fetch(`${baseUrl}/v2/nfe/${ref}`, {
       method: "GET",
       headers: {

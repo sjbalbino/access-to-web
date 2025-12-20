@@ -10,8 +10,11 @@ const FOCUSNFE_TOKEN = Deno.env.get("FOCUSNFE_TOKEN");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-const getBaseUrl = () => {
-  if (FOCUSNFE_TOKEN?.startsWith("T")) {
+// Determina ambiente baseado no cadastro do emitente (não mais pelo token)
+const getBaseUrl = (ambiente: number | null | undefined) => {
+  const isHomologacao = ambiente === 2;
+  console.log("Ambiente do emitente:", isHomologacao ? "HOMOLOGAÇÃO" : "PRODUÇÃO");
+  if (isHomologacao) {
     return "https://homologacao.focusnfe.com.br";
   }
   return "https://api.focusnfe.com.br";
@@ -35,7 +38,31 @@ serve(async (req) => {
 
     console.log("Consultando NF-e:", ref);
 
-    const baseUrl = getBaseUrl();
+    // Buscar ambiente do emitente se temos o ID da nota
+    let ambiente: number | null | undefined;
+    // deno-lint-ignore no-explicit-any
+    let supabase: any = null;
+
+    if (notaFiscalId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
+      const { data: notaData } = await supabase
+        .from("notas_fiscais")
+        .select(`
+          emitente_id,
+          emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente)
+        `)
+        .eq("id", notaFiscalId)
+        .maybeSingle();
+
+      // Cast para unknown primeiro para evitar erros de tipo
+      const emitenteData = (notaData as unknown as { emitentes_nfe?: { ambiente: number | null } })?.emitentes_nfe;
+      ambiente = emitenteData?.ambiente;
+    }
+
+    const baseUrl = getBaseUrl(ambiente);
+    console.log("URL Base:", baseUrl);
+
     const response = await fetch(`${baseUrl}/v2/nfe/${ref}`, {
       method: "GET",
       headers: {
@@ -47,9 +74,7 @@ serve(async (req) => {
     console.log("Resposta Focus NFe:", JSON.stringify(responseData, null, 2));
 
     // Se temos o ID da nota, atualizar no banco
-    if (notaFiscalId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
+    if (notaFiscalId && supabase) {
       const updateData: Record<string, unknown> = {
         status: responseData.status,
       };

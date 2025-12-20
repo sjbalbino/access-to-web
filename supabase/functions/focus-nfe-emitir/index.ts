@@ -10,9 +10,11 @@ const FOCUSNFE_TOKEN = Deno.env.get("FOCUSNFE_TOKEN");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-// Determina ambiente baseado no token (homologação começa com "T")
-const getBaseUrl = () => {
-  if (FOCUSNFE_TOKEN?.startsWith("T")) {
+// Determina ambiente baseado no cadastro do emitente (não mais pelo token)
+const getBaseUrl = (ambiente: number | null | undefined) => {
+  const isHomologacao = ambiente === 2;
+  console.log("Ambiente do emitente:", isHomologacao ? "HOMOLOGAÇÃO" : "PRODUÇÃO");
+  if (isHomologacao) {
     return "https://homologacao.focusnfe.com.br";
   }
   return "https://api.focusnfe.com.br";
@@ -37,12 +39,22 @@ serve(async (req) => {
     // Inicializar cliente Supabase
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Verificar se já existe uma referência anterior para esta nota
+    // Buscar nota fiscal com dados do emitente para determinar o ambiente
     const { data: existingNota } = await supabase
       .from("notas_fiscais")
-      .select("uuid_api, status, motivo_status")
+      .select(`
+        uuid_api, 
+        status, 
+        motivo_status,
+        emitente_id,
+        emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente)
+      `)
       .eq("id", notaFiscalId)
       .maybeSingle();
+
+    // Obter ambiente do emitente - cast para unknown primeiro para evitar erros de tipo
+    const emitenteData = (existingNota as unknown as { emitentes_nfe?: { ambiente: number | null } })?.emitentes_nfe;
+    const ambiente = emitenteData?.ambiente;
 
     // Se já existe uma nota autorizada, não permitir nova emissão
     if (existingNota?.status === "autorizada") {
@@ -77,8 +89,10 @@ serve(async (req) => {
     console.log("Referência:", ref);
     console.log("Dados:", JSON.stringify(notaData, null, 2));
 
-    // Chamar API Focus NFe
-    const baseUrl = getBaseUrl();
+    // Chamar API Focus NFe usando o ambiente do emitente
+    const baseUrl = getBaseUrl(ambiente);
+    console.log("URL Base:", baseUrl);
+    
     const response = await fetch(`${baseUrl}/v2/nfe?ref=${ref}`, {
       method: "POST",
       headers: {
