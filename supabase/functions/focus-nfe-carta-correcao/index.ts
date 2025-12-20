@@ -55,6 +55,20 @@ serve(async (req) => {
         .eq("id", notaFiscalId)
         .maybeSingle();
 
+      // Verificar se a nota existe
+      if (!notaData) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Nota fiscal não encontrada no banco de dados",
+          }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
       const emitenteData = (notaData as unknown as { emitentes_nfe?: { ambiente: number | null; api_access_token: string | null } })?.emitentes_nfe;
       ambiente = emitenteData?.ambiente;
       emitenteToken = emitenteData?.api_access_token;
@@ -115,10 +129,16 @@ serve(async (req) => {
       const infoAtual = nota?.info_complementar || "";
       const novaInfo = `${infoAtual}\n\nCarta de Correção (${new Date().toLocaleDateString("pt-BR")}): ${correcao}`.trim();
 
-      await supabase
+      const { error: updateError } = await supabase
         .from("notas_fiscais")
         .update({ info_complementar: novaInfo })
         .eq("id", notaFiscalId);
+
+      if (updateError) {
+        console.error("Erro ao atualizar nota fiscal no banco:", updateError);
+      } else {
+        console.log("Nota fiscal atualizada com sucesso no banco de dados");
+      }
     }
 
     return new Response(

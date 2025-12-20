@@ -47,6 +47,20 @@ serve(async (req) => {
       .eq("id", notaFiscalId)
       .maybeSingle();
 
+    // Verificar se a nota existe
+    if (!existingNota) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Nota fiscal não encontrada no banco de dados",
+        }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Obter ambiente e token do emitente
     const emitenteData = (existingNota as unknown as { emitentes_nfe?: { ambiente: number | null; api_access_token: string | null } })?.emitentes_nfe;
     const ambiente = emitenteData?.ambiente;
@@ -196,10 +210,28 @@ serve(async (req) => {
       updateData.motivo_status = responseData.mensagem_sefaz;
     }
 
-    await supabase
+    const { error: updateError } = await supabase
       .from("notas_fiscais")
       .update(updateData)
       .eq("id", notaFiscalId);
+
+    if (updateError) {
+      console.error("Erro ao atualizar nota fiscal no banco:", updateError);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          warning: "NF-e processada pela SEFAZ, mas houve erro ao atualizar o banco de dados local",
+          data: responseData,
+          ref,
+          updateError: updateError.message,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    console.log("Nota fiscal atualizada com sucesso no banco de dados");
 
     return new Response(
       JSON.stringify({

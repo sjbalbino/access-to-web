@@ -53,6 +53,20 @@ serve(async (req) => {
         .eq("id", notaFiscalId)
         .maybeSingle();
 
+      // Verificar se a nota existe
+      if (!notaData) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Nota fiscal não encontrada no banco de dados",
+          }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
       const emitenteData = (notaData as unknown as { emitentes_nfe?: { ambiente: number | null; api_access_token: string | null } })?.emitentes_nfe;
       ambiente = emitenteData?.ambiente;
       emitenteToken = emitenteData?.api_access_token;
