@@ -341,6 +341,14 @@ export function mapNotaToFocusNfe(
   return focusNota;
 }
 
+// Formata CST para 3 dígitos (padrão NFe para IBS/CBS/IS)
+function formatCst3Digits(cst: string | null | undefined): string | undefined {
+  if (!cst) return undefined;
+  const cstLimpo = cst.replace(/\D/g, "");
+  if (!cstLimpo) return undefined;
+  return cstLimpo.padStart(3, "0");
+}
+
 function mapItemToFocusNfe(
   item: NotaFiscalItemData,
   numeroItem: number,
@@ -348,7 +356,14 @@ function mapItemToFocusNfe(
 ): FocusNfeItem {
   const cstIcms = mapCstIcms(item.cst_icms, crt ?? null);
   
-  return {
+  // Verificar se tem dados de IBS preenchidos
+  const temIbs = item.cst_ibs && (item.base_ibs || item.valor_ibs);
+  // Verificar se tem dados de CBS preenchidos
+  const temCbs = item.cst_cbs && (item.base_cbs || item.valor_cbs);
+  // Verificar se tem dados de IS preenchidos
+  const temIs = item.cst_is && (item.base_is || item.valor_is);
+  
+  const focusItem: FocusNfeItem = {
     numero_item: numeroItem,
     codigo_produto: item.codigo || `PROD${numeroItem}`,
     descricao: item.descricao,
@@ -385,32 +400,41 @@ function mapItemToFocusNfe(
     ipi_aliquota: item.aliq_ipi || undefined,
     ipi_valor: item.valor_ipi || undefined,
     
-    // Reforma Tributária (NT 2025.002) - IBS
-    ibs_situacao_tributaria: item.cst_ibs || undefined,
-    ibs_base_calculo: item.base_ibs || undefined,
-    ibs_aliquota: item.aliq_ibs || undefined,
-    ibs_valor: item.valor_ibs || undefined,
-    cclass_trib_ibs: item.cclass_trib_ibs || undefined,
-    
-    // Reforma Tributária (NT 2025.002) - CBS
-    cbs_situacao_tributaria: item.cst_cbs || undefined,
-    cbs_base_calculo: item.base_cbs || undefined,
-    cbs_aliquota: item.aliq_cbs || undefined,
-    cbs_valor: item.valor_cbs || undefined,
-    cclass_trib_cbs: item.cclass_trib_cbs || undefined,
-    
-    // Reforma Tributária (NT 2025.002) - IS
-    is_situacao_tributaria: item.cst_is || undefined,
-    is_base_calculo: item.base_is || undefined,
-    is_aliquota: item.aliq_is || undefined,
-    is_valor: item.valor_is || undefined,
-    
     // Valores adicionais
     valor_desconto: item.valor_desconto || undefined,
     valor_frete: item.valor_frete || undefined,
     valor_seguro: item.valor_seguro || undefined,
     valor_outras_despesas: item.valor_outros || undefined,
   };
+  
+  // Reforma Tributária (NT 2025.002) - Só adiciona se tiver dados preenchidos
+  // IBS - requer cClassTribIBS antes de vBCIBS
+  if (temIbs) {
+    focusItem.ibs_situacao_tributaria = formatCst3Digits(item.cst_ibs);
+    focusItem.cclass_trib_ibs = item.cclass_trib_ibs || undefined;
+    focusItem.ibs_base_calculo = item.base_ibs || undefined;
+    focusItem.ibs_aliquota = item.aliq_ibs || undefined;
+    focusItem.ibs_valor = item.valor_ibs || undefined;
+  }
+  
+  // CBS - requer cClassTribCBS antes de vBCCBS
+  if (temCbs) {
+    focusItem.cbs_situacao_tributaria = formatCst3Digits(item.cst_cbs);
+    focusItem.cclass_trib_cbs = item.cclass_trib_cbs || undefined;
+    focusItem.cbs_base_calculo = item.base_cbs || undefined;
+    focusItem.cbs_aliquota = item.aliq_cbs || undefined;
+    focusItem.cbs_valor = item.valor_cbs || undefined;
+  }
+  
+  // IS - requer cClassTribIS antes de vBCIS (CST deve ter 3 dígitos)
+  if (temIs) {
+    focusItem.is_situacao_tributaria = formatCst3Digits(item.cst_is);
+    focusItem.is_base_calculo = item.base_is || undefined;
+    focusItem.is_aliquota = item.aliq_is || undefined;
+    focusItem.is_valor = item.valor_is || undefined;
+  }
+  
+  return focusItem;
 }
 
 // Validação de dados antes do envio
