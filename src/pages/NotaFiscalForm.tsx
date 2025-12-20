@@ -33,7 +33,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loader2, CheckCircle2, XCircle, Download } from "lucide-react";
+import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loader2, CheckCircle2, XCircle, Download, Check } from "lucide-react";
 import { useNotasFiscais, useNotaFiscalItens, NotaFiscalInsert, NotaFiscalItemInsert } from "@/hooks/useNotasFiscais";
 import { useCfops } from "@/hooks/useCfops";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
@@ -42,6 +42,7 @@ import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useProdutores } from "@/hooks/useProdutores";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useUnidadesMedida } from "@/hooks/useUnidadesMedida";
+import { useTransportadoras } from "@/hooks/useTransportadoras";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
@@ -124,6 +125,7 @@ export default function NotaFiscalForm() {
   const produtos = produtosQuery.data || [];
   const unidadesQuery = useUnidadesMedida();
   const unidadesMedida = unidadesQuery.data || [];
+  const { transportadoras } = useTransportadoras();
   const { user } = useAuth();
   const focusNfe = useFocusNfe();
 
@@ -131,13 +133,16 @@ export default function NotaFiscalForm() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isEmitting, setIsEmitting] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   const existingNota = isEditing ? notasFiscais.find((n) => n.id === id) : null;
 
-  const [formData, setFormData] = useState<Partial<NotaFiscalInsert>>({
+  const [formData, setFormData] = useState({
     emitente_id: "",
     granja_id: "",
     inscricao_produtor_id: "",
+    cliente_fornecedor_id: "",
     data_emissao: new Date().toISOString().slice(0, 10),
     operacao: 1,
     natureza_operacao: "",
@@ -163,6 +168,22 @@ export default function NotaFiscalForm() {
     tipo_pagamento: "90",
     info_complementar: "",
     observacoes: "",
+    // Transport fields
+    transp_nome: "",
+    transp_cpf_cnpj: "",
+    transp_ie: "",
+    transp_endereco: "",
+    transp_cidade: "",
+    transp_uf: "",
+    veiculo_placa: "",
+    veiculo_uf: "",
+    veiculo_rntc: "",
+    volumes_quantidade: null as number | null,
+    volumes_especie: "",
+    volumes_marca: "",
+    volumes_numeracao: "",
+    volumes_peso_bruto: null as number | null,
+    volumes_peso_liquido: null as number | null,
   });
 
   const [itemFormData, setItemFormData] = useState<Partial<NotaFiscalItemInsert>>({
@@ -192,6 +213,7 @@ export default function NotaFiscalForm() {
         emitente_id: existingNota.emitente_id || "",
         granja_id: existingNota.granja_id || "",
         inscricao_produtor_id: existingNota.inscricao_produtor_id || "",
+        cliente_fornecedor_id: existingNota.cliente_fornecedor_id || "",
         data_emissao: existingNota.data_emissao ? existingNota.data_emissao.slice(0, 10) : "",
         operacao: existingNota.operacao || 1,
         natureza_operacao: existingNota.natureza_operacao || "",
@@ -212,11 +234,27 @@ export default function NotaFiscalForm() {
         dest_cep: existingNota.dest_cep || "",
         ind_consumidor_final: existingNota.ind_consumidor_final || 0,
         ind_presenca: existingNota.ind_presenca || 9,
-        modalidade_frete: existingNota.modalidade_frete || 9,
+        modalidade_frete: existingNota.modalidade_frete ?? 9,
         forma_pagamento: existingNota.forma_pagamento || 0,
         tipo_pagamento: existingNota.tipo_pagamento || "90",
         info_complementar: existingNota.info_complementar || "",
         observacoes: existingNota.observacoes || "",
+        // Transport fields
+        transp_nome: existingNota.transp_nome || "",
+        transp_cpf_cnpj: existingNota.transp_cpf_cnpj || "",
+        transp_ie: existingNota.transp_ie || "",
+        transp_endereco: existingNota.transp_endereco || "",
+        transp_cidade: existingNota.transp_cidade || "",
+        transp_uf: existingNota.transp_uf || "",
+        veiculo_placa: existingNota.veiculo_placa || "",
+        veiculo_uf: existingNota.veiculo_uf || "",
+        veiculo_rntc: existingNota.veiculo_rntc || "",
+        volumes_quantidade: existingNota.volumes_quantidade,
+        volumes_especie: existingNota.volumes_especie || "",
+        volumes_marca: existingNota.volumes_marca || "",
+        volumes_numeracao: existingNota.volumes_numeracao || "",
+        volumes_peso_bruto: existingNota.volumes_peso_bruto,
+        volumes_peso_liquido: existingNota.volumes_peso_liquido,
       });
     }
   }, [existingNota]);
@@ -273,12 +311,12 @@ export default function NotaFiscalForm() {
     }
   };
 
-  // Auto-fill destinatário from cliente/fornecedor
-  const handleClienteSelect = (clienteId: string) => {
+  // Auto-fill destinatário from cliente/fornecedor and auto-save
+  const handleClienteSelect = async (clienteId: string) => {
     const cliente = clientesFornecedores.find((c) => c.id === clienteId);
     if (cliente) {
-      setFormData((prev) => ({
-        ...prev,
+      const updatedData = {
+        ...formData,
         cliente_fornecedor_id: clienteId,
         dest_tipo: cliente.tipo_pessoa === "fisica" ? "PF" : "PJ",
         dest_cpf_cnpj: cliente.cpf_cnpj || "",
@@ -293,6 +331,118 @@ export default function NotaFiscalForm() {
         dest_cidade: cliente.cidade || "",
         dest_uf: cliente.uf || "",
         dest_cep: cliente.cep || "",
+      };
+      setFormData(updatedData);
+      
+      // Auto-save draft if we have the required fields
+      if (updatedData.inscricao_produtor_id && updatedData.emitente_id) {
+        await autoSaveDraft(updatedData);
+      }
+    }
+  };
+
+  // Auto-save draft function
+  const autoSaveDraft = async (data: typeof formData) => {
+    if (isAutoSaving) return;
+    
+    const emitente = emitentes.find((e) => e.id === data.emitente_id);
+    const inscricao = inscricoesParceria.find((i) => i.id === data.inscricao_produtor_id);
+    const granjaId = data.granja_id || inscricao?.granja_id || emitente?.granja_id || "";
+
+    if (!data.inscricao_produtor_id || !data.emitente_id) return;
+
+    setIsAutoSaving(true);
+    setAutoSaveStatus("saving");
+    
+    try {
+      const totals = calculateTotals();
+      const notaData = {
+        emitente_id: data.emitente_id,
+        granja_id: granjaId,
+        inscricao_produtor_id: data.inscricao_produtor_id,
+        natureza_operacao: data.natureza_operacao || "VENDA",
+        data_emissao: data.data_emissao || null,
+        operacao: data.operacao,
+        finalidade: data.finalidade,
+        cfop_id: data.cfop_id || null,
+        dest_tipo: data.dest_tipo,
+        dest_cpf_cnpj: cleanDigits(data.dest_cpf_cnpj, 14),
+        dest_nome: data.dest_nome,
+        dest_ie: cleanDigits(data.dest_ie, 14),
+        dest_email: data.dest_email,
+        dest_telefone: cleanDigits(data.dest_telefone, 14),
+        dest_logradouro: data.dest_logradouro,
+        dest_numero: data.dest_numero,
+        dest_complemento: data.dest_complemento,
+        dest_bairro: data.dest_bairro,
+        dest_cidade: data.dest_cidade,
+        dest_uf: data.dest_uf,
+        dest_cep: cleanCep(data.dest_cep),
+        ind_consumidor_final: data.ind_consumidor_final,
+        ind_presenca: data.ind_presenca,
+        modalidade_frete: data.modalidade_frete,
+        forma_pagamento: data.forma_pagamento,
+        tipo_pagamento: data.tipo_pagamento,
+        info_complementar: data.info_complementar,
+        observacoes: data.observacoes,
+        status: "rascunho",
+        total_produtos: totals.totalProdutos,
+        total_nota: totals.totalNota,
+        total_icms: totals.totalIcms,
+        total_pis: totals.totalPis,
+        total_cofins: totals.totalCofins,
+        valor_pagamento: totals.totalNota,
+        // Transport fields
+        transp_nome: data.transp_nome || null,
+        transp_cpf_cnpj: cleanDigits(data.transp_cpf_cnpj, 14),
+        transp_ie: cleanDigits(data.transp_ie, 14),
+        transp_endereco: data.transp_endereco || null,
+        transp_cidade: data.transp_cidade || null,
+        transp_uf: data.transp_uf || null,
+        veiculo_placa: data.veiculo_placa || null,
+        veiculo_uf: data.veiculo_uf || null,
+        veiculo_rntc: data.veiculo_rntc || null,
+        volumes_quantidade: data.volumes_quantidade || null,
+        volumes_especie: data.volumes_especie || null,
+        volumes_marca: data.volumes_marca || null,
+        volumes_numeracao: data.volumes_numeracao || null,
+        volumes_peso_bruto: data.volumes_peso_bruto || null,
+        volumes_peso_liquido: data.volumes_peso_liquido || null,
+      };
+
+      if (isEditing) {
+        await updateNotaFiscal.mutateAsync({ id: id!, ...notaData });
+      } else {
+        const result = await createNotaFiscal.mutateAsync(notaData as any);
+        navigate(`/notas-fiscais/${result.id}`, { replace: true });
+      }
+      
+      setAutoSaveStatus("saved");
+      toast.success("Rascunho salvo automaticamente", { duration: 2000 });
+      setTimeout(() => setAutoSaveStatus("idle"), 3000);
+    } catch (error) {
+      console.error("Auto-save error:", error);
+      setAutoSaveStatus("idle");
+    } finally {
+      setIsAutoSaving(false);
+    }
+  };
+
+  // Handle transportadora selection
+  const handleTransportadoraSelect = (transportadoraId: string) => {
+    const transp = transportadoras.find((t) => t.id === transportadoraId);
+    if (transp) {
+      setFormData((prev) => ({
+        ...prev,
+        transp_nome: transp.nome,
+        transp_cpf_cnpj: transp.cpf_cnpj || "",
+        transp_ie: transp.inscricao_estadual || "",
+        transp_endereco: transp.logradouro ? `${transp.logradouro}, ${transp.numero || "S/N"}` : "",
+        transp_cidade: transp.cidade || "",
+        transp_uf: transp.uf || "",
+        veiculo_placa: transp.placa_padrao || "",
+        veiculo_uf: transp.uf_placa_padrao || "",
+        veiculo_rntc: transp.rntc || "",
       }));
     }
   };

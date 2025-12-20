@@ -2381,6 +2381,80 @@ export type Database = {
         }
         Relationships: []
       }
+      transportadoras: {
+        Row: {
+          ativa: boolean | null
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          email: string | null
+          granja_id: string | null
+          id: string
+          inscricao_estadual: string | null
+          logradouro: string | null
+          nome: string
+          numero: string | null
+          placa_padrao: string | null
+          rntc: string | null
+          telefone: string | null
+          uf: string | null
+          uf_placa_padrao: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          granja_id?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          logradouro?: string | null
+          nome: string
+          numero?: string | null
+          placa_padrao?: string | null
+          rntc?: string | null
+          telefone?: string | null
+          uf?: string | null
+          uf_placa_padrao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          granja_id?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          logradouro?: string | null
+          nome?: string
+          numero?: string | null
+          placa_padrao?: string | null
+          rntc?: string | null
+          telefone?: string | null
+          uf?: string | null
+          uf_placa_padrao?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transportadoras_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unidades_medida: {
         Row: {
           ativa: boolean | null

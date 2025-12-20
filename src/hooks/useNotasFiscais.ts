@@ -62,6 +62,22 @@ export interface NotaFiscal {
   info_complementar: string | null;
   info_fisco: string | null;
   observacoes: string | null;
+  // Transport fields
+  transp_nome: string | null;
+  transp_cpf_cnpj: string | null;
+  transp_ie: string | null;
+  transp_endereco: string | null;
+  transp_cidade: string | null;
+  transp_uf: string | null;
+  veiculo_placa: string | null;
+  veiculo_uf: string | null;
+  veiculo_rntc: string | null;
+  volumes_quantidade: number | null;
+  volumes_especie: string | null;
+  volumes_marca: string | null;
+  volumes_numeracao: string | null;
+  volumes_peso_bruto: number | null;
+  volumes_peso_liquido: number | null;
   created_at: string;
   updated_at: string;
   cfop?: {
