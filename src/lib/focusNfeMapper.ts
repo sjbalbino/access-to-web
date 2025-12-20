@@ -9,7 +9,8 @@ export interface FocusNfeNota {
   presenca_comprador: number; // 0=Não se aplica, 1=Presencial, etc.
   
   // Emitente (preenchido via certificado na Focus NFe, mas enviamos para validação)
-  cnpj_emitente: string;
+  cnpj_emitente?: string;
+  cpf_emitente?: string;
   nome_emitente: string;
   nome_fantasia_emitente?: string;
   inscricao_estadual_emitente: string;
@@ -143,6 +144,7 @@ export interface NotaFiscalData {
   
   // Granja (emitente)
   granja?: {
+    cpf: string | null;
     cnpj: string | null;
     razao_social: string;
     nome_fantasia: string | null;
@@ -217,6 +219,9 @@ export function mapNotaToFocusNfe(
   // Determinar se é CPF ou CNPJ
   const cpfCnpjLimpo = nota.dest_cpf_cnpj.replace(/\D/g, "");
   const isCpf = cpfCnpjLimpo.length === 11;
+  // Determinar se emitente é CPF ou CNPJ
+  const emitenteCpfCnpj = granja.cpf || granja.cnpj || "";
+  const emitenteIsCpf = granja.cpf && granja.cpf.replace(/\D/g, "").length === 11;
   
   const focusNota: FocusNfeNota = {
     natureza_operacao: nota.natureza_operacao,
@@ -225,8 +230,10 @@ export function mapNotaToFocusNfe(
     consumidor_final: nota.ind_consumidor_final ?? 0,
     presenca_comprador: nota.ind_presenca ?? 0,
     
-    // Emitente
-    cnpj_emitente: granja.cnpj?.replace(/\D/g, "") || "",
+    // Emitente - usar CPF ou CNPJ conforme disponível
+    ...(emitenteIsCpf
+      ? { cpf_emitente: granja.cpf?.replace(/\D/g, "") || "" }
+      : { cnpj_emitente: granja.cnpj?.replace(/\D/g, "") || "" }),
     nome_emitente: granja.razao_social,
     nome_fantasia_emitente: granja.nome_fantasia || undefined,
     inscricao_estadual_emitente: granja.inscricao_estadual?.replace(/\D/g, "") || "",
@@ -327,9 +334,9 @@ function mapItemToFocusNfe(
 export function validateNotaForEmission(nota: NotaFiscalData, itens: NotaFiscalItemData[]): string[] {
   const errors: string[] = [];
   
-  // Validar emitente
-  if (!nota.granja?.cnpj) {
-    errors.push("CNPJ do emitente é obrigatório");
+  // Validar emitente - aceitar CPF ou CNPJ
+  if (!nota.granja?.cnpj && !nota.granja?.cpf) {
+    errors.push("CPF ou CNPJ do emitente é obrigatório");
   }
   if (!nota.granja?.inscricao_estadual) {
     errors.push("Inscrição Estadual do emitente é obrigatória");

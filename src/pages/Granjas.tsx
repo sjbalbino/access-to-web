@@ -45,6 +45,7 @@ import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 const emptyGranja: GranjaInput = {
   razao_social: "",
   nome_fantasia: "",
+  cpf: "",
   cnpj: "",
   inscricao_estadual: "",
   logradouro: "",
@@ -91,6 +92,7 @@ export default function Granjas() {
     (g) =>
       g.razao_social.toLowerCase().includes(search.toLowerCase()) ||
       g.nome_fantasia?.toLowerCase().includes(search.toLowerCase()) ||
+      g.cpf?.includes(search) ||
       g.cnpj?.includes(search)
   );
 
@@ -99,6 +101,7 @@ export default function Granjas() {
     setFormData({
       razao_social: granja.razao_social,
       nome_fantasia: granja.nome_fantasia || "",
+      cpf: granja.cpf || "",
       cnpj: granja.cnpj || "",
       inscricao_estadual: granja.inscricao_estadual || "",
       logradouro: granja.logradouro || "",
@@ -184,7 +187,7 @@ export default function Granjas() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Razão Social</TableHead>
-                    <TableHead>CNPJ</TableHead>
+                    <TableHead>CPF/CNPJ</TableHead>
                     <TableHead>Cidade/UF</TableHead>
                     <TableHead>Hectares</TableHead>
                     <TableHead>Status</TableHead>
@@ -202,7 +205,7 @@ export default function Granjas() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{granja.cnpj || "-"}</TableCell>
+                      <TableCell>{granja.cpf || granja.cnpj || "-"}</TableCell>
                       <TableCell>
                         {granja.cidade && granja.uf
                           ? `${granja.cidade}/${granja.uf}`
@@ -278,15 +281,27 @@ export default function Granjas() {
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ</Label>
+              <Label htmlFor="cpf">CPF (Pessoa Física)</Label>
               <Input
-                id="cnpj"
-                value={formData.cnpj || ""}
-                onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                id="cpf"
+                value={formData.cpf || ""}
+                onChange={(e) => setFormData({ ...formData, cpf: e.target.value.replace(/\D/g, "").slice(0, 11) })}
+                placeholder="Somente números"
+                maxLength={11}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+              <Label htmlFor="cnpj">CNPJ (Pessoa Jurídica)</Label>
+              <Input
+                id="cnpj"
+                value={formData.cnpj || ""}
+                onChange={(e) => setFormData({ ...formData, cnpj: e.target.value.replace(/\D/g, "").slice(0, 14) })}
+                placeholder="Somente números"
+                maxLength={14}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inscricao_estadual">Inscrição Estadual *</Label>
               <Input
                 id="inscricao_estadual"
                 value={formData.inscricao_estadual || ""}
