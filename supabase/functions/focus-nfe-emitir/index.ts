@@ -34,11 +34,39 @@ serve(async (req) => {
       throw new Error("notaFiscalId e notaData são obrigatórios");
     }
 
-    console.log("Emitindo NF-e:", notaFiscalId);
-    console.log("Dados:", JSON.stringify(notaData, null, 2));
+    // Inicializar cliente Supabase
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Gerar referência única para a nota
-    const ref = `nfe_${notaFiscalId}`;
+    // Verificar se já existe uma referência anterior para esta nota
+    const { data: existingNota } = await supabase
+      .from("notas_fiscais")
+      .select("uuid_api, status, motivo_status")
+      .eq("id", notaFiscalId)
+      .maybeSingle();
+
+    // Se já existe uma nota autorizada, não permitir nova emissão
+    if (existingNota?.status === "autorizada") {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Esta nota já foi autorizada anteriormente",
+          details: { status: existingNota.status },
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Gerar referência única para a nota incluindo timestamp
+    // Isso evita erros de duplicidade na Focus NFe ao reenviar
+    const timestamp = Date.now();
+    const ref = existingNota?.uuid_api || `nfe_${notaFiscalId}_${timestamp}`;
+
+    console.log("Emitindo NF-e:", notaFiscalId);
+    console.log("Referência:", ref);
+    console.log("Dados:", JSON.stringify(notaData, null, 2));
 
     // Chamar API Focus NFe
     const baseUrl = getBaseUrl();
@@ -53,9 +81,6 @@ serve(async (req) => {
 
     const responseData = await response.json();
     console.log("Resposta Focus NFe:", JSON.stringify(responseData, null, 2));
-
-    // Inicializar cliente Supabase
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     if (!response.ok) {
       // Atualizar nota com erro
