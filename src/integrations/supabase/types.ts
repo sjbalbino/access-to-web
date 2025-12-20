@@ -2017,13 +2017,18 @@ export type Database = {
         Row: {
           artigo_nfe: string | null
           ativo: boolean | null
+          cclass_trib_cbs: string | null
+          cclass_trib_ibs: string | null
           cod_fornecedor: string | null
           codigo: string | null
           codigo_barras: string | null
           created_at: string
+          cst_cbs: string | null
           cst_cofins: string | null
+          cst_ibs: string | null
           cst_icms: string | null
           cst_ipi: string | null
+          cst_is: string | null
           cst_pis: string | null
           descricao: string | null
           estoque_atual: number | null
@@ -2052,13 +2057,18 @@ export type Database = {
         Insert: {
           artigo_nfe?: string | null
           ativo?: boolean | null
+          cclass_trib_cbs?: string | null
+          cclass_trib_ibs?: string | null
           cod_fornecedor?: string | null
           codigo?: string | null
           codigo_barras?: string | null
           created_at?: string
+          cst_cbs?: string | null
           cst_cofins?: string | null
+          cst_ibs?: string | null
           cst_icms?: string | null
           cst_ipi?: string | null
+          cst_is?: string | null
           cst_pis?: string | null
           descricao?: string | null
           estoque_atual?: number | null
@@ -2087,13 +2097,18 @@ export type Database = {
         Update: {
           artigo_nfe?: string | null
           ativo?: boolean | null
+          cclass_trib_cbs?: string | null
+          cclass_trib_ibs?: string | null
           cod_fornecedor?: string | null
           codigo?: string | null
           codigo_barras?: string | null
           created_at?: string
+          cst_cbs?: string | null
           cst_cofins?: string | null
+          cst_ibs?: string | null
           cst_icms?: string | null
           cst_ipi?: string | null
+          cst_is?: string | null
           cst_pis?: string | null
           descricao?: string | null
           estoque_atual?: number | null

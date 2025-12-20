@@ -36,6 +36,12 @@ export type Produto = {
   cst_ipi: string | null;
   natureza_receita: string | null;
   observacao_tributaria: string | null;
+  // Campos Reforma Tributária
+  cst_ibs: string | null;
+  cst_cbs: string | null;
+  cst_is: string | null;
+  cclass_trib_ibs: string | null;
+  cclass_trib_cbs: string | null;
 };
 
 export type ProdutoInsert = Omit<Produto, 'id' | 'created_at' | 'updated_at'>;
