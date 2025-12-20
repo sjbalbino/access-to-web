@@ -671,34 +671,59 @@ export default function NotaFiscalForm() {
 
         {/* Status Badge and Actions */}
         {existingNota && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Status:</span>
-              <Badge variant={
-                existingNota.status === "autorizada" ? "default" :
-                existingNota.status === "rejeitada" || existingNota.status === "cancelada" ? "destructive" :
-                "secondary"
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Status:</span>
+                <Badge variant={
+                  existingNota.status === "autorizada" ? "default" :
+                  existingNota.status === "rejeitada" || existingNota.status === "cancelada" || existingNota.status === "erro_autorizacao" ? "destructive" :
+                  "secondary"
+                }>
+                  {existingNota.status}
+                </Badge>
+                {existingNota.protocolo && (
+                  <span className="text-xs text-muted-foreground font-mono ml-2">
+                    Protocolo: {existingNota.protocolo}
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {existingNota.danfe_url && (
+                  <Button variant="outline" size="sm" onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "danfe")}>
+                    <Download className="h-4 w-4 mr-1" /> DANFE
+                  </Button>
+                )}
+                {existingNota.xml_url && (
+                  <Button variant="outline" size="sm" onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "xml")}>
+                    <Download className="h-4 w-4 mr-1" /> XML
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            {existingNota.chave_acesso && (
+              <div className="text-xs text-muted-foreground font-mono bg-muted/50 p-2 rounded">
+                <span className="font-semibold">Chave de Acesso:</span> {existingNota.chave_acesso}
+              </div>
+            )}
+
+            {/* Retorno SEFAZ */}
+            {existingNota.motivo_status && (
+              <Alert variant={
+                existingNota.status === "autorizada" ? "default" : 
+                existingNota.status === "rejeitada" || existingNota.status === "erro_autorizacao" ? "destructive" : 
+                "default"
               }>
-                {existingNota.status}
-              </Badge>
-              {existingNota.chave_acesso && (
-                <span className="text-xs text-muted-foreground font-mono ml-2">
-                  Chave: {existingNota.chave_acesso}
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2">
-              {existingNota.danfe_url && (
-                <Button variant="outline" size="sm" onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "danfe")}>
-                  <Download className="h-4 w-4 mr-1" /> DANFE
-                </Button>
-              )}
-              {existingNota.xml_url && (
-                <Button variant="outline" size="sm" onClick={() => focusNfe.downloadArquivo(`nfe_${id}`, "xml")}>
-                  <Download className="h-4 w-4 mr-1" /> XML
-                </Button>
-              )}
-            </div>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Retorno SEFAZ</AlertTitle>
+                <AlertDescription className="mt-2">
+                  <div className="font-mono text-sm whitespace-pre-wrap break-words">
+                    {existingNota.motivo_status}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         )}
 
