@@ -2516,7 +2516,7 @@ export default function NotaFiscalForm() {
                     id="item_cst_ibs"
                     value={itemFormData.cst_ibs || ""}
                     onChange={(e) => setItemFormData({ ...itemFormData, cst_ibs: e.target.value })}
-                    maxLength={2}
+                    maxLength={3}
                   />
                 </div>
                 <div className="space-y-2">
@@ -2535,7 +2535,7 @@ export default function NotaFiscalForm() {
                     id="item_cst_cbs"
                     value={itemFormData.cst_cbs || ""}
                     onChange={(e) => setItemFormData({ ...itemFormData, cst_cbs: e.target.value })}
-                    maxLength={2}
+                    maxLength={3}
                   />
                 </div>
                 <div className="space-y-2">
@@ -2557,7 +2557,7 @@ export default function NotaFiscalForm() {
                     id="item_cst_is"
                     value={itemFormData.cst_is || ""}
                     onChange={(e) => setItemFormData({ ...itemFormData, cst_is: e.target.value })}
-                    maxLength={2}
+                    maxLength={3}
                   />
                 </div>
                 <div className="space-y-2">
