@@ -52,6 +52,27 @@ const CST_IPI = [
   { value: '55', label: '55 - Saída com Suspensão' },
 ];
 
+// CST IBS/CBS (Reforma Tributária)
+const CST_IBS_CBS = [
+  { value: '000', label: '000 - Tributação Normal' },
+  { value: '010', label: '010 - Tributação Monofásica' },
+  { value: '020', label: '020 - Tributação por ST' },
+  { value: '040', label: '040 - Operação Isenta' },
+  { value: '041', label: '041 - Operação não Tributável' },
+  { value: '050', label: '050 - Operação com Suspensão' },
+  { value: '060', label: '060 - Operação Imune' },
+  { value: '090', label: '090 - Outros' },
+];
+
+// CST IS (Imposto Seletivo)
+const CST_IS = [
+  { value: '000', label: '000 - Tributação Normal' },
+  { value: '040', label: '040 - Operação Isenta' },
+  { value: '041', label: '041 - Operação não Tributável' },
+  { value: '050', label: '050 - Operação com Suspensão' },
+  { value: '090', label: '090 - Outros' },
+];
+
 export default function Produtos() {
   const { canEdit } = useAuth();
   const { data: produtos, isLoading } = useProdutos();
@@ -99,6 +120,12 @@ export default function Produtos() {
     cst_ipi: '',
     natureza_receita: '',
     observacao_tributaria: '',
+    // Campos Reforma Tributária
+    cst_ibs: null,
+    cst_cbs: null,
+    cst_is: null,
+    cclass_trib_ibs: null,
+    cclass_trib_cbs: null,
   });
 
   const resetForm = () => {
@@ -132,6 +159,11 @@ export default function Produtos() {
       cst_ipi: '',
       natureza_receita: '',
       observacao_tributaria: '',
+      cst_ibs: null,
+      cst_cbs: null,
+      cst_is: null,
+      cclass_trib_ibs: null,
+      cclass_trib_cbs: null,
     });
     setEditingItem(null);
   };
@@ -179,6 +211,11 @@ export default function Produtos() {
       cst_ipi: item.cst_ipi || '',
       natureza_receita: item.natureza_receita || '',
       observacao_tributaria: item.observacao_tributaria || '',
+      cst_ibs: item.cst_ibs || null,
+      cst_cbs: item.cst_cbs || null,
+      cst_is: item.cst_is || null,
+      cclass_trib_ibs: item.cclass_trib_ibs || null,
+      cclass_trib_cbs: item.cclass_trib_cbs || null,
     });
     setIsDialogOpen(true);
   };
@@ -510,6 +547,56 @@ export default function Produtos() {
                     <div className="space-y-2">
                       <Label>Observação Tributária</Label>
                       <Textarea value={formData.observacao_tributaria || ''} onChange={(e) => setFormData({ ...formData, observacao_tributaria: e.target.value })} rows={2} />
+                    </div>
+                    
+                    {/* Subseção: Reforma Tributária (IBS/CBS/IS) */}
+                    <div className="pt-4">
+                      <p className="text-sm font-medium text-muted-foreground mb-3">Reforma Tributária (IBS/CBS/IS)</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>CST IBS</Label>
+                          <Select value={formData.cst_ibs || ''} onValueChange={(value) => setFormData({ ...formData, cst_ibs: value || null })}>
+                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent>
+                              {CST_IBS_CBS.map((cst) => (
+                                <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>CST CBS</Label>
+                          <Select value={formData.cst_cbs || ''} onValueChange={(value) => setFormData({ ...formData, cst_cbs: value || null })}>
+                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent>
+                              {CST_IBS_CBS.map((cst) => (
+                                <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>CST IS</Label>
+                          <Select value={formData.cst_is || ''} onValueChange={(value) => setFormData({ ...formData, cst_is: value || null })}>
+                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent>
+                              {CST_IS.map((cst) => (
+                                <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div className="space-y-2">
+                          <Label>Classificação Tributária IBS</Label>
+                          <Input value={formData.cclass_trib_ibs || ''} onChange={(e) => setFormData({ ...formData, cclass_trib_ibs: e.target.value || null })} placeholder="Ex: 100001" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Classificação Tributária CBS</Label>
+                          <Input value={formData.cclass_trib_cbs || ''} onChange={(e) => setFormData({ ...formData, cclass_trib_cbs: e.target.value || null })} placeholder="Ex: 100001" />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
