@@ -59,6 +59,7 @@ const menuItems = [
   { title: "NCM", icon: FileText, path: "/ncm", color: "text-slate-500" },
   { title: "CFOPs", icon: FileText, path: "/cfops", color: "text-indigo-500" },
   { title: "Emitentes NF-e", icon: Building2, path: "/emitentes-nfe", color: "text-teal-500" },
+  { title: "Transportadoras", icon: Truck, path: "/transportadoras", color: "text-purple-500" },
   { title: "Notas Fiscais", icon: Receipt, path: "/notas-fiscais", color: "text-rose-500" },
 ];
 
