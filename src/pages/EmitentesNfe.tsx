@@ -201,12 +201,12 @@ export default function EmitentesNfe() {
           description="Configuração de emitentes de Nota Fiscal Eletrônica por granja"
         />
 
-        <Alert className="border-green-600 bg-green-50 dark:bg-green-950">
-          <AlertCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-700">Focus NFe Integrada</AlertTitle>
+        <Alert className="border-blue-600 bg-blue-50 dark:bg-blue-950">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="text-blue-700">Configuração Focus NFe</AlertTitle>
           <AlertDescription>
-            O token da API Focus NFe está configurado. Certifique-se de que o certificado A1 foi 
-            enviado no painel da Focus NFe e marque a opção "API Configurada" no emitente.
+            Configure o token da API Focus NFe em cada emitente, correspondendo ao ambiente (homologação ou produção).
+            Certifique-se de que o certificado A1 foi enviado no painel da Focus NFe.
           </AlertDescription>
         </Alert>
 
@@ -548,7 +548,7 @@ export default function EmitentesNfe() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">API Focus NFe</CardTitle>
                   <CardDescription>
-                    O token foi configurado globalmente. Marque como configurada após enviar o certificado A1 no painel Focus NFe.
+                    Configure o token da API correspondente ao ambiente selecionado.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -584,14 +584,32 @@ export default function EmitentesNfe() {
                       <Label htmlFor="api_configurada">API Configurada e Testada</Label>
                     </div>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="api_access_token">Token Focus NFe *</Label>
+                    <Input
+                      id="api_access_token"
+                      type="password"
+                      value={formData.api_access_token || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, api_access_token: e.target.value || null })
+                      }
+                      placeholder={formData.ambiente === 2 ? "Token de homologação (inicia com T)" : "Token de produção"}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {formData.ambiente === 2 
+                        ? "Para homologação, use o token que inicia com 'T'" 
+                        : "Para produção, use o token principal da sua conta Focus NFe"}
+                    </p>
+                  </div>
                   
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
                       <strong>Passos para ativar:</strong>
                       <ol className="list-decimal ml-4 mt-2 space-y-1">
-                        <li>Acesse o painel da Focus NFe</li>
-                        <li>Faça upload do certificado A1 desta granja</li>
+                        <li>Obtenha o token no painel da Focus NFe (corresponde ao ambiente)</li>
+                        <li>Faça upload do certificado A1 desta granja no painel Focus NFe</li>
                         <li>Teste uma emissão em homologação</li>
                         <li>Marque "API Configurada e Testada" acima</li>
                       </ol>

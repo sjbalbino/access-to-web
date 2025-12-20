@@ -6,11 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const FOCUSNFE_TOKEN = Deno.env.get("FOCUSNFE_TOKEN");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-// Determina ambiente baseado no cadastro do emitente (não mais pelo token)
+// Determina ambiente baseado no cadastro do emitente
 const getBaseUrl = (ambiente: number | null | undefined) => {
   const isHomologacao = ambiente === 2;
   console.log("Ambiente do emitente:", isHomologacao ? "HOMOLOGAÇÃO" : "PRODUÇÃO");
@@ -26,10 +25,6 @@ serve(async (req) => {
   }
 
   try {
-    if (!FOCUSNFE_TOKEN) {
-      throw new Error("FOCUSNFE_TOKEN não configurado");
-    }
-
     const { notaFiscalId, notaData } = await req.json();
 
     if (!notaFiscalId || !notaData) {
@@ -39,7 +34,7 @@ serve(async (req) => {
     // Inicializar cliente Supabase
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Buscar nota fiscal com dados do emitente para determinar o ambiente
+    // Buscar nota fiscal com dados do emitente para determinar o ambiente e token
     const { data: existingNota } = await supabase
       .from("notas_fiscais")
       .select(`
@@ -47,14 +42,29 @@ serve(async (req) => {
         status, 
         motivo_status,
         emitente_id,
-        emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente)
+        emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, api_access_token)
       `)
       .eq("id", notaFiscalId)
       .maybeSingle();
 
-    // Obter ambiente do emitente - cast para unknown primeiro para evitar erros de tipo
-    const emitenteData = (existingNota as unknown as { emitentes_nfe?: { ambiente: number | null } })?.emitentes_nfe;
+    // Obter ambiente e token do emitente
+    const emitenteData = (existingNota as unknown as { emitentes_nfe?: { ambiente: number | null; api_access_token: string | null } })?.emitentes_nfe;
     const ambiente = emitenteData?.ambiente;
+    const emitenteToken = emitenteData?.api_access_token;
+
+    // Verificar se o token do emitente está configurado
+    if (!emitenteToken) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Token da Focus NFe não configurado para este emitente. Configure o token no cadastro do emitente.",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Se já existe uma nota autorizada, não permitir nova emissão
     if (existingNota?.status === "autorizada") {
@@ -72,7 +82,6 @@ serve(async (req) => {
     }
 
     // Gerar referência única para a nota incluindo timestamp
-    // Isso evita erros de duplicidade na Focus NFe ao reenviar
     const timestamp = Date.now();
     
     // Se status anterior é erro ou rejeitada, gerar NOVA referência para evitar duplicidade
@@ -96,7 +105,7 @@ serve(async (req) => {
     const response = await fetch(`${baseUrl}/v2/nfe?ref=${ref}`, {
       method: "POST",
       headers: {
-        Authorization: `Basic ${btoa(`${FOCUSNFE_TOKEN}:`)}`,
+        Authorization: `Basic ${btoa(`${emitenteToken}:`)}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(notaData),
@@ -124,7 +133,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Erro de autenticação ou comunicação com Focus NFe",
+          error: "Erro de autenticação ou comunicação com Focus NFe. Verifique se o token está correto para o ambiente selecionado.",
           details: responseText.substring(0, 500),
         }),
         {
