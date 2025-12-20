@@ -89,14 +89,14 @@ export default function VendasProducao() {
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Vendas da Produção</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Vendas da Produção</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Contratos de venda e remessas de produção agrícola
             </p>
           </div>
-          <Button onClick={() => navigate("/vendas-producao/nova")}>
+          <Button onClick={() => navigate("/vendas-producao/nova")} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Novo Contrato
           </Button>
@@ -108,7 +108,7 @@ export default function VendasProducao() {
             <CardTitle className="text-base">Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Safra</Label>
                 <Select value={filtroSafra || "__all__"} onValueChange={(v) => setFiltroSafra(v === "__all__" ? "" : v)}>
@@ -153,6 +153,7 @@ export default function VendasProducao() {
               <div className="flex items-end">
                 <Button
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     setFiltroSafra("");
                     setFiltroComprador("");
@@ -174,20 +175,20 @@ export default function VendasProducao() {
                 <Spinner />
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <Table className="min-w-[900px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-20">Nº</TableHead>
-                      <TableHead>Comprador</TableHead>
-                      <TableHead>Safra</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Contrato</TableHead>
-                      <TableHead className="text-right">Vendido (kg)</TableHead>
-                      <TableHead className="text-right">Carregado (kg)</TableHead>
-                      <TableHead className="text-right">Saldo (kg)</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
+                      <TableHead className="w-16">Nº</TableHead>
+                      <TableHead className="min-w-[150px]">Comprador</TableHead>
+                      <TableHead className="min-w-[100px]">Safra</TableHead>
+                      <TableHead className="min-w-[90px]">Data</TableHead>
+                      <TableHead className="min-w-[100px]">Contrato</TableHead>
+                      <TableHead className="text-right min-w-[100px]">Vendido</TableHead>
+                      <TableHead className="text-right min-w-[100px]">Carregado</TableHead>
+                      <TableHead className="text-right min-w-[100px]">Saldo</TableHead>
+                      <TableHead className="min-w-[90px]">Status</TableHead>
+                      <TableHead className="text-right min-w-[100px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

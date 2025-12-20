@@ -299,39 +299,39 @@ export default function VendaProducaoForm() {
     <AppLayout>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-4">
-            <Button type="button" variant="ghost" size="icon" onClick={() => navigate("/vendas-producao")}>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start gap-4">
+            <Button type="button" variant="ghost" size="icon" onClick={() => navigate("/vendas-producao")} className="shrink-0">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-foreground">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">
                   {isEditing ? `Contrato #${contrato?.numero}` : "Novo Contrato de Venda"}
                 </h1>
                 {isEditing && isContratoFechado && (
                   <Badge variant="default" className="bg-green-600">Fechado</Badge>
                 )}
               </div>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm sm:text-base">
                 {isEditing ? "Editar contrato de venda" : "Cadastrar novo contrato"}
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {isEditing && (vendaEntregaFutura || aFixar) && (
-              <Button type="button" variant="outline" onClick={handleEmitirNfe}>
+              <Button type="button" variant="outline" onClick={handleEmitirNfe} className="flex-1 sm:flex-none">
                 <FileText className="h-4 w-4 mr-2" />
                 Emitir NFe
               </Button>
             )}
             {isEditing && (
-              <Button type="button" variant="outline" onClick={() => navigate(`/vendas-producao/${id}/remessas`)}>
+              <Button type="button" variant="outline" onClick={() => navigate(`/vendas-producao/${id}/remessas`)} className="flex-1 sm:flex-none">
                 <Truck className="h-4 w-4 mr-2" />
                 Remessas
               </Button>
             )}
-            <Button type="submit" disabled={createContrato.isPending || updateContrato.isPending}>
+            <Button type="submit" disabled={createContrato.isPending || updateContrato.isPending} className="flex-1 sm:flex-none">
               <Save className="h-4 w-4 mr-2" />
               Salvar
             </Button>
@@ -344,12 +344,12 @@ export default function VendaProducaoForm() {
             <CardTitle>Dados da Venda</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
               <div className="space-y-2">
                 <Label>Número</Label>
                 <Input type="number" {...register("numero", { valueAsNumber: true })} readOnly className="bg-muted" />
               </div>
-              <div className="space-y-2 col-span-2">
+              <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Safra *</Label>
                 <Select value={watch("safra_id")} onValueChange={(v) => setValue("safra_id", v)}>
                   <SelectTrigger>
@@ -362,7 +362,7 @@ export default function VendaProducaoForm() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2 col-span-2">
+              <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Produto *</Label>
                 <Select value={watch("produto_id")} onValueChange={(v) => setValue("produto_id", v)}>
                   <SelectTrigger>
@@ -380,7 +380,7 @@ export default function VendaProducaoForm() {
                 <Input type="date" {...register("data_contrato")} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Nota de Venda</Label>
                 <Input {...register("nota_venda")} placeholder="Número da nota" />
@@ -389,7 +389,7 @@ export default function VendaProducaoForm() {
                 <Label>Nº Contrato Comprador</Label>
                 <Input {...register("numero_contrato_comprador")} placeholder="Contrato do comprador" />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-2 lg:col-span-1">
                 <Label>Vendedor (Parceiro)</Label>
                 <Select value={watch("inscricao_produtor_id")} onValueChange={(v) => setValue("inscricao_produtor_id", v)}>
                   <SelectTrigger>
@@ -414,8 +414,8 @@ export default function VendaProducaoForm() {
             <CardTitle>Comprador e Valores</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-2 col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2 sm:col-span-2">
                 <Label>Comprador *</Label>
                 <Select value={watch("comprador_id")} onValueChange={(v) => setValue("comprador_id", v)}>
                   <SelectTrigger>
@@ -443,7 +443,7 @@ export default function VendaProducaoForm() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Quantidade (kg)</Label>
                 <QuantityInput
@@ -488,8 +488,8 @@ export default function VendaProducaoForm() {
             <CardTitle>Local de Entrega</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-2 col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2 sm:col-span-2">
                 <Label>Nome / Razão Social</Label>
                 <Input {...register("local_entrega_nome")} />
               </div>
@@ -498,12 +498,12 @@ export default function VendaProducaoForm() {
                 <Input {...register("local_entrega_cnpj_cpf")} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>IE</Label>
                 <Input {...register("local_entrega_ie")} />
               </div>
-              <div className="space-y-2 col-span-2">
+              <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Logradouro</Label>
                 <Input {...register("local_entrega_logradouro")} />
               </div>
@@ -512,7 +512,7 @@ export default function VendaProducaoForm() {
                 <Input {...register("local_entrega_numero")} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Complemento</Label>
                 <Input {...register("local_entrega_complemento")} />
