@@ -54,6 +54,7 @@ import { CurrencyInput, formatBrazilianNumber } from "@/components/ui/currency-i
 import { QuantityInput, formatBrazilianQuantity } from "@/components/ui/quantity-input";
 import { cn } from "@/lib/utils";
 import { calculateTaxes, type TaxCalculatorInput } from "@/lib/taxCalculator";
+import { getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
 
 const OPERACOES = [
   { value: 0, label: "Entrada" },
@@ -2659,21 +2660,31 @@ export default function NotaFiscalForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_cclass_trib_ibs">Cód. Class. IBS</Label>
-                  <Input
-                    id="item_cclass_trib_ibs"
+                  <Select
                     value={itemFormData.cclass_trib_ibs || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, cclass_trib_ibs: e.target.value })}
-                    placeholder="cClassTribIBS"
-                  />
+                    onValueChange={(value) => setItemFormData({ ...itemFormData, cclass_trib_ibs: value })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {getClassificacoesPorCst(itemFormData.cst_ibs).map((c) => (
+                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_cclass_trib_cbs">Cód. Class. CBS</Label>
-                  <Input
-                    id="item_cclass_trib_cbs"
+                  <Select
                     value={itemFormData.cclass_trib_cbs || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, cclass_trib_cbs: e.target.value })}
-                    placeholder="cClassTribCBS"
-                  />
+                    onValueChange={(value) => setItemFormData({ ...itemFormData, cclass_trib_cbs: value })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {getClassificacoesPorCst(itemFormData.cst_cbs).map((c) => (
+                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>

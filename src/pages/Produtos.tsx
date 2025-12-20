@@ -54,6 +54,7 @@ const CST_IPI = [
 
 // CST IBS/CBS e IS (Reforma Tributária) - Importados do módulo centralizado
 import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
+import { CLASSIFICACAO_TRIBUTARIA, getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
 
 export default function Produtos() {
   const { canEdit } = useAuth();
@@ -572,11 +573,25 @@ export default function Produtos() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div className="space-y-2">
                           <Label>Classificação Tributária IBS</Label>
-                          <Input value={formData.cclass_trib_ibs || ''} onChange={(e) => setFormData({ ...formData, cclass_trib_ibs: e.target.value || null })} placeholder="Ex: 100001" />
+                          <Select value={formData.cclass_trib_ibs || ''} onValueChange={(value) => setFormData({ ...formData, cclass_trib_ibs: value || null })}>
+                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              {getClassificacoesPorCst(formData.cst_ibs).map((c) => (
+                                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
                           <Label>Classificação Tributária CBS</Label>
-                          <Input value={formData.cclass_trib_cbs || ''} onChange={(e) => setFormData({ ...formData, cclass_trib_cbs: e.target.value || null })} placeholder="Ex: 100001" />
+                          <Select value={formData.cclass_trib_cbs || ''} onValueChange={(value) => setFormData({ ...formData, cclass_trib_cbs: value || null })}>
+                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              {getClassificacoesPorCst(formData.cst_cbs).map((c) => (
+                                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     </div>
