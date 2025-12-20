@@ -245,9 +245,15 @@ export default function NotaFiscalForm() {
     cclass_trib_cbs: "",
   });
 
+  // Buscar emitente automaticamente pela granja_id da inscrição selecionada
+  const selectedInscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
+  const autoEmitente = selectedInscricao 
+    ? emitentes.find((e) => e.granja_id === selectedInscricao.granja_id && e.ativo)
+    : null;
+
   // Tab progress calculation
   const getTabProgress = () => ({
-    emitente: !!formData.inscricao_produtor_id && !!formData.emitente_id,
+    emitente: !!formData.inscricao_produtor_id && !!autoEmitente,
     operacao: !!formData.natureza_operacao && !!formData.cfop_id && !!formData.data_emissao,
     destinatario: !!formData.dest_cpf_cnpj && !!formData.dest_nome && !!formData.dest_cidade,
     itens: itens.length > 0,
@@ -326,18 +332,28 @@ export default function NotaFiscalForm() {
     }
   }, [formData.cfop_id, cfops]);
 
-  // Auto-fill granja_id from emitente
+  // Auto-fill emitente_id and granja_id from inscrição selecionada
   useEffect(() => {
-    if (formData.emitente_id) {
-      const emitente = emitentes.find((e) => e.id === formData.emitente_id);
-      if (emitente?.granja_id) {
-        setFormData((prev) => ({
-          ...prev,
-          granja_id: emitente.granja_id || "",
-        }));
+    if (formData.inscricao_produtor_id) {
+      const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
+      if (inscricao?.granja_id) {
+        const emitenteEncontrado = emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo);
+        if (emitenteEncontrado) {
+          setFormData((prev) => ({
+            ...prev,
+            granja_id: inscricao.granja_id || "",
+            emitente_id: emitenteEncontrado.id,
+          }));
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            granja_id: inscricao.granja_id || "",
+            emitente_id: "",
+          }));
+        }
       }
     }
-  }, [formData.emitente_id, emitentes]);
+  }, [formData.inscricao_produtor_id, inscricoesParceria, emitentes]);
 
   // Calculate item total
   useEffect(() => {
@@ -398,11 +414,11 @@ export default function NotaFiscalForm() {
   const autoSaveDraft = async (data: typeof formData) => {
     if (isAutoSaving) return;
     
-    const emitente = emitentes.find((e) => e.id === data.emitente_id);
     const inscricao = inscricoesParceria.find((i) => i.id === data.inscricao_produtor_id);
-    const granjaId = data.granja_id || inscricao?.granja_id || emitente?.granja_id || "";
+    const emitenteAuto = inscricao ? emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo) : null;
+    const granjaId = data.granja_id || inscricao?.granja_id || "";
 
-    if (!data.inscricao_produtor_id || !data.emitente_id) return;
+    if (!data.inscricao_produtor_id || !emitenteAuto) return;
 
     setIsAutoSaving(true);
     setAutoSaveStatus("saving");
@@ -410,7 +426,7 @@ export default function NotaFiscalForm() {
     try {
       const totals = calculateTotals();
       const notaData = {
-        emitente_id: data.emitente_id,
+        emitente_id: emitenteAuto.id,
         granja_id: granjaId,
         inscricao_produtor_id: data.inscricao_produtor_id,
         natureza_operacao: data.natureza_operacao || "VENDA",
@@ -522,17 +538,17 @@ export default function NotaFiscalForm() {
       return;
     }
 
-    const emitente = emitentes.find((e) => e.id === formData.emitente_id);
     const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
-    const granjaId = formData.granja_id || inscricao?.granja_id || emitente?.granja_id || "";
+    const emitenteAuto = inscricao ? emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo) : null;
+    const granjaId = formData.granja_id || inscricao?.granja_id || "";
 
     if (!formData.inscricao_produtor_id) {
       toast.error("Selecione uma Inscrição do Produtor");
       return;
     }
 
-    if (!formData.emitente_id) {
-      toast.error("Selecione uma configuração de API (Emitente)");
+    if (!emitenteAuto) {
+      toast.error("Não há configuração de API (Emitente) para a granja desta inscrição. Cadastre um emitente para esta granja.");
       return;
     }
 
@@ -541,7 +557,7 @@ export default function NotaFiscalForm() {
       const totals = calculateTotals();
       const notaData: NotaFiscalInsert = {
         ...formData,
-        emitente_id: formData.emitente_id,
+        emitente_id: emitenteAuto.id,
         granja_id: granjaId,
         inscricao_produtor_id: formData.inscricao_produtor_id,
         data_emissao: formData.data_emissao || null,
@@ -581,21 +597,22 @@ export default function NotaFiscalForm() {
       return;
     }
 
-    const emitente = emitentes.find((e) => e.id === formData.emitente_id);
     const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
+    
+    if (!inscricao) {
+      toast.error("Selecione uma Inscrição do Produtor (Parceria)");
+      return;
+    }
+
+    const emitente = emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo);
 
     if (!emitente) {
-      toast.error("Selecione um emitente (configuração API)");
+      toast.error("Não há configuração de API (Emitente) para a granja desta inscrição. Cadastre um emitente.");
       return;
     }
 
     if (!emitente.api_configurada) {
       toast.error("Configure a API do emitente antes de emitir");
-      return;
-    }
-
-    if (!inscricao) {
-      toast.error("Selecione uma Inscrição do Produtor (Parceria)");
       return;
     }
 
@@ -994,55 +1011,54 @@ export default function NotaFiscalForm() {
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Emitente</CardTitle>
         <CardDescription>
-          Selecione a inscrição do produtor (tipo Parceria) como emitente fiscal e a configuração de API
+          Selecione a inscrição do produtor (tipo Parceria) como emitente fiscal
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="inscricao_produtor_id">Inscrição do Produtor (Parceria) *</Label>
-            <Select
-              value={formData.inscricao_produtor_id || ""}
-              onValueChange={(value) => {
-                const inscricao = inscricoesParceria.find((i) => i.id === value);
-                setFormData({ 
-                  ...formData, 
-                  inscricao_produtor_id: value,
-                  granja_id: inscricao?.granja_id || "",
-                });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a inscrição" />
-              </SelectTrigger>
-              <SelectContent>
-                {inscricoesParceria.map((inscricao) => (
-                  <SelectItem key={inscricao.id} value={inscricao.id}>
-                    {inscricao.produtores?.nome} - IE: {inscricao.inscricao_estadual} ({inscricao.granjas?.razao_social || inscricao.granja})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="emitente_id">Configuração API (Emitente NF-e) *</Label>
-            <Select
-              value={formData.emitente_id || ""}
-              onValueChange={(value) => setFormData({ ...formData, emitente_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o emitente" />
-              </SelectTrigger>
-              <SelectContent>
-                {emitentes.filter((e) => e.ativo).map((emitente) => (
-                  <SelectItem key={emitente.id} value={emitente.id}>
-                    {emitente.granja?.nome_fantasia || emitente.granja?.razao_social}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="inscricao_produtor_id">Inscrição do Produtor (Parceria) *</Label>
+          <Select
+            value={formData.inscricao_produtor_id || ""}
+            onValueChange={(value) => {
+              const inscricao = inscricoesParceria.find((i) => i.id === value);
+              setFormData({ 
+                ...formData, 
+                inscricao_produtor_id: value,
+                granja_id: inscricao?.granja_id || "",
+              });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a inscrição" />
+            </SelectTrigger>
+            <SelectContent>
+              {inscricoesParceria.map((inscricao) => (
+                <SelectItem key={inscricao.id} value={inscricao.id}>
+                  {inscricao.produtores?.nome} - IE: {inscricao.inscricao_estadual} ({inscricao.granjas?.razao_social || inscricao.granja})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
+        {formData.inscricao_produtor_id && (
+          <div className="p-3 rounded-md bg-muted/50 border">
+            {autoEmitente ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <span>Configuração API encontrada: <strong>{autoEmitente.granja?.nome_fantasia || autoEmitente.granja?.razao_social}</strong></span>
+                <Badge variant={autoEmitente.ambiente === 1 ? "default" : "secondary"} className="ml-2">
+                  {autoEmitente.ambiente === 1 ? "Produção" : "Homologação"}
+                </Badge>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4" />
+                <span>Nenhuma configuração de API encontrada para a granja desta inscrição. Cadastre um emitente NF-e.</span>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
