@@ -234,6 +234,15 @@ export default function NotaFiscalForm() {
     aliq_pis: 1.65,
     cst_cofins: "01",
     aliq_cofins: 7.6,
+    // Reforma Tributária (NT 2025.002)
+    cst_ibs: "00",
+    aliq_ibs: 0,
+    cst_cbs: "00",
+    aliq_cbs: 0,
+    cst_is: "00",
+    aliq_is: 0,
+    cclass_trib_ibs: "",
+    cclass_trib_cbs: "",
   });
 
   // Tab progress calculation
@@ -699,6 +708,21 @@ export default function NotaFiscalForm() {
         valor_frete: (item as any).valor_frete ?? null,
         valor_seguro: (item as any).valor_seguro ?? null,
         valor_outros: (item as any).valor_outros ?? null,
+        // Reforma Tributária (NT 2025.002)
+        cst_ibs: item.cst_ibs,
+        base_ibs: item.base_ibs,
+        aliq_ibs: item.aliq_ibs,
+        valor_ibs: item.valor_ibs,
+        cclass_trib_ibs: item.cclass_trib_ibs,
+        cst_cbs: item.cst_cbs,
+        base_cbs: item.base_cbs,
+        aliq_cbs: item.aliq_cbs,
+        valor_cbs: item.valor_cbs,
+        cclass_trib_cbs: item.cclass_trib_cbs,
+        cst_is: item.cst_is,
+        base_is: item.base_is,
+        aliq_is: item.aliq_is,
+        valor_is: item.valor_is,
       }));
 
       setEmissionStatus({ step: "sending", message: "Enviando para a SEFAZ...", progress: 50 });
@@ -782,12 +806,22 @@ export default function NotaFiscalForm() {
     const totalIcms = itens.reduce((acc, item) => acc + (item.valor_icms || 0), 0);
     const totalPis = itens.reduce((acc, item) => acc + (item.valor_pis || 0), 0);
     const totalCofins = itens.reduce((acc, item) => acc + (item.valor_cofins || 0), 0);
+    // Reforma Tributária
+    const totalIbs = itens.reduce((acc, item) => acc + (item.valor_ibs || 0), 0);
+    const totalCbs = itens.reduce((acc, item) => acc + (item.valor_cbs || 0), 0);
+    const totalIs = itens.reduce((acc, item) => acc + (item.valor_is || 0), 0);
     const totalNota = totalProdutos - totalDesconto;
 
-    return { totalProdutos, totalDesconto, totalIcms, totalPis, totalCofins, totalNota };
+    return { totalProdutos, totalDesconto, totalIcms, totalPis, totalCofins, totalIbs, totalCbs, totalIs, totalNota };
   };
 
   const handleOpenItemDialog = (item?: any) => {
+    // Buscar alíquotas padrão do emitente para Reforma Tributária
+    const emitente = emitentes.find((e) => e.id === formData.emitente_id);
+    const defaultIbs = emitente?.aliq_ibs_padrao || 0;
+    const defaultCbs = emitente?.aliq_cbs_padrao || 0;
+    const defaultIs = emitente?.aliq_is_padrao || 0;
+
     if (item) {
       setSelectedItem(item);
       setItemFormData({
@@ -808,6 +842,15 @@ export default function NotaFiscalForm() {
         aliq_pis: item.aliq_pis || 1.65,
         cst_cofins: item.cst_cofins || "01",
         aliq_cofins: item.aliq_cofins || 7.6,
+        // Reforma Tributária
+        cst_ibs: item.cst_ibs || "00",
+        aliq_ibs: item.aliq_ibs || defaultIbs,
+        cst_cbs: item.cst_cbs || "00",
+        aliq_cbs: item.aliq_cbs || defaultCbs,
+        cst_is: item.cst_is || "00",
+        aliq_is: item.aliq_is || defaultIs,
+        cclass_trib_ibs: item.cclass_trib_ibs || "",
+        cclass_trib_cbs: item.cclass_trib_cbs || "",
       });
     } else {
       setSelectedItem(null);
@@ -829,6 +872,15 @@ export default function NotaFiscalForm() {
         aliq_pis: 1.65,
         cst_cofins: "01",
         aliq_cofins: 7.6,
+        // Reforma Tributária - usar alíquotas padrão do emitente
+        cst_ibs: "00",
+        aliq_ibs: defaultIbs,
+        cst_cbs: "00",
+        aliq_cbs: defaultCbs,
+        cst_is: "00",
+        aliq_is: defaultIs,
+        cclass_trib_ibs: "",
+        cclass_trib_cbs: "",
       });
     }
     setIsItemDialogOpen(true);
@@ -871,6 +923,21 @@ export default function NotaFiscalForm() {
       base_cofins: base,
       aliq_cofins: itemFormData.aliq_cofins || 0,
       valor_cofins: base * ((itemFormData.aliq_cofins || 0) / 100),
+      // Reforma Tributária (IBS, CBS, IS)
+      cst_ibs: itemFormData.cst_ibs || null,
+      base_ibs: base,
+      aliq_ibs: itemFormData.aliq_ibs || 0,
+      valor_ibs: base * ((itemFormData.aliq_ibs || 0) / 100),
+      cst_cbs: itemFormData.cst_cbs || null,
+      base_cbs: base,
+      aliq_cbs: itemFormData.aliq_cbs || 0,
+      valor_cbs: base * ((itemFormData.aliq_cbs || 0) / 100),
+      cst_is: itemFormData.cst_is || null,
+      base_is: base,
+      aliq_is: itemFormData.aliq_is || 0,
+      valor_is: base * ((itemFormData.aliq_is || 0) / 100),
+      cclass_trib_ibs: itemFormData.cclass_trib_ibs || null,
+      cclass_trib_cbs: itemFormData.cclass_trib_cbs || null,
     } as any;
 
     if (selectedItem) {
@@ -2418,6 +2485,91 @@ export default function NotaFiscalForm() {
                     onChange={(value) => setItemFormData({ ...itemFormData, aliq_cofins: value ?? 0 })}
                     decimals={2}
                     prefix=""
+                  />
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+              <p className="text-sm font-medium">Reforma Tributária (NT 2025.002)</p>
+              <p className="text-xs text-muted-foreground mb-3">IBS, CBS e IS - Vigência a partir de 2026</p>
+
+              <div className="grid grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="item_cst_ibs">CST IBS</Label>
+                  <Input
+                    id="item_cst_ibs"
+                    value={itemFormData.cst_ibs || ""}
+                    onChange={(e) => setItemFormData({ ...itemFormData, cst_ibs: e.target.value })}
+                    maxLength={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item_aliq_ibs">Alíq. IBS (%)</Label>
+                  <CurrencyInput
+                    id="item_aliq_ibs"
+                    value={itemFormData.aliq_ibs}
+                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_ibs: value ?? 0 })}
+                    decimals={2}
+                    prefix=""
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item_cst_cbs">CST CBS</Label>
+                  <Input
+                    id="item_cst_cbs"
+                    value={itemFormData.cst_cbs || ""}
+                    onChange={(e) => setItemFormData({ ...itemFormData, cst_cbs: e.target.value })}
+                    maxLength={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item_aliq_cbs">Alíq. CBS (%)</Label>
+                  <CurrencyInput
+                    id="item_aliq_cbs"
+                    value={itemFormData.aliq_cbs}
+                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_cbs: value ?? 0 })}
+                    decimals={2}
+                    prefix=""
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="item_cst_is">CST IS</Label>
+                  <Input
+                    id="item_cst_is"
+                    value={itemFormData.cst_is || ""}
+                    onChange={(e) => setItemFormData({ ...itemFormData, cst_is: e.target.value })}
+                    maxLength={2}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item_aliq_is">Alíq. IS (%)</Label>
+                  <CurrencyInput
+                    id="item_aliq_is"
+                    value={itemFormData.aliq_is}
+                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_is: value ?? 0 })}
+                    decimals={2}
+                    prefix=""
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item_cclass_trib_ibs">Cód. Class. IBS</Label>
+                  <Input
+                    id="item_cclass_trib_ibs"
+                    value={itemFormData.cclass_trib_ibs || ""}
+                    onChange={(e) => setItemFormData({ ...itemFormData, cclass_trib_ibs: e.target.value })}
+                    placeholder="cClassTribIBS"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item_cclass_trib_cbs">Cód. Class. CBS</Label>
+                  <Input
+                    id="item_cclass_trib_cbs"
+                    value={itemFormData.cclass_trib_cbs || ""}
+                    onChange={(e) => setItemFormData({ ...itemFormData, cclass_trib_cbs: e.target.value })}
+                    placeholder="cClassTribCBS"
                   />
                 </div>
               </div>

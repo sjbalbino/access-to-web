@@ -89,6 +89,26 @@ export interface FocusNfeItem {
   ipi_aliquota?: number;
   ipi_valor?: number;
   
+  // Reforma Tributária (NT 2025.002) - IBS
+  ibs_situacao_tributaria?: string;
+  ibs_base_calculo?: number;
+  ibs_aliquota?: number;
+  ibs_valor?: number;
+  cclass_trib_ibs?: string;
+  
+  // Reforma Tributária (NT 2025.002) - CBS
+  cbs_situacao_tributaria?: string;
+  cbs_base_calculo?: number;
+  cbs_aliquota?: number;
+  cbs_valor?: number;
+  cclass_trib_cbs?: string;
+  
+  // Reforma Tributária (NT 2025.002) - IS
+  is_situacao_tributaria?: string;
+  is_base_calculo?: number;
+  is_aliquota?: number;
+  is_valor?: number;
+  
   // Valores adicionais
   valor_desconto?: number;
   valor_frete?: number;
@@ -218,6 +238,21 @@ export interface NotaFiscalItemData {
   valor_frete: number | null;
   valor_seguro: number | null;
   valor_outros: number | null;
+  // Reforma Tributária (NT 2025.002)
+  cst_ibs: string | null;
+  base_ibs: number | null;
+  aliq_ibs: number | null;
+  valor_ibs: number | null;
+  cclass_trib_ibs: string | null;
+  cst_cbs: string | null;
+  base_cbs: number | null;
+  aliq_cbs: number | null;
+  valor_cbs: number | null;
+  cclass_trib_cbs: string | null;
+  cst_is: string | null;
+  base_is: number | null;
+  aliq_is: number | null;
+  valor_is: number | null;
 }
 
 export function mapNotaToFocusNfe(
@@ -349,6 +384,26 @@ function mapItemToFocusNfe(
     ipi_base_calculo: item.base_ipi || undefined,
     ipi_aliquota: item.aliq_ipi || undefined,
     ipi_valor: item.valor_ipi || undefined,
+    
+    // Reforma Tributária (NT 2025.002) - IBS
+    ibs_situacao_tributaria: item.cst_ibs || undefined,
+    ibs_base_calculo: item.base_ibs || undefined,
+    ibs_aliquota: item.aliq_ibs || undefined,
+    ibs_valor: item.valor_ibs || undefined,
+    cclass_trib_ibs: item.cclass_trib_ibs || undefined,
+    
+    // Reforma Tributária (NT 2025.002) - CBS
+    cbs_situacao_tributaria: item.cst_cbs || undefined,
+    cbs_base_calculo: item.base_cbs || undefined,
+    cbs_aliquota: item.aliq_cbs || undefined,
+    cbs_valor: item.valor_cbs || undefined,
+    cclass_trib_cbs: item.cclass_trib_cbs || undefined,
+    
+    // Reforma Tributária (NT 2025.002) - IS
+    is_situacao_tributaria: item.cst_is || undefined,
+    is_base_calculo: item.base_is || undefined,
+    is_aliquota: item.aliq_is || undefined,
+    is_valor: item.valor_is || undefined,
     
     // Valores adicionais
     valor_desconto: item.valor_desconto || undefined,
