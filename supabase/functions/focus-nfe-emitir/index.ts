@@ -62,7 +62,16 @@ serve(async (req) => {
     // Gerar referência única para a nota incluindo timestamp
     // Isso evita erros de duplicidade na Focus NFe ao reenviar
     const timestamp = Date.now();
-    const ref = existingNota?.uuid_api || `nfe_${notaFiscalId}_${timestamp}`;
+    
+    // Se status anterior é erro ou rejeitada, gerar NOVA referência para evitar duplicidade
+    const shouldGenerateNewRef = !existingNota?.uuid_api || 
+      existingNota.status === "erro_autorizacao" || 
+      existingNota.status === "rejeitada" ||
+      existingNota.status === "rejeitado";
+
+    const ref = shouldGenerateNewRef 
+      ? `nfe_${notaFiscalId}_${timestamp}` 
+      : existingNota.uuid_api;
 
     console.log("Emitindo NF-e:", notaFiscalId);
     console.log("Referência:", ref);

@@ -712,19 +712,40 @@ export default function NotaFiscalForm() {
         const pollResult = await focusNfe.pollStatus(result.ref as string, id);
         
         if (pollResult.success) {
-          setEmissionStatus({ 
-            step: "success", 
-            message: "NF-e autorizada com sucesso!", 
-            progress: 100,
-            details: `Protocolo: ${pollResult.data?.protocolo || "N/A"}`
-          });
-          toast.success("NF-e autorizada com sucesso!");
+          const realStatus = (pollResult.data as Record<string, unknown>)?.status as string;
+          
+          if (realStatus === "autorizado" || realStatus === "autorizada") {
+            setEmissionStatus({ 
+              step: "success", 
+              message: "NF-e autorizada com sucesso!", 
+              progress: 100,
+              details: `Protocolo: ${(pollResult.data as Record<string, unknown>)?.protocolo || "N/A"}`
+            });
+          } else if (realStatus === "erro_autorizacao" || realStatus === "rejeitado" || realStatus === "rejeitada") {
+            const motivo = (pollResult.data as Record<string, unknown>)?.mensagem_sefaz as string || 
+                           (pollResult.data as Record<string, unknown>)?.motivo_status as string ||
+                           "Verifique os dados e tente novamente.";
+            setEmissionStatus({ 
+              step: "error", 
+              message: "NF-e rejeitada pela SEFAZ", 
+              progress: 100,
+              details: motivo
+            });
+          } else {
+            // Status intermediário ou desconhecido
+            setEmissionStatus({ 
+              step: "processing", 
+              message: `Status: ${realStatus}`, 
+              progress: 80,
+              details: "Aguardando processamento..."
+            });
+          }
         } else {
           setEmissionStatus({ 
             step: "error", 
-            message: "Erro na autorização da NF-e", 
+            message: pollResult.error || "Erro ao consultar status", 
             progress: 100,
-            details: pollResult.error || "Verifique os dados e tente novamente."
+            details: "Verifique os dados informados e tente novamente."
           });
         }
       } else {
