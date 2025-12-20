@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2 } from 'lucide-react';
 import { useClientesFornecedores, useCreateClienteFornecedor, useUpdateClienteFornecedor, useDeleteClienteFornecedor, ClienteFornecedorInsert } from '@/hooks/useClientesFornecedores';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useCepLookup, formatCep } from '@/hooks/useCepLookup';
@@ -66,10 +66,13 @@ export default function ClientesFornecedores() {
     }
   };
 
-  const handleCnpjLookup = async () => {
-    if (formData.tipo_pessoa !== 'juridica' || !formData.cpf_cnpj) return;
+  const handleCnpjBlur = async (cnpj: string) => {
+    if (formData.tipo_pessoa !== 'juridica') return;
     
-    const data = await fetchCnpj(formData.cpf_cnpj);
+    const cnpjLimpo = cnpj.replace(/\D/g, '');
+    if (cnpjLimpo.length !== 14) return;
+    
+    const data = await fetchCnpj(cnpj);
     if (data) {
       setFormData((prev) => ({
         ...prev,
@@ -86,6 +89,11 @@ export default function ClientesFornecedores() {
         telefone: data.telefone || prev.telefone,
         email: data.email || prev.email,
       }));
+      
+      // Buscar CEP no ViaCEP para complementar dados se necessário
+      if (data.cep) {
+        await handleCepBlur(data.cep);
+      }
     }
   };
 
@@ -237,7 +245,25 @@ export default function ClientesFornecedores() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>{formData.tipo_pessoa === 'fisica' ? 'CPF' : 'CNPJ'}</Label>
+                      <div className="relative">
+                        <Input 
+                          value={formData.cpf_cnpj || ''} 
+                          onChange={(e) => setFormData({ 
+                            ...formData, 
+                            cpf_cnpj: formData.tipo_pessoa === 'juridica' ? formatCnpj(e.target.value) : e.target.value 
+                          })}
+                          onBlur={(e) => handleCnpjBlur(e.target.value)}
+                          placeholder={formData.tipo_pessoa === 'juridica' ? '00.000.000/0000-00' : '000.000.000-00'}
+                          maxLength={formData.tipo_pessoa === 'juridica' ? 18 : 14}
+                        />
+                        {cnpjLoading && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
                     <div className="space-y-2 md:col-span-2">
                       <Label>Nome / Razão Social *</Label>
                       <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
@@ -248,36 +274,6 @@ export default function ClientesFornecedores() {
                     <div className="space-y-2">
                       <Label>Nome Fantasia</Label>
                       <Input value={formData.nome_fantasia || ''} onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{formData.tipo_pessoa === 'fisica' ? 'CPF' : 'CNPJ'}</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          value={formData.cpf_cnpj || ''} 
-                          onChange={(e) => setFormData({ 
-                            ...formData, 
-                            cpf_cnpj: formData.tipo_pessoa === 'juridica' ? formatCnpj(e.target.value) : e.target.value 
-                          })}
-                          placeholder={formData.tipo_pessoa === 'juridica' ? '00.000.000/0000-00' : '000.000.000-00'}
-                          maxLength={formData.tipo_pessoa === 'juridica' ? 18 : 14}
-                        />
-                        {formData.tipo_pessoa === 'juridica' && (
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="icon"
-                            onClick={handleCnpjLookup}
-                            disabled={cnpjLoading || !formData.cpf_cnpj}
-                            title="Buscar dados na Receita Federal"
-                          >
-                            {cnpjLoading ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Search className="h-4 w-4" />
-                            )}
-                          </Button>
-                        )}
-                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Inscrição Estadual</Label>
