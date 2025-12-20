@@ -52,26 +52,8 @@ const CST_IPI = [
   { value: '55', label: '55 - Saída com Suspensão' },
 ];
 
-// CST IBS/CBS (Reforma Tributária)
-const CST_IBS_CBS = [
-  { value: '000', label: '000 - Tributação Normal' },
-  { value: '010', label: '010 - Tributação Monofásica' },
-  { value: '020', label: '020 - Tributação por ST' },
-  { value: '040', label: '040 - Operação Isenta' },
-  { value: '041', label: '041 - Operação não Tributável' },
-  { value: '050', label: '050 - Operação com Suspensão' },
-  { value: '060', label: '060 - Operação Imune' },
-  { value: '090', label: '090 - Outros' },
-];
-
-// CST IS (Imposto Seletivo)
-const CST_IS = [
-  { value: '000', label: '000 - Tributação Normal' },
-  { value: '040', label: '040 - Operação Isenta' },
-  { value: '041', label: '041 - Operação não Tributável' },
-  { value: '050', label: '050 - Operação com Suspensão' },
-  { value: '090', label: '090 - Outros' },
-];
+// CST IBS/CBS e IS (Reforma Tributária) - Importados do módulo centralizado
+import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
 
 export default function Produtos() {
   const { canEdit } = useAuth();

@@ -3,6 +3,8 @@
  * Cálculo básico baseado em CRT, CFOP e alíquotas do emitente
  */
 
+import { cstIbsCbsTemTributacao, cstIsTemTributacao } from "./cstReformaTributaria";
+
 export interface TaxCalculatorInput {
   // Valor base
   valorTotal: number;
@@ -249,7 +251,8 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
   if (input.incidenciaIbsCbs) {
     // IBS - prioridade: produto > CFOP > padrão
     resultado.cstIbs = input.produtoCstIbs || input.cstIbsPadrao || "000";
-    if (input.aliqIbsPadrao && input.aliqIbsPadrao > 0) {
+    // Só calcula se CST indica tributação
+    if (cstIbsCbsTemTributacao(resultado.cstIbs) && input.aliqIbsPadrao && input.aliqIbsPadrao > 0) {
       resultado.baseIbs = input.valorTotal;
       resultado.aliqIbs = input.aliqIbsPadrao;
       resultado.valorIbs = Number(((resultado.baseIbs * resultado.aliqIbs) / 100).toFixed(2));
@@ -257,7 +260,8 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
     
     // CBS - prioridade: produto > CFOP > padrão
     resultado.cstCbs = input.produtoCstCbs || input.cstCbsPadrao || "000";
-    if (input.aliqCbsPadrao && input.aliqCbsPadrao > 0) {
+    // Só calcula se CST indica tributação
+    if (cstIbsCbsTemTributacao(resultado.cstCbs) && input.aliqCbsPadrao && input.aliqCbsPadrao > 0) {
       resultado.baseCbs = input.valorTotal;
       resultado.aliqCbs = input.aliqCbsPadrao;
       resultado.valorCbs = Number(((resultado.baseCbs * resultado.aliqCbs) / 100).toFixed(2));
@@ -265,7 +269,8 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
     
     // IS - prioridade: produto > CFOP > padrão
     resultado.cstIs = input.produtoCstIs || input.cstIsPadrao || "000";
-    if (input.aliqIsPadrao && input.aliqIsPadrao > 0) {
+    // Só calcula se CST indica tributação
+    if (cstIsTemTributacao(resultado.cstIs) && input.aliqIsPadrao && input.aliqIsPadrao > 0) {
       resultado.baseIs = input.valorTotal;
       resultado.aliqIs = input.aliqIsPadrao;
       resultado.valorIs = Number(((resultado.baseIs * resultado.aliqIs) / 100).toFixed(2));
