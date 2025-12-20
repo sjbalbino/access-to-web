@@ -48,6 +48,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
+import { CurrencyInput, formatBrazilianNumber } from "@/components/ui/currency-input";
+import { QuantityInput, formatBrazilianQuantity } from "@/components/ui/quantity-input";
 
 const OPERACOES = [
   { value: 0, label: "Entrada" },
@@ -364,7 +366,8 @@ export default function NotaFiscalForm() {
         data_emissao: data.data_emissao || null,
         operacao: data.operacao,
         finalidade: data.finalidade,
-        cfop_id: data.cfop_id || null,
+        cfop_id: cleanUuid(data.cfop_id),
+        cliente_fornecedor_id: cleanUuid(data.cliente_fornecedor_id),
         dest_tipo: data.dest_tipo,
         dest_cpf_cnpj: cleanDigits(data.dest_cpf_cnpj, 14),
         dest_nome: data.dest_nome,
@@ -460,6 +463,11 @@ export default function NotaFiscalForm() {
   // Remove mask from CEP (keep only digits)
   const cleanCep = (cep: string | null | undefined): string | null => cleanDigits(cep, 8);
 
+  // Clean UUID fields - convert empty strings to null
+  const cleanUuid = (value: string | null | undefined): string | null => {
+    return value && value.trim() !== "" ? value : null;
+  };
+
   const handleSaveDraft = async () => {
     if (!formData.natureza_operacao) {
       toast.error("Natureza da operação é obrigatória");
@@ -489,6 +497,8 @@ export default function NotaFiscalForm() {
         granja_id: granjaId,
         inscricao_produtor_id: formData.inscricao_produtor_id,
         data_emissao: formData.data_emissao || null,
+        cfop_id: cleanUuid(formData.cfop_id),
+        cliente_fornecedor_id: cleanUuid(formData.cliente_fornecedor_id),
         dest_cpf_cnpj: cleanDigits(formData.dest_cpf_cnpj, 14),
         dest_ie: cleanDigits(formData.dest_ie, 14),
         dest_telefone: cleanDigits(formData.dest_telefone, 14),
@@ -1247,7 +1257,7 @@ export default function NotaFiscalForm() {
                         <TableCell className="truncate max-w-[200px]">{item.descricao}</TableCell>
                         <TableCell className="font-mono text-xs">{item.ncm || "-"}</TableCell>
                         <TableCell>{item.unidade}</TableCell>
-                        <TableCell className="text-right">{item.quantidade}</TableCell>
+                        <TableCell className="text-right">{formatBrazilianQuantity(item.quantidade, 3)}</TableCell>
                         <TableCell className="text-right">{formatCurrency(item.valor_unitario)}</TableCell>
                         <TableCell className="text-right font-medium">{formatCurrency(item.valor_total)}</TableCell>
                         <TableCell>
@@ -1534,22 +1544,20 @@ export default function NotaFiscalForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_quantidade">Quantidade</Label>
-                  <Input
+                  <QuantityInput
                     id="item_quantidade"
-                    type="number"
-                    step="0.0001"
-                    value={itemFormData.quantidade || 0}
-                    onChange={(e) => setItemFormData({ ...itemFormData, quantidade: Number(e.target.value) })}
+                    value={itemFormData.quantidade}
+                    onChange={(value) => setItemFormData({ ...itemFormData, quantidade: value ?? 0 })}
+                    decimals={3}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_valor_unitario">Valor Unitário</Label>
-                  <Input
+                  <CurrencyInput
                     id="item_valor_unitario"
-                    type="number"
-                    step="0.01"
-                    value={itemFormData.valor_unitario || 0}
-                    onChange={(e) => setItemFormData({ ...itemFormData, valor_unitario: Number(e.target.value) })}
+                    value={itemFormData.valor_unitario}
+                    onChange={(value) => setItemFormData({ ...itemFormData, valor_unitario: value ?? 0 })}
+                    decimals={2}
                   />
                 </div>
               </div>
@@ -1557,22 +1565,21 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_valor_desconto">Desconto</Label>
-                  <Input
+                  <CurrencyInput
                     id="item_valor_desconto"
-                    type="number"
-                    step="0.01"
-                    value={itemFormData.valor_desconto || 0}
-                    onChange={(e) => setItemFormData({ ...itemFormData, valor_desconto: Number(e.target.value) })}
+                    value={itemFormData.valor_desconto}
+                    onChange={(value) => setItemFormData({ ...itemFormData, valor_desconto: value ?? 0 })}
+                    decimals={2}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_valor_total">Valor Total</Label>
-                  <Input
+                  <CurrencyInput
                     id="item_valor_total"
-                    type="number"
-                    step="0.01"
-                    value={itemFormData.valor_total || 0}
-                    readOnly
+                    value={itemFormData.valor_total}
+                    onChange={() => {}}
+                    decimals={2}
+                    disabled
                     className="bg-muted"
                   />
                 </div>
@@ -1593,12 +1600,12 @@ export default function NotaFiscalForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_aliq_icms">Alíq. ICMS (%)</Label>
-                  <Input
+                  <CurrencyInput
                     id="item_aliq_icms"
-                    type="number"
-                    step="0.01"
-                    value={itemFormData.aliq_icms || 0}
-                    onChange={(e) => setItemFormData({ ...itemFormData, aliq_icms: Number(e.target.value) })}
+                    value={itemFormData.aliq_icms}
+                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_icms: value ?? 0 })}
+                    decimals={2}
+                    prefix=""
                   />
                 </div>
               </div>
@@ -1615,12 +1622,12 @@ export default function NotaFiscalForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_aliq_pis">Alíq. PIS (%)</Label>
-                  <Input
+                  <CurrencyInput
                     id="item_aliq_pis"
-                    type="number"
-                    step="0.0001"
-                    value={itemFormData.aliq_pis || 0}
-                    onChange={(e) => setItemFormData({ ...itemFormData, aliq_pis: Number(e.target.value) })}
+                    value={itemFormData.aliq_pis}
+                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_pis: value ?? 0 })}
+                    decimals={2}
+                    prefix=""
                   />
                 </div>
                 <div className="space-y-2">
@@ -1634,12 +1641,12 @@ export default function NotaFiscalForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_aliq_cofins">Alíq. COFINS (%)</Label>
-                  <Input
+                  <CurrencyInput
                     id="item_aliq_cofins"
-                    type="number"
-                    step="0.0001"
-                    value={itemFormData.aliq_cofins || 0}
-                    onChange={(e) => setItemFormData({ ...itemFormData, aliq_cofins: Number(e.target.value) })}
+                    value={itemFormData.aliq_cofins}
+                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_cofins: value ?? 0 })}
+                    decimals={2}
+                    prefix=""
                   />
                 </div>
               </div>
