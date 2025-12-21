@@ -95,18 +95,18 @@ serve(async (req) => {
       );
     }
 
-    // Gerar referência única para a nota incluindo timestamp
+    // SEMPRE gerar nova referência única para evitar cache da Focus NFe
+    // Usar timestamp + random para garantir unicidade absoluta
     const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
     
-    // Se status anterior é erro ou rejeitada, gerar NOVA referência para evitar duplicidade
-    const shouldGenerateNewRef = !existingNota?.uuid_api || 
-      existingNota.status === "erro_autorizacao" || 
-      existingNota.status === "rejeitada" ||
-      existingNota.status === "rejeitado";
-
-    const ref = shouldGenerateNewRef 
-      ? `nfe_${notaFiscalId}_${timestamp}` 
-      : existingNota.uuid_api;
+    // Sempre gerar nova referência - a Focus NFe faz cache por referência
+    // Se reusar uma referência antiga, ela retorna o resultado anterior
+    const ref = `nfe_${notaFiscalId}_${timestamp}_${randomSuffix}`;
+    
+    console.log("Gerando NOVA referência única:", ref);
+    console.log("Status anterior:", existingNota?.status);
+    console.log("UUID_API anterior:", existingNota?.uuid_api || "NENHUM");
 
     console.log("Emitindo NF-e:", notaFiscalId);
     console.log("Referência:", ref);
@@ -160,24 +160,38 @@ serve(async (req) => {
     console.log("Resposta Focus NFe:", JSON.stringify(responseData, null, 2));
 
     if (!response.ok) {
-      // Atualizar nota com erro
-      await supabase
-        .from("notas_fiscais")
-        .update({
-          status: "rejeitada",
-          motivo_status: responseData.mensagem || responseData.erros?.join("; ") || "Erro desconhecido",
-        })
-        .eq("id", notaFiscalId);
-
       // Verificar se é erro de duplicidade (código 539)
       const isDuplicidade = responseData.status_sefaz === "539" || 
         responseData.mensagem_sefaz?.includes("Duplicidade");
+
+      // Se for erro de duplicidade, LIMPAR uuid_api para forçar nova referência na próxima tentativa
+      if (isDuplicidade) {
+        await supabase
+          .from("notas_fiscais")
+          .update({
+            status: "erro_autorizacao",
+            motivo_status: responseData.mensagem_sefaz || "NFe com número duplicado. Tente novamente com outro número.",
+            uuid_api: null, // CRÍTICO: limpar para forçar nova referência
+            chave_acesso: null,
+            protocolo: null,
+          })
+          .eq("id", notaFiscalId);
+      } else {
+        // Atualizar nota com erro normal
+        await supabase
+          .from("notas_fiscais")
+          .update({
+            status: "rejeitada",
+            motivo_status: responseData.mensagem || responseData.erros?.join("; ") || "Erro desconhecido",
+          })
+          .eq("id", notaFiscalId);
+      }
 
       return new Response(
         JSON.stringify({
           success: false,
           error: isDuplicidade 
-            ? "NFe com número duplicado. O sistema tentará com um novo número na próxima emissão."
+            ? "NFe com número duplicado. Altere o número da NFe e tente novamente."
             : (responseData.mensagem || "Erro ao emitir NF-e"),
           details: responseData,
           isDuplicidade,
