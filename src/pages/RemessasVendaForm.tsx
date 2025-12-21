@@ -37,7 +37,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Receipt, ChevronDown, MapPin, Scale } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Receipt, ChevronDown, MapPin, Scale, Pencil } from "lucide-react";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
 import {
   useRemessasVenda,
@@ -57,6 +57,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PesarBrutoDialog } from "@/components/remessas/PesarBrutoDialog";
+import { EditarRemessaDialog } from "@/components/remessas/EditarRemessaDialog";
 import { toast } from "sonner";
 
 interface FormData {
@@ -93,6 +94,7 @@ export default function RemessasVendaForm() {
   const navigate = useNavigate();
   const [remessaExcluir, setRemessaExcluir] = useState<string | null>(null);
   const [remessaPesar, setRemessaPesar] = useState<RemessaVenda | null>(null);
+  const [remessaEditar, setRemessaEditar] = useState<RemessaVenda | null>(null);
   const [pesoLiquido, setPesoLiquido] = useState(0);
   const [kgRemessa, setKgRemessa] = useState(0);
   const [kgDescontoUmidade, setKgDescontoUmidade] = useState(0);
@@ -756,8 +758,19 @@ export default function RemessasVendaForm() {
                           </TableCell>
                           <TableCell>
                             <div className="flex justify-end gap-1">
-                              {/* Botão Pesar Bruto para status "carregando" */}
-                              {r.status === "carregando" && !r.nota_fiscal_id && (
+                              {/* Botão Editar para status "pendente" ou "carregando" sem NFe */}
+                              {(r.status === "pendente" || r.status === "carregando") && !r.nota_fiscal_id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setRemessaEditar(r)}
+                                  title="Editar Remessa"
+                                >
+                                  <Pencil className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              )}
+                              {/* Botão Pesar Bruto para status "pendente" ou "carregando" */}
+                              {(r.status === "carregando" || r.status === "pendente") && !r.nota_fiscal_id && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -825,6 +838,13 @@ export default function RemessasVendaForm() {
         remessa={remessaPesar}
         precoKg={contrato?.preco_kg || 0}
         onClose={() => setRemessaPesar(null)}
+      />
+
+      {/* Dialog de Editar Remessa */}
+      <EditarRemessaDialog
+        remessa={remessaEditar}
+        precoKg={contrato?.preco_kg || 0}
+        onClose={() => setRemessaEditar(null)}
       />
     </AppLayout>
   );
