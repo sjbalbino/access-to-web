@@ -24,21 +24,36 @@ import {
   useUpdateRemessaVenda,
 } from "@/hooks/useRemessasVenda";
 import { useAuth } from "@/contexts/AuthContext";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Package, Truck, FileText } from "lucide-react";
+import { Package, Truck, FileText, MapPin } from "lucide-react";
+
+interface LocalEntrega {
+  local_entrega_nome?: string;
+  local_entrega_cnpj_cpf?: string;
+  local_entrega_ie?: string;
+  local_entrega_logradouro?: string;
+  local_entrega_numero?: string;
+  local_entrega_complemento?: string;
+  local_entrega_bairro?: string;
+  local_entrega_cidade?: string;
+  local_entrega_uf?: string;
+  local_entrega_cep?: string;
+}
 
 interface EditarRemessaDialogProps {
   remessa: RemessaVenda | null;
   precoKg: number;
   exigePh?: boolean;
+  localEntrega?: LocalEntrega;
   onClose: () => void;
 }
 
-export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, onClose }: EditarRemessaDialogProps) {
+export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEntrega, onClose }: EditarRemessaDialogProps) {
   const { data: silos } = useSilos();
   const { transportadoras } = useTransportadoras();
   const updateRemessa = useUpdateRemessaVenda();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const [dataRemessa, setDataRemessa] = useState("");
   const [pesoTara, setPesoTara] = useState(0);
@@ -74,7 +89,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, onClose 
       setUmidade(remessa.umidade || 0);
       setImpureza(remessa.impureza || 0);
       setSiloId(remessa.silo_id || "");
-      setBalanceiro(remessa.balanceiro || user?.email || "");
+      setBalanceiro(remessa.balanceiro || profile?.nome || user?.email || "");
       setTransportadoraId(remessa.transportadora_id || "");
       setMotorista(remessa.motorista || "");
       setMotoristaCpf(remessa.motorista_cpf || "");
@@ -419,7 +434,115 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, onClose 
             </CardContent>
           </Card>
 
-          {/* Card 3: Observações */}
+          {/* Card 3: Local de Entrega */}
+          <Card className="border-warning/20 bg-warning/5">
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Local de Entrega
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Nome</Label>
+                  <Input
+                    value={localEntrega?.local_entrega_nome || ""}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">CNPJ/CPF</Label>
+                  <Input
+                    value={localEntrega?.local_entrega_cnpj_cpf || ""}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">IE</Label>
+                  <Input
+                    value={localEntrega?.local_entrega_ie || ""}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div className="sm:col-span-2 space-y-2">
+                  <Label className="text-xs">Logradouro</Label>
+                  <Input
+                    value={localEntrega?.local_entrega_logradouro || ""}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Número</Label>
+                  <Input
+                    value={localEntrega?.local_entrega_numero || ""}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Bairro</Label>
+                  <Input
+                    value={localEntrega?.local_entrega_bairro || ""}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Complemento</Label>
+                  <Input
+                    value={localEntrega?.local_entrega_complemento || ""}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Cidade</Label>
+                  <Input
+                    value={localEntrega?.local_entrega_cidade || ""}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">UF</Label>
+                  <Input
+                    value={localEntrega?.local_entrega_uf || ""}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">CEP</Label>
+                  <Input
+                    value={localEntrega?.local_entrega_cep || ""}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 4: Observações */}
           <Card className="border-muted-foreground/20 bg-muted/30">
             <CardHeader className="py-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -428,10 +551,11 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, onClose 
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Input
+              <Textarea
                 value={observacoes}
                 onChange={(e) => setObservacoes(e.target.value)}
                 placeholder="Observações da remessa..."
+                rows={3}
               />
             </CardContent>
           </Card>

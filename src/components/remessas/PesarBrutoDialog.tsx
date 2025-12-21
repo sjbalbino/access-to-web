@@ -38,7 +38,7 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
   const { data: silos } = useSilos();
   const { transportadoras } = useTransportadoras();
   const updateRemessa = useUpdateRemessaVenda();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const [pesoBruto, setPesoBruto] = useState(0);
   const [kgNota, setKgNota] = useState(0);
@@ -71,7 +71,7 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
       setUmidade(remessa.umidade || 0);
       setImpureza(remessa.impureza || 0);
       setSiloId(remessa.silo_id || "");
-      setBalanceiro(remessa.balanceiro || user?.email || "");
+      setBalanceiro(remessa.balanceiro || profile?.nome || user?.email || "");
       setTransportadoraId(remessa.transportadora_id || "");
       setMotorista(remessa.motorista || "");
       setMotoristaCpf(remessa.motorista_cpf || "");
@@ -346,79 +346,6 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
             </CardContent>
           </Card>
 
-          {/* Card 2: Transportadora */}
-          <Card className="border-info/20 bg-info/5">
-            <CardHeader className="py-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Truck className="h-4 w-4" />
-                Transportadora
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                <div className="space-y-2">
-                  <Label>Transportadora</Label>
-                  <Select value={transportadoraId} onValueChange={setTransportadoraId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {transportadoras?.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Motorista</Label>
-                  <Input
-                    value={motorista}
-                    onChange={(e) => setMotorista(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>CPF Motorista</Label>
-                  <Input
-                    value={motoristaCpf}
-                    onChange={(e) => setMotoristaCpf(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Placa</Label>
-                  <Input
-                    value={placa}
-                    onChange={(e) => setPlaca(e.target.value.toUpperCase())}
-                    maxLength={7}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>UF</Label>
-                  <Input
-                    value={ufPlaca}
-                    onChange={(e) => setUfPlaca(e.target.value.toUpperCase())}
-                    maxLength={2}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card 3: Observações */}
-          <Card className="border-muted-foreground/20 bg-muted/30">
-            <CardHeader className="py-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Observações
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                value={observacoes}
-                onChange={(e) => setObservacoes(e.target.value)}
-                placeholder="Observações da remessa..."
-              />
-            </CardContent>
-          </Card>
         </div>
 
         <DialogFooter>
