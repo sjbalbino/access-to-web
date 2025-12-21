@@ -71,6 +71,7 @@ export default function Transportadoras() {
     uf_placa_padrao: null,
     rntc: null,
     motorista_padrao: null,
+    motorista_cpf_padrao: null,
     ativa: true,
   });
 
@@ -135,6 +136,7 @@ export default function Transportadoras() {
         uf_placa_padrao: transportadora.uf_placa_padrao,
         rntc: transportadora.rntc,
         motorista_padrao: transportadora.motorista_padrao,
+        motorista_cpf_padrao: transportadora.motorista_cpf_padrao,
         ativa: transportadora.ativa ?? true,
       });
     } else {
@@ -156,6 +158,7 @@ export default function Transportadoras() {
         uf_placa_padrao: null,
         rntc: null,
         motorista_padrao: null,
+        motorista_cpf_padrao: null,
         ativa: true,
       });
     }
@@ -495,15 +498,27 @@ export default function Transportadoras() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="motorista_padrao">Motorista Padrão</Label>
-              <Input
-                id="motorista_padrao"
-                value={formData.motorista_padrao || ""}
-                onChange={(e) => setFormData({ ...formData, motorista_padrao: e.target.value })}
-                maxLength={100}
-                placeholder="Nome do motorista padrão"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="motorista_padrao">Motorista Padrão</Label>
+                <Input
+                  id="motorista_padrao"
+                  value={formData.motorista_padrao || ""}
+                  onChange={(e) => setFormData({ ...formData, motorista_padrao: e.target.value })}
+                  maxLength={100}
+                  placeholder="Nome do motorista padrão"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="motorista_cpf_padrao">CPF Motorista Padrão</Label>
+                <Input
+                  id="motorista_cpf_padrao"
+                  value={formData.motorista_cpf_padrao || ""}
+                  onChange={(e) => setFormData({ ...formData, motorista_cpf_padrao: e.target.value })}
+                  maxLength={14}
+                  placeholder="000.000.000-00"
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-2">

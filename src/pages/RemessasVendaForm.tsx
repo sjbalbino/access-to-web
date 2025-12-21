@@ -65,6 +65,7 @@ interface FormData {
   impureza: number;
   transportadora_id: string;
   motorista: string;
+  motorista_cpf: string;
   placa: string;
   uf_placa: string;
   balanceiro: string;
@@ -120,6 +121,7 @@ export default function RemessasVendaForm() {
       placa: "",
       uf_placa: "",
       motorista: "",
+      motorista_cpf: "",
       local_entrega_nome: "",
       local_entrega_cnpj_cpf: "",
       local_entrega_ie: "",
@@ -155,7 +157,7 @@ export default function RemessasVendaForm() {
     }
   }, [contrato, setValue]);
 
-  // Quando selecionar transportadora, preencher placa, UF e motorista padrão
+  // Quando selecionar transportadora, preencher placa, UF, motorista e CPF padrão
   useEffect(() => {
     if (transportadoraId && transportadoras) {
       const transp = transportadoras.find(t => t.id === transportadoraId);
@@ -163,6 +165,7 @@ export default function RemessasVendaForm() {
         if (transp.placa_padrao) setValue("placa", transp.placa_padrao);
         if (transp.uf_placa_padrao) setValue("uf_placa", transp.uf_placa_padrao);
         if (transp.motorista_padrao) setValue("motorista", transp.motorista_padrao);
+        if (transp.motorista_cpf_padrao) setValue("motorista_cpf", transp.motorista_cpf_padrao);
       }
     }
   }, [transportadoraId, transportadoras, setValue]);
@@ -195,20 +198,29 @@ export default function RemessasVendaForm() {
     setValorNota(kgFinal * preco);
   }, [kgRemessa, umidade, impureza, contrato?.preco_kg]);
 
+  // Determinar status baseado nos pesos
+  const determinarStatus = (pesoTara: number, pesoBruto: number) => {
+    if (pesoBruto > 0) return "carregado";
+    if (pesoTara > 0) return "carregando";
+    return "carregando";
+  };
+
   const onSubmit = async (data: FormData) => {
     if (!id || !contrato) return;
+
+    const status = determinarStatus(data.peso_tara, data.peso_bruto);
 
     const payload: RemessaVendaInsert = {
       contrato_venda_id: id,
       codigo: proximoCodigo || 1,
       data_remessa: data.data_remessa,
-      placa_id: null, // Não usar mais placa_id, usar placa direta
+      placa_id: null,
       placa: data.placa || null,
       uf_placa: data.uf_placa || null,
       peso_bruto: data.peso_bruto,
       peso_tara: data.peso_tara,
       peso_liquido: pesoLiquido,
-      variedade_id: contrato.produto_id || null, // Pegar do contrato
+      variedade_id: contrato.produto_id || null,
       silo_id: data.silo_id || null,
       ph: data.ph,
       umidade: data.umidade,
@@ -217,7 +229,7 @@ export default function RemessasVendaForm() {
       kg_desconto_umidade: kgDescontoUmidade,
       kg_desconto_impureza: kgDescontoImpureza,
       kg_nota: kgNota,
-      sacos: sacosNota, // Manter compatibilidade
+      sacos: sacosNota,
       sacos_remessa: sacosRemessa,
       sacos_nota: sacosNota,
       preco_kg: contrato?.preco_kg || 0,
@@ -225,10 +237,11 @@ export default function RemessasVendaForm() {
       valor_nota: valorNota,
       transportadora_id: data.transportadora_id || null,
       motorista: data.motorista || null,
+      motorista_cpf: data.motorista_cpf || null,
       balanceiro: data.balanceiro || null,
       romaneio: data.romaneio || null,
       observacoes: data.observacoes || null,
-      status: "pendente",
+      status,
       nota_fiscal_id: null,
       // Local de entrega
       local_entrega_nome: data.local_entrega_nome || null,
@@ -256,6 +269,7 @@ export default function RemessasVendaForm() {
       impureza: 0,
       transportadora_id: "",
       motorista: "",
+      motorista_cpf: "",
       placa: "",
       uf_placa: "",
       balanceiro: "",
@@ -531,7 +545,7 @@ export default function RemessasVendaForm() {
               </div>
 
               {/* Transporte */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
                   <Select value={watch("transportadora_id")} onValueChange={(v) => setValue("transportadora_id", v)}>
@@ -546,16 +560,20 @@ export default function RemessasVendaForm() {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label>Motorista</Label>
+                  <Input {...register("motorista")} placeholder="Nome do motorista" />
+                </div>
+                <div className="space-y-2">
+                  <Label>CPF Motorista</Label>
+                  <Input {...register("motorista_cpf")} placeholder="000.000.000-00" maxLength={14} />
+                </div>
+                <div className="space-y-2">
                   <Label>Placa</Label>
                   <Input {...register("placa")} placeholder="AAA-0000" maxLength={8} />
                 </div>
                 <div className="space-y-2">
-                  <Label>UF Placa</Label>
+                  <Label>UF</Label>
                   <Input {...register("uf_placa")} placeholder="SP" maxLength={2} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Motorista</Label>
-                  <Input {...register("motorista")} />
                 </div>
                 <div className="space-y-2">
                   <Label>Balanceiro</Label>
@@ -693,8 +711,12 @@ export default function RemessasVendaForm() {
                           <TableCell className="text-right">{formatCurrency(r.valor_nota)}</TableCell>
                           <TableCell>{r.silo?.nome || "-"}</TableCell>
                           <TableCell>
-                            {r.status === "nfe_emitida" ? (
-                              <Badge variant="default" className="bg-success text-success-foreground">NFe Emitida</Badge>
+                            {r.status === "carregado_nfe" || r.nota_fiscal_id ? (
+                              <Badge className="bg-blue-500 text-white">Carregado/NFe</Badge>
+                            ) : r.status === "carregado" ? (
+                              <Badge className="bg-green-500 text-white">Carregado</Badge>
+                            ) : r.status === "carregando" ? (
+                              <Badge className="bg-yellow-500 text-black">Carregando</Badge>
                             ) : r.status === "cancelada" ? (
                               <Badge variant="destructive">Cancelada</Badge>
                             ) : (
