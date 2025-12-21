@@ -30,6 +30,7 @@ export interface RemessaVenda {
   valor_nota: number | null;
   transportadora_id: string | null;
   motorista: string | null;
+  motorista_cpf: string | null;
   nota_fiscal_id: string | null;
   romaneio: number | null;
   balanceiro: string | null;
@@ -52,7 +53,7 @@ export interface RemessaVenda {
   placaObj?: { id: string; placa: string } | null;
   variedade?: { id: string; nome: string } | null;
   silo?: { id: string; nome: string } | null;
-  transportadora?: { id: string; nome: string; placa_padrao: string | null; uf_placa_padrao: string | null; motorista_padrao: string | null } | null;
+  transportadora?: { id: string; nome: string; placa_padrao: string | null; uf_placa_padrao: string | null; motorista_padrao: string | null; motorista_cpf_padrao: string | null } | null;
   nota_fiscal?: { id: string; numero: number | null; status: string | null; chave_acesso: string | null } | null;
 }
 
@@ -72,7 +73,7 @@ export function useRemessasVenda(contratoId: string | undefined) {
           placaObj:placas(id, placa),
           variedade:produtos(id, nome),
           silo:silos(id, nome),
-          transportadora:transportadoras(id, nome, placa_padrao, uf_placa_padrao, motorista_padrao),
+          transportadora:transportadoras(id, nome, placa_padrao, uf_placa_padrao, motorista_padrao, motorista_cpf_padrao),
           nota_fiscal:notas_fiscais(id, numero, status, chave_acesso)
         `)
         .eq("contrato_venda_id", contratoId)
@@ -98,7 +99,7 @@ export function useRemessaVenda(id: string | undefined) {
           placaObj:placas(id, placa),
           variedade:produtos(id, nome),
           silo:silos(id, nome),
-          transportadora:transportadoras(id, nome, placa_padrao, uf_placa_padrao, motorista_padrao),
+          transportadora:transportadoras(id, nome, placa_padrao, uf_placa_padrao, motorista_padrao, motorista_cpf_padrao),
           nota_fiscal:notas_fiscais(id, numero, status, chave_acesso)
         `)
         .eq("id", id)

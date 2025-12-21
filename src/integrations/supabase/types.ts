@@ -2402,6 +2402,7 @@ export type Database = {
           local_entrega_numero: string | null
           local_entrega_uf: string | null
           motorista: string | null
+          motorista_cpf: string | null
           nota_fiscal_id: string | null
           observacoes: string | null
           peso_bruto: number | null
@@ -2448,6 +2449,7 @@ export type Database = {
           local_entrega_numero?: string | null
           local_entrega_uf?: string | null
           motorista?: string | null
+          motorista_cpf?: string | null
           nota_fiscal_id?: string | null
           observacoes?: string | null
           peso_bruto?: number | null
@@ -2494,6 +2496,7 @@ export type Database = {
           local_entrega_numero?: string | null
           local_entrega_uf?: string | null
           motorista?: string | null
+          motorista_cpf?: string | null
           nota_fiscal_id?: string | null
           observacoes?: string | null
           peso_bruto?: number | null
@@ -2785,6 +2788,7 @@ export type Database = {
           id: string
           inscricao_estadual: string | null
           logradouro: string | null
+          motorista_cpf_padrao: string | null
           motorista_padrao: string | null
           nome: string
           numero: string | null
@@ -2807,6 +2811,7 @@ export type Database = {
           id?: string
           inscricao_estadual?: string | null
           logradouro?: string | null
+          motorista_cpf_padrao?: string | null
           motorista_padrao?: string | null
           nome: string
           numero?: string | null
@@ -2829,6 +2834,7 @@ export type Database = {
           id?: string
           inscricao_estadual?: string | null
           logradouro?: string | null
+          motorista_cpf_padrao?: string | null
           motorista_padrao?: string | null
           nome?: string
           numero?: string | null
