@@ -37,15 +37,17 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Receipt, ChevronDown, MapPin } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Receipt, ChevronDown, MapPin, Scale } from "lucide-react";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
 import {
   useRemessasVenda,
   useCreateRemessaVenda,
   useDeleteRemessaVenda,
   useProximoCodigoRemessa,
+  useProximoRomaneio,
   useTotaisContrato,
   RemessaVendaInsert,
+  RemessaVenda,
   calcularDescontoUmidade,
   calcularDescontoImpureza,
 } from "@/hooks/useRemessasVenda";
@@ -54,6 +56,8 @@ import { useTransportadoras } from "@/hooks/useTransportadoras";
 import { Spinner } from "@/components/ui/spinner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PesarBrutoDialog } from "@/components/remessas/PesarBrutoDialog";
+import { toast } from "sonner";
 
 interface FormData {
   data_remessa: string;
@@ -88,6 +92,7 @@ export default function RemessasVendaForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [remessaExcluir, setRemessaExcluir] = useState<string | null>(null);
+  const [remessaPesar, setRemessaPesar] = useState<RemessaVenda | null>(null);
   const [pesoLiquido, setPesoLiquido] = useState(0);
   const [kgRemessa, setKgRemessa] = useState(0);
   const [kgDescontoUmidade, setKgDescontoUmidade] = useState(0);
@@ -102,6 +107,7 @@ export default function RemessasVendaForm() {
   const { data: contrato, isLoading: loadingContrato } = useContratoVenda(id);
   const { data: remessas, isLoading: loadingRemessas } = useRemessasVenda(id);
   const { data: proximoCodigo } = useProximoCodigoRemessa(id);
+  const { data: proximoRomaneio } = useProximoRomaneio();
   const { data: totais } = useTotaisContrato(id);
   const { data: silos } = useSilos();
   const { transportadoras } = useTransportadoras();
@@ -208,6 +214,12 @@ export default function RemessasVendaForm() {
   const onSubmit = async (data: FormData) => {
     if (!id || !contrato) return;
 
+    // Validação: Silo obrigatório
+    if (!data.silo_id) {
+      toast.error("Silo é obrigatório!");
+      return;
+    }
+
     const status = determinarStatus(data.peso_tara, data.peso_bruto);
 
     const payload: RemessaVendaInsert = {
@@ -239,7 +251,7 @@ export default function RemessasVendaForm() {
       motorista: data.motorista || null,
       motorista_cpf: data.motorista_cpf || null,
       balanceiro: data.balanceiro || null,
-      romaneio: data.romaneio || null,
+      romaneio: proximoRomaneio || 1,
       observacoes: data.observacoes || null,
       status,
       nota_fiscal_id: null,
@@ -289,10 +301,18 @@ export default function RemessasVendaForm() {
   };
 
   const handleExcluir = async () => {
-    if (remessaExcluir && id) {
-      await deleteRemessa.mutateAsync({ id: remessaExcluir, contratoId: id });
+    if (!remessaExcluir || !id) return;
+    
+    // Verificar se a remessa pode ser excluída
+    const remessa = remessas?.find(r => r.id === remessaExcluir);
+    if (remessa?.status === "carregado_nfe" || remessa?.nota_fiscal_id) {
+      toast.error("Remessas com NFe emitida não podem ser excluídas!");
       setRemessaExcluir(null);
+      return;
     }
+    
+    await deleteRemessa.mutateAsync({ id: remessaExcluir, contratoId: id });
+    setRemessaExcluir(null);
   };
 
   const handleEmitirNfe = (remessaId: string) => {
@@ -439,6 +459,7 @@ export default function RemessasVendaForm() {
                     type="text" 
                     value={formatNumber(pesoLiquido)} 
                     readOnly 
+                    tabIndex={-1}
                     className="bg-muted font-bold text-right" 
                   />
                 </div>
@@ -448,6 +469,7 @@ export default function RemessasVendaForm() {
                     type="text" 
                     value={formatNumber(sacosRemessa, 2)} 
                     readOnly 
+                    tabIndex={-1}
                     className="bg-muted text-right" 
                   />
                 </div>
@@ -455,6 +477,19 @@ export default function RemessasVendaForm() {
 
               {/* Qualidade e Descontos */}
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
+                <div className="space-y-2">
+                  <Label>Silo *</Label>
+                  <Select value={watch("silo_id")} onValueChange={(v) => setValue("silo_id", v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {silos?.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label>PH</Label>
                   <Input type="number" step="0.01" {...register("ph", { valueAsNumber: true })} />
@@ -473,6 +508,7 @@ export default function RemessasVendaForm() {
                     type="text" 
                     value={formatNumber(kgDescontoUmidade)} 
                     readOnly 
+                    tabIndex={-1}
                     className="bg-muted text-destructive text-right" 
                   />
                 </div>
@@ -482,28 +518,31 @@ export default function RemessasVendaForm() {
                     type="text" 
                     value={formatNumber(kgDescontoImpureza)} 
                     readOnly 
+                    tabIndex={-1}
                     className="bg-muted text-destructive text-right" 
                   />
                 </div>
+              </div>
+
+              {/* Valores e Notas */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Kg Nota</Label>
                   <Input 
                     type="text" 
                     value={formatNumber(kgNota)} 
                     readOnly 
+                    tabIndex={-1}
                     className="bg-muted font-bold text-success text-right" 
                   />
                 </div>
-              </div>
-
-              {/* Valores */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Sacos Nota</Label>
                   <Input 
                     type="text" 
                     value={formatNumber(sacosNota, 2)} 
                     readOnly 
+                    tabIndex={-1}
                     className="bg-muted text-right" 
                   />
                 </div>
@@ -513,6 +552,7 @@ export default function RemessasVendaForm() {
                     type="text" 
                     value={formatCurrency(valorRemessa)} 
                     readOnly 
+                    tabIndex={-1}
                     className="bg-muted font-bold text-right" 
                   />
                 </div>
@@ -522,30 +562,18 @@ export default function RemessasVendaForm() {
                     type="text" 
                     value={formatCurrency(valorNota)} 
                     readOnly 
+                    tabIndex={-1}
                     className="bg-muted font-bold text-primary text-right" 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Silo</Label>
-                  <Select value={watch("silo_id")} onValueChange={(v) => setValue("silo_id", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {silos?.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Romaneio</Label>
-                  <Input type="number" {...register("romaneio", { valueAsNumber: true })} />
+                  <Label>Balanceiro</Label>
+                  <Input {...register("balanceiro")} />
                 </div>
               </div>
 
               {/* Transporte */}
-              <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
                   <Select value={watch("transportadora_id")} onValueChange={(v) => setValue("transportadora_id", v)}>
@@ -574,10 +602,6 @@ export default function RemessasVendaForm() {
                 <div className="space-y-2">
                   <Label>UF</Label>
                   <Input {...register("uf_placa")} placeholder="SP" maxLength={2} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Balanceiro</Label>
-                  <Input {...register("balanceiro")} />
                 </div>
               </div>
 
@@ -732,7 +756,19 @@ export default function RemessasVendaForm() {
                           </TableCell>
                           <TableCell>
                             <div className="flex justify-end gap-1">
-                              {!r.nota_fiscal_id && r.status !== "cancelada" && (
+                              {/* Botão Pesar Bruto para status "carregando" */}
+                              {r.status === "carregando" && !r.nota_fiscal_id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setRemessaPesar(r)}
+                                  title="Pesar Bruto"
+                                >
+                                  <Scale className="h-4 w-4 text-warning" />
+                                </Button>
+                              )}
+                              {/* Botão Emitir NFe para status "carregado" */}
+                              {r.status === "carregado" && !r.nota_fiscal_id && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -742,7 +778,8 @@ export default function RemessasVendaForm() {
                                   <Receipt className="h-4 w-4 text-primary" />
                                 </Button>
                               )}
-                              {!r.nota_fiscal_id && (
+                              {/* Botão Excluir - apenas se não tiver NFe */}
+                              {!r.nota_fiscal_id && r.status !== "carregado_nfe" && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -765,7 +802,7 @@ export default function RemessasVendaForm() {
         </Card>
       </div>
 
-      {/* Dialog de Confirmação */}
+      {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={!!remessaExcluir} onOpenChange={() => setRemessaExcluir(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -782,6 +819,13 @@ export default function RemessasVendaForm() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog de Pesar Bruto */}
+      <PesarBrutoDialog
+        remessa={remessaPesar}
+        precoKg={contrato?.preco_kg || 0}
+        onClose={() => setRemessaPesar(null)}
+      />
     </AppLayout>
   );
 }

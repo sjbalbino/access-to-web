@@ -131,6 +131,23 @@ export function useProximoCodigoRemessa(contratoId: string | undefined) {
   });
 }
 
+// Hook para pegar próximo romaneio (global, não por contrato)
+export function useProximoRomaneio() {
+  return useQuery({
+    queryKey: ["proximo_romaneio"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("remessas_venda")
+        .select("romaneio")
+        .not("romaneio", "is", null)
+        .order("romaneio", { ascending: false })
+        .limit(1);
+
+      return (data?.[0]?.romaneio || 0) + 1;
+    },
+  });
+}
+
 export function useTotaisContrato(contratoId: string | undefined) {
   return useQuery({
     queryKey: ["totais_contrato", contratoId],
