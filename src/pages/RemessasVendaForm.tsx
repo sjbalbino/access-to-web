@@ -857,6 +857,7 @@ export default function RemessasVendaForm() {
       <PesarBrutoDialog
         remessa={remessaPesar}
         precoKg={contrato?.preco_kg || 0}
+        exigePh={exigePh}
         onClose={() => setRemessaPesar(null)}
       />
 
@@ -864,6 +865,7 @@ export default function RemessasVendaForm() {
       <EditarRemessaDialog
         remessa={remessaEditar}
         precoKg={contrato?.preco_kg || 0}
+        exigePh={exigePh}
         onClose={() => setRemessaEditar(null)}
       />
     </AppLayout>

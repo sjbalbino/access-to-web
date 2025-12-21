@@ -16,37 +16,47 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSilos } from "@/hooks/useSilos";
+import { useTransportadoras } from "@/hooks/useTransportadoras";
 import {
   RemessaVenda,
   useUpdateRemessaVenda,
-  calcularDescontoUmidade,
-  calcularDescontoImpureza,
 } from "@/hooks/useRemessasVenda";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Package, Truck, FileText } from "lucide-react";
 
 interface PesarBrutoDialogProps {
   remessa: RemessaVenda | null;
   precoKg: number;
+  exigePh?: boolean;
   onClose: () => void;
 }
 
-export function PesarBrutoDialog({ remessa, precoKg, onClose }: PesarBrutoDialogProps) {
+export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: PesarBrutoDialogProps) {
   const { data: silos } = useSilos();
+  const { transportadoras } = useTransportadoras();
   const updateRemessa = useUpdateRemessaVenda();
+  const { user } = useAuth();
 
   const [pesoBruto, setPesoBruto] = useState(0);
+  const [kgNota, setKgNota] = useState(0);
   const [ph, setPh] = useState(0);
   const [umidade, setUmidade] = useState(0);
   const [impureza, setImpureza] = useState(0);
   const [siloId, setSiloId] = useState("");
+  const [balanceiro, setBalanceiro] = useState("");
+  const [transportadoraId, setTransportadoraId] = useState("");
+  const [motorista, setMotorista] = useState("");
+  const [motoristaCpf, setMotoristaCpf] = useState("");
+  const [placa, setPlaca] = useState("");
+  const [ufPlaca, setUfPlaca] = useState("");
+  const [observacoes, setObservacoes] = useState("");
 
   // Valores calculados
   const pesoTara = remessa?.peso_tara || 0;
   const kgRemessa = pesoBruto > pesoTara ? pesoBruto - pesoTara : 0;
-  const kgDescontoUmidade = calcularDescontoUmidade(kgRemessa, umidade);
-  const kgDescontoImpureza = calcularDescontoImpureza(kgRemessa, impureza);
-  const kgNota = Math.max(0, kgRemessa - kgDescontoUmidade - kgDescontoImpureza);
   const sacosRemessa = kgRemessa / 60;
   const sacosNota = kgNota / 60;
   const valorRemessa = kgRemessa * precoKg;
@@ -56,12 +66,40 @@ export function PesarBrutoDialog({ remessa, precoKg, onClose }: PesarBrutoDialog
   useEffect(() => {
     if (remessa) {
       setPesoBruto(remessa.peso_bruto || 0);
+      setKgNota(remessa.kg_nota || 0);
       setPh(remessa.ph || 0);
       setUmidade(remessa.umidade || 0);
       setImpureza(remessa.impureza || 0);
       setSiloId(remessa.silo_id || "");
+      setBalanceiro(remessa.balanceiro || user?.email || "");
+      setTransportadoraId(remessa.transportadora_id || "");
+      setMotorista(remessa.motorista || "");
+      setMotoristaCpf(remessa.motorista_cpf || "");
+      setPlaca(remessa.placa || "");
+      setUfPlaca(remessa.uf_placa || "");
+      setObservacoes(remessa.observacoes || "");
     }
-  }, [remessa]);
+  }, [remessa, user]);
+
+  // Atualizar kgNota quando kgRemessa mudar
+  useEffect(() => {
+    if (kgRemessa > 0) {
+      setKgNota(kgRemessa);
+    }
+  }, [kgRemessa]);
+
+  // Preencher dados da transportadora ao selecionar
+  useEffect(() => {
+    if (transportadoraId && transportadoras) {
+      const transp = transportadoras.find(t => t.id === transportadoraId);
+      if (transp) {
+        if (transp.placa_padrao && !placa) setPlaca(transp.placa_padrao);
+        if (transp.uf_placa_padrao && !ufPlaca) setUfPlaca(transp.uf_placa_padrao);
+        if (transp.motorista_padrao && !motorista) setMotorista(transp.motorista_padrao);
+        if (transp.motorista_cpf_padrao && !motoristaCpf) setMotoristaCpf(transp.motorista_cpf_padrao);
+      }
+    }
+  }, [transportadoraId, transportadoras]);
 
   const formatNumber = (value: number, decimals: number = 0) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -94,13 +132,18 @@ export function PesarBrutoDialog({ remessa, precoKg, onClose }: PesarBrutoDialog
       id: remessa.id,
       peso_bruto: pesoBruto,
       peso_liquido: kgRemessa,
-      ph,
+      ph: exigePh ? ph : null,
       umidade,
       impureza,
       silo_id: siloId,
+      balanceiro,
+      transportadora_id: transportadoraId || null,
+      motorista: motorista || null,
+      motorista_cpf: motoristaCpf || null,
+      placa: placa || null,
+      uf_placa: ufPlaca || null,
+      observacoes: observacoes || null,
       kg_remessa: kgRemessa,
-      kg_desconto_umidade: kgDescontoUmidade,
-      kg_desconto_impureza: kgDescontoImpureza,
       kg_nota: kgNota,
       sacos: sacosNota,
       sacos_remessa: sacosRemessa,
@@ -117,7 +160,7 @@ export function PesarBrutoDialog({ remessa, precoKg, onClose }: PesarBrutoDialog
 
   return (
     <Dialog open={!!remessa} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Pesar Bruto - Remessa #{remessa.codigo}
@@ -125,166 +168,257 @@ export function PesarBrutoDialog({ remessa, precoKg, onClose }: PesarBrutoDialog
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Peso Tara (readonly) */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Peso Tara (kg)</Label>
-              <Input
-                type="text"
-                value={formatNumber(pesoTara)}
-                readOnly
-                className="bg-muted text-right"
-                tabIndex={-1}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Peso Bruto (kg) *</Label>
-              <Input
-                type="number"
-                step="1"
-                value={pesoBruto || ""}
-                onChange={(e) => setPesoBruto(Number(e.target.value))}
-                className="text-right"
-                autoFocus
-              />
-            </div>
-          </div>
+          {/* Card 1: Dados da Remessa */}
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Dados da Remessa
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Pesagem */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label>Peso Tara (kg)</Label>
+                  <Input
+                    type="text"
+                    value={formatNumber(pesoTara)}
+                    readOnly
+                    className="bg-muted text-right"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Peso Bruto (kg) *</Label>
+                  <Input
+                    type="number"
+                    step="1"
+                    value={pesoBruto || ""}
+                    onChange={(e) => setPesoBruto(Number(e.target.value))}
+                    className="text-right"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Preço/Kg</Label>
+                  <Input
+                    type="text"
+                    value={formatCurrency(precoKg)}
+                    readOnly
+                    className="bg-muted text-right"
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
 
-          {/* Kgs Calculados */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Kgs Remessa</Label>
-              <Input
-                type="text"
-                value={formatNumber(kgRemessa)}
-                readOnly
-                className="bg-muted font-bold text-right"
-                tabIndex={-1}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Sacos Remessa</Label>
-              <Input
-                type="text"
-                value={formatNumber(sacosRemessa, 2)}
-                readOnly
-                className="bg-muted text-right"
-                tabIndex={-1}
-              />
-            </div>
-          </div>
+              {/* Valores na ordem solicitada */}
+              <div className="grid grid-cols-2 sm:grid-cols-7 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Kgs Remessa</Label>
+                  <Input
+                    type="text"
+                    value={formatNumber(kgRemessa)}
+                    readOnly
+                    className="bg-muted font-bold text-right"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Sacos Remessa</Label>
+                  <Input
+                    type="text"
+                    value={formatNumber(sacosRemessa, 2)}
+                    readOnly
+                    className="bg-muted text-right"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Kgs Nota</Label>
+                  <Input
+                    type="number"
+                    step="1"
+                    value={kgNota || ""}
+                    onChange={(e) => setKgNota(Number(e.target.value))}
+                    className="text-right font-bold"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Sacos Nota</Label>
+                  <Input
+                    type="text"
+                    value={formatNumber(sacosNota, 2)}
+                    readOnly
+                    className="bg-muted text-right"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Preço Kg</Label>
+                  <Input
+                    type="text"
+                    value={formatCurrency(precoKg)}
+                    readOnly
+                    className="bg-muted text-right"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Vlr Remessa</Label>
+                  <Input
+                    type="text"
+                    value={formatCurrency(valorRemessa)}
+                    readOnly
+                    className="bg-muted text-right"
+                    tabIndex={-1}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Vlr Nota</Label>
+                  <Input
+                    type="text"
+                    value={formatCurrency(valorNota)}
+                    readOnly
+                    className="bg-muted font-bold text-primary text-right"
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
 
-          {/* Qualidade */}
-          <div className="grid grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label>PH</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={ph || ""}
-                onChange={(e) => setPh(Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Umidade %</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={umidade || ""}
-                onChange={(e) => setUmidade(Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Impureza %</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={impureza || ""}
-                onChange={(e) => setImpureza(Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Silo *</Label>
-              <Select value={siloId} onValueChange={setSiloId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {silos?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+              {/* Silo, PH, Umidade, Impureza, Balanceiro */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div className="space-y-2">
+                  <Label>Silo *</Label>
+                  <Select value={siloId} onValueChange={setSiloId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {silos?.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {exigePh && (
+                  <div className="space-y-2">
+                    <Label>PH</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={ph || ""}
+                      onChange={(e) => setPh(Number(e.target.value))}
+                      className="text-right"
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>Umidade %</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={umidade || ""}
+                    onChange={(e) => setUmidade(Number(e.target.value))}
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Impureza %</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={impureza || ""}
+                    onChange={(e) => setImpureza(Number(e.target.value))}
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Balanceiro</Label>
+                  <Input
+                    value={balanceiro}
+                    readOnly
+                    className="bg-muted"
+                    tabIndex={-1}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Descontos */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Desc. Umidade (kg)</Label>
-              <Input
-                type="text"
-                value={formatNumber(kgDescontoUmidade)}
-                readOnly
-                className="bg-muted text-destructive text-right"
-                tabIndex={-1}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Desc. Impureza (kg)</Label>
-              <Input
-                type="text"
-                value={formatNumber(kgDescontoImpureza)}
-                readOnly
-                className="bg-muted text-destructive text-right"
-                tabIndex={-1}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Kg Nota</Label>
-              <Input
-                type="text"
-                value={formatNumber(kgNota)}
-                readOnly
-                className="bg-muted font-bold text-success text-right"
-                tabIndex={-1}
-              />
-            </div>
-          </div>
+          {/* Card 2: Transportadora */}
+          <Card className="border-info/20 bg-info/5">
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                Transportadora
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div className="space-y-2">
+                  <Label>Transportadora</Label>
+                  <Select value={transportadoraId} onValueChange={setTransportadoraId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {transportadoras?.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Motorista</Label>
+                  <Input
+                    value={motorista}
+                    onChange={(e) => setMotorista(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>CPF Motorista</Label>
+                  <Input
+                    value={motoristaCpf}
+                    onChange={(e) => setMotoristaCpf(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Placa</Label>
+                  <Input
+                    value={placa}
+                    onChange={(e) => setPlaca(e.target.value.toUpperCase())}
+                    maxLength={7}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>UF</Label>
+                  <Input
+                    value={ufPlaca}
+                    onChange={(e) => setUfPlaca(e.target.value.toUpperCase())}
+                    maxLength={2}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Valores */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Sacos Nota</Label>
+          {/* Card 3: Observações */}
+          <Card className="border-muted-foreground/20 bg-muted/30">
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Observações
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <Input
-                type="text"
-                value={formatNumber(sacosNota, 2)}
-                readOnly
-                className="bg-muted text-right"
-                tabIndex={-1}
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                placeholder="Observações da remessa..."
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Valor Remessa</Label>
-              <Input
-                type="text"
-                value={formatCurrency(valorRemessa)}
-                readOnly
-                className="bg-muted font-bold text-right"
-                tabIndex={-1}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Valor Nota</Label>
-              <Input
-                type="text"
-                value={formatCurrency(valorNota)}
-                readOnly
-                className="bg-muted font-bold text-primary text-right"
-                tabIndex={-1}
-              />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
         <DialogFooter>
