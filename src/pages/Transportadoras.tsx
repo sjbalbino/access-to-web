@@ -70,6 +70,7 @@ export default function Transportadoras() {
     placa_padrao: null,
     uf_placa_padrao: null,
     rntc: null,
+    motorista_padrao: null,
     ativa: true,
   });
 
@@ -133,6 +134,7 @@ export default function Transportadoras() {
         placa_padrao: transportadora.placa_padrao,
         uf_placa_padrao: transportadora.uf_placa_padrao,
         rntc: transportadora.rntc,
+        motorista_padrao: transportadora.motorista_padrao,
         ativa: transportadora.ativa ?? true,
       });
     } else {
@@ -153,6 +155,7 @@ export default function Transportadoras() {
         placa_padrao: null,
         uf_placa_padrao: null,
         rntc: null,
+        motorista_padrao: null,
         ativa: true,
       });
     }
@@ -490,6 +493,17 @@ export default function Transportadoras() {
                   maxLength={20}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="motorista_padrao">Motorista Padrão</Label>
+              <Input
+                id="motorista_padrao"
+                value={formData.motorista_padrao || ""}
+                onChange={(e) => setFormData({ ...formData, motorista_padrao: e.target.value })}
+                maxLength={100}
+                placeholder="Nome do motorista padrão"
+              />
             </div>
 
             <div className="flex items-center gap-2">
