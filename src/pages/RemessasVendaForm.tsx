@@ -866,6 +866,18 @@ export default function RemessasVendaForm() {
         remessa={remessaEditar}
         precoKg={contrato?.preco_kg || 0}
         exigePh={exigePh}
+        localEntrega={{
+          local_entrega_nome: contrato?.local_entrega_nome || "",
+          local_entrega_cnpj_cpf: contrato?.local_entrega_cnpj_cpf || "",
+          local_entrega_ie: contrato?.local_entrega_ie || "",
+          local_entrega_logradouro: contrato?.local_entrega_logradouro || "",
+          local_entrega_numero: contrato?.local_entrega_numero || "",
+          local_entrega_complemento: contrato?.local_entrega_complemento || "",
+          local_entrega_bairro: contrato?.local_entrega_bairro || "",
+          local_entrega_cidade: contrato?.local_entrega_cidade || "",
+          local_entrega_uf: contrato?.local_entrega_uf || "",
+          local_entrega_cep: contrato?.local_entrega_cep || "",
+        }}
         onClose={() => setRemessaEditar(null)}
       />
     </AppLayout>
