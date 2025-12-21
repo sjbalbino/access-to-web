@@ -51,6 +51,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PesarBrutoDialog } from "@/components/remessas/PesarBrutoDialog";
 import { EditarRemessaDialog } from "@/components/remessas/EditarRemessaDialog";
+import { EmitirNfeAutomaticoDialog } from "@/components/remessas/EmitirNfeAutomaticoDialog";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -91,6 +92,7 @@ export default function RemessasVendaForm() {
   const [remessaExcluir, setRemessaExcluir] = useState<string | null>(null);
   const [remessaPesar, setRemessaPesar] = useState<RemessaVenda | null>(null);
   const [remessaEditar, setRemessaEditar] = useState<RemessaVenda | null>(null);
+  const [remessaEmitirNfe, setRemessaEmitirNfe] = useState<RemessaVenda | null>(null);
   const [pesoLiquido, setPesoLiquido] = useState(0);
   const [kgRemessa, setKgRemessa] = useState(0);
   const [kgNota, setKgNota] = useState(0);
@@ -313,8 +315,8 @@ export default function RemessasVendaForm() {
     setRemessaExcluir(null);
   };
 
-  const handleEmitirNfe = (remessaId: string) => {
-    navigate(`/notas-fiscais/nova?remessa_id=${remessaId}&contrato_id=${id}`);
+  const handleEmitirNfe = (remessa: RemessaVenda) => {
+    setRemessaEmitirNfe(remessa);
   };
 
   const formatNumber = (value: number | null | undefined, decimals: number = 0) => {
@@ -805,7 +807,7 @@ export default function RemessasVendaForm() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleEmitirNfe(r.id)}
+                                  onClick={() => handleEmitirNfe(r)}
                                   title="Emitir NF-e"
                                 >
                                   <Receipt className="h-4 w-4 text-primary" />
@@ -879,6 +881,15 @@ export default function RemessasVendaForm() {
           local_entrega_cep: contrato?.local_entrega_cep || "",
         }}
         onClose={() => setRemessaEditar(null)}
+      />
+
+      {/* Dialog de Emitir NFe Automático */}
+      <EmitirNfeAutomaticoDialog
+        remessa={remessaEmitirNfe}
+        contrato={contrato}
+        contratoId={id || ""}
+        onClose={() => setRemessaEmitirNfe(null)}
+        onSuccess={() => setRemessaEmitirNfe(null)}
       />
     </AppLayout>
   );

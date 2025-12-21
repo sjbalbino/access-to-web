@@ -212,8 +212,8 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
                 </div>
               </div>
 
-              {/* Valores na ordem solicitada */}
-              <div className="grid grid-cols-2 sm:grid-cols-7 gap-4">
+              {/* Valores na ordem solicitada - dividido em duas linhas para evitar truncamento */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label className="text-xs">Kgs Remessa</Label>
                   <Input
@@ -254,6 +254,8 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
                     tabIndex={-1}
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label className="text-xs">Preço Kg</Label>
                   <Input
@@ -265,17 +267,17 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs">Vlr Remessa</Label>
+                  <Label className="text-xs">Total da Remessa</Label>
                   <Input
                     type="text"
                     value={formatCurrency(valorRemessa)}
                     readOnly
-                    className="bg-muted text-right"
+                    className="bg-muted text-right font-semibold"
                     tabIndex={-1}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs">Vlr Nota</Label>
+                  <Label className="text-xs">Total da Nota</Label>
                   <Input
                     type="text"
                     value={formatCurrency(valorNota)}
