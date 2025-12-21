@@ -440,7 +440,7 @@ export default function RemessasVendaForm() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Pesagem e Data */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label>Data *</Label>
                   <Input type="date" {...register("data_remessa")} />
@@ -454,25 +454,13 @@ export default function RemessasVendaForm() {
                   <Input type="number" step="1" {...register("peso_bruto", { valueAsNumber: true })} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Silo *</Label>
-                  <Select value={watch("silo_id")} onValueChange={(v) => setValue("silo_id", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {silos?.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Balanceiro</Label>
+                  <Label>Peso Líquido</Label>
                   <Input 
-                    {...register("balanceiro")} 
+                    type="text" 
+                    value={formatNumber(pesoLiquido)} 
                     readOnly 
                     tabIndex={-1}
-                    className="bg-muted"
+                    className="bg-muted font-bold text-right" 
                   />
                 </div>
               </div>
@@ -551,8 +539,21 @@ export default function RemessasVendaForm() {
                 </div>
               </div>
 
-              {/* Qualidade (informativos para NFe) */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {/* Campos após Valor da Nota: Silo, PH, Umidade, Impureza, Balanceiro */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div className="space-y-2">
+                  <Label>Silo *</Label>
+                  <Select value={watch("silo_id")} onValueChange={(v) => setValue("silo_id", v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {silos?.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 {exigePh && (
                   <div className="space-y-2">
                     <Label>PH</Label>
@@ -567,9 +568,28 @@ export default function RemessasVendaForm() {
                   <Label>Impureza %</Label>
                   <Input type="number" step="0.01" {...register("impureza", { valueAsNumber: true })} />
                 </div>
+                <div className="space-y-2">
+                  <Label>Balanceiro</Label>
+                  <Input 
+                    {...register("balanceiro")} 
+                    readOnly 
+                    tabIndex={-1}
+                    className="bg-muted"
+                  />
+                </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Transporte */}
+          {/* Card 2: Transportadora */}
+          <Card className="border-info/20 bg-info/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Truck className="h-5 w-5 text-info" />
+                Transportadora
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
@@ -604,7 +624,7 @@ export default function RemessasVendaForm() {
             </CardContent>
           </Card>
 
-          {/* Card 2: Local de Entrega */}
+          {/* Card 3: Local de Entrega */}
           <Card className="border-warning/20 bg-warning/5">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -662,7 +682,7 @@ export default function RemessasVendaForm() {
             </CardContent>
           </Card>
 
-          {/* Card 3: Observações */}
+          {/* Card 4: Observações */}
           <Card className="border-muted-foreground/20 bg-muted/30">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
