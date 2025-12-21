@@ -150,9 +150,34 @@ export function EmitirNfeAutomaticoDialog({
         transportadora = transp;
       }
 
+      setStatus({ step: "creating_nfe", message: "Verificando numeração...", progress: 25 });
+
+      // 2. Buscar próximo número de NFe disponível para o emitente/série
+      const serieNfe = emitente.serie_nfe || 1;
+      
+      // Buscar o maior número já usado para este emitente/série
+      const { data: ultimaNfe } = await supabase
+        .from("notas_fiscais")
+        .select("numero")
+        .eq("emitente_id", emitente.id)
+        .eq("serie", serieNfe)
+        .not("numero", "is", null)
+        .order("numero", { ascending: false })
+        .limit(1)
+        .single();
+
+      // Usar o maior entre: último número no banco OU numero_atual_nfe do emitente
+      const ultimoNumeroUsado = Math.max(
+        ultimaNfe?.numero || 0,
+        emitente.numero_atual_nfe || 0
+      );
+      const proximoNumero = ultimoNumeroUsado + 1;
+
+      console.log("Próximo número NFe:", proximoNumero, "Série:", serieNfe);
+
       setStatus({ step: "creating_nfe", message: "Criando nota fiscal...", progress: 30 });
 
-      // 2. Criar a nota fiscal
+      // 3. Criar a nota fiscal
       const valorTotal = remessa.valor_nota || (remessa.kg_nota || 0) * (contrato.preco_kg || 0);
       const kgNota = remessa.kg_nota || remessa.kg_remessa || 0;
 
@@ -166,6 +191,9 @@ export function EmitirNfeAutomaticoDialog({
         operacao: 1, // Saída
         finalidade: 1, // Normal
         cfop_id: cfop.id,
+        // Numeração automática
+        numero: proximoNumero,
+        serie: serieNfe,
         dest_tipo: comprador.tipo_pessoa === "fisica" ? "PF" : "PJ",
         dest_cpf_cnpj: cleanDigits(comprador.cpf_cnpj, 14),
         dest_nome: comprador.nome,
@@ -374,6 +402,12 @@ export function EmitirNfeAutomaticoDialog({
             nota_fiscal_id: notaFiscal.id,
             status: "carregado_nfe",
           });
+
+          // Atualizar numero_atual_nfe do emitente para controle de sequência
+          await supabase
+            .from("emitentes_nfe")
+            .update({ numero_atual_nfe: proximoNumero })
+            .eq("id", emitente.id);
 
           setStatus({
             step: "success",

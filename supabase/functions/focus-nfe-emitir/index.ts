@@ -169,11 +169,18 @@ serve(async (req) => {
         })
         .eq("id", notaFiscalId);
 
+      // Verificar se é erro de duplicidade (código 539)
+      const isDuplicidade = responseData.status_sefaz === "539" || 
+        responseData.mensagem_sefaz?.includes("Duplicidade");
+
       return new Response(
         JSON.stringify({
           success: false,
-          error: responseData.mensagem || "Erro ao emitir NF-e",
+          error: isDuplicidade 
+            ? "NFe com número duplicado. O sistema tentará com um novo número na próxima emissão."
+            : (responseData.mensagem || "Erro ao emitir NF-e"),
           details: responseData,
+          isDuplicidade,
         }),
         {
           status: 400,
