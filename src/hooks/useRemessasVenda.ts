@@ -156,12 +156,13 @@ export function useTotaisContrato(contratoId: string | undefined) {
 
       const { data } = await supabase
         .from("remessas_venda")
-        .select("kg_nota, valor_nota")
+        .select("kg_remessa, valor_remessa")
         .eq("contrato_venda_id", contratoId)
         .neq("status", "cancelada");
 
-      const total_carregado_kg = data?.reduce((acc, r) => acc + (Number(r.kg_nota) || 0), 0) || 0;
-      const total_valor = data?.reduce((acc, r) => acc + (Number(r.valor_nota) || 0), 0) || 0;
+      // Usar kg_remessa e valor_remessa para controle do saldo do contrato
+      const total_carregado_kg = data?.reduce((acc, r) => acc + (Number(r.kg_remessa) || 0), 0) || 0;
+      const total_valor = data?.reduce((acc, r) => acc + (Number(r.valor_remessa) || 0), 0) || 0;
 
       return { total_carregado_kg, total_valor };
     },
