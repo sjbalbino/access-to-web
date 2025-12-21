@@ -134,7 +134,7 @@ export function useContratoVenda(id: string | undefined) {
         .select(`
           *,
           safra:safras(id, nome),
-          produto:produtos(id, nome),
+          produto:produtos(id, nome, tipo),
           comprador:clientes_fornecedores(id, nome, cpf_cnpj),
           inscricao_produtor:inscricoes_produtor(
             id, granja, inscricao_estadual,
@@ -156,11 +156,24 @@ export function useContratoVenda(id: string | undefined) {
       const total_carregado_kg = remessas?.reduce((acc, r) => acc + (Number(r.kg_nota) || 0), 0) || 0;
       const saldo_kg = (Number(data.quantidade_kg) || 0) - total_carregado_kg;
 
+      // Buscar informação da cultura para verificar se exige PH
+      let informar_ph = false;
+      if (data.produto?.tipo) {
+        const { data: culturaData } = await supabase
+          .from("culturas")
+          .select("informar_ph")
+          .ilike("nome", data.produto.tipo)
+          .single();
+        
+        informar_ph = culturaData?.informar_ph || false;
+      }
+
       return {
         ...data,
         total_carregado_kg,
         saldo_kg,
-      } as ContratoVenda;
+        informar_ph,
+      } as ContratoVenda & { informar_ph: boolean };
     },
     enabled: !!id,
   });
