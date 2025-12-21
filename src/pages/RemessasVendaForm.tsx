@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -32,8 +31,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, FileText, Receipt } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Receipt, ChevronDown, MapPin } from "lucide-react";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
 import {
   useRemessasVenda,
@@ -45,8 +49,6 @@ import {
   calcularDescontoUmidade,
   calcularDescontoImpureza,
 } from "@/hooks/useRemessasVenda";
-import { usePlacas } from "@/hooks/usePlacas";
-import { useProdutosSementes } from "@/hooks/useProdutosSementes";
 import { useSilos } from "@/hooks/useSilos";
 import { useTransportadoras } from "@/hooks/useTransportadoras";
 import { Spinner } from "@/components/ui/spinner";
@@ -55,19 +57,30 @@ import { ptBR } from "date-fns/locale";
 
 interface FormData {
   data_remessa: string;
-  placa_id: string;
   peso_bruto: number;
   peso_tara: number;
-  variedade_id: string;
   silo_id: string;
   ph: number;
   umidade: number;
   impureza: number;
   transportadora_id: string;
   motorista: string;
+  placa: string;
+  uf_placa: string;
   balanceiro: string;
   romaneio: number;
   observacoes: string;
+  // Local de entrega
+  local_entrega_nome: string;
+  local_entrega_cnpj_cpf: string;
+  local_entrega_ie: string;
+  local_entrega_logradouro: string;
+  local_entrega_numero: string;
+  local_entrega_complemento: string;
+  local_entrega_bairro: string;
+  local_entrega_cidade: string;
+  local_entrega_uf: string;
+  local_entrega_cep: string;
 }
 
 export default function RemessasVendaForm() {
@@ -79,15 +92,16 @@ export default function RemessasVendaForm() {
   const [kgDescontoUmidade, setKgDescontoUmidade] = useState(0);
   const [kgDescontoImpureza, setKgDescontoImpureza] = useState(0);
   const [kgNota, setKgNota] = useState(0);
-  const [sacos, setSacos] = useState(0);
+  const [sacosRemessa, setSacosRemessa] = useState(0);
+  const [sacosNota, setSacosNota] = useState(0);
+  const [valorRemessa, setValorRemessa] = useState(0);
   const [valorNota, setValorNota] = useState(0);
+  const [localEntregaOpen, setLocalEntregaOpen] = useState(false);
 
   const { data: contrato, isLoading: loadingContrato } = useContratoVenda(id);
   const { data: remessas, isLoading: loadingRemessas } = useRemessasVenda(id);
   const { data: proximoCodigo } = useProximoCodigoRemessa(id);
   const { data: totais } = useTotaisContrato(id);
-  const { data: placas } = usePlacas();
-  const { data: variedades } = useProdutosSementes();
   const { data: silos } = useSilos();
   const { transportadoras } = useTransportadoras();
 
@@ -103,6 +117,19 @@ export default function RemessasVendaForm() {
       umidade: 0,
       impureza: 0,
       romaneio: 0,
+      placa: "",
+      uf_placa: "",
+      motorista: "",
+      local_entrega_nome: "",
+      local_entrega_cnpj_cpf: "",
+      local_entrega_ie: "",
+      local_entrega_logradouro: "",
+      local_entrega_numero: "",
+      local_entrega_complemento: "",
+      local_entrega_bairro: "",
+      local_entrega_cidade: "",
+      local_entrega_uf: "",
+      local_entrega_cep: "",
     },
   });
 
@@ -110,15 +137,44 @@ export default function RemessasVendaForm() {
   const pesoTara = watch("peso_tara");
   const umidade = watch("umidade");
   const impureza = watch("impureza");
+  const transportadoraId = watch("transportadora_id");
 
-  // Calculate peso_liquido
+  // Carregar local de entrega do contrato quando abrir
+  useEffect(() => {
+    if (contrato) {
+      setValue("local_entrega_nome", contrato.local_entrega_nome || "");
+      setValue("local_entrega_cnpj_cpf", contrato.local_entrega_cnpj_cpf || "");
+      setValue("local_entrega_ie", contrato.local_entrega_ie || "");
+      setValue("local_entrega_logradouro", contrato.local_entrega_logradouro || "");
+      setValue("local_entrega_numero", contrato.local_entrega_numero || "");
+      setValue("local_entrega_complemento", contrato.local_entrega_complemento || "");
+      setValue("local_entrega_bairro", contrato.local_entrega_bairro || "");
+      setValue("local_entrega_cidade", contrato.local_entrega_cidade || "");
+      setValue("local_entrega_uf", contrato.local_entrega_uf || "");
+      setValue("local_entrega_cep", contrato.local_entrega_cep || "");
+    }
+  }, [contrato, setValue]);
+
+  // Quando selecionar transportadora, preencher placa, UF e motorista padrão
+  useEffect(() => {
+    if (transportadoraId && transportadoras) {
+      const transp = transportadoras.find(t => t.id === transportadoraId);
+      if (transp) {
+        if (transp.placa_padrao) setValue("placa", transp.placa_padrao);
+        if (transp.uf_placa_padrao) setValue("uf_placa", transp.uf_placa_padrao);
+        if (transp.motorista_padrao) setValue("motorista", transp.motorista_padrao);
+      }
+    }
+  }, [transportadoraId, transportadoras, setValue]);
+
+  // Calculate peso_liquido (Kgs da Remessa)
   useEffect(() => {
     const liquido = (pesoBruto || 0) - (pesoTara || 0);
     setPesoLiquido(liquido > 0 ? liquido : 0);
     setKgRemessa(liquido > 0 ? liquido : 0);
   }, [pesoBruto, pesoTara]);
 
-  // Calculate discounts
+  // Calculate discounts and values
   useEffect(() => {
     const descontoUmidade = calcularDescontoUmidade(kgRemessa, umidade || 0);
     const descontoImpureza = calcularDescontoImpureza(kgRemessa, impureza || 0);
@@ -127,24 +183,32 @@ export default function RemessasVendaForm() {
 
     const kgFinal = kgRemessa - descontoUmidade - descontoImpureza;
     setKgNota(kgFinal > 0 ? kgFinal : 0);
-    setSacos(kgFinal > 0 ? kgFinal / 60 : 0); // 60kg por saco padrão
+
+    // Sacos separados
+    setSacosRemessa(kgRemessa > 0 ? kgRemessa / 60 : 0);
+    setSacosNota(kgFinal > 0 ? kgFinal / 60 : 0);
 
     const preco = contrato?.preco_kg || 0;
+    // Valor Remessa = Kgs Remessa * Preço (baixa do contrato)
+    setValorRemessa(kgRemessa * preco);
+    // Valor Nota = Kgs Nota * Preço (vai na nota fiscal)
     setValorNota(kgFinal * preco);
   }, [kgRemessa, umidade, impureza, contrato?.preco_kg]);
 
   const onSubmit = async (data: FormData) => {
-    if (!id) return;
+    if (!id || !contrato) return;
 
     const payload: RemessaVendaInsert = {
       contrato_venda_id: id,
       codigo: proximoCodigo || 1,
       data_remessa: data.data_remessa,
-      placa_id: data.placa_id || null,
+      placa_id: null, // Não usar mais placa_id, usar placa direta
+      placa: data.placa || null,
+      uf_placa: data.uf_placa || null,
       peso_bruto: data.peso_bruto,
       peso_tara: data.peso_tara,
       peso_liquido: pesoLiquido,
-      variedade_id: data.variedade_id || null,
+      variedade_id: contrato.produto_id || null, // Pegar do contrato
       silo_id: data.silo_id || null,
       ph: data.ph,
       umidade: data.umidade,
@@ -153,9 +217,11 @@ export default function RemessasVendaForm() {
       kg_desconto_umidade: kgDescontoUmidade,
       kg_desconto_impureza: kgDescontoImpureza,
       kg_nota: kgNota,
-      sacos: sacos,
+      sacos: sacosNota, // Manter compatibilidade
+      sacos_remessa: sacosRemessa,
+      sacos_nota: sacosNota,
       preco_kg: contrato?.preco_kg || 0,
-      valor_remessa: valorNota,
+      valor_remessa: valorRemessa,
       valor_nota: valorNota,
       transportadora_id: data.transportadora_id || null,
       motorista: data.motorista || null,
@@ -164,26 +230,47 @@ export default function RemessasVendaForm() {
       observacoes: data.observacoes || null,
       status: "pendente",
       nota_fiscal_id: null,
+      // Local de entrega
+      local_entrega_nome: data.local_entrega_nome || null,
+      local_entrega_cnpj_cpf: data.local_entrega_cnpj_cpf || null,
+      local_entrega_ie: data.local_entrega_ie || null,
+      local_entrega_logradouro: data.local_entrega_logradouro || null,
+      local_entrega_numero: data.local_entrega_numero || null,
+      local_entrega_complemento: data.local_entrega_complemento || null,
+      local_entrega_bairro: data.local_entrega_bairro || null,
+      local_entrega_cidade: data.local_entrega_cidade || null,
+      local_entrega_uf: data.local_entrega_uf || null,
+      local_entrega_cep: data.local_entrega_cep || null,
     };
 
     await createRemessa.mutateAsync(payload);
 
-    // Reset form
+    // Reset form (manter local de entrega)
     reset({
       data_remessa: new Date().toISOString().split("T")[0],
-      placa_id: "",
       peso_bruto: 0,
       peso_tara: 0,
-      variedade_id: "",
       silo_id: "",
       ph: 0,
       umidade: 0,
       impureza: 0,
       transportadora_id: "",
       motorista: "",
+      placa: "",
+      uf_placa: "",
       balanceiro: "",
       romaneio: 0,
       observacoes: "",
+      local_entrega_nome: contrato.local_entrega_nome || "",
+      local_entrega_cnpj_cpf: contrato.local_entrega_cnpj_cpf || "",
+      local_entrega_ie: contrato.local_entrega_ie || "",
+      local_entrega_logradouro: contrato.local_entrega_logradouro || "",
+      local_entrega_numero: contrato.local_entrega_numero || "",
+      local_entrega_complemento: contrato.local_entrega_complemento || "",
+      local_entrega_bairro: contrato.local_entrega_bairro || "",
+      local_entrega_cidade: contrato.local_entrega_cidade || "",
+      local_entrega_uf: contrato.local_entrega_uf || "",
+      local_entrega_cep: contrato.local_entrega_cep || "",
     });
   };
 
@@ -198,11 +285,11 @@ export default function RemessasVendaForm() {
     navigate(`/notas-fiscais/nova?remessa_id=${remessaId}&contrato_id=${id}`);
   };
 
-  const formatNumber = (value: number | null | undefined) => {
+  const formatNumber = (value: number | null | undefined, decimals: number = 0) => {
     if (value === null || value === undefined) return "-";
     return new Intl.NumberFormat("pt-BR", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
     }).format(value);
   };
 
@@ -256,8 +343,18 @@ export default function RemessasVendaForm() {
                 Remessas - Contrato #{contrato.numero}
               </h1>
               <p className="text-muted-foreground">
-                {contrato.comprador?.nome} • {contrato.safra?.nome} • {contrato.produto?.nome}
+                {contrato.comprador?.nome} • {contrato.safra?.nome}
               </p>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary" className="text-base font-semibold">
+                  {contrato.produto?.nome}
+                </Badge>
+                {contrato.numero_contrato_comprador && (
+                  <Badge variant="outline">
+                    Contrato Comprador: {contrato.numero_contrato_comprador}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -309,35 +406,110 @@ export default function RemessasVendaForm() {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {/* Pesagem */}
-              <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Data *</Label>
                   <Input type="date" {...register("data_remessa")} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Placa</Label>
-                  <Select value={watch("placa_id")} onValueChange={(v) => setValue("placa_id", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {placas?.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.placa}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
                   <Label>Peso Tara (kg)</Label>
-                  <Input type="number" step="0.01" {...register("peso_tara", { valueAsNumber: true })} />
+                  <Input type="number" step="1" {...register("peso_tara", { valueAsNumber: true })} />
                 </div>
                 <div className="space-y-2">
                   <Label>Peso Bruto (kg)</Label>
-                  <Input type="number" step="0.01" {...register("peso_bruto", { valueAsNumber: true })} />
+                  <Input type="number" step="1" {...register("peso_bruto", { valueAsNumber: true })} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Peso Líquido</Label>
-                  <Input type="number" value={pesoLiquido.toFixed(2)} readOnly className="bg-muted font-bold" />
+                  <Label>Kgs da Remessa</Label>
+                  <Input 
+                    type="text" 
+                    value={formatNumber(pesoLiquido)} 
+                    readOnly 
+                    className="bg-muted font-bold text-right" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sacos Remessa</Label>
+                  <Input 
+                    type="text" 
+                    value={formatNumber(sacosRemessa, 2)} 
+                    readOnly 
+                    className="bg-muted text-right" 
+                  />
+                </div>
+              </div>
+
+              {/* Qualidade e Descontos */}
+              <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
+                <div className="space-y-2">
+                  <Label>PH</Label>
+                  <Input type="number" step="0.01" {...register("ph", { valueAsNumber: true })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Umidade %</Label>
+                  <Input type="number" step="0.01" {...register("umidade", { valueAsNumber: true })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Impureza %</Label>
+                  <Input type="number" step="0.01" {...register("impureza", { valueAsNumber: true })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Desc. Umidade (kg)</Label>
+                  <Input 
+                    type="text" 
+                    value={formatNumber(kgDescontoUmidade)} 
+                    readOnly 
+                    className="bg-muted text-destructive text-right" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Desc. Impureza (kg)</Label>
+                  <Input 
+                    type="text" 
+                    value={formatNumber(kgDescontoImpureza)} 
+                    readOnly 
+                    className="bg-muted text-destructive text-right" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Kg Nota</Label>
+                  <Input 
+                    type="text" 
+                    value={formatNumber(kgNota)} 
+                    readOnly 
+                    className="bg-muted font-bold text-success text-right" 
+                  />
+                </div>
+              </div>
+
+              {/* Valores */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div className="space-y-2">
+                  <Label>Sacos Nota</Label>
+                  <Input 
+                    type="text" 
+                    value={formatNumber(sacosNota, 2)} 
+                    readOnly 
+                    className="bg-muted text-right" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor Remessa</Label>
+                  <Input 
+                    type="text" 
+                    value={formatCurrency(valorRemessa)} 
+                    readOnly 
+                    className="bg-muted font-bold text-right" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor Nota</Label>
+                  <Input 
+                    type="text" 
+                    value={formatCurrency(valorNota)} 
+                    readOnly 
+                    className="bg-muted font-bold text-primary text-right" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Silo</Label>
@@ -352,59 +524,14 @@ export default function RemessasVendaForm() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              {/* Qualidade e Descontos */}
-              <div className="grid grid-cols-2 sm:grid-cols-7 gap-4">
                 <div className="space-y-2">
-                  <Label>Variedade</Label>
-                  <Select value={watch("variedade_id")} onValueChange={(v) => setValue("variedade_id", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {variedades?.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>{v.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>PH</Label>
-                  <Input type="number" step="0.01" {...register("ph", { valueAsNumber: true })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Umidade %</Label>
-                  <Input type="number" step="0.01" {...register("umidade", { valueAsNumber: true })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Impureza %</Label>
-                  <Input type="number" step="0.01" {...register("impureza", { valueAsNumber: true })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Desc. Umidade</Label>
-                  <Input type="number" value={kgDescontoUmidade.toFixed(2)} readOnly className="bg-muted text-destructive" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Desc. Impureza</Label>
-                  <Input type="number" value={kgDescontoImpureza.toFixed(2)} readOnly className="bg-muted text-destructive" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Kg Nota</Label>
-                  <Input type="number" value={kgNota.toFixed(2)} readOnly className="bg-muted font-bold text-success" />
+                  <Label>Romaneio</Label>
+                  <Input type="number" {...register("romaneio", { valueAsNumber: true })} />
                 </div>
               </div>
 
-              {/* Valores e Transporte */}
-              <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
-                <div className="space-y-2">
-                  <Label>Sacos</Label>
-                  <Input type="number" value={sacos.toFixed(2)} readOnly className="bg-muted" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Valor Nota</Label>
-                  <Input type="text" value={formatCurrency(valorNota)} readOnly className="bg-muted font-bold text-primary" />
-                </div>
+              {/* Transporte */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
                   <Select value={watch("transportadora_id")} onValueChange={(v) => setValue("transportadora_id", v)}>
@@ -419,6 +546,14 @@ export default function RemessasVendaForm() {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label>Placa</Label>
+                  <Input {...register("placa")} placeholder="AAA-0000" maxLength={8} />
+                </div>
+                <div className="space-y-2">
+                  <Label>UF Placa</Label>
+                  <Input {...register("uf_placa")} placeholder="SP" maxLength={2} />
+                </div>
+                <div className="space-y-2">
                   <Label>Motorista</Label>
                   <Input {...register("motorista")} />
                 </div>
@@ -426,11 +561,73 @@ export default function RemessasVendaForm() {
                   <Label>Balanceiro</Label>
                   <Input {...register("balanceiro")} />
                 </div>
-                <div className="space-y-2">
-                  <Label>Romaneio</Label>
-                  <Input type="number" {...register("romaneio", { valueAsNumber: true })} />
-                </div>
               </div>
+
+              {/* Local de Entrega (colapsável) */}
+              <Collapsible open={localEntregaOpen} onOpenChange={setLocalEntregaOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button type="button" variant="outline" className="w-full justify-between">
+                    <span className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Local de Entrega
+                      {watch("local_entrega_nome") && (
+                        <span className="text-muted-foreground text-sm">
+                          - {watch("local_entrega_nome")} ({watch("local_entrega_cidade")}/{watch("local_entrega_uf")})
+                        </span>
+                      )}
+                    </span>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${localEntregaOpen ? 'rotate-180' : ''}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-4 space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="space-y-2 col-span-2">
+                      <Label>Nome/Razão Social</Label>
+                      <Input {...register("local_entrega_nome")} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>CNPJ/CPF</Label>
+                      <Input {...register("local_entrega_cnpj_cpf")} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>IE</Label>
+                      <Input {...register("local_entrega_ie")} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
+                    <div className="space-y-2">
+                      <Label>CEP</Label>
+                      <Input {...register("local_entrega_cep")} />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <Label>Logradouro</Label>
+                      <Input {...register("local_entrega_logradouro")} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Número</Label>
+                      <Input {...register("local_entrega_numero")} />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <Label>Complemento</Label>
+                      <Input {...register("local_entrega_complemento")} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Bairro</Label>
+                      <Input {...register("local_entrega_bairro")} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Cidade</Label>
+                      <Input {...register("local_entrega_cidade")} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>UF</Label>
+                      <Input {...register("local_entrega_uf")} maxLength={2} />
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Observações e Botão */}
               <div className="flex gap-4 items-end">
@@ -464,12 +661,11 @@ export default function RemessasVendaForm() {
                     <TableRow>
                       <TableHead>Cód</TableHead>
                       <TableHead>Data</TableHead>
+                      <TableHead>Transportadora</TableHead>
                       <TableHead>Placa</TableHead>
-                      <TableHead className="text-right">Bruto</TableHead>
-                      <TableHead className="text-right">Tara</TableHead>
-                      <TableHead className="text-right">Líquido</TableHead>
+                      <TableHead className="text-right">Kg Remessa</TableHead>
                       <TableHead className="text-right">Kg Nota</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead className="text-right">Valor Nota</TableHead>
                       <TableHead>Silo</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Nota</TableHead>
@@ -479,7 +675,7 @@ export default function RemessasVendaForm() {
                   <TableBody>
                     {remessas?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                           Nenhuma remessa cadastrada
                         </TableCell>
                       </TableRow>
@@ -490,10 +686,9 @@ export default function RemessasVendaForm() {
                           <TableCell>
                             {r.data_remessa ? format(new Date(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                           </TableCell>
-                          <TableCell>{r.placa?.placa || "-"}</TableCell>
-                          <TableCell className="text-right">{formatNumber(r.peso_bruto)}</TableCell>
-                          <TableCell className="text-right">{formatNumber(r.peso_tara)}</TableCell>
-                          <TableCell className="text-right">{formatNumber(r.peso_liquido)}</TableCell>
+                          <TableCell>{r.transportadora?.nome || "-"}</TableCell>
+                          <TableCell>{r.placa || "-"}</TableCell>
+                          <TableCell className="text-right">{formatNumber(r.kg_remessa)}</TableCell>
                           <TableCell className="text-right font-medium">{formatNumber(r.kg_nota)}</TableCell>
                           <TableCell className="text-right">{formatCurrency(r.valor_nota)}</TableCell>
                           <TableCell>{r.silo?.nome || "-"}</TableCell>
