@@ -29,11 +29,13 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Search, Pencil, Trash2, Truck } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Truck, Loader2 } from "lucide-react";
 import { useTransportadoras, TransportadoraInsert } from "@/hooks/useTransportadoras";
 import { useGranjas } from "@/hooks/useGranjas";
 import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
+import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 
 const UFS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
@@ -48,6 +50,9 @@ export default function Transportadoras() {
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTransportadora, setSelectedTransportadora] = useState<any>(null);
+
+  const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
+  const { isLoading: cepLoading, fetchCep } = useCepLookup();
 
   const [formData, setFormData] = useState<TransportadoraInsert>({
     granja_id: null,
@@ -73,6 +78,41 @@ export default function Transportadoras() {
     t.cpf_cnpj?.includes(search) ||
     t.cidade?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleCnpjBlur = async (cnpj: string) => {
+    const cleanCnpj = cnpj.replace(/\D/g, "");
+    if (cleanCnpj.length !== 14) return;
+    
+    const data = await fetchCnpj(cnpj);
+    if (data) {
+      setFormData((prev) => ({
+        ...prev,
+        nome: data.razao_social || prev.nome,
+        inscricao_estadual: prev.inscricao_estadual,
+        logradouro: data.logradouro || prev.logradouro,
+        numero: data.numero || prev.numero,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.cidade || prev.cidade,
+        uf: data.uf || prev.uf,
+        cep: data.cep?.replace(/\D/g, "") || prev.cep,
+        telefone: data.telefone || prev.telefone,
+        email: data.email || prev.email,
+      }));
+    }
+  };
+
+  const handleCepBlur = async (cep: string) => {
+    const data = await fetchCep(cep);
+    if (data) {
+      setFormData((prev) => ({
+        ...prev,
+        logradouro: data.logradouro || prev.logradouro,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.localidade || prev.cidade,
+        uf: data.uf || prev.uf,
+      }));
+    }
+  };
 
   const handleOpenDialog = (transportadora?: any) => {
     if (transportadora) {
@@ -251,25 +291,23 @@ export default function Transportadoras() {
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* CNPJ primeiro */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="nome">Nome/Razão Social *</Label>
-                <Input
-                  id="nome"
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  maxLength={100}
-                />
-              </div>
-
               <div className="space-y-2">
-                <Label htmlFor="cpf_cnpj">CPF/CNPJ</Label>
-                <Input
-                  id="cpf_cnpj"
-                  value={formData.cpf_cnpj || ""}
-                  onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value })}
-                  maxLength={14}
-                />
+                <Label htmlFor="cpf_cnpj">CNPJ</Label>
+                <div className="relative">
+                  <Input
+                    id="cpf_cnpj"
+                    value={formData.cpf_cnpj ? formatCnpj(formData.cpf_cnpj) : ""}
+                    onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value.replace(/\D/g, "") })}
+                    onBlur={(e) => handleCnpjBlur(e.target.value)}
+                    placeholder="00.000.000/0000-00"
+                    maxLength={18}
+                  />
+                  {cnpjLoading && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -283,7 +321,35 @@ export default function Transportadoras() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome/Razão Social *</Label>
+              <Input
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                maxLength={100}
+              />
+            </div>
+
+            {/* CEP e endereço */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cep">CEP</Label>
+                <div className="relative">
+                  <Input
+                    id="cep"
+                    value={formData.cep ? formatCep(formData.cep) : ""}
+                    onChange={(e) => setFormData({ ...formData, cep: e.target.value.replace(/\D/g, "") })}
+                    onBlur={(e) => handleCepBlur(e.target.value)}
+                    placeholder="00000-000"
+                    maxLength={9}
+                  />
+                  {cepLoading && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+              </div>
+
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="logradouro">Logradouro</Label>
                 <Input
@@ -344,13 +410,22 @@ export default function Transportadoras() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cep">CEP</Label>
-                <Input
-                  id="cep"
-                  value={formData.cep || ""}
-                  onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
-                  maxLength={8}
-                />
+                <Label htmlFor="granja_id">Granja</Label>
+                <Select
+                  value={formData.granja_id || ""}
+                  onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {granjas.map((granja) => (
+                      <SelectItem key={granja.id} value={granja.id}>
+                        {granja.nome_fantasia || granja.razao_social}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -415,25 +490,6 @@ export default function Transportadoras() {
                   maxLength={20}
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="granja_id">Granja</Label>
-              <Select
-                value={formData.granja_id || ""}
-                onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a granja" />
-                </SelectTrigger>
-                <SelectContent>
-                  {granjas.map((granja) => (
-                    <SelectItem key={granja.id} value={granja.id}>
-                      {granja.nome_fantasia || granja.razao_social}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="flex items-center gap-2">

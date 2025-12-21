@@ -34,7 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { Building, Plus, Pencil, Trash2, Search, Crown } from "lucide-react";
+import { Building, Plus, Pencil, Trash2, Search, Crown, Loader2 } from "lucide-react";
 import {
   useTenants,
   useCreateTenant,
@@ -44,6 +44,7 @@ import {
   Tenant,
 } from "@/hooks/useTenants";
 import { useCepLookup } from "@/hooks/useCepLookup";
+import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 
 const emptyTenant: TenantInput = {
   codigo: "",
@@ -77,6 +78,7 @@ export default function Tenants() {
   const deleteMutation = useDeleteTenant();
 
   const { fetchCep, isLoading: isLoadingCep } = useCepLookup();
+  const { fetchCnpj, isLoading: isLoadingCnpj } = useCnpjLookup();
 
   const filteredTenants = tenants?.filter(
     (tenant) =>
@@ -130,6 +132,29 @@ export default function Tenants() {
       await deleteMutation.mutateAsync(tenantToDelete.id);
       setIsDeleteDialogOpen(false);
       setTenantToDelete(null);
+    }
+  };
+
+  const handleCnpjBlur = async () => {
+    const cnpj = formData.cnpj?.replace(/\D/g, "");
+    if (cnpj && cnpj.length === 14) {
+      const data = await fetchCnpj(cnpj);
+      if (data) {
+        setFormData((prev) => ({
+          ...prev,
+          razao_social: data.razao_social || prev.razao_social,
+          nome_fantasia: data.nome_fantasia || prev.nome_fantasia,
+          logradouro: data.logradouro || prev.logradouro,
+          numero: data.numero || prev.numero,
+          complemento: data.complemento || prev.complemento,
+          bairro: data.bairro || prev.bairro,
+          cidade: data.cidade || prev.cidade,
+          uf: data.uf || prev.uf,
+          cep: data.cep?.replace(/\D/g, "") || prev.cep,
+          telefone: data.telefone || prev.telefone,
+          email: data.email || prev.email,
+        }));
+      }
     }
   };
 
@@ -279,6 +304,37 @@ export default function Tenants() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
+              {/* CNPJ primeiro */}
+              <div>
+                <Label htmlFor="cnpj">CNPJ</Label>
+                <div className="relative">
+                  <Input
+                    id="cnpj"
+                    value={formData.cnpj ? formatCnpj(formData.cnpj) : ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cnpj: e.target.value.replace(/\D/g, "") })
+                    }
+                    onBlur={handleCnpjBlur}
+                    placeholder="00.000.000/0000-00"
+                    maxLength={18}
+                  />
+                  {isLoadingCnpj && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                <Input
+                  id="inscricao_estadual"
+                  value={formData.inscricao_estadual || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, inscricao_estadual: e.target.value })
+                  }
+                />
+              </div>
+
               <div className="col-span-2">
                 <Label htmlFor="razao_social">Razão Social *</Label>
                 <Input
@@ -303,37 +359,32 @@ export default function Tenants() {
               </div>
 
               <div>
-                <Label htmlFor="cnpj">CNPJ</Label>
-                <Input
-                  id="cnpj"
-                  value={formData.cnpj || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, cnpj: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-                <Input
-                  id="inscricao_estadual"
-                  value={formData.inscricao_estadual || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, inscricao_estadual: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
                 <Label htmlFor="cep">CEP</Label>
+                <div className="relative">
+                  <Input
+                    id="cep"
+                    value={formData.cep || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cep: e.target.value })
+                    }
+                    onBlur={handleCepBlur}
+                    disabled={isLoadingCep}
+                  />
+                  {isLoadingCep && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="uf">UF</Label>
                 <Input
-                  id="cep"
-                  value={formData.cep || ""}
+                  id="uf"
+                  value={formData.uf || ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, cep: e.target.value })
+                    setFormData({ ...formData, uf: e.target.value })
                   }
-                  onBlur={handleCepBlur}
-                  disabled={isLoadingCep}
+                  maxLength={2}
                 />
               </div>
 
@@ -389,18 +440,6 @@ export default function Tenants() {
                   onChange={(e) =>
                     setFormData({ ...formData, cidade: e.target.value })
                   }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="uf">UF</Label>
-                <Input
-                  id="uf"
-                  value={formData.uf || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, uf: e.target.value })
-                  }
-                  maxLength={2}
                 />
               </div>
 

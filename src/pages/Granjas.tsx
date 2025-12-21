@@ -41,6 +41,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
+import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 
 const emptyGranja: GranjaInput = {
   razao_social: "",
@@ -68,12 +69,36 @@ export default function Granjas() {
   const deleteGranja = useDeleteGranja();
   const { canEdit } = useAuth();
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
+  const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedGranja, setSelectedGranja] = useState<Granja | null>(null);
   const [formData, setFormData] = useState<GranjaInput>(emptyGranja);
+
+  const handleCnpjBlur = async (cnpj: string) => {
+    const cleanCnpj = cnpj.replace(/\D/g, "");
+    if (cleanCnpj.length !== 14) return;
+    
+    const data = await fetchCnpj(cnpj);
+    if (data) {
+      setFormData((prev) => ({
+        ...prev,
+        razao_social: data.razao_social || prev.razao_social,
+        nome_fantasia: data.nome_fantasia || prev.nome_fantasia,
+        logradouro: data.logradouro || prev.logradouro,
+        numero: data.numero || prev.numero,
+        complemento: data.complemento || prev.complemento,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.cidade || prev.cidade,
+        uf: data.uf || prev.uf,
+        cep: data.cep?.replace(/\D/g, "") || prev.cep,
+        telefone: data.telefone || prev.telefone,
+        email: data.email || prev.email,
+      }));
+    }
+  };
 
   const handleCepBlur = async (cep: string) => {
     const data = await fetchCep(cep);
@@ -280,6 +305,7 @@ export default function Granjas() {
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            {/* CPF/CNPJ primeiro */}
             <div className="space-y-2">
               <Label htmlFor="cpf">CPF (Pessoa Física)</Label>
               <Input
@@ -292,13 +318,19 @@ export default function Granjas() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="cnpj">CNPJ (Pessoa Jurídica)</Label>
-              <Input
-                id="cnpj"
-                value={formData.cnpj || ""}
-                onChange={(e) => setFormData({ ...formData, cnpj: e.target.value.replace(/\D/g, "").slice(0, 14) })}
-                placeholder="Somente números"
-                maxLength={14}
-              />
+              <div className="relative">
+                <Input
+                  id="cnpj"
+                  value={formData.cnpj ? formatCnpj(formData.cnpj) : ""}
+                  onChange={(e) => setFormData({ ...formData, cnpj: e.target.value.replace(/\D/g, "").slice(0, 14) })}
+                  onBlur={(e) => handleCnpjBlur(e.target.value)}
+                  placeholder="00.000.000/0000-00"
+                  maxLength={18}
+                />
+                {cnpjLoading && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="inscricao_estadual">Inscrição Estadual *</Label>
@@ -306,6 +338,15 @@ export default function Granjas() {
                 id="inscricao_estadual"
                 value={formData.inscricao_estadual || ""}
                 onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="total_hectares">Total de Hectares</Label>
+              <Input
+                id="total_hectares"
+                type="number"
+                value={formData.total_hectares || 0}
+                onChange={(e) => setFormData({ ...formData, total_hectares: parseFloat(e.target.value) || 0 })}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -340,6 +381,15 @@ export default function Granjas() {
                   <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
                 )}
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="uf">UF</Label>
+              <Input
+                id="uf"
+                value={formData.uf || ""}
+                onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
+                maxLength={2}
+              />
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="logradouro">Logradouro</Label>
@@ -379,24 +429,6 @@ export default function Granjas() {
                 id="cidade"
                 value={formData.cidade || ""}
                 onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="uf">UF</Label>
-              <Input
-                id="uf"
-                value={formData.uf || ""}
-                onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
-                maxLength={2}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="total_hectares">Total de Hectares</Label>
-              <Input
-                id="total_hectares"
-                type="number"
-                value={formData.total_hectares || 0}
-                onChange={(e) => setFormData({ ...formData, total_hectares: parseFloat(e.target.value) || 0 })}
               />
             </div>
             <div className="space-y-2">
