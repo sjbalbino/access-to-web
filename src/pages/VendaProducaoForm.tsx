@@ -720,7 +720,7 @@ export default function VendaProducaoForm() {
                         <TableCell>
                           {r.data_remessa ? format(new Date(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                         </TableCell>
-                        <TableCell>{r.placa?.placa || "-"}</TableCell>
+                        <TableCell>{r.placa || "-"}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.peso_bruto)}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.peso_tara)}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.kg_nota)}</TableCell>

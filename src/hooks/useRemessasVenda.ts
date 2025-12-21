@@ -8,6 +8,8 @@ export interface RemessaVenda {
   codigo: number | null;
   data_remessa: string;
   placa_id: string | null;
+  placa: string | null;
+  uf_placa: string | null;
   peso_bruto: number | null;
   peso_tara: number | null;
   peso_liquido: number | null;
@@ -21,6 +23,8 @@ export interface RemessaVenda {
   kg_desconto_impureza: number | null;
   kg_nota: number | null;
   sacos: number | null;
+  sacos_remessa: number | null;
+  sacos_nota: number | null;
   preco_kg: number | null;
   valor_remessa: number | null;
   valor_nota: number | null;
@@ -31,17 +35,28 @@ export interface RemessaVenda {
   balanceiro: string | null;
   status: string | null;
   observacoes: string | null;
+  // Local de entrega (editável por remessa)
+  local_entrega_nome: string | null;
+  local_entrega_cnpj_cpf: string | null;
+  local_entrega_ie: string | null;
+  local_entrega_logradouro: string | null;
+  local_entrega_numero: string | null;
+  local_entrega_complemento: string | null;
+  local_entrega_bairro: string | null;
+  local_entrega_cidade: string | null;
+  local_entrega_uf: string | null;
+  local_entrega_cep: string | null;
   created_at: string;
   updated_at: string;
   // Joins
-  placa?: { id: string; placa: string } | null;
+  placaObj?: { id: string; placa: string } | null;
   variedade?: { id: string; nome: string } | null;
   silo?: { id: string; nome: string } | null;
-  transportadora?: { id: string; nome: string } | null;
+  transportadora?: { id: string; nome: string; placa_padrao: string | null; uf_placa_padrao: string | null; motorista_padrao: string | null } | null;
   nota_fiscal?: { id: string; numero: number | null; status: string | null; chave_acesso: string | null } | null;
 }
 
-export type RemessaVendaInsert = Omit<RemessaVenda, "id" | "created_at" | "updated_at" | "placa" | "variedade" | "silo" | "transportadora" | "nota_fiscal">;
+export type RemessaVendaInsert = Omit<RemessaVenda, "id" | "created_at" | "updated_at" | "placaObj" | "variedade" | "silo" | "transportadora" | "nota_fiscal">;
 export type RemessaVendaUpdate = Partial<RemessaVendaInsert>;
 
 export function useRemessasVenda(contratoId: string | undefined) {
@@ -54,10 +69,10 @@ export function useRemessasVenda(contratoId: string | undefined) {
         .from("remessas_venda")
         .select(`
           *,
-          placa:placas(id, placa),
+          placaObj:placas(id, placa),
           variedade:produtos(id, nome),
           silo:silos(id, nome),
-          transportadora:transportadoras(id, nome),
+          transportadora:transportadoras(id, nome, placa_padrao, uf_placa_padrao, motorista_padrao),
           nota_fiscal:notas_fiscais(id, numero, status, chave_acesso)
         `)
         .eq("contrato_venda_id", contratoId)
@@ -80,10 +95,10 @@ export function useRemessaVenda(id: string | undefined) {
         .from("remessas_venda")
         .select(`
           *,
-          placa:placas(id, placa),
+          placaObj:placas(id, placa),
           variedade:produtos(id, nome),
           silo:silos(id, nome),
-          transportadora:transportadoras(id, nome),
+          transportadora:transportadoras(id, nome, placa_padrao, uf_placa_padrao, motorista_padrao),
           nota_fiscal:notas_fiscais(id, numero, status, chave_acesso)
         `)
         .eq("id", id)

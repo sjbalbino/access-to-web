@@ -2391,6 +2391,16 @@ export type Database = {
           kg_desconto_umidade: number | null
           kg_nota: number | null
           kg_remessa: number | null
+          local_entrega_bairro: string | null
+          local_entrega_cep: string | null
+          local_entrega_cidade: string | null
+          local_entrega_cnpj_cpf: string | null
+          local_entrega_complemento: string | null
+          local_entrega_ie: string | null
+          local_entrega_logradouro: string | null
+          local_entrega_nome: string | null
+          local_entrega_numero: string | null
+          local_entrega_uf: string | null
           motorista: string | null
           nota_fiscal_id: string | null
           observacoes: string | null
@@ -2398,13 +2408,17 @@ export type Database = {
           peso_liquido: number | null
           peso_tara: number | null
           ph: number | null
+          placa: string | null
           placa_id: string | null
           preco_kg: number | null
           romaneio: number | null
           sacos: number | null
+          sacos_nota: number | null
+          sacos_remessa: number | null
           silo_id: string | null
           status: string | null
           transportadora_id: string | null
+          uf_placa: string | null
           umidade: number | null
           updated_at: string
           valor_nota: number | null
@@ -2423,6 +2437,16 @@ export type Database = {
           kg_desconto_umidade?: number | null
           kg_nota?: number | null
           kg_remessa?: number | null
+          local_entrega_bairro?: string | null
+          local_entrega_cep?: string | null
+          local_entrega_cidade?: string | null
+          local_entrega_cnpj_cpf?: string | null
+          local_entrega_complemento?: string | null
+          local_entrega_ie?: string | null
+          local_entrega_logradouro?: string | null
+          local_entrega_nome?: string | null
+          local_entrega_numero?: string | null
+          local_entrega_uf?: string | null
           motorista?: string | null
           nota_fiscal_id?: string | null
           observacoes?: string | null
@@ -2430,13 +2454,17 @@ export type Database = {
           peso_liquido?: number | null
           peso_tara?: number | null
           ph?: number | null
+          placa?: string | null
           placa_id?: string | null
           preco_kg?: number | null
           romaneio?: number | null
           sacos?: number | null
+          sacos_nota?: number | null
+          sacos_remessa?: number | null
           silo_id?: string | null
           status?: string | null
           transportadora_id?: string | null
+          uf_placa?: string | null
           umidade?: number | null
           updated_at?: string
           valor_nota?: number | null
@@ -2455,6 +2483,16 @@ export type Database = {
           kg_desconto_umidade?: number | null
           kg_nota?: number | null
           kg_remessa?: number | null
+          local_entrega_bairro?: string | null
+          local_entrega_cep?: string | null
+          local_entrega_cidade?: string | null
+          local_entrega_cnpj_cpf?: string | null
+          local_entrega_complemento?: string | null
+          local_entrega_ie?: string | null
+          local_entrega_logradouro?: string | null
+          local_entrega_nome?: string | null
+          local_entrega_numero?: string | null
+          local_entrega_uf?: string | null
           motorista?: string | null
           nota_fiscal_id?: string | null
           observacoes?: string | null
@@ -2462,13 +2500,17 @@ export type Database = {
           peso_liquido?: number | null
           peso_tara?: number | null
           ph?: number | null
+          placa?: string | null
           placa_id?: string | null
           preco_kg?: number | null
           romaneio?: number | null
           sacos?: number | null
+          sacos_nota?: number | null
+          sacos_remessa?: number | null
           silo_id?: string | null
           status?: string | null
           transportadora_id?: string | null
+          uf_placa?: string | null
           umidade?: number | null
           updated_at?: string
           valor_nota?: number | null
