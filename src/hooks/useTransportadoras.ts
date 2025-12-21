@@ -19,6 +19,7 @@ export interface Transportadora {
   placa_padrao: string | null;
   uf_placa_padrao: string | null;
   rntc: string | null;
+  motorista_padrao: string | null;
   ativa: boolean | null;
   created_at: string;
   updated_at: string;

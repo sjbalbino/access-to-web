@@ -2743,6 +2743,7 @@ export type Database = {
           id: string
           inscricao_estadual: string | null
           logradouro: string | null
+          motorista_padrao: string | null
           nome: string
           numero: string | null
           placa_padrao: string | null
@@ -2764,6 +2765,7 @@ export type Database = {
           id?: string
           inscricao_estadual?: string | null
           logradouro?: string | null
+          motorista_padrao?: string | null
           nome: string
           numero?: string | null
           placa_padrao?: string | null
@@ -2785,6 +2787,7 @@ export type Database = {
           id?: string
           inscricao_estadual?: string | null
           logradouro?: string | null
+          motorista_padrao?: string | null
           nome?: string
           numero?: string | null
           placa_padrao?: string | null
