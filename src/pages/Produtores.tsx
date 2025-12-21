@@ -48,6 +48,7 @@ import { useGranjas } from "@/hooks/useGranjas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
+import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { InscricoesTab } from "@/components/produtores/InscricoesTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -84,6 +85,7 @@ export default function Produtores() {
   const deleteProdutor = useDeleteProdutor();
   const { canEdit } = useAuth();
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
+  const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
 
   const [selectedProdutorId, setSelectedProdutorId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -138,6 +140,52 @@ export default function Produtores() {
       email: produtor.email || "",
       ativo: produtor.ativo ?? true,
     });
+  };
+
+  const handleCnpjBlurNew = async (cnpj: string) => {
+    if (newFormData.tipo_pessoa !== "juridica") return;
+    const cleanCnpj = cnpj.replace(/\D/g, "");
+    if (cleanCnpj.length !== 14) return;
+    
+    const data = await fetchCnpj(cnpj);
+    if (data) {
+      setNewFormData((prev) => ({
+        ...prev,
+        nome: data.razao_social || prev.nome,
+        logradouro: data.logradouro || prev.logradouro,
+        numero: data.numero || prev.numero,
+        complemento: data.complemento || prev.complemento,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.cidade || prev.cidade,
+        uf: data.uf || prev.uf,
+        cep: data.cep?.replace(/\D/g, "") || prev.cep,
+        telefone: data.telefone || prev.telefone,
+        email: data.email || prev.email,
+      }));
+    }
+  };
+
+  const handleCnpjBlurEdit = async (cnpj: string) => {
+    if (editFormData.tipo_pessoa !== "juridica") return;
+    const cleanCnpj = cnpj.replace(/\D/g, "");
+    if (cleanCnpj.length !== 14) return;
+    
+    const data = await fetchCnpj(cnpj);
+    if (data) {
+      setEditFormData((prev) => ({
+        ...prev,
+        nome: data.razao_social || prev.nome,
+        logradouro: data.logradouro || prev.logradouro,
+        numero: data.numero || prev.numero,
+        complemento: data.complemento || prev.complemento,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.cidade || prev.cidade,
+        uf: data.uf || prev.uf,
+        cep: data.cep?.replace(/\D/g, "") || prev.cep,
+        telefone: data.telefone || prev.telefone,
+        email: data.email || prev.email,
+      }));
+    }
   };
 
   const handleCepBlurNew = async (cep: string) => {
@@ -392,25 +440,25 @@ export default function Produtores() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2 lg:col-span-2">
-                  <Label>Nome *</Label>
-                  <Input
-                    value={editFormData.nome}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, nome: e.target.value })
-                    }
-                    disabled={!canEdit}
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label>{editFormData.tipo_pessoa === "fisica" ? "CPF" : "CNPJ"}</Label>
-                  <Input
-                    value={editFormData.cpf_cnpj || ""}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, cpf_cnpj: e.target.value })
-                    }
-                    disabled={!canEdit}
-                  />
+                  <div className="relative">
+                    <Input
+                      value={editFormData.tipo_pessoa === "juridica" 
+                        ? formatCnpj(editFormData.cpf_cnpj || "") 
+                        : editFormData.cpf_cnpj || ""}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, cpf_cnpj: e.target.value.replace(/\D/g, "") })
+                      }
+                      onBlur={(e) => handleCnpjBlurEdit(e.target.value)}
+                      disabled={!canEdit}
+                      placeholder={editFormData.tipo_pessoa === "juridica" ? "00.000.000/0000-00" : ""}
+                      maxLength={editFormData.tipo_pessoa === "juridica" ? 18 : 11}
+                    />
+                    {cnpjLoading && editFormData.tipo_pessoa === "juridica" && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Identidade</Label>
@@ -418,6 +466,16 @@ export default function Produtores() {
                     value={editFormData.identidade || ""}
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, identidade: e.target.value })
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+                <div className="space-y-2 lg:col-span-2">
+                  <Label>Nome *</Label>
+                  <Input
+                    value={editFormData.nome}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, nome: e.target.value })
                     }
                     disabled={!canEdit}
                   />
@@ -623,7 +681,7 @@ export default function Produtores() {
               <Select
                 value={newFormData.tipo_pessoa || "fisica"}
                 onValueChange={(value) =>
-                  setNewFormData({ ...newFormData, tipo_pessoa: value })
+                  setNewFormData({ ...newFormData, tipo_pessoa: value, cpf_cnpj: "" })
                 }
               >
                 <SelectTrigger>
@@ -635,26 +693,37 @@ export default function Produtores() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Nome Completo *</Label>
-              <Input
-                value={newFormData.nome}
-                onChange={(e) => setNewFormData({ ...newFormData, nome: e.target.value })}
-                required
-              />
-            </div>
+            {/* CPF/CNPJ primeiro quando PJ */}
             <div className="space-y-2">
               <Label>{newFormData.tipo_pessoa === "fisica" ? "CPF" : "CNPJ"}</Label>
-              <Input
-                value={newFormData.cpf_cnpj || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, cpf_cnpj: e.target.value })}
-              />
+              <div className="relative">
+                <Input
+                  value={newFormData.tipo_pessoa === "juridica" 
+                    ? formatCnpj(newFormData.cpf_cnpj || "") 
+                    : newFormData.cpf_cnpj || ""}
+                  onChange={(e) => setNewFormData({ ...newFormData, cpf_cnpj: e.target.value.replace(/\D/g, "") })}
+                  onBlur={(e) => handleCnpjBlurNew(e.target.value)}
+                  placeholder={newFormData.tipo_pessoa === "juridica" ? "00.000.000/0000-00" : ""}
+                  maxLength={newFormData.tipo_pessoa === "juridica" ? 18 : 11}
+                />
+                {cnpjLoading && newFormData.tipo_pessoa === "juridica" && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Identidade</Label>
               <Input
                 value={newFormData.identidade || ""}
                 onChange={(e) => setNewFormData({ ...newFormData, identidade: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Nome Completo *</Label>
+              <Input
+                value={newFormData.nome}
+                onChange={(e) => setNewFormData({ ...newFormData, nome: e.target.value })}
+                required
               />
             </div>
             <div className="space-y-2 md:col-span-2">
