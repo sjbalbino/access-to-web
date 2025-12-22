@@ -224,6 +224,17 @@ export function useFocusNfe() {
   ): Promise<void> => {
     setIsLoading(true);
 
+    // Abrir janela ANTES do await para evitar bloqueio de pop-up
+    let pdfWindow: Window | null = null;
+    if (tipo === "danfe") {
+      pdfWindow = window.open("", "_blank");
+      if (pdfWindow) {
+        pdfWindow.document.write(
+          '<html><head><title>Carregando DANFE...</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;background:#f5f5f5;"><p>Carregando DANFE...</p></body></html>'
+        );
+      }
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
         body: { ref, tipo, notaFiscalId },
@@ -245,10 +256,21 @@ export function useFocusNfe() {
 
       const url = window.URL.createObjectURL(blob);
 
-      // Para PDF (DANFE), abrir em nova aba; para XML, fazer download
+      // Para PDF (DANFE), atualizar a janela já aberta; para XML, fazer download
       if (tipo === "danfe") {
-        window.open(url, "_blank");
-        toast.success("DANFE aberto em nova aba");
+        if (pdfWindow) {
+          pdfWindow.location.href = url;
+          toast.success("DANFE aberto em nova aba");
+        } else {
+          // Fallback se janela foi bloqueada - fazer download
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `danfe_${ref}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          toast.success("Download do DANFE iniciado");
+        }
       } else {
         const a = document.createElement("a");
         a.href = url;
@@ -265,8 +287,12 @@ export function useFocusNfe() {
       // Revogar URL após um delay para permitir visualização/download
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
-      }, 1000);
+      }, 5000);
     } catch (error) {
+      // Fechar janela em branco se houver erro
+      if (pdfWindow) {
+        pdfWindow.close();
+      }
       const message = error instanceof Error ? error.message : "Erro desconhecido";
       toast.error("Erro ao baixar arquivo", { description: message });
     } finally {
