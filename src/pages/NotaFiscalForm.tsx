@@ -35,7 +35,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loader2, CheckCircle2, XCircle, Download, Check, ChevronRight, ChevronLeft, Package, Truck, CreditCard, FileEdit, User, Building2, Calculator } from "lucide-react";
+import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loader2, CheckCircle2, XCircle, Download, Check, ChevronRight, ChevronLeft, Package, Truck, CreditCard, FileEdit, User, Building2, Calculator, Banknote } from "lucide-react";
 import { useNotasFiscais, useNotaFiscalItens, NotaFiscalInsert, NotaFiscalItemInsert } from "@/hooks/useNotasFiscais";
 import { useCfops } from "@/hooks/useCfops";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
@@ -55,6 +55,7 @@ import { QuantityInput, formatBrazilianQuantity } from "@/components/ui/quantity
 import { cn } from "@/lib/utils";
 import { calculateTaxes, type TaxCalculatorInput } from "@/lib/taxCalculator";
 import { getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
+import { useNotasFiscaisDuplicatas } from "@/hooks/useNotasFiscaisDuplicatas";
 
 const OPERACOES = [
   { value: 0, label: "Entrada" },
@@ -111,6 +112,7 @@ const TABS = [
   { id: "destinatario", label: "Destinatário", icon: User },
   { id: "itens", label: "Itens", icon: Package },
   { id: "transporte", label: "Transporte", icon: Truck },
+  { id: "cobranca", label: "Cobrança", icon: Banknote },
   { id: "pagamento", label: "Pagamento", icon: CreditCard },
   { id: "dados_nota", label: "Dados da Nota", icon: FileText },
 ];
@@ -154,6 +156,7 @@ export default function NotaFiscalForm() {
   const { transportadoras } = useTransportadoras();
   const { user } = useAuth();
   const focusNfe = useFocusNfe();
+  const { duplicatas, createDuplicata, updateDuplicata, deleteDuplicata } = useNotasFiscaisDuplicatas(id || null);
 
   const [currentTab, setCurrentTab] = useState("emitente");
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
@@ -265,6 +268,7 @@ export default function NotaFiscalForm() {
     destinatario: !!formData.dest_cpf_cnpj && !!formData.dest_nome && !!formData.dest_cidade,
     itens: itens.length > 0,
     transporte: true,
+    cobranca: true,
     pagamento: true,
     dados_nota: true,
   });
@@ -1787,6 +1791,144 @@ export default function NotaFiscalForm() {
     </Card>
   );
 
+  // Estado para nova duplicata
+  const [novaDuplicata, setNovaDuplicata] = useState({
+    numero: "",
+    data_vencimento: "",
+    valor: 0,
+  });
+
+  const handleAddDuplicata = async () => {
+    if (!id) return;
+    await createDuplicata.mutateAsync({
+      nota_fiscal_id: id,
+      numero: novaDuplicata.numero || null,
+      data_vencimento: novaDuplicata.data_vencimento || null,
+      valor: novaDuplicata.valor || null,
+    });
+    setNovaDuplicata({ numero: "", data_vencimento: "", valor: 0 });
+  };
+
+  const handleDeleteDuplicata = async (duplicataId: string) => {
+    await deleteDuplicata.mutateAsync(duplicataId);
+  };
+
+  const totalDuplicatas = duplicatas.reduce((acc, d) => acc + (d.valor || 0), 0);
+
+  const renderCobranca = () => {
+    const totalNota = existingNota?.total_nota || 0;
+    const saldoRestante = totalNota - totalDuplicatas;
+    const nota = existingNota as any;
+
+    return (
+      <div className="space-y-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Banknote className="h-4 w-4" />
+              Dados da Fatura
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>Número da Fatura</Label>
+                <Input value={nota?.numero_fatura || ""} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <Label>Valor Original</Label>
+                <Input value={formatCurrency(nota?.valor_original || totalNota)} disabled className="bg-muted text-right" />
+              </div>
+              <div className="space-y-2">
+                <Label>Desconto</Label>
+                <Input value={formatCurrency(nota?.valor_desconto_fatura || 0)} disabled className="bg-muted text-right" />
+              </div>
+              <div className="space-y-2">
+                <Label>Valor Líquido</Label>
+                <Input value={formatCurrency(nota?.valor_liquido_fatura || totalNota)} disabled className="bg-muted text-right font-bold" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Duplicatas / Parcelas</CardTitle>
+            <CardDescription>Total: {formatCurrency(totalDuplicatas)} | Saldo: {formatCurrency(saldoRestante)}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {duplicatas.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="w-16"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {duplicatas.map((dup) => (
+                    <TableRow key={dup.id}>
+                      <TableCell>{dup.numero || "-"}</TableCell>
+                      <TableCell>{dup.data_vencimento ? new Date(dup.data_vencimento + "T00:00:00").toLocaleDateString("pt-BR") : "-"}</TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(dup.valor || 0)}</TableCell>
+                      <TableCell>
+                        {!isReadOnly && (
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteDuplicata(dup.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={2}>Total</TableCell>
+                    <TableCell className="text-right font-bold">{formatCurrency(totalDuplicatas)}</TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            )}
+            {!isReadOnly && isEditing && (
+              <div className="border rounded-lg p-4 bg-muted/30">
+                <p className="text-sm font-medium mb-3">Adicionar Duplicata</p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Número</Label>
+                    <Input value={novaDuplicata.numero} onChange={(e) => setNovaDuplicata({ ...novaDuplicata, numero: e.target.value })} placeholder="001/01" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Vencimento</Label>
+                    <Input type="date" value={novaDuplicata.data_vencimento} onChange={(e) => setNovaDuplicata({ ...novaDuplicata, data_vencimento: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Valor</Label>
+                    <CurrencyInput value={novaDuplicata.valor} onChange={(value) => setNovaDuplicata({ ...novaDuplicata, valor: value || 0 })} />
+                  </div>
+                  <div className="flex items-end">
+                    <Button type="button" onClick={handleAddDuplicata} disabled={createDuplicata.isPending} className="w-full">
+                      <Plus className="h-4 w-4 mr-2" />Adicionar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {duplicatas.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Banknote className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>Nenhuma duplicata cadastrada</p>
+                <p className="text-sm">Para vendas a prazo, adicione as parcelas acima.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   const renderPagamento = () => (
     <div className="space-y-4">
       <Card>
@@ -2247,6 +2389,8 @@ export default function NotaFiscalForm() {
         return renderItens();
       case "transporte":
         return renderTransporte();
+      case "cobranca":
+        return renderCobranca();
       case "pagamento":
         return renderPagamento();
       case "dados_nota":

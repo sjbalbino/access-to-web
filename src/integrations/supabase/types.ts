@@ -1651,6 +1651,41 @@ export type Database = {
           },
         ]
       }
+      notas_fiscais_duplicatas: {
+        Row: {
+          created_at: string
+          data_vencimento: string | null
+          id: string
+          nota_fiscal_id: string
+          numero: string | null
+          valor: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_vencimento?: string | null
+          id?: string
+          nota_fiscal_id: string
+          numero?: string | null
+          valor?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_vencimento?: string | null
+          id?: string
+          nota_fiscal_id?: string
+          numero?: string | null
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_duplicatas_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_fiscais_itens: {
         Row: {
           aliq_cbs: number | null

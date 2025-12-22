@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
+import { formatCpf, formatCpfCnpj, formatPlaca, formatCep } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -174,10 +175,10 @@ export default function RemessasVendaForm() {
     if (transportadoraId && transportadoras) {
       const transp = transportadoras.find(t => t.id === transportadoraId);
       if (transp) {
-        if (transp.placa_padrao) setValue("placa", transp.placa_padrao);
+        if (transp.placa_padrao) setValue("placa", formatPlaca(transp.placa_padrao));
         if (transp.uf_placa_padrao) setValue("uf_placa", transp.uf_placa_padrao);
         if (transp.motorista_padrao) setValue("motorista", transp.motorista_padrao);
-        if (transp.motorista_cpf_padrao) setValue("motorista_cpf", transp.motorista_cpf_padrao);
+        if (transp.motorista_cpf_padrao) setValue("motorista_cpf", formatCpf(transp.motorista_cpf_padrao));
       }
     }
   }, [transportadoraId, transportadoras, setValue]);
@@ -612,11 +613,21 @@ export default function RemessasVendaForm() {
                 </div>
                 <div className="space-y-2">
                   <Label>CPF Motorista</Label>
-                  <Input {...register("motorista_cpf")} placeholder="000.000.000-00" maxLength={14} />
+                  <Input 
+                    value={watch("motorista_cpf") || ""}
+                    onChange={(e) => setValue("motorista_cpf", formatCpf(e.target.value))}
+                    placeholder="000.000.000-00" 
+                    maxLength={14} 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Placa</Label>
-                  <Input {...register("placa")} placeholder="AAA-0000" maxLength={8} />
+                  <Input 
+                    value={watch("placa") || ""}
+                    onChange={(e) => setValue("placa", formatPlaca(e.target.value))}
+                    placeholder="AAA-0000" 
+                    maxLength={8} 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>UF</Label>
@@ -642,7 +653,11 @@ export default function RemessasVendaForm() {
                 </div>
                 <div className="space-y-2">
                   <Label>CNPJ/CPF</Label>
-                  <Input {...register("local_entrega_cnpj_cpf")} />
+                  <Input 
+                    value={watch("local_entrega_cnpj_cpf") || ""}
+                    onChange={(e) => setValue("local_entrega_cnpj_cpf", formatCpfCnpj(e.target.value))}
+                    maxLength={18}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>IE</Label>
@@ -652,7 +667,11 @@ export default function RemessasVendaForm() {
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
                 <div className="space-y-2">
                   <Label>CEP</Label>
-                  <Input {...register("local_entrega_cep")} />
+                  <Input 
+                    value={watch("local_entrega_cep") || ""}
+                    onChange={(e) => setValue("local_entrega_cep", formatCep(e.target.value))}
+                    maxLength={9}
+                  />
                 </div>
                 <div className="space-y-2 col-span-2">
                   <Label>Logradouro</Label>
