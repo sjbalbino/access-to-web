@@ -9,6 +9,10 @@ export interface FocusNfeNota {
   consumidor_final: number; // 0=Normal, 1=Consumidor Final
   presenca_comprador: number; // 0=Não se aplica, 1=Presencial, etc.
   
+  // Numeração (IMPORTANTE: enviar para evitar que a API gere automaticamente)
+  numero?: number;
+  serie?: string;
+  
   // Emitente (preenchido via certificado na Focus NFe, mas enviamos para validação)
   cnpj_emitente?: string;
   cpf_emitente?: string;
@@ -175,6 +179,10 @@ export interface NotaFiscalData {
   info_complementar: string | null;
   info_fisco: string | null;
   
+  // Numeração da NFe (IMPORTANTE: enviar para evitar duplicidade)
+  numero?: number | null;
+  serie?: number | null;
+  
   // Destinatário
   dest_cpf_cnpj: string | null;
   dest_nome: string | null;
@@ -296,6 +304,10 @@ export function mapNotaToFocusNfe(
     finalidade_emissao: nota.finalidade ?? 1, // Default: Normal
     consumidor_final: nota.ind_consumidor_final ?? 0,
     presenca_comprador: nota.ind_presenca ?? 0,
+    
+    // Numeração (IMPORTANTE: enviar para garantir que a SEFAZ use o número correto)
+    numero: nota.numero ?? undefined,
+    serie: nota.serie ? String(nota.serie) : undefined,
     
     // Emitente - usar CPF ou CNPJ conforme disponível
     ...(emitenteIsCpf

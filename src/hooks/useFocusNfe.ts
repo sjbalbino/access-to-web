@@ -39,8 +39,28 @@ export function useFocusNfe() {
 
       setStatus("mapeando");
 
+      // Buscar numero e serie da nota fiscal do banco para garantir que estamos usando os valores corretos
+      const { data: notaCompleta, error: notaError } = await supabase
+        .from("notas_fiscais")
+        .select("numero, serie")
+        .eq("id", notaFiscalId)
+        .single();
+
+      if (notaError) {
+        console.warn("Aviso: não foi possível buscar numero/serie da nota:", notaError.message);
+      }
+
+      // Garantir que notaData tenha numero e serie do banco
+      const notaDataComNumero: NotaFiscalData = {
+        ...notaData,
+        numero: notaCompleta?.numero ?? notaData.numero,
+        serie: notaCompleta?.serie ?? notaData.serie,
+      };
+
+      console.log("Emitindo NFe com numero:", notaDataComNumero.numero, "serie:", notaDataComNumero.serie);
+
       // Mapear para formato Focus NFe
-      const focusNfeData = mapNotaToFocusNfe(notaData, itens);
+      const focusNfeData = mapNotaToFocusNfe(notaDataComNumero, itens);
 
       setStatus("enviando");
 
