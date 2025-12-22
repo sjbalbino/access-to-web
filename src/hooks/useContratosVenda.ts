@@ -101,13 +101,13 @@ export function useContratosVenda(filtros?: ContratoVendaFiltros) {
       // Buscar totais de remessas para cada contrato
       const contratosComTotais = await Promise.all(
         (data || []).map(async (contrato) => {
-          const { data: remessas } = await supabase
+        const { data: remessas } = await supabase
             .from("remessas_venda")
-            .select("kg_nota")
+            .select("kg_remessa")
             .eq("contrato_venda_id", contrato.id)
             .neq("status", "cancelada");
 
-          const total_carregado_kg = remessas?.reduce((acc, r) => acc + (Number(r.kg_nota) || 0), 0) || 0;
+          const total_carregado_kg = remessas?.reduce((acc, r) => acc + (Number(r.kg_remessa) || 0), 0) || 0;
           const saldo_kg = (Number(contrato.quantidade_kg) || 0) - total_carregado_kg;
 
           return {
@@ -149,11 +149,11 @@ export function useContratoVenda(id: string | undefined) {
       // Buscar totais de remessas
       const { data: remessas } = await supabase
         .from("remessas_venda")
-        .select("kg_nota")
+        .select("kg_remessa")
         .eq("contrato_venda_id", id)
         .neq("status", "cancelada");
 
-      const total_carregado_kg = remessas?.reduce((acc, r) => acc + (Number(r.kg_nota) || 0), 0) || 0;
+      const total_carregado_kg = remessas?.reduce((acc, r) => acc + (Number(r.kg_remessa) || 0), 0) || 0;
       const saldo_kg = (Number(data.quantidade_kg) || 0) - total_carregado_kg;
 
       // Buscar informação da cultura para verificar se exige PH
