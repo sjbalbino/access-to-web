@@ -17,6 +17,13 @@ export interface EmitenteNfe {
   aliq_ibs_padrao: number | null;
   aliq_cbs_padrao: number | null;
   aliq_is_padrao: number | null;
+  cst_icms_padrao: string | null;
+  cst_pis_padrao: string | null;
+  cst_cofins_padrao: string | null;
+  cst_ipi_padrao: string | null;
+  cst_ibs_padrao: string | null;
+  cst_cbs_padrao: string | null;
+  cst_is_padrao: string | null;
   api_provider: string | null;
   api_consumer_key: string | null;
   api_consumer_secret: string | null;

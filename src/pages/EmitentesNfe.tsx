@@ -84,6 +84,13 @@ export default function EmitentesNfe() {
     aliq_ibs_padrao: 0,
     aliq_cbs_padrao: 0,
     aliq_is_padrao: 0,
+    cst_icms_padrao: "00",
+    cst_pis_padrao: "01",
+    cst_cofins_padrao: "01",
+    cst_ipi_padrao: "53",
+    cst_ibs_padrao: "00",
+    cst_cbs_padrao: "00",
+    cst_is_padrao: "00",
     api_provider: null,
     api_consumer_key: null,
     api_consumer_secret: null,
@@ -114,6 +121,13 @@ export default function EmitentesNfe() {
       aliq_ibs_padrao: 0,
       aliq_cbs_padrao: 0,
       aliq_is_padrao: 0,
+      cst_icms_padrao: "00",
+      cst_pis_padrao: "01",
+      cst_cofins_padrao: "01",
+      cst_ipi_padrao: "53",
+      cst_ibs_padrao: "00",
+      cst_cbs_padrao: "00",
+      cst_is_padrao: "00",
       api_provider: null,
       api_consumer_key: null,
       api_consumer_secret: null,
@@ -139,11 +153,18 @@ export default function EmitentesNfe() {
         numero_atual_nfce: emitente.numero_atual_nfce || 0,
         crt: emitente.crt || 3,
         aliq_icms_padrao: emitente.aliq_icms_padrao || 0,
-        aliq_pis_padrao: emitente.aliq_pis_padrao || 1.65,
-        aliq_cofins_padrao: emitente.aliq_cofins_padrao || 7.6,
+        aliq_pis_padrao: emitente.aliq_pis_padrao ?? 1.65,
+        aliq_cofins_padrao: emitente.aliq_cofins_padrao ?? 7.6,
         aliq_ibs_padrao: emitente.aliq_ibs_padrao || 0,
         aliq_cbs_padrao: emitente.aliq_cbs_padrao || 0,
         aliq_is_padrao: emitente.aliq_is_padrao || 0,
+        cst_icms_padrao: emitente.cst_icms_padrao ?? "00",
+        cst_pis_padrao: emitente.cst_pis_padrao ?? "01",
+        cst_cofins_padrao: emitente.cst_cofins_padrao ?? "01",
+        cst_ipi_padrao: emitente.cst_ipi_padrao ?? "53",
+        cst_ibs_padrao: emitente.cst_ibs_padrao ?? "00",
+        cst_cbs_padrao: emitente.cst_cbs_padrao ?? "00",
+        cst_is_padrao: emitente.cst_is_padrao ?? "00",
         api_provider: emitente.api_provider,
         api_consumer_key: emitente.api_consumer_key,
         api_consumer_secret: emitente.api_consumer_secret,
@@ -479,7 +500,7 @@ export default function EmitentesNfe() {
                         id="aliq_pis_padrao"
                         type="number"
                         step="0.0001"
-                        value={formData.aliq_pis_padrao || 1.65}
+                        value={formData.aliq_pis_padrao ?? 1.65}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_pis_padrao: Number(e.target.value) })
                         }
@@ -491,7 +512,7 @@ export default function EmitentesNfe() {
                         id="aliq_cofins_padrao"
                         type="number"
                         step="0.0001"
-                        value={formData.aliq_cofins_padrao || 7.6}
+                        value={formData.aliq_cofins_padrao ?? 7.6}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_cofins_padrao: Number(e.target.value) })
                         }
@@ -538,6 +559,200 @@ export default function EmitentesNfe() {
                           setFormData({ ...formData, aliq_is_padrao: Number(e.target.value) })
                         }
                       />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* CST Padrões */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">CST Padrões</CardTitle>
+                  <CardDescription>
+                    Códigos de Situação Tributária padrão para novos itens de NF-e
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="cst_icms_padrao">CST ICMS</Label>
+                      <Select
+                        value={formData.cst_icms_padrao || "00"}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, cst_icms_padrao: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="00">00 - Tributada integralmente</SelectItem>
+                          <SelectItem value="10">10 - Trib. com cobrança ICMS ST</SelectItem>
+                          <SelectItem value="20">20 - Com redução de BC</SelectItem>
+                          <SelectItem value="30">30 - Isenta/não trib. com ST</SelectItem>
+                          <SelectItem value="40">40 - Isenta</SelectItem>
+                          <SelectItem value="41">41 - Não tributada</SelectItem>
+                          <SelectItem value="50">50 - Suspensão</SelectItem>
+                          <SelectItem value="51">51 - Diferimento</SelectItem>
+                          <SelectItem value="60">60 - Cobrado ant. por ST</SelectItem>
+                          <SelectItem value="70">70 - Redução BC com ST</SelectItem>
+                          <SelectItem value="90">90 - Outras</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cst_pis_padrao">CST PIS</Label>
+                      <Select
+                        value={formData.cst_pis_padrao || "01"}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, cst_pis_padrao: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="01">01 - Op. tributável</SelectItem>
+                          <SelectItem value="02">02 - Op. trib. alíq. diferenciada</SelectItem>
+                          <SelectItem value="03">03 - Op. trib. alíq. unidade</SelectItem>
+                          <SelectItem value="04">04 - Op. trib. monofásica</SelectItem>
+                          <SelectItem value="05">05 - Op. trib. ST</SelectItem>
+                          <SelectItem value="06">06 - Op. trib. alíq. zero</SelectItem>
+                          <SelectItem value="07">07 - Op. isenta</SelectItem>
+                          <SelectItem value="08">08 - Op. sem incidência</SelectItem>
+                          <SelectItem value="09">09 - Op. com suspensão</SelectItem>
+                          <SelectItem value="49">49 - Outras saídas</SelectItem>
+                          <SelectItem value="99">99 - Outras operações</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cst_cofins_padrao">CST COFINS</Label>
+                      <Select
+                        value={formData.cst_cofins_padrao || "01"}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, cst_cofins_padrao: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="01">01 - Op. tributável</SelectItem>
+                          <SelectItem value="02">02 - Op. trib. alíq. diferenciada</SelectItem>
+                          <SelectItem value="03">03 - Op. trib. alíq. unidade</SelectItem>
+                          <SelectItem value="04">04 - Op. trib. monofásica</SelectItem>
+                          <SelectItem value="05">05 - Op. trib. ST</SelectItem>
+                          <SelectItem value="06">06 - Op. trib. alíq. zero</SelectItem>
+                          <SelectItem value="07">07 - Op. isenta</SelectItem>
+                          <SelectItem value="08">08 - Op. sem incidência</SelectItem>
+                          <SelectItem value="09">09 - Op. com suspensão</SelectItem>
+                          <SelectItem value="49">49 - Outras saídas</SelectItem>
+                          <SelectItem value="99">99 - Outras operações</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cst_ipi_padrao">CST IPI</Label>
+                      <Select
+                        value={formData.cst_ipi_padrao || "53"}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, cst_ipi_padrao: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="00">00 - Entrada com recuperação</SelectItem>
+                          <SelectItem value="01">01 - Entrada tributável alíq. zero</SelectItem>
+                          <SelectItem value="02">02 - Entrada isenta</SelectItem>
+                          <SelectItem value="03">03 - Entrada não tributável</SelectItem>
+                          <SelectItem value="04">04 - Entrada imune</SelectItem>
+                          <SelectItem value="05">05 - Entrada com suspensão</SelectItem>
+                          <SelectItem value="49">49 - Outras entradas</SelectItem>
+                          <SelectItem value="50">50 - Saída tributável</SelectItem>
+                          <SelectItem value="51">51 - Saída tributável alíq. zero</SelectItem>
+                          <SelectItem value="52">52 - Saída isenta</SelectItem>
+                          <SelectItem value="53">53 - Saída não tributável</SelectItem>
+                          <SelectItem value="54">54 - Saída imune</SelectItem>
+                          <SelectItem value="55">55 - Saída com suspensão</SelectItem>
+                          <SelectItem value="99">99 - Outras saídas</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <Separator />
+                  <p className="text-sm text-muted-foreground">NT 2025.002 - Novos Tributos</p>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="cst_ibs_padrao">CST IBS</Label>
+                      <Select
+                        value={formData.cst_ibs_padrao || "00"}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, cst_ibs_padrao: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="00">00 - Tributação normal</SelectItem>
+                          <SelectItem value="10">10 - Tributação monofásica</SelectItem>
+                          <SelectItem value="20">20 - Diferimento</SelectItem>
+                          <SelectItem value="30">30 - Imunidade</SelectItem>
+                          <SelectItem value="40">40 - Isenção</SelectItem>
+                          <SelectItem value="50">50 - Suspensão</SelectItem>
+                          <SelectItem value="51">51 - Red. alíquota</SelectItem>
+                          <SelectItem value="90">90 - Outras</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cst_cbs_padrao">CST CBS</Label>
+                      <Select
+                        value={formData.cst_cbs_padrao || "00"}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, cst_cbs_padrao: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="00">00 - Tributação normal</SelectItem>
+                          <SelectItem value="10">10 - Tributação monofásica</SelectItem>
+                          <SelectItem value="20">20 - Diferimento</SelectItem>
+                          <SelectItem value="30">30 - Imunidade</SelectItem>
+                          <SelectItem value="40">40 - Isenção</SelectItem>
+                          <SelectItem value="50">50 - Suspensão</SelectItem>
+                          <SelectItem value="51">51 - Red. alíquota</SelectItem>
+                          <SelectItem value="90">90 - Outras</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cst_is_padrao">CST IS</Label>
+                      <Select
+                        value={formData.cst_is_padrao || "00"}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, cst_is_padrao: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="00">00 - Tributação normal</SelectItem>
+                          <SelectItem value="10">10 - Tributação monofásica</SelectItem>
+                          <SelectItem value="30">30 - Imunidade</SelectItem>
+                          <SelectItem value="40">40 - Não incidência</SelectItem>
+                          <SelectItem value="50">50 - Suspensão</SelectItem>
+                          <SelectItem value="90">90 - Outras</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </CardContent>
