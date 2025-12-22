@@ -35,6 +35,76 @@ import { useCfops, Cfop, CfopInsert } from "@/hooks/useCfops";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
+
+// CST ICMS para empresas do Regime Normal
+const CST_ICMS = [
+  { value: "00", label: "00 - Tributada integralmente" },
+  { value: "10", label: "10 - Tributada com ICMS ST" },
+  { value: "20", label: "20 - Com redução de base de cálculo" },
+  { value: "30", label: "30 - Isenta com ICMS ST" },
+  { value: "40", label: "40 - Isenta" },
+  { value: "41", label: "41 - Não tributada" },
+  { value: "50", label: "50 - Suspensão" },
+  { value: "51", label: "51 - Diferimento" },
+  { value: "60", label: "60 - ICMS ST cobrado anteriormente" },
+  { value: "70", label: "70 - Red. BC e cobrança ICMS ST" },
+  { value: "90", label: "90 - Outras" },
+];
+
+// CST PIS/COFINS
+const CST_PIS_COFINS = [
+  { value: "01", label: "01 - Op. tributável c/ alíq. básica" },
+  { value: "02", label: "02 - Op. tributável c/ alíq. diferenciada" },
+  { value: "03", label: "03 - Op. tributável c/ alíq. por quantidade" },
+  { value: "04", label: "04 - Op. tributável monofásica - revenda" },
+  { value: "05", label: "05 - Op. tributável por ST" },
+  { value: "06", label: "06 - Op. tributável alíq. zero" },
+  { value: "07", label: "07 - Op. isenta de contribuição" },
+  { value: "08", label: "08 - Op. sem incidência de contribuição" },
+  { value: "09", label: "09 - Op. com suspensão de contribuição" },
+  { value: "49", label: "49 - Outras operações de saída" },
+  { value: "50", label: "50 - Op. c/ direito a crédito" },
+  { value: "51", label: "51 - Op. c/ direito - alíq. básica" },
+  { value: "52", label: "52 - Op. c/ direito - alíq. diferenciada" },
+  { value: "53", label: "53 - Op. c/ direito - alíq. por quantidade" },
+  { value: "54", label: "54 - Op. c/ direito - alíq. vinculada exlusivamente" },
+  { value: "55", label: "55 - Op. c/ direito - receita tributada e não tributada" },
+  { value: "56", label: "56 - Op. c/ direito - receita de exportação" },
+  { value: "60", label: "60 - Créd. presumido - op. tributável" },
+  { value: "61", label: "61 - Créd. presumido - op. não tributável" },
+  { value: "62", label: "62 - Créd. presumido - op. exportação" },
+  { value: "63", label: "63 - Créd. presumido - vinculado" },
+  { value: "64", label: "64 - Créd. presumido - tributada e não tributada" },
+  { value: "65", label: "65 - Créd. presumido - exportação" },
+  { value: "66", label: "66 - Créd. presumido - merc./serv. externos" },
+  { value: "67", label: "67 - Créd. presumido - outros" },
+  { value: "70", label: "70 - Op. de aquisição sem direito a crédito" },
+  { value: "71", label: "71 - Op. aquisição - alíq. zero" },
+  { value: "72", label: "72 - Op. aquisição - suspensão" },
+  { value: "73", label: "73 - Op. aquisição - isenção" },
+  { value: "74", label: "74 - Op. aquisição - não tributável" },
+  { value: "75", label: "75 - Op. aquisição - ST" },
+  { value: "98", label: "98 - Outras operações de entrada" },
+  { value: "99", label: "99 - Outras operações" },
+];
+
+// CST IPI
+const CST_IPI = [
+  { value: "00", label: "00 - Entrada com recuperação de crédito" },
+  { value: "01", label: "01 - Entrada tributável c/ alíq. zero" },
+  { value: "02", label: "02 - Entrada isenta" },
+  { value: "03", label: "03 - Entrada não tributada" },
+  { value: "04", label: "04 - Entrada imune" },
+  { value: "05", label: "05 - Entrada com suspensão" },
+  { value: "49", label: "49 - Outras entradas" },
+  { value: "50", label: "50 - Saída tributada" },
+  { value: "51", label: "51 - Saída tributável c/ alíq. zero" },
+  { value: "52", label: "52 - Saída isenta" },
+  { value: "53", label: "53 - Saída não tributada" },
+  { value: "54", label: "54 - Saída imune" },
+  { value: "55", label: "55 - Saída com suspensão" },
+  { value: "99", label: "99 - Outras saídas" },
+];
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,6 +145,7 @@ export default function Cfops() {
     cst_icms_padrao: null,
     cst_pis_padrao: null,
     cst_cofins_padrao: null,
+    cst_ipi_padrao: null,
     cst_ibs_padrao: null,
     cst_cbs_padrao: null,
     cst_is_padrao: null,
@@ -94,6 +165,7 @@ export default function Cfops() {
       cst_icms_padrao: null,
       cst_pis_padrao: null,
       cst_cofins_padrao: null,
+      cst_ipi_padrao: null,
       cst_ibs_padrao: null,
       cst_cbs_padrao: null,
       cst_is_padrao: null,
@@ -117,6 +189,7 @@ export default function Cfops() {
         cst_icms_padrao: cfop.cst_icms_padrao,
         cst_pis_padrao: cfop.cst_pis_padrao,
         cst_cofins_padrao: cfop.cst_cofins_padrao,
+        cst_ipi_padrao: cfop.cst_ipi_padrao,
         cst_ibs_padrao: cfop.cst_ibs_padrao,
         cst_cbs_padrao: cfop.cst_cbs_padrao,
         cst_is_padrao: cfop.cst_is_padrao,
@@ -427,42 +500,89 @@ export default function Cfops() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="cst_icms_padrao">CST ICMS Padrão</Label>
-                  <Input
-                    id="cst_icms_padrao"
+                  <Select
                     value={formData.cst_icms_padrao || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, cst_icms_padrao: e.target.value || null })
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, cst_icms_padrao: value || null })
                     }
-                    placeholder="Ex: 00"
-                    maxLength={3}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CST_ICMS.map((cst) => (
+                        <SelectItem key={cst.value} value={cst.value}>
+                          {cst.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cst_pis_padrao">CST PIS Padrão</Label>
-                  <Input
-                    id="cst_pis_padrao"
-                    value={formData.cst_pis_padrao || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, cst_pis_padrao: e.target.value || null })
+                  <Label htmlFor="cst_ipi_padrao">CST IPI Padrão</Label>
+                  <Select
+                    value={formData.cst_ipi_padrao || ""}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, cst_ipi_padrao: value || null })
                     }
-                    placeholder="Ex: 01"
-                    maxLength={2}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CST_IPI.map((cst) => (
+                        <SelectItem key={cst.value} value={cst.value}>
+                          {cst.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cst_pis_padrao">CST PIS Padrão</Label>
+                  <Select
+                    value={formData.cst_pis_padrao || ""}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, cst_pis_padrao: value || null })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CST_PIS_COFINS.map((cst) => (
+                        <SelectItem key={cst.value} value={cst.value}>
+                          {cst.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cst_cofins_padrao">CST COFINS Padrão</Label>
-                  <Input
-                    id="cst_cofins_padrao"
+                  <Select
                     value={formData.cst_cofins_padrao || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, cst_cofins_padrao: e.target.value || null })
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, cst_cofins_padrao: value || null })
                     }
-                    placeholder="Ex: 01"
-                    maxLength={2}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CST_PIS_COFINS.map((cst) => (
+                        <SelectItem key={cst.value} value={cst.value}>
+                          {cst.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
