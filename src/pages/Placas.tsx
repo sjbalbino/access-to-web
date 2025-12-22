@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Truck, Car, User } from 'lucide-react';
 import { usePlacas, useCreatePlaca, useUpdatePlaca, useDeletePlaca, PlacaInsert } from '@/hooks/usePlacas';
 import { useGranjas } from '@/hooks/useGranjas';
+import { formatPlaca } from '@/lib/formatters';
 
 export default function Placas() {
   const { canEdit } = useAuth();
@@ -145,7 +146,13 @@ export default function Placas() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Placa *</Label>
-                      <Input value={formData.placa} onChange={(e) => setFormData({ ...formData, placa: e.target.value.toUpperCase() })} required placeholder="ABC1D23" />
+                      <Input 
+                        value={formatPlaca(formData.placa)} 
+                        onChange={(e) => setFormData({ ...formData, placa: e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase() })} 
+                        required 
+                        placeholder="ABC-1D23" 
+                        maxLength={8}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Tipo</Label>

@@ -36,7 +36,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
-import { formatCpf, unformatDocument } from "@/lib/formatters";
+import { formatCpf, formatPlaca, unformatDocument, validateCnpj, validateCpf } from "@/lib/formatters";
+import { toast } from "sonner";
 
 const UFS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
@@ -168,6 +169,22 @@ export default function Transportadoras() {
 
   const handleSave = async () => {
     if (!formData.nome.trim()) return;
+
+    // Validar CNPJ se informado
+    if (formData.cpf_cnpj && formData.cpf_cnpj.length > 0) {
+      if (!validateCnpj(formData.cpf_cnpj)) {
+        toast.error("CNPJ inválido!");
+        return;
+      }
+    }
+
+    // Validar CPF do motorista se informado
+    if (formData.motorista_cpf_padrao && formData.motorista_cpf_padrao.length > 0) {
+      if (!validateCpf(formData.motorista_cpf_padrao)) {
+        toast.error("CPF do motorista inválido!");
+        return;
+      }
+    }
 
     if (selectedTransportadora) {
       await updateTransportadora.mutateAsync({ id: selectedTransportadora.id, ...formData });
@@ -464,10 +481,10 @@ export default function Transportadoras() {
                 <Label htmlFor="placa_padrao">Placa Padrão</Label>
                 <Input
                   id="placa_padrao"
-                  value={formData.placa_padrao || ""}
-                  onChange={(e) => setFormData({ ...formData, placa_padrao: e.target.value.toUpperCase() })}
-                  maxLength={7}
-                  placeholder="ABC1D23"
+                  value={formatPlaca(formData.placa_padrao) || ""}
+                  onChange={(e) => setFormData({ ...formData, placa_padrao: e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase() })}
+                  maxLength={8}
+                  placeholder="ABC-1D23"
                 />
               </div>
 

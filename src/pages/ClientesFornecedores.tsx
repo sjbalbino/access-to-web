@@ -17,6 +17,8 @@ import { useClientesFornecedores, useCreateClienteFornecedor, useUpdateClienteFo
 import { useGranjas } from '@/hooks/useGranjas';
 import { useCepLookup, formatCep } from '@/hooks/useCepLookup';
 import { useCnpjLookup, formatCnpj } from '@/hooks/useCnpjLookup';
+import { formatCpf, validateCpf, validateCnpj } from '@/lib/formatters';
+import { toast } from 'sonner';
 
 export default function ClientesFornecedores() {
   const { canEdit } = useAuth();
@@ -125,6 +127,23 @@ export default function ClientesFornecedores() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validar CPF/CNPJ se informado
+    if (formData.cpf_cnpj && formData.cpf_cnpj.length > 0) {
+      const doc = formData.cpf_cnpj.replace(/\D/g, "");
+      if (formData.tipo_pessoa === "fisica") {
+        if (doc.length > 0 && !validateCpf(doc)) {
+          toast.error("CPF inválido!");
+          return;
+        }
+      } else {
+        if (doc.length > 0 && !validateCnpj(doc)) {
+          toast.error("CNPJ inválido!");
+          return;
+        }
+      }
+    }
+
     if (editingItem) {
       await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
     } else {
@@ -250,10 +269,10 @@ export default function ClientesFornecedores() {
                       <Label>{formData.tipo_pessoa === 'fisica' ? 'CPF' : 'CNPJ'}</Label>
                       <div className="relative">
                         <Input 
-                          value={formData.cpf_cnpj || ''} 
+                          value={formData.tipo_pessoa === 'juridica' ? formatCnpj(formData.cpf_cnpj || '') : formatCpf(formData.cpf_cnpj || '')} 
                           onChange={(e) => setFormData({ 
                             ...formData, 
-                            cpf_cnpj: formData.tipo_pessoa === 'juridica' ? formatCnpj(e.target.value) : e.target.value 
+                            cpf_cnpj: e.target.value.replace(/\D/g, '')
                           })}
                           onBlur={(e) => handleCnpjBlur(e.target.value)}
                           placeholder={formData.tipo_pessoa === 'juridica' ? '00.000.000/0000-00' : '000.000.000-00'}
