@@ -94,6 +94,7 @@ export default function VendaProducaoForm() {
   const isEditing = !!id;
   const [corretorOpen, setCorretorOpen] = useState(false);
   const [loadedContractId, setLoadedContractId] = useState<string | null>(null);
+  const [formResetDone, setFormResetDone] = useState(!isEditing);
 
   const { data: contrato, isLoading: loadingContrato } = useContratoVenda(id);
   const { data: remessas } = useRemessasVenda(id);
@@ -110,13 +111,13 @@ export default function VendaProducaoForm() {
   const { register, handleSubmit, watch, setValue, reset } = useForm<FormData>({
     defaultValues: {
       numero: 0,
-      safra_id: undefined as unknown as string,
-      produto_id: undefined as unknown as string,
+      safra_id: "",
+      produto_id: "",
       data_contrato: "",
       nota_venda: "",
       numero_contrato_comprador: "",
-      inscricao_produtor_id: undefined as unknown as string,
-      comprador_id: undefined as unknown as string,
+      inscricao_produtor_id: "",
+      comprador_id: "",
       tipo_venda: "industria",
       quantidade_kg: null,
       quantidade_sacos: null,
@@ -143,7 +144,7 @@ export default function VendaProducaoForm() {
       remessa_deposito: false,
       retorno_deposito: false,
       observacoes: "",
-      granja_id: undefined as unknown as string,
+      granja_id: "",
     },
   });
 
@@ -153,6 +154,16 @@ export default function VendaProducaoForm() {
   // Check if all required data is loaded for the form
   const isDataReady = !!(safras && produtos && clientes);
   const isFormReady = isEditing ? !!(contrato && isDataReady) : isDataReady;
+
+  // When switching routes (editar/novo), force a new "reset cycle"
+  useEffect(() => {
+    if (isEditing) {
+      setFormResetDone(false);
+      setLoadedContractId(null);
+    } else {
+      setFormResetDone(true);
+    }
+  }, [isEditing, id]);
 
   // Watch values for calculations
   const quantidadeKg = watch("quantidade_kg");
@@ -203,13 +214,13 @@ export default function VendaProducaoForm() {
     if (isEditing && contrato && isDataReady && contrato.id !== loadedContractId) {
       reset({
         numero: contrato.numero,
-        safra_id: contrato.safra_id ?? (undefined as unknown as string),
-        produto_id: contrato.produto_id ?? (undefined as unknown as string),
+        safra_id: contrato.safra_id || "",
+        produto_id: contrato.produto_id || "",
         data_contrato: contrato.data_contrato || "",
         nota_venda: contrato.nota_venda || "",
         numero_contrato_comprador: contrato.numero_contrato_comprador || "",
-        inscricao_produtor_id: contrato.inscricao_produtor_id ?? (undefined as unknown as string),
-        comprador_id: contrato.comprador_id ?? (undefined as unknown as string),
+        inscricao_produtor_id: contrato.inscricao_produtor_id || "",
+        comprador_id: contrato.comprador_id || "",
         tipo_venda: contrato.tipo_venda || "industria",
         quantidade_kg: contrato.quantidade_kg,
         quantidade_sacos: contrato.quantidade_sacos,
@@ -236,10 +247,11 @@ export default function VendaProducaoForm() {
         remessa_deposito: contrato.remessa_deposito || false,
         retorno_deposito: contrato.retorno_deposito || false,
         observacoes: contrato.observacoes || "",
-        granja_id: contrato.granja_id ?? (undefined as unknown as string),
+        granja_id: contrato.granja_id || "",
       });
       if (contrato.corretor) setCorretorOpen(true);
       setLoadedContractId(contrato.id);
+      setFormResetDone(true);
     }
   }, [isEditing, contrato, isDataReady, loadedContractId, reset]);
 
@@ -320,7 +332,7 @@ export default function VendaProducaoForm() {
   };
 
   // Show loading state until ALL data is ready
-  if ((loadingContrato && isEditing) || !isFormReady) {
+  if ((loadingContrato && isEditing) || !isFormReady || (isEditing && !formResetDone)) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-96">
@@ -332,7 +344,11 @@ export default function VendaProducaoForm() {
 
   return (
     <AppLayout>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        key={isEditing ? (loadedContractId ?? id ?? "edit") : "new"}
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-6"
+      >
         {/* Header */}
         <div className="flex flex-col gap-4">
           <div className="flex items-start gap-4">
