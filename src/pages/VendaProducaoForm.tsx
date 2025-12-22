@@ -706,7 +706,7 @@ export default function VendaProducaoForm() {
                       <TableHead>Placa</TableHead>
                       <TableHead className="text-right">Bruto</TableHead>
                       <TableHead className="text-right">Tara</TableHead>
-                      <TableHead className="text-right">Kg Nota</TableHead>
+                      <TableHead className="text-right">Kg Remessa</TableHead>
                       <TableHead className="text-right">Preço</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
                       <TableHead>Silo</TableHead>
@@ -723,7 +723,7 @@ export default function VendaProducaoForm() {
                         <TableCell>{r.placa || "-"}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.peso_bruto)}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.peso_tara)}</TableCell>
-                        <TableCell className="text-right">{formatNumber(r.kg_nota)}</TableCell>
+                        <TableCell className="text-right">{formatNumber(r.kg_remessa)}</TableCell>
                         <TableCell className="text-right">{formatCurrency(r.preco_kg)}</TableCell>
                         <TableCell className="text-right">{formatCurrency(r.valor_nota)}</TableCell>
                         <TableCell>{r.silo?.nome || "-"}</TableCell>

@@ -117,24 +117,28 @@ export interface FocusNfeItem {
 }
 
 // Formatar data para o padrão ISO 8601 com timezone do Brasil
-// Usa a hora atual do computador do usuário (navegador/Windows)
+// IMPORTANTE: Subtrai alguns minutos para evitar erro 703 (Data-Hora de Emissao posterior)
+// devido a diferenças de sincronização entre o relógio do cliente e servidor da SEFAZ
 function formatDateForFocusNfe(dateStr: string | null): string {
   if (!dateStr) return "";
   
-  // Se já está no formato ISO completo com timezone, retorna
-  if (dateStr.includes("T") && (dateStr.includes("+") || dateStr.includes("-03"))) {
-    return dateStr;
-  }
-  
-  // Capturar a hora ATUAL do computador do usuário (Windows/navegador)
+  // Capturar a hora ATUAL e subtrair 2 minutos como margem de segurança
   const agora = new Date();
+  agora.setMinutes(agora.getMinutes() - 2); // Margem de segurança para evitar erro 703
+  
+  // Calcular o offset de timezone do Brasil (-03:00)
+  // Usar o offset local pode causar problemas se o servidor estiver em outro fuso
+  // Forçar -03:00 que é o fuso padrão de Brasília
   const hours = String(agora.getHours()).padStart(2, '0');
   const minutes = String(agora.getMinutes()).padStart(2, '0');
   const seconds = String(agora.getSeconds()).padStart(2, '0');
   
-  // Usar a data do formulário com a hora atual do computador
-  const datePart = dateStr.split("T")[0];
-  return `${datePart}T${hours}:${minutes}:${seconds}-03:00`;
+  // Usar a data atual (não a do formulário) para evitar inconsistências
+  const year = agora.getFullYear();
+  const month = String(agora.getMonth() + 1).padStart(2, '0');
+  const day = String(agora.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}-03:00`;
 }
 
 // Mapeamento do indicador de IE do destinatário
