@@ -302,8 +302,16 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
     );
   }
 
-  // Abrir PDF em nova aba
+  // Download direto do PDF (evita bloqueio de pop-up)
   const pdfBlob = doc.output("blob");
   const pdfUrl = URL.createObjectURL(pdfBlob);
-  window.open(pdfUrl, "_blank");
+  const link = document.createElement("a");
+  link.href = pdfUrl;
+  link.download = `extrato_contrato_${contrato.numero}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Revogar URL após download
+  setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
 }
