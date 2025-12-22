@@ -235,7 +235,7 @@ export function EmitirNfeAutomaticoDialog({
         transp_endereco: transportadora?.logradouro ? `${transportadora.logradouro}, ${transportadora.numero || "S/N"}` : null,
         transp_cidade: transportadora?.cidade || null,
         transp_uf: transportadora?.uf || null,
-        veiculo_placa: remessa.placa || null,
+        veiculo_placa: remessa.placa ? remessa.placa.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 7) : null,
         veiculo_uf: remessa.uf_placa || null,
         volumes_quantidade: 1,
         volumes_especie: "GRANEL",
