@@ -149,6 +149,10 @@ export default function VendaProducaoForm() {
   const compradores = clientes?.filter(c => c.tipo === "cliente" || c.tipo === "ambos") || [];
   const inscricoesParceria = inscricoes?.filter(i => i.tipo === "parceria" || i.produtores?.tipo_produtor === "parceiro") || [];
 
+  // Check if all required data is loaded for the form
+  const isDataReady = !!(safras && produtos && clientes);
+  const isFormReady = isEditing ? !!(contrato && isDataReady) : isDataReady;
+
   // Watch values for calculations
   const quantidadeKg = watch("quantidade_kg");
   const precoKg = watch("preco_kg");
@@ -192,9 +196,10 @@ export default function VendaProducaoForm() {
     }
   }, [compradorId, clientes, isEditing, setValue]);
 
-  // Load contrato data
+  // Load contrato data - only when ALL required data is ready
   useEffect(() => {
-    if (contrato) {
+    // Only run reset when editing and all data is ready
+    if (isEditing && contrato && isDataReady) {
       reset({
         numero: contrato.numero,
         safra_id: contrato.safra_id || "",
@@ -233,11 +238,16 @@ export default function VendaProducaoForm() {
         granja_id: contrato.granja_id || "",
       });
       if (contrato.corretor) setCorretorOpen(true);
-    } else if (proximoNumero && !isEditing) {
+    }
+  }, [isEditing, contrato, isDataReady, reset]);
+
+  // Set initial values for new contracts
+  useEffect(() => {
+    if (!isEditing && proximoNumero && isDataReady) {
       setValue("numero", proximoNumero);
       setValue("data_contrato", new Date().toISOString().split("T")[0]);
     }
-  }, [contrato, proximoNumero, isEditing, reset, setValue]);
+  }, [isEditing, proximoNumero, isDataReady, setValue]);
 
   const onSubmit = async (data: FormData) => {
     const payload: ContratoVendaInsert = {
@@ -307,7 +317,8 @@ export default function VendaProducaoForm() {
     navigate(`/notas-fiscais/nova?contrato=${id}`);
   };
 
-  if (loadingContrato && isEditing) {
+  // Show loading state until ALL data is ready
+  if ((loadingContrato && isEditing) || !isFormReady) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-96">
