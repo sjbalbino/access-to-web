@@ -1,0 +1,9 @@
+-- Adicionar campos de CST padrão na tabela emitentes_nfe
+ALTER TABLE emitentes_nfe 
+ADD COLUMN IF NOT EXISTS cst_icms_padrao VARCHAR(3) DEFAULT '00',
+ADD COLUMN IF NOT EXISTS cst_pis_padrao VARCHAR(2) DEFAULT '01',
+ADD COLUMN IF NOT EXISTS cst_cofins_padrao VARCHAR(2) DEFAULT '01',
+ADD COLUMN IF NOT EXISTS cst_ipi_padrao VARCHAR(2) DEFAULT '53',
+ADD COLUMN IF NOT EXISTS cst_ibs_padrao VARCHAR(2) DEFAULT '00',
+ADD COLUMN IF NOT EXISTS cst_cbs_padrao VARCHAR(2) DEFAULT '00',
+ADD COLUMN IF NOT EXISTS cst_is_padrao VARCHAR(2) DEFAULT '00';
