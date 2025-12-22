@@ -171,6 +171,11 @@ export default function NotaFiscalForm() {
     message: "",
     progress: 0,
   });
+  const [novaDuplicata, setNovaDuplicata] = useState({
+    numero: "",
+    data_vencimento: "",
+    valor: 0,
+  });
 
   const existingNota = isEditing ? notasFiscais.find((n) => n.id === id) : null;
   
@@ -1790,13 +1795,6 @@ export default function NotaFiscalForm() {
       </CardContent>
     </Card>
   );
-
-  // Estado para nova duplicata
-  const [novaDuplicata, setNovaDuplicata] = useState({
-    numero: "",
-    data_vencimento: "",
-    valor: 0,
-  });
 
   const handleAddDuplicata = async () => {
     if (!id) return;
