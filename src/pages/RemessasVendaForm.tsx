@@ -625,7 +625,7 @@ export default function RemessasVendaForm() {
                   <Input 
                     value={watch("placa") || ""}
                     onChange={(e) => setValue("placa", formatPlaca(e.target.value))}
-                    placeholder="AAA-0000" 
+                    placeholder="ABC1D23" 
                     maxLength={8} 
                   />
                 </div>
@@ -720,10 +720,47 @@ export default function RemessasVendaForm() {
                     rows={2}
                   />
                 </div>
-                <Button type="submit" disabled={createRemessa.isPending}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Remessa
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => {
+                      reset({
+                        data_remessa: new Date().toISOString().split("T")[0],
+                        peso_bruto: 0,
+                        peso_tara: 0,
+                        silo_id: "",
+                        ph: 0,
+                        umidade: 0,
+                        impureza: 0,
+                        transportadora_id: "",
+                        motorista: "",
+                        motorista_cpf: "",
+                        placa: "",
+                        uf_placa: "",
+                        balanceiro: profile?.nome || "",
+                        romaneio: 0,
+                        observacoes: "",
+                        local_entrega_nome: contrato?.local_entrega_nome || "",
+                        local_entrega_cnpj_cpf: contrato?.local_entrega_cnpj_cpf || "",
+                        local_entrega_ie: contrato?.local_entrega_ie || "",
+                        local_entrega_logradouro: contrato?.local_entrega_logradouro || "",
+                        local_entrega_numero: contrato?.local_entrega_numero || "",
+                        local_entrega_complemento: contrato?.local_entrega_complemento || "",
+                        local_entrega_bairro: contrato?.local_entrega_bairro || "",
+                        local_entrega_cidade: contrato?.local_entrega_cidade || "",
+                        local_entrega_uf: contrato?.local_entrega_uf || "",
+                        local_entrega_cep: contrato?.local_entrega_cep || "",
+                      });
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={createRemessa.isPending}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Remessa
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -145,7 +145,7 @@ export default function Placas() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Placa *</Label>
-                      <Input value={formData.placa} onChange={(e) => setFormData({ ...formData, placa: e.target.value.toUpperCase() })} required placeholder="ABC-1234" />
+                      <Input value={formData.placa} onChange={(e) => setFormData({ ...formData, placa: e.target.value.toUpperCase() })} required placeholder="ABC1D23" />
                     </div>
                     <div className="space-y-2">
                       <Label>Tipo</Label>
