@@ -192,6 +192,25 @@ export function EmitirNfeAutomaticoDialog({
       const valorTotal = remessa.valor_nota || (remessa.kg_nota || 0) * (contrato.preco_kg || 0);
       const kgNota = remessa.kg_nota || remessa.kg_remessa || 0;
 
+      // Montar informações complementares
+      const infoComplementarParts: string[] = [];
+      infoComplementarParts.push(`Contrato de Venda nº ${contrato.numero}${contrato.numero_contrato_comprador ? ` - Contrato Comprador: ${contrato.numero_contrato_comprador}` : ""}`);
+      infoComplementarParts.push(`Romaneio: ${remessa.romaneio || remessa.codigo}`);
+      
+      // Adicionar Local de Entrega se houver
+      const localEntrega = contrato.local_entrega_nome || remessa.local_entrega_nome;
+      if (localEntrega) {
+        let localEntregaStr = `Local de Entrega: ${localEntrega}`;
+        const cidadeUf = [contrato.local_entrega_cidade || remessa.local_entrega_cidade, contrato.local_entrega_uf || remessa.local_entrega_uf].filter(Boolean).join("/");
+        if (cidadeUf) localEntregaStr += ` - ${cidadeUf}`;
+        infoComplementarParts.push(localEntregaStr);
+      }
+      
+      // Adicionar Observações do contrato se houver
+      if (contrato.observacoes) {
+        infoComplementarParts.push(`Obs: ${contrato.observacoes}`);
+      }
+
       const notaFiscalData = {
         emitente_id: emitente.id,
         granja_id: inscricao.granja_id,
@@ -223,7 +242,7 @@ export function EmitirNfeAutomaticoDialog({
         modalidade_frete: contrato.modalidade_frete ?? 9,
         forma_pagamento: 1, // A prazo
         tipo_pagamento: "90", // Sem pagamento
-        info_complementar: `Contrato de Venda nº ${contrato.numero}${contrato.numero_contrato_comprador ? ` - Contrato Comprador: ${contrato.numero_contrato_comprador}` : ""}. Romaneio: ${remessa.romaneio || remessa.codigo}.`,
+        info_complementar: infoComplementarParts.join(". ") + ".",
         status: "rascunho",
         total_produtos: valorTotal,
         total_nota: valorTotal,
