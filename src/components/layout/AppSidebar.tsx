@@ -23,6 +23,7 @@ import {
   FileText,
   Receipt,
   ShoppingCart,
+  LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -42,27 +43,64 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const menuItems = [
-  { title: "Dashboard", icon: LayoutDashboard, path: "/", color: "text-primary" },
-  { title: "Granjas", icon: Building2, path: "/granjas", color: "text-info" },
-  { title: "Culturas", icon: Leaf, path: "/culturas", color: "text-success" },
-  { title: "Safras", icon: Calendar, path: "/safras", color: "text-warning" },
-  { title: "Produtores", icon: Users, path: "/produtores", color: "text-accent" },
-  { title: "Lavouras", icon: Map, path: "/lavouras", color: "text-chart-5" },
-  { title: "Controle Lavoura", icon: Wheat, path: "/controle-lavoura", color: "text-lime-600" },
-  { title: "Clientes/Forn.", icon: Users, path: "/clientes-fornecedores", color: "text-info" },
-  { title: "Produtos", icon: Package, path: "/produtos", color: "text-amber-500" },
-  { title: "Grupos Produtos", icon: FolderOpen, path: "/grupos-produtos", color: "text-violet-500" },
-  { title: "Unidades", icon: Ruler, path: "/unidades-medida", color: "text-sky-500" },
-  { title: "Silos", icon: Warehouse, path: "/silos", color: "text-emerald-500" },
-  { title: "Placas", icon: Truck, path: "/placas", color: "text-orange-500" },
-  { title: "Tab. Umidades", icon: Droplets, path: "/tabela-umidades", color: "text-cyan-500" },
-  { title: "NCM", icon: FileText, path: "/ncm", color: "text-slate-500" },
-  { title: "CFOPs", icon: FileText, path: "/cfops", color: "text-indigo-500" },
-  { title: "Emitentes NF-e", icon: Building2, path: "/emitentes-nfe", color: "text-teal-500" },
-  { title: "Transportadoras", icon: Truck, path: "/transportadoras", color: "text-purple-500" },
-  { title: "Notas Fiscais", icon: Receipt, path: "/notas-fiscais", color: "text-rose-500" },
-  { title: "Vendas Produção", icon: ShoppingCart, path: "/vendas-producao", color: "text-green-600" },
+interface MenuItem {
+  title: string;
+  icon: LucideIcon;
+  path: string;
+  color: string;
+}
+
+interface MenuGroup {
+  title: string;
+  items: MenuItem[];
+}
+
+const menuGroups: MenuGroup[] = [
+  {
+    title: "Principal",
+    items: [
+      { title: "Dashboard", icon: LayoutDashboard, path: "/", color: "text-primary" },
+    ],
+  },
+  {
+    title: "Produção",
+    items: [
+      { title: "Granjas", icon: Building2, path: "/granjas", color: "text-info" },
+      { title: "Culturas", icon: Leaf, path: "/culturas", color: "text-success" },
+      { title: "Safras", icon: Calendar, path: "/safras", color: "text-warning" },
+      { title: "Produtores", icon: Users, path: "/produtores", color: "text-accent" },
+      { title: "Lavouras", icon: Map, path: "/lavouras", color: "text-chart-5" },
+      { title: "Controle Lavoura", icon: Wheat, path: "/controle-lavoura", color: "text-lime-600" },
+    ],
+  },
+  {
+    title: "Comercial",
+    items: [
+      { title: "Clientes/Forn.", icon: Users, path: "/clientes-fornecedores", color: "text-info" },
+      { title: "Vendas Produção", icon: ShoppingCart, path: "/vendas-producao", color: "text-green-600" },
+      { title: "Notas Fiscais", icon: Receipt, path: "/notas-fiscais", color: "text-rose-500" },
+    ],
+  },
+  {
+    title: "Cadastros",
+    items: [
+      { title: "Produtos", icon: Package, path: "/produtos", color: "text-amber-500" },
+      { title: "Grupos Produtos", icon: FolderOpen, path: "/grupos-produtos", color: "text-violet-500" },
+      { title: "Unidades", icon: Ruler, path: "/unidades-medida", color: "text-sky-500" },
+      { title: "Silos", icon: Warehouse, path: "/silos", color: "text-emerald-500" },
+      { title: "Placas", icon: Truck, path: "/placas", color: "text-orange-500" },
+      { title: "Tab. Umidades", icon: Droplets, path: "/tabela-umidades", color: "text-cyan-500" },
+    ],
+  },
+  {
+    title: "Fiscal",
+    items: [
+      { title: "NCM", icon: FileText, path: "/ncm", color: "text-slate-500" },
+      { title: "CFOPs", icon: FileText, path: "/cfops", color: "text-indigo-500" },
+      { title: "Emitentes NF-e", icon: Building2, path: "/emitentes-nfe", color: "text-teal-500" },
+      { title: "Transportadoras", icon: Truck, path: "/transportadoras", color: "text-purple-500" },
+    ],
+  },
 ];
 
 const roleLabels: Record<string, string> = {
@@ -75,6 +113,41 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
+
+  const renderMenuItem = (item: MenuItem, isActive: boolean) => {
+    const Icon = item.icon;
+    return (
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>
+          <Link
+            to={item.path}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+              "hover:bg-sidebar-accent",
+              isActive
+                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                : "text-sidebar-foreground"
+            )}
+          >
+            <Icon
+              className={cn(
+                "h-5 w-5 flex-shrink-0",
+                isActive ? "text-sidebar-primary-foreground" : item.color
+              )}
+            />
+            {!collapsed && (
+              <span className="font-medium">{item.title}</span>
+            )}
+          </Link>
+        </TooltipTrigger>
+        {collapsed && (
+          <TooltipContent side="right" className="bg-popover">
+            {item.title}
+          </TooltipContent>
+        )}
+      </Tooltip>
+    );
+  };
 
   return (
     <aside
@@ -132,116 +205,123 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 py-4 overflow-y-auto">
-        <ul className="space-y-1 px-2">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const Icon = item.icon;
+        <div className="space-y-4 px-2">
+          {menuGroups.map((group, groupIndex) => (
+            <div key={group.title}>
+              {/* Group Title */}
+              {!collapsed ? (
+                <div className="px-3 py-2">
+                  <span className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+                    {group.title}
+                  </span>
+                </div>
+              ) : (
+                groupIndex > 0 && (
+                  <div className="my-2 border-t border-sidebar-border" />
+                )
+              )}
+              
+              {/* Group Items */}
+              <ul className="space-y-1">
+                {group.items.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <li key={item.path}>
+                      {renderMenuItem(item, isActive)}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
 
-            return (
-              <li key={item.path}>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to={item.path}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                        "hover:bg-sidebar-accent",
-                        isActive
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                          : "text-sidebar-foreground"
+          {/* Administração - Conditional Items */}
+          {(isAdmin || isSuperAdmin) && (
+            <div>
+              {!collapsed ? (
+                <div className="px-3 py-2">
+                  <span className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+                    Administração
+                  </span>
+                </div>
+              ) : (
+                <div className="my-2 border-t border-sidebar-border" />
+              )}
+              
+              <ul className="space-y-1">
+                {/* Users Management - Admin Only */}
+                {isAdmin && (
+                  <li>
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to="/usuarios"
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                            "hover:bg-sidebar-accent",
+                            location.pathname === "/usuarios"
+                              ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                              : "text-sidebar-foreground"
+                          )}
+                        >
+                          <Shield
+                            className={cn(
+                              "h-5 w-5 flex-shrink-0",
+                              location.pathname === "/usuarios" ? "text-sidebar-primary-foreground" : "text-destructive"
+                            )}
+                          />
+                          {!collapsed && (
+                            <span className="font-medium">Usuários</span>
+                          )}
+                        </Link>
+                      </TooltipTrigger>
+                      {collapsed && (
+                        <TooltipContent side="right" className="bg-popover">
+                          Usuários
+                        </TooltipContent>
                       )}
-                    >
-                      <Icon
-                        className={cn(
-                          "h-5 w-5 flex-shrink-0",
-                          isActive ? "text-sidebar-primary-foreground" : item.color
-                        )}
-                      />
-                      {!collapsed && (
-                        <span className="font-medium">{item.title}</span>
-                      )}
-                    </Link>
-                  </TooltipTrigger>
-                  {collapsed && (
-                    <TooltipContent side="right" className="bg-popover">
-                      {item.title}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </li>
-            );
-          })}
-
-          {/* Users Management - Admin Only */}
-          {isAdmin && (
-            <li>
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <Link
-                    to="/usuarios"
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                      "hover:bg-sidebar-accent",
-                      location.pathname === "/usuarios"
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                        : "text-sidebar-foreground"
-                    )}
-                  >
-                    <Shield
-                      className={cn(
-                        "h-5 w-5 flex-shrink-0",
-                        location.pathname === "/usuarios" ? "text-sidebar-primary-foreground" : "text-destructive"
-                      )}
-                    />
-                    {!collapsed && (
-                      <span className="font-medium">Usuários</span>
-                    )}
-                  </Link>
-                </TooltipTrigger>
-                {collapsed && (
-                  <TooltipContent side="right" className="bg-popover">
-                    Usuários
-                  </TooltipContent>
+                    </Tooltip>
+                  </li>
                 )}
-              </Tooltip>
-            </li>
-          )}
 
-          {/* Tenants Management - Super Admin Only */}
-          {isSuperAdmin && (
-            <li>
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <Link
-                    to="/tenants"
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                      "hover:bg-sidebar-accent",
-                      location.pathname === "/tenants"
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                        : "text-sidebar-foreground"
-                    )}
-                  >
-                    <Crown
-                      className={cn(
-                        "h-5 w-5 flex-shrink-0",
-                        location.pathname === "/tenants" ? "text-sidebar-primary-foreground" : "text-amber-500"
+                {/* Tenants Management - Super Admin Only */}
+                {isSuperAdmin && (
+                  <li>
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to="/tenants"
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                            "hover:bg-sidebar-accent",
+                            location.pathname === "/tenants"
+                              ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                              : "text-sidebar-foreground"
+                          )}
+                        >
+                          <Crown
+                            className={cn(
+                              "h-5 w-5 flex-shrink-0",
+                              location.pathname === "/tenants" ? "text-sidebar-primary-foreground" : "text-amber-500"
+                            )}
+                          />
+                          {!collapsed && (
+                            <span className="font-medium">Empresas Contratantes</span>
+                          )}
+                        </Link>
+                      </TooltipTrigger>
+                      {collapsed && (
+                        <TooltipContent side="right" className="bg-popover">
+                          Empresas Contratantes
+                        </TooltipContent>
                       )}
-                    />
-                    {!collapsed && (
-                      <span className="font-medium">Empresas Contratantes</span>
-                    )}
-                  </Link>
-                </TooltipTrigger>
-                {collapsed && (
-                  <TooltipContent side="right" className="bg-popover">
-                    Empresas Contratantes
-                  </TooltipContent>
+                    </Tooltip>
+                  </li>
                 )}
-              </Tooltip>
-            </li>
+              </ul>
+            </div>
           )}
-        </ul>
+        </div>
       </nav>
 
       {/* User Menu */}

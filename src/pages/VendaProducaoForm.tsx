@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -264,6 +265,12 @@ export default function VendaProducaoForm() {
   }, [isEditing, proximoNumero, isDataReady, setValue]);
 
   const onSubmit = async (data: FormData) => {
+    // Validar campo obrigatório
+    if (!data.inscricao_produtor_id) {
+      toast.error("Selecione o Vendedor (Parceiro)");
+      return;
+    }
+
     const payload: ContratoVendaInsert = {
       numero: data.numero,
       data_contrato: data.data_contrato,
