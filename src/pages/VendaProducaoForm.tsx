@@ -31,7 +31,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, ArrowLeft, Save, Truck, FileText } from "lucide-react";
+import { ChevronDown, ChevronUp, ArrowLeft, Save, Truck, FileText, Printer } from "lucide-react";
+import { gerarExtratoContrato } from "@/lib/contratoVendaPdf";
 import {
   useContratoVenda,
   useCreateContratoVenda,
@@ -378,10 +379,26 @@ export default function VendaProducaoForm() {
           </div>
           <div className="flex flex-wrap gap-2">
             {isEditing && (
-              <Button type="button" variant="outline" onClick={() => navigate(`/vendas-producao/${id}/remessas`)} className="flex-1 sm:flex-none">
-                <Truck className="h-4 w-4 mr-2" />
-                Remessas
-              </Button>
+              <>
+                <Button type="button" variant="outline" onClick={() => navigate(`/vendas-producao/${id}/remessas`)} className="flex-1 sm:flex-none">
+                  <Truck className="h-4 w-4 mr-2" />
+                  Remessas
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    if (contrato && remessas) {
+                      gerarExtratoContrato(contrato as any, remessas as any);
+                    }
+                  }} 
+                  className="flex-1 sm:flex-none"
+                  title="Gerar Extrato PDF"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Extrato PDF
+                </Button>
+              </>
             )}
             <Button type="submit" disabled={createContrato.isPending || updateContrato.isPending} className="flex-1 sm:flex-none">
               <Save className="h-4 w-4 mr-2" />

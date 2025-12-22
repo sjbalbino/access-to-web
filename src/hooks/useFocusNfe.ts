@@ -238,26 +238,34 @@ export function useFocusNfe() {
         throw new Error(data.error as string);
       }
 
-      // Criar blob e baixar
+      // Criar blob
       const blob = new Blob([data], {
         type: tipo === "danfe" ? "application/pdf" : "application/xml",
       });
 
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download =
-        tipo === "danfe"
-          ? `danfe_${ref}.pdf`
-          : tipo === "xml_cancelamento"
-          ? `nfe_cancelamento_${ref}.xml`
-          : `nfe_${ref}.xml`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
 
-      toast.success("Download iniciado");
+      // Para PDF (DANFE), abrir em nova aba; para XML, fazer download
+      if (tipo === "danfe") {
+        window.open(url, "_blank");
+        toast.success("DANFE aberto em nova aba");
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download =
+          tipo === "xml_cancelamento"
+            ? `nfe_cancelamento_${ref}.xml`
+            : `nfe_${ref}.xml`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast.success("Download iniciado");
+      }
+
+      // Revogar URL após um delay para permitir visualização/download
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro desconhecido";
       toast.error("Erro ao baixar arquivo", { description: message });
