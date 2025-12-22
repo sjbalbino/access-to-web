@@ -36,6 +36,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
+import { formatCpf, unformatDocument } from "@/lib/formatters";
 
 const UFS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
@@ -466,7 +467,7 @@ export default function Transportadoras() {
                   value={formData.placa_padrao || ""}
                   onChange={(e) => setFormData({ ...formData, placa_padrao: e.target.value.toUpperCase() })}
                   maxLength={7}
-                  placeholder="ABC1234"
+                  placeholder="ABC1D23"
                 />
               </div>
 
@@ -513,8 +514,8 @@ export default function Transportadoras() {
                 <Label htmlFor="motorista_cpf_padrao">CPF Motorista Padrão</Label>
                 <Input
                   id="motorista_cpf_padrao"
-                  value={formData.motorista_cpf_padrao || ""}
-                  onChange={(e) => setFormData({ ...formData, motorista_cpf_padrao: e.target.value })}
+                  value={formatCpf(formData.motorista_cpf_padrao || "")}
+                  onChange={(e) => setFormData({ ...formData, motorista_cpf_padrao: unformatDocument(e.target.value) })}
                   maxLength={14}
                   placeholder="000.000.000-00"
                 />
