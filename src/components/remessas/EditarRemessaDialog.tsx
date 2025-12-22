@@ -27,7 +27,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Package, Truck, FileText, MapPin } from "lucide-react";
-import { formatCpf, formatCpfCnpj, formatPlaca, formatCep } from "@/lib/formatters";
+import { formatCpf, formatCpfCnpj, formatPlaca, formatCep, validateCpf } from "@/lib/formatters";
 
 interface LocalEntrega {
   local_entrega_nome?: string;
@@ -147,6 +147,13 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
 
     if (!siloId) {
       toast.error("Silo é obrigatório!");
+      return;
+    }
+
+    // Validar CPF do motorista se informado
+    const cpfLimpo = motoristaCpf?.replace(/\D/g, "") || "";
+    if (cpfLimpo.length > 0 && !validateCpf(cpfLimpo)) {
+      toast.error("CPF do motorista inválido!");
       return;
     }
 

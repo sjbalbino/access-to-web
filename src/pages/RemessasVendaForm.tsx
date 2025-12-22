@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { formatCpf, formatCpfCnpj, formatPlaca, formatCep } from "@/lib/formatters";
+import { formatCpf, formatCpfCnpj, formatPlaca, formatCep, validateCpf } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -218,6 +218,13 @@ export default function RemessasVendaForm() {
     // Validação: Silo obrigatório
     if (!data.silo_id) {
       toast.error("Silo é obrigatório!");
+      return;
+    }
+
+    // Validar CPF do motorista se informado
+    const cpfLimpo = data.motorista_cpf?.replace(/\D/g, "") || "";
+    if (cpfLimpo.length > 0 && !validateCpf(cpfLimpo)) {
+      toast.error("CPF do motorista inválido!");
       return;
     }
 
@@ -625,7 +632,7 @@ export default function RemessasVendaForm() {
                   <Input 
                     value={watch("placa") || ""}
                     onChange={(e) => setValue("placa", formatPlaca(e.target.value))}
-                    placeholder="ABC1D23" 
+                    placeholder="ABC-1D23" 
                     maxLength={8} 
                   />
                 </div>

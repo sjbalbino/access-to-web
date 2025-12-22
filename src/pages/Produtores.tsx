@@ -51,6 +51,8 @@ import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { InscricoesTab } from "@/components/produtores/InscricoesTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatCpf, validateCpf, validateCnpj } from "@/lib/formatters";
+import { toast } from "sonner";
 
 const TIPOS_PRODUTOR = [
   { value: "produtor", label: "Produtor" },
@@ -220,6 +222,21 @@ export default function Produtores() {
   };
 
   const handleSaveNew = async () => {
+    // Validar CPF/CNPJ se informado
+    if (newFormData.cpf_cnpj && newFormData.cpf_cnpj.length > 0) {
+      if (newFormData.tipo_pessoa === "fisica") {
+        if (!validateCpf(newFormData.cpf_cnpj)) {
+          toast.error("CPF inválido!");
+          return;
+        }
+      } else {
+        if (!validateCnpj(newFormData.cpf_cnpj)) {
+          toast.error("CNPJ inválido!");
+          return;
+        }
+      }
+    }
+
     const newProdutor = await createProdutor.mutateAsync(newFormData);
     setDialogOpen(false);
     if (newProdutor) {
@@ -230,6 +247,22 @@ export default function Produtores() {
 
   const handleSaveEdit = async () => {
     if (!selectedProdutorId) return;
+
+    // Validar CPF/CNPJ se informado
+    if (editFormData.cpf_cnpj && editFormData.cpf_cnpj.length > 0) {
+      if (editFormData.tipo_pessoa === "fisica") {
+        if (!validateCpf(editFormData.cpf_cnpj)) {
+          toast.error("CPF inválido!");
+          return;
+        }
+      } else {
+        if (!validateCnpj(editFormData.cpf_cnpj)) {
+          toast.error("CNPJ inválido!");
+          return;
+        }
+      }
+    }
+
     await updateProdutor.mutateAsync({ id: selectedProdutorId, ...editFormData });
   };
 
