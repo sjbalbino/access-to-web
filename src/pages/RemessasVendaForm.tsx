@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink } from "lucide-react";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
 import {
   useRemessasVenda,
@@ -875,6 +875,29 @@ export default function RemessasVendaForm() {
                                 >
                                   <Receipt className="h-4 w-4 text-primary" />
                                 </Button>
+                              )}
+                              {/* Botões para status "carregado_nfe" - Visualizar Remessa e NFe */}
+                              {(r.status === "carregado_nfe" || r.nota_fiscal_id) && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setRemessaEditar(r)}
+                                    title="Visualizar Remessa"
+                                  >
+                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                  </Button>
+                                  {r.nota_fiscal_id && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => navigate(`/notas-fiscais/${r.nota_fiscal_id}`)}
+                                      title="Visualizar NF-e"
+                                    >
+                                      <ExternalLink className="h-4 w-4 text-primary" />
+                                    </Button>
+                                  )}
+                                </>
                               )}
                               {/* Botão Excluir - apenas se não tiver NFe */}
                               {!r.nota_fiscal_id && r.status !== "carregado_nfe" && (
