@@ -121,21 +121,9 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
   doc.setFontSize(12);
   doc.text(`Contrato Nº ${contrato.numero}`, pageWidth / 2, yPos, { align: "center" });
 
-  // Dados do Emitente/Granja
+  // Dados do Contrato
   yPos += 15;
   doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("EMITENTE:", 14, yPos);
-  doc.setFont("helvetica", "normal");
-  yPos += 5;
-  doc.text(contrato.granjas?.razao_social || "-", 14, yPos);
-  if (contrato.granjas?.cnpj) {
-    yPos += 5;
-    doc.text(`CNPJ: ${contrato.granjas.cnpj}`, 14, yPos);
-  }
-
-  // Dados do Contrato
-  yPos += 12;
   doc.setFont("helvetica", "bold");
   doc.text("DADOS DO CONTRATO", 14, yPos);
   doc.setFont("helvetica", "normal");
@@ -143,14 +131,14 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
   yPos += 6;
   const contratoInfo = [
     [`Data: ${formatDate(contrato.data_contrato)}`, `Safra: ${contrato.safras?.nome || "-"}`],
-    [`Produto: ${contrato.produtos?.nome || "-"}`, `Tipo: ${contrato.tipo_venda === "semente" ? "Semente" : "Indústria"}`],
+    [`Tipo: ${contrato.tipo_venda === "semente" ? "Semente" : "Indústria"}`, `Frete: ${getModalidadeFrete(contrato.modalidade_frete)}`],
     [`Quantidade: ${formatNumber(contrato.quantidade_kg)} kg (${formatNumber(contrato.quantidade_sacos)} sacos)`, `Preço/kg: ${formatCurrency(contrato.preco_kg)}`],
-    [`Valor Total: ${formatCurrency(contrato.valor_total)}`, `Frete: ${getModalidadeFrete(contrato.modalidade_frete)}`],
+    [`Valor Total: ${formatCurrency(contrato.valor_total)}`, ``],
   ];
 
   contratoInfo.forEach(([left, right]) => {
     doc.text(left, 14, yPos);
-    doc.text(right, pageWidth / 2, yPos);
+    if (right) doc.text(right, pageWidth / 2, yPos);
     yPos += 5;
   });
 
@@ -175,7 +163,7 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
   doc.text("VENDEDOR:", 14, yPos);
   doc.setFont("helvetica", "normal");
   yPos += 5;
-  const vendedorNome = contrato.inscricoes_produtor?.produtores?.nome || contrato.inscricoes_produtor?.granja || "-";
+  const vendedorNome = contrato.inscricoes_produtor?.granja || "-";
   doc.text(vendedorNome, 14, yPos);
   if (contrato.inscricoes_produtor?.cpf_cnpj) {
     yPos += 5;
@@ -188,7 +176,8 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
   doc.text("COMPRADOR:", 14, yPos);
   doc.setFont("helvetica", "normal");
   yPos += 5;
-  doc.text(contrato.clientes_fornecedores?.nome || "-", 14, yPos);
+  const compradorNome = contrato.clientes_fornecedores?.nome || "-";
+  doc.text(compradorNome, 14, yPos);
   if (contrato.clientes_fornecedores?.cpf_cnpj) {
     yPos += 5;
     doc.text(`CNPJ/CPF: ${contrato.clientes_fornecedores.cpf_cnpj}`, 14, yPos);
@@ -258,7 +247,6 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
       .filter(r => r.status !== "cancelada")
       .map((r) => [
         r.codigo?.toString() || "-",
-        r.romaneio || "-",
         formatDate(r.data_carregamento),
         r.placa || "-",
         r.motorista || "-",
@@ -270,20 +258,19 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
 
     autoTable(doc, {
       startY: yPos + 3,
-      head: [["Cód", "Romaneio", "Data", "Placa", "Motorista", "Kg", "Valor", "Status", "NFe"]],
+      head: [["Cód", "Data", "Placa", "Motorista", "Kg", "Valor", "Status", "NFe"]],
       body: remessasData,
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
       columnStyles: {
         0: { halign: "center", cellWidth: 12 },
-        1: { cellWidth: 20 },
+        1: { halign: "center", cellWidth: 22 },
         2: { halign: "center", cellWidth: 20 },
-        3: { halign: "center", cellWidth: 18 },
-        4: { cellWidth: 28 },
-        5: { halign: "right", cellWidth: 18 },
-        6: { halign: "right", cellWidth: 22 },
-        7: { halign: "center", cellWidth: 22 },
-        8: { halign: "center", cellWidth: 15 },
+        3: { cellWidth: 32 },
+        4: { halign: "right", cellWidth: 20 },
+        5: { halign: "right", cellWidth: 24 },
+        6: { halign: "center", cellWidth: 24 },
+        7: { halign: "center", cellWidth: 18 },
       },
     });
   }
