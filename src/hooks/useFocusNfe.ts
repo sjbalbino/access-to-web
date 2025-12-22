@@ -224,17 +224,6 @@ export function useFocusNfe() {
   ): Promise<void> => {
     setIsLoading(true);
 
-    // Abrir janela ANTES do await para evitar bloqueio de pop-up
-    let pdfWindow: Window | null = null;
-    if (tipo === "danfe") {
-      pdfWindow = window.open("", "_blank");
-      if (pdfWindow) {
-        pdfWindow.document.write(
-          '<html><head><title>Carregando DANFE...</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;background:#f5f5f5;"><p>Carregando DANFE...</p></body></html>'
-        );
-      }
-    }
-
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
         body: { ref, tipo, notaFiscalId },
@@ -256,43 +245,30 @@ export function useFocusNfe() {
 
       const url = window.URL.createObjectURL(blob);
 
-      // Para PDF (DANFE), atualizar a janela já aberta; para XML, fazer download
+      // Download direto de todos os arquivos (evita bloqueio de pop-up)
+      const a = document.createElement("a");
+      a.href = url;
+      
       if (tipo === "danfe") {
-        if (pdfWindow) {
-          pdfWindow.location.href = url;
-          toast.success("DANFE aberto em nova aba");
-        } else {
-          // Fallback se janela foi bloqueada - fazer download
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `danfe_${ref}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          toast.success("Download do DANFE iniciado");
-        }
+        a.download = `danfe_${ref}.pdf`;
+      } else if (tipo === "xml_cancelamento") {
+        a.download = `nfe_cancelamento_${ref}.xml`;
       } else {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download =
-          tipo === "xml_cancelamento"
-            ? `nfe_cancelamento_${ref}.xml`
-            : `nfe_${ref}.xml`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        toast.success("Download iniciado");
+        a.download = `nfe_${ref}.xml`;
       }
+      
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      const tipoMsg = tipo === "danfe" ? "DANFE" : "XML";
+      toast.success(`Download do ${tipoMsg} iniciado`);
 
-      // Revogar URL após um delay para permitir visualização/download
+      // Revogar URL após um delay para permitir download
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
-      }, 5000);
+      }, 3000);
     } catch (error) {
-      // Fechar janela em branco se houver erro
-      if (pdfWindow) {
-        pdfWindow.close();
-      }
       const message = error instanceof Error ? error.message : "Erro desconhecido";
       toast.error("Erro ao baixar arquivo", { description: message });
     } finally {
