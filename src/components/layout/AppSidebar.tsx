@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
   Building2,
@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Wheat,
   LogOut,
   User,
@@ -25,6 +26,7 @@ import {
   ShoppingCart,
   LucideIcon,
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -113,6 +115,44 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
+
+  // Função para verificar se um grupo contém a rota ativa
+  const isGroupActive = (items: MenuItem[]) =>
+    items.some((item) => location.pathname === item.path);
+
+  // Estado para controlar grupos expandidos
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    menuGroups.forEach((group) => {
+      initial[group.title] = isGroupActive(group.items);
+    });
+    // Administração
+    initial["Administração"] = ["/usuarios", "/tenants"].includes(location.pathname);
+    return initial;
+  });
+
+  // Atualiza grupos expandidos quando a rota muda
+  useEffect(() => {
+    setExpandedGroups((prev) => {
+      const updated = { ...prev };
+      menuGroups.forEach((group) => {
+        if (isGroupActive(group.items)) {
+          updated[group.title] = true;
+        }
+      });
+      if (["/usuarios", "/tenants"].includes(location.pathname)) {
+        updated["Administração"] = true;
+      }
+      return updated;
+    });
+  }, [location.pathname]);
+
+  const toggleGroup = (groupTitle: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupTitle]: !prev[groupTitle],
+    }));
+  };
 
   const renderMenuItem = (item: MenuItem, isActive: boolean) => {
     const Icon = item.icon;
@@ -205,120 +245,189 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 py-4 overflow-y-auto">
-        <div className="space-y-4 px-2">
+        <div className="space-y-1 px-2">
           {menuGroups.map((group, groupIndex) => (
             <div key={group.title}>
-              {/* Group Title */}
-              {!collapsed ? (
-                <div className="px-3 py-2">
-                  <span className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
-                    {group.title}
-                  </span>
-                </div>
+              {collapsed ? (
+                <>
+                  {groupIndex > 0 && (
+                    <div className="my-2 border-t border-sidebar-border" />
+                  )}
+                  <ul className="space-y-1">
+                    {group.items.map((item) => {
+                      const isActive = location.pathname === item.path;
+                      return (
+                        <li key={item.path}>
+                          {renderMenuItem(item, isActive)}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
               ) : (
-                groupIndex > 0 && (
-                  <div className="my-2 border-t border-sidebar-border" />
-                )
+                <Collapsible
+                  open={expandedGroups[group.title]}
+                  onOpenChange={() => toggleGroup(group.title)}
+                >
+                  <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 hover:bg-sidebar-accent rounded-lg transition-colors cursor-pointer">
+                    <span className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+                      {group.title}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 text-sidebar-foreground/50 transition-transform duration-200",
+                        expandedGroups[group.title] && "rotate-180"
+                      )}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                    <ul className="space-y-1 mt-1">
+                      {group.items.map((item) => {
+                        const isActive = location.pathname === item.path;
+                        return (
+                          <li key={item.path}>
+                            {renderMenuItem(item, isActive)}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
-              
-              {/* Group Items */}
-              <ul className="space-y-1">
-                {group.items.map((item) => {
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <li key={item.path}>
-                      {renderMenuItem(item, isActive)}
-                    </li>
-                  );
-                })}
-              </ul>
             </div>
           ))}
 
           {/* Administração - Conditional Items */}
           {(isAdmin || isSuperAdmin) && (
             <div>
-              {!collapsed ? (
-                <div className="px-3 py-2">
-                  <span className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
-                    Administração
-                  </span>
-                </div>
+              {collapsed ? (
+                <>
+                  <div className="my-2 border-t border-sidebar-border" />
+                  <ul className="space-y-1">
+                    {isAdmin && (
+                      <li>
+                        <Tooltip delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <Link
+                              to="/usuarios"
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                                "hover:bg-sidebar-accent",
+                                location.pathname === "/usuarios"
+                                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                                  : "text-sidebar-foreground"
+                              )}
+                            >
+                              <Shield
+                                className={cn(
+                                  "h-5 w-5 flex-shrink-0",
+                                  location.pathname === "/usuarios" ? "text-sidebar-primary-foreground" : "text-destructive"
+                                )}
+                              />
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="bg-popover">
+                            Usuários
+                          </TooltipContent>
+                        </Tooltip>
+                      </li>
+                    )}
+                    {isSuperAdmin && (
+                      <li>
+                        <Tooltip delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <Link
+                              to="/tenants"
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                                "hover:bg-sidebar-accent",
+                                location.pathname === "/tenants"
+                                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                                  : "text-sidebar-foreground"
+                              )}
+                            >
+                              <Crown
+                                className={cn(
+                                  "h-5 w-5 flex-shrink-0",
+                                  location.pathname === "/tenants" ? "text-sidebar-primary-foreground" : "text-amber-500"
+                                )}
+                              />
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="bg-popover">
+                            Empresas Contratantes
+                          </TooltipContent>
+                        </Tooltip>
+                      </li>
+                    )}
+                  </ul>
+                </>
               ) : (
-                <div className="my-2 border-t border-sidebar-border" />
-              )}
-              
-              <ul className="space-y-1">
-                {/* Users Management - Admin Only */}
-                {isAdmin && (
-                  <li>
-                    <Tooltip delayDuration={0}>
-                      <TooltipTrigger asChild>
-                        <Link
-                          to="/usuarios"
-                          className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                            "hover:bg-sidebar-accent",
-                            location.pathname === "/usuarios"
-                              ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                              : "text-sidebar-foreground"
-                          )}
-                        >
-                          <Shield
+                <Collapsible
+                  open={expandedGroups["Administração"]}
+                  onOpenChange={() => toggleGroup("Administração")}
+                >
+                  <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 hover:bg-sidebar-accent rounded-lg transition-colors cursor-pointer">
+                    <span className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+                      Administração
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 text-sidebar-foreground/50 transition-transform duration-200",
+                        expandedGroups["Administração"] && "rotate-180"
+                      )}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                    <ul className="space-y-1 mt-1">
+                      {isAdmin && (
+                        <li>
+                          <Link
+                            to="/usuarios"
                             className={cn(
-                              "h-5 w-5 flex-shrink-0",
-                              location.pathname === "/usuarios" ? "text-sidebar-primary-foreground" : "text-destructive"
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                              "hover:bg-sidebar-accent",
+                              location.pathname === "/usuarios"
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                                : "text-sidebar-foreground"
                             )}
-                          />
-                          {!collapsed && (
+                          >
+                            <Shield
+                              className={cn(
+                                "h-5 w-5 flex-shrink-0",
+                                location.pathname === "/usuarios" ? "text-sidebar-primary-foreground" : "text-destructive"
+                              )}
+                            />
                             <span className="font-medium">Usuários</span>
-                          )}
-                        </Link>
-                      </TooltipTrigger>
-                      {collapsed && (
-                        <TooltipContent side="right" className="bg-popover">
-                          Usuários
-                        </TooltipContent>
+                          </Link>
+                        </li>
                       )}
-                    </Tooltip>
-                  </li>
-                )}
-
-                {/* Tenants Management - Super Admin Only */}
-                {isSuperAdmin && (
-                  <li>
-                    <Tooltip delayDuration={0}>
-                      <TooltipTrigger asChild>
-                        <Link
-                          to="/tenants"
-                          className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                            "hover:bg-sidebar-accent",
-                            location.pathname === "/tenants"
-                              ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                              : "text-sidebar-foreground"
-                          )}
-                        >
-                          <Crown
+                      {isSuperAdmin && (
+                        <li>
+                          <Link
+                            to="/tenants"
                             className={cn(
-                              "h-5 w-5 flex-shrink-0",
-                              location.pathname === "/tenants" ? "text-sidebar-primary-foreground" : "text-amber-500"
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                              "hover:bg-sidebar-accent",
+                              location.pathname === "/tenants"
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                                : "text-sidebar-foreground"
                             )}
-                          />
-                          {!collapsed && (
+                          >
+                            <Crown
+                              className={cn(
+                                "h-5 w-5 flex-shrink-0",
+                                location.pathname === "/tenants" ? "text-sidebar-primary-foreground" : "text-amber-500"
+                              )}
+                            />
                             <span className="font-medium">Empresas Contratantes</span>
-                          )}
-                        </Link>
-                      </TooltipTrigger>
-                      {collapsed && (
-                        <TooltipContent side="right" className="bg-popover">
-                          Empresas Contratantes
-                        </TooltipContent>
+                          </Link>
+                        </li>
                       )}
-                    </Tooltip>
-                  </li>
-                )}
-              </ul>
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
             </div>
           )}
         </div>
