@@ -170,6 +170,11 @@ export default function NotaFiscalForm() {
   });
 
   const existingNota = isEditing ? notasFiscais.find((n) => n.id === id) : null;
+  
+  // Verificar se a nota está autorizada (readonly mode)
+  const isAuthorized = existingNota?.status === "autorizada" || existingNota?.status === "autorizado";
+  const isCancelled = existingNota?.status === "cancelada" || existingNota?.status === "cancelado";
+  const isReadOnly = isAuthorized || isCancelled;
 
   const [formData, setFormData] = useState({
     emitente_id: "",
@@ -1103,6 +1108,7 @@ export default function NotaFiscalForm() {
                 granja_id: inscricao?.granja_id || "",
               });
             }}
+            disabled={isReadOnly}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione a inscrição" />
@@ -1151,6 +1157,7 @@ export default function NotaFiscalForm() {
             <Select
               value={String(formData.operacao)}
               onValueChange={(value) => setFormData({ ...formData, operacao: Number(value) })}
+              disabled={isReadOnly}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -1169,6 +1176,7 @@ export default function NotaFiscalForm() {
             <Select
               value={String(formData.finalidade)}
               onValueChange={(value) => setFormData({ ...formData, finalidade: Number(value) })}
+              disabled={isReadOnly}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -1187,6 +1195,7 @@ export default function NotaFiscalForm() {
             <Select
               value={formData.cfop_id || ""}
               onValueChange={(value) => setFormData({ ...formData, cfop_id: value })}
+              disabled={isReadOnly}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o CFOP" />
@@ -1212,18 +1221,20 @@ export default function NotaFiscalForm() {
               type="date"
               value={formData.data_emissao || ""}
               onChange={(e) => setFormData({ ...formData, data_emissao: e.target.value })}
+              disabled={isReadOnly}
             />
           </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="natureza_operacao">Natureza da Operação *</Label>
-          <Input
-            id="natureza_operacao"
-            value={formData.natureza_operacao || ""}
-            onChange={(e) => setFormData({ ...formData, natureza_operacao: e.target.value })}
-            placeholder="Ex: Venda de Produção"
-            maxLength={60}
-          />
+            <Input
+              id="natureza_operacao"
+              value={formData.natureza_operacao || ""}
+              onChange={(e) => setFormData({ ...formData, natureza_operacao: e.target.value })}
+              placeholder="Ex: Venda de Produção"
+              maxLength={60}
+              disabled={isReadOnly}
+            />
         </div>
       </CardContent>
     </Card>
@@ -1238,23 +1249,25 @@ export default function NotaFiscalForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label>Importar de Cliente/Fornecedor</Label>
-          <Select onValueChange={handleClienteSelect}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione para importar dados" />
-            </SelectTrigger>
-            <SelectContent>
-              {clientesFornecedores.filter((c) => c.ativo).map((cliente) => (
-                <SelectItem key={cliente.id} value={cliente.id}>
-                  {cliente.nome} {cliente.cpf_cnpj && `- ${cliente.cpf_cnpj}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!isReadOnly && (
+          <div className="space-y-2">
+            <Label>Importar de Cliente/Fornecedor</Label>
+            <Select onValueChange={handleClienteSelect} disabled={isReadOnly}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione para importar dados" />
+              </SelectTrigger>
+              <SelectContent>
+                {clientesFornecedores.filter((c) => c.ativo).map((cliente) => (
+                  <SelectItem key={cliente.id} value={cliente.id}>
+                    {cliente.nome} {cliente.cpf_cnpj && `- ${cliente.cpf_cnpj}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
-        <Separator />
+        {!isReadOnly && <Separator />}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
@@ -1262,6 +1275,7 @@ export default function NotaFiscalForm() {
             <Select
               value={formData.dest_tipo || "PJ"}
               onValueChange={(value) => setFormData({ ...formData, dest_tipo: value })}
+              disabled={isReadOnly}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -1279,6 +1293,7 @@ export default function NotaFiscalForm() {
               value={formData.dest_cpf_cnpj || ""}
               onChange={(e) => setFormData({ ...formData, dest_cpf_cnpj: e.target.value })}
               maxLength={14}
+              disabled={isReadOnly}
             />
           </div>
           <div className="space-y-2">
@@ -1287,6 +1302,7 @@ export default function NotaFiscalForm() {
               id="dest_ie"
               value={formData.dest_ie || ""}
               onChange={(e) => setFormData({ ...formData, dest_ie: e.target.value })}
+              disabled={isReadOnly}
             />
           </div>
         </div>
@@ -1298,6 +1314,7 @@ export default function NotaFiscalForm() {
             value={formData.dest_nome || ""}
             onChange={(e) => setFormData({ ...formData, dest_nome: e.target.value })}
             maxLength={60}
+            disabled={isReadOnly}
           />
         </div>
 
@@ -1309,6 +1326,7 @@ export default function NotaFiscalForm() {
               type="email"
               value={formData.dest_email || ""}
               onChange={(e) => setFormData({ ...formData, dest_email: e.target.value })}
+              disabled={isReadOnly}
             />
           </div>
           <div className="space-y-2">
@@ -1317,6 +1335,7 @@ export default function NotaFiscalForm() {
               id="dest_telefone"
               value={formData.dest_telefone || ""}
               onChange={(e) => setFormData({ ...formData, dest_telefone: e.target.value })}
+              disabled={isReadOnly}
             />
           </div>
         </div>
@@ -1332,6 +1351,7 @@ export default function NotaFiscalForm() {
               value={formData.dest_cep || ""}
               onChange={(e) => setFormData({ ...formData, dest_cep: e.target.value })}
               maxLength={8}
+              disabled={isReadOnly}
             />
           </div>
           <div className="space-y-2 md:col-span-2">
@@ -1341,6 +1361,7 @@ export default function NotaFiscalForm() {
               value={formData.dest_logradouro || ""}
               onChange={(e) => setFormData({ ...formData, dest_logradouro: e.target.value })}
               maxLength={60}
+              disabled={isReadOnly}
             />
           </div>
           <div className="space-y-2">
@@ -1350,6 +1371,7 @@ export default function NotaFiscalForm() {
               value={formData.dest_numero || ""}
               onChange={(e) => setFormData({ ...formData, dest_numero: e.target.value })}
               maxLength={10}
+              disabled={isReadOnly}
             />
           </div>
         </div>
@@ -1362,6 +1384,7 @@ export default function NotaFiscalForm() {
               value={formData.dest_complemento || ""}
               onChange={(e) => setFormData({ ...formData, dest_complemento: e.target.value })}
               maxLength={60}
+              disabled={isReadOnly}
             />
           </div>
           <div className="space-y-2">
@@ -1371,6 +1394,7 @@ export default function NotaFiscalForm() {
               value={formData.dest_bairro || ""}
               onChange={(e) => setFormData({ ...formData, dest_bairro: e.target.value })}
               maxLength={60}
+              disabled={isReadOnly}
             />
           </div>
           <div className="space-y-2">
@@ -1380,6 +1404,7 @@ export default function NotaFiscalForm() {
               value={formData.dest_cidade || ""}
               onChange={(e) => setFormData({ ...formData, dest_cidade: e.target.value })}
               maxLength={60}
+              disabled={isReadOnly}
             />
           </div>
           <div className="space-y-2">
@@ -1387,6 +1412,7 @@ export default function NotaFiscalForm() {
             <Select
               value={formData.dest_uf || ""}
               onValueChange={(value) => setFormData({ ...formData, dest_uf: value })}
+              disabled={isReadOnly}
             >
               <SelectTrigger>
                 <SelectValue placeholder="UF" />
@@ -1413,10 +1439,15 @@ export default function NotaFiscalForm() {
             <div>
               <CardTitle className="text-base">Itens da NF-e</CardTitle>
               <CardDescription>
-                {isEditing ? "Adicione produtos à nota fiscal" : "Salve o rascunho primeiro para adicionar itens"}
+                {isReadOnly 
+                  ? "Visualização dos itens da nota fiscal" 
+                  : isEditing 
+                    ? "Adicione produtos à nota fiscal" 
+                    : "Salve o rascunho primeiro para adicionar itens"
+                }
               </CardDescription>
             </div>
-            {isEditing && (
+            {isEditing && !isReadOnly && (
               <Button onClick={() => handleOpenItemDialog()} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Item
@@ -1445,7 +1476,7 @@ export default function NotaFiscalForm() {
                     <TableHead className="text-right w-20">Qtd.</TableHead>
                     <TableHead className="text-right w-28">Vlr Unit.</TableHead>
                     <TableHead className="text-right w-28">Total</TableHead>
-                    <TableHead className="w-20">Ações</TableHead>
+                    {!isReadOnly && <TableHead className="w-20">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1458,24 +1489,26 @@ export default function NotaFiscalForm() {
                       <TableCell className="text-right">{formatBrazilianQuantity(item.quantidade, 3)}</TableCell>
                       <TableCell className="text-right">{formatCurrency(item.valor_unitario)}</TableCell>
                       <TableCell className="text-right font-medium">{formatCurrency(item.valor_total)}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenItemDialog(item)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteItem.mutate(item.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      {!isReadOnly && (
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenItemDialog(item)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteItem.mutate(item.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                   {itens.length === 0 && (
@@ -1549,6 +1582,7 @@ export default function NotaFiscalForm() {
             <Select
               value={String(formData.modalidade_frete)}
               onValueChange={(value) => setFormData({ ...formData, modalidade_frete: Number(value) })}
+              disabled={isReadOnly}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -1562,10 +1596,10 @@ export default function NotaFiscalForm() {
               </SelectContent>
             </Select>
           </div>
-          {formData.modalidade_frete !== 9 && (
+          {formData.modalidade_frete !== 9 && !isReadOnly && (
             <div className="space-y-2">
               <Label>Importar Transportadora</Label>
-              <Select onValueChange={handleTransportadoraSelect}>
+              <Select onValueChange={handleTransportadoraSelect} disabled={isReadOnly}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione transportadora" />
                 </SelectTrigger>
@@ -1766,6 +1800,7 @@ export default function NotaFiscalForm() {
               <Select
                 value={String(formData.forma_pagamento)}
                 onValueChange={(value) => setFormData({ ...formData, forma_pagamento: Number(value) })}
+                disabled={isReadOnly}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -1784,6 +1819,7 @@ export default function NotaFiscalForm() {
               <Select
                 value={formData.tipo_pagamento || "90"}
                 onValueChange={(value) => setFormData({ ...formData, tipo_pagamento: value })}
+                disabled={isReadOnly}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -1813,6 +1849,7 @@ export default function NotaFiscalForm() {
               value={formData.info_complementar || ""}
               onChange={(e) => setFormData({ ...formData, info_complementar: e.target.value })}
               rows={3}
+              disabled={isReadOnly}
             />
           </div>
           <div className="space-y-2">
@@ -1822,6 +1859,7 @@ export default function NotaFiscalForm() {
               value={formData.observacoes || ""}
               onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
               rows={2}
+              disabled={isReadOnly}
             />
           </div>
         </CardContent>
@@ -2232,6 +2270,24 @@ export default function NotaFiscalForm() {
           />
         </div>
 
+        {/* Banner de Alerta para NFe Autorizada/Cancelada */}
+        {isReadOnly && (
+          <Alert variant={isCancelled ? "destructive" : "default"} className={cn(
+            isCancelled ? "" : "border-amber-500 bg-amber-50 dark:bg-amber-950"
+          )}>
+            <AlertCircle className={cn("h-4 w-4", !isCancelled && "text-amber-600")} />
+            <AlertTitle className={cn(!isCancelled && "text-amber-700 dark:text-amber-400")}>
+              {isCancelled ? "NF-e Cancelada" : "NF-e Autorizada - Modo Somente Leitura"}
+            </AlertTitle>
+            <AlertDescription className={cn(!isCancelled && "text-amber-600 dark:text-amber-300")}>
+              {isCancelled 
+                ? "Esta NF-e foi cancelada e não pode ser alterada."
+                : "Esta NF-e foi autorizada e não pode ser editada. Use Carta de Correção para pequenas alterações ou Cancelamento para anular a nota."
+              }
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Status Badge and Actions for existing nota */}
         {existingNota && (
           <div className="space-y-3">
@@ -2245,6 +2301,11 @@ export default function NotaFiscalForm() {
                 }>
                   {existingNota.status}
                 </Badge>
+                {existingNota.numero && (
+                  <span className="text-sm font-medium ml-2">
+                    Nº {existingNota.numero}
+                  </span>
+                )}
                 {existingNota.protocolo && (
                   <span className="text-xs text-muted-foreground font-mono ml-2">
                     Protocolo: {existingNota.protocolo}
@@ -2360,31 +2421,59 @@ export default function NotaFiscalForm() {
 
           <div className="flex gap-4">
             <Button variant="outline" onClick={() => navigate("/notas-fiscais")}>
-              Cancelar
+              Voltar
             </Button>
-            <Button onClick={handleSaveDraft} disabled={isSaving}>
-              <Save className="h-4 w-4 mr-2" />
-              {isSaving ? "Salvando..." : "Salvar Rascunho"}
-            </Button>
-            {(() => {
-              const emitente = emitentes.find((e) => e.id === formData.emitente_id);
-              const canEmit = isEditing && itens.length > 0 && emitente?.api_configurada && existingNota?.status === "rascunho";
-              
-              return (
+            
+            {/* Ações para NFe Autorizada - Apenas Carta de Correção e Cancelamento */}
+            {isAuthorized && (
+              <>
                 <Button 
-                  onClick={handleEmitirNfe} 
-                  disabled={!canEmit || isEmitting || focusNfe.isLoading}
-                  variant={canEmit ? "default" : "secondary"}
+                  variant="outline" 
+                  onClick={() => navigate(`/notas-fiscais`)}
+                  className="gap-2"
                 >
-                  {isEmitting || focusNfe.isLoading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4 mr-2" />
-                  )}
-                  {isEmitting ? "Emitindo..." : focusNfe.status === "processando" ? "Processando..." : "Emitir NF-e"}
+                  <FileEdit className="h-4 w-4" />
+                  Carta de Correção
                 </Button>
-              );
-            })()}
+                <Button 
+                  variant="destructive" 
+                  onClick={() => navigate(`/notas-fiscais`)}
+                  className="gap-2"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Cancelar NF-e
+                </Button>
+              </>
+            )}
+            
+            {/* Ações normais - Apenas para notas não autorizadas/canceladas */}
+            {!isReadOnly && (
+              <>
+                <Button onClick={handleSaveDraft} disabled={isSaving}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? "Salvando..." : "Salvar Rascunho"}
+                </Button>
+                {(() => {
+                  const emitente = emitentes.find((e) => e.id === formData.emitente_id);
+                  const canEmit = isEditing && itens.length > 0 && emitente?.api_configurada && existingNota?.status === "rascunho";
+                  
+                  return (
+                    <Button 
+                      onClick={handleEmitirNfe} 
+                      disabled={!canEmit || isEmitting || focusNfe.isLoading}
+                      variant={canEmit ? "default" : "secondary"}
+                    >
+                      {isEmitting || focusNfe.isLoading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
+                      {isEmitting ? "Emitindo..." : focusNfe.status === "processando" ? "Processando..." : "Emitir NF-e"}
+                    </Button>
+                  );
+                })()}
+              </>
+            )}
           </div>
 
           <Button 
