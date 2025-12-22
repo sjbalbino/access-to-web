@@ -94,7 +94,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       setTransportadoraId(remessa.transportadora_id || "");
       setMotorista(remessa.motorista || "");
       setMotoristaCpf(formatCpf(remessa.motorista_cpf) || "");
-      setPlaca(formatPlaca(remessa.placa) || "");
+      setPlaca(remessa.placa?.replace(/[^A-Za-z0-9]/g, "").toUpperCase() || "");
       setUfPlaca(remessa.uf_placa || "");
       setObservacoes(remessa.observacoes || "");
     }
@@ -113,7 +113,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       const transp = transportadoras.find(t => t.id === transportadoraId);
       if (transp) {
         // Sempre preenche com os dados da transportadora selecionada
-        if (transp.placa_padrao) setPlaca(formatPlaca(transp.placa_padrao));
+        if (transp.placa_padrao) setPlaca(transp.placa_padrao.replace(/[^A-Za-z0-9]/g, "").toUpperCase());
         if (transp.uf_placa_padrao) setUfPlaca(transp.uf_placa_padrao);
         if (transp.motorista_padrao) setMotorista(transp.motorista_padrao);
         if (transp.motorista_cpf_padrao) setMotoristaCpf(formatCpf(transp.motorista_cpf_padrao));
@@ -428,8 +428,8 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Label>Placa</Label>
                   <Input
                     value={placa}
-                    onChange={(e) => setPlaca(formatPlaca(e.target.value))}
-                    maxLength={8}
+                    onChange={(e) => setPlaca(e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase())}
+                    maxLength={7}
                   />
                 </div>
                 <div className="space-y-2">

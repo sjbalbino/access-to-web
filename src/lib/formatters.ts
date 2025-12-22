@@ -40,25 +40,12 @@ export function formatCpfCnpj(value: string | null | undefined): string {
 }
 
 /**
- * Formata placa de veículo
- * Suporta padrão antigo (ABC-1234) e Mercosul (ABC1D23)
+ * Formata placa de veículo - retorna apenas letras e números em maiúsculo
+ * Suporta padrão antigo (ABC1234) e Mercosul (ABC1D23)
  */
 export function formatPlaca(value: string | null | undefined): string {
   if (!value) return "";
-  const clean = value.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 7);
-  
-  if (clean.length <= 3) return clean;
-  
-  // Detectar padrão Mercosul (ABC1D23 - letra na 5ª posição)
-  const isMercosul = clean.length >= 5 && /[A-Z]/.test(clean[4]);
-  
-  if (isMercosul) {
-    // Mercosul: ABC-1D23 (com hífen)
-    return `${clean.slice(0, 3)}-${clean.slice(3)}`;
-  } else {
-    // Padrão antigo: ABC-1234
-    return `${clean.slice(0, 3)}-${clean.slice(3)}`;
-  }
+  return value.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 7);
 }
 
 /**
