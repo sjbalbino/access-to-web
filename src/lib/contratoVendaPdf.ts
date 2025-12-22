@@ -180,9 +180,15 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
   doc.text("VENDEDOR:", 14, yPos);
   doc.setFont("helvetica", "normal");
   yPos += 5;
-  const vendedorNome = contrato.inscricoes_produtor?.granja || contrato.inscricao_produtor?.granja || "-";
+  const vendedorNome =
+    contrato.inscricoes_produtor?.produtores?.nome ||
+    contrato.inscricoes_produtor?.granja ||
+    contrato.inscricao_produtor?.produtor?.nome ||
+    contrato.inscricao_produtor?.granja ||
+    "-";
   doc.text(vendedorNome, 14, yPos);
-  const vendedorCpfCnpj = contrato.inscricoes_produtor?.cpf_cnpj || contrato.inscricao_produtor?.inscricao_estadual;
+  const vendedorCpfCnpj =
+    contrato.inscricoes_produtor?.cpf_cnpj || contrato.inscricao_produtor?.inscricao_estadual;
   if (vendedorCpfCnpj) {
     yPos += 5;
     doc.text(`CPF/CNPJ: ${vendedorCpfCnpj}`, 14, yPos);
