@@ -93,7 +93,7 @@ export default function VendaProducaoForm() {
   const navigate = useNavigate();
   const isEditing = !!id;
   const [corretorOpen, setCorretorOpen] = useState(false);
-  const [hasReset, setHasReset] = useState(false);
+  const [loadedContractId, setLoadedContractId] = useState<string | null>(null);
 
   const { data: contrato, isLoading: loadingContrato } = useContratoVenda(id);
   const { data: remessas } = useRemessasVenda(id);
@@ -110,13 +110,13 @@ export default function VendaProducaoForm() {
   const { register, handleSubmit, watch, setValue, reset } = useForm<FormData>({
     defaultValues: {
       numero: 0,
-      safra_id: "",
-      produto_id: "",
+      safra_id: undefined as unknown as string,
+      produto_id: undefined as unknown as string,
       data_contrato: "",
       nota_venda: "",
       numero_contrato_comprador: "",
-      inscricao_produtor_id: "",
-      comprador_id: "",
+      inscricao_produtor_id: undefined as unknown as string,
+      comprador_id: undefined as unknown as string,
       tipo_venda: "industria",
       quantidade_kg: null,
       quantidade_sacos: null,
@@ -143,7 +143,7 @@ export default function VendaProducaoForm() {
       remessa_deposito: false,
       retorno_deposito: false,
       observacoes: "",
-      granja_id: "",
+      granja_id: undefined as unknown as string,
     },
   });
 
@@ -197,19 +197,19 @@ export default function VendaProducaoForm() {
     }
   }, [compradorId, clientes, isEditing, setValue]);
 
-  // Load contrato data - only when ALL required data is ready and only once
+  // Load contrato data - only when ALL required data is ready and only once per contract
   useEffect(() => {
-    // Only run reset when editing, all data is ready, and hasn't reset yet
-    if (isEditing && contrato && isDataReady && !hasReset) {
+    // Only run reset when editing, all data is ready, and this specific contract hasn't been loaded
+    if (isEditing && contrato && isDataReady && contrato.id !== loadedContractId) {
       reset({
         numero: contrato.numero,
-        safra_id: contrato.safra_id || undefined,
-        produto_id: contrato.produto_id || undefined,
+        safra_id: contrato.safra_id ?? (undefined as unknown as string),
+        produto_id: contrato.produto_id ?? (undefined as unknown as string),
         data_contrato: contrato.data_contrato || "",
         nota_venda: contrato.nota_venda || "",
         numero_contrato_comprador: contrato.numero_contrato_comprador || "",
-        inscricao_produtor_id: contrato.inscricao_produtor_id || undefined,
-        comprador_id: contrato.comprador_id || undefined,
+        inscricao_produtor_id: contrato.inscricao_produtor_id ?? (undefined as unknown as string),
+        comprador_id: contrato.comprador_id ?? (undefined as unknown as string),
         tipo_venda: contrato.tipo_venda || "industria",
         quantidade_kg: contrato.quantidade_kg,
         quantidade_sacos: contrato.quantidade_sacos,
@@ -236,12 +236,12 @@ export default function VendaProducaoForm() {
         remessa_deposito: contrato.remessa_deposito || false,
         retorno_deposito: contrato.retorno_deposito || false,
         observacoes: contrato.observacoes || "",
-        granja_id: contrato.granja_id || "",
+        granja_id: contrato.granja_id ?? (undefined as unknown as string),
       });
       if (contrato.corretor) setCorretorOpen(true);
-      setHasReset(true);
+      setLoadedContractId(contrato.id);
     }
-  }, [isEditing, contrato, isDataReady, hasReset, reset]);
+  }, [isEditing, contrato, isDataReady, loadedContractId, reset]);
 
   // Set initial values for new contracts
   useEffect(() => {
@@ -380,7 +380,7 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Safra *</Label>
-                <Select value={watch("safra_id") || undefined} onValueChange={(v) => setValue("safra_id", v)}>
+                <Select value={watch("safra_id")} onValueChange={(v) => setValue("safra_id", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
@@ -393,7 +393,7 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Produto *</Label>
-                <Select value={watch("produto_id") || undefined} onValueChange={(v) => setValue("produto_id", v)}>
+                <Select value={watch("produto_id")} onValueChange={(v) => setValue("produto_id", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
@@ -420,7 +420,7 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2 sm:col-span-2 lg:col-span-1">
                 <Label>Vendedor (Parceiro)</Label>
-                <Select value={watch("inscricao_produtor_id") || undefined} onValueChange={(v) => setValue("inscricao_produtor_id", v)}>
+                <Select value={watch("inscricao_produtor_id")} onValueChange={(v) => setValue("inscricao_produtor_id", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
@@ -446,7 +446,7 @@ export default function VendaProducaoForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2 sm:col-span-2">
                 <Label>Comprador *</Label>
-                <Select value={watch("comprador_id") || undefined} onValueChange={(v) => setValue("comprador_id", v)}>
+                <Select value={watch("comprador_id")} onValueChange={(v) => setValue("comprador_id", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o comprador..." />
                   </SelectTrigger>
