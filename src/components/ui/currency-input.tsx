@@ -27,10 +27,16 @@ const parseBrazilianNumber = (value: string): number | null => {
 const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
   ({ className, value, onChange, decimals = 2, prefix = "R$", ...props }, ref) => {
     const [displayValue, setDisplayValue] = React.useState(() => formatBrazilianNumber(value, decimals));
+    const [isFocused, setIsFocused] = React.useState(false);
+    const valueRef = React.useRef(value);
 
     React.useEffect(() => {
-      setDisplayValue(formatBrazilianNumber(value, decimals));
-    }, [value, decimals]);
+      // Only update display value when not focused and value actually changed
+      if (!isFocused && valueRef.current !== value) {
+        setDisplayValue(formatBrazilianNumber(value, decimals));
+        valueRef.current = value;
+      }
+    }, [value, decimals, isFocused]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const rawValue = e.target.value;
@@ -40,12 +46,15 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
     };
 
     const handleBlur = () => {
+      setIsFocused(false);
       const parsed = parseBrazilianNumber(displayValue);
       onChange(parsed);
       setDisplayValue(formatBrazilianNumber(parsed, decimals));
+      valueRef.current = parsed;
     };
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(true);
       e.target.select();
     };
 
