@@ -192,6 +192,7 @@ export type Database = {
           cst_cofins_padrao: string | null
           cst_ibs_padrao: string | null
           cst_icms_padrao: string | null
+          cst_ipi_padrao: string | null
           cst_is_padrao: string | null
           cst_pis_padrao: string | null
           descricao: string
@@ -212,6 +213,7 @@ export type Database = {
           cst_cofins_padrao?: string | null
           cst_ibs_padrao?: string | null
           cst_icms_padrao?: string | null
+          cst_ipi_padrao?: string | null
           cst_is_padrao?: string | null
           cst_pis_padrao?: string | null
           descricao: string
@@ -232,6 +234,7 @@ export type Database = {
           cst_cofins_padrao?: string | null
           cst_ibs_padrao?: string | null
           cst_icms_padrao?: string | null
+          cst_ipi_padrao?: string | null
           cst_is_padrao?: string | null
           cst_pis_padrao?: string | null
           descricao?: string
