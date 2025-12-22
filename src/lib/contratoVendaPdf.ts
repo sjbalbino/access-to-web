@@ -6,8 +6,9 @@ import { ptBR } from "date-fns/locale";
 interface RemessaData {
   id: string;
   codigo?: number | null;
-  romaneio?: string | null;
+  romaneio?: string | number | null;
   data_carregamento?: string | null;
+  data_remessa?: string | null;
   status?: string | null;
   placa?: string | null;
   motorista?: string | null;
@@ -16,6 +17,10 @@ interface RemessaData {
   valor_nota?: number | null;
   nota_fiscal_id?: string | null;
   notas_fiscais?: {
+    numero?: number | null;
+    status?: string | null;
+  } | null;
+  nota_fiscal?: {
     numero?: number | null;
     status?: string | null;
   } | null;
@@ -48,13 +53,23 @@ interface ContratoData {
   corretor?: string | null;
   percentual_comissao?: number | null;
   valor_comissao?: number | null;
+  // Suporta ambos os formatos de nomes de campo
   safras?: { nome?: string } | null;
+  safra?: { nome?: string } | null;
   produtos?: { nome?: string } | null;
+  produto?: { nome?: string } | null;
   clientes_fornecedores?: { nome?: string; cpf_cnpj?: string } | null;
+  comprador?: { nome?: string; cpf_cnpj?: string } | null;
   inscricoes_produtor?: { 
     granja?: string; 
     cpf_cnpj?: string;
     produtores?: { nome?: string } | null;
+  } | null;
+  inscricao_produtor?: { 
+    granja?: string; 
+    cpf_cnpj?: string;
+    inscricao_estadual?: string;
+    produtor?: { nome?: string } | null;
   } | null;
   granjas?: { razao_social?: string; cnpj?: string } | null;
 }
@@ -129,8 +144,10 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
   doc.setFont("helvetica", "normal");
   
   yPos += 6;
+  // Suporta ambos os formatos de nomes de campo
+  const safraNome = contrato.safras?.nome || contrato.safra?.nome || "-";
   const contratoInfo = [
-    [`Data: ${formatDate(contrato.data_contrato)}`, `Safra: ${contrato.safras?.nome || "-"}`],
+    [`Data: ${formatDate(contrato.data_contrato)}`, `Safra: ${safraNome}`],
     [`Tipo: ${contrato.tipo_venda === "semente" ? "Semente" : "Indústria"}`, `Frete: ${getModalidadeFrete(contrato.modalidade_frete)}`],
     [`Quantidade: ${formatNumber(contrato.quantidade_kg)} kg (${formatNumber(contrato.quantidade_sacos)} sacos)`, `Preço/kg: ${formatCurrency(contrato.preco_kg)}`],
     [`Valor Total: ${formatCurrency(contrato.valor_total)}`, ``],
@@ -157,30 +174,32 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
     yPos += 5;
   }
 
-  // Vendedor
+  // Vendedor - suporta ambos os formatos
   yPos += 7;
   doc.setFont("helvetica", "bold");
   doc.text("VENDEDOR:", 14, yPos);
   doc.setFont("helvetica", "normal");
   yPos += 5;
-  const vendedorNome = contrato.inscricoes_produtor?.granja || "-";
+  const vendedorNome = contrato.inscricoes_produtor?.granja || contrato.inscricao_produtor?.granja || "-";
   doc.text(vendedorNome, 14, yPos);
-  if (contrato.inscricoes_produtor?.cpf_cnpj) {
+  const vendedorCpfCnpj = contrato.inscricoes_produtor?.cpf_cnpj || contrato.inscricao_produtor?.inscricao_estadual;
+  if (vendedorCpfCnpj) {
     yPos += 5;
-    doc.text(`CPF/CNPJ: ${contrato.inscricoes_produtor.cpf_cnpj}`, 14, yPos);
+    doc.text(`CPF/CNPJ: ${vendedorCpfCnpj}`, 14, yPos);
   }
 
-  // Comprador
+  // Comprador - suporta ambos os formatos
   yPos += 7;
   doc.setFont("helvetica", "bold");
   doc.text("COMPRADOR:", 14, yPos);
   doc.setFont("helvetica", "normal");
   yPos += 5;
-  const compradorNome = contrato.clientes_fornecedores?.nome || "-";
+  const compradorNome = contrato.clientes_fornecedores?.nome || contrato.comprador?.nome || "-";
   doc.text(compradorNome, 14, yPos);
-  if (contrato.clientes_fornecedores?.cpf_cnpj) {
+  const compradorCpfCnpj = contrato.clientes_fornecedores?.cpf_cnpj || contrato.comprador?.cpf_cnpj;
+  if (compradorCpfCnpj) {
     yPos += 5;
-    doc.text(`CNPJ/CPF: ${contrato.clientes_fornecedores.cpf_cnpj}`, 14, yPos);
+    doc.text(`CNPJ/CPF: ${compradorCpfCnpj}`, 14, yPos);
   }
 
   // Local de Entrega
@@ -247,13 +266,13 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
       .filter(r => r.status !== "cancelada")
       .map((r) => [
         r.codigo?.toString() || "-",
-        formatDate(r.data_carregamento),
+        formatDate(r.data_carregamento || r.data_remessa),
         r.placa || "-",
         r.motorista || "-",
         formatNumber(r.kg_remessa || r.kg_nota, 0),
         formatCurrency(r.valor_nota),
         getStatusRemessa(r.status),
-        r.notas_fiscais?.numero?.toString() || "-",
+        (r.notas_fiscais?.numero || r.nota_fiscal?.numero)?.toString() || "-",
       ]);
 
     autoTable(doc, {
@@ -263,14 +282,14 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
       columnStyles: {
-        0: { halign: "center", cellWidth: 12 },
-        1: { halign: "center", cellWidth: 22 },
-        2: { halign: "center", cellWidth: 20 },
-        3: { cellWidth: 32 },
-        4: { halign: "right", cellWidth: 20 },
-        5: { halign: "right", cellWidth: 24 },
-        6: { halign: "center", cellWidth: 24 },
-        7: { halign: "center", cellWidth: 18 },
+        0: { halign: "right", cellWidth: 12 },   // Cód (numérico) - direita
+        1: { halign: "center", cellWidth: 22 },  // Data - centro
+        2: { halign: "left", cellWidth: 20 },    // Placa (texto) - esquerda
+        3: { halign: "left", cellWidth: 32 },    // Motorista (texto) - esquerda
+        4: { halign: "right", cellWidth: 20 },   // Kg (numérico) - direita
+        5: { halign: "right", cellWidth: 24 },   // Valor (moeda) - direita
+        6: { halign: "left", cellWidth: 24 },    // Status (texto) - esquerda
+        7: { halign: "right", cellWidth: 18 },   // NFe (numérico) - direita
       },
     });
   }
