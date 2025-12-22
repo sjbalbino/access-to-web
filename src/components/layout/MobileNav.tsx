@@ -21,8 +21,10 @@ import {
   Receipt,
   ShoppingCart,
   Menu,
+  ChevronDown,
   LucideIcon,
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -107,6 +109,27 @@ export function MobileNav() {
   const location = useLocation();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
 
+  // Função para verificar se um grupo contém a rota ativa
+  const isGroupActive = (items: MenuItem[]) =>
+    items.some((item) => location.pathname === item.path);
+
+  // Estado para controlar grupos expandidos
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    menuGroups.forEach((group) => {
+      initial[group.title] = isGroupActive(group.items);
+    });
+    initial["Administração"] = ["/usuarios", "/tenants"].includes(location.pathname);
+    return initial;
+  });
+
+  const toggleGroup = (groupTitle: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupTitle]: !prev[groupTitle],
+    }));
+  };
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -130,111 +153,127 @@ export function MobileNav() {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 overflow-y-auto max-h-[calc(100vh-180px)]">
-          <div className="space-y-4 px-2">
+          <div className="space-y-1 px-2">
             {menuGroups.map((group) => (
-              <div key={group.title}>
-                {/* Group Title */}
-                <div className="px-3 py-2">
+              <Collapsible
+                key={group.title}
+                open={expandedGroups[group.title]}
+                onOpenChange={() => toggleGroup(group.title)}
+              >
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 hover:bg-accent rounded-lg transition-colors cursor-pointer">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     {group.title}
                   </span>
-                </div>
-                
-                {/* Group Items */}
-                <ul className="space-y-1">
-                  {group.items.map((item) => {
-                    const isActive = location.pathname === item.path;
-                    const Icon = item.icon;
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                      expandedGroups[group.title] && "rotate-180"
+                    )}
+                  />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                  <ul className="space-y-1 mt-1">
+                    {group.items.map((item) => {
+                      const isActive = location.pathname === item.path;
+                      const Icon = item.icon;
 
-                    return (
-                      <li key={item.path}>
-                        <Link
-                          to={item.path}
-                          onClick={() => setOpen(false)}
-                          className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                            "hover:bg-accent",
-                            isActive
-                              ? "bg-primary text-primary-foreground shadow-md"
-                              : "text-foreground"
-                          )}
-                        >
-                          <Icon
+                      return (
+                        <li key={item.path}>
+                          <Link
+                            to={item.path}
+                            onClick={() => setOpen(false)}
                             className={cn(
-                              "h-5 w-5 flex-shrink-0",
-                              isActive ? "text-primary-foreground" : item.color
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                              "hover:bg-accent",
+                              isActive
+                                ? "bg-primary text-primary-foreground shadow-md"
+                                : "text-foreground"
                             )}
-                          />
-                          <span className="font-medium">{item.title}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
+                          >
+                            <Icon
+                              className={cn(
+                                "h-5 w-5 flex-shrink-0",
+                                isActive ? "text-primary-foreground" : item.color
+                              )}
+                            />
+                            <span className="font-medium">{item.title}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CollapsibleContent>
+              </Collapsible>
             ))}
 
             {/* Administração - Conditional Items */}
             {(isAdmin || isSuperAdmin) && (
-              <div>
-                <div className="px-3 py-2">
+              <Collapsible
+                open={expandedGroups["Administração"]}
+                onOpenChange={() => toggleGroup("Administração")}
+              >
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 hover:bg-accent rounded-lg transition-colors cursor-pointer">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Administração
                   </span>
-                </div>
-                
-                <ul className="space-y-1">
-                  {/* Users Management - Admin Only */}
-                  {isAdmin && (
-                    <li>
-                      <Link
-                        to="/usuarios"
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                          "hover:bg-accent",
-                          location.pathname === "/usuarios"
-                            ? "bg-primary text-primary-foreground shadow-md"
-                            : "text-foreground"
-                        )}
-                      >
-                        <Shield
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                      expandedGroups["Administração"] && "rotate-180"
+                    )}
+                  />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+                  <ul className="space-y-1 mt-1">
+                    {isAdmin && (
+                      <li>
+                        <Link
+                          to="/usuarios"
+                          onClick={() => setOpen(false)}
                           className={cn(
-                            "h-5 w-5 flex-shrink-0",
-                            location.pathname === "/usuarios" ? "text-primary-foreground" : "text-destructive"
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                            "hover:bg-accent",
+                            location.pathname === "/usuarios"
+                              ? "bg-primary text-primary-foreground shadow-md"
+                              : "text-foreground"
                           )}
-                        />
-                        <span className="font-medium">Usuários</span>
-                      </Link>
-                    </li>
-                  )}
-
-                  {/* Tenants Management - Super Admin Only */}
-                  {isSuperAdmin && (
-                    <li>
-                      <Link
-                        to="/tenants"
-                        onClick={() => setOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                          "hover:bg-accent",
-                          location.pathname === "/tenants"
-                            ? "bg-primary text-primary-foreground shadow-md"
-                            : "text-foreground"
-                        )}
-                      >
-                        <Crown
+                        >
+                          <Shield
+                            className={cn(
+                              "h-5 w-5 flex-shrink-0",
+                              location.pathname === "/usuarios" ? "text-primary-foreground" : "text-destructive"
+                            )}
+                          />
+                          <span className="font-medium">Usuários</span>
+                        </Link>
+                      </li>
+                    )}
+                    {isSuperAdmin && (
+                      <li>
+                        <Link
+                          to="/tenants"
+                          onClick={() => setOpen(false)}
                           className={cn(
-                            "h-5 w-5 flex-shrink-0",
-                            location.pathname === "/tenants" ? "text-primary-foreground" : "text-amber-500"
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                            "hover:bg-accent",
+                            location.pathname === "/tenants"
+                              ? "bg-primary text-primary-foreground shadow-md"
+                              : "text-foreground"
                           )}
-                        />
-                        <span className="font-medium">Empresas Contratantes</span>
-                      </Link>
-                    </li>
-                  )}
-                </ul>
-              </div>
+                        >
+                          <Crown
+                            className={cn(
+                              "h-5 w-5 flex-shrink-0",
+                              location.pathname === "/tenants" ? "text-primary-foreground" : "text-amber-500"
+                            )}
+                          />
+                          <span className="font-medium">Empresas Contratantes</span>
+                        </Link>
+                      </li>
+                    )}
+                  </ul>
+                </CollapsibleContent>
+              </Collapsible>
             )}
           </div>
         </nav>
