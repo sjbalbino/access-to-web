@@ -481,10 +481,10 @@ export default function Transportadoras() {
                 <Label htmlFor="placa_padrao">Placa Padrão</Label>
                 <Input
                   id="placa_padrao"
-                  value={formatPlaca(formData.placa_padrao) || ""}
+                  value={formData.placa_padrao?.toUpperCase() || ""}
                   onChange={(e) => setFormData({ ...formData, placa_padrao: e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase() })}
-                  maxLength={8}
-                  placeholder="ABC-1D23"
+                  maxLength={7}
+                  placeholder="ABC1D23"
                 />
               </div>
 

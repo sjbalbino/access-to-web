@@ -175,7 +175,7 @@ export default function RemessasVendaForm() {
     if (transportadoraId && transportadoras) {
       const transp = transportadoras.find(t => t.id === transportadoraId);
       if (transp) {
-        if (transp.placa_padrao) setValue("placa", formatPlaca(transp.placa_padrao));
+        if (transp.placa_padrao) setValue("placa", transp.placa_padrao.replace(/[^A-Za-z0-9]/g, "").toUpperCase());
         if (transp.uf_placa_padrao) setValue("uf_placa", transp.uf_placa_padrao);
         if (transp.motorista_padrao) setValue("motorista", transp.motorista_padrao);
         if (transp.motorista_cpf_padrao) setValue("motorista_cpf", formatCpf(transp.motorista_cpf_padrao));
@@ -631,9 +631,9 @@ export default function RemessasVendaForm() {
                   <Label>Placa</Label>
                   <Input 
                     value={watch("placa") || ""}
-                    onChange={(e) => setValue("placa", formatPlaca(e.target.value))}
-                    placeholder="ABC-1D23" 
-                    maxLength={8} 
+                    onChange={(e) => setValue("placa", e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase())}
+                    placeholder="ABC1D23" 
+                    maxLength={7} 
                   />
                 </div>
                 <div className="space-y-2">

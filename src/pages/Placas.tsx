@@ -147,10 +147,10 @@ export default function Placas() {
                     <div className="space-y-2">
                       <Label>Placa *</Label>
                       <Input 
-                        value={formatPlaca(formData.placa)} 
+                        value={formData.placa?.toUpperCase() || ''} 
                         onChange={(e) => setFormData({ ...formData, placa: e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase() })} 
                         required 
-                        placeholder="ABC-1D23" 
+                        placeholder="ABC1D23"
                         maxLength={8}
                       />
                     </div>
