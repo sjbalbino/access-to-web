@@ -21,6 +21,7 @@ import {
   Receipt,
   ShoppingCart,
   Menu,
+  LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,27 +36,64 @@ import {
 } from "@/components/ui/sheet";
 import { useState } from "react";
 
-const menuItems = [
-  { title: "Dashboard", icon: LayoutDashboard, path: "/", color: "text-primary" },
-  { title: "Granjas", icon: Building2, path: "/granjas", color: "text-info" },
-  { title: "Culturas", icon: Leaf, path: "/culturas", color: "text-success" },
-  { title: "Safras", icon: Calendar, path: "/safras", color: "text-warning" },
-  { title: "Produtores", icon: Users, path: "/produtores", color: "text-accent" },
-  { title: "Lavouras", icon: Map, path: "/lavouras", color: "text-chart-5" },
-  { title: "Controle Lavoura", icon: Wheat, path: "/controle-lavoura", color: "text-lime-600" },
-  { title: "Clientes/Forn.", icon: Users, path: "/clientes-fornecedores", color: "text-info" },
-  { title: "Produtos", icon: Package, path: "/produtos", color: "text-amber-500" },
-  { title: "Grupos Produtos", icon: FolderOpen, path: "/grupos-produtos", color: "text-violet-500" },
-  { title: "Unidades", icon: Ruler, path: "/unidades-medida", color: "text-sky-500" },
-  { title: "Silos", icon: Warehouse, path: "/silos", color: "text-emerald-500" },
-  { title: "Placas", icon: Truck, path: "/placas", color: "text-orange-500" },
-  { title: "Tab. Umidades", icon: Droplets, path: "/tabela-umidades", color: "text-cyan-500" },
-  { title: "NCM", icon: FileText, path: "/ncm", color: "text-slate-500" },
-  { title: "CFOPs", icon: FileText, path: "/cfops", color: "text-indigo-500" },
-  { title: "Emitentes NF-e", icon: Building2, path: "/emitentes-nfe", color: "text-teal-500" },
-  { title: "Transportadoras", icon: Truck, path: "/transportadoras", color: "text-purple-500" },
-  { title: "Notas Fiscais", icon: Receipt, path: "/notas-fiscais", color: "text-rose-500" },
-  { title: "Vendas Produção", icon: ShoppingCart, path: "/vendas-producao", color: "text-green-600" },
+interface MenuItem {
+  title: string;
+  icon: LucideIcon;
+  path: string;
+  color: string;
+}
+
+interface MenuGroup {
+  title: string;
+  items: MenuItem[];
+}
+
+const menuGroups: MenuGroup[] = [
+  {
+    title: "Principal",
+    items: [
+      { title: "Dashboard", icon: LayoutDashboard, path: "/", color: "text-primary" },
+    ],
+  },
+  {
+    title: "Produção",
+    items: [
+      { title: "Granjas", icon: Building2, path: "/granjas", color: "text-info" },
+      { title: "Culturas", icon: Leaf, path: "/culturas", color: "text-success" },
+      { title: "Safras", icon: Calendar, path: "/safras", color: "text-warning" },
+      { title: "Produtores", icon: Users, path: "/produtores", color: "text-accent" },
+      { title: "Lavouras", icon: Map, path: "/lavouras", color: "text-chart-5" },
+      { title: "Controle Lavoura", icon: Wheat, path: "/controle-lavoura", color: "text-lime-600" },
+    ],
+  },
+  {
+    title: "Comercial",
+    items: [
+      { title: "Clientes/Forn.", icon: Users, path: "/clientes-fornecedores", color: "text-info" },
+      { title: "Vendas Produção", icon: ShoppingCart, path: "/vendas-producao", color: "text-green-600" },
+      { title: "Notas Fiscais", icon: Receipt, path: "/notas-fiscais", color: "text-rose-500" },
+    ],
+  },
+  {
+    title: "Cadastros",
+    items: [
+      { title: "Produtos", icon: Package, path: "/produtos", color: "text-amber-500" },
+      { title: "Grupos Produtos", icon: FolderOpen, path: "/grupos-produtos", color: "text-violet-500" },
+      { title: "Unidades", icon: Ruler, path: "/unidades-medida", color: "text-sky-500" },
+      { title: "Silos", icon: Warehouse, path: "/silos", color: "text-emerald-500" },
+      { title: "Placas", icon: Truck, path: "/placas", color: "text-orange-500" },
+      { title: "Tab. Umidades", icon: Droplets, path: "/tabela-umidades", color: "text-cyan-500" },
+    ],
+  },
+  {
+    title: "Fiscal",
+    items: [
+      { title: "NCM", icon: FileText, path: "/ncm", color: "text-slate-500" },
+      { title: "CFOPs", icon: FileText, path: "/cfops", color: "text-indigo-500" },
+      { title: "Emitentes NF-e", icon: Building2, path: "/emitentes-nfe", color: "text-teal-500" },
+      { title: "Transportadoras", icon: Truck, path: "/transportadoras", color: "text-purple-500" },
+    ],
+  },
 ];
 
 const roleLabels: Record<string, string> = {
@@ -92,86 +130,113 @@ export function MobileNav() {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 overflow-y-auto max-h-[calc(100vh-180px)]">
-          <ul className="space-y-1 px-2">
-            {menuItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              const Icon = item.icon;
+          <div className="space-y-4 px-2">
+            {menuGroups.map((group) => (
+              <div key={group.title}>
+                {/* Group Title */}
+                <div className="px-3 py-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {group.title}
+                  </span>
+                </div>
+                
+                {/* Group Items */}
+                <ul className="space-y-1">
+                  {group.items.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    const Icon = item.icon;
 
-              return (
-                <li key={item.path}>
-                  <Link
-                    to={item.path}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                      "hover:bg-accent",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "text-foreground"
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        "h-5 w-5 flex-shrink-0",
-                        isActive ? "text-primary-foreground" : item.color
-                      )}
-                    />
-                    <span className="font-medium">{item.title}</span>
-                  </Link>
-                </li>
-              );
-            })}
+                    return (
+                      <li key={item.path}>
+                        <Link
+                          to={item.path}
+                          onClick={() => setOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                            "hover:bg-accent",
+                            isActive
+                              ? "bg-primary text-primary-foreground shadow-md"
+                              : "text-foreground"
+                          )}
+                        >
+                          <Icon
+                            className={cn(
+                              "h-5 w-5 flex-shrink-0",
+                              isActive ? "text-primary-foreground" : item.color
+                            )}
+                          />
+                          <span className="font-medium">{item.title}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
 
-            {/* Users Management - Admin Only */}
-            {isAdmin && (
-              <li>
-                <Link
-                  to="/usuarios"
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                    "hover:bg-accent",
-                    location.pathname === "/usuarios"
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "text-foreground"
+            {/* Administração - Conditional Items */}
+            {(isAdmin || isSuperAdmin) && (
+              <div>
+                <div className="px-3 py-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Administração
+                  </span>
+                </div>
+                
+                <ul className="space-y-1">
+                  {/* Users Management - Admin Only */}
+                  {isAdmin && (
+                    <li>
+                      <Link
+                        to="/usuarios"
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                          "hover:bg-accent",
+                          location.pathname === "/usuarios"
+                            ? "bg-primary text-primary-foreground shadow-md"
+                            : "text-foreground"
+                        )}
+                      >
+                        <Shield
+                          className={cn(
+                            "h-5 w-5 flex-shrink-0",
+                            location.pathname === "/usuarios" ? "text-primary-foreground" : "text-destructive"
+                          )}
+                        />
+                        <span className="font-medium">Usuários</span>
+                      </Link>
+                    </li>
                   )}
-                >
-                  <Shield
-                    className={cn(
-                      "h-5 w-5 flex-shrink-0",
-                      location.pathname === "/usuarios" ? "text-primary-foreground" : "text-destructive"
-                    )}
-                  />
-                  <span className="font-medium">Usuários</span>
-                </Link>
-              </li>
-            )}
 
-            {/* Tenants Management - Super Admin Only */}
-            {isSuperAdmin && (
-              <li>
-                <Link
-                  to="/tenants"
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                    "hover:bg-accent",
-                    location.pathname === "/tenants"
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "text-foreground"
+                  {/* Tenants Management - Super Admin Only */}
+                  {isSuperAdmin && (
+                    <li>
+                      <Link
+                        to="/tenants"
+                        onClick={() => setOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                          "hover:bg-accent",
+                          location.pathname === "/tenants"
+                            ? "bg-primary text-primary-foreground shadow-md"
+                            : "text-foreground"
+                        )}
+                      >
+                        <Crown
+                          className={cn(
+                            "h-5 w-5 flex-shrink-0",
+                            location.pathname === "/tenants" ? "text-primary-foreground" : "text-amber-500"
+                          )}
+                        />
+                        <span className="font-medium">Empresas Contratantes</span>
+                      </Link>
+                    </li>
                   )}
-                >
-                  <Crown
-                    className={cn(
-                      "h-5 w-5 flex-shrink-0",
-                      location.pathname === "/tenants" ? "text-primary-foreground" : "text-amber-500"
-                    )}
-                  />
-                  <span className="font-medium">Empresas Contratantes</span>
-                </Link>
-              </li>
+                </ul>
+              </div>
             )}
-          </ul>
+          </div>
         </nav>
 
         {/* User Info */}
