@@ -27,6 +27,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Package, Truck, FileText, MapPin } from "lucide-react";
+import { formatCpf, formatCpfCnpj, formatPlaca, formatCep } from "@/lib/formatters";
 
 interface LocalEntrega {
   local_entrega_nome?: string;
@@ -92,8 +93,8 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       setBalanceiro(remessa.balanceiro || profile?.nome || user?.email || "");
       setTransportadoraId(remessa.transportadora_id || "");
       setMotorista(remessa.motorista || "");
-      setMotoristaCpf(remessa.motorista_cpf || "");
-      setPlaca(remessa.placa || "");
+      setMotoristaCpf(formatCpf(remessa.motorista_cpf) || "");
+      setPlaca(formatPlaca(remessa.placa) || "");
       setUfPlaca(remessa.uf_placa || "");
       setObservacoes(remessa.observacoes || "");
     }
@@ -106,15 +107,16 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
     }
   }, [kgRemessa]);
 
-  // Preencher dados da transportadora ao selecionar
+  // Preencher dados da transportadora ao selecionar (sempre sobrescreve)
   useEffect(() => {
     if (transportadoraId && transportadoras) {
       const transp = transportadoras.find(t => t.id === transportadoraId);
       if (transp) {
-        if (transp.placa_padrao && !placa) setPlaca(transp.placa_padrao);
-        if (transp.uf_placa_padrao && !ufPlaca) setUfPlaca(transp.uf_placa_padrao);
-        if (transp.motorista_padrao && !motorista) setMotorista(transp.motorista_padrao);
-        if (transp.motorista_cpf_padrao && !motoristaCpf) setMotoristaCpf(transp.motorista_cpf_padrao);
+        // Sempre preenche com os dados da transportadora selecionada
+        if (transp.placa_padrao) setPlaca(formatPlaca(transp.placa_padrao));
+        if (transp.uf_placa_padrao) setUfPlaca(transp.uf_placa_padrao);
+        if (transp.motorista_padrao) setMotorista(transp.motorista_padrao);
+        if (transp.motorista_cpf_padrao) setMotoristaCpf(formatCpf(transp.motorista_cpf_padrao));
       }
     }
   }, [transportadoraId, transportadoras]);
@@ -411,15 +413,16 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Label>CPF Motorista</Label>
                   <Input
                     value={motoristaCpf}
-                    onChange={(e) => setMotoristaCpf(e.target.value)}
+                    onChange={(e) => setMotoristaCpf(formatCpf(e.target.value))}
+                    maxLength={14}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Placa</Label>
                   <Input
                     value={placa}
-                    onChange={(e) => setPlaca(e.target.value.toUpperCase())}
-                    maxLength={7}
+                    onChange={(e) => setPlaca(formatPlaca(e.target.value))}
+                    maxLength={8}
                   />
                 </div>
                 <div className="space-y-2">
@@ -456,7 +459,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                 <div className="space-y-2">
                   <Label className="text-xs">CNPJ/CPF</Label>
                   <Input
-                    value={localEntrega?.local_entrega_cnpj_cpf || ""}
+                    value={formatCpfCnpj(localEntrega?.local_entrega_cnpj_cpf) || ""}
                     readOnly
                     className="bg-muted"
                     tabIndex={-1}
