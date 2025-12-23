@@ -1315,6 +1315,78 @@ export type Database = {
         }
         Relationships: []
       }
+      notas_deposito_emitidas: {
+        Row: {
+          created_at: string
+          data_emissao: string | null
+          granja_id: string | null
+          id: string
+          inscricao_produtor_id: string | null
+          nota_fiscal_id: string | null
+          produto_id: string | null
+          quantidade_kg: number
+          safra_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_emissao?: string | null
+          granja_id?: string | null
+          id?: string
+          inscricao_produtor_id?: string | null
+          nota_fiscal_id?: string | null
+          produto_id?: string | null
+          quantidade_kg?: number
+          safra_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_emissao?: string | null
+          granja_id?: string | null
+          id?: string
+          inscricao_produtor_id?: string | null
+          nota_fiscal_id?: string | null
+          produto_id?: string | null
+          quantidade_kg?: number
+          safra_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_deposito_emitidas_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_deposito_emitidas_inscricao_produtor_id_fkey"
+            columns: ["inscricao_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_deposito_emitidas_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_deposito_emitidas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_deposito_emitidas_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_fiscais: {
         Row: {
           cfop_id: string | null
@@ -1913,6 +1985,62 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notas_fiscais_referenciadas: {
+        Row: {
+          chave_nfe: string | null
+          created_at: string
+          id: string
+          nfp_aamm: string | null
+          nfp_cnpj: string | null
+          nfp_cpf: string | null
+          nfp_ie: string | null
+          nfp_modelo: string | null
+          nfp_numero: number | null
+          nfp_serie: number | null
+          nfp_uf: string | null
+          nota_fiscal_id: string
+          tipo: string
+        }
+        Insert: {
+          chave_nfe?: string | null
+          created_at?: string
+          id?: string
+          nfp_aamm?: string | null
+          nfp_cnpj?: string | null
+          nfp_cpf?: string | null
+          nfp_ie?: string | null
+          nfp_modelo?: string | null
+          nfp_numero?: number | null
+          nfp_serie?: number | null
+          nfp_uf?: string | null
+          nota_fiscal_id: string
+          tipo?: string
+        }
+        Update: {
+          chave_nfe?: string | null
+          created_at?: string
+          id?: string
+          nfp_aamm?: string | null
+          nfp_cnpj?: string | null
+          nfp_cpf?: string | null
+          nfp_ie?: string | null
+          nfp_modelo?: string | null
+          nfp_numero?: number | null
+          nfp_serie?: number | null
+          nfp_uf?: string | null
+          nota_fiscal_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_referenciadas_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais"
             referencedColumns: ["id"]
           },
         ]
@@ -2834,6 +2962,107 @@ export type Database = {
         }
         Relationships: []
       }
+      transferencias_deposito: {
+        Row: {
+          codigo: number
+          created_at: string
+          data_transferencia: string
+          granja_destino_id: string | null
+          granja_origem_id: string | null
+          id: string
+          inscricao_destino_id: string | null
+          inscricao_origem_id: string | null
+          observacoes: string | null
+          produto_id: string | null
+          quantidade_kg: number
+          safra_id: string | null
+          silo_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          codigo?: number
+          created_at?: string
+          data_transferencia?: string
+          granja_destino_id?: string | null
+          granja_origem_id?: string | null
+          id?: string
+          inscricao_destino_id?: string | null
+          inscricao_origem_id?: string | null
+          observacoes?: string | null
+          produto_id?: string | null
+          quantidade_kg?: number
+          safra_id?: string | null
+          silo_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          codigo?: number
+          created_at?: string
+          data_transferencia?: string
+          granja_destino_id?: string | null
+          granja_origem_id?: string | null
+          id?: string
+          inscricao_destino_id?: string | null
+          inscricao_origem_id?: string | null
+          observacoes?: string | null
+          produto_id?: string | null
+          quantidade_kg?: number
+          safra_id?: string | null
+          silo_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transferencias_deposito_granja_destino_id_fkey"
+            columns: ["granja_destino_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_deposito_granja_origem_id_fkey"
+            columns: ["granja_origem_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_deposito_inscricao_destino_id_fkey"
+            columns: ["inscricao_destino_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_deposito_inscricao_origem_id_fkey"
+            columns: ["inscricao_origem_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_deposito_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_deposito_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_deposito_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transportadoras: {
         Row: {
           ativa: boolean | null
@@ -2970,6 +3199,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calcular_saldo_deposito: {
+        Args: {
+          p_inscricao_id: string
+          p_produto_id: string
+          p_safra_id: string
+        }
+        Returns: number
+      }
       can_edit: { Args: { _user_id: string }; Returns: boolean }
       get_user_tenant_id: { Args: never; Returns: string }
       granja_belongs_to_tenant: {
