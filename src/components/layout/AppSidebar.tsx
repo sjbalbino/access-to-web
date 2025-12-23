@@ -24,6 +24,7 @@ import {
   FileText,
   Receipt,
   ShoppingCart,
+  ArrowRightLeft,
   LucideIcon,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -81,6 +82,8 @@ const menuGroups: MenuGroup[] = [
       { title: "Clientes/Forn.", icon: Users, path: "/clientes-fornecedores", color: "text-info" },
       { title: "Vendas Produção", icon: ShoppingCart, path: "/vendas-producao", color: "text-green-600" },
       { title: "Notas Fiscais", icon: Receipt, path: "/notas-fiscais", color: "text-rose-500" },
+      { title: "Transferências", icon: ArrowRightLeft, path: "/transferencias", color: "text-blue-500" },
+      { title: "Notas Depósito", icon: FileText, path: "/notas-deposito", color: "text-amber-600" },
     ],
   },
   {

@@ -173,3 +173,14 @@ export function validateCpfCnpj(value: string | null | undefined): boolean {
   if (digits.length <= 11) return validateCpf(value);
   return validateCnpj(value);
 }
+
+/**
+ * Formata um número com separador de milhar e decimais
+ */
+export function formatNumber(value: number | null | undefined, decimals: number = 2): string {
+  if (value === null || value === undefined) return "0";
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
