@@ -736,7 +736,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               </div>
 
               <div className="space-y-2">
-                <Label>Local Entrega (Terceiros)</Label>
+                <Label>Local Entrega</Label>
                 <Select
                   value={formData.local_entrega_terceiro_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, local_entrega_terceiro_id: value === "none" ? null : value })}
@@ -791,7 +791,6 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                 <Select
                   value={formData.silo_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, silo_id: value === "none" ? null : value })}
-                  disabled={!!formData.local_entrega_terceiro_id && formData.local_entrega_terceiro_id !== "none"}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
