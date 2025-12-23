@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Plus, Trash2 } from "lucide-react";
 import { useSafras } from "@/hooks/useSafras";
-import { useGranjas } from "@/hooks/useGranjas";
+
 import { useSilos } from "@/hooks/useSilos";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
@@ -36,10 +36,8 @@ export default function Transferencias() {
   const [siloId, setSiloId] = useState<string>("");
 
   // Formulário
-  const [granjaOrigemId, setGranjaOrigemId] = useState<string>("");
   const [inscricaoOrigemId, setInscricaoOrigemId] = useState<string>("");
   const [localSaidaId, setLocalSaidaId] = useState<string>("");
-  const [granjaDestinoId, setGranjaDestinoId] = useState<string>("");
   const [inscricaoDestinoId, setInscricaoDestinoId] = useState<string>("");
   const [localEntradaId, setLocalEntradaId] = useState<string>("");
   const [quantidadeKg, setQuantidadeKg] = useState<string>("");
@@ -48,7 +46,6 @@ export default function Transferencias() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: safras = [] } = useSafras();
-  const { data: granjas = [] } = useGranjas();
   const { data: silos = [] } = useSilos();
   const { data: produtos = [] } = useProdutos();
   const { data: todasInscricoes = [] } = useAllInscricoes();
@@ -63,18 +60,10 @@ export default function Transferencias() {
   const createTransferencia = useCreateTransferenciaDeposito();
   const deleteTransferencia = useDeleteTransferenciaDeposito();
 
-  // Filtrar inscrições por granja
-  const inscricoesOrigem = todasInscricoes.filter(i => 
-    !granjaOrigemId || i.granja_id === granjaOrigemId
-  );
-  const inscricoesDestino = todasInscricoes.filter(i => 
-    !granjaDestinoId || i.granja_id === granjaDestinoId
-  );
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!safraId || !produtoId || !inscricaoOrigemId || !inscricaoDestinoId || !quantidadeKg) {
+    if (!safraId || !produtoId || !inscricaoOrigemId || !inscricaoDestinoId || !localSaidaId || !localEntradaId || !quantidadeKg) {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha todos os campos obrigatórios.",
@@ -92,19 +81,23 @@ export default function Transferencias() {
       return;
     }
 
+    // Derivar granja_id das inscrições selecionadas
+    const inscricaoOrigem = todasInscricoes.find(i => i.id === inscricaoOrigemId);
+    const inscricaoDestino = todasInscricoes.find(i => i.id === inscricaoDestinoId);
+
     await createTransferencia.mutateAsync({
       data_transferencia: new Date().toISOString().split('T')[0],
-      granja_origem_id: granjaOrigemId || null,
+      granja_origem_id: inscricaoOrigem?.granja_id || null,
       inscricao_origem_id: inscricaoOrigemId,
-      granja_destino_id: granjaDestinoId || null,
+      granja_destino_id: inscricaoDestino?.granja_id || null,
       inscricao_destino_id: inscricaoDestinoId,
       safra_id: safraId,
       produto_id: produtoId,
       silo_id: siloId || null,
       quantidade_kg: parseFloat(quantidadeKg),
       observacoes: observacoes || null,
-      local_saida_id: localSaidaId || null,
-      local_entrada_id: localEntradaId || null,
+      local_saida_id: localSaidaId,
+      local_entrada_id: localEntradaId,
     });
 
     // Limpar formulário
@@ -125,8 +118,8 @@ export default function Transferencias() {
 
   const getInscricaoLabel = (inscricao: any) => {
     const ie = inscricao.inscricao_estadual || inscricao.cpf_cnpj || "";
-    const nome = inscricao.produtores?.nome || inscricao.granja || "";
-    return `${ie} - ${nome}`;
+    const granja = inscricao.granjas?.razao_social || inscricao.granjas?.nome_fantasia || "";
+    return granja ? `${ie} - ${granja}` : ie;
   };
 
   return (
@@ -213,30 +206,13 @@ export default function Transferencias() {
                     <h4 className="font-medium text-sm text-muted-foreground">SAÍDA (Origem)</h4>
                     
                     <div className="space-y-2">
-                      <Label>Local</Label>
-                      <Select value={granjaOrigemId || "__all__"} onValueChange={(val) => setGranjaOrigemId(val === "__all__" ? "" : val)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o local" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__all__">Todos</SelectItem>
-                          {granjas.map((g) => (
-                            <SelectItem key={g.id} value={g.id}>
-                              {g.nome_fantasia || g.razao_social}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
                       <Label>Inscrição Estadual *</Label>
                       <Select value={inscricaoOrigemId} onValueChange={setInscricaoOrigemId}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a inscrição" />
                         </SelectTrigger>
                         <SelectContent>
-                          {inscricoesOrigem.map((i) => (
+                          {todasInscricoes.map((i) => (
                             <SelectItem key={i.id} value={i.id}>
                               {getInscricaoLabel(i)}
                             </SelectItem>
@@ -246,13 +222,12 @@ export default function Transferencias() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Local de Saída (Terceiro)</Label>
-                      <Select value={localSaidaId || "__none__"} onValueChange={(val) => setLocalSaidaId(val === "__none__" ? "" : val)}>
+                      <Label>Local de Saída (Terceiro) *</Label>
+                      <Select value={localSaidaId} onValueChange={setLocalSaidaId}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o local de saída" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="__none__">Nenhum</SelectItem>
                           {locaisEntrega.map((l) => (
                             <SelectItem key={l.id} value={l.id}>
                               {l.nome} {l.cidade ? `- ${l.cidade}/${l.uf}` : ''}
@@ -273,30 +248,13 @@ export default function Transferencias() {
                     <h4 className="font-medium text-sm text-muted-foreground">ENTRADA (Destino)</h4>
                     
                     <div className="space-y-2">
-                      <Label>Local</Label>
-                      <Select value={granjaDestinoId || "__all__"} onValueChange={(val) => setGranjaDestinoId(val === "__all__" ? "" : val)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o local" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__all__">Todos</SelectItem>
-                          {granjas.map((g) => (
-                            <SelectItem key={g.id} value={g.id}>
-                              {g.nome_fantasia || g.razao_social}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
                       <Label>Inscrição Estadual *</Label>
                       <Select value={inscricaoDestinoId} onValueChange={setInscricaoDestinoId}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a inscrição" />
                         </SelectTrigger>
                         <SelectContent>
-                          {inscricoesDestino.map((i) => (
+                          {todasInscricoes.map((i) => (
                             <SelectItem key={i.id} value={i.id}>
                               {getInscricaoLabel(i)}
                             </SelectItem>
@@ -306,13 +264,12 @@ export default function Transferencias() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Local de Entrada (Terceiro)</Label>
-                      <Select value={localEntradaId || "__none__"} onValueChange={(val) => setLocalEntradaId(val === "__none__" ? "" : val)}>
+                      <Label>Local de Entrada (Terceiro) *</Label>
+                      <Select value={localEntradaId} onValueChange={setLocalEntradaId}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o local de entrada" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="__none__">Nenhum</SelectItem>
                           {locaisEntrega.map((l) => (
                             <SelectItem key={l.id} value={l.id}>
                               {l.nome} {l.cidade ? `- ${l.cidade}/${l.uf}` : ''}
