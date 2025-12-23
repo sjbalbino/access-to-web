@@ -244,6 +244,23 @@ export default function Transferencias() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    <div className="space-y-2">
+                      <Label>Local de Saída (Terceiro)</Label>
+                      <Select value={localSaidaId || "__none__"} onValueChange={(val) => setLocalSaidaId(val === "__none__" ? "" : val)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o local de saída" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Nenhum</SelectItem>
+                          {locaisEntrega.map((l) => (
+                            <SelectItem key={l.id} value={l.id}>
+                              {l.nome} {l.cidade ? `- ${l.cidade}/${l.uf}` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   {/* Seta indicando direção */}
@@ -282,6 +299,23 @@ export default function Transferencias() {
                           {inscricoesDestino.map((i) => (
                             <SelectItem key={i.id} value={i.id}>
                               {getInscricaoLabel(i)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Local de Entrada (Terceiro)</Label>
+                      <Select value={localEntradaId || "__none__"} onValueChange={(val) => setLocalEntradaId(val === "__none__" ? "" : val)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o local de entrada" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Nenhum</SelectItem>
+                          {locaisEntrega.map((l) => (
+                            <SelectItem key={l.id} value={l.id}>
+                              {l.nome} {l.cidade ? `- ${l.cidade}/${l.uf}` : ''}
                             </SelectItem>
                           ))}
                         </SelectContent>
