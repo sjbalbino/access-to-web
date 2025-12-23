@@ -30,9 +30,10 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, Building2, AlertCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2, AlertCircle, User } from "lucide-react";
 import { useEmitentesNfe, EmitenteNfe, EmitenteNfeInsert } from "@/hooks/useEmitentesNfe";
 import { useGranjas } from "@/hooks/useGranjas";
+import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -62,16 +63,25 @@ const API_PROVIDERS = [
   { value: "focusnfe", label: "Focus NFe" },
 ];
 
+const TIPO_EMITENTE = [
+  { value: "granja", label: "Granja (PJ - NF-e)" },
+  { value: "inscricao", label: "Inscrição do Produtor (PF - NFP-e)" },
+];
+
 export default function EmitentesNfe() {
   const { emitentes, isLoading, createEmitente, updateEmitente, deleteEmitente } = useEmitentesNfe();
   const granjasQuery = useGranjas();
+  const inscricoesQuery = useAllInscricoes();
   const granjas = granjasQuery.data || [];
+  const inscricoes = inscricoesQuery.data || [];
   const { canEdit } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedEmitente, setSelectedEmitente] = useState<EmitenteNfe | null>(null);
+  const [tipoEmitente, setTipoEmitente] = useState<"granja" | "inscricao">("granja");
   const [formData, setFormData] = useState<EmitenteNfeInsert>({
-    granja_id: "",
+    granja_id: null,
+    inscricao_produtor_id: null,
     ambiente: 2,
     serie_nfe: 1,
     numero_atual_nfe: 0,
@@ -102,13 +112,20 @@ export default function EmitentesNfe() {
     ativo: true,
   });
 
+  // Granjas que não têm emitente (ou é a granja do emitente sendo editado)
   const granjasDisponiveis = granjas.filter(
     (g) => g.ativa && !emitentes.some((e) => e.granja_id === g.id && e.id !== selectedEmitente?.id)
   );
 
+  // Inscrições que não têm emitente (ou é a inscrição do emitente sendo editado)
+  const inscricoesDisponiveis = inscricoes.filter(
+    (i) => i.ativa && !emitentes.some((e) => e.inscricao_produtor_id === i.id && e.id !== selectedEmitente?.id)
+  );
+
   const resetForm = () => {
     setFormData({
-      granja_id: "",
+      granja_id: null,
+      inscricao_produtor_id: null,
       ambiente: 2,
       serie_nfe: 1,
       numero_atual_nfe: 0,
@@ -139,13 +156,21 @@ export default function EmitentesNfe() {
       ativo: true,
     });
     setSelectedEmitente(null);
+    setTipoEmitente("granja");
   };
 
   const handleOpenDialog = (emitente?: EmitenteNfe) => {
     if (emitente) {
       setSelectedEmitente(emitente);
+      // Determina o tipo de emitente baseado nos dados
+      if (emitente.inscricao_produtor_id) {
+        setTipoEmitente("inscricao");
+      } else {
+        setTipoEmitente("granja");
+      }
       setFormData({
-        granja_id: emitente.granja_id || "",
+        granja_id: emitente.granja_id,
+        inscricao_produtor_id: emitente.inscricao_produtor_id,
         ambiente: emitente.ambiente || 2,
         serie_nfe: emitente.serie_nfe || 1,
         numero_atual_nfe: emitente.numero_atual_nfe || 0,
@@ -218,8 +243,8 @@ export default function EmitentesNfe() {
     <AppLayout>
       <div className="space-y-6">
         <PageHeader
-          title="Emitentes NF-e"
-          description="Configuração de emitentes de Nota Fiscal Eletrônica por granja"
+          title="Emitentes NF-e / NFP-e"
+          description="Configuração de emitentes de Nota Fiscal Eletrônica (Granja) ou Nota Fiscal do Produtor (Inscrição)"
         />
 
         <Alert className="border-blue-600 bg-blue-50 dark:bg-blue-950">
@@ -235,7 +260,7 @@ export default function EmitentesNfe() {
           <div className="text-sm text-muted-foreground">
             {emitentes.length} emitente(s) configurado(s)
           </div>
-          {canEdit && granjasDisponiveis.length > 0 && (
+          {canEdit && (granjasDisponiveis.length > 0 || inscricoesDisponiveis.length > 0) && (
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Emitente
@@ -247,77 +272,105 @@ export default function EmitentesNfe() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Granja</TableHead>
-                <TableHead>CNPJ</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Emitente</TableHead>
+                <TableHead>CPF/CNPJ</TableHead>
+                <TableHead>IE</TableHead>
                 <TableHead>Ambiente</TableHead>
-                <TableHead>Regime Tributário</TableHead>
-                <TableHead>Série NF-e</TableHead>
+                <TableHead>Série</TableHead>
                 <TableHead>API</TableHead>
                 <TableHead>Status</TableHead>
                 {canEdit && <TableHead className="w-24">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {emitentes.map((emitente) => (
-                <TableRow key={emitente.id}>
-                  <TableCell className="font-medium">
-                    {emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "-"}
-                  </TableCell>
-                  <TableCell className="font-mono">
-                    {emitente.granja?.cnpj || "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={emitente.ambiente === 1 ? "default" : "secondary"}>
-                      {AMBIENTES.find((a) => a.value === emitente.ambiente)?.label || "-"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {REGIMES_TRIBUTARIOS.find((r) => r.value === emitente.crt)?.label || "-"}
-                  </TableCell>
-                  <TableCell>{emitente.serie_nfe}</TableCell>
-                  <TableCell>
-                    {emitente.api_configurada ? (
-                      <Badge variant="default">
-                        {API_PROVIDERS.find((p) => p.value === emitente.api_provider)?.label || "Configurada"}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Não configurada</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={emitente.ativo ? "default" : "secondary"}>
-                      {emitente.ativo ? "Ativo" : "Inativo"}
-                    </Badge>
-                  </TableCell>
-                  {canEdit && (
+              {emitentes.map((emitente) => {
+                const isInscricao = !!emitente.inscricao_produtor_id;
+                const nomeEmitente = isInscricao
+                  ? emitente.inscricao_produtor?.produtores?.nome || emitente.inscricao_produtor?.granja || "-"
+                  : emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "-";
+                const cpfCnpj = isInscricao
+                  ? emitente.inscricao_produtor?.cpf_cnpj || "-"
+                  : emitente.granja?.cnpj || "-";
+                const ie = isInscricao
+                  ? emitente.inscricao_produtor?.inscricao_estadual || "-"
+                  : "-";
+                
+                return (
+                  <TableRow key={emitente.id}>
                     <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(emitente)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedEmitente(emitente);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <Badge variant={isInscricao ? "outline" : "secondary"}>
+                        {isInscricao ? (
+                          <><User className="h-3 w-3 mr-1" /> NFP-e</>
+                        ) : (
+                          <><Building2 className="h-3 w-3 mr-1" /> NF-e</>
+                        )}
+                      </Badge>
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                    <TableCell className="font-medium">
+                      {nomeEmitente}
+                      {isInscricao && emitente.inscricao_produtor?.cidade && (
+                        <span className="text-muted-foreground text-xs block">
+                          {emitente.inscricao_produtor.cidade}/{emitente.inscricao_produtor.uf}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {cpfCnpj}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {ie}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={emitente.ambiente === 1 ? "default" : "secondary"}>
+                        {AMBIENTES.find((a) => a.value === emitente.ambiente)?.label || "-"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{emitente.serie_nfe}</TableCell>
+                    <TableCell>
+                      {emitente.api_configurada ? (
+                        <Badge variant="default">
+                          {API_PROVIDERS.find((p) => p.value === emitente.api_provider)?.label || "Configurada"}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Não configurada</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={emitente.ativo ? "default" : "secondary"}>
+                        {emitente.ativo ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </TableCell>
+                    {canEdit && (
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenDialog(emitente)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setSelectedEmitente(emitente);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
               {emitentes.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={canEdit ? 8 : 7}
+                    colSpan={canEdit ? 9 : 8}
                     className="text-center py-8 text-muted-foreground"
                   >
                     Nenhum emitente configurado
@@ -337,36 +390,93 @@ export default function EmitentesNfe() {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Granja */}
+              {/* Tipo de Emitente */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Empresa Emitente</CardTitle>
+                  <CardTitle className="text-base">Tipo de Emitente</CardTitle>
+                  <CardDescription>
+                    Selecione se a emissão será por Granja (NF-e) ou por Inscrição do Produtor (NFP-e)
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="granja_id">Granja *</Label>
+                    <Label htmlFor="tipo_emitente">Tipo *</Label>
                     <Select
-                      value={formData.granja_id || ""}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, granja_id: value })
-                      }
+                      value={tipoEmitente}
+                      onValueChange={(value: "granja" | "inscricao") => {
+                        setTipoEmitente(value);
+                        // Limpa a seleção do tipo anterior
+                        setFormData({
+                          ...formData,
+                          granja_id: value === "granja" ? formData.granja_id : null,
+                          inscricao_produtor_id: value === "inscricao" ? formData.inscricao_produtor_id : null,
+                        });
+                      }}
+                      disabled={!!selectedEmitente}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a granja" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {(selectedEmitente
-                          ? granjas.filter((g) => g.ativa || g.id === selectedEmitente.granja_id)
-                          : granjasDisponiveis
-                        ).map((granja) => (
-                          <SelectItem key={granja.id} value={granja.id}>
-                            {granja.nome_fantasia || granja.razao_social}
-                            {granja.cnpj && ` - ${granja.cnpj}`}
+                        {TIPO_EMITENTE.map((tipo) => (
+                          <SelectItem key={tipo.value} value={tipo.value}>
+                            {tipo.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {tipoEmitente === "granja" ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="granja_id">Granja *</Label>
+                      <Select
+                        value={formData.granja_id || ""}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, granja_id: value, inscricao_produtor_id: null })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a granja" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(selectedEmitente
+                            ? granjas.filter((g) => g.ativa || g.id === selectedEmitente.granja_id)
+                            : granjasDisponiveis
+                          ).map((granja) => (
+                            <SelectItem key={granja.id} value={granja.id}>
+                              {granja.nome_fantasia || granja.razao_social}
+                              {granja.cnpj && ` - ${granja.cnpj}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="inscricao_produtor_id">Inscrição do Produtor *</Label>
+                      <Select
+                        value={formData.inscricao_produtor_id || ""}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, inscricao_produtor_id: value, granja_id: null })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a inscrição do produtor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(selectedEmitente
+                            ? inscricoes.filter((i) => i.ativa || i.id === selectedEmitente.inscricao_produtor_id)
+                            : inscricoesDisponiveis
+                          ).map((inscricao) => (
+                            <SelectItem key={inscricao.id} value={inscricao.id}>
+                              {inscricao.produtores?.nome || inscricao.granjas?.razao_social || "Produtor"} - IE: {inscricao.inscricao_estadual || "N/A"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

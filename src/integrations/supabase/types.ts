@@ -821,6 +821,7 @@ export type Database = {
           cst_pis_padrao: string | null
           granja_id: string | null
           id: string
+          inscricao_produtor_id: string | null
           numero_atual_nfce: number | null
           numero_atual_nfe: number | null
           serie_nfce: number | null
@@ -855,6 +856,7 @@ export type Database = {
           cst_pis_padrao?: string | null
           granja_id?: string | null
           id?: string
+          inscricao_produtor_id?: string | null
           numero_atual_nfce?: number | null
           numero_atual_nfe?: number | null
           serie_nfce?: number | null
@@ -889,6 +891,7 @@ export type Database = {
           cst_pis_padrao?: string | null
           granja_id?: string | null
           id?: string
+          inscricao_produtor_id?: string | null
           numero_atual_nfce?: number | null
           numero_atual_nfe?: number | null
           serie_nfce?: number | null
@@ -901,6 +904,13 @@ export type Database = {
             columns: ["granja_id"]
             isOneToOne: true
             referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emitentes_nfe_inscricao_produtor_id_fkey"
+            columns: ["inscricao_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
             referencedColumns: ["id"]
           },
         ]

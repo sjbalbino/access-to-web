@@ -5,6 +5,7 @@ import { toast } from "sonner";
 export interface EmitenteNfe {
   id: string;
   granja_id: string | null;
+  inscricao_produtor_id: string | null;
   ambiente: number | null;
   serie_nfe: number | null;
   numero_atual_nfe: number | null;
@@ -41,6 +42,18 @@ export interface EmitenteNfe {
     nome_fantasia: string | null;
     cnpj: string | null;
   };
+  inscricao_produtor?: {
+    id: string;
+    cpf_cnpj: string | null;
+    inscricao_estadual: string | null;
+    cidade: string | null;
+    uf: string | null;
+    granja: string | null;
+    produtores?: {
+      id: string;
+      nome: string;
+    } | null;
+  } | null;
 }
 
 export type EmitenteNfeInsert = Omit<EmitenteNfe, "id" | "created_at" | "updated_at" | "granja">;
@@ -56,7 +69,16 @@ export function useEmitentesNfe() {
         .from("emitentes_nfe")
         .select(`
           *,
-          granja:granjas(id, razao_social, nome_fantasia, cnpj)
+          granja:granjas(id, razao_social, nome_fantasia, cnpj),
+          inscricao_produtor:inscricoes_produtor(
+            id, 
+            cpf_cnpj, 
+            inscricao_estadual, 
+            cidade, 
+            uf, 
+            granja,
+            produtores:produtor_id(id, nome)
+          )
         `)
         .order("created_at", { ascending: false });
 
