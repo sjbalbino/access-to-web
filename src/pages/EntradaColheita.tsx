@@ -330,12 +330,12 @@ export default function EntradaColheita() {
 
               <div className="space-y-2">
                 <Label>Silo (Destino)</Label>
-                <Select value={siloId} onValueChange={setSiloId}>
+                <Select value={siloId || "_none"} onValueChange={v => setSiloId(v === "_none" ? "" : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="_none">Nenhum</SelectItem>
                     {silos.filter(s => s.ativo).map(s => (
                       <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                     ))}
@@ -345,12 +345,12 @@ export default function EntradaColheita() {
 
               <div className="space-y-2">
                 <Label>Produtor/Inscrição</Label>
-                <Select value={inscricaoId} onValueChange={setInscricaoId}>
+                <Select value={inscricaoId || "_none"} onValueChange={v => setInscricaoId(v === "_none" ? "" : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="_none">Nenhum</SelectItem>
                     {inscricoesAtivas.map(i => (
                       <SelectItem key={i.id} value={i.id}>
                         {i.produtores?.nome} - {i.inscricao_estadual}
@@ -362,12 +362,12 @@ export default function EntradaColheita() {
 
               <div className="space-y-2">
                 <Label>Local Entrega</Label>
-                <Select value={localEntregaId} onValueChange={setLocalEntregaId}>
+                <Select value={localEntregaId || "_none"} onValueChange={v => setLocalEntregaId(v === "_none" ? "" : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="_none">Nenhum</SelectItem>
                     {locaisEntrega.filter(l => l.ativo).map(l => (
                       <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
                     ))}
@@ -479,14 +479,14 @@ export default function EntradaColheita() {
                     <div className="space-y-2">
                       <Label>Placa</Label>
                       <Select 
-                        value={formEntrada.placa_id} 
-                        onValueChange={v => setFormEntrada(prev => ({ ...prev, placa_id: v }))}
+                        value={formEntrada.placa_id || "_none"} 
+                        onValueChange={v => setFormEntrada(prev => ({ ...prev, placa_id: v === "_none" ? "" : v }))}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Nenhuma</SelectItem>
+                          <SelectItem value="_none">Nenhuma</SelectItem>
                           {placas.filter(p => p.ativa).map(p => (
                             <SelectItem key={p.id} value={p.id}>{p.placa}</SelectItem>
                           ))}
@@ -522,14 +522,14 @@ export default function EntradaColheita() {
                     <div className="space-y-2">
                       <Label>Variedade</Label>
                       <Select 
-                        value={formEntrada.variedade_id} 
-                        onValueChange={v => setFormEntrada(prev => ({ ...prev, variedade_id: v }))}
+                        value={formEntrada.variedade_id || "_none"} 
+                        onValueChange={v => setFormEntrada(prev => ({ ...prev, variedade_id: v === "_none" ? "" : v }))}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Nenhuma</SelectItem>
+                          <SelectItem value="_none">Nenhuma</SelectItem>
                           {sementes.map(s => (
                             <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                           ))}
