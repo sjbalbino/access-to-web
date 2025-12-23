@@ -412,7 +412,6 @@ export default function EmitentesNfe() {
                           inscricao_produtor_id: value === "inscricao" ? formData.inscricao_produtor_id : null,
                         });
                       }}
-                      disabled={!!selectedEmitente}
                     >
                       <SelectTrigger>
                         <SelectValue />
