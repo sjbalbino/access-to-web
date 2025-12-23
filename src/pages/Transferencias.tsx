@@ -170,12 +170,12 @@ export default function Transferencias() {
 
               <div className="space-y-2">
                 <Label>Silo</Label>
-                <Select value={siloId} onValueChange={setSiloId}>
+                <Select value={siloId || "__all__"} onValueChange={(val) => setSiloId(val === "__all__" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todos os silos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="__all__">Todos</SelectItem>
                     {silos.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.nome}
@@ -206,12 +206,12 @@ export default function Transferencias() {
                     
                     <div className="space-y-2">
                       <Label>Local</Label>
-                      <Select value={granjaOrigemId} onValueChange={setGranjaOrigemId}>
+                      <Select value={granjaOrigemId || "__all__"} onValueChange={(val) => setGranjaOrigemId(val === "__all__" ? "" : val)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o local" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos</SelectItem>
+                          <SelectItem value="__all__">Todos</SelectItem>
                           {granjas.map((g) => (
                             <SelectItem key={g.id} value={g.id}>
                               {g.nome_fantasia || g.razao_social}
@@ -249,12 +249,12 @@ export default function Transferencias() {
                     
                     <div className="space-y-2">
                       <Label>Local</Label>
-                      <Select value={granjaDestinoId} onValueChange={setGranjaDestinoId}>
+                      <Select value={granjaDestinoId || "__all__"} onValueChange={(val) => setGranjaDestinoId(val === "__all__" ? "" : val)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o local" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos</SelectItem>
+                          <SelectItem value="__all__">Todos</SelectItem>
                           {granjas.map((g) => (
                             <SelectItem key={g.id} value={g.id}>
                               {g.nome_fantasia || g.razao_social}
