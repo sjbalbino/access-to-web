@@ -15,6 +15,7 @@ import { useGranjas } from "@/hooks/useGranjas";
 import { useSilos } from "@/hooks/useSilos";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
+import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useTransferenciasDeposito, useCreateTransferenciaDeposito, useDeleteTransferenciaDeposito } from "@/hooks/useTransferenciasDeposito";
 import { formatNumber } from "@/lib/formatters";
 import { toast } from "@/hooks/use-toast";
@@ -37,8 +38,10 @@ export default function Transferencias() {
   // Formulário
   const [granjaOrigemId, setGranjaOrigemId] = useState<string>("");
   const [inscricaoOrigemId, setInscricaoOrigemId] = useState<string>("");
+  const [localSaidaId, setLocalSaidaId] = useState<string>("");
   const [granjaDestinoId, setGranjaDestinoId] = useState<string>("");
   const [inscricaoDestinoId, setInscricaoDestinoId] = useState<string>("");
+  const [localEntradaId, setLocalEntradaId] = useState<string>("");
   const [quantidadeKg, setQuantidadeKg] = useState<string>("");
   const [observacoes, setObservacoes] = useState<string>("");
 
@@ -49,6 +52,7 @@ export default function Transferencias() {
   const { data: silos = [] } = useSilos();
   const { data: produtos = [] } = useProdutos();
   const { data: todasInscricoes = [] } = useAllInscricoes();
+  const { data: locaisEntrega = [] } = useLocaisEntrega();
 
   const { data: transferencias = [], isLoading } = useTransferenciasDeposito({
     safraId: safraId || undefined,
@@ -99,11 +103,15 @@ export default function Transferencias() {
       silo_id: siloId || null,
       quantidade_kg: parseFloat(quantidadeKg),
       observacoes: observacoes || null,
+      local_saida_id: localSaidaId || null,
+      local_entrada_id: localEntradaId || null,
     });
 
     // Limpar formulário
     setInscricaoOrigemId("");
     setInscricaoDestinoId("");
+    setLocalSaidaId("");
+    setLocalEntradaId("");
     setQuantidadeKg("");
     setObservacoes("");
   };

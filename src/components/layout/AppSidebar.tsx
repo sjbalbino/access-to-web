@@ -95,6 +95,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Silos", icon: Warehouse, path: "/silos", color: "text-emerald-500" },
       { title: "Placas", icon: Truck, path: "/placas", color: "text-orange-500" },
       { title: "Tab. Umidades", icon: Droplets, path: "/tabela-umidades", color: "text-cyan-500" },
+      { title: "Locais Entrega", icon: Map, path: "/locais-entrega", color: "text-pink-500" },
     ],
   },
   {

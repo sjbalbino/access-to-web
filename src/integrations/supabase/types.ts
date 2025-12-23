@@ -510,7 +510,7 @@ export type Database = {
             foreignKeyName: "colheitas_local_entrega_terceiro_id_fkey"
             columns: ["local_entrega_terceiro_id"]
             isOneToOne: false
-            referencedRelation: "clientes_fornecedores"
+            referencedRelation: "locais_entrega"
             referencedColumns: ["id"]
           },
           {
@@ -1281,6 +1281,86 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "lavouras_empresa_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locais_entrega: {
+        Row: {
+          ativo: boolean | null
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          codigo: string | null
+          complemento: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          email: string | null
+          granja_id: string | null
+          id: string
+          inscricao_estadual: string | null
+          logradouro: string | null
+          nome: string
+          nome_fantasia: string | null
+          numero: string | null
+          observacoes: string | null
+          telefone: string | null
+          tipo_pessoa: string | null
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          granja_id?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          logradouro?: string | null
+          nome: string
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          telefone?: string | null
+          tipo_pessoa?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          codigo?: string | null
+          complemento?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          granja_id?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          logradouro?: string | null
+          nome?: string
+          nome_fantasia?: string | null
+          numero?: string | null
+          observacoes?: string | null
+          telefone?: string | null
+          tipo_pessoa?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locais_entrega_granja_id_fkey"
             columns: ["granja_id"]
             isOneToOne: false
             referencedRelation: "granjas"
@@ -2972,6 +3052,8 @@ export type Database = {
           id: string
           inscricao_destino_id: string | null
           inscricao_origem_id: string | null
+          local_entrada_id: string | null
+          local_saida_id: string | null
           observacoes: string | null
           produto_id: string | null
           quantidade_kg: number
@@ -2988,6 +3070,8 @@ export type Database = {
           id?: string
           inscricao_destino_id?: string | null
           inscricao_origem_id?: string | null
+          local_entrada_id?: string | null
+          local_saida_id?: string | null
           observacoes?: string | null
           produto_id?: string | null
           quantidade_kg?: number
@@ -3004,6 +3088,8 @@ export type Database = {
           id?: string
           inscricao_destino_id?: string | null
           inscricao_origem_id?: string | null
+          local_entrada_id?: string | null
+          local_saida_id?: string | null
           observacoes?: string | null
           produto_id?: string | null
           quantidade_kg?: number
@@ -3038,6 +3124,20 @@ export type Database = {
             columns: ["inscricao_origem_id"]
             isOneToOne: false
             referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_deposito_local_entrada_id_fkey"
+            columns: ["local_entrada_id"]
+            isOneToOne: false
+            referencedRelation: "locais_entrega"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_deposito_local_saida_id_fkey"
+            columns: ["local_saida_id"]
+            isOneToOne: false
+            referencedRelation: "locais_entrega"
             referencedColumns: ["id"]
           },
           {

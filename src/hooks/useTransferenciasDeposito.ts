@@ -15,6 +15,8 @@ export interface TransferenciaDeposito {
   silo_id: string | null;
   quantidade_kg: number;
   observacoes: string | null;
+  local_saida_id: string | null;
+  local_entrada_id: string | null;
   created_at: string;
   updated_at: string;
   // Joins
@@ -25,6 +27,8 @@ export interface TransferenciaDeposito {
   safra?: { nome: string } | null;
   produto?: { nome: string } | null;
   silo?: { nome: string } | null;
+  local_saida?: { nome: string; cidade: string | null; uf: string | null } | null;
+  local_entrada?: { nome: string; cidade: string | null; uf: string | null } | null;
 }
 
 export type TransferenciaInput = Omit<TransferenciaDeposito, 'id' | 'codigo' | 'created_at' | 'updated_at' | 'granja_origem' | 'granja_destino' | 'inscricao_origem' | 'inscricao_destino' | 'safra' | 'produto' | 'silo'>;
@@ -48,7 +52,9 @@ export function useTransferenciasDeposito(filters?: {
           inscricao_destino:inscricoes_produtor!transferencias_deposito_inscricao_destino_id_fkey(inscricao_estadual, cpf_cnpj, granja, produtores(nome)),
           safra:safras(nome),
           produto:produtos(nome),
-          silo:silos(nome)
+          silo:silos(nome),
+          local_saida:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome, cidade, uf),
+          local_entrada:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome, cidade, uf)
         `)
         .order('codigo', { ascending: false });
 
