@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 export interface Lavoura {
   id: string;
-  codigo: string | null;
+  codigo: number;
   nome: string;
   granja_id: string | null;
   total_hectares: number | null;
@@ -18,7 +18,7 @@ export interface Lavoura {
   updated_at: string;
 }
 
-export type LavouraInput = Omit<Lavoura, "id" | "created_at" | "updated_at">;
+export type LavouraInput = Omit<Lavoura, "id" | "created_at" | "updated_at" | "codigo">;
 
 export function useLavouras() {
   return useQuery({

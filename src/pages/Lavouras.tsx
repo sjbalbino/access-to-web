@@ -50,7 +50,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 
 const emptyLavoura: LavouraInput = {
-  codigo: "",
   nome: "",
   granja_id: null,
   total_hectares: 0,
@@ -83,7 +82,6 @@ export default function Lavouras() {
   const handleEdit = (lavoura: any) => {
     setSelectedLavoura(lavoura);
     setFormData({
-      codigo: lavoura.codigo || "",
       nome: lavoura.nome,
       granja_id: lavoura.granja_id,
       total_hectares: lavoura.total_hectares || 0,

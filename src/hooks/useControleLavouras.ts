@@ -14,7 +14,7 @@ export interface ControleLavoura {
   lavouras?: {
     id: string;
     nome: string;
-    codigo: string | null;
+    codigo: number;
     total_hectares: number | null;
   };
   safras?: {

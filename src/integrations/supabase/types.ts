@@ -1237,7 +1237,7 @@ export type Database = {
           area_nao_aproveitavel: number | null
           area_plantio: number | null
           ativa: boolean | null
-          codigo: string | null
+          codigo: number
           created_at: string
           granja_id: string | null
           id: string
@@ -1252,7 +1252,7 @@ export type Database = {
           area_nao_aproveitavel?: number | null
           area_plantio?: number | null
           ativa?: boolean | null
-          codigo?: string | null
+          codigo?: number
           created_at?: string
           granja_id?: string | null
           id?: string
@@ -1267,7 +1267,7 @@ export type Database = {
           area_nao_aproveitavel?: number | null
           area_plantio?: number | null
           ativa?: boolean | null
-          codigo?: string | null
+          codigo?: number
           created_at?: string
           granja_id?: string | null
           id?: string
