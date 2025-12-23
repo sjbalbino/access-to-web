@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -54,24 +54,31 @@ export function NotaReferenciadaForm({
   const [chaveNfe, setChaveNfe] = useState("");
   
   // Campos NFP
-  const [nfpUf, setNfpUf] = useState(inscricao?.uf || "");
+  const [nfpUf, setNfpUf] = useState("");
   const [nfpAamm, setNfpAamm] = useState("");
   const [nfpCnpj, setNfpCnpj] = useState("");
-  const [nfpCpf, setNfpCpf] = useState(
-    inscricao?.cpf_cnpj && inscricao.cpf_cnpj.length <= 11 ? inscricao.cpf_cnpj : ""
-  );
-  const [nfpIe, setNfpIe] = useState(inscricao?.inscricao_estadual || "");
+  const [nfpCpf, setNfpCpf] = useState("");
+  const [nfpIe, setNfpIe] = useState("");
   const [nfpSerie, setNfpSerie] = useState("");
   const [nfpNumero, setNfpNumero] = useState("");
+
+  // Preencher campos com dados da inscrição quando o dialog abrir
+  useEffect(() => {
+    if (open && inscricao) {
+      setNfpUf(inscricao.uf || "");
+      setNfpCpf(inscricao.cpf_cnpj && inscricao.cpf_cnpj.length <= 11 ? inscricao.cpf_cnpj : "");
+      setNfpIe(inscricao.inscricao_estadual || "");
+    }
+  }, [open, inscricao]);
 
   const resetForm = () => {
     setTipo('nfp');
     setChaveNfe("");
-    setNfpUf(inscricao?.uf || "");
+    setNfpUf("");
     setNfpAamm("");
     setNfpCnpj("");
-    setNfpCpf(inscricao?.cpf_cnpj && inscricao.cpf_cnpj.length <= 11 ? inscricao.cpf_cnpj : "");
-    setNfpIe(inscricao?.inscricao_estadual || "");
+    setNfpCpf("");
+    setNfpIe("");
     setNfpSerie("");
     setNfpNumero("");
   };
