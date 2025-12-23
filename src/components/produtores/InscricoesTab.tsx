@@ -34,7 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Building2, Banknote } from "lucide-react";
 import {
   useInscricoesByProdutor,
   useCreateInscricao,
@@ -46,7 +46,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGranjas } from "@/hooks/useGranjas";
+import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 
 const TIPOS_INSCRICAO = [
   { value: "parceria", label: "Parceria" },
@@ -75,11 +78,14 @@ const emptyInscricao: InscricaoInput = {
   granja: "",
   granja_id: null,
   ativa: true,
+  emitente_id: null,
+  conta_bancaria: null,
 };
 
 export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const { data: inscricoes, isLoading } = useInscricoesByProdutor(produtorId);
   const { data: granjas } = useGranjas();
+  const { emitentes } = useEmitentesNfe();
   const createInscricao = useCreateInscricao();
   const updateInscricao = useUpdateInscricao();
   const deleteInscricao = useDeleteInscricao();
@@ -116,6 +122,8 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       granja: inscricao.granja || "",
       granja_id: inscricao.granja_id || null,
       ativa: inscricao.ativa ?? true,
+      emitente_id: inscricao.emitente_id || null,
+      conta_bancaria: inscricao.conta_bancaria || null,
     });
     setDialogOpen(true);
   };
@@ -153,6 +161,9 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
     }
   };
 
+  // Emitentes ativos para seleção
+  const emitentesAtivos = emitentes.filter(e => e.ativo);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -184,6 +195,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 <TableHead>CPF/CNPJ</TableHead>
                 <TableHead>Cidade/UF</TableHead>
                 <TableHead>Granja</TableHead>
+                <TableHead>Emitente</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -207,6 +219,16 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                         || granjas?.find(e => e.id === inscricao.granja_id)?.razao_social 
                         || "-"
                       : inscricao.granja || "-"}
+                  </TableCell>
+                  <TableCell>
+                    {inscricao.emitente ? (
+                      <Badge variant="outline" className="gap-1">
+                        <Building2 className="h-3 w-3" />
+                        {inscricao.emitente.granja?.nome_fantasia || inscricao.emitente.granja?.razao_social || "Configurado"}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <span
@@ -422,6 +444,73 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                     placeholder="email@exemplo.com"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Emitente NF-e */}
+            <div className="space-y-4">
+              <h5 className="text-sm font-medium text-muted-foreground border-b pb-2 flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Emitente NF-e
+              </h5>
+              <div className="space-y-2">
+                <Label htmlFor="emitente_id">Emitente para emissão de NFP-e</Label>
+                <Select
+                  value={formData.emitente_id || "none"}
+                  onValueChange={(value) => setFormData({ ...formData, emitente_id: value === "none" ? null : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o emitente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {emitentesAtivos.map((emitente) => (
+                      <SelectItem key={emitente.id} value={emitente.id}>
+                        {emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "Emitente"}
+                        {emitente.ambiente === 1 ? " (Produção)" : " (Homologação)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Selecione o emitente que será usado para emissão de NFP-e desta inscrição
+                </p>
+              </div>
+              {formData.emitente_id && (
+                <div className="p-3 bg-muted/50 rounded-md text-sm">
+                  {(() => {
+                    const emitente = emitentes.find(e => e.id === formData.emitente_id);
+                    if (!emitente) return null;
+                    return (
+                      <div className="space-y-1">
+                        <p><span className="font-medium">Ambiente:</span> {emitente.ambiente === 1 ? "Produção" : "Homologação"}</p>
+                        <p><span className="font-medium">Série:</span> {emitente.serie_nfe}</p>
+                        <p><span className="font-medium">API:</span> {emitente.api_configurada ? "Configurada" : "Não configurada"}</p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* Conta Bancária */}
+            <div className="space-y-4">
+              <h5 className="text-sm font-medium text-muted-foreground border-b pb-2 flex items-center gap-2">
+                <Banknote className="h-4 w-4" />
+                Conta Bancária
+              </h5>
+              <div className="space-y-2">
+                <Label htmlFor="conta_bancaria">Dados da Conta Bancária</Label>
+                <Textarea
+                  id="conta_bancaria"
+                  value={formData.conta_bancaria || ""}
+                  onChange={(e) => setFormData({ ...formData, conta_bancaria: e.target.value })}
+                  placeholder="Ex: Banco do Brasil - Ag: 1234-5 - CC: 12345-6 - PIX: email@exemplo.com"
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Informe os dados bancários para recebimento de pagamentos
+                </p>
               </div>
             </div>
 

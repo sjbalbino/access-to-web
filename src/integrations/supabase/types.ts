@@ -821,7 +821,6 @@ export type Database = {
           cst_pis_padrao: string | null
           granja_id: string | null
           id: string
-          inscricao_produtor_id: string | null
           numero_atual_nfce: number | null
           numero_atual_nfe: number | null
           serie_nfce: number | null
@@ -856,7 +855,6 @@ export type Database = {
           cst_pis_padrao?: string | null
           granja_id?: string | null
           id?: string
-          inscricao_produtor_id?: string | null
           numero_atual_nfce?: number | null
           numero_atual_nfe?: number | null
           serie_nfce?: number | null
@@ -891,7 +889,6 @@ export type Database = {
           cst_pis_padrao?: string | null
           granja_id?: string | null
           id?: string
-          inscricao_produtor_id?: string | null
           numero_atual_nfce?: number | null
           numero_atual_nfe?: number | null
           serie_nfce?: number | null
@@ -904,13 +901,6 @@ export type Database = {
             columns: ["granja_id"]
             isOneToOne: true
             referencedRelation: "granjas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "emitentes_nfe_inscricao_produtor_id_fkey"
-            columns: ["inscricao_produtor_id"]
-            isOneToOne: false
-            referencedRelation: "inscricoes_produtor"
             referencedColumns: ["id"]
           },
         ]
@@ -1124,9 +1114,11 @@ export type Database = {
           cep: string | null
           cidade: string | null
           complemento: string | null
+          conta_bancaria: string | null
           cpf_cnpj: string | null
           created_at: string
           email: string | null
+          emitente_id: string | null
           granja: string | null
           granja_id: string | null
           id: string
@@ -1145,9 +1137,11 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
+          conta_bancaria?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          emitente_id?: string | null
           granja?: string | null
           granja_id?: string | null
           id?: string
@@ -1166,9 +1160,11 @@ export type Database = {
           cep?: string | null
           cidade?: string | null
           complemento?: string | null
+          conta_bancaria?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          emitente_id?: string | null
           granja?: string | null
           granja_id?: string | null
           id?: string
@@ -1182,6 +1178,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "inscricoes_produtor_emitente_id_fkey"
+            columns: ["emitente_id"]
+            isOneToOne: false
+            referencedRelation: "emitentes_nfe"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inscricoes_produtor_empresa_id_fkey"
             columns: ["granja_id"]

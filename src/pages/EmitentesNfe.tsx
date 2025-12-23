@@ -30,10 +30,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, Building2, AlertCircle, User } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2, AlertCircle } from "lucide-react";
 import { useEmitentesNfe, EmitenteNfe, EmitenteNfeInsert } from "@/hooks/useEmitentesNfe";
 import { useGranjas } from "@/hooks/useGranjas";
-import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -63,25 +62,16 @@ const API_PROVIDERS = [
   { value: "focusnfe", label: "Focus NFe" },
 ];
 
-const TIPO_EMITENTE = [
-  { value: "granja", label: "Granja (PJ - NF-e)" },
-  { value: "inscricao", label: "Inscrição do Produtor (PF - NFP-e)" },
-];
-
 export default function EmitentesNfe() {
   const { emitentes, isLoading, createEmitente, updateEmitente, deleteEmitente } = useEmitentesNfe();
   const granjasQuery = useGranjas();
-  const inscricoesQuery = useAllInscricoes();
   const granjas = granjasQuery.data || [];
-  const inscricoes = inscricoesQuery.data || [];
   const { canEdit } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedEmitente, setSelectedEmitente] = useState<EmitenteNfe | null>(null);
-  const [tipoEmitente, setTipoEmitente] = useState<"granja" | "inscricao">("granja");
   const [formData, setFormData] = useState<EmitenteNfeInsert>({
     granja_id: null,
-    inscricao_produtor_id: null,
     ambiente: 2,
     serie_nfe: 1,
     numero_atual_nfe: 0,
@@ -117,15 +107,9 @@ export default function EmitentesNfe() {
     (g) => g.ativa && !emitentes.some((e) => e.granja_id === g.id && e.id !== selectedEmitente?.id)
   );
 
-  // Inscrições que não têm emitente (ou é a inscrição do emitente sendo editado)
-  const inscricoesDisponiveis = inscricoes.filter(
-    (i) => i.ativa && !emitentes.some((e) => e.inscricao_produtor_id === i.id && e.id !== selectedEmitente?.id)
-  );
-
   const resetForm = () => {
     setFormData({
       granja_id: null,
-      inscricao_produtor_id: null,
       ambiente: 2,
       serie_nfe: 1,
       numero_atual_nfe: 0,
@@ -156,21 +140,13 @@ export default function EmitentesNfe() {
       ativo: true,
     });
     setSelectedEmitente(null);
-    setTipoEmitente("granja");
   };
 
   const handleOpenDialog = (emitente?: EmitenteNfe) => {
     if (emitente) {
       setSelectedEmitente(emitente);
-      // Determina o tipo de emitente baseado nos dados
-      if (emitente.inscricao_produtor_id) {
-        setTipoEmitente("inscricao");
-      } else {
-        setTipoEmitente("granja");
-      }
       setFormData({
         granja_id: emitente.granja_id,
-        inscricao_produtor_id: emitente.inscricao_produtor_id,
         ambiente: emitente.ambiente || 2,
         serie_nfe: emitente.serie_nfe || 1,
         numero_atual_nfe: emitente.numero_atual_nfe || 0,
@@ -243,8 +219,8 @@ export default function EmitentesNfe() {
     <AppLayout>
       <div className="space-y-6">
         <PageHeader
-          title="Emitentes NF-e / NFP-e"
-          description="Configuração de emitentes de Nota Fiscal Eletrônica (Granja) ou Nota Fiscal do Produtor (Inscrição)"
+          title="Emitentes NF-e"
+          description="Configuração de emitentes de Nota Fiscal Eletrônica por Granja"
         />
 
         <Alert className="border-blue-600 bg-blue-50 dark:bg-blue-950">
@@ -253,6 +229,7 @@ export default function EmitentesNfe() {
           <AlertDescription>
             Configure o token da API Focus NFe em cada emitente, correspondendo ao ambiente (homologação ou produção).
             Certifique-se de que o certificado A1 foi enviado no painel da Focus NFe.
+            Para vincular um emitente a uma inscrição do produtor (NFP-e), acesse o cadastro da inscrição na aba do produtor.
           </AlertDescription>
         </Alert>
 
@@ -260,7 +237,7 @@ export default function EmitentesNfe() {
           <div className="text-sm text-muted-foreground">
             {emitentes.length} emitente(s) configurado(s)
           </div>
-          {canEdit && (granjasDisponiveis.length > 0 || inscricoesDisponiveis.length > 0) && (
+          {canEdit && granjasDisponiveis.length > 0 && (
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Emitente
@@ -272,9 +249,8 @@ export default function EmitentesNfe() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Emitente</TableHead>
-                <TableHead>CPF/CNPJ</TableHead>
+                <TableHead>Granja</TableHead>
+                <TableHead>CNPJ</TableHead>
                 <TableHead>IE</TableHead>
                 <TableHead>Ambiente</TableHead>
                 <TableHead>Série</TableHead>
@@ -284,93 +260,69 @@ export default function EmitentesNfe() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {emitentes.map((emitente) => {
-                const isInscricao = !!emitente.inscricao_produtor_id;
-                const nomeEmitente = isInscricao
-                  ? emitente.inscricao_produtor?.produtores?.nome || emitente.inscricao_produtor?.granja || "-"
-                  : emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "-";
-                const cpfCnpj = isInscricao
-                  ? emitente.inscricao_produtor?.cpf_cnpj || "-"
-                  : emitente.granja?.cnpj || "-";
-                const ie = isInscricao
-                  ? emitente.inscricao_produtor?.inscricao_estadual || "-"
-                  : "-";
-                
-                return (
-                  <TableRow key={emitente.id}>
-                    <TableCell>
-                      <Badge variant={isInscricao ? "outline" : "secondary"}>
-                        {isInscricao ? (
-                          <><User className="h-3 w-3 mr-1" /> NFP-e</>
-                        ) : (
-                          <><Building2 className="h-3 w-3 mr-1" /> NF-e</>
-                        )}
+              {emitentes.map((emitente) => (
+                <TableRow key={emitente.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      {emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "-"}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {emitente.granja?.cnpj || "-"}
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {emitente.granja?.inscricao_estadual || "-"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={emitente.ambiente === 1 ? "default" : "secondary"}>
+                      {AMBIENTES.find((a) => a.value === emitente.ambiente)?.label || "-"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{emitente.serie_nfe}</TableCell>
+                  <TableCell>
+                    {emitente.api_configurada ? (
+                      <Badge variant="default">
+                        {API_PROVIDERS.find((p) => p.value === emitente.api_provider)?.label || "Configurada"}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {nomeEmitente}
-                      {isInscricao && emitente.inscricao_produtor?.cidade && (
-                        <span className="text-muted-foreground text-xs block">
-                          {emitente.inscricao_produtor.cidade}/{emitente.inscricao_produtor.uf}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {cpfCnpj}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {ie}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={emitente.ambiente === 1 ? "default" : "secondary"}>
-                        {AMBIENTES.find((a) => a.value === emitente.ambiente)?.label || "-"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{emitente.serie_nfe}</TableCell>
-                    <TableCell>
-                      {emitente.api_configurada ? (
-                        <Badge variant="default">
-                          {API_PROVIDERS.find((p) => p.value === emitente.api_provider)?.label || "Configurada"}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">Não configurada</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={emitente.ativo ? "default" : "secondary"}>
-                        {emitente.ativo ? "Ativo" : "Inativo"}
-                      </Badge>
-                    </TableCell>
-                    {canEdit && (
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenDialog(emitente)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedEmitente(emitente);
-                              setIsDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                    ) : (
+                      <Badge variant="outline">Não configurada</Badge>
                     )}
-                  </TableRow>
-                );
-              })}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={emitente.ativo ? "default" : "secondary"}>
+                      {emitente.ativo ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </TableCell>
+                  {canEdit && (
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenDialog(emitente)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSelectedEmitente(emitente);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
               {emitentes.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={canEdit ? 9 : 8}
+                    colSpan={canEdit ? 8 : 7}
                     className="text-center py-8 text-muted-foreground"
                   >
                     Nenhum emitente configurado
@@ -390,92 +342,39 @@ export default function EmitentesNfe() {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Tipo de Emitente */}
+              {/* Granja */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Tipo de Emitente</CardTitle>
+                  <CardTitle className="text-base">Granja</CardTitle>
                   <CardDescription>
-                    Selecione se a emissão será por Granja (NF-e) ou por Inscrição do Produtor (NFP-e)
+                    Selecione a granja que será o emitente da NF-e
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="tipo_emitente">Tipo *</Label>
+                    <Label htmlFor="granja_id">Granja *</Label>
                     <Select
-                      value={tipoEmitente}
-                      onValueChange={(value: "granja" | "inscricao") => {
-                        setTipoEmitente(value);
-                        // Limpa a seleção do tipo anterior
-                        setFormData({
-                          ...formData,
-                          granja_id: value === "granja" ? formData.granja_id : null,
-                          inscricao_produtor_id: value === "inscricao" ? formData.inscricao_produtor_id : null,
-                        });
-                      }}
+                      value={formData.granja_id || ""}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, granja_id: value })
+                      }
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Selecione a granja" />
                       </SelectTrigger>
                       <SelectContent>
-                        {TIPO_EMITENTE.map((tipo) => (
-                          <SelectItem key={tipo.value} value={tipo.value}>
-                            {tipo.label}
+                        {(selectedEmitente
+                          ? granjas.filter((g) => g.ativa || g.id === selectedEmitente.granja_id)
+                          : granjasDisponiveis
+                        ).map((granja) => (
+                          <SelectItem key={granja.id} value={granja.id}>
+                            {granja.nome_fantasia || granja.razao_social}
+                            {granja.cnpj && ` - ${granja.cnpj}`}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {tipoEmitente === "granja" ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="granja_id">Granja *</Label>
-                      <Select
-                        value={formData.granja_id || ""}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, granja_id: value, inscricao_produtor_id: null })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a granja" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(selectedEmitente
-                            ? granjas.filter((g) => g.ativa || g.id === selectedEmitente.granja_id)
-                            : granjasDisponiveis
-                          ).map((granja) => (
-                            <SelectItem key={granja.id} value={granja.id}>
-                              {granja.nome_fantasia || granja.razao_social}
-                              {granja.cnpj && ` - ${granja.cnpj}`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Label htmlFor="inscricao_produtor_id">Inscrição do Produtor *</Label>
-                      <Select
-                        value={formData.inscricao_produtor_id || ""}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, inscricao_produtor_id: value, granja_id: null })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a inscrição do produtor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(selectedEmitente
-                            ? inscricoes.filter((i) => i.ativa || i.id === selectedEmitente.inscricao_produtor_id)
-                            : inscricoesDisponiveis
-                          ).map((inscricao) => (
-                            <SelectItem key={inscricao.id} value={inscricao.id}>
-                              {inscricao.produtores?.nome || inscricao.granjas?.razao_social || "Produtor"} - IE: {inscricao.inscricao_estadual || "N/A"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
@@ -507,7 +406,7 @@ export default function EmitentesNfe() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="crt">Regime Tributário (CRT)</Label>
+                      <Label htmlFor="crt">Regime Tributário</Label>
                       <Select
                         value={String(formData.crt)}
                         onValueChange={(value) =>
@@ -518,16 +417,16 @@ export default function EmitentesNfe() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {REGIMES_TRIBUTARIOS.map((regime) => (
-                            <SelectItem key={regime.value} value={String(regime.value)}>
-                              {regime.label}
+                          {REGIMES_TRIBUTARIOS.map((reg) => (
+                            <SelectItem key={reg.value} value={String(reg.value)}>
+                              {reg.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-
+                  <Separator />
                   <div className="grid grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="serie_nfe">Série NF-e</Label>
@@ -538,11 +437,10 @@ export default function EmitentesNfe() {
                         onChange={(e) =>
                           setFormData({ ...formData, serie_nfe: Number(e.target.value) })
                         }
-                        min={1}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="numero_atual_nfe">Último Nº NF-e</Label>
+                      <Label htmlFor="numero_atual_nfe">Número Atual</Label>
                       <Input
                         id="numero_atual_nfe"
                         type="number"
@@ -550,7 +448,6 @@ export default function EmitentesNfe() {
                         onChange={(e) =>
                           setFormData({ ...formData, numero_atual_nfe: Number(e.target.value) })
                         }
-                        min={0}
                       />
                     </div>
                     <div className="space-y-2">
@@ -562,11 +459,10 @@ export default function EmitentesNfe() {
                         onChange={(e) =>
                           setFormData({ ...formData, serie_nfce: Number(e.target.value) })
                         }
-                        min={1}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="numero_atual_nfce">Último Nº NFC-e</Label>
+                      <Label htmlFor="numero_atual_nfce">Número Atual</Label>
                       <Input
                         id="numero_atual_nfce"
                         type="number"
@@ -574,7 +470,6 @@ export default function EmitentesNfe() {
                         onChange={(e) =>
                           setFormData({ ...formData, numero_atual_nfce: Number(e.target.value) })
                         }
-                        min={0}
                       />
                     </div>
                   </div>
@@ -586,11 +481,11 @@ export default function EmitentesNfe() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Alíquotas Padrão (%)</CardTitle>
                   <CardDescription>
-                    Valores padrão para novos itens de NF-e (podem ser alterados por item)
+                    Valores padrão que serão aplicados nos itens da nota
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                <CardContent>
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="aliq_icms_padrao">ICMS</Label>
                       <Input
@@ -608,8 +503,8 @@ export default function EmitentesNfe() {
                       <Input
                         id="aliq_pis_padrao"
                         type="number"
-                        step="0.0001"
-                        value={formData.aliq_pis_padrao ?? 1.65}
+                        step="0.01"
+                        value={formData.aliq_pis_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_pis_padrao: Number(e.target.value) })
                         }
@@ -620,25 +515,19 @@ export default function EmitentesNfe() {
                       <Input
                         id="aliq_cofins_padrao"
                         type="number"
-                        step="0.0001"
-                        value={formData.aliq_cofins_padrao ?? 7.6}
+                        step="0.01"
+                        value={formData.aliq_cofins_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_cofins_padrao: Number(e.target.value) })
                         }
                       />
                     </div>
-                  </div>
-
-                  <Separator />
-                  <p className="text-sm text-muted-foreground">NT 2025.002 - Novos Tributos</p>
-                  
-                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="aliq_ibs_padrao">IBS</Label>
                       <Input
                         id="aliq_ibs_padrao"
                         type="number"
-                        step="0.0001"
+                        step="0.01"
                         value={formData.aliq_ibs_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_ibs_padrao: Number(e.target.value) })
@@ -650,7 +539,7 @@ export default function EmitentesNfe() {
                       <Input
                         id="aliq_cbs_padrao"
                         type="number"
-                        step="0.0001"
+                        step="0.01"
                         value={formData.aliq_cbs_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_cbs_padrao: Number(e.target.value) })
@@ -658,11 +547,11 @@ export default function EmitentesNfe() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="aliq_is_padrao">IS (Imposto Seletivo)</Label>
+                      <Label htmlFor="aliq_is_padrao">IS</Label>
                       <Input
                         id="aliq_is_padrao"
                         type="number"
-                        step="0.0001"
+                        step="0.01"
                         value={formData.aliq_is_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_is_padrao: Number(e.target.value) })
@@ -673,206 +562,103 @@ export default function EmitentesNfe() {
                 </CardContent>
               </Card>
 
-              {/* CST Padrões */}
+              {/* CST Padrão */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">CST Padrões</CardTitle>
+                  <CardTitle className="text-base">CST Padrão</CardTitle>
                   <CardDescription>
-                    Códigos de Situação Tributária padrão para novos itens de NF-e
+                    Códigos de situação tributária padrão
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-4 gap-4">
+                <CardContent>
+                  <div className="grid grid-cols-3 md:grid-cols-7 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="cst_icms_padrao">CST ICMS</Label>
-                      <Select
-                        value={formData.cst_icms_padrao || "00"}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, cst_icms_padrao: value })
+                      <Label htmlFor="cst_icms_padrao">ICMS</Label>
+                      <Input
+                        id="cst_icms_padrao"
+                        value={formData.cst_icms_padrao || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cst_icms_padrao: e.target.value })
                         }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="00">00 - Tributada integralmente</SelectItem>
-                          <SelectItem value="10">10 - Trib. com cobrança ICMS ST</SelectItem>
-                          <SelectItem value="20">20 - Com redução de BC</SelectItem>
-                          <SelectItem value="30">30 - Isenta/não trib. com ST</SelectItem>
-                          <SelectItem value="40">40 - Isenta</SelectItem>
-                          <SelectItem value="41">41 - Não tributada</SelectItem>
-                          <SelectItem value="50">50 - Suspensão</SelectItem>
-                          <SelectItem value="51">51 - Diferimento</SelectItem>
-                          <SelectItem value="60">60 - Cobrado ant. por ST</SelectItem>
-                          <SelectItem value="70">70 - Redução BC com ST</SelectItem>
-                          <SelectItem value="90">90 - Outras</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        maxLength={3}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cst_pis_padrao">CST PIS</Label>
-                      <Select
-                        value={formData.cst_pis_padrao || "01"}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, cst_pis_padrao: value })
+                      <Label htmlFor="cst_pis_padrao">PIS</Label>
+                      <Input
+                        id="cst_pis_padrao"
+                        value={formData.cst_pis_padrao || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cst_pis_padrao: e.target.value })
                         }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="01">01 - Op. tributável</SelectItem>
-                          <SelectItem value="02">02 - Op. trib. alíq. diferenciada</SelectItem>
-                          <SelectItem value="03">03 - Op. trib. alíq. unidade</SelectItem>
-                          <SelectItem value="04">04 - Op. trib. monofásica</SelectItem>
-                          <SelectItem value="05">05 - Op. trib. ST</SelectItem>
-                          <SelectItem value="06">06 - Op. trib. alíq. zero</SelectItem>
-                          <SelectItem value="07">07 - Op. isenta</SelectItem>
-                          <SelectItem value="08">08 - Op. sem incidência</SelectItem>
-                          <SelectItem value="09">09 - Op. com suspensão</SelectItem>
-                          <SelectItem value="49">49 - Outras saídas</SelectItem>
-                          <SelectItem value="99">99 - Outras operações</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        maxLength={2}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cst_cofins_padrao">CST COFINS</Label>
-                      <Select
-                        value={formData.cst_cofins_padrao || "01"}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, cst_cofins_padrao: value })
+                      <Label htmlFor="cst_cofins_padrao">COFINS</Label>
+                      <Input
+                        id="cst_cofins_padrao"
+                        value={formData.cst_cofins_padrao || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cst_cofins_padrao: e.target.value })
                         }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="01">01 - Op. tributável</SelectItem>
-                          <SelectItem value="02">02 - Op. trib. alíq. diferenciada</SelectItem>
-                          <SelectItem value="03">03 - Op. trib. alíq. unidade</SelectItem>
-                          <SelectItem value="04">04 - Op. trib. monofásica</SelectItem>
-                          <SelectItem value="05">05 - Op. trib. ST</SelectItem>
-                          <SelectItem value="06">06 - Op. trib. alíq. zero</SelectItem>
-                          <SelectItem value="07">07 - Op. isenta</SelectItem>
-                          <SelectItem value="08">08 - Op. sem incidência</SelectItem>
-                          <SelectItem value="09">09 - Op. com suspensão</SelectItem>
-                          <SelectItem value="49">49 - Outras saídas</SelectItem>
-                          <SelectItem value="99">99 - Outras operações</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        maxLength={2}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cst_ipi_padrao">CST IPI</Label>
-                      <Select
-                        value={formData.cst_ipi_padrao || "53"}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, cst_ipi_padrao: value })
+                      <Label htmlFor="cst_ipi_padrao">IPI</Label>
+                      <Input
+                        id="cst_ipi_padrao"
+                        value={formData.cst_ipi_padrao || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cst_ipi_padrao: e.target.value })
                         }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="00">00 - Entrada com recuperação</SelectItem>
-                          <SelectItem value="01">01 - Entrada tributável alíq. zero</SelectItem>
-                          <SelectItem value="02">02 - Entrada isenta</SelectItem>
-                          <SelectItem value="03">03 - Entrada não tributável</SelectItem>
-                          <SelectItem value="04">04 - Entrada imune</SelectItem>
-                          <SelectItem value="05">05 - Entrada com suspensão</SelectItem>
-                          <SelectItem value="49">49 - Outras entradas</SelectItem>
-                          <SelectItem value="50">50 - Saída tributável</SelectItem>
-                          <SelectItem value="51">51 - Saída tributável alíq. zero</SelectItem>
-                          <SelectItem value="52">52 - Saída isenta</SelectItem>
-                          <SelectItem value="53">53 - Saída não tributável</SelectItem>
-                          <SelectItem value="54">54 - Saída imune</SelectItem>
-                          <SelectItem value="55">55 - Saída com suspensão</SelectItem>
-                          <SelectItem value="99">99 - Outras saídas</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Separator />
-                  <p className="text-sm text-muted-foreground">NT 2025.002 - Novos Tributos</p>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cst_ibs_padrao">CST IBS</Label>
-                      <Select
-                        value={formData.cst_ibs_padrao || "00"}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, cst_ibs_padrao: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="00">00 - Tributação normal</SelectItem>
-                          <SelectItem value="10">10 - Tributação monofásica</SelectItem>
-                          <SelectItem value="20">20 - Diferimento</SelectItem>
-                          <SelectItem value="30">30 - Imunidade</SelectItem>
-                          <SelectItem value="40">40 - Isenção</SelectItem>
-                          <SelectItem value="50">50 - Suspensão</SelectItem>
-                          <SelectItem value="51">51 - Red. alíquota</SelectItem>
-                          <SelectItem value="90">90 - Outras</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        maxLength={2}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cst_cbs_padrao">CST CBS</Label>
-                      <Select
-                        value={formData.cst_cbs_padrao || "00"}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, cst_cbs_padrao: value })
+                      <Label htmlFor="cst_ibs_padrao">IBS</Label>
+                      <Input
+                        id="cst_ibs_padrao"
+                        value={formData.cst_ibs_padrao || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cst_ibs_padrao: e.target.value })
                         }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="00">00 - Tributação normal</SelectItem>
-                          <SelectItem value="10">10 - Tributação monofásica</SelectItem>
-                          <SelectItem value="20">20 - Diferimento</SelectItem>
-                          <SelectItem value="30">30 - Imunidade</SelectItem>
-                          <SelectItem value="40">40 - Isenção</SelectItem>
-                          <SelectItem value="50">50 - Suspensão</SelectItem>
-                          <SelectItem value="51">51 - Red. alíquota</SelectItem>
-                          <SelectItem value="90">90 - Outras</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        maxLength={2}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cst_is_padrao">CST IS</Label>
-                      <Select
-                        value={formData.cst_is_padrao || "00"}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, cst_is_padrao: value })
+                      <Label htmlFor="cst_cbs_padrao">CBS</Label>
+                      <Input
+                        id="cst_cbs_padrao"
+                        value={formData.cst_cbs_padrao || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cst_cbs_padrao: e.target.value })
                         }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="00">00 - Tributação normal</SelectItem>
-                          <SelectItem value="10">10 - Tributação monofásica</SelectItem>
-                          <SelectItem value="30">30 - Imunidade</SelectItem>
-                          <SelectItem value="40">40 - Não incidência</SelectItem>
-                          <SelectItem value="50">50 - Suspensão</SelectItem>
-                          <SelectItem value="90">90 - Outras</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        maxLength={2}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cst_is_padrao">IS</Label>
+                      <Input
+                        id="cst_is_padrao"
+                        value={formData.cst_is_padrao || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cst_is_padrao: e.target.value })
+                        }
+                        maxLength={2}
+                      />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* API de Integração - Focus NFe */}
+              {/* API Integration */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">API Focus NFe</CardTitle>
+                  <CardTitle className="text-base">Integração API</CardTitle>
                   <CardDescription>
-                    Configure o token da API correspondente ao ambiente selecionado.
+                    Configuração da API para emissão de notas fiscais
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -880,65 +666,46 @@ export default function EmitentesNfe() {
                     <div className="space-y-2">
                       <Label htmlFor="api_provider">Provedor</Label>
                       <Select
-                        value={formData.api_provider || "focusnfe"}
+                        value={formData.api_provider || ""}
                         onValueChange={(value) =>
-                          setFormData({ ...formData, api_provider: value || "focusnfe" })
+                          setFormData({ ...formData, api_provider: value })
                         }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o provedor" />
                         </SelectTrigger>
                         <SelectContent>
-                          {API_PROVIDERS.map((provider) => (
-                            <SelectItem key={provider.value} value={provider.value}>
-                              {provider.label}
+                          {API_PROVIDERS.map((prov) => (
+                            <SelectItem key={prov.value} value={prov.value}>
+                              {prov.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex items-center space-x-2 pt-8">
-                      <Switch
-                        id="api_configurada"
-                        checked={formData.api_configurada || false}
-                        onCheckedChange={(checked) =>
-                          setFormData({ ...formData, api_configurada: checked })
+                    <div className="space-y-2">
+                      <Label htmlFor="api_access_token">Token de Acesso</Label>
+                      <Input
+                        id="api_access_token"
+                        type="password"
+                        value={formData.api_access_token || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, api_access_token: e.target.value })
                         }
+                        placeholder="Token da API Focus NFe"
                       />
-                      <Label htmlFor="api_configurada">API Configurada e Testada</Label>
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="api_access_token">Token Focus NFe *</Label>
-                    <Input
-                      id="api_access_token"
-                      type="password"
-                      value={formData.api_access_token || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, api_access_token: e.target.value || null })
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="api_configurada"
+                      checked={formData.api_configurada || false}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, api_configurada: checked })
                       }
-                      placeholder={formData.ambiente === 2 ? "Token de homologação (inicia com T)" : "Token de produção"}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      {formData.ambiente === 2 
-                        ? "Para homologação, use o token que inicia com 'T'" 
-                        : "Para produção, use o token principal da sua conta Focus NFe"}
-                    </p>
+                    <Label htmlFor="api_configurada">API Configurada</Label>
                   </div>
-                  
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>Passos para ativar:</strong>
-                      <ol className="list-decimal ml-4 mt-2 space-y-1">
-                        <li>Obtenha o token no painel da Focus NFe (corresponde ao ambiente)</li>
-                        <li>Faça upload do certificado A1 desta granja no painel Focus NFe</li>
-                        <li>Teste uma emissão em homologação</li>
-                        <li>Marque "API Configurada e Testada" acima</li>
-                      </ol>
-                    </AlertDescription>
-                  </Alert>
                 </CardContent>
               </Card>
 
@@ -947,10 +714,10 @@ export default function EmitentesNfe() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Certificado Digital</CardTitle>
                   <CardDescription>
-                    O certificado A1 deve ser enviado ao provedor de NF-e
+                    O certificado A1 deve ser enviado no painel da Focus NFe
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="certificado_nome">Nome do Certificado</Label>
@@ -958,9 +725,9 @@ export default function EmitentesNfe() {
                         id="certificado_nome"
                         value={formData.certificado_nome || ""}
                         onChange={(e) =>
-                          setFormData({ ...formData, certificado_nome: e.target.value || null })
+                          setFormData({ ...formData, certificado_nome: e.target.value })
                         }
-                        placeholder="Ex: empresa_certificado_2024.pfx"
+                        placeholder="Descrição do certificado"
                       />
                     </div>
                     <div className="space-y-2">
@@ -970,7 +737,7 @@ export default function EmitentesNfe() {
                         type="date"
                         value={formData.certificado_validade || ""}
                         onChange={(e) =>
-                          setFormData({ ...formData, certificado_validade: e.target.value || null })
+                          setFormData({ ...formData, certificado_validade: e.target.value })
                         }
                       />
                     </div>
@@ -979,23 +746,26 @@ export default function EmitentesNfe() {
               </Card>
 
               {/* Status */}
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="ativo"
-                  checked={formData.ativo ?? true}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, ativo: checked })
-                  }
-                />
-                <Label htmlFor="ativo">Emitente Ativo</Label>
-              </div>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Status do Emitente</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="ativo"
+                      checked={formData.ativo ?? true}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, ativo: checked })
+                      }
+                    />
+                    <Label htmlFor="ativo">Emitente Ativo</Label>
+                  </div>
+                </CardContent>
+              </Card>
 
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCloseDialog}
-                >
+                <Button type="button" variant="outline" onClick={handleCloseDialog}>
                   Cancelar
                 </Button>
                 <Button
@@ -1004,7 +774,9 @@ export default function EmitentesNfe() {
                 >
                   {createEmitente.isPending || updateEmitente.isPending
                     ? "Salvando..."
-                    : "Salvar"}
+                    : selectedEmitente
+                    ? "Salvar Alterações"
+                    : "Criar Emitente"}
                 </Button>
               </DialogFooter>
             </form>
@@ -1012,17 +784,12 @@ export default function EmitentesNfe() {
         </Dialog>
 
         {/* Dialog de Confirmação de Exclusão */}
-        <AlertDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-        >
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja excluir a configuração de emitente NF-e para "
-                {selectedEmitente?.granja?.nome_fantasia || selectedEmitente?.granja?.razao_social}"? 
-                Esta ação não pode ser desfeita.
+                Tem certeza que deseja excluir este emitente? Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

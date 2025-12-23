@@ -20,11 +20,26 @@ export interface InscricaoProdutor {
   granja: string | null;
   granja_id: string | null;
   ativa: boolean | null;
+  emitente_id: string | null;
+  conta_bancaria: string | null;
   created_at: string;
   updated_at: string;
+  emitente?: {
+    id: string;
+    ambiente: number | null;
+    serie_nfe: number | null;
+    api_configurada: boolean | null;
+    certificado_nome: string | null;
+    certificado_validade: string | null;
+    granja?: {
+      id: string;
+      razao_social: string;
+      nome_fantasia: string | null;
+    } | null;
+  } | null;
 }
 
-export type InscricaoInput = Omit<InscricaoProdutor, 'id' | 'created_at' | 'updated_at'>;
+export type InscricaoInput = Omit<InscricaoProdutor, 'id' | 'created_at' | 'updated_at' | 'emitente'>;
 
 export function useInscricoesByProdutor(produtorId: string | undefined) {
   return useQuery({
@@ -33,7 +48,18 @@ export function useInscricoesByProdutor(produtorId: string | undefined) {
       if (!produtorId) return [];
       const { data, error } = await supabase
         .from('inscricoes_produtor')
-        .select('*')
+        .select(`
+          *,
+          emitente:emitentes_nfe(
+            id,
+            ambiente,
+            serie_nfe,
+            api_configurada,
+            certificado_nome,
+            certificado_validade,
+            granja:granjas(id, razao_social, nome_fantasia)
+          )
+        `)
         .eq('produtor_id', produtorId)
         .order('inscricao_estadual');
       
