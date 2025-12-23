@@ -791,7 +791,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                 <Select
                   value={formData.silo_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, silo_id: value === "none" ? null : value })}
-                  disabled={!!formData.local_entrega_terceiro_id}
+                  disabled={!!formData.local_entrega_terceiro_id && formData.local_entrega_terceiro_id !== "none"}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
