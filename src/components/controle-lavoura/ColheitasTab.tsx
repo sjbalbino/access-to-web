@@ -18,7 +18,7 @@ import { useControleLavoura } from '@/hooks/useControleLavouras';
 import { useAllInscricoes } from '@/hooks/useAllInscricoes';
 import { useInscricoesByProdutor } from '@/hooks/useInscricoesProdutor';
 import { useProdutores } from '@/hooks/useProdutores';
-import { useClientesFornecedores } from '@/hooks/useClientesFornecedores';
+import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
 import { format } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -68,7 +68,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   const { data: tabelaUmidades } = useTabelaUmidades();
   const { data: inscricoes } = useAllInscricoes();
   const { data: produtores } = useProdutores();
-  const { data: clientesFornecedores } = useClientesFornecedores();
+  const { data: locaisEntrega = [] } = useLocaisEntrega();
 
   // Estado para seleção de produtor em duas etapas
   const [selectedProdutorId, setSelectedProdutorId] = useState<string | null>(null);
@@ -746,8 +746,8 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum (Silo próprio)</SelectItem>
-                    {clientesFornecedores?.filter(cf => cf.ativo).map((cf) => (
-                      <SelectItem key={cf.id} value={cf.id}>{cf.nome}</SelectItem>
+                    {locaisEntrega?.filter(le => le.ativo).map((le) => (
+                      <SelectItem key={le.id} value={le.id}>{le.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

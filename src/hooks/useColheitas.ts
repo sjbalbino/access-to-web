@@ -96,7 +96,7 @@ export function useColheitas(controleLavouraId: string | null) {
           placas (id, placa),
           semente:produtos!colheitas_variedade_id_fkey (id, nome),
           inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey (id, inscricao_estadual, produtores:produtor_id(nome, tipo_produtor)),
-          local_entrega_terceiro:clientes_fornecedores!colheitas_local_entrega_terceiro_id_fkey (id, nome)
+          local_entrega_terceiro:locais_entrega!colheitas_local_entrega_terceiro_id_fkey (id, nome)
         `)
         .eq("controle_lavoura_id", controleLavouraId)
         .order("data_colheita", { ascending: false });
