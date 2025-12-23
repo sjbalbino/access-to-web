@@ -13,8 +13,7 @@ import { Plus, FileText, Trash2 } from "lucide-react";
 import { useSafras } from "@/hooks/useSafras";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useSaldosDeposito, useInscricoesComSaldo } from "@/hooks/useSaldosDeposito";
-import { useInscricoesByProdutor, InscricaoProdutor } from "@/hooks/useInscricoesProdutor";
-import { useAllInscricoes } from "@/hooks/useAllInscricoes";
+import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
@@ -55,9 +54,9 @@ export default function NotasDeposito() {
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
   const { data: produtos = [] } = useProdutos();
-  const { data: cfops = [] } = useCfops();
-  const { data: emitentes = [] } = useEmitentesNfe();
-  const { data: todasInscricoes = [] } = useAllInscricoes();
+  const { cfops } = useCfops();
+  const { emitentes } = useEmitentesNfe();
+  const { data: todasInscricoes = [] } = useInscricoesCompletas();
 
   // Buscar inscrições com saldo disponível
   const { data: inscricoesComSaldo = [] } = useInscricoesComSaldo({
