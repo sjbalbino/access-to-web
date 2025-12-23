@@ -34,6 +34,7 @@ import RemessasVendaForm from "./pages/RemessasVendaForm";
 import Transferencias from "./pages/Transferencias";
 import NotasDeposito from "./pages/NotasDeposito";
 import LocaisEntrega from "./pages/LocaisEntrega";
+import EntradaColheita from "./pages/EntradaColheita";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/produtores" element={<ProtectedRoute><Produtores /></ProtectedRoute>} />
             <Route path="/lavouras" element={<ProtectedRoute><Lavouras /></ProtectedRoute>} />
             <Route path="/controle-lavoura" element={<ProtectedRoute><ControleLavoura /></ProtectedRoute>} />
+            <Route path="/entrada-colheita" element={<ProtectedRoute><EntradaColheita /></ProtectedRoute>} />
             <Route path="/clientes-fornecedores" element={<ProtectedRoute><ClientesFornecedores /></ProtectedRoute>} />
             <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
             <Route path="/grupos-produtos" element={<ProtectedRoute><GruposProdutos /></ProtectedRoute>} />
