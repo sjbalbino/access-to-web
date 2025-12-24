@@ -110,8 +110,6 @@ const initialFormContraNota: FormContraNota = {
   chave_acesso: "",
 };
 
-type TipoProdutor = "todos" | "socios" | "terceiros";
-
 export default function EntradaColheita() {
   const { profile } = useAuth();
   
@@ -121,7 +119,6 @@ export default function EntradaColheita() {
   const [inscricaoId, setInscricaoId] = useState<string>("");
   const [localEntregaId, setLocalEntregaId] = useState<string>("");
   const [balanceiro, setBalanceiro] = useState<string>("");
-  const [tipoProdutor, setTipoProdutor] = useState<TipoProdutor>("todos");
 
   // Combobox produtor
   const [produtorOpen, setProdutorOpen] = useState(false);
@@ -199,7 +196,17 @@ export default function EntradaColheita() {
     [inscricoes, inscricaoId]
   );
 
-  // Filtrar lavouras por tipo de produtor
+  // Determinar tipo do produtor selecionado
+  const tipoProdutor = useMemo(() => {
+    if (!inscricaoSelecionada) return "todos";
+    // tipo_produtor pode ser "socio" ou "terceiro" no cadastro de produtores
+    const tipoProdutor = inscricaoSelecionada.produtores?.tipo_produtor;
+    if (tipoProdutor === "terceiro") return "terceiros";
+    if (tipoProdutor === "socio") return "socios";
+    return "todos";
+  }, [inscricaoSelecionada]);
+
+  // Filtrar lavouras automaticamente pelo tipo de produtor selecionado
   const lavourasFiltradasPorTipo = useMemo(() => {
     if (tipoProdutor === "todos") {
       return controleLavouras;
@@ -474,21 +481,6 @@ export default function EntradaColheita() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Silo (Destino)</Label>
-                <Select value={siloId || "_none"} onValueChange={v => setSiloId(v === "_none" ? "" : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">Nenhum</SelectItem>
-                    {silos.filter(s => s.ativo).map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Produtor/Inscrição com Combobox de busca */}
               <div className="space-y-2 lg:col-span-2">
                 <Label>Produtor/Inscrição</Label>
@@ -543,7 +535,7 @@ export default function EntradaColheita() {
                               <div className="flex flex-col">
                                 <span className="font-medium">{i.produtores?.nome}</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {i.cpf_cnpj} | IE: {i.inscricao_estadual}
+                                  {i.cpf_cnpj} | IE: {i.inscricao_estadual} | {i.produtores?.tipo_produtor === "terceiro" ? "Terceiro" : "Sócio"}
                                 </span>
                               </div>
                             </CommandItem>
@@ -553,6 +545,21 @@ export default function EntradaColheita() {
                     </Command>
                   </PopoverContent>
                 </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Silo (Destino)</Label>
+                <Select value={siloId || "_none"} onValueChange={v => setSiloId(v === "_none" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">Nenhum</SelectItem>
+                    {silos.filter(s => s.ativo).map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -609,17 +616,12 @@ export default function EntradaColheita() {
                     <CardTitle className="text-base flex items-center gap-2">
                       <Package className="h-4 w-4" />
                       Lista de Lavouras
+                      {tipoProdutor !== "todos" && (
+                        <Badge variant="secondary" className="ml-2">
+                          {tipoProdutor === "socios" ? "Sócios" : "Terceiros"}
+                        </Badge>
+                      )}
                     </CardTitle>
-                    <Select value={tipoProdutor} onValueChange={(v: TipoProdutor) => setTipoProdutor(v)}>
-                      <SelectTrigger className="w-[140px] h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todos">Todos</SelectItem>
-                        <SelectItem value="socios">Sócios</SelectItem>
-                        <SelectItem value="terceiros">Terceiros</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
