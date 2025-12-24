@@ -196,14 +196,10 @@ export default function EntradaColheita() {
     [inscricoes, inscricaoId]
   );
 
-  // Determinar tipo do produtor selecionado
+  // Determinar tipo do produtor selecionado (usa valor direto do banco: "produtor" ou "socio")
   const tipoProdutor = useMemo(() => {
     if (!inscricaoSelecionada) return "todos";
-    // tipo_produtor pode ser "socio" ou "terceiro" no cadastro de produtores
-    const tipoProdutor = inscricaoSelecionada.produtores?.tipo_produtor;
-    if (tipoProdutor === "terceiro") return "terceiros";
-    if (tipoProdutor === "socio") return "socios";
-    return "todos";
+    return inscricaoSelecionada.produtores?.tipo_produtor || "todos";
   }, [inscricaoSelecionada]);
 
   // Filtrar lavouras automaticamente pelo tipo de produtor selecionado
@@ -212,15 +208,15 @@ export default function EntradaColheita() {
       return controleLavouras;
     }
     
-    if (tipoProdutor === "terceiros") {
-      // Mostrar apenas lavouras com recebe_terceiros = true
+    if (tipoProdutor === "produtor") {
+      // Produtor externo: mostrar apenas lavouras com recebe_terceiros = true
       return controleLavouras.filter(cl => {
         const lavoura = lavouras.find(l => l.id === cl.lavoura_id);
         return lavoura?.recebe_terceiros === true;
       });
     }
     
-    // Sócios: mostrar lavouras que NÃO são de terceiros
+    // Sócio: mostrar lavouras que NÃO são de terceiros
     return controleLavouras.filter(cl => {
       const lavoura = lavouras.find(l => l.id === cl.lavoura_id);
       return lavoura?.recebe_terceiros !== true;
@@ -535,7 +531,7 @@ export default function EntradaColheita() {
                               <div className="flex flex-col">
                                 <span className="font-medium">{i.produtores?.nome}</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {i.cpf_cnpj} | IE: {i.inscricao_estadual} | {i.produtores?.tipo_produtor === "terceiro" ? "Terceiro" : "Sócio"}
+                                  {i.cpf_cnpj} | IE: {i.inscricao_estadual} | {i.produtores?.tipo_produtor === "produtor" ? "Produtor Externo" : "Sócio"}
                                 </span>
                               </div>
                             </CommandItem>
@@ -618,7 +614,7 @@ export default function EntradaColheita() {
                       Lista de Lavouras
                       {tipoProdutor !== "todos" && (
                         <Badge variant="secondary" className="ml-2">
-                          {tipoProdutor === "socios" ? "Sócios" : "Terceiros"}
+                          {tipoProdutor === "socio" ? "Sócios" : "Produtor Externo"}
                         </Badge>
                       )}
                     </CardTitle>
