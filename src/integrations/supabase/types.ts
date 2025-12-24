@@ -1123,6 +1123,7 @@ export type Database = {
           granja_id: string | null
           id: string
           inscricao_estadual: string | null
+          is_emitente_principal: boolean | null
           logradouro: string | null
           numero: string | null
           produtor_id: string | null
@@ -1146,6 +1147,7 @@ export type Database = {
           granja_id?: string | null
           id?: string
           inscricao_estadual?: string | null
+          is_emitente_principal?: boolean | null
           logradouro?: string | null
           numero?: string | null
           produtor_id?: string | null
@@ -1169,6 +1171,7 @@ export type Database = {
           granja_id?: string | null
           id?: string
           inscricao_estadual?: string | null
+          is_emitente_principal?: boolean | null
           logradouro?: string | null
           numero?: string | null
           produtor_id?: string | null
