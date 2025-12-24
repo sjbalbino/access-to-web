@@ -40,6 +40,7 @@ import { useNotasFiscais, useNotaFiscalItens, NotaFiscalInsert, NotaFiscalItemIn
 import { useCfops } from "@/hooks/useCfops";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { useInscricoesParceria } from "@/hooks/useInscricoesParceria";
+import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useProdutores } from "@/hooks/useProdutores";
 import { useProdutos } from "@/hooks/useProdutos";
@@ -145,6 +146,7 @@ export default function NotaFiscalForm() {
   const { emitentes } = useEmitentesNfe();
   const inscricoesParceriaQuery = useInscricoesParceria();
   const inscricoesParceria = inscricoesParceriaQuery.data || [];
+  const { data: inscricoesCompletas = [] } = useInscricoesCompletas();
   const clientesQuery = useClientesFornecedores();
   const clientesFornecedores = clientesQuery.data || [];
   const produtoresQuery = useProdutores();
@@ -417,6 +419,36 @@ export default function NotaFiscalForm() {
         dest_cidade: cliente.cidade || "",
         dest_uf: cliente.uf || "",
         dest_cep: cliente.cep || "",
+      };
+      setFormData(updatedData);
+      
+      if (updatedData.inscricao_produtor_id && updatedData.emitente_id) {
+        await autoSaveDraft(updatedData);
+      }
+    }
+  };
+
+  // Auto-fill destinatário from inscrição de produtor (para notas de entrada)
+  const handleInscricaoRemetenteSelect = async (inscricaoId: string) => {
+    const inscricao = inscricoesCompletas.find((i) => i.id === inscricaoId);
+    if (inscricao) {
+      const cpfCnpj = inscricao.cpf_cnpj || "";
+      const updatedData = {
+        ...formData,
+        cliente_fornecedor_id: "", // Limpa cliente/fornecedor
+        dest_tipo: cpfCnpj.length > 11 ? "PJ" : "PF",
+        dest_cpf_cnpj: cpfCnpj,
+        dest_nome: inscricao.produtores?.nome || inscricao.granja || "",
+        dest_ie: inscricao.inscricao_estadual || "",
+        dest_email: inscricao.email || "",
+        dest_telefone: inscricao.telefone || "",
+        dest_logradouro: inscricao.logradouro || "",
+        dest_numero: inscricao.numero || "",
+        dest_complemento: inscricao.complemento || "",
+        dest_bairro: inscricao.bairro || "",
+        dest_cidade: inscricao.cidade || "",
+        dest_uf: inscricao.uf || "",
+        dest_cep: inscricao.cep || "",
       };
       setFormData(updatedData);
       
@@ -1273,6 +1305,28 @@ export default function NotaFiscalForm() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        )}
+
+        {/* Seletor adicional para notas de entrada - importar de inscrição de produtor */}
+        {!isReadOnly && formData.operacao === 0 && (
+          <div className="space-y-2">
+            <Label>Importar de Inscrição de Produtor (Remetente)</Label>
+            <Select onValueChange={handleInscricaoRemetenteSelect} disabled={isReadOnly}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma inscrição de produtor" />
+              </SelectTrigger>
+              <SelectContent>
+                {inscricoesCompletas.filter((i) => i.ativa).map((inscricao) => (
+                  <SelectItem key={inscricao.id} value={inscricao.id}>
+                    {inscricao.produtores?.nome || inscricao.granja} - IE: {inscricao.inscricao_estadual}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Use esta opção para notas de entrada (contra-nota) onde o remetente é um produtor
+            </p>
           </div>
         )}
 

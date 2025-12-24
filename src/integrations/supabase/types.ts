@@ -1527,6 +1527,7 @@ export type Database = {
           info_complementar: string | null
           info_fisco: string | null
           inscricao_produtor_id: string | null
+          inscricao_remetente_id: string | null
           modalidade_frete: number | null
           modelo: string | null
           motivo_status: string | null
@@ -1627,6 +1628,7 @@ export type Database = {
           info_complementar?: string | null
           info_fisco?: string | null
           inscricao_produtor_id?: string | null
+          inscricao_remetente_id?: string | null
           modalidade_frete?: number | null
           modelo?: string | null
           motivo_status?: string | null
@@ -1727,6 +1729,7 @@ export type Database = {
           info_complementar?: string | null
           info_fisco?: string | null
           inscricao_produtor_id?: string | null
+          inscricao_remetente_id?: string | null
           modalidade_frete?: number | null
           modelo?: string | null
           motivo_status?: string | null
@@ -1829,6 +1832,13 @@ export type Database = {
           {
             foreignKeyName: "notas_fiscais_inscricao_produtor_id_fkey"
             columns: ["inscricao_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_inscricao_remetente_id_fkey"
+            columns: ["inscricao_remetente_id"]
             isOneToOne: false
             referencedRelation: "inscricoes_produtor"
             referencedColumns: ["id"]
