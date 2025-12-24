@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Truck, Scale, Check, Loader2, AlertCircle, Package } from "lucide-react";
+import { Truck, Scale, Check, Loader2, AlertCircle, Package, Search, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -26,17 +26,36 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
-import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
+import { useLocaisEntrega, useLocalSede } from "@/hooks/useLocaisEntrega";
 import { usePlacas } from "@/hooks/usePlacas";
 import { useProdutosSementes } from "@/hooks/useProdutosSementes";
 import { useControleLavouras, useCreateControleLavoura } from "@/hooks/useControleLavouras";
 import { useTabelaUmidades } from "@/hooks/useTabelaUmidades";
 import { useColheitasPendentes, useCreateColheitaEntrada, useUpdateColheitaSaida } from "@/hooks/useColheitasEntrada";
+import { useLavouras } from "@/hooks/useLavouras";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCfops } from "@/hooks/useCfops";
+import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
+import { useCreateNotaDepositoEmitida } from "@/hooks/useNotasDepositoEmitidas";
 import { supabase } from "@/integrations/supabase/client";
 
 interface FormEntrada {
@@ -56,6 +75,15 @@ interface FormSaida {
   ph: number;
 }
 
+interface FormContraNota {
+  emitir: boolean;
+  tipo: "bloco" | "nfpe";
+  numero_nfp: string;
+  serie_nfp: string;
+  data_emissao_nfp: string;
+  chave_acesso: string;
+}
+
 const initialFormEntrada: FormEntrada = {
   peso_bruto: 0,
   placa_id: "",
@@ -73,13 +101,31 @@ const initialFormSaida: FormSaida = {
   ph: 0,
 };
 
+const initialFormContraNota: FormContraNota = {
+  emitir: false,
+  tipo: "bloco",
+  numero_nfp: "",
+  serie_nfp: "",
+  data_emissao_nfp: format(new Date(), "yyyy-MM-dd"),
+  chave_acesso: "",
+};
+
+type TipoProdutor = "todos" | "socios" | "terceiros";
+
 export default function EntradaColheita() {
+  const { profile } = useAuth();
+  
   // Filtros
   const [safraId, setSafraId] = useState<string>("");
   const [siloId, setSiloId] = useState<string>("");
   const [inscricaoId, setInscricaoId] = useState<string>("");
   const [localEntregaId, setLocalEntregaId] = useState<string>("");
   const [balanceiro, setBalanceiro] = useState<string>("");
+  const [tipoProdutor, setTipoProdutor] = useState<TipoProdutor>("todos");
+
+  // Combobox produtor
+  const [produtorOpen, setProdutorOpen] = useState(false);
+  const [produtorSearch, setProdutorSearch] = useState("");
 
   // Seleções
   const [selectedLavouraId, setSelectedLavouraId] = useState<string | null>(null);
@@ -88,6 +134,7 @@ export default function EntradaColheita() {
   // Formulários
   const [formEntrada, setFormEntrada] = useState<FormEntrada>(initialFormEntrada);
   const [formSaida, setFormSaida] = useState<FormSaida>(initialFormSaida);
+  const [formContraNota, setFormContraNota] = useState<FormContraNota>(initialFormContraNota);
   const [pesoBrutoSelecionado, setPesoBrutoSelecionado] = useState<number>(0);
 
   // Queries
@@ -95,16 +142,35 @@ export default function EntradaColheita() {
   const { data: silos = [] } = useSilos();
   const { data: inscricoes = [] } = useInscricoesCompletas();
   const { data: locaisEntrega = [] } = useLocaisEntrega();
+  const { data: localSede } = useLocalSede();
   const { data: placas = [] } = usePlacas();
   const { data: sementes = [] } = useProdutosSementes();
   const { data: tabelaUmidades = [] } = useTabelaUmidades();
   const { data: controleLavouras = [] } = useControleLavouras(safraId || null);
   const { data: cargasPendentes = [], isLoading: loadingPendentes } = useColheitasPendentes(safraId || null);
+  const { data: lavouras = [] } = useLavouras();
+  const { cfops = [] } = useCfops();
+  const { emitentes = [] } = useEmitentesNfe();
 
   // Mutations
   const createControleLavoura = useCreateControleLavoura();
   const createColheitaEntrada = useCreateColheitaEntrada();
   const updateColheitaSaida = useUpdateColheitaSaida();
+  const createNotaDeposito = useCreateNotaDepositoEmitida();
+
+  // Preencher balanceiro com nome do usuário logado
+  useEffect(() => {
+    if (profile?.nome && !balanceiro) {
+      setBalanceiro(profile.nome);
+    }
+  }, [profile?.nome]);
+
+  // Preencher local de entrega com sede padrão
+  useEffect(() => {
+    if (localSede?.id && !localEntregaId) {
+      setLocalEntregaId(localSede.id);
+    }
+  }, [localSede?.id]);
 
   // Buscar cultura da safra selecionada
   const safraSelecionada = useMemo(() => 
@@ -114,11 +180,45 @@ export default function EntradaColheita() {
   
   const culturaId = safraSelecionada?.cultura_id;
 
-  // Filtrar inscrições ativas
-  const inscricoesAtivas = useMemo(() => 
-    inscricoes.filter(i => i.ativa), 
-    [inscricoes]
+  // Filtrar inscrições ativas com busca
+  const inscricoesAtivas = useMemo(() => {
+    const ativas = inscricoes.filter(i => i.ativa);
+    if (!produtorSearch) return ativas;
+    
+    const search = produtorSearch.toLowerCase();
+    return ativas.filter(i => 
+      i.produtores?.nome?.toLowerCase().includes(search) ||
+      i.cpf_cnpj?.includes(search) ||
+      i.inscricao_estadual?.toLowerCase().includes(search)
+    );
+  }, [inscricoes, produtorSearch]);
+
+  // Inscricao selecionada
+  const inscricaoSelecionada = useMemo(() => 
+    inscricoes.find(i => i.id === inscricaoId),
+    [inscricoes, inscricaoId]
   );
+
+  // Filtrar lavouras por tipo de produtor
+  const lavourasFiltradasPorTipo = useMemo(() => {
+    if (tipoProdutor === "todos") {
+      return controleLavouras;
+    }
+    
+    if (tipoProdutor === "terceiros") {
+      // Mostrar apenas lavouras com recebe_terceiros = true
+      return controleLavouras.filter(cl => {
+        const lavoura = lavouras.find(l => l.id === cl.lavoura_id);
+        return lavoura?.recebe_terceiros === true;
+      });
+    }
+    
+    // Sócios: mostrar lavouras que NÃO são de terceiros
+    return controleLavouras.filter(cl => {
+      const lavoura = lavouras.find(l => l.id === cl.lavoura_id);
+      return lavoura?.recebe_terceiros !== true;
+    });
+  }, [controleLavouras, lavouras, tipoProdutor]);
 
   // Obter controle_lavoura_id para a lavoura selecionada
   const controleLavouraSelecionado = useMemo(() => 
@@ -175,6 +275,7 @@ export default function EntradaColheita() {
     setSelectedPendente(null);
     setFormEntrada(initialFormEntrada);
     setFormSaida(initialFormSaida);
+    setFormContraNota(initialFormContraNota);
     setPesoBrutoSelecionado(0);
   }, [safraId]);
 
@@ -190,6 +291,7 @@ export default function EntradaColheita() {
           variedade_id: carga.variedade_id || "",
         }));
         setFormSaida(initialFormSaida);
+        setFormContraNota(initialFormContraNota);
       }
     }
   }, [selectedPendente, cargasPendentes]);
@@ -262,7 +364,23 @@ export default function EntradaColheita() {
       return;
     }
 
+    // Validar contra nota se marcado
+    if (formContraNota.emitir) {
+      if (formContraNota.tipo === "bloco") {
+        if (!formContraNota.numero_nfp || !formContraNota.serie_nfp) {
+          toast.error("Informe o número e série da NFP");
+          return;
+        }
+      } else {
+        if (!formContraNota.chave_acesso || formContraNota.chave_acesso.length !== 44) {
+          toast.error("Informe a chave de acesso com 44 dígitos");
+          return;
+        }
+      }
+    }
+
     try {
+      // Atualizar colheita
       await updateColheitaSaida.mutateAsync({
         id: selectedPendente,
         peso_tara: formSaida.peso_tara,
@@ -282,9 +400,37 @@ export default function EntradaColheita() {
         ph: formSaida.ph || null,
       });
 
+      // Se emitir contra nota
+      if (formContraNota.emitir && inscricaoId) {
+        // Buscar CFOP 1905
+        const cfop1905 = cfops.find(c => c.codigo === "1905");
+        
+        // Buscar emitente da granja
+        const emitente = emitentes.find(e => e.granja_id === inscricaoSelecionada?.granja_id);
+        
+        // Buscar variedade selecionada
+        const variedade = sementes.find(s => s.id === formEntrada.variedade_id);
+        
+        // Criar nota de depósito emitida
+        await createNotaDeposito.mutateAsync({
+          inscricao_produtor_id: inscricaoId,
+          safra_id: safraId,
+          produto_id: formEntrada.variedade_id || null,
+          quantidade_kg: calculos.liquidoFinal,
+          data_emissao: formContraNota.tipo === "bloco" 
+            ? formContraNota.data_emissao_nfp 
+            : format(new Date(), "yyyy-MM-dd"),
+          granja_id: inscricaoSelecionada?.granja_id || null,
+          nota_fiscal_id: null,
+        });
+
+        toast.success("Nota de depósito registrada com CFOP 1905!");
+      }
+
       toast.success("Saída registrada com sucesso!");
       setSelectedPendente(null);
       setFormSaida(initialFormSaida);
+      setFormContraNota(initialFormContraNota);
       setPesoBrutoSelecionado(0);
     } catch (error: any) {
       toast.error("Erro ao registrar saída: " + error.message);
@@ -343,21 +489,70 @@ export default function EntradaColheita() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              {/* Produtor/Inscrição com Combobox de busca */}
+              <div className="space-y-2 lg:col-span-2">
                 <Label>Produtor/Inscrição</Label>
-                <Select value={inscricaoId || "_none"} onValueChange={v => setInscricaoId(v === "_none" ? "" : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">Nenhum</SelectItem>
-                    {inscricoesAtivas.map(i => (
-                      <SelectItem key={i.id} value={i.id}>
-                        {i.produtores?.nome} - {i.inscricao_estadual}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={produtorOpen} onOpenChange={setProdutorOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={produtorOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {inscricaoId ? (
+                        <span className="truncate">
+                          {inscricaoSelecionada?.produtores?.nome} - {inscricaoSelecionada?.inscricao_estadual}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">Buscar nome/CPF/IE...</span>
+                      )}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput 
+                        placeholder="Buscar por nome, CPF ou Inscrição..." 
+                        value={produtorSearch}
+                        onValueChange={setProdutorSearch}
+                      />
+                      <CommandList>
+                        <CommandEmpty>Nenhum produtor encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="_none"
+                            onSelect={() => {
+                              setInscricaoId("");
+                              setProdutorOpen(false);
+                              setProdutorSearch("");
+                            }}
+                          >
+                            <span className="text-muted-foreground">Nenhum</span>
+                          </CommandItem>
+                          {inscricoesAtivas.slice(0, 20).map(i => (
+                            <CommandItem
+                              key={i.id}
+                              value={i.id}
+                              onSelect={() => {
+                                setInscricaoId(i.id);
+                                setProdutorOpen(false);
+                                setProdutorSearch("");
+                              }}
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium">{i.produtores?.nome}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {i.cpf_cnpj} | IE: {i.inscricao_estadual}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
@@ -369,18 +564,22 @@ export default function EntradaColheita() {
                   <SelectContent>
                     <SelectItem value="_none">Nenhum</SelectItem>
                     {locaisEntrega.filter(l => l.ativo).map(l => (
-                      <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.nome} {l.is_sede && "(Sede)"}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2 lg:col-span-2">
+              <div className="space-y-2">
                 <Label>Balanceiro</Label>
                 <Input 
                   value={balanceiro} 
                   onChange={e => setBalanceiro(e.target.value)}
-                  placeholder="Nome do balanceiro"
+                  placeholder="Nome"
+                  className="bg-muted"
+                  readOnly
                 />
               </div>
             </div>
@@ -406,10 +605,22 @@ export default function EntradaColheita() {
               {/* Lista de Lavouras */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Package className="h-4 w-4" />
-                    Lista de Lavouras
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      Lista de Lavouras
+                    </CardTitle>
+                    <Select value={tipoProdutor} onValueChange={(v: TipoProdutor) => setTipoProdutor(v)}>
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="socios">Sócios</SelectItem>
+                        <SelectItem value="terceiros">Terceiros</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="max-h-48 overflow-y-auto">
@@ -421,14 +632,14 @@ export default function EntradaColheita() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {controleLavouras.length === 0 ? (
+                        {lavourasFiltradasPorTipo.length === 0 ? (
                           <TableRow>
                             <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
                               Nenhuma lavoura cadastrada para esta safra
                             </TableCell>
                           </TableRow>
                         ) : (
-                          controleLavouras.map(cl => (
+                          lavourasFiltradasPorTipo.map(cl => (
                             <TableRow 
                               key={cl.id}
                               className={cn(
@@ -759,6 +970,93 @@ export default function EntradaColheita() {
                     </div>
                   </div>
 
+                  <Separator />
+
+                  {/* Seção Contra Nota */}
+                  <Card className="border-dashed">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="emitir_contra_nota"
+                          checked={formContraNota.emitir}
+                          onCheckedChange={(checked) => 
+                            setFormContraNota(prev => ({ ...prev, emitir: checked === true }))
+                          }
+                        />
+                        <Label htmlFor="emitir_contra_nota" className="text-base font-semibold flex items-center gap-2 cursor-pointer">
+                          <FileText className="h-4 w-4" />
+                          Emitir Contra Nota (CFOP 1905)
+                        </Label>
+                      </div>
+                    </CardHeader>
+                    
+                    {formContraNota.emitir && (
+                      <CardContent className="space-y-4 pt-0">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Tipo NFP</Label>
+                            <Select 
+                              value={formContraNota.tipo} 
+                              onValueChange={(v: "bloco" | "nfpe") => 
+                                setFormContraNota(prev => ({ ...prev, tipo: v }))
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="bloco">NFP Bloco</SelectItem>
+                                <SelectItem value="nfpe">NFPe Eletrônica</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        {formContraNota.tipo === "bloco" ? (
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <Label>Número NFP *</Label>
+                              <Input
+                                value={formContraNota.numero_nfp}
+                                onChange={e => setFormContraNota(prev => ({ ...prev, numero_nfp: e.target.value }))}
+                                placeholder="000000"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Série *</Label>
+                              <Input
+                                value={formContraNota.serie_nfp}
+                                onChange={e => setFormContraNota(prev => ({ ...prev, serie_nfp: e.target.value }))}
+                                placeholder="1"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Data Emissão</Label>
+                              <Input
+                                type="date"
+                                value={formContraNota.data_emissao_nfp}
+                                onChange={e => setFormContraNota(prev => ({ ...prev, data_emissao_nfp: e.target.value }))}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <Label>Chave de Acesso NFPe (44 dígitos) *</Label>
+                            <Input
+                              value={formContraNota.chave_acesso}
+                              onChange={e => setFormContraNota(prev => ({ ...prev, chave_acesso: e.target.value.replace(/\D/g, '').slice(0, 44) }))}
+                              placeholder="00000000000000000000000000000000000000000000"
+                              maxLength={44}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              {formContraNota.chave_acesso.length}/44 dígitos
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    )}
+                  </Card>
+
                   <Button 
                     onClick={handleConfirmarSaida}
                     disabled={!selectedPendente || formSaida.peso_tara <= 0 || updateColheitaSaida.isPending}
@@ -770,7 +1068,7 @@ export default function EntradaColheita() {
                     ) : (
                       <Check className="h-4 w-4 mr-2" />
                     )}
-                    Confirmar Saída
+                    {formContraNota.emitir ? "Confirmar Saída + Emitir Nota" : "Confirmar Saída"}
                   </Button>
                 </CardContent>
               </Card>

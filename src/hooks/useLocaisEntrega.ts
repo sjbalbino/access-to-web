@@ -22,6 +22,7 @@ export interface LocalEntrega {
   email: string | null;
   observacoes: string | null;
   ativo: boolean | null;
+  is_sede: boolean | null;
   created_at: string;
   updated_at: string;
   granjas?: { razao_social: string; nome_fantasia: string | null } | null;
@@ -29,6 +30,26 @@ export interface LocalEntrega {
 
 export type LocalEntregaInsert = Omit<LocalEntrega, 'id' | 'created_at' | 'updated_at' | 'granjas'>;
 export type LocalEntregaUpdate = Partial<LocalEntregaInsert>;
+
+// Buscar local sede padrão
+export function useLocalSede() {
+  return useQuery({
+    queryKey: ["locais_entrega_sede"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("locais_entrega")
+        .select(`
+          *,
+          granjas (razao_social, nome_fantasia)
+        `)
+        .eq("is_sede", true)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (error) throw error;
+      return data as LocalEntrega | null;
+    },
+  });
+}
 
 export function useLocaisEntrega(granjaId?: string) {
   return useQuery({

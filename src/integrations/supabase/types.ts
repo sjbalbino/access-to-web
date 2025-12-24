@@ -1258,6 +1258,7 @@ export type Database = {
           longitude: number | null
           nome: string
           observacoes: string | null
+          recebe_terceiros: boolean | null
           total_hectares: number | null
           updated_at: string
         }
@@ -1273,6 +1274,7 @@ export type Database = {
           longitude?: number | null
           nome: string
           observacoes?: string | null
+          recebe_terceiros?: boolean | null
           total_hectares?: number | null
           updated_at?: string
         }
@@ -1288,6 +1290,7 @@ export type Database = {
           longitude?: number | null
           nome?: string
           observacoes?: string | null
+          recebe_terceiros?: boolean | null
           total_hectares?: number | null
           updated_at?: string
         }
@@ -1315,6 +1318,7 @@ export type Database = {
           granja_id: string | null
           id: string
           inscricao_estadual: string | null
+          is_sede: boolean | null
           logradouro: string | null
           nome: string
           nome_fantasia: string | null
@@ -1338,6 +1342,7 @@ export type Database = {
           granja_id?: string | null
           id?: string
           inscricao_estadual?: string | null
+          is_sede?: boolean | null
           logradouro?: string | null
           nome: string
           nome_fantasia?: string | null
@@ -1361,6 +1366,7 @@ export type Database = {
           granja_id?: string | null
           id?: string
           inscricao_estadual?: string | null
+          is_sede?: boolean | null
           logradouro?: string | null
           nome?: string
           nome_fantasia?: string | null
