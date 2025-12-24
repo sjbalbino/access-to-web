@@ -407,14 +407,147 @@ export default function EntradaColheita() {
       if (formContraNota.emitir && inscricaoId) {
         // Buscar CFOP 1905
         const cfop1905 = cfops.find(c => c.codigo === "1905");
+        if (!cfop1905) {
+          toast.error("CFOP 1905 não encontrado. Cadastre o CFOP antes de emitir.");
+          return;
+        }
         
         // Buscar emitente da granja
         const emitente = emitentes.find(e => e.granja_id === inscricaoSelecionada?.granja_id);
+        if (!emitente) {
+          toast.error("Emitente não configurado para esta granja.");
+          return;
+        }
+        
+        // Buscar granja
+        const { data: granja, error: granjaError } = await supabase
+          .from("granjas")
+          .select("*")
+          .eq("id", inscricaoSelecionada?.granja_id)
+          .single();
+        
+        if (granjaError || !granja) {
+          toast.error("Erro ao buscar dados da granja.");
+          return;
+        }
         
         // Buscar variedade selecionada
         const variedade = sementes.find(s => s.id === formEntrada.variedade_id);
         
-        // Criar nota de depósito emitida
+        // Buscar carga para pegar placa
+        const cargaSelecionada = cargasPendentes.find(c => c.id === selectedPendente);
+        const placa = placas.find(p => p.id === cargaSelecionada?.placa_id);
+        
+        // Calcular valor total (para NF-e de entrada geralmente é sem valor)
+        const valorUnitario = 0; // Depósito não tem valor comercial
+        const valorTotal = calculos.liquidoFinal * valorUnitario;
+        
+        // Dados do produtor/remetente
+        const dataEmissao = formContraNota.tipo === "bloco" 
+          ? formContraNota.data_emissao_nfp 
+          : format(new Date(), "yyyy-MM-dd'T'HH:mm:ssXXX");
+        
+        // Criar NF-e na tabela notas_fiscais
+        const { data: notaFiscal, error: notaError } = await supabase
+          .from("notas_fiscais")
+          .insert({
+            granja_id: granja.id,
+            emitente_id: emitente.id,
+            inscricao_produtor_id: inscricaoId,
+            produtor_id: inscricaoSelecionada?.produtor_id || null,
+            operacao: 0, // 0 = Entrada
+            natureza_operacao: cfop1905.natureza_operacao || "Entrada Depósito",
+            cfop_id: cfop1905.id,
+            data_emissao: dataEmissao,
+            data_saida_entrada: dataEmissao,
+            status: "rascunho",
+            finalidade: 1, // 1 = NF-e Normal
+            ind_consumidor_final: 0, // 0 = Normal (não é consumidor final)
+            ind_presenca: 9, // 9 = Operação não presencial
+            forma_pagamento: 0, // 0 = À Vista
+            tipo_pagamento: "90", // 90 = Sem pagamento
+            modalidade_frete: 9, // 9 = Sem frete
+            // Remetente = Produtor (campos dest_ para entrada)
+            dest_tipo: inscricaoSelecionada?.cpf_cnpj && inscricaoSelecionada.cpf_cnpj.length > 14 ? "juridica" : "fisica",
+            dest_cpf_cnpj: inscricaoSelecionada?.cpf_cnpj?.replace(/\D/g, "") || "",
+            dest_nome: inscricaoSelecionada?.produtores?.nome || "",
+            dest_ie: inscricaoSelecionada?.inscricao_estadual?.replace(/\D/g, "") || "",
+            dest_logradouro: inscricaoSelecionada?.logradouro || "",
+            dest_numero: inscricaoSelecionada?.numero || "S/N",
+            dest_complemento: inscricaoSelecionada?.complemento || "",
+            dest_bairro: inscricaoSelecionada?.bairro || "",
+            dest_cidade: inscricaoSelecionada?.cidade || "",
+            dest_uf: inscricaoSelecionada?.uf || "",
+            dest_cep: inscricaoSelecionada?.cep?.replace(/\D/g, "") || "",
+            dest_email: inscricaoSelecionada?.email || null,
+            // Totais
+            total_produtos: valorTotal,
+            total_nota: valorTotal,
+            total_icms: 0,
+            total_pis: 0,
+            total_cofins: 0,
+            // Volumes
+            volumes_quantidade: 1,
+            volumes_peso_bruto: pesoBrutoSelecionado,
+            volumes_peso_liquido: calculos.liquidoFinal,
+            volumes_especie: "GRANEL",
+            // Veículo (extrair UF da placa se no formato Mercosul ABC1D23)
+            veiculo_placa: placa?.placa || cargaSelecionada?.placas?.placa || null,
+            veiculo_uf: granja.uf || null, // Usar UF da granja como padrão
+            // NF-e referenciada (se tipo NFP-e)
+            nfe_referenciada: formContraNota.tipo === "nfpe" ? formContraNota.chave_acesso : null,
+            // Informações complementares
+            info_complementar: formContraNota.tipo === "bloco" 
+              ? `NFP Bloco Nº ${formContraNota.numero_nfp} Série ${formContraNota.serie_nfp}` 
+              : `Contra Nota ref. NFP-e Chave: ${formContraNota.chave_acesso}`,
+          })
+          .select()
+          .single();
+        
+        if (notaError || !notaFiscal) {
+          toast.error("Erro ao criar NF-e: " + (notaError?.message || "Erro desconhecido"));
+          return;
+        }
+        
+        // Criar item da NF-e
+        const { error: itemError } = await supabase
+          .from("notas_fiscais_itens")
+          .insert({
+            nota_fiscal_id: notaFiscal.id,
+            numero_item: 1,
+            produto_id: formEntrada.variedade_id || null,
+            codigo: variedade?.codigo || "001",
+            descricao: variedade?.nome || "SOJA EM GRÃOS",
+            ncm: "12010090", // NCM padrão soja
+            cfop: cfop1905.codigo,
+            unidade: "KG",
+            quantidade: calculos.liquidoFinal,
+            valor_unitario: valorUnitario,
+            valor_total: valorTotal,
+            origem: 0, // 0 = Nacional
+            cst_icms: emitente.cst_icms_padrao || "51",
+            base_icms: 0,
+            aliq_icms: 0,
+            valor_icms: 0,
+            cst_pis: emitente.cst_pis_padrao || "09",
+            base_pis: 0,
+            aliq_pis: 0,
+            valor_pis: 0,
+            cst_cofins: emitente.cst_cofins_padrao || "09",
+            base_cofins: 0,
+            aliq_cofins: 0,
+            valor_cofins: 0,
+            info_adicional: `Umidade: ${formSaida.umidade}% | Impureza: ${formSaida.impureza}% | Peso Bruto: ${pesoBrutoSelecionado}kg`,
+          });
+        
+        if (itemError) {
+          toast.error("Erro ao criar item da NF-e: " + itemError.message);
+          // Tentar excluir a nota criada
+          await supabase.from("notas_fiscais").delete().eq("id", notaFiscal.id);
+          return;
+        }
+        
+        // Criar nota de depósito emitida vinculada à NF-e
         await createNotaDeposito.mutateAsync({
           inscricao_produtor_id: inscricaoId,
           safra_id: safraId,
@@ -423,11 +556,11 @@ export default function EntradaColheita() {
           data_emissao: formContraNota.tipo === "bloco" 
             ? formContraNota.data_emissao_nfp 
             : format(new Date(), "yyyy-MM-dd"),
-          granja_id: inscricaoSelecionada?.granja_id || null,
-          nota_fiscal_id: null,
+          granja_id: granja.id,
+          nota_fiscal_id: notaFiscal.id, // Vincular à NF-e criada
         });
 
-        toast.success("Nota de depósito registrada com CFOP 1905!");
+        toast.success("NF-e de entrada criada com sucesso! Acesse Notas Fiscais para emitir.");
       }
 
       toast.success("Saída registrada com sucesso!");
