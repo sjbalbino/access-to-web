@@ -467,6 +467,8 @@ export default function EntradaColheita() {
             forma_pagamento: 0, // 0 = À Vista
             tipo_pagamento: "90", // 90 = Sem pagamento
             modalidade_frete: 9, // 9 = Sem frete
+            // Inscrição do produtor como remetente (para notas de entrada)
+            inscricao_remetente_id: inscricaoSelecionada?.id || null,
             // Remetente = Produtor (campos dest_ para entrada)
             dest_tipo: inscricaoSelecionada?.cpf_cnpj && inscricaoSelecionada.cpf_cnpj.length > 14 ? "juridica" : "fisica",
             dest_cpf_cnpj: inscricaoSelecionada?.cpf_cnpj?.replace(/\D/g, "") || "",

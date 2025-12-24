@@ -57,6 +57,7 @@ export interface NotaFiscal {
   cliente_fornecedor_id: string | null;
   produtor_id: string | null;
   inscricao_produtor_id: string | null;
+  inscricao_remetente_id: string | null;
   xml_url: string | null;
   danfe_url: string | null;
   info_complementar: string | null;
