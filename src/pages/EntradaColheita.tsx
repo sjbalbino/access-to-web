@@ -438,8 +438,8 @@ export default function EntradaColheita() {
         const cargaSelecionada = cargasPendentes.find(c => c.id === selectedPendente);
         const placa = placas.find(p => p.id === cargaSelecionada?.placa_id);
         
-        // Calcular valor total (para NF-e de entrada geralmente é sem valor)
-        const valorUnitario = 0; // Depósito não tem valor comercial
+        // Buscar preço à vista do produto/variedade
+        const valorUnitario = variedade?.preco_venda || 0;
         const valorTotal = calculos.liquidoFinal * valorUnitario;
         
         // Dados do produtor/remetente
@@ -518,7 +518,7 @@ export default function EntradaColheita() {
             produto_id: formEntrada.variedade_id || null,
             codigo: variedade?.codigo || "001",
             descricao: variedade?.nome || "SOJA EM GRÃOS",
-            ncm: "12010090", // NCM padrão soja
+            ncm: variedade?.ncm || "12010090", // NCM do produto ou padrão soja
             cfop: cfop1905.codigo,
             unidade: "KG",
             quantidade: calculos.liquidoFinal,
