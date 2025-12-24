@@ -1103,23 +1103,24 @@ export default function EntradaColheita() {
 
                   <Separator />
 
-                  {/* Seção Contra Nota */}
-                  <Card className="border-dashed">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="emitir_contra_nota"
-                          checked={formContraNota.emitir}
-                          onCheckedChange={(checked) => 
-                            setFormContraNota(prev => ({ ...prev, emitir: checked === true }))
-                          }
-                        />
-                        <Label htmlFor="emitir_contra_nota" className="text-base font-semibold flex items-center gap-2 cursor-pointer">
-                          <FileText className="h-4 w-4" />
-                          Emitir Contra Nota (CFOP 1905)
-                        </Label>
-                      </div>
-                    </CardHeader>
+                  {/* Seção Contra Nota - apenas para produtores externos */}
+                  {tipoProdutor === "produtor" ? (
+                    <Card className="border-dashed">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="emitir_contra_nota"
+                            checked={formContraNota.emitir}
+                            onCheckedChange={(checked) => 
+                              setFormContraNota(prev => ({ ...prev, emitir: checked === true }))
+                            }
+                          />
+                          <Label htmlFor="emitir_contra_nota" className="text-base font-semibold flex items-center gap-2 cursor-pointer">
+                            <FileText className="h-4 w-4" />
+                            Emitir Contra Nota (CFOP 1905)
+                          </Label>
+                        </div>
+                      </CardHeader>
                     
                     {formContraNota.emitir && (
                       <CardContent className="space-y-4 pt-0">
@@ -1187,6 +1188,18 @@ export default function EntradaColheita() {
                       </CardContent>
                     )}
                   </Card>
+                  ) : tipoProdutor === "socio" ? (
+                    <Card className="border-dashed bg-muted/50">
+                      <CardContent className="py-4">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <AlertCircle className="h-4 w-4" />
+                          <span className="text-sm">
+                            Contra-nota não aplicável para sócios (o sócio não pode ser emitente e destinatário da mesma nota)
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : null}
 
                   <Button 
                     onClick={handleConfirmarSaida}

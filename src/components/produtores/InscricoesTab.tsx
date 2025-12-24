@@ -34,7 +34,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, FileText, Building2, Banknote } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, Building2, Banknote, Crown } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useInscricoesByProdutor,
   useCreateInscricao,
@@ -80,6 +82,7 @@ const emptyInscricao: InscricaoInput = {
   ativa: true,
   emitente_id: null,
   conta_bancaria: null,
+  is_emitente_principal: false,
 };
 
 export function InscricoesTab({ produtorId }: InscricoesTabProps) {
@@ -124,8 +127,64 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       ativa: inscricao.ativa ?? true,
       emitente_id: inscricao.emitente_id || null,
       conta_bancaria: inscricao.conta_bancaria || null,
+      is_emitente_principal: inscricao.is_emitente_principal ?? false,
     });
     setDialogOpen(true);
+  };
+
+  // Handler para marcar/desmarcar inscrição principal
+  const handleToggleEmitentePrincipal = async (inscricao: InscricaoProdutor) => {
+    if (!inscricao.granja_id) {
+      toast({
+        title: "Granja não vinculada",
+        description: "Esta inscrição não está vinculada a uma granja.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const novoValor = !inscricao.is_emitente_principal;
+
+    try {
+      // Se estiver marcando como principal, desmarcar outras da mesma granja primeiro
+      if (novoValor) {
+        await supabase
+          .from("inscricoes_produtor")
+          .update({ is_emitente_principal: false })
+          .eq("granja_id", inscricao.granja_id)
+          .eq("is_emitente_principal", true);
+      }
+
+      // Atualizar a inscrição atual
+      await updateInscricao.mutateAsync({
+        id: inscricao.id,
+        produtor_id: inscricao.produtor_id,
+        tipo: inscricao.tipo,
+        inscricao_estadual: inscricao.inscricao_estadual,
+        cpf_cnpj: inscricao.cpf_cnpj,
+        cep: inscricao.cep,
+        logradouro: inscricao.logradouro,
+        numero: inscricao.numero,
+        complemento: inscricao.complemento,
+        bairro: inscricao.bairro,
+        cidade: inscricao.cidade,
+        uf: inscricao.uf,
+        telefone: inscricao.telefone,
+        email: inscricao.email,
+        granja: inscricao.granja,
+        granja_id: inscricao.granja_id,
+        ativa: inscricao.ativa,
+        emitente_id: inscricao.emitente_id,
+        conta_bancaria: inscricao.conta_bancaria,
+        is_emitente_principal: novoValor,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCepBlur = async () => {
@@ -196,6 +255,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 <TableHead>Cidade/UF</TableHead>
                 <TableHead>Granja</TableHead>
                 <TableHead>Emitente</TableHead>
+                <TableHead>Principal</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -226,6 +286,25 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                         <Building2 className="h-3 w-3" />
                         {inscricao.emitente.granja?.nome_fantasia || inscricao.emitente.granja?.razao_social || "Configurado"}
                       </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {inscricao.granja_id && inscricao.emitente_id ? (
+                      <Button
+                        variant={inscricao.is_emitente_principal ? "default" : "ghost"}
+                        size="sm"
+                        className={inscricao.is_emitente_principal ? "gap-1 bg-amber-500 hover:bg-amber-600" : "gap-1"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleEmitentePrincipal(inscricao);
+                        }}
+                        disabled={updateInscricao.isPending}
+                      >
+                        <Crown className="h-3 w-3" />
+                        {inscricao.is_emitente_principal ? "Principal" : "Definir"}
+                      </Button>
                     ) : (
                       <span className="text-muted-foreground text-xs">-</span>
                     )}

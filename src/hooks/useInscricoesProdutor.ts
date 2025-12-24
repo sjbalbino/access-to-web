@@ -22,6 +22,7 @@ export interface InscricaoProdutor {
   ativa: boolean | null;
   emitente_id: string | null;
   conta_bancaria: string | null;
+  is_emitente_principal: boolean | null;
   created_at: string;
   updated_at: string;
   emitente?: {
