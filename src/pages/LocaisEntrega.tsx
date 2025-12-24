@@ -42,6 +42,7 @@ const emptyLocal: LocalEntregaInsert = {
   email: null,
   observacoes: null,
   ativo: true,
+  is_sede: false,
 };
 
 export default function LocaisEntrega() {
@@ -98,6 +99,7 @@ export default function LocaisEntrega() {
       email: local.email,
       observacoes: local.observacoes,
       ativo: local.ativo ?? true,
+      is_sede: local.is_sede ?? false,
     });
     setEditingId(local.id);
     setIsDialogOpen(true);
@@ -511,6 +513,14 @@ export default function LocaisEntrega() {
                     placeholder="Observações adicionais..."
                     rows={3}
                   />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={formData.is_sede ?? false}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_sede: checked })}
+                  />
+                  <Label>É Sede/Granja Receptora (Local padrão de entrega)</Label>
                 </div>
 
                 <div className="flex items-center gap-2">

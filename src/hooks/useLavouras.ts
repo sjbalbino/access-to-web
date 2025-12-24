@@ -14,6 +14,7 @@ export interface Lavoura {
   longitude: number | null;
   observacoes: string | null;
   ativa: boolean | null;
+  recebe_terceiros: boolean | null;
   created_at: string;
   updated_at: string;
 }

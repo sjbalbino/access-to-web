@@ -59,6 +59,7 @@ const emptyLavoura: LavouraInput = {
   longitude: null,
   observacoes: "",
   ativa: true,
+  recebe_terceiros: false,
 };
 
 export default function Lavouras() {
@@ -91,6 +92,7 @@ export default function Lavouras() {
       longitude: lavoura.longitude,
       observacoes: lavoura.observacoes || "",
       ativa: lavoura.ativa ?? true,
+      recebe_terceiros: lavoura.recebe_terceiros ?? false,
     });
     setDialogOpen(true);
   };
@@ -340,6 +342,28 @@ export default function Lavouras() {
                 onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                 rows={3}
               />
+            </div>
+            <div className="flex items-center gap-4 md:col-span-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="recebe_terceiros"
+                  checked={formData.recebe_terceiros ?? false}
+                  onChange={(e) => setFormData({ ...formData, recebe_terceiros: e.target.checked })}
+                  className="h-4 w-4 rounded border-input"
+                />
+                <Label htmlFor="recebe_terceiros">Recebe Produção de Terceiros</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="ativa"
+                  checked={formData.ativa ?? true}
+                  onChange={(e) => setFormData({ ...formData, ativa: e.target.checked })}
+                  className="h-4 w-4 rounded border-input"
+                />
+                <Label htmlFor="ativa">Ativa</Label>
+              </div>
             </div>
           </div>
           <div className="flex justify-end gap-2">
