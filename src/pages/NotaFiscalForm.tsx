@@ -2334,7 +2334,17 @@ export default function NotaFiscalForm() {
                 <p className="text-muted-foreground">Data de Emissão</p>
                 <p className="font-medium">
                   {nota?.data_emissao 
-                    ? new Date(nota.data_emissao).toLocaleString("pt-BR")
+                    ? (() => {
+                        const dateStr = nota.data_emissao;
+                        // Se contém T e não é meia-noite UTC, usar toLocaleString
+                        if (dateStr.includes('T') && !dateStr.includes('T00:00:00') && !dateStr.includes('T03:00:00')) {
+                          return new Date(dateStr).toLocaleString("pt-BR");
+                        }
+                        // Caso contrário, extrair apenas a data (evita problema de timezone)
+                        const datePart = dateStr.substring(0, 10);
+                        const [year, month, day] = datePart.split('-');
+                        return `${day}/${month}/${year}`;
+                      })()
                     : formData.data_emissao || "-"}
                 </p>
               </div>
@@ -2342,7 +2352,15 @@ export default function NotaFiscalForm() {
                 <p className="text-muted-foreground">Data Saída/Entrada</p>
                 <p className="font-medium">
                   {nota?.data_saida_entrada 
-                    ? new Date(nota.data_saida_entrada).toLocaleString("pt-BR")
+                    ? (() => {
+                        const dateStr = nota.data_saida_entrada;
+                        if (dateStr.includes('T') && !dateStr.includes('T00:00:00') && !dateStr.includes('T03:00:00')) {
+                          return new Date(dateStr).toLocaleString("pt-BR");
+                        }
+                        const datePart = dateStr.substring(0, 10);
+                        const [year, month, day] = datePart.split('-');
+                        return `${day}/${month}/${year}`;
+                      })()
                     : "-"}
                 </p>
               </div>
