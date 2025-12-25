@@ -595,6 +595,38 @@ export default function EntradaColheita() {
           return;
         }
         
+        // CRIAR NOTA REFERENCIADA (OBRIGATÓRIO para SEFAZ - evita Rejeição 318)
+        if (formContraNota.tipo === "nfpe" && formContraNota.chave_acesso) {
+          // Referência a NF-e eletrônica (modelo 55)
+          await supabase.from("notas_fiscais_referenciadas").insert({
+            nota_fiscal_id: notaFiscal.id,
+            tipo: "nfe",
+            chave_nfe: formContraNota.chave_acesso,
+          });
+        } else if (formContraNota.tipo === "bloco") {
+          // Referência a NFP em talão (modelo 04)
+          const aamm = format(
+            formContraNota.data_emissao_nfp 
+              ? new Date(formContraNota.data_emissao_nfp) 
+              : new Date(), 
+            "yyMM"
+          );
+          const cpfCnpjLimpo = inscricaoSelecionada?.cpf_cnpj?.replace(/\D/g, "") || "";
+          
+          await supabase.from("notas_fiscais_referenciadas").insert({
+            nota_fiscal_id: notaFiscal.id,
+            tipo: "nfp",
+            nfp_cpf: cpfCnpjLimpo.length <= 11 ? cpfCnpjLimpo : null,
+            nfp_cnpj: cpfCnpjLimpo.length > 11 ? cpfCnpjLimpo : null,
+            nfp_ie: inscricaoSelecionada?.inscricao_estadual?.replace(/\D/g, "") || "",
+            nfp_uf: inscricaoSelecionada?.uf || "RS",
+            nfp_aamm: aamm,
+            nfp_modelo: "04", // Nota de Produtor
+            nfp_serie: parseInt(formContraNota.serie_nfp) || 0,
+            nfp_numero: parseInt(formContraNota.numero_nfp) || 0,
+          });
+        }
+        
         // Incrementar número atual da NF-e no emitente
         await supabase
           .from("emitentes_nfe")
