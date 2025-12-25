@@ -76,6 +76,22 @@ export function useFocusNfe() {
 
       console.log("Notas referenciadas encontradas:", notasReferenciadasMapeadas.length);
 
+      const isContranotaProdutor = itens.some(
+        (i) => (i.cfop ?? "").replace(/\D/g, "") === "1905"
+      );
+
+      if (isContranotaProdutor && notasReferenciadasMapeadas.length === 0) {
+        setStatus("erro");
+        toast.error("Nota referenciada obrigatória", {
+          description:
+            "Para contranota (CFOP 1905) é obrigatório informar uma Nota Fiscal referenciada para evitar a Rejeição 318.",
+        });
+        return {
+          success: false,
+          error: "Rejeição 318: falta nota referenciada",
+        };
+      }
+
       // Garantir que notaData tenha numero e serie do banco
       const notaDataComNumero: NotaFiscalData = {
         ...notaData,

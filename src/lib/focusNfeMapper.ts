@@ -8,14 +8,14 @@ export interface FocusNfeRefNFe {
 
 // Interface para referência de NFP - Nota Fiscal de Produtor (modelo 04 ou 01)
 export interface FocusNfeRefNFP {
-  uf: string; // UF do emitente
-  aamm: string; // Ano/Mês de emissão (AAMM)
-  cnpj?: string; // CNPJ do emitente (se PJ)
-  cpf?: string; // CPF do emitente (se PF)
-  inscricao_estadual: string; // IE do emitente
-  modelo: string; // Modelo do documento (01 ou 04)
-  serie: number; // Série do documento
-  numero: number; // Número do documento
+  uf_nf_produtor: string; // UF do emitente (nota produtor rural)
+  mes_nf_produtor: number; // Ano e mês de emissão no formato AAMM (nota produtor rural)
+  cnpj_nf_produtor?: string; // CNPJ do emitente (nota produtor rural)
+  cpf_nf_produtor?: string; // CPF do emitente (nota produtor rural)
+  inscricao_estadual_nf_produtor: string; // IE do emitente (nota produtor rural)
+  modelo_nf_produtor: string; // 04 (produtor) ou 01
+  serie_nf_produtor: number; // Série (informar 0 se não existir)
+  numero_nf_produtor: number; // Número
 }
 
 // Union type para notas referenciadas
@@ -34,7 +34,7 @@ export interface FocusNfeNota {
   serie?: string;
   
   // Notas Fiscais Referenciadas (obrigatório para contranota de produtor)
-  nfes_referenciadas?: FocusNfeNotaReferenciada[];
+  notas_referenciadas?: FocusNfeNotaReferenciada[];
   
   // Emitente (preenchido via certificado na Focus NFe, mas enviamos para validação)
   cnpj_emitente?: string;
@@ -306,36 +306,50 @@ export interface NotaReferenciadaData {
 
 // Mapeia notas referenciadas do banco para formato Focus NFe
 function mapNotasReferenciadas(notas: NotaReferenciadaData[]): FocusNfeNotaReferenciada[] {
-  return notas.map(nota => {
-    if (nota.tipo === 'nfe' && nota.chave_nfe) {
-      // Referência de NFe - apenas a chave de acesso
-      return {
-        chave_nfe: nota.chave_nfe.replace(/\D/g, ''), // Apenas dígitos
-      } as FocusNfeRefNFe;
-    } else {
-      // Referência de NFP - dados do produtor
-      const refNfp: FocusNfeRefNFP = {
-        uf: nota.nfp_uf || '',
-        aamm: nota.nfp_aamm || '',
-        inscricao_estadual: nota.nfp_ie?.replace(/\D/g, '') || '',
-        modelo: nota.nfp_modelo || '04', // Default: Nota de Produtor modelo 04
-        serie: nota.nfp_serie || 0,
-        numero: nota.nfp_numero || 0,
-      };
-      
-      // Adicionar CPF ou CNPJ (limpo, apenas dígitos)
-      const cpfLimpo = nota.nfp_cpf?.replace(/\D/g, '') || '';
-      const cnpjLimpo = nota.nfp_cnpj?.replace(/\D/g, '') || '';
-      
-      if (cpfLimpo && cpfLimpo.length === 11) {
-        refNfp.cpf = cpfLimpo;
-      } else if (cnpjLimpo && cnpjLimpo.length === 14) {
-        refNfp.cnpj = cnpjLimpo;
+  return notas
+    .map((nota) => {
+      if (nota.tipo === "nfe" && nota.chave_nfe) {
+        // Referência de NFe - apenas a chave de acesso
+        return {
+          chave_nfe: nota.chave_nfe.replace(/\D/g, ""), // Apenas dígitos
+        } as FocusNfeRefNFe;
       }
-      
+
+      // Referência de NFP (produtor rural) - schema da Focus: *_nf_produtor
+      const mes = Number(String(nota.nfp_aamm ?? "").replace(/\D/g, ""));
+      const serie = Number(nota.nfp_serie ?? 0);
+      const numero = Number(nota.nfp_numero ?? 0);
+
+      const refNfp: FocusNfeRefNFP = {
+        uf_nf_produtor: (nota.nfp_uf || "").toString().slice(0, 2),
+        mes_nf_produtor: Number.isFinite(mes) && mes > 0 ? mes : 0,
+        inscricao_estadual_nf_produtor: nota.nfp_ie?.replace(/\D/g, "") || "",
+        modelo_nf_produtor: (nota.nfp_modelo || "04").toString().padStart(2, "0"),
+        serie_nf_produtor: Number.isFinite(serie) ? serie : 0,
+        numero_nf_produtor: Number.isFinite(numero) ? numero : 0,
+      };
+
+      const cpfLimpo = nota.nfp_cpf?.replace(/\D/g, "") || "";
+      const cnpjLimpo = nota.nfp_cnpj?.replace(/\D/g, "") || "";
+
+      if (cpfLimpo.length === 11) {
+        refNfp.cpf_nf_produtor = cpfLimpo;
+      } else if (cnpjLimpo.length === 14) {
+        refNfp.cnpj_nf_produtor = cnpjLimpo;
+      }
+
       return refNfp;
-    }
-  });
+    })
+    .filter((ref) => {
+      if ("chave_nfe" in ref) return !!ref.chave_nfe;
+      const nfp = ref as FocusNfeRefNFP;
+      return (
+        !!nfp.uf_nf_produtor &&
+        !!nfp.inscricao_estadual_nf_produtor &&
+        !!nfp.modelo_nf_produtor &&
+        !!nfp.numero_nf_produtor
+      );
+    });
 }
 
 export function mapNotaToFocusNfe(
@@ -382,9 +396,10 @@ export function mapNotaToFocusNfe(
     serie: nota.serie ? String(nota.serie) : undefined,
     
     // Notas Fiscais Referenciadas (obrigatório para contranota de produtor - CFOP 1905)
-    nfes_referenciadas: notasReferenciadas && notasReferenciadas.length > 0 
-      ? mapNotasReferenciadas(notasReferenciadas) 
-      : undefined,
+    notas_referenciadas:
+      notasReferenciadas && notasReferenciadas.length > 0
+        ? mapNotasReferenciadas(notasReferenciadas)
+        : undefined,
     
     // Emitente - usar CPF ou CNPJ conforme disponível
     ...(emitenteIsCpf
