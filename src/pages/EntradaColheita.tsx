@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Truck, Scale, Check, Loader2, AlertCircle, Package, Search, FileText } from "lucide-react";
+import { Truck, Scale, Check, Loader2, AlertCircle, Package, Search, FileText, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -40,6 +40,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 import { useSafras } from "@/hooks/useSafras";
@@ -60,6 +70,18 @@ import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrinc
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { supabase } from "@/integrations/supabase/client";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
+
+// Tipos para controle do painel de emissão
+type EmissionStep = "idle" | "validating" | "creating" | "sending" | "processing" | "success" | "error";
+
+interface EmissionStatus {
+  step: EmissionStep;
+  message: string;
+  progress: number;
+  details?: string;
+  chaveAcesso?: string;
+  protocolo?: string;
+}
 
 interface FormEntrada {
   peso_bruto: number;
@@ -141,6 +163,14 @@ export default function EntradaColheita() {
   const [formSaida, setFormSaida] = useState<FormSaida>(initialFormSaida);
   const [formContraNota, setFormContraNota] = useState<FormContraNota>(initialFormContraNota);
   const [pesoBrutoSelecionado, setPesoBrutoSelecionado] = useState<number>(0);
+
+  // Estados para painel de emissão
+  const [isEmissionDialogOpen, setIsEmissionDialogOpen] = useState(false);
+  const [emissionStatus, setEmissionStatus] = useState<EmissionStatus>({
+    step: "idle",
+    message: "",
+    progress: 0,
+  });
 
   // Queries
   const { data: safras = [] } = useSafras();
@@ -473,16 +503,30 @@ export default function EntradaColheita() {
 
       // Se emitir contra nota
       if (formContraNota.emitir && inscricaoId) {
+        // Abrir dialog de emissão
+        setIsEmissionDialogOpen(true);
+        setEmissionStatus({ step: "validating", message: "Validando dados da nota...", progress: 10 });
+
         // Buscar CFOP 1905
         const cfop1905 = cfops.find(c => c.codigo === "1905");
         if (!cfop1905) {
-          toast.error("CFOP 1905 não encontrado. Cadastre o CFOP antes de emitir.");
+          setEmissionStatus({ 
+            step: "error", 
+            message: "Erro na validação", 
+            progress: 10,
+            details: "CFOP 1905 não encontrado. Cadastre o CFOP antes de emitir."
+          });
           return;
         }
         
         // Usar inscricao emitente principal (sócio) para emitir a contra-nota
         if (!inscricaoPrincipal?.emitente) {
-          toast.error("Nenhum emitente principal configurado para esta granja. Configure uma inscrição de sócio como emitente principal.");
+          setEmissionStatus({ 
+            step: "error", 
+            message: "Erro na validação", 
+            progress: 10,
+            details: "Nenhum emitente principal configurado para esta granja. Configure uma inscrição de sócio como emitente principal."
+          });
           return;
         }
         
@@ -496,9 +540,16 @@ export default function EntradaColheita() {
           .single();
         
         if (granjaError || !granja) {
-          toast.error("Erro ao buscar dados da granja.");
+          setEmissionStatus({ 
+            step: "error", 
+            message: "Erro na validação", 
+            progress: 10,
+            details: "Erro ao buscar dados da granja."
+          });
           return;
         }
+        
+        setEmissionStatus({ step: "creating", message: "Criando nota fiscal...", progress: 30 });
         
         // Buscar variedade selecionada
         const variedade = sementes.find(s => s.id === formEntrada.variedade_id);
@@ -615,7 +666,12 @@ export default function EntradaColheita() {
           .single();
         
         if (notaError || !notaFiscal) {
-          toast.error("Erro ao criar NF-e: " + (notaError?.message || "Erro desconhecido"));
+          setEmissionStatus({ 
+            step: "error", 
+            message: "Erro ao criar nota fiscal", 
+            progress: 30,
+            details: notaError?.message || "Erro desconhecido"
+          });
           return;
         }
         
@@ -651,7 +707,12 @@ export default function EntradaColheita() {
           });
         
         if (itemError) {
-          toast.error("Erro ao criar item da NF-e: " + itemError.message);
+          setEmissionStatus({ 
+            step: "error", 
+            message: "Erro ao criar item da nota", 
+            progress: 30,
+            details: itemError.message
+          });
           // Tentar excluir a nota criada
           await supabase.from("notas_fiscais").delete().eq("id", notaFiscal.id);
           return;
@@ -708,7 +769,7 @@ export default function EntradaColheita() {
           nota_fiscal_id: notaFiscal.id,
         };
 
-        toast.success("NF-e criada. Iniciando transmissão à SEFAZ...");
+        setEmissionStatus({ step: "sending", message: "Enviando à SEFAZ...", progress: 50 });
 
         // Emissão automática à SEFAZ usando o hook useFocusNfe
         try {
@@ -736,7 +797,7 @@ export default function EntradaColheita() {
             dest_bairro: inscricaoSelecionada?.bairro || "",
             dest_cidade: inscricaoSelecionada?.cidade || "",
             dest_uf: inscricaoSelecionada?.uf || "",
-            dest_cep: inscricaoSelecionada?.cep || "",
+            dest_cep: inscricaoSelecionada?.cep?.replace(/\D/g, "") || "",
             dest_tipo: inscricaoSelecionada?.produtores?.tipo_produtor === "produtor" ? "2" : "0",
             dest_email: inscricaoSelecionada?.email || null,
             dest_telefone: null,
@@ -750,7 +811,7 @@ export default function EntradaColheita() {
               bairro: inscricaoPrincipal?.bairro || null,
               cidade: inscricaoPrincipal?.cidade || null,
               uf: inscricaoPrincipal?.uf || null,
-              cep: inscricaoPrincipal?.cep || null,
+              cep: inscricaoPrincipal?.cep?.replace(/\D/g, "") || null,
               produtorNome: inscricaoPrincipal?.produtores?.nome || null,
               granjaNome: granja.razao_social || null,
             },
@@ -812,7 +873,7 @@ export default function EntradaColheita() {
           const resultEmissao = await emitirNfe(notaFiscal.id, notaDataParaEmissao, itensParaEmissao);
 
           if (resultEmissao?.success && resultEmissao?.ref) {
-            toast.success("NF-e transmitida. Aguardando autorização da SEFAZ...");
+            setEmissionStatus({ step: "processing", message: "Aguardando retorno da SEFAZ...", progress: 70 });
             
             // Polling com callback para registrar nota de depósito após autorização
             const pollResult = await pollStatus(resultEmissao.ref, notaFiscal.id);
@@ -824,12 +885,44 @@ export default function EntradaColheita() {
               } catch (depositoErr) {
                 console.error("Erro ao registrar nota de depósito:", depositoErr);
               }
+              setEmissionStatus({ 
+                step: "success", 
+                message: "NF-e autorizada com sucesso!", 
+                progress: 100,
+                chaveAcesso: String(pollResult?.data?.chave_nfe || pollResult?.data?.chave || ""),
+                protocolo: String(pollResult?.data?.protocolo || "")
+              });
+            } else if (pollResult?.success === false) {
+              setEmissionStatus({ 
+                step: "error", 
+                message: "Erro no processamento", 
+                progress: 70,
+                details: pollResult?.error || "Erro ao consultar status da SEFAZ"
+              });
+            } else {
+              // Status final mas não autorizada (cancelada, rejeitada, etc)
+              setEmissionStatus({ 
+                step: "error", 
+                message: "Nota não autorizada", 
+                progress: 70,
+                details: String(pollResult?.data?.mensagem_sefaz || pollResult?.data?.motivo || "Status: " + (pollResult?.data?.status || "desconhecido"))
+              });
             }
           } else if (!resultEmissao?.success) {
-            toast.error(resultEmissao?.error || "Erro ao emitir. Acesse Notas Fiscais.");
+            setEmissionStatus({ 
+              step: "error", 
+              message: "Erro na transmissão", 
+              progress: 50,
+              details: resultEmissao?.error || "Erro ao emitir. NF-e criada como rascunho."
+            });
           }
         } catch (emissaoErr: any) {
-          toast.error("Erro na transmissão. NF-e criada como rascunho.");
+          setEmissionStatus({ 
+            step: "error", 
+            message: "Erro na transmissão", 
+            progress: 50,
+            details: emissaoErr?.message || "Erro na transmissão. NF-e criada como rascunho."
+          });
           console.error("Erro emissão:", emissaoErr);
         }
       }
@@ -841,6 +934,29 @@ export default function EntradaColheita() {
       setPesoBrutoSelecionado(0);
     } catch (error: any) {
       toast.error("Erro ao registrar saída: " + error.message);
+    }
+  };
+
+  // Funções auxiliares para o painel de emissão
+  const getStepStatus = (step: EmissionStep): "pending" | "active" | "completed" | "error" => {
+    const steps: EmissionStep[] = ["validating", "creating", "sending", "processing"];
+    const currentIndex = steps.indexOf(emissionStatus.step);
+    const stepIndex = steps.indexOf(step);
+    
+    if (emissionStatus.step === "error") {
+      if (stepIndex <= currentIndex) return "error";
+      return "pending";
+    }
+    if (emissionStatus.step === "success") return "completed";
+    if (stepIndex < currentIndex) return "completed";
+    if (stepIndex === currentIndex) return "active";
+    return "pending";
+  };
+
+  const handleCloseEmissionDialog = () => {
+    if (emissionStatus.step === "success" || emissionStatus.step === "error") {
+      setIsEmissionDialogOpen(false);
+      setEmissionStatus({ step: "idle", message: "", progress: 0 });
     }
   };
 
@@ -1570,6 +1686,101 @@ export default function EntradaColheita() {
           </div>
         )}
       </div>
+
+      {/* Dialog de Progresso da Emissão NF-e */}
+      <Dialog open={isEmissionDialogOpen} onOpenChange={(open) => {
+        if (!open && (emissionStatus.step === "success" || emissionStatus.step === "error")) {
+          handleCloseEmissionDialog();
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {emissionStatus.step === "success" ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              ) : emissionStatus.step === "error" ? (
+                <XCircle className="h-5 w-5 text-red-500" />
+              ) : (
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              )}
+              Emissão de NF-e
+            </DialogTitle>
+            <DialogDescription>
+              {emissionStatus.message}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {/* Progress bar */}
+          <div className="space-y-4 py-4">
+            <Progress value={emissionStatus.progress} className="h-2" />
+            
+            {/* Steps visuais */}
+            <div className="space-y-2">
+              {[
+                { step: "validating", label: "Validando dados" },
+                { step: "creating", label: "Criando nota fiscal" },
+                { step: "sending", label: "Enviando à SEFAZ" },
+                { step: "processing", label: "Aguardando retorno" },
+              ].map(({ step, label }) => {
+                const status = getStepStatus(step as EmissionStep);
+                return (
+                  <div key={step} className="flex items-center gap-2">
+                    {status === "completed" ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : status === "active" ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    ) : status === "error" ? (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <div className="h-4 w-4 rounded-full border-2 border-muted" />
+                    )}
+                    <span className={cn(
+                      "text-sm",
+                      status === "active" && "font-medium text-primary",
+                      status === "completed" && "text-green-600",
+                      status === "error" && "text-red-500",
+                      status === "pending" && "text-muted-foreground"
+                    )}>
+                      {label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Alertas de sucesso/erro */}
+            {emissionStatus.step === "success" && emissionStatus.chaveAcesso && (
+              <Alert className="border-green-200 bg-green-50">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertTitle className="text-green-800">NF-e Autorizada!</AlertTitle>
+                <AlertDescription className="text-green-700 text-xs break-all">
+                  Chave: {emissionStatus.chaveAcesso}
+                  {emissionStatus.protocolo && <><br />Protocolo: {emissionStatus.protocolo}</>}
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {emissionStatus.step === "error" && emissionStatus.details && (
+              <Alert variant="destructive">
+                <XCircle className="h-4 w-4" />
+                <AlertTitle>Erro na Emissão</AlertTitle>
+                <AlertDescription className="text-sm">
+                  {emissionStatus.details}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              onClick={handleCloseEmissionDialog}
+              disabled={emissionStatus.step !== "success" && emissionStatus.step !== "error"}
+            >
+              {emissionStatus.step === "success" || emissionStatus.step === "error" ? "Fechar" : "Aguarde..."}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
