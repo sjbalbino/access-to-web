@@ -46,7 +46,8 @@ import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useLocaisEntrega, useLocalSede } from "@/hooks/useLocaisEntrega";
-import { usePlacas } from "@/hooks/usePlacas";
+import { usePlacas, useCreatePlaca } from "@/hooks/usePlacas";
+import { formatPlaca, unformatPlaca } from "@/lib/formatters";
 import { useProdutosSementes } from "@/hooks/useProdutosSementes";
 import { useControleLavouras, useCreateControleLavoura } from "@/hooks/useControleLavouras";
 import { useTabelaUmidades } from "@/hooks/useTabelaUmidades";
@@ -126,6 +127,11 @@ export default function EntradaColheita() {
   const [produtorOpen, setProdutorOpen] = useState(false);
   const [produtorSearch, setProdutorSearch] = useState("");
 
+  // Combobox placa
+  const [placaOpen, setPlacaOpen] = useState(false);
+  const [placaSearch, setPlacaSearch] = useState("");
+  const [creatingPlaca, setCreatingPlaca] = useState(false);
+
   // Seleções
   const [selectedLavouraId, setSelectedLavouraId] = useState<string | null>(null);
   const [selectedPendente, setSelectedPendente] = useState<string | null>(null);
@@ -158,7 +164,59 @@ export default function EntradaColheita() {
   const createColheitaEntrada = useCreateColheitaEntrada();
   const updateColheitaSaida = useUpdateColheitaSaida();
   const createNotaDeposito = useCreateNotaDepositoEmitida();
+  const createPlaca = useCreatePlaca();
   const { emitirNfe, pollStatus } = useFocusNfe();
+
+  // Filtrar placas ativas com busca
+  const placasAtivas = useMemo(() => {
+    const ativas = placas.filter(p => p.ativa);
+    if (!placaSearch) return ativas;
+    
+    const search = placaSearch.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return ativas.filter(p => 
+      p.placa?.toUpperCase().replace(/[^A-Z0-9]/g, '').includes(search)
+    );
+  }, [placas, placaSearch]);
+
+  // Verifica se a placa digitada não existe
+  const placaParaCriar = useMemo(() => {
+    if (!placaSearch || placaSearch.length < 3) return null;
+    const searchFormatted = placaSearch.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const existe = placas.some(p => 
+      p.placa?.toUpperCase().replace(/[^A-Z0-9]/g, '') === searchFormatted
+    );
+    if (!existe && searchFormatted.length >= 3) {
+      return searchFormatted.slice(0, 7);
+    }
+    return null;
+  }, [placaSearch, placas]);
+
+  // Handler para criar nova placa
+  const handleCreatePlaca = async (placaStr: string) => {
+    try {
+      setCreatingPlaca(true);
+      const result = await createPlaca.mutateAsync({
+        placa: placaStr,
+        ativa: true,
+        granja_id: localSede?.granja_id || null,
+        tipo: null,
+        marca: null,
+        modelo: null,
+        ano: null,
+        cor: null,
+        capacidade_kg: null,
+        proprietario: null,
+        observacoes: null,
+      });
+      setFormEntrada(prev => ({ ...prev, placa_id: result.id }));
+      setPlacaSearch("");
+      setPlacaOpen(false);
+    } catch (error) {
+      console.error("Erro ao criar placa:", error);
+    } finally {
+      setCreatingPlaca(false);
+    }
+  };
 
   // Preencher balanceiro com nome do usuário logado
   useEffect(() => {
@@ -1033,20 +1091,99 @@ export default function EntradaColheita() {
 
                     <div className="space-y-2">
                       <Label>Placa</Label>
-                      <Select 
-                        value={formEntrada.placa_id || "_none"} 
-                        onValueChange={v => setFormEntrada(prev => ({ ...prev, placa_id: v === "_none" ? "" : v }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="_none">Nenhuma</SelectItem>
-                          {placas.filter(p => p.ativa).map(p => (
-                            <SelectItem key={p.id} value={p.id}>{p.placa}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Popover open={placaOpen} onOpenChange={setPlacaOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={placaOpen}
+                            className="w-full justify-between font-normal"
+                          >
+                            {formEntrada.placa_id 
+                              ? placas.find(p => p.id === formEntrada.placa_id)?.placa || "Selecione"
+                              : "Selecione ou digite"}
+                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[250px] p-0" align="start">
+                          <Command shouldFilter={false}>
+                            <CommandInput 
+                              placeholder="Buscar ou criar placa..." 
+                              value={placaSearch}
+                              onValueChange={setPlacaSearch}
+                            />
+                            <CommandList>
+                              <CommandEmpty>
+                                {placaParaCriar ? (
+                                  <Button
+                                    variant="ghost"
+                                    className="w-full justify-start"
+                                    disabled={creatingPlaca}
+                                    onClick={() => handleCreatePlaca(placaParaCriar)}
+                                  >
+                                    {creatingPlaca ? (
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Truck className="mr-2 h-4 w-4" />
+                                    )}
+                                    Criar placa {placaParaCriar}
+                                  </Button>
+                                ) : (
+                                  "Nenhuma placa encontrada"
+                                )}
+                              </CommandEmpty>
+                              <CommandGroup>
+                                <CommandItem
+                                  value="_none"
+                                  onSelect={() => {
+                                    setFormEntrada(prev => ({ ...prev, placa_id: "" }));
+                                    setPlacaOpen(false);
+                                    setPlacaSearch("");
+                                  }}
+                                >
+                                  Nenhuma
+                                </CommandItem>
+                                {placasAtivas.map(p => (
+                                  <CommandItem
+                                    key={p.id}
+                                    value={p.id}
+                                    onSelect={() => {
+                                      setFormEntrada(prev => ({ ...prev, placa_id: p.id }));
+                                      setPlacaOpen(false);
+                                      setPlacaSearch("");
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        formEntrada.placa_id === p.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {p.placa}
+                                    {p.tipo && <span className="ml-2 text-muted-foreground text-xs">({p.tipo})</span>}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                              {placaParaCriar && placasAtivas.length > 0 && (
+                                <CommandGroup heading="Nova placa">
+                                  <CommandItem
+                                    value={`criar_${placaParaCriar}`}
+                                    onSelect={() => handleCreatePlaca(placaParaCriar)}
+                                    disabled={creatingPlaca}
+                                  >
+                                    {creatingPlaca ? (
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Truck className="mr-2 h-4 w-4" />
+                                    )}
+                                    Criar placa {placaParaCriar}
+                                  </CommandItem>
+                                </CommandGroup>
+                              )}
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     <div className="space-y-2">
