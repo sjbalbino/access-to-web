@@ -297,21 +297,6 @@ export default function NotasDeposito() {
         if (refError) throw refError;
       }
 
-      // Registrar nota de depósito emitida para controle de saldo
-      const { error: depositoError } = await supabase
-        .from('notas_deposito_emitidas')
-        .insert({
-          nota_fiscal_id: notaFiscal.id,
-          granja_id: granjaId,
-          inscricao_produtor_id: inscricaoId,
-          safra_id: safraId,
-          produto_id: produtoId,
-          quantidade_kg: qtdKg,
-          data_emissao: new Date().toISOString().split('T')[0],
-        });
-
-      if (depositoError) throw depositoError;
-
       // Incrementar número atual da NF-e no emitente
       await supabase
         .from("emitentes_nfe")
@@ -322,6 +307,17 @@ export default function NotasDeposito() {
         title: "NFe criada com sucesso",
         description: `Nota fiscal ${proximoNumero} criada. Iniciando transmissão à SEFAZ...`,
       });
+
+      // Dados para registrar nota de depósito emitida APÓS autorização
+      const dadosNotaDeposito = {
+        nota_fiscal_id: notaFiscal.id,
+        granja_id: granjaId,
+        inscricao_produtor_id: inscricaoId,
+        safra_id: safraId,
+        produto_id: produtoId,
+        quantidade_kg: qtdKg,
+        data_emissao: new Date().toISOString().split('T')[0],
+      };
 
       // Emissão automática à SEFAZ
       try {
@@ -356,6 +352,13 @@ export default function NotasDeposito() {
               
               const status = consultaResult?.data?.status;
               if (status === "autorizado" || status === "autorizada") {
+                // REGISTRAR NOTA DE DEPÓSITO APENAS APÓS AUTORIZAÇÃO
+                try {
+                  await supabase.from('notas_deposito_emitidas').insert(dadosNotaDeposito);
+                } catch (depositoErr) {
+                  console.error("Erro ao registrar nota de depósito:", depositoErr);
+                }
+                
                 toast({
                   title: "NF-e Autorizada!",
                   description: `Protocolo: ${consultaResult?.data?.protocolo || "N/A"}`,
@@ -363,6 +366,7 @@ export default function NotasDeposito() {
                 navigate(`/notas-fiscais/${notaFiscal.id}`);
                 return;
               } else if (status === "erro_autorizacao" || status === "rejeitado" || status === "rejeitada") {
+                // NÃO registra nota de depósito se rejeitada
                 toast({
                   title: "NF-e Rejeitada",
                   description: consultaResult?.data?.mensagem_sefaz || "Verifique os dados.",
