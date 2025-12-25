@@ -55,10 +55,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatCpfCnpj, formatTelefone } from "@/lib/formatters";
 import { useProdutor } from "@/hooks/useProdutores";
 
-const TIPOS_INSCRICAO = [
+// Tipos de contrato para a inscrição (opcional - para regras de negócio futuras)
+const TIPOS_CONTRATO = [
   { value: "parceria", label: "Parceria" },
   { value: "arrendamento", label: "Arrendamento" },
-  { value: "terceiros", label: "Terceiros" },
 ];
 
 interface InscricoesTabProps {
@@ -267,7 +267,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tipo</TableHead>
+                <TableHead>Tipo Contrato</TableHead>
                 <TableHead>Inscrição Estadual</TableHead>
                 <TableHead>CPF/CNPJ</TableHead>
                 <TableHead>Cidade/UF</TableHead>
@@ -282,7 +282,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               {inscricoes.map((inscricao) => (
                 <TableRow key={inscricao.id}>
                   <TableCell>
-                    {TIPOS_INSCRICAO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
+                    {TIPOS_CONTRATO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
                   </TableCell>
                   <TableCell className="font-medium">{inscricao.inscricao_estadual || "-"}</TableCell>
                   <TableCell className="font-mono">{formatCpfCnpj(inscricao.cpf_cnpj) || "-"}</TableCell>
@@ -396,16 +396,16 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               <h5 className="text-sm font-medium text-muted-foreground border-b pb-2">Dados da Inscrição</h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="tipo">Tipo</Label>
+                  <Label htmlFor="tipo">Tipo de Contrato (opcional)</Label>
                   <Select
                     value={formData.tipo || ""}
                     onValueChange={(value) => setFormData({ ...formData, tipo: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
+                      <SelectValue placeholder="Selecione (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      {TIPOS_INSCRICAO.map((tipo) => (
+                      {TIPOS_CONTRATO.map((tipo) => (
                         <SelectItem key={tipo.value} value={tipo.value}>
                           {tipo.label}
                         </SelectItem>

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface InscricaoParceria {
+export interface InscricaoTipoProdutor {
   id: string;
   produtor_id: string | null;
   inscricao_estadual: string | null;
@@ -31,10 +31,29 @@ export interface InscricaoParceria {
   } | null;
 }
 
-export function useInscricoesParceria() {
+/**
+ * Hook para buscar inscrições de produtores do tipo "produtor" (depositantes/parceiros).
+ * Filtra por produtores.tipo_produtor = 'produtor' ao invés de inscricoes.tipo.
+ */
+export function useInscricoesTipoProdutor() {
   return useQuery({
-    queryKey: ['inscricoes_parceria'],
+    queryKey: ['inscricoes_tipo_produtor'],
     queryFn: async () => {
+      // Primeiro buscar os produtores que são do tipo "produtor" (depositantes)
+      const { data: produtoresTipo, error: errorProdutores } = await supabase
+        .from('produtores')
+        .select('id')
+        .eq('tipo_produtor', 'produtor');
+      
+      if (errorProdutores) throw errorProdutores;
+      
+      const produtorIds = produtoresTipo?.map(p => p.id) || [];
+      
+      if (produtorIds.length === 0) {
+        return [] as InscricaoTipoProdutor[];
+      }
+      
+      // Buscar inscrições desses produtores
       const { data, error } = await supabase
         .from('inscricoes_produtor')
         .select(`
@@ -58,12 +77,12 @@ export function useInscricoesParceria() {
           produtores:produtor_id(id, nome, tipo_produtor),
           granjas:granja_id(id, razao_social, nome_fantasia)
         `)
-        .eq('tipo', 'parceria')
+        .in('produtor_id', produtorIds)
         .eq('ativa', true)
         .order('inscricao_estadual');
       
       if (error) throw error;
-      return data as InscricaoParceria[];
+      return (data || []) as InscricaoTipoProdutor[];
     },
   });
 }
