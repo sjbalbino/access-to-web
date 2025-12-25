@@ -16,7 +16,7 @@ import { useSaldosDeposito, useInscricoesComSaldo } from "@/hooks/useSaldosDepos
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
-import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
+import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrincipal";
 import { formatNumber, formatCpfCnpj } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -55,7 +55,6 @@ export default function NotasDeposito() {
   const { data: granjas = [] } = useGranjas();
   const { data: produtos = [] } = useProdutos();
   const { cfops } = useCfops();
-  const { emitentes } = useEmitentesNfe();
   const { data: todasInscricoes = [] } = useInscricoesCompletas();
 
   // Buscar inscrições com saldo disponível
@@ -80,10 +79,11 @@ export default function NotasDeposito() {
     return cfops.find(c => c.codigo === '1905');
   }, [cfops]);
 
-  // Emitente da granja
-  const emitente = useMemo(() => {
-    return emitentes.find(e => e.granja_id === granjaId);
-  }, [emitentes, granjaId]);
+  // Buscar inscrição emitente principal da granja (sócio com is_emitente_principal = true)
+  const { data: inscricaoPrincipal } = useInscricaoEmitentePrincipal(granjaId || undefined);
+
+  // Emitente derivado da inscrição principal
+  const emitente = inscricaoPrincipal?.emitente;
 
   // Granja selecionada
   const granjaSelecionada = useMemo(() => {

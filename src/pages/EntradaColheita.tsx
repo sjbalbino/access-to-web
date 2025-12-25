@@ -54,8 +54,8 @@ import { useColheitasPendentes, useCreateColheitaEntrada, useUpdateColheitaSaida
 import { useLavouras } from "@/hooks/useLavouras";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCfops } from "@/hooks/useCfops";
-import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { useCreateNotaDepositoEmitida } from "@/hooks/useNotasDepositoEmitidas";
+import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrincipal";
 import { supabase } from "@/integrations/supabase/client";
 
 interface FormEntrada {
@@ -147,7 +147,9 @@ export default function EntradaColheita() {
   const { data: cargasPendentes = [], isLoading: loadingPendentes } = useColheitasPendentes(safraId || null);
   const { data: lavouras = [] } = useLavouras();
   const { cfops = [] } = useCfops();
-  const { emitentes = [] } = useEmitentesNfe();
+  
+  // Buscar inscrição emitente principal da granja (sócio com is_emitente_principal = true)
+  const { data: inscricaoPrincipal } = useInscricaoEmitentePrincipal(localSede?.granja_id || undefined);
 
   // Mutations
   const createControleLavoura = useCreateControleLavoura();
@@ -412,18 +414,19 @@ export default function EntradaColheita() {
           return;
         }
         
-        // Buscar emitente da granja
-        const emitente = emitentes.find(e => e.granja_id === inscricaoSelecionada?.granja_id);
-        if (!emitente) {
-          toast.error("Emitente não configurado para esta granja.");
+        // Usar inscricao emitente principal (sócio) para emitir a contra-nota
+        if (!inscricaoPrincipal?.emitente) {
+          toast.error("Nenhum emitente principal configurado para esta granja. Configure uma inscrição de sócio como emitente principal.");
           return;
         }
         
-        // Buscar granja
+        const emitente = inscricaoPrincipal.emitente;
+        
+        // Buscar granja do local sede
         const { data: granja, error: granjaError } = await supabase
           .from("granjas")
           .select("*")
-          .eq("id", inscricaoSelecionada?.granja_id)
+          .eq("id", localSede?.granja_id)
           .single();
         
         if (granjaError || !granja) {

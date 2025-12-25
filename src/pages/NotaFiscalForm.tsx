@@ -262,11 +262,16 @@ export default function NotaFiscalForm() {
     cclass_trib_cbs: "",
   });
 
-  // Buscar emitente automaticamente pela granja_id da inscrição selecionada
+  // Buscar emitente automaticamente pela granja_id da inscrição selecionada ou pelo ID já salvo
   const selectedInscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
-  const autoEmitente = selectedInscricao 
+  const emitenteFromInscricao = selectedInscricao 
     ? emitentes.find((e) => e.granja_id === selectedInscricao.granja_id && e.ativo)
     : null;
+  // Se a nota já tem emitente_id salvo (ex: notas de entrada criadas automaticamente), usar esse
+  const emitenteFromId = formData.emitente_id 
+    ? emitentes.find((e) => e.id === formData.emitente_id)
+    : null;
+  const autoEmitente = emitenteFromInscricao || emitenteFromId;
 
   // Tab progress calculation
   const getTabProgress = () => ({
@@ -294,9 +299,9 @@ export default function NotaFiscalForm() {
         inscricao_produtor_id: existingNota.inscricao_produtor_id || "",
         cliente_fornecedor_id: existingNota.cliente_fornecedor_id || "",
         data_emissao: existingNota.data_emissao ? existingNota.data_emissao.slice(0, 10) : "",
-        operacao: existingNota.operacao || 1,
+        operacao: existingNota.operacao ?? 1,
         natureza_operacao: existingNota.natureza_operacao || "",
-        finalidade: existingNota.finalidade || 1,
+        finalidade: existingNota.finalidade ?? 1,
         cfop_id: existingNota.cfop_id || "",
         dest_tipo: existingNota.dest_tipo || "PJ",
         dest_cpf_cnpj: existingNota.dest_cpf_cnpj || "",
@@ -1164,7 +1169,7 @@ export default function NotaFiscalForm() {
           </Select>
         </div>
 
-        {formData.inscricao_produtor_id && (
+        {(formData.inscricao_produtor_id || formData.emitente_id) && (
           <div className="p-3 rounded-md bg-muted/50 border">
             {autoEmitente ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
