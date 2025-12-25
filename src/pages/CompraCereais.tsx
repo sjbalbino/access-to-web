@@ -38,10 +38,10 @@ export default function CompraCereais() {
   const [valorUnitarioKg, setValorUnitarioKg] = useState(0);
   const [observacao, setObservacao] = useState('');
 
-  const { granjas } = useGranjas();
-  const { safras } = useSafras();
+  const { data: granjas } = useGranjas();
+  const { data: safras } = useSafras();
   const { data: produtos } = useProdutosSementes();
-  const { silos } = useSilos();
+  const { data: silos } = useSilos();
   const { data: inscricoesSocio } = useInscricoesSocio();
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ safraId, granjaId });
   
@@ -174,7 +174,7 @@ export default function CompraCereais() {
                     <SelectContent>
                       {inscricoesSocio?.map(i => (
                         <SelectItem key={i.id} value={i.id}>
-                          {i.produtor?.nome} - IE: {i.inscricao_estadual}
+                          {i.produtores?.nome} - IE: {i.inscricao_estadual}
                         </SelectItem>
                       ))}
                     </SelectContent>
