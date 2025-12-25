@@ -543,6 +543,126 @@ export type Database = {
           },
         ]
       }
+      compras_cereais: {
+        Row: {
+          codigo: number
+          created_at: string | null
+          data_compra: string
+          devolucao_id: string | null
+          granja_id: string
+          id: string
+          inscricao_comprador_id: string
+          inscricao_vendedor_id: string
+          nota_fiscal_id: string | null
+          observacao: string | null
+          produto_id: string
+          quantidade_kg: number
+          safra_id: string
+          silo_id: string | null
+          status: string | null
+          updated_at: string | null
+          valor_total: number
+          valor_unitario_kg: number
+        }
+        Insert: {
+          codigo?: number
+          created_at?: string | null
+          data_compra?: string
+          devolucao_id?: string | null
+          granja_id: string
+          id?: string
+          inscricao_comprador_id: string
+          inscricao_vendedor_id: string
+          nota_fiscal_id?: string | null
+          observacao?: string | null
+          produto_id: string
+          quantidade_kg?: number
+          safra_id: string
+          silo_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          valor_total?: number
+          valor_unitario_kg?: number
+        }
+        Update: {
+          codigo?: number
+          created_at?: string | null
+          data_compra?: string
+          devolucao_id?: string | null
+          granja_id?: string
+          id?: string
+          inscricao_comprador_id?: string
+          inscricao_vendedor_id?: string
+          nota_fiscal_id?: string | null
+          observacao?: string | null
+          produto_id?: string
+          quantidade_kg?: number
+          safra_id?: string
+          silo_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          valor_total?: number
+          valor_unitario_kg?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_cereais_devolucao_id_fkey"
+            columns: ["devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "devolucoes_deposito"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_cereais_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_cereais_inscricao_comprador_id_fkey"
+            columns: ["inscricao_comprador_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_cereais_inscricao_vendedor_id_fkey"
+            columns: ["inscricao_vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_cereais_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_cereais_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_cereais_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_cereais_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos_venda: {
         Row: {
           a_fixar: boolean | null
@@ -791,6 +911,132 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      devolucoes_deposito: {
+        Row: {
+          codigo: number
+          created_at: string | null
+          data_devolucao: string
+          granja_id: string
+          id: string
+          inscricao_emitente_id: string
+          inscricao_produtor_id: string
+          inscricao_recebe_taxa_id: string | null
+          kg_taxa_armazenagem: number | null
+          nota_fiscal_id: string | null
+          observacao: string | null
+          produto_id: string
+          quantidade_kg: number
+          safra_id: string
+          silo_id: string | null
+          status: string | null
+          taxa_armazenagem: number | null
+          updated_at: string | null
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          codigo?: number
+          created_at?: string | null
+          data_devolucao?: string
+          granja_id: string
+          id?: string
+          inscricao_emitente_id: string
+          inscricao_produtor_id: string
+          inscricao_recebe_taxa_id?: string | null
+          kg_taxa_armazenagem?: number | null
+          nota_fiscal_id?: string | null
+          observacao?: string | null
+          produto_id: string
+          quantidade_kg?: number
+          safra_id: string
+          silo_id?: string | null
+          status?: string | null
+          taxa_armazenagem?: number | null
+          updated_at?: string | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          codigo?: number
+          created_at?: string | null
+          data_devolucao?: string
+          granja_id?: string
+          id?: string
+          inscricao_emitente_id?: string
+          inscricao_produtor_id?: string
+          inscricao_recebe_taxa_id?: string | null
+          kg_taxa_armazenagem?: number | null
+          nota_fiscal_id?: string | null
+          observacao?: string | null
+          produto_id?: string
+          quantidade_kg?: number
+          safra_id?: string
+          silo_id?: string | null
+          status?: string | null
+          taxa_armazenagem?: number | null
+          updated_at?: string | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devolucoes_deposito_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_deposito_inscricao_emitente_id_fkey"
+            columns: ["inscricao_emitente_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_deposito_inscricao_produtor_id_fkey"
+            columns: ["inscricao_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_deposito_inscricao_recebe_taxa_id_fkey"
+            columns: ["inscricao_recebe_taxa_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_deposito_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_deposito_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_deposito_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_deposito_silo_id_fkey"
+            columns: ["silo_id"]
+            isOneToOne: false
+            referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       emitentes_nfe: {
         Row: {
