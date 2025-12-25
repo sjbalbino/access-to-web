@@ -39,7 +39,7 @@ import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loa
 import { useNotasFiscais, useNotaFiscalItens, NotaFiscalInsert, NotaFiscalItemInsert } from "@/hooks/useNotasFiscais";
 import { useCfops } from "@/hooks/useCfops";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
-import { useInscricoesParceria } from "@/hooks/useInscricoesParceria";
+import { useInscricoesSocio } from "@/hooks/useInscricoesSocio";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useProdutores } from "@/hooks/useProdutores";
@@ -144,8 +144,8 @@ export default function NotaFiscalForm() {
   const { itens, createItem, updateItem, deleteItem, isLoading: isLoadingItens } = useNotaFiscalItens(id || null);
   const { cfops } = useCfops();
   const { emitentes } = useEmitentesNfe();
-  const inscricoesParceriaQuery = useInscricoesParceria();
-  const inscricoesParceria = inscricoesParceriaQuery.data || [];
+  const inscricoesSocioQuery = useInscricoesSocio();
+  const inscricoesSocio = inscricoesSocioQuery.data || [];
   const { data: inscricoesCompletas = [] } = useInscricoesCompletas();
   const clientesQuery = useClientesFornecedores();
   const clientesFornecedores = clientesQuery.data || [];
@@ -263,7 +263,7 @@ export default function NotaFiscalForm() {
   });
 
   // Buscar emitente automaticamente pela granja_id da inscrição selecionada ou pelo ID já salvo
-  const selectedInscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
+  const selectedInscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
   const emitenteFromInscricao = selectedInscricao 
     ? emitentes.find((e) => e.granja_id === selectedInscricao.granja_id && e.ativo)
     : null;
@@ -358,7 +358,7 @@ export default function NotaFiscalForm() {
   // Auto-fill emitente_id and granja_id from inscrição selecionada
   useEffect(() => {
     if (formData.inscricao_produtor_id) {
-      const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
+      const inscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
       if (inscricao?.granja_id) {
         const emitenteEncontrado = emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo);
         if (emitenteEncontrado) {
@@ -376,7 +376,7 @@ export default function NotaFiscalForm() {
         }
       }
     }
-  }, [formData.inscricao_produtor_id, inscricoesParceria, emitentes]);
+  }, [formData.inscricao_produtor_id, inscricoesSocio, emitentes]);
 
   // Calculate item total
   useEffect(() => {
@@ -467,7 +467,7 @@ export default function NotaFiscalForm() {
   const autoSaveDraft = async (data: typeof formData) => {
     if (isAutoSaving) return;
     
-    const inscricao = inscricoesParceria.find((i) => i.id === data.inscricao_produtor_id);
+    const inscricao = inscricoesSocio.find((i) => i.id === data.inscricao_produtor_id);
     const emitenteAuto = inscricao ? emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo) : null;
     const granjaId = data.granja_id || inscricao?.granja_id || "";
 
@@ -591,7 +591,7 @@ export default function NotaFiscalForm() {
       return;
     }
 
-    const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
+    const inscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
     const emitenteAuto = inscricao ? emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo) : null;
     const granjaId = formData.granja_id || inscricao?.granja_id || "";
 
@@ -650,10 +650,10 @@ export default function NotaFiscalForm() {
       return;
     }
 
-    const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
+    const inscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
     
     if (!inscricao) {
-      toast.error("Selecione uma Inscrição do Produtor (Parceria)");
+      toast.error("Selecione uma Inscrição do Sócio (Emitente)");
       return;
     }
 
@@ -1024,7 +1024,7 @@ export default function NotaFiscalForm() {
     const emitente = emitentes.find((e) => e.id === formData.emitente_id);
     const cfop = cfops.find((c) => c.id === formData.cfop_id);
     const produto = produtos.find((p) => p.id === itemFormData.produto_id);
-    const inscricao = inscricoesParceria.find((i) => i.id === formData.inscricao_produtor_id);
+    const inscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
     
     if (!emitente || !cfop) {
       toast.error("Selecione um emitente e CFOP para calcular os impostos");
@@ -1138,16 +1138,16 @@ export default function NotaFiscalForm() {
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Emitente</CardTitle>
         <CardDescription>
-          Selecione a inscrição do produtor (tipo Parceria) como emitente fiscal
+          Selecione a inscrição do sócio como emitente fiscal
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="inscricao_produtor_id">Inscrição do Produtor (Parceria) *</Label>
+          <Label htmlFor="inscricao_produtor_id">Inscrição do Sócio (Emitente) *</Label>
           <Select
             value={formData.inscricao_produtor_id || ""}
             onValueChange={(value) => {
-              const inscricao = inscricoesParceria.find((i) => i.id === value);
+              const inscricao = inscricoesSocio.find((i) => i.id === value);
               setFormData({ 
                 ...formData, 
                 inscricao_produtor_id: value,
@@ -1157,11 +1157,12 @@ export default function NotaFiscalForm() {
             disabled={isReadOnly}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecione a inscrição" />
+              <SelectValue placeholder="Selecione a inscrição do sócio" />
             </SelectTrigger>
             <SelectContent>
-              {inscricoesParceria.map((inscricao) => (
+              {inscricoesSocio.map((inscricao) => (
                 <SelectItem key={inscricao.id} value={inscricao.id}>
+                  {inscricao.is_emitente_principal && "★ "}
                   {inscricao.produtores?.nome} - IE: {inscricao.inscricao_estadual} ({inscricao.granjas?.razao_social || inscricao.granja})
                 </SelectItem>
               ))}
