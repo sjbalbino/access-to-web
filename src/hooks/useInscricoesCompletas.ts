@@ -23,6 +23,7 @@ export interface InscricaoCompleta {
     id: string;
     nome: string;
     tipo_produtor: string | null;
+    ativo: boolean | null;
   } | null;
   granjas?: {
     id: string;
@@ -54,7 +55,7 @@ export function useInscricoesCompletas() {
           cep,
           telefone,
           email,
-          produtores:produtor_id(id, nome, tipo_produtor),
+          produtores:produtor_id(id, nome, tipo_produtor, ativo),
           granjas:granja_id(id, razao_social)
         `)
         .order('inscricao_estadual');

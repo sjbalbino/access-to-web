@@ -179,9 +179,10 @@ export default function EntradaColheita() {
   
   const culturaId = safraSelecionada?.cultura_id;
 
-  // Filtrar inscrições ativas com busca
+  // Filtrar inscrições ativas de produtores ativos com busca
   const inscricoesAtivas = useMemo(() => {
-    const ativas = inscricoes.filter(i => i.ativa);
+    // Apenas inscrições ativas de produtores ativos
+    const ativas = inscricoes.filter(i => i.ativa && i.produtores?.ativo !== false);
     if (!produtorSearch) return ativas;
     
     const search = produtorSearch.toLowerCase();
