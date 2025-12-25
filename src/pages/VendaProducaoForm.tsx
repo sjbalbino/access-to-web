@@ -151,7 +151,8 @@ export default function VendaProducaoForm() {
   });
 
   const compradores = clientes?.filter(c => c.tipo === "cliente" || c.tipo === "ambos") || [];
-  const inscricoesParceria = inscricoes?.filter(i => i.tipo === "parceria" || i.produtores?.tipo_produtor === "parceiro") || [];
+  // Filtra inscrições de produtores do tipo "produtor" (depositantes/parceiros)
+  const inscricoesParceria = inscricoes?.filter(i => i.produtores?.tipo_produtor === "produtor") || [];
 
   // Check if all required data is loaded for the form
   const isDataReady = !!(safras && produtos && clientes);
