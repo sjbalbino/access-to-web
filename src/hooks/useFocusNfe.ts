@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { mapNotaToFocusNfe, validateNotaForEmission, type NotaFiscalData, type NotaFiscalItemData } from "@/lib/focusNfeMapper";
+import { mapNotaToFocusNfe, validateNotaForEmission, type NotaFiscalData, type NotaFiscalItemData, type NotaReferenciadaData } from "@/lib/focusNfeMapper";
 
 export interface FocusNfeResult {
   success: boolean;
@@ -50,6 +50,32 @@ export function useFocusNfe() {
         console.warn("Aviso: não foi possível buscar numero/serie da nota:", notaError.message);
       }
 
+      // Buscar notas referenciadas vinculadas a esta NF-e (obrigatório para contranota de produtor)
+      const { data: notasReferenciadas, error: refError } = await supabase
+        .from("notas_fiscais_referenciadas")
+        .select("*")
+        .eq("nota_fiscal_id", notaFiscalId);
+
+      if (refError) {
+        console.warn("Aviso: não foi possível buscar notas referenciadas:", refError.message);
+      }
+
+      // Mapear notas referenciadas para o formato esperado
+      const notasReferenciadasMapeadas: NotaReferenciadaData[] = (notasReferenciadas || []).map(nr => ({
+        tipo: nr.tipo as 'nfe' | 'nfp',
+        chave_nfe: nr.chave_nfe,
+        nfp_uf: nr.nfp_uf,
+        nfp_aamm: nr.nfp_aamm,
+        nfp_cnpj: nr.nfp_cnpj,
+        nfp_cpf: nr.nfp_cpf,
+        nfp_ie: nr.nfp_ie,
+        nfp_modelo: nr.nfp_modelo,
+        nfp_serie: nr.nfp_serie,
+        nfp_numero: nr.nfp_numero,
+      }));
+
+      console.log("Notas referenciadas encontradas:", notasReferenciadasMapeadas.length);
+
       // Garantir que notaData tenha numero e serie do banco
       const notaDataComNumero: NotaFiscalData = {
         ...notaData,
@@ -59,8 +85,8 @@ export function useFocusNfe() {
 
       console.log("Emitindo NFe com numero:", notaDataComNumero.numero, "serie:", notaDataComNumero.serie);
 
-      // Mapear para formato Focus NFe
-      const focusNfeData = mapNotaToFocusNfe(notaDataComNumero, itens);
+      // Mapear para formato Focus NFe (incluindo notas referenciadas)
+      const focusNfeData = mapNotaToFocusNfe(notaDataComNumero, itens, notasReferenciadasMapeadas);
 
       setStatus("enviando");
 
