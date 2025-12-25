@@ -90,6 +90,11 @@ export default function NotasDeposito() {
     return granjas.find(g => g.id === granjaId);
   }, [granjas, granjaId]);
 
+  // Safra selecionada
+  const safraSelecionada = useMemo(() => {
+    return safras.find(s => s.id === safraId);
+  }, [safras, safraId]);
+
   // Saldo disponível para o produto selecionado
   const saldoProduto = useMemo(() => {
     if (!produtoId) return null;
@@ -155,6 +160,39 @@ export default function NotasDeposito() {
       // Próximo número da nota
       const proximoNumero = (emitente.numero_atual_nfe || 0) + 1;
 
+      // Montar informações complementares
+      const infoComplementar = (() => {
+        const partes: string[] = [];
+        
+        // Safra
+        if (safraSelecionada?.nome) {
+          partes.push(`Safra: ${safraSelecionada.nome}`);
+        }
+        
+        // PRODUTO JÁ TESTADO POR [Emitente]
+        const nomeEmitente = inscricaoPrincipal?.produtores?.nome || "";
+        const cidadeEmitente = inscricaoPrincipal?.cidade || "";
+        const cpfEmitente = inscricaoPrincipal?.cpf_cnpj || "";
+        
+        if (nomeEmitente) {
+          partes.push(`PRODUTO JÁ TESTADO POR ${nomeEmitente} - ${cidadeEmitente} - CPF: ${cpfEmitente}`);
+        }
+        
+        // Notas referenciadas
+        if (notasReferenciadas.length > 0) {
+          const refs = notasReferenciadas.map(n => {
+            if (n.tipo === 'nfe') {
+              return `NFe ${n.chave_nfe}`;
+            } else {
+              return `NFP ${n.nfp_numero}/${n.nfp_serie}`;
+            }
+          }).join(", ");
+          partes.push(`Ref: ${refs}`);
+        }
+        
+        return partes.join(" | ");
+      })();
+
       // Criar a nota fiscal
       const { data: notaFiscal, error: notaError } = await supabase
         .from('notas_fiscais')
@@ -170,6 +208,7 @@ export default function NotasDeposito() {
           operacao: 0, // Entrada
           finalidade: 1, // Normal
           inscricao_produtor_id: inscricaoId,
+          info_complementar: infoComplementar || null,
           // Destinatário (produtor)
           dest_tipo: inscricaoSelecionada?.cpf_cnpj && inscricaoSelecionada.cpf_cnpj.length > 11 ? 'juridica' : 'fisica',
           dest_cpf_cnpj: inscricaoSelecionada?.cpf_cnpj,
