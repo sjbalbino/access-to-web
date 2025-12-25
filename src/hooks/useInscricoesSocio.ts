@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface InscricaoEmitentePrincipal {
+export interface InscricaoSocio {
   id: string;
   produtor_id: string | null;
   inscricao_estadual: string | null;
@@ -26,47 +26,36 @@ export interface InscricaoEmitentePrincipal {
     nome: string;
     tipo_produtor: string | null;
   } | null;
-  emitente?: {
+  granjas?: {
     id: string;
-    granja_id: string | null;
-    ambiente: number | null;
-    serie_nfe: number | null;
-    numero_atual_nfe: number | null;
-    api_configurada: boolean | null;
-    api_access_token: string | null;
-    cst_icms_padrao: string | null;
-    cst_pis_padrao: string | null;
-    cst_cofins_padrao: string | null;
-    cst_ipi_padrao: string | null;
-    cst_ibs_padrao: string | null;
-    cst_cbs_padrao: string | null;
-    cst_is_padrao: string | null;
+    razao_social: string;
+    nome_fantasia: string | null;
   } | null;
 }
 
-export function useInscricaoEmitentePrincipal(granjaId: string | undefined) {
+/**
+ * Hook para buscar inscrições de produtores do tipo "sócio".
+ * Usado para selecionar o emitente de NF-e no formulário de notas fiscais.
+ */
+export function useInscricoesSocio() {
   return useQuery({
-    queryKey: ['inscricao_emitente_principal', granjaId],
+    queryKey: ['inscricoes_socio'],
     queryFn: async () => {
-      if (!granjaId) return null;
-      
-      // Primeiro buscar produtores do tipo sócio
+      // Primeiro buscar os produtores que são sócios
       const { data: produtoresSocios, error: errorProdutores } = await supabase
         .from('produtores')
         .select('id')
         .eq('tipo_produtor', 'socio');
       
-      if (errorProdutores) {
-        console.error('Erro ao buscar produtores sócios:', errorProdutores);
-        return null;
-      }
+      if (errorProdutores) throw errorProdutores;
       
       const produtorIds = produtoresSocios?.map(p => p.id) || [];
       
       if (produtorIds.length === 0) {
-        return null;
+        return [] as InscricaoSocio[];
       }
       
+      // Buscar inscrições desses produtores
       const { data, error } = await supabase
         .from('inscricoes_produtor')
         .select(`
@@ -90,19 +79,14 @@ export function useInscricaoEmitentePrincipal(granjaId: string | undefined) {
           emitente_id,
           is_emitente_principal,
           produtores:produtor_id(id, nome, tipo_produtor),
-          emitente:emitente_id(id, granja_id, ambiente, serie_nfe, numero_atual_nfe, api_configurada, api_access_token, cst_icms_padrao, cst_pis_padrao, cst_cofins_padrao, cst_ipi_padrao, cst_ibs_padrao, cst_cbs_padrao, cst_is_padrao)
+          granjas:granja_id(id, razao_social, nome_fantasia)
         `)
-        .eq('granja_id', granjaId)
-        .eq('is_emitente_principal', true)
         .in('produtor_id', produtorIds)
-        .maybeSingle();
+        .eq('ativa', true)
+        .order('inscricao_estadual');
       
-      if (error) {
-        console.error('Erro ao buscar inscrição emitente principal:', error);
-        return null;
-      }
-      return data as InscricaoEmitentePrincipal | null;
+      if (error) throw error;
+      return (data || []) as InscricaoSocio[];
     },
-    enabled: !!granjaId,
   });
 }
