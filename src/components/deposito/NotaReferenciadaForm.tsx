@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { formatCpf, formatCnpj } from "@/lib/formatters";
+
+// Função para obter AAMM atual (Ano e Mês no formato AAMM)
+function getCurrentAamm(): string {
+  const now = new Date();
+  return format(now, "yyMM"); // Ex: "2512" para Dez/2025
+}
 
 const UFS = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -63,19 +70,24 @@ export function NotaReferenciadaForm({
   const [nfpSerie, setNfpSerie] = useState("");
   const [nfpNumero, setNfpNumero] = useState("");
 
-  // Preencher campos com dados da inscrição quando o dialog abrir
+  // Preencher campos com dados da inscrição e AAMM padrão quando o dialog abrir
   useEffect(() => {
-    if (open && inscricao) {
-      setNfpUf(inscricao.uf || "");
-      const cpfCnpjLimpo = inscricao.cpf_cnpj?.replace(/\D/g, "") || "";
-      if (cpfCnpjLimpo.length <= 11) {
-        setNfpCpf(cpfCnpjLimpo);
-        setNfpCnpj("");
-      } else {
-        setNfpCnpj(cpfCnpjLimpo);
-        setNfpCpf("");
+    if (open) {
+      // Sempre definir AAMM padrão com ano/mês atual
+      setNfpAamm(getCurrentAamm());
+      
+      if (inscricao) {
+        setNfpUf(inscricao.uf || "");
+        const cpfCnpjLimpo = inscricao.cpf_cnpj?.replace(/\D/g, "") || "";
+        if (cpfCnpjLimpo.length <= 11) {
+          setNfpCpf(cpfCnpjLimpo);
+          setNfpCnpj("");
+        } else {
+          setNfpCnpj(cpfCnpjLimpo);
+          setNfpCpf("");
+        }
+        setNfpIe(inscricao.inscricao_estadual || "");
       }
-      setNfpIe(inscricao.inscricao_estadual || "");
     }
   }, [open, inscricao]);
 
