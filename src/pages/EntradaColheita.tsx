@@ -56,7 +56,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCfops } from "@/hooks/useCfops";
 import { useCreateNotaDepositoEmitida } from "@/hooks/useNotasDepositoEmitidas";
 import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrincipal";
+import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { supabase } from "@/integrations/supabase/client";
+import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 
 interface FormEntrada {
   peso_bruto: number;
@@ -156,6 +158,7 @@ export default function EntradaColheita() {
   const createColheitaEntrada = useCreateColheitaEntrada();
   const updateColheitaSaida = useUpdateColheitaSaida();
   const createNotaDeposito = useCreateNotaDepositoEmitida();
+  const { emitirNfe, pollStatus } = useFocusNfe();
 
   // Preencher balanceiro com nome do usuário logado
   useEffect(() => {
@@ -649,44 +652,116 @@ export default function EntradaColheita() {
 
         toast.success("NF-e criada. Iniciando transmissão à SEFAZ...");
 
-        // Emissão automática à SEFAZ
+        // Emissão automática à SEFAZ usando o hook useFocusNfe
         try {
-          const { data: resultEmissao, error: emissaoError } = await supabase.functions.invoke("focus-nfe-emitir", {
-            body: { notaFiscalId: notaFiscal.id }
-          });
+          // Montar dados da nota no formato esperado pelo hook
+          const notaDataParaEmissao: NotaFiscalData = {
+            id: notaFiscal.id,
+            data_emissao: dataEmissao,
+            natureza_operacao: cfop1905.natureza_operacao || "Entrada Depósito",
+            operacao: 0, // Entrada
+            finalidade: 1,
+            ind_consumidor_final: 0,
+            ind_presenca: 9,
+            modalidade_frete: 9,
+            forma_pagamento: 0,
+            info_complementar: notaFiscal.info_complementar || null,
+            info_fisco: null,
+            numero: proximoNumero,
+            serie: emitente.serie_nfe || 1,
+            // Destinatário (remetente da colheita)
+            dest_cpf_cnpj: inscricaoSelecionada?.cpf_cnpj || "",
+            dest_nome: inscricaoSelecionada?.produtores?.nome || "",
+            dest_ie: inscricaoSelecionada?.inscricao_estadual || "",
+            dest_logradouro: inscricaoSelecionada?.logradouro || "",
+            dest_numero: inscricaoSelecionada?.numero || "S/N",
+            dest_bairro: inscricaoSelecionada?.bairro || "",
+            dest_cidade: inscricaoSelecionada?.cidade || "",
+            dest_uf: inscricaoSelecionada?.uf || "",
+            dest_cep: inscricaoSelecionada?.cep || "",
+            dest_tipo: inscricaoSelecionada?.produtores?.tipo_produtor === "produtor" ? "2" : "0",
+            dest_email: inscricaoSelecionada?.email || null,
+            dest_telefone: null,
+            // Dados do emitente (sócio principal)
+            inscricaoProdutor: {
+              cpf_cnpj: inscricaoPrincipal?.cpf_cnpj || null,
+              inscricao_estadual: inscricaoPrincipal?.inscricao_estadual || null,
+              logradouro: inscricaoPrincipal?.logradouro || null,
+              numero: inscricaoPrincipal?.numero || null,
+              complemento: inscricaoPrincipal?.complemento || null,
+              bairro: inscricaoPrincipal?.bairro || null,
+              cidade: inscricaoPrincipal?.cidade || null,
+              uf: inscricaoPrincipal?.uf || null,
+              cep: inscricaoPrincipal?.cep || null,
+              produtorNome: inscricaoPrincipal?.produtores?.nome || null,
+              granjaNome: granja.razao_social || null,
+            },
+            emitente: {
+              crt: emitente.crt || 3,
+            },
+          };
 
-          if (emissaoError) {
-            toast.error("Erro ao transmitir. Acesse Notas Fiscais para emitir manualmente.");
-          } else if (resultEmissao?.success && resultEmissao?.ref) {
+          // Montar item da nota
+          const itensParaEmissao: NotaFiscalItemData[] = [{
+            numero_item: 1,
+            codigo: variedade?.codigo || "001",
+            descricao: variedade?.nome || "SOJA EM GRÃOS",
+            cfop: cfop1905.codigo,
+            unidade: "KG",
+            quantidade: calculos.liquidoFinal,
+            valor_unitario: valorUnitario,
+            valor_total: valorTotal,
+            ncm: variedade?.ncm || "12010090",
+            origem: 0,
+            cst_icms: emitente.cst_icms_padrao || "51",
+            modalidade_bc_icms: 3,
+            base_icms: 0,
+            aliq_icms: 0,
+            valor_icms: 0,
+            cst_pis: emitente.cst_pis_padrao || "09",
+            base_pis: 0,
+            aliq_pis: 0,
+            valor_pis: 0,
+            cst_cofins: emitente.cst_cofins_padrao || "09",
+            base_cofins: 0,
+            aliq_cofins: 0,
+            valor_cofins: 0,
+            cst_ipi: null,
+            base_ipi: null,
+            aliq_ipi: null,
+            valor_ipi: null,
+            valor_desconto: null,
+            valor_frete: null,
+            valor_seguro: null,
+            valor_outros: null,
+            cst_ibs: null,
+            base_ibs: null,
+            aliq_ibs: null,
+            valor_ibs: null,
+            cclass_trib_ibs: null,
+            cst_cbs: null,
+            base_cbs: null,
+            aliq_cbs: null,
+            valor_cbs: null,
+            cclass_trib_cbs: null,
+            cst_is: null,
+            base_is: null,
+            aliq_is: null,
+            valor_is: null,
+          }];
+
+          // Emitir via hook (faz mapeamento, busca notas referenciadas e envia)
+          const resultEmissao = await emitirNfe(notaFiscal.id, notaDataParaEmissao, itensParaEmissao);
+
+          if (resultEmissao?.success && resultEmissao?.ref) {
             toast.success("NF-e transmitida. Aguardando autorização da SEFAZ...");
-            
-            // Polling de status (máx 30 tentativas = 90 segundos)
-            const pollStatus = async (ref: string, maxAttempts = 30) => {
-              for (let i = 0; i < maxAttempts; i++) {
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                
-                const { data: consultaResult } = await supabase.functions.invoke("focus-nfe-consultar", {
-                  body: { ref, notaFiscalId: notaFiscal.id }
-                });
-                
-                const status = consultaResult?.data?.status;
-                if (status === "autorizado" || status === "autorizada") {
-                  toast.success(`NF-e Autorizada! Protocolo: ${consultaResult?.data?.protocolo || "N/A"}`);
-                  return;
-                } else if (status === "erro_autorizacao" || status === "rejeitado" || status === "rejeitada") {
-                  toast.error(`NF-e Rejeitada: ${consultaResult?.data?.mensagem_sefaz || "Verifique os dados."}`);
-                  return;
-                }
-              }
-              toast.warning("Tempo esgotado. Verifique o status em Notas Fiscais.");
-            };
-            
-            await pollStatus(resultEmissao.ref);
-          } else {
+            await pollStatus(resultEmissao.ref, notaFiscal.id);
+          } else if (!resultEmissao?.success) {
             toast.error(resultEmissao?.error || "Erro ao emitir. Acesse Notas Fiscais.");
           }
         } catch (emissaoErr: any) {
           toast.error("Erro na transmissão. NF-e criada como rascunho.");
+          console.error("Erro emissão:", emissaoErr);
         }
       }
 
