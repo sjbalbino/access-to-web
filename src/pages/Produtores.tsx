@@ -51,6 +51,7 @@ import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { InscricoesTab } from "@/components/produtores/InscricoesTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { formatCpf, formatCpfCnpj, formatTelefone, validateCpf, validateCnpj } from "@/lib/formatters";
 import { toast } from "sonner";
 
@@ -538,7 +539,7 @@ export default function Produtores() {
                     disabled={!canEdit}
                   />
                 </div>
-                <div className="space-y-2 lg:col-span-2">
+                <div className="space-y-2">
                   <Label>Granja</Label>
                   <Select
                     value={editFormData.granja_id || ""}
@@ -558,6 +559,21 @@ export default function Produtores() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <div className="flex items-center gap-3 h-10">
+                    <Switch
+                      checked={editFormData.ativo}
+                      onCheckedChange={(checked) =>
+                        setEditFormData({ ...editFormData, ativo: checked })
+                      }
+                      disabled={!canEdit}
+                    />
+                    <span className={`text-sm font-medium ${editFormData.ativo ? "text-success" : "text-destructive"}`}>
+                      {editFormData.ativo ? "Ativo" : "Inativo"}
+                    </span>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>CEP</Label>
@@ -912,9 +928,12 @@ export default function Produtores() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir "{selectedProdutor?.nome}"? Todas as
-              inscrições estaduais vinculadas também serão excluídas. Esta ação não
-              pode ser desfeita.
+              Deseja remover "{selectedProdutor?.nome}"?
+              <br /><br />
+              <strong>Se houver movimentação</strong> (inscrições ou notas fiscais vinculadas), 
+              o cadastro será <strong>marcado como inativo</strong>.
+              <br /><br />
+              <strong>Se não houver movimentação</strong>, o cadastro será <strong>excluído permanentemente</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
