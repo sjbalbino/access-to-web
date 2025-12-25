@@ -454,14 +454,23 @@ export default function EntradaColheita() {
           ? formContraNota.data_emissao_nfp 
           : format(new Date(), "yyyy-MM-dd'T'HH:mm:ssXXX");
         
+        // Calcular próximo número da NF-e
+        const proximoNumero = (emitente.numero_atual_nfe || 0) + 1;
+        
         // Criar NF-e na tabela notas_fiscais
+        // IMPORTANTE: inscricao_produtor_id = sócio principal (emitente)
+        //             inscricao_remetente_id = produtor que entregou a colheita
         const { data: notaFiscal, error: notaError } = await supabase
           .from("notas_fiscais")
           .insert({
             granja_id: granja.id,
             emitente_id: emitente.id,
-            inscricao_produtor_id: inscricaoId,
-            produtor_id: inscricaoSelecionada?.produtor_id || null,
+            // Emitente: inscrição do sócio principal
+            inscricao_produtor_id: inscricaoPrincipal.id,
+            produtor_id: inscricaoPrincipal.produtor_id,
+            // Série e número automáticos do emitente
+            serie: emitente.serie_nfe || 1,
+            numero: proximoNumero,
             operacao: 0, // 0 = Entrada
             natureza_operacao: cfop1905.natureza_operacao || "Entrada Depósito",
             cfop_id: cfop1905.id,
@@ -474,10 +483,11 @@ export default function EntradaColheita() {
             forma_pagamento: 0, // 0 = À Vista
             tipo_pagamento: "90", // 90 = Sem pagamento
             modalidade_frete: 9, // 9 = Sem frete
-            // Inscrição do produtor como remetente (para notas de entrada)
+            // Remetente: inscrição do produtor que entregou a colheita (para notas de entrada)
             inscricao_remetente_id: inscricaoSelecionada?.id || null,
-            // Remetente = Produtor (campos dest_ para entrada)
-            dest_tipo: inscricaoSelecionada?.cpf_cnpj && inscricaoSelecionada.cpf_cnpj.length > 14 ? "juridica" : "fisica",
+            // Remetente = Produtor (campos dest_ para entrada) - Tipo 2 = Produtor Rural
+            dest_tipo: inscricaoSelecionada?.produtores?.tipo_produtor === "produtor" ? "2" : 
+              (inscricaoSelecionada?.cpf_cnpj && inscricaoSelecionada.cpf_cnpj.replace(/\D/g, "").length > 11 ? "1" : "0"),
             dest_cpf_cnpj: inscricaoSelecionada?.cpf_cnpj?.replace(/\D/g, "") || "",
             dest_nome: inscricaoSelecionada?.produtores?.nome || "",
             dest_ie: inscricaoSelecionada?.inscricao_estadual?.replace(/\D/g, "") || "",
@@ -584,6 +594,12 @@ export default function EntradaColheita() {
           await supabase.from("notas_fiscais").delete().eq("id", notaFiscal.id);
           return;
         }
+        
+        // Incrementar número atual da NF-e no emitente
+        await supabase
+          .from("emitentes_nfe")
+          .update({ numero_atual_nfe: proximoNumero })
+          .eq("id", emitente.id);
         
         // Criar nota de depósito emitida vinculada à NF-e
         await createNotaDeposito.mutateAsync({

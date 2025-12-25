@@ -107,6 +107,14 @@ const UFS = [
   "SP", "SE", "TO",
 ];
 
+// Tipos de pessoa conforme NT 2025.002
+const TIPOS_PESSOA = [
+  { value: "0", label: "Pessoa Física", docLabel: "CPF" },
+  { value: "1", label: "Pessoa Jurídica", docLabel: "CNPJ" },
+  { value: "2", label: "Produtor Rural", docLabel: "CPF" },
+  { value: "3", label: "Estrangeiro", docLabel: "ID Estrangeiro" },
+];
+
 const TABS = [
   { id: "emitente", label: "Emitente", icon: Building2 },
   { id: "operacao", label: "Operação", icon: FileEdit },
@@ -196,7 +204,7 @@ export default function NotaFiscalForm() {
     natureza_operacao: "",
     finalidade: 1,
     cfop_id: "",
-    dest_tipo: "PJ",
+    dest_tipo: "1", // 1 = Pessoa Jurídica (default)
     dest_cpf_cnpj: "",
     dest_nome: "",
     dest_ie: "",
@@ -408,10 +416,18 @@ export default function NotaFiscalForm() {
   const handleClienteSelect = async (clienteId: string) => {
     const cliente = clientesFornecedores.find((c) => c.id === clienteId);
     if (cliente) {
+      // Determinar tipo de pessoa: 0=PF, 1=PJ, 2=Produtor Rural (se tiver IE)
+      const cpfCnpjLimpo = (cliente.cpf_cnpj || "").replace(/\D/g, "");
+      let destTipo = "1"; // Default: Pessoa Jurídica
+      if (cpfCnpjLimpo.length <= 11) {
+        // CPF - verificar se tem IE (seria produtor rural)
+        destTipo = cliente.inscricao_estadual ? "2" : "0";
+      }
+      
       const updatedData = {
         ...formData,
         cliente_fornecedor_id: clienteId,
-        dest_tipo: cliente.tipo_pessoa === "fisica" ? "PF" : "PJ",
+        dest_tipo: destTipo,
         dest_cpf_cnpj: cliente.cpf_cnpj || "",
         dest_nome: cliente.nome,
         dest_ie: cliente.inscricao_estadual || "",
@@ -437,11 +453,21 @@ export default function NotaFiscalForm() {
   const handleInscricaoRemetenteSelect = async (inscricaoId: string) => {
     const inscricao = inscricoesCompletas.find((i) => i.id === inscricaoId);
     if (inscricao) {
-      const cpfCnpj = inscricao.cpf_cnpj || "";
+      const cpfCnpj = (inscricao.cpf_cnpj || "").replace(/\D/g, "");
+      
+      // Determinar tipo de pessoa conforme NT 2025.002:
+      // 0 = Pessoa Física, 1 = Pessoa Jurídica, 2 = Produtor Rural, 3 = Estrangeiro
+      let destTipo = "0"; // Default: Pessoa Física
+      if (inscricao.produtores?.tipo_produtor === "produtor") {
+        destTipo = "2"; // Produtor Rural
+      } else if (cpfCnpj.length > 11) {
+        destTipo = "1"; // Pessoa Jurídica
+      }
+      
       const updatedData = {
         ...formData,
         cliente_fornecedor_id: "", // Limpa cliente/fornecedor
-        dest_tipo: cpfCnpj.length > 11 ? "PJ" : "PF",
+        dest_tipo: destTipo,
         dest_cpf_cnpj: cpfCnpj,
         dest_nome: inscricao.produtores?.nome || inscricao.granja || "",
         dest_ie: inscricao.inscricao_estadual || "",
@@ -1342,7 +1368,7 @@ export default function NotaFiscalForm() {
           <div className="space-y-2">
             <Label htmlFor="dest_tipo">Tipo</Label>
             <Select
-              value={formData.dest_tipo || "PJ"}
+              value={formData.dest_tipo || "1"}
               onValueChange={(value) => setFormData({ ...formData, dest_tipo: value })}
               disabled={isReadOnly}
             >
@@ -1350,13 +1376,18 @@ export default function NotaFiscalForm() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="PF">Pessoa Física</SelectItem>
-                <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
+                {TIPOS_PESSOA.map((tipo) => (
+                  <SelectItem key={tipo.value} value={tipo.value}>
+                    {tipo.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dest_cpf_cnpj">{formData.dest_tipo === "PF" ? "CPF" : "CNPJ"}</Label>
+            <Label htmlFor="dest_cpf_cnpj">
+              {TIPOS_PESSOA.find(t => t.value === formData.dest_tipo)?.docLabel || "CPF/CNPJ"}
+            </Label>
             <Input
               id="dest_cpf_cnpj"
               value={formData.dest_cpf_cnpj || ""}
