@@ -52,6 +52,8 @@ import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { formatCpfCnpj, formatTelefone } from "@/lib/formatters";
+import { useProdutor } from "@/hooks/useProdutores";
 
 const TIPOS_INSCRICAO = [
   { value: "parceria", label: "Parceria" },
@@ -87,6 +89,7 @@ const emptyInscricao: InscricaoInput = {
 
 export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const { data: inscricoes, isLoading } = useInscricoesByProdutor(produtorId);
+  const { data: produtor } = useProdutor(produtorId);
   const { data: granjas } = useGranjas();
   const { emitentes } = useEmitentesNfe();
   const createInscricao = useCreateInscricao();
@@ -102,7 +105,22 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
   const handleNew = () => {
     setSelectedInscricao(null);
-    setFormData({ ...emptyInscricao, produtor_id: produtorId });
+    // Preencher automaticamente com dados do produtor
+    setFormData({ 
+      ...emptyInscricao, 
+      produtor_id: produtorId,
+      cpf_cnpj: produtor?.cpf_cnpj || "",
+      cep: produtor?.cep || "",
+      logradouro: produtor?.logradouro || "",
+      numero: produtor?.numero || "",
+      complemento: produtor?.complemento || "",
+      bairro: produtor?.bairro || "",
+      cidade: produtor?.cidade || "",
+      uf: produtor?.uf || "",
+      telefone: produtor?.telefone || "",
+      email: produtor?.email || "",
+      granja_id: produtor?.granja_id || null,
+    });
     setDialogOpen(true);
   };
 
@@ -267,7 +285,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                     {TIPOS_INSCRICAO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
                   </TableCell>
                   <TableCell className="font-medium">{inscricao.inscricao_estadual || "-"}</TableCell>
-                  <TableCell>{inscricao.cpf_cnpj || "-"}</TableCell>
+                  <TableCell className="font-mono">{formatCpfCnpj(inscricao.cpf_cnpj) || "-"}</TableCell>
                   <TableCell>
                     {inscricao.cidade && inscricao.uf
                       ? `${inscricao.cidade}/${inscricao.uf}`
@@ -425,8 +443,9 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   <Label htmlFor="cpf_cnpj">CPF/CNPJ</Label>
                   <Input
                     id="cpf_cnpj"
-                    value={formData.cpf_cnpj || ""}
-                    onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value })}
+                    value={formatCpfCnpj(formData.cpf_cnpj || "")}
+                    onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value.replace(/\D/g, "") })}
+                    placeholder="000.000.000-00"
                   />
                 </div>
               </div>
@@ -508,8 +527,8 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   <Label htmlFor="telefone">Telefone</Label>
                   <Input
                     id="telefone"
-                    value={formData.telefone || ""}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                    value={formatTelefone(formData.telefone || "")}
+                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value.replace(/\D/g, "") })}
                     placeholder="(00) 0000-0000"
                   />
                 </div>

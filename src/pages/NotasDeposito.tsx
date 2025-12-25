@@ -141,6 +141,24 @@ export default function NotasDeposito() {
       return;
     }
 
+    if (!inscricaoPrincipal) {
+      toast({
+        title: "Inscrição do emitente não configurada",
+        description: "Defina uma inscrição estadual como emitente principal para esta granja.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!inscricaoPrincipal.cpf_cnpj || !inscricaoPrincipal.inscricao_estadual) {
+      toast({
+        title: "Dados do emitente incompletos",
+        description: "A inscrição do emitente principal precisa ter CPF/CNPJ e Inscrição Estadual.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const qtdKg = parseFloat(quantidadeKg);
     if (saldoProduto && qtdKg > saldoProduto.saldo_a_emitir_kg) {
       toast({
