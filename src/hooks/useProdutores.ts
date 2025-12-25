@@ -65,6 +65,27 @@ export function useProdutor(id: string | undefined) {
   });
 }
 
+// Verificar se produtor tem movimentação (inscrições, colheitas, notas fiscais, contratos)
+async function verificarMovimentacaoProdutor(produtorId: string): Promise<boolean> {
+  // Verificar inscrições
+  const { count: inscricoesCount } = await supabase
+    .from("inscricoes_produtor")
+    .select("*", { count: "exact", head: true })
+    .eq("produtor_id", produtorId);
+  
+  if (inscricoesCount && inscricoesCount > 0) return true;
+
+  // Verificar notas fiscais pelo produtor_id
+  const { count: notasCount } = await supabase
+    .from("notas_fiscais")
+    .select("*", { count: "exact", head: true })
+    .eq("produtor_id", produtorId);
+  
+  if (notasCount && notasCount > 0) return true;
+
+  return false;
+}
+
 export function useCreateProdutor() {
   const queryClient = useQueryClient();
   
@@ -117,15 +138,34 @@ export function useDeleteProdutor() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("produtores")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
+      // Verificar se tem movimentação
+      const temMovimentacao = await verificarMovimentacaoProdutor(id);
+      
+      if (temMovimentacao) {
+        // Marcar como inativo ao invés de excluir
+        const { error } = await supabase
+          .from("produtores")
+          .update({ ativo: false })
+          .eq("id", id);
+        if (error) throw error;
+        return { inativado: true };
+      } else {
+        // Excluir de fato
+        const { error } = await supabase
+          .from("produtores")
+          .delete()
+          .eq("id", id);
+        if (error) throw error;
+        return { inativado: false };
+      }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["produtores"] });
-      toast.success("Produtor excluído com sucesso!");
+      if (result.inativado) {
+        toast.success("Produtor possui movimentação e foi marcado como inativo.");
+      } else {
+        toast.success("Produtor excluído com sucesso!");
+      }
     },
     onError: (error) => {
       toast.error("Erro ao excluir produtor: " + error.message);

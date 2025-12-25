@@ -99,12 +99,13 @@ export default function Produtores() {
   const [selectedProdutorId, setSelectedProdutorId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterTipo, setFilterTipo] = useState<string>("todos");
+  const [filterStatus, setFilterStatus] = useState<string>("ativos");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newFormData, setNewFormData] = useState<ProdutorInput>(emptyProdutor);
   const [editFormData, setEditFormData] = useState<ProdutorInput>(emptyProdutor);
 
-  // Filtra produtores pela busca e tipo
+  // Filtra produtores pela busca, tipo e status
   const filteredProdutores = useMemo(() => {
     return produtores?.filter((p: any) => {
       const matchesSearch =
@@ -112,9 +113,13 @@ export default function Produtores() {
         p.cpf_cnpj?.includes(search);
       const matchesTipo =
         filterTipo === "todos" || p.tipo_produtor === filterTipo;
-      return matchesSearch && matchesTipo;
+      const matchesStatus =
+        filterStatus === "todos" ||
+        (filterStatus === "ativos" && p.ativo !== false) ||
+        (filterStatus === "inativos" && p.ativo === false);
+      return matchesSearch && matchesTipo && matchesStatus;
     });
-  }, [produtores, search, filterTipo]);
+  }, [produtores, search, filterTipo, filterStatus]);
 
   // Produtor selecionado
   const selectedProdutor = useMemo(() => {
@@ -312,6 +317,16 @@ export default function Produtores() {
               )}
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="ativos">Ativos</SelectItem>
+                  <SelectItem value="inativos">Inativos</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={filterTipo} onValueChange={setFilterTipo}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue />
