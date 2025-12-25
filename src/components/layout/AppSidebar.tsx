@@ -85,6 +85,8 @@ const menuGroups: MenuGroup[] = [
       { title: "Notas Fiscais", icon: Receipt, path: "/notas-fiscais", color: "text-rose-500" },
       { title: "Transferências", icon: ArrowRightLeft, path: "/transferencias", color: "text-blue-500" },
       { title: "Notas Depósito", icon: FileText, path: "/notas-deposito", color: "text-amber-600" },
+      { title: "Devolução Depósito", icon: ArrowRightLeft, path: "/devolucao-deposito", color: "text-orange-600" },
+      { title: "Compra Cereais", icon: Wheat, path: "/compra-cereais", color: "text-yellow-600" },
     ],
   },
   {

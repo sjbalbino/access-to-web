@@ -35,6 +35,8 @@ import Transferencias from "./pages/Transferencias";
 import NotasDeposito from "./pages/NotasDeposito";
 import LocaisEntrega from "./pages/LocaisEntrega";
 import EntradaColheita from "./pages/EntradaColheita";
+import DevolucaoDeposito from "./pages/DevolucaoDeposito";
+import CompraCereais from "./pages/CompraCereais";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +78,8 @@ const App = () => (
             <Route path="/vendas-producao/:id/remessas" element={<ProtectedRoute><RemessasVendaForm /></ProtectedRoute>} />
             <Route path="/transferencias" element={<ProtectedRoute><Transferencias /></ProtectedRoute>} />
             <Route path="/notas-deposito" element={<ProtectedRoute><NotasDeposito /></ProtectedRoute>} />
+            <Route path="/devolucao-deposito" element={<ProtectedRoute><DevolucaoDeposito /></ProtectedRoute>} />
+            <Route path="/compra-cereais" element={<ProtectedRoute><CompraCereais /></ProtectedRoute>} />
             <Route path="/locais-entrega" element={<ProtectedRoute><LocaisEntrega /></ProtectedRoute>} />
             <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />
             <Route path="/tenants" element={<ProtectedRoute requireSuperAdmin><Tenants /></ProtectedRoute>} />
