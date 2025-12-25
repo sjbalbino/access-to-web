@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -168,6 +169,7 @@ export default function NotaFiscalForm() {
   const unidadesMedida = unidadesQuery.data || [];
   const { transportadoras } = useTransportadoras();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const focusNfe = useFocusNfe();
   const { duplicatas, createDuplicata, updateDuplicata, deleteDuplicata } = useNotasFiscaisDuplicatas(id || null);
   const { data: notasReferenciadas = [], isLoading: isLoadingReferencias } = useNotasReferenciadas(id);
@@ -841,13 +843,18 @@ export default function NotaFiscalForm() {
         
         if (pollResult.success) {
           const realStatus = (pollResult.data as Record<string, unknown>)?.status as string;
+          const chaveAcesso = (pollResult.data as Record<string, unknown>)?.chave_nfe as string;
+          const protocolo = (pollResult.data as Record<string, unknown>)?.protocolo as string;
+          
+          // Invalidar cache para recarregar dados da nota com status atualizado
+          queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
           
           if (realStatus === "autorizado" || realStatus === "autorizada") {
             setEmissionStatus({ 
               step: "success", 
               message: "NF-e autorizada com sucesso!", 
               progress: 100,
-              details: `Protocolo: ${(pollResult.data as Record<string, unknown>)?.protocolo || "N/A"}`
+              details: `Protocolo: ${protocolo || "N/A"}`
             });
           } else if (realStatus === "erro_autorizacao" || realStatus === "rejeitado" || realStatus === "rejeitada") {
             const motivo = (pollResult.data as Record<string, unknown>)?.mensagem_sefaz as string || 

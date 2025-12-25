@@ -646,7 +646,47 @@ export default function EntradaColheita() {
           nota_fiscal_id: notaFiscal.id, // Vincular à NF-e criada
         });
 
-        toast.success("NF-e de entrada criada com sucesso! Acesse Notas Fiscais para emitir.");
+        toast.success("NF-e criada. Iniciando transmissão à SEFAZ...");
+
+        // Emissão automática à SEFAZ
+        try {
+          const { data: resultEmissao, error: emissaoError } = await supabase.functions.invoke("focus-nfe-emitir", {
+            body: { notaFiscalId: notaFiscal.id }
+          });
+
+          if (emissaoError) {
+            toast.error("Erro ao transmitir. Acesse Notas Fiscais para emitir manualmente.");
+          } else if (resultEmissao?.success && resultEmissao?.ref) {
+            toast.success("NF-e transmitida. Aguardando autorização da SEFAZ...");
+            
+            // Polling de status (máx 30 tentativas = 90 segundos)
+            const pollStatus = async (ref: string, maxAttempts = 30) => {
+              for (let i = 0; i < maxAttempts; i++) {
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                const { data: consultaResult } = await supabase.functions.invoke("focus-nfe-consultar", {
+                  body: { ref, notaFiscalId: notaFiscal.id }
+                });
+                
+                const status = consultaResult?.data?.status;
+                if (status === "autorizado" || status === "autorizada") {
+                  toast.success(`NF-e Autorizada! Protocolo: ${consultaResult?.data?.protocolo || "N/A"}`);
+                  return;
+                } else if (status === "erro_autorizacao" || status === "rejeitado" || status === "rejeitada") {
+                  toast.error(`NF-e Rejeitada: ${consultaResult?.data?.mensagem_sefaz || "Verifique os dados."}`);
+                  return;
+                }
+              }
+              toast.warning("Tempo esgotado. Verifique o status em Notas Fiscais.");
+            };
+            
+            await pollStatus(resultEmissao.ref);
+          } else {
+            toast.error(resultEmissao?.error || "Erro ao emitir. Acesse Notas Fiscais.");
+          }
+        } catch (emissaoErr: any) {
+          toast.error("Erro na transmissão. NF-e criada como rascunho.");
+        }
       }
 
       toast.success("Saída registrada com sucesso!");
