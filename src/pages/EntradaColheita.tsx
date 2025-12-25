@@ -261,6 +261,9 @@ export default function EntradaColheita() {
     const pesoSaco = formEntrada.tipo_colheita === "semente" ? 40 : 60;
     const totalSacos = liquidoFinal / pesoSaco;
 
+    // Melhoria PH (para cálculo do PHC = PH corrigido)
+    const melhoriaPh = faixaUmidade?.melhoria_ph || 0;
+
     return {
       pesoLiquido,
       kgImpureza,
@@ -271,6 +274,7 @@ export default function EntradaColheita() {
       totalDescontos,
       liquidoFinal,
       totalSacos,
+      melhoriaPh,
     };
   }, [pesoBrutoSelecionado, formSaida, formEntrada.tipo_colheita, tabelaUmidades, culturaId]);
 
@@ -502,9 +506,38 @@ export default function EntradaColheita() {
             // NF-e referenciada (se tipo NFP-e)
             nfe_referenciada: formContraNota.tipo === "nfpe" ? formContraNota.chave_acesso : null,
             // Informações complementares
-            info_complementar: formContraNota.tipo === "bloco" 
-              ? `NFP Bloco Nº ${formContraNota.numero_nfp} Série ${formContraNota.serie_nfp}` 
-              : `Contra Nota ref. NFP-e Chave: ${formContraNota.chave_acesso}`,
+            info_complementar: (() => {
+              const partes: string[] = [];
+              
+              // Referência da NFP
+              if (formContraNota.tipo === "bloco") {
+                partes.push(`NFP Bloco Nº ${formContraNota.numero_nfp} Série ${formContraNota.serie_nfp}`);
+              } else {
+                partes.push(`Contra Nota ref. NFP-e Chave: ${formContraNota.chave_acesso}`);
+              }
+              
+              // Safra
+              if (safraSelecionada?.nome) {
+                partes.push(`Safra: ${safraSelecionada.nome}`);
+              }
+              
+              // PRODUTO JÁ TESTADO POR [Emitente]
+              const nomeEmitente = inscricaoPrincipal?.produtores?.nome || "";
+              const cidadeEmitente = inscricaoPrincipal?.cidade || "";
+              const cpfEmitente = inscricaoPrincipal?.cpf_cnpj || "";
+              
+              if (nomeEmitente) {
+                partes.push(`PRODUTO JÁ TESTADO POR ${nomeEmitente} - ${cidadeEmitente} - CPF: ${cpfEmitente}`);
+              }
+              
+              // PH e PHC (se produto tiver PH informado)
+              if (formSaida.ph && formSaida.ph > 0) {
+                const phCorrigido = formSaida.ph + calculos.melhoriaPh;
+                partes.push(`PH: ${formSaida.ph} / PHC: ${phCorrigido.toFixed(1)}`);
+              }
+              
+              return partes.join(" | ");
+            })(),
           })
           .select()
           .single();
