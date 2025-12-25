@@ -21,6 +21,8 @@ import { formatNumber, formatCpfCnpj } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { NotaReferenciadaForm, NotaReferenciadaTemp } from "@/components/deposito/NotaReferenciadaForm";
+import { useFocusNfe } from "@/hooks/useFocusNfe";
+import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +52,8 @@ export default function NotasDeposito() {
   const [deleteNotaIndex, setDeleteNotaIndex] = useState<number | null>(null);
   
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const { emitirNfe, pollStatus } = useFocusNfe();
 
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
@@ -319,75 +323,156 @@ export default function NotasDeposito() {
         data_emissao: new Date().toISOString().split('T')[0],
       };
 
-      // Emissão automática à SEFAZ
-      try {
-        const { data: resultEmissao, error: emissaoError } = await supabase.functions.invoke("focus-nfe-emitir", {
-          body: { notaFiscalId: notaFiscal.id }
-        });
+      // Montar dados para emissão via hook
+      const notaDataParaEmissao: NotaFiscalData = {
+        id: notaFiscal.id,
+        data_emissao: new Date().toISOString(),
+        natureza_operacao: cfop1905.natureza_operacao || 'ENTRADA DE MERCADORIA RECEBIDA PARA DEPOSITO',
+        operacao: 0,
+        finalidade: 1,
+        ind_consumidor_final: 0,
+        ind_presenca: 9,
+        modalidade_frete: 9,
+        forma_pagamento: 0,
+        numero: proximoNumero,
+        serie: emitente.serie_nfe || 1,
+        info_complementar: infoComplementar,
+        info_fisco: null,
+        // Destinatário (produtor parceiro depositante)
+        dest_cpf_cnpj: inscricaoSelecionada?.cpf_cnpj || null,
+        dest_nome: inscricaoSelecionada?.produtores?.nome || inscricaoSelecionada?.granja || null,
+        dest_ie: inscricaoSelecionada?.inscricao_estadual || null,
+        dest_logradouro: inscricaoSelecionada?.logradouro || null,
+        dest_numero: inscricaoSelecionada?.numero || null,
+        dest_bairro: inscricaoSelecionada?.bairro || null,
+        dest_cidade: inscricaoSelecionada?.cidade || null,
+        dest_uf: inscricaoSelecionada?.uf || null,
+        dest_cep: inscricaoSelecionada?.cep || null,
+        dest_telefone: inscricaoSelecionada?.telefone || null,
+        dest_email: inscricaoSelecionada?.email || null,
+        dest_tipo: inscricaoSelecionada?.cpf_cnpj && inscricaoSelecionada.cpf_cnpj.replace(/\D/g, '').length > 11 ? '1' : '0',
+        // Emitente (sócio principal da granja)
+        inscricaoProdutor: {
+          cpf_cnpj: inscricaoPrincipal?.cpf_cnpj || null,
+          inscricao_estadual: inscricaoPrincipal?.inscricao_estadual || null,
+          logradouro: inscricaoPrincipal?.logradouro || null,
+          numero: inscricaoPrincipal?.numero || null,
+          complemento: inscricaoPrincipal?.complemento || null,
+          bairro: inscricaoPrincipal?.bairro || null,
+          cidade: inscricaoPrincipal?.cidade || null,
+          uf: inscricaoPrincipal?.uf || null,
+          cep: inscricaoPrincipal?.cep || null,
+          produtorNome: inscricaoPrincipal?.produtores?.nome || null,
+          granjaNome: granjaSelecionada?.nome_fantasia || granjaSelecionada?.razao_social || null,
+        },
+        emitente: {
+          crt: emitente.crt || 3,
+        },
+      };
 
-        if (emissaoError) {
+      const itensParaEmissao: NotaFiscalItemData[] = [{
+        numero_item: 1,
+        codigo: produto?.codigo || '',
+        descricao: produto?.nome || 'Produto',
+        ncm: produto?.ncm || '',
+        cfop: cfop1905.codigo,
+        unidade: 'KG',
+        quantidade: qtdKg,
+        valor_unitario: 1,
+        valor_total: qtdKg,
+        origem: 0,
+        cst_icms: cfop1905.cst_icms_padrao || '41',
+        modalidade_bc_icms: 0,
+        base_icms: 0,
+        aliq_icms: 0,
+        valor_icms: 0,
+        cst_pis: cfop1905.cst_pis_padrao || '08',
+        base_pis: 0,
+        aliq_pis: 0,
+        valor_pis: 0,
+        cst_cofins: cfop1905.cst_cofins_padrao || '08',
+        base_cofins: 0,
+        aliq_cofins: 0,
+        valor_cofins: 0,
+        cst_ipi: '53',
+        base_ipi: 0,
+        aliq_ipi: 0,
+        valor_ipi: 0,
+        valor_desconto: 0,
+        valor_frete: 0,
+        valor_seguro: 0,
+        valor_outros: 0,
+        // Reforma tributária
+        cst_ibs: null,
+        base_ibs: null,
+        aliq_ibs: null,
+        valor_ibs: null,
+        cclass_trib_ibs: null,
+        cst_cbs: null,
+        base_cbs: null,
+        aliq_cbs: null,
+        valor_cbs: null,
+        cclass_trib_cbs: null,
+        cst_is: null,
+        base_is: null,
+        aliq_is: null,
+        valor_is: null,
+      }];
+
+      // Emissão automática à SEFAZ usando o hook
+      try {
+        const resultEmissao = await emitirNfe(notaFiscal.id, notaDataParaEmissao, itensParaEmissao);
+
+        if (!resultEmissao.success) {
           toast({
             title: "NF-e criada como rascunho",
-            description: "Erro ao transmitir. Acesse Notas Fiscais para emitir manualmente.",
+            description: resultEmissao.error || "Erro ao transmitir. Acesse Notas Fiscais para emitir manualmente.",
             variant: "destructive",
           });
           navigate(`/notas-fiscais/${notaFiscal.id}`);
           return;
         }
 
-        if (resultEmissao?.success && resultEmissao?.ref) {
+        if (resultEmissao.data?.ref) {
           toast({
             title: "NF-e transmitida",
             description: "Aguardando autorização da SEFAZ...",
           });
           
           // Polling de status
-          const pollStatus = async (ref: string, maxAttempts = 30) => {
-            for (let i = 0; i < maxAttempts; i++) {
-              await new Promise(resolve => setTimeout(resolve, 3000));
-              
-              const { data: consultaResult } = await supabase.functions.invoke("focus-nfe-consultar", {
-                body: { ref, notaFiscalId: notaFiscal.id }
-              });
-              
-              const status = consultaResult?.data?.status;
-              if (status === "autorizado" || status === "autorizada") {
-                // REGISTRAR NOTA DE DEPÓSITO APENAS APÓS AUTORIZAÇÃO
-                try {
-                  await supabase.from('notas_deposito_emitidas').insert(dadosNotaDeposito);
-                } catch (depositoErr) {
-                  console.error("Erro ao registrar nota de depósito:", depositoErr);
-                }
-                
-                toast({
-                  title: "NF-e Autorizada!",
-                  description: `Protocolo: ${consultaResult?.data?.protocolo || "N/A"}`,
-                });
-                navigate(`/notas-fiscais/${notaFiscal.id}`);
-                return;
-              } else if (status === "erro_autorizacao" || status === "rejeitado" || status === "rejeitada") {
-                // NÃO registra nota de depósito se rejeitada
-                toast({
-                  title: "NF-e Rejeitada",
-                  description: consultaResult?.data?.mensagem_sefaz || "Verifique os dados.",
-                  variant: "destructive",
-                });
-                navigate(`/notas-fiscais/${notaFiscal.id}`);
-                return;
-              }
+          const statusResult = await pollStatus(String(resultEmissao.data.ref), notaFiscal.id, 30, 3000);
+          
+          if (statusResult.success && statusResult.data?.status === "autorizado") {
+            // REGISTRAR NOTA DE DEPÓSITO APENAS APÓS AUTORIZAÇÃO
+            try {
+              await supabase.from('notas_deposito_emitidas').insert(dadosNotaDeposito);
+            } catch (depositoErr) {
+              console.error("Erro ao registrar nota de depósito:", depositoErr);
             }
+            
+            toast({
+              title: "NF-e Autorizada!",
+              description: `Protocolo: ${String(statusResult.data?.protocolo || "N/A")}`,
+            });
+            navigate(`/notas-fiscais/${notaFiscal.id}`);
+          } else if (statusResult.data?.status === "erro_autorizacao" || statusResult.data?.status === "rejeitado") {
+            toast({
+              title: "NF-e Rejeitada",
+              description: String(statusResult.data?.mensagem_sefaz || "Verifique os dados."),
+              variant: "destructive",
+            });
+            navigate(`/notas-fiscais/${notaFiscal.id}`);
+          } else {
             toast({
               title: "Tempo esgotado",
               description: "Verifique o status no módulo de Notas Fiscais.",
             });
             navigate(`/notas-fiscais/${notaFiscal.id}`);
-          };
-          
-          await pollStatus(resultEmissao.ref);
+          }
         } else {
           toast({
             title: "NF-e criada como rascunho",
-            description: resultEmissao?.error || "Acesse Notas Fiscais para emitir.",
+            description: "Acesse Notas Fiscais para emitir.",
             variant: "destructive",
           });
           navigate(`/notas-fiscais/${notaFiscal.id}`);
