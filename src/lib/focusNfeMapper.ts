@@ -112,6 +112,7 @@ export interface FocusNfeItem {
   
   // IPI (quando aplicável)
   ipi_situacao_tributaria?: string;
+  ipi_codigo_enquadramento?: string; // cEnq - obrigatório quando IPI é informado
   ipi_base_calculo?: number;
   ipi_aliquota?: number;
   ipi_valor?: number;
@@ -317,15 +318,21 @@ function mapNotasReferenciadas(notas: NotaReferenciadaData[]): FocusNfeNotaRefer
 
       // Referência de NFP (produtor rural) - schema da Focus: *_nf_produtor
       const mes = Number(String(nota.nfp_aamm ?? "").replace(/\D/g, ""));
-      const serie = Number(nota.nfp_serie ?? 0);
+      let serie = Number(nota.nfp_serie ?? 0);
       const numero = Number(nota.nfp_numero ?? 0);
+      
+      // IMPORTANTE: serie_nf_produtor deve ser 0-999 (padrão SEFAZ)
+      // Se série informada for maior que 999, usar 0 (sem série)
+      if (!Number.isFinite(serie) || serie < 0 || serie > 999) {
+        serie = 0;
+      }
 
       const refNfp: FocusNfeRefNFP = {
         uf_nf_produtor: (nota.nfp_uf || "").toString().slice(0, 2),
         mes_nf_produtor: Number.isFinite(mes) && mes > 0 ? mes : 0,
         inscricao_estadual_nf_produtor: nota.nfp_ie?.replace(/\D/g, "") || "",
         modelo_nf_produtor: (nota.nfp_modelo || "04").toString().padStart(2, "0"),
-        serie_nf_produtor: Number.isFinite(serie) ? serie : 0,
+        serie_nf_produtor: serie,
         numero_nf_produtor: Number.isFinite(numero) ? numero : 0,
       };
 
@@ -502,8 +509,9 @@ function mapItemToFocusNfe(
     cofins_aliquota: item.aliq_cofins || undefined,
     cofins_valor: item.valor_cofins || undefined,
     
-    // IPI
+    // IPI - IMPORTANTE: cEnq (código enquadramento) é obrigatório quando IPI é informado
     ipi_situacao_tributaria: item.cst_ipi || undefined,
+    ipi_codigo_enquadramento: item.cst_ipi ? "999" : undefined, // 999 = Outros (padrão quando não especificado)
     ipi_base_calculo: item.base_ipi || undefined,
     ipi_aliquota: item.aliq_ipi || undefined,
     ipi_valor: item.valor_ipi || undefined,
