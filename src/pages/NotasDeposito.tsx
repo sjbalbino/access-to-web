@@ -312,13 +312,90 @@ export default function NotasDeposito() {
 
       if (depositoError) throw depositoError;
 
+      // Incrementar número atual da NF-e no emitente
+      await supabase
+        .from("emitentes_nfe")
+        .update({ numero_atual_nfe: proximoNumero })
+        .eq("id", emitente.id);
+
       toast({
         title: "NFe criada com sucesso",
-        description: `Nota fiscal ${proximoNumero} criada. Você será redirecionado para revisão.`,
+        description: `Nota fiscal ${proximoNumero} criada. Iniciando transmissão à SEFAZ...`,
       });
 
-      // Redirecionar para o formulário de NF-e
-      navigate(`/notas-fiscais/${notaFiscal.id}`);
+      // Emissão automática à SEFAZ
+      try {
+        const { data: resultEmissao, error: emissaoError } = await supabase.functions.invoke("focus-nfe-emitir", {
+          body: { notaFiscalId: notaFiscal.id }
+        });
+
+        if (emissaoError) {
+          toast({
+            title: "NF-e criada como rascunho",
+            description: "Erro ao transmitir. Acesse Notas Fiscais para emitir manualmente.",
+            variant: "destructive",
+          });
+          navigate(`/notas-fiscais/${notaFiscal.id}`);
+          return;
+        }
+
+        if (resultEmissao?.success && resultEmissao?.ref) {
+          toast({
+            title: "NF-e transmitida",
+            description: "Aguardando autorização da SEFAZ...",
+          });
+          
+          // Polling de status
+          const pollStatus = async (ref: string, maxAttempts = 30) => {
+            for (let i = 0; i < maxAttempts; i++) {
+              await new Promise(resolve => setTimeout(resolve, 3000));
+              
+              const { data: consultaResult } = await supabase.functions.invoke("focus-nfe-consultar", {
+                body: { ref, notaFiscalId: notaFiscal.id }
+              });
+              
+              const status = consultaResult?.data?.status;
+              if (status === "autorizado" || status === "autorizada") {
+                toast({
+                  title: "NF-e Autorizada!",
+                  description: `Protocolo: ${consultaResult?.data?.protocolo || "N/A"}`,
+                });
+                navigate(`/notas-fiscais/${notaFiscal.id}`);
+                return;
+              } else if (status === "erro_autorizacao" || status === "rejeitado" || status === "rejeitada") {
+                toast({
+                  title: "NF-e Rejeitada",
+                  description: consultaResult?.data?.mensagem_sefaz || "Verifique os dados.",
+                  variant: "destructive",
+                });
+                navigate(`/notas-fiscais/${notaFiscal.id}`);
+                return;
+              }
+            }
+            toast({
+              title: "Tempo esgotado",
+              description: "Verifique o status no módulo de Notas Fiscais.",
+            });
+            navigate(`/notas-fiscais/${notaFiscal.id}`);
+          };
+          
+          await pollStatus(resultEmissao.ref);
+        } else {
+          toast({
+            title: "NF-e criada como rascunho",
+            description: resultEmissao?.error || "Acesse Notas Fiscais para emitir.",
+            variant: "destructive",
+          });
+          navigate(`/notas-fiscais/${notaFiscal.id}`);
+        }
+      } catch (emissaoErr: any) {
+        toast({
+          title: "Erro na transmissão",
+          description: "NF-e criada como rascunho. Emita manualmente.",
+          variant: "destructive",
+        });
+        navigate(`/notas-fiscais/${notaFiscal.id}`);
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao gerar NFe",
