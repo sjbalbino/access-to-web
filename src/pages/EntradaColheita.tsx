@@ -637,8 +637,8 @@ export default function EntradaColheita() {
           .update({ numero_atual_nfe: proximoNumero })
           .eq("id", emitente.id);
         
-        // Criar nota de depósito emitida vinculada à NF-e
-        await createNotaDeposito.mutateAsync({
+        // Dados para registrar nota de depósito emitida APÓS autorização
+        const dadosNotaDeposito = {
           inscricao_produtor_id: inscricaoId,
           safra_id: safraId,
           produto_id: formEntrada.variedade_id || null,
@@ -647,8 +647,8 @@ export default function EntradaColheita() {
             ? formContraNota.data_emissao_nfp 
             : format(new Date(), "yyyy-MM-dd"),
           granja_id: granja.id,
-          nota_fiscal_id: notaFiscal.id, // Vincular à NF-e criada
-        });
+          nota_fiscal_id: notaFiscal.id,
+        };
 
         toast.success("NF-e criada. Iniciando transmissão à SEFAZ...");
 
@@ -755,7 +755,18 @@ export default function EntradaColheita() {
 
           if (resultEmissao?.success && resultEmissao?.ref) {
             toast.success("NF-e transmitida. Aguardando autorização da SEFAZ...");
-            await pollStatus(resultEmissao.ref, notaFiscal.id);
+            
+            // Polling com callback para registrar nota de depósito após autorização
+            const pollResult = await pollStatus(resultEmissao.ref, notaFiscal.id);
+            
+            // Verificar se foi autorizada e registrar nota de depósito
+            if (pollResult?.success && (pollResult?.data?.status === "autorizado" || pollResult?.data?.status === "autorizada")) {
+              try {
+                await createNotaDeposito.mutateAsync(dadosNotaDeposito);
+              } catch (depositoErr) {
+                console.error("Erro ao registrar nota de depósito:", depositoErr);
+              }
+            }
           } else if (!resultEmissao?.success) {
             toast.error(resultEmissao?.error || "Erro ao emitir. Acesse Notas Fiscais.");
           }
