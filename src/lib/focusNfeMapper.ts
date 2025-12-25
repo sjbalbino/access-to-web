@@ -1,6 +1,26 @@
 // Mapeia dados do sistema para o formato da API Focus NFe
 // Referência: https://focusnfe.com.br/doc/
 
+// Interface para referência de NFe (modelo 55)
+export interface FocusNfeRefNFe {
+  chave_nfe: string; // Chave de acesso da NFe referenciada (44 dígitos)
+}
+
+// Interface para referência de NFP - Nota Fiscal de Produtor (modelo 04 ou 01)
+export interface FocusNfeRefNFP {
+  uf: string; // UF do emitente
+  aamm: string; // Ano/Mês de emissão (AAMM)
+  cnpj?: string; // CNPJ do emitente (se PJ)
+  cpf?: string; // CPF do emitente (se PF)
+  inscricao_estadual: string; // IE do emitente
+  modelo: string; // Modelo do documento (01 ou 04)
+  serie: number; // Série do documento
+  numero: number; // Número do documento
+}
+
+// Union type para notas referenciadas
+export type FocusNfeNotaReferenciada = FocusNfeRefNFe | FocusNfeRefNFP;
+
 export interface FocusNfeNota {
   natureza_operacao: string;
   data_emissao: string;
@@ -12,6 +32,9 @@ export interface FocusNfeNota {
   // Numeração (IMPORTANTE: enviar para evitar que a API gere automaticamente)
   numero?: number;
   serie?: string;
+  
+  // Notas Fiscais Referenciadas (obrigatório para contranota de produtor)
+  nfes_referenciadas?: FocusNfeNotaReferenciada[];
   
   // Emitente (preenchido via certificado na Focus NFe, mas enviamos para validação)
   cnpj_emitente?: string;
@@ -267,9 +290,58 @@ export interface NotaFiscalItemData {
   valor_is: number | null;
 }
 
+// Interface para notas referenciadas do banco de dados
+export interface NotaReferenciadaData {
+  tipo: 'nfe' | 'nfp';
+  chave_nfe: string | null;
+  nfp_uf: string | null;
+  nfp_aamm: string | null;
+  nfp_cnpj: string | null;
+  nfp_cpf: string | null;
+  nfp_ie: string | null;
+  nfp_modelo: string | null;
+  nfp_serie: number | null;
+  nfp_numero: number | null;
+}
+
+// Mapeia notas referenciadas do banco para formato Focus NFe
+function mapNotasReferenciadas(notas: NotaReferenciadaData[]): FocusNfeNotaReferenciada[] {
+  return notas.map(nota => {
+    if (nota.tipo === 'nfe' && nota.chave_nfe) {
+      // Referência de NFe - apenas a chave de acesso
+      return {
+        chave_nfe: nota.chave_nfe.replace(/\D/g, ''), // Apenas dígitos
+      } as FocusNfeRefNFe;
+    } else {
+      // Referência de NFP - dados do produtor
+      const refNfp: FocusNfeRefNFP = {
+        uf: nota.nfp_uf || '',
+        aamm: nota.nfp_aamm || '',
+        inscricao_estadual: nota.nfp_ie?.replace(/\D/g, '') || '',
+        modelo: nota.nfp_modelo || '04', // Default: Nota de Produtor modelo 04
+        serie: nota.nfp_serie || 0,
+        numero: nota.nfp_numero || 0,
+      };
+      
+      // Adicionar CPF ou CNPJ (limpo, apenas dígitos)
+      const cpfLimpo = nota.nfp_cpf?.replace(/\D/g, '') || '';
+      const cnpjLimpo = nota.nfp_cnpj?.replace(/\D/g, '') || '';
+      
+      if (cpfLimpo && cpfLimpo.length === 11) {
+        refNfp.cpf = cpfLimpo;
+      } else if (cnpjLimpo && cnpjLimpo.length === 14) {
+        refNfp.cnpj = cnpjLimpo;
+      }
+      
+      return refNfp;
+    }
+  });
+}
+
 export function mapNotaToFocusNfe(
   nota: NotaFiscalData,
-  itens: NotaFiscalItemData[]
+  itens: NotaFiscalItemData[],
+  notasReferenciadas?: NotaReferenciadaData[]
 ): FocusNfeNota {
   const inscricao = nota.inscricaoProdutor;
   const emitente = nota.emitente;
@@ -308,6 +380,11 @@ export function mapNotaToFocusNfe(
     // Numeração (IMPORTANTE: enviar para garantir que a SEFAZ use o número correto)
     numero: nota.numero ?? undefined,
     serie: nota.serie ? String(nota.serie) : undefined,
+    
+    // Notas Fiscais Referenciadas (obrigatório para contranota de produtor - CFOP 1905)
+    nfes_referenciadas: notasReferenciadas && notasReferenciadas.length > 0 
+      ? mapNotasReferenciadas(notasReferenciadas) 
+      : undefined,
     
     // Emitente - usar CPF ou CNPJ conforme disponível
     ...(emitenteIsCpf
