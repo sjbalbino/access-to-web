@@ -9,7 +9,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Trash2 } from "lucide-react";
+import { Plus, FileText, Trash2, Loader2, CheckCircle2, XCircle, Check } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { useSafras } from "@/hooks/useSafras";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useSaldosDeposito, useInscricoesComSaldo } from "@/hooks/useSaldosDeposito";
@@ -34,6 +45,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type EmissionStep = "idle" | "validating" | "creating" | "sending" | "processing" | "success" | "error";
+
+interface EmissionStatus {
+  step: EmissionStep;
+  message: string;
+  progress: number;
+  details?: string;
+}
+
 export default function NotasDeposito() {
   const navigate = useNavigate();
   
@@ -52,6 +72,14 @@ export default function NotasDeposito() {
   const [deleteNotaIndex, setDeleteNotaIndex] = useState<number | null>(null);
   
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Estado do painel de progresso
+  const [isEmissionDialogOpen, setIsEmissionDialogOpen] = useState(false);
+  const [emissionStatus, setEmissionStatus] = useState<EmissionStatus>({
+    step: "idle",
+    message: "",
+    progress: 0,
+  });
 
   const { emitirNfe, pollStatus } = useFocusNfe();
 
@@ -117,6 +145,28 @@ export default function NotasDeposito() {
     }
   };
 
+  const handleCloseEmissionDialog = () => {
+    if (emissionStatus.step === "success" || emissionStatus.step === "error" || emissionStatus.step === "idle") {
+      setIsEmissionDialogOpen(false);
+      setEmissionStatus({ step: "idle", message: "", progress: 0 });
+    }
+  };
+
+  const getStepStatus = (step: EmissionStep): "pending" | "active" | "completed" | "error" => {
+    const steps: EmissionStep[] = ["validating", "creating", "sending", "processing"];
+    const currentIndex = steps.indexOf(emissionStatus.step);
+    const stepIndex = steps.indexOf(step);
+
+    if (emissionStatus.step === "error") {
+      if (stepIndex <= currentIndex) return "error";
+      return "pending";
+    }
+    if (emissionStatus.step === "success") return "completed";
+    if (stepIndex < currentIndex) return "completed";
+    if (stepIndex === currentIndex) return "active";
+    return "pending";
+  };
+
   const handleGerarNfe = async () => {
     if (!granjaId || !inscricaoId || !produtoId || !quantidadeKg || !safraId) {
       toast({
@@ -173,6 +223,9 @@ export default function NotasDeposito() {
       return;
     }
 
+    // Abrir diálogo de emissão e iniciar progresso
+    setIsEmissionDialogOpen(true);
+    setEmissionStatus({ step: "validating", message: "Validando dados...", progress: 10 });
     setIsGenerating(true);
 
     try {
@@ -215,6 +268,8 @@ export default function NotasDeposito() {
         return partes.join(" | ");
       })();
 
+      setEmissionStatus({ step: "creating", message: "Criando nota fiscal...", progress: 25 });
+
       // Criar a nota fiscal
       const { data: notaFiscal, error: notaError } = await supabase
         .from('notas_fiscais')
@@ -242,7 +297,7 @@ export default function NotasDeposito() {
           dest_bairro: inscricaoSelecionada?.bairro,
           dest_cidade: inscricaoSelecionada?.cidade,
           dest_uf: inscricaoSelecionada?.uf,
-          dest_cep: inscricaoSelecionada?.cep,
+          dest_cep: inscricaoSelecionada?.cep?.replace(/\D/g, '') || null,
           dest_telefone: inscricaoSelecionada?.telefone,
           dest_email: inscricaoSelecionada?.email,
           // Totais serão calculados pelo item
@@ -347,7 +402,7 @@ export default function NotasDeposito() {
         dest_bairro: inscricaoSelecionada?.bairro || null,
         dest_cidade: inscricaoSelecionada?.cidade || null,
         dest_uf: inscricaoSelecionada?.uf || null,
-        dest_cep: inscricaoSelecionada?.cep || null,
+        dest_cep: inscricaoSelecionada?.cep?.replace(/\D/g, '') || null,
         dest_telefone: inscricaoSelecionada?.telefone || null,
         dest_email: inscricaoSelecionada?.email || null,
         dest_tipo: inscricaoSelecionada?.cpf_cnpj && inscricaoSelecionada.cpf_cnpj.replace(/\D/g, '').length > 11 ? '1' : '0',
@@ -361,7 +416,7 @@ export default function NotasDeposito() {
           bairro: inscricaoPrincipal?.bairro || null,
           cidade: inscricaoPrincipal?.cidade || null,
           uf: inscricaoPrincipal?.uf || null,
-          cep: inscricaoPrincipal?.cep || null,
+          cep: inscricaoPrincipal?.cep?.replace(/\D/g, '') || null,
           produtorNome: inscricaoPrincipal?.produtores?.nome || null,
           granjaNome: granjaSelecionada?.nome_fantasia || granjaSelecionada?.razao_social || null,
         },
@@ -419,25 +474,24 @@ export default function NotasDeposito() {
         valor_is: null,
       }];
 
+      setEmissionStatus({ step: "sending", message: "Enviando para SEFAZ...", progress: 50 });
+
       // Emissão automática à SEFAZ usando o hook
       try {
         const resultEmissao = await emitirNfe(notaFiscal.id, notaDataParaEmissao, itensParaEmissao);
 
         if (!resultEmissao.success) {
-          toast({
-            title: "NF-e criada como rascunho",
-            description: resultEmissao.error || "Erro ao transmitir. Acesse Notas Fiscais para emitir manualmente.",
-            variant: "destructive",
+          setEmissionStatus({
+            step: "error",
+            message: "Erro ao transmitir",
+            progress: 100,
+            details: resultEmissao.error || "Acesse Notas Fiscais para emitir manualmente.",
           });
-          navigate(`/notas-fiscais/${notaFiscal.id}`);
           return;
         }
 
         if (resultEmissao.data?.ref) {
-          toast({
-            title: "NF-e transmitida",
-            description: "Aguardando autorização da SEFAZ...",
-          });
+          setEmissionStatus({ step: "processing", message: "Aguardando retorno da SEFAZ...", progress: 70 });
           
           // Polling de status
           const statusResult = await pollStatus(String(resultEmissao.data.ref), notaFiscal.id, 30, 3000);
@@ -450,46 +504,54 @@ export default function NotasDeposito() {
               console.error("Erro ao registrar nota de depósito:", depositoErr);
             }
             
-            toast({
-              title: "NF-e Autorizada!",
-              description: `Protocolo: ${String(statusResult.data?.protocolo || "N/A")}`,
+            setEmissionStatus({
+              step: "success",
+              message: "NF-e Autorizada!",
+              progress: 100,
+              details: `Protocolo: ${String(statusResult.data?.protocolo || "N/A")}`,
             });
-            navigate(`/notas-fiscais/${notaFiscal.id}`);
+
+            // Limpar formulário
+            setProdutoId("");
+            setQuantidadeKg("");
+            setNotasReferenciadas([]);
           } else if (statusResult.data?.status === "erro_autorizacao" || statusResult.data?.status === "rejeitado") {
-            toast({
-              title: "NF-e Rejeitada",
-              description: String(statusResult.data?.mensagem_sefaz || "Verifique os dados."),
-              variant: "destructive",
+            setEmissionStatus({
+              step: "error",
+              message: "NF-e Rejeitada",
+              progress: 100,
+              details: String(statusResult.data?.mensagem_sefaz || "Verifique os dados."),
             });
-            navigate(`/notas-fiscais/${notaFiscal.id}`);
           } else {
-            toast({
-              title: "Tempo esgotado",
-              description: "Verifique o status no módulo de Notas Fiscais.",
+            setEmissionStatus({
+              step: "error",
+              message: "Tempo esgotado",
+              progress: 100,
+              details: "Verifique o status no módulo de Notas Fiscais.",
             });
-            navigate(`/notas-fiscais/${notaFiscal.id}`);
           }
         } else {
-          toast({
-            title: "NF-e criada como rascunho",
-            description: "Acesse Notas Fiscais para emitir.",
-            variant: "destructive",
+          setEmissionStatus({
+            step: "error",
+            message: "NF-e criada como rascunho",
+            progress: 100,
+            details: "Acesse Notas Fiscais para emitir.",
           });
-          navigate(`/notas-fiscais/${notaFiscal.id}`);
         }
       } catch (emissaoErr: any) {
-        toast({
-          title: "Erro na transmissão",
-          description: "NF-e criada como rascunho. Emita manualmente.",
-          variant: "destructive",
+        setEmissionStatus({
+          step: "error",
+          message: "Erro na transmissão",
+          progress: 100,
+          details: "NF-e criada como rascunho. Emita manualmente.",
         });
-        navigate(`/notas-fiscais/${notaFiscal.id}`);
       }
     } catch (error: any) {
-      toast({
-        title: "Erro ao gerar NFe",
-        description: error.message,
-        variant: "destructive",
+      setEmissionStatus({
+        step: "error",
+        message: "Erro ao gerar NFe",
+        progress: 100,
+        details: error.message,
       });
     } finally {
       setIsGenerating(false);
@@ -808,6 +870,117 @@ export default function NotasDeposito() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Painel de Progresso da Emissão */}
+      <Dialog open={isEmissionDialogOpen} onOpenChange={handleCloseEmissionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {emissionStatus.step === "success" ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              ) : emissionStatus.step === "error" ? (
+                <XCircle className="h-5 w-5 text-destructive" />
+              ) : (
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              )}
+              Emissão de NF-e
+            </DialogTitle>
+            <DialogDescription>
+              Acompanhe o progresso da emissão da nota fiscal
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Progress bar */}
+            <div className="space-y-2">
+              <Progress value={emissionStatus.progress} />
+              <p className="text-sm text-center text-muted-foreground">
+                {emissionStatus.progress}%
+              </p>
+            </div>
+
+            {/* Steps */}
+            <div className="space-y-3">
+              {[
+                { step: "validating" as EmissionStep, label: "Validando dados" },
+                { step: "creating" as EmissionStep, label: "Criando nota fiscal" },
+                { step: "sending" as EmissionStep, label: "Enviando para SEFAZ" },
+                { step: "processing" as EmissionStep, label: "Aguardando retorno" },
+              ].map(({ step, label }) => {
+                const status = getStepStatus(step);
+                return (
+                  <div key={step} className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-6 h-6 rounded-full flex items-center justify-center",
+                      status === "completed" && "bg-green-500 text-white",
+                      status === "active" && "bg-primary text-primary-foreground",
+                      status === "pending" && "bg-muted text-muted-foreground",
+                      status === "error" && "bg-destructive text-destructive-foreground"
+                    )}>
+                      {status === "completed" ? (
+                        <Check className="h-3 w-3" />
+                      ) : status === "active" ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : status === "error" ? (
+                        <XCircle className="h-3 w-3" />
+                      ) : (
+                        <span className="text-xs">•</span>
+                      )}
+                    </div>
+                    <span className={cn(
+                      "text-sm",
+                      status === "active" && "font-medium",
+                      status === "pending" && "text-muted-foreground"
+                    )}>
+                      {label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Status message */}
+            <div className="pt-2">
+              {emissionStatus.step === "success" && (
+                <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-600">NF-e Autorizada!</AlertTitle>
+                  <AlertDescription>
+                    {emissionStatus.details || "A nota fiscal foi autorizada com sucesso pela SEFAZ."}
+                  </AlertDescription>
+                </Alert>
+              )}
+              {emissionStatus.step === "error" && (
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertTitle>Erro na Emissão</AlertTitle>
+                  <AlertDescription>
+                    <div className="space-y-1">
+                      <p>{emissionStatus.message}</p>
+                      {emissionStatus.details && (
+                        <p className="text-xs opacity-80">{emissionStatus.details}</p>
+                      )}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+              {emissionStatus.step !== "success" && emissionStatus.step !== "error" && emissionStatus.step !== "idle" && (
+                <p className="text-sm text-center text-muted-foreground">
+                  {emissionStatus.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            {(emissionStatus.step === "success" || emissionStatus.step === "error") && (
+              <Button onClick={handleCloseEmissionDialog}>
+                Fechar
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
