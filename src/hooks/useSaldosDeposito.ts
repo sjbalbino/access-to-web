@@ -132,6 +132,7 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
 }
 
 // Hook para buscar todas as inscrições com saldo disponível
+// IMPORTANTE: Filtra apenas produtores (não sócios) para notas de depósito
 export function useInscricoesComSaldo(filters: { safraId?: string; granjaId?: string }) {
   return useQuery({
     queryKey: ['inscricoes_com_saldo', filters],
@@ -139,6 +140,7 @@ export function useInscricoesComSaldo(filters: { safraId?: string; granjaId?: st
       if (!filters.safraId) return [];
 
       // Buscar todas as colheitas da safra
+      // Incluir tipo_produtor do produtor para filtrar apenas produtores
       let colheitasQuery = supabase
         .from('colheitas')
         .select(`
@@ -150,7 +152,7 @@ export function useInscricoesComSaldo(filters: { safraId?: string; granjaId?: st
             cpf_cnpj,
             granja,
             granja_id,
-            produtores(nome)
+            produtores(nome, tipo_produtor)
           )
         `)
         .eq('safra_id', filters.safraId)
@@ -173,6 +175,12 @@ export function useInscricoesComSaldo(filters: { safraId?: string; granjaId?: st
       colheitas?.forEach((c: any) => {
         const inscId = c.inscricao_produtor_id;
         if (!inscId || !c.inscricao_produtor) return;
+        
+        // Filtrar apenas produtores (não sócios) - notas de depósito são apenas para produtores
+        const tipoProdutor = c.inscricao_produtor.produtores?.tipo_produtor;
+        if (tipoProdutor !== 'produtor') {
+          return;
+        }
         
         // Filtrar por granja se especificado
         if (filters.granjaId && c.inscricao_produtor.granja_id !== filters.granjaId) {

@@ -48,6 +48,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { toast } from "sonner";
+import { formatCpfCnpj } from "@/lib/formatters";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },
@@ -255,7 +256,7 @@ export default function NotasFiscais() {
                         {nota.dest_nome || "-"}
                       </div>
                       <div className="text-xs text-muted-foreground font-mono">
-                        {nota.dest_cpf_cnpj || "-"}
+                        {formatCpfCnpj(nota.dest_cpf_cnpj) || "-"}
                       </div>
                     </div>
                   </TableCell>

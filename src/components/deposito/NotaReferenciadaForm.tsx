@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { formatCpf, formatCnpj } from "@/lib/formatters";
 
 const UFS = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -66,7 +67,14 @@ export function NotaReferenciadaForm({
   useEffect(() => {
     if (open && inscricao) {
       setNfpUf(inscricao.uf || "");
-      setNfpCpf(inscricao.cpf_cnpj && inscricao.cpf_cnpj.length <= 11 ? inscricao.cpf_cnpj : "");
+      const cpfCnpjLimpo = inscricao.cpf_cnpj?.replace(/\D/g, "") || "";
+      if (cpfCnpjLimpo.length <= 11) {
+        setNfpCpf(cpfCnpjLimpo);
+        setNfpCnpj("");
+      } else {
+        setNfpCnpj(cpfCnpjLimpo);
+        setNfpCpf("");
+      }
       setNfpIe(inscricao.inscricao_estadual || "");
     }
   }, [open, inscricao]);
@@ -220,13 +228,13 @@ export function NotaReferenciadaForm({
               <div className="space-y-2">
                 <Label>CPF do Produtor</Label>
                 <Input
-                  value={nfpCpf}
+                  value={formatCpf(nfpCpf)}
                   onChange={(e) => {
                     setNfpCpf(e.target.value.replace(/\D/g, '').slice(0, 11));
                     if (e.target.value) setNfpCnpj("");
                   }}
-                  placeholder="00000000000"
-                  maxLength={11}
+                  placeholder="000.000.000-00"
+                  maxLength={14}
                   disabled={!!nfpCnpj}
                 />
               </div>
@@ -234,13 +242,13 @@ export function NotaReferenciadaForm({
               <div className="space-y-2">
                 <Label>ou CNPJ do Produtor</Label>
                 <Input
-                  value={nfpCnpj}
+                  value={formatCnpj(nfpCnpj)}
                   onChange={(e) => {
                     setNfpCnpj(e.target.value.replace(/\D/g, '').slice(0, 14));
                     if (e.target.value) setNfpCpf("");
                   }}
-                  placeholder="00000000000000"
-                  maxLength={14}
+                  placeholder="00.000.000/0000-00"
+                  maxLength={18}
                   disabled={!!nfpCpf}
                 />
               </div>

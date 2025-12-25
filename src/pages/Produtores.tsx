@@ -51,12 +51,19 @@ import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { InscricoesTab } from "@/components/produtores/InscricoesTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatCpf, validateCpf, validateCnpj } from "@/lib/formatters";
+import { formatCpf, formatCpfCnpj, formatTelefone, validateCpf, validateCnpj } from "@/lib/formatters";
 import { toast } from "sonner";
 
 const TIPOS_PRODUTOR = [
   { value: "produtor", label: "Produtor" },
   { value: "socio", label: "Sócio" },
+];
+
+const TIPOS_PESSOA = [
+  { value: "fisica", label: "Pessoa Física" },
+  { value: "juridica", label: "Pessoa Jurídica" },
+  { value: "estrangeiro", label: "Estrangeiro" },
+  { value: "produtor_rural", label: "Produtor Rural" },
 ];
 
 const emptyProdutor: ProdutorInput = {
@@ -370,7 +377,7 @@ export default function Produtores() {
                         </span>
                       </TableCell>
                       <TableCell className="font-medium">{produtor.nome}</TableCell>
-                      <TableCell>{produtor.cpf_cnpj || "-"}</TableCell>
+                      <TableCell className="font-mono">{formatCpfCnpj(produtor.cpf_cnpj) || "-"}</TableCell>
                       <TableCell>{produtor.granja?.razao_social || "-"}</TableCell>
                       <TableCell>
                         <span
@@ -468,25 +475,28 @@ export default function Produtores() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="fisica">Pessoa Física</SelectItem>
-                      <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
+                      {TIPOS_PESSOA.map((tipo) => (
+                        <SelectItem key={tipo.value} value={tipo.value}>
+                          {tipo.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>{editFormData.tipo_pessoa === "fisica" ? "CPF" : "CNPJ"}</Label>
+                  <Label>{editFormData.tipo_pessoa === "fisica" || editFormData.tipo_pessoa === "produtor_rural" ? "CPF" : "CNPJ"}</Label>
                   <div className="relative">
                     <Input
-                      value={editFormData.tipo_pessoa === "juridica" 
-                        ? formatCnpj(editFormData.cpf_cnpj || "") 
-                        : editFormData.cpf_cnpj || ""}
+                      value={editFormData.tipo_pessoa === "fisica" || editFormData.tipo_pessoa === "produtor_rural"
+                        ? formatCpf(editFormData.cpf_cnpj || "") 
+                        : formatCnpj(editFormData.cpf_cnpj || "")}
                       onChange={(e) =>
                         setEditFormData({ ...editFormData, cpf_cnpj: e.target.value.replace(/\D/g, "") })
                       }
                       onBlur={(e) => handleCnpjBlurEdit(e.target.value)}
                       disabled={!canEdit}
-                      placeholder={editFormData.tipo_pessoa === "juridica" ? "00.000.000/0000-00" : ""}
-                      maxLength={editFormData.tipo_pessoa === "juridica" ? 18 : 11}
+                      placeholder={editFormData.tipo_pessoa === "fisica" || editFormData.tipo_pessoa === "produtor_rural" ? "000.000.000-00" : "00.000.000/0000-00"}
+                      maxLength={editFormData.tipo_pessoa === "fisica" || editFormData.tipo_pessoa === "produtor_rural" ? 14 : 18}
                     />
                     {cnpjLoading && editFormData.tipo_pessoa === "juridica" && (
                       <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -616,20 +626,22 @@ export default function Produtores() {
                 <div className="space-y-2">
                   <Label>Telefone</Label>
                   <Input
-                    value={editFormData.telefone || ""}
+                    value={formatTelefone(editFormData.telefone || "")}
                     onChange={(e) =>
-                      setEditFormData({ ...editFormData, telefone: e.target.value })
+                      setEditFormData({ ...editFormData, telefone: e.target.value.replace(/\D/g, "") })
                     }
+                    placeholder="(00) 0000-0000"
                     disabled={!canEdit}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Celular</Label>
                   <Input
-                    value={editFormData.celular || ""}
+                    value={formatTelefone(editFormData.celular || "")}
                     onChange={(e) =>
-                      setEditFormData({ ...editFormData, celular: e.target.value })
+                      setEditFormData({ ...editFormData, celular: e.target.value.replace(/\D/g, "") })
                     }
+                    placeholder="(00) 00000-0000"
                     disabled={!canEdit}
                   />
                 </div>
@@ -721,23 +733,26 @@ export default function Produtores() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fisica">Pessoa Física</SelectItem>
-                  <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
+                  {TIPOS_PESSOA.map((tipo) => (
+                    <SelectItem key={tipo.value} value={tipo.value}>
+                      {tipo.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             {/* CPF/CNPJ primeiro quando PJ */}
             <div className="space-y-2">
-              <Label>{newFormData.tipo_pessoa === "fisica" ? "CPF" : "CNPJ"}</Label>
+              <Label>{newFormData.tipo_pessoa === "fisica" || newFormData.tipo_pessoa === "produtor_rural" ? "CPF" : "CNPJ"}</Label>
               <div className="relative">
                 <Input
-                  value={newFormData.tipo_pessoa === "juridica" 
-                    ? formatCnpj(newFormData.cpf_cnpj || "") 
-                    : newFormData.cpf_cnpj || ""}
+                  value={newFormData.tipo_pessoa === "fisica" || newFormData.tipo_pessoa === "produtor_rural"
+                    ? formatCpf(newFormData.cpf_cnpj || "") 
+                    : formatCnpj(newFormData.cpf_cnpj || "")}
                   onChange={(e) => setNewFormData({ ...newFormData, cpf_cnpj: e.target.value.replace(/\D/g, "") })}
                   onBlur={(e) => handleCnpjBlurNew(e.target.value)}
-                  placeholder={newFormData.tipo_pessoa === "juridica" ? "00.000.000/0000-00" : ""}
-                  maxLength={newFormData.tipo_pessoa === "juridica" ? 18 : 11}
+                  placeholder={newFormData.tipo_pessoa === "fisica" || newFormData.tipo_pessoa === "produtor_rural" ? "000.000.000-00" : "00.000.000/0000-00"}
+                  maxLength={newFormData.tipo_pessoa === "fisica" || newFormData.tipo_pessoa === "produtor_rural" ? 14 : 18}
                 />
                 {cnpjLoading && newFormData.tipo_pessoa === "juridica" && (
                   <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -840,15 +855,17 @@ export default function Produtores() {
             <div className="space-y-2">
               <Label>Telefone</Label>
               <Input
-                value={newFormData.telefone || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, telefone: e.target.value })}
+                value={formatTelefone(newFormData.telefone || "")}
+                onChange={(e) => setNewFormData({ ...newFormData, telefone: e.target.value.replace(/\D/g, "") })}
+                placeholder="(00) 0000-0000"
               />
             </div>
             <div className="space-y-2">
               <Label>Celular</Label>
               <Input
-                value={newFormData.celular || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, celular: e.target.value })}
+                value={formatTelefone(newFormData.celular || "")}
+                onChange={(e) => setNewFormData({ ...newFormData, celular: e.target.value.replace(/\D/g, "") })}
+                placeholder="(00) 00000-0000"
               />
             </div>
             <div className="space-y-2 md:col-span-2">
