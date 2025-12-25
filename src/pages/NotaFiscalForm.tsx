@@ -35,7 +35,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loader2, CheckCircle2, XCircle, Download, Check, ChevronRight, ChevronLeft, Package, Truck, CreditCard, FileEdit, User, Building2, Calculator, Banknote } from "lucide-react";
+import { ArrowLeft, FileText, AlertCircle, Plus, Pencil, Trash2, Save, Send, Loader2, CheckCircle2, XCircle, Download, Check, ChevronRight, ChevronLeft, Package, Truck, CreditCard, FileEdit, User, Building2, Calculator, Banknote, Link2 } from "lucide-react";
 import { useNotasFiscais, useNotaFiscalItens, NotaFiscalInsert, NotaFiscalItemInsert } from "@/hooks/useNotasFiscais";
 import { useCfops } from "@/hooks/useCfops";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
@@ -57,6 +57,8 @@ import { cn } from "@/lib/utils";
 import { calculateTaxes, type TaxCalculatorInput } from "@/lib/taxCalculator";
 import { getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
 import { useNotasFiscaisDuplicatas } from "@/hooks/useNotasFiscaisDuplicatas";
+import { useNotasReferenciadas, useCreateNotaReferenciada, useDeleteNotaReferenciada } from "@/hooks/useNotasReferenciadas";
+import { NotaReferenciadaForm, NotaReferenciadaTemp } from "@/components/deposito/NotaReferenciadaForm";
 
 const OPERACOES = [
   { value: 0, label: "Entrada" },
@@ -120,6 +122,7 @@ const TABS = [
   { id: "operacao", label: "Operação", icon: FileEdit },
   { id: "destinatario", label: "Destinatário", icon: User },
   { id: "itens", label: "Itens", icon: Package },
+  { id: "referencias", label: "Referenciadas", icon: Link2 },
   { id: "transporte", label: "Transporte", icon: Truck },
   { id: "cobranca", label: "Cobrança", icon: Banknote },
   { id: "pagamento", label: "Pagamento", icon: CreditCard },
@@ -167,6 +170,9 @@ export default function NotaFiscalForm() {
   const { user } = useAuth();
   const focusNfe = useFocusNfe();
   const { duplicatas, createDuplicata, updateDuplicata, deleteDuplicata } = useNotasFiscaisDuplicatas(id || null);
+  const { data: notasReferenciadas = [], isLoading: isLoadingReferencias } = useNotasReferenciadas(id);
+  const createNotaReferenciada = useCreateNotaReferenciada();
+  const deleteNotaReferenciada = useDeleteNotaReferenciada();
 
   const [currentTab, setCurrentTab] = useState("emitente");
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
@@ -186,6 +192,7 @@ export default function NotaFiscalForm() {
     data_vencimento: "",
     valor: 0,
   });
+  const [isNotaReferenciadaDialogOpen, setIsNotaReferenciadaDialogOpen] = useState(false);
 
   const existingNota = isEditing ? notasFiscais.find((n) => n.id === id) : null;
   
@@ -287,6 +294,7 @@ export default function NotaFiscalForm() {
     operacao: !!formData.natureza_operacao && !!formData.cfop_id && !!formData.data_emissao,
     destinatario: !!formData.dest_cpf_cnpj && !!formData.dest_nome && !!formData.dest_cidade,
     itens: itens.length > 0,
+    referencias: true, // Notas referenciadas são opcionais (apenas obrigatórias para certas operações)
     transporte: true,
     cobranca: true,
     pagamento: true,
@@ -1667,6 +1675,144 @@ export default function NotaFiscalForm() {
     </div>
   );
 
+  // Handler para adicionar nota referenciada
+  const handleAddNotaReferenciada = async (nota: NotaReferenciadaTemp) => {
+    if (!id) {
+      toast.error("Salve a NF-e primeiro antes de adicionar notas referenciadas.");
+      return;
+    }
+    
+    try {
+      await createNotaReferenciada.mutateAsync({
+        nota_fiscal_id: id,
+        tipo: nota.tipo,
+        chave_nfe: nota.chave_nfe || null,
+        nfp_uf: nota.nfp_uf || null,
+        nfp_aamm: nota.nfp_aamm || null,
+        nfp_cnpj: nota.nfp_cnpj || null,
+        nfp_cpf: nota.nfp_cpf || null,
+        nfp_ie: nota.nfp_ie || null,
+        nfp_modelo: nota.tipo === 'nfp' ? '04' : null,
+        nfp_serie: nota.nfp_serie || null,
+        nfp_numero: nota.nfp_numero || null,
+      });
+    } catch (error) {
+      // Erro já tratado no hook
+    }
+  };
+
+  const handleDeleteNotaReferenciada = async (notaRefId: string) => {
+    if (!id) return;
+    try {
+      await deleteNotaReferenciada.mutateAsync({ id: notaRefId, notaFiscalId: id });
+    } catch (error) {
+      // Erro já tratado no hook
+    }
+  };
+
+  const renderReferencias = () => (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-base">Notas Fiscais Referenciadas</CardTitle>
+            <CardDescription>
+              {isReadOnly 
+                ? "Notas fiscais referenciadas nesta NF-e" 
+                : "Adicione NFe ou NFP de produtor que devem ser referenciadas (obrigatório para contra-notas)"}
+            </CardDescription>
+          </div>
+          {!isReadOnly && isEditing && (
+            <Button onClick={() => setIsNotaReferenciadaDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        {!isEditing ? (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Salve a NF-e como rascunho primeiro para adicionar notas referenciadas.
+            </AlertDescription>
+          </Alert>
+        ) : isLoadingReferencias ? (
+          <div className="flex justify-center py-8">
+            <Spinner />
+          </div>
+        ) : notasReferenciadas.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Link2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
+            <p>Nenhuma nota referenciada</p>
+            {!isReadOnly && (
+              <p className="text-sm">Clique em "Adicionar" para referenciar NFe ou NFP</p>
+            )}
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Identificação</TableHead>
+                <TableHead>Detalhes</TableHead>
+                {!isReadOnly && <TableHead className="w-[80px]">Ações</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {notasReferenciadas.map((nota) => (
+                <TableRow key={nota.id}>
+                  <TableCell>
+                    <Badge variant={nota.tipo === 'nfe' ? 'default' : 'secondary'}>
+                      {nota.tipo === 'nfe' ? 'NF-e' : 'NFP'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {nota.tipo === 'nfe' ? (
+                      <span className="break-all">{nota.chave_nfe}</span>
+                    ) : (
+                      <span>
+                        Série {nota.nfp_serie} Nº {nota.nfp_numero}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {nota.tipo === 'nfp' && (
+                      <span>
+                        {nota.nfp_uf} • {nota.nfp_aamm} • {nota.nfp_cpf || nota.nfp_cnpj}
+                      </span>
+                    )}
+                  </TableCell>
+                  {!isReadOnly && (
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteNotaReferenciada(nota.id)}
+                        disabled={deleteNotaReferenciada.isPending}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+
+      {/* Dialog para adicionar nota referenciada */}
+      <NotaReferenciadaForm
+        open={isNotaReferenciadaDialogOpen}
+        onOpenChange={setIsNotaReferenciadaDialogOpen}
+        onAdd={handleAddNotaReferenciada}
+        inscricao={null}
+      />
+    </Card>
+  );
+
   const renderTransporte = () => (
     <Card>
       <CardHeader className="pb-3">
@@ -2476,6 +2622,8 @@ export default function NotaFiscalForm() {
         return renderDestinatario();
       case "itens":
         return renderItens();
+      case "referencias":
+        return renderReferencias();
       case "transporte":
         return renderTransporte();
       case "cobranca":
