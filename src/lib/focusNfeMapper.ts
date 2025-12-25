@@ -509,12 +509,16 @@ function mapItemToFocusNfe(
     cofins_aliquota: item.aliq_cofins || undefined,
     cofins_valor: item.valor_cofins || undefined,
     
-    // IPI - IMPORTANTE: cEnq (código enquadramento) é obrigatório quando IPI é informado
-    ipi_situacao_tributaria: item.cst_ipi || undefined,
-    ipi_codigo_enquadramento: item.cst_ipi ? "999" : undefined, // 999 = Outros (padrão quando não especificado)
-    ipi_base_calculo: item.base_ipi || undefined,
-    ipi_aliquota: item.aliq_ipi || undefined,
-    ipi_valor: item.valor_ipi || undefined,
+    // IPI - Para produtos agrícolas (CFOP 1905, 5905, etc) e CST NT/Isento (53), não enviar grupo IPI
+    // Apenas incluir IPI quando CST for tributado (00, 49, 50, 99) ou tiver valor calculado
+    // CST 53 = IPINT (Não Tributado) - não deve ter grupo IPI no XML
+    ...(item.cst_ipi && !['53', '52', '51', '54', '55'].includes(item.cst_ipi) ? {
+      ipi_situacao_tributaria: item.cst_ipi,
+      ipi_codigo_enquadramento: "999", // 999 = Outros (padrão)
+      ipi_base_calculo: item.base_ipi || undefined,
+      ipi_aliquota: item.aliq_ipi || undefined,
+      ipi_valor: item.valor_ipi || undefined,
+    } : {}),
     
     // Valores adicionais
     valor_desconto: item.valor_desconto || undefined,
