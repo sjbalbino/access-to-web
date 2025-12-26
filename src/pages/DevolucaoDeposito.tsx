@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, Edit, Send } from 'lucide-react';
 import { useDevolucoes, useDeleteDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
@@ -15,6 +15,7 @@ import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { formatNumber } from '@/lib/formatters';
 import { format } from 'date-fns';
 import { DevolucaoDialog } from '@/components/devolucao/DevolucaoDialog';
+import { EmitirNfeDevolucaoDialog } from '@/components/devolucao/EmitirNfeDevolucaoDialog';
 
 export default function DevolucaoDeposito() {
   const [granjaId, setGranjaId] = useState<string>('');
@@ -24,6 +25,9 @@ export default function DevolucaoDeposito() {
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [devolucaoSelecionada, setDevolucaoSelecionada] = useState<DevolucaoDeposito | null>(null);
+  
+  // NFe Dialog state
+  const [nfeDialogDevolucao, setNfeDialogDevolucao] = useState<DevolucaoDeposito | null>(null);
 
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
@@ -139,6 +143,15 @@ export default function DevolucaoDeposito() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
+                            onClick={() => setNfeDialogDevolucao(d)}
+                            disabled={!!d.nota_fiscal_id}
+                            title={d.nota_fiscal_id ? 'NFe já emitida' : 'Emitir NFe'}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
                             onClick={() => handleEditarDevolucao(d)}
                             disabled={!!d.nota_fiscal_id}
                             title={d.nota_fiscal_id ? 'Não é possível editar - NFe emitida' : 'Editar'}
@@ -170,6 +183,13 @@ export default function DevolucaoDeposito() {
           onOpenChange={setDialogOpen}
           devolucao={devolucaoSelecionada}
           defaultFiltros={{ granjaId, safraId, produtoId }}
+        />
+
+        {/* NFe Dialog */}
+        <EmitirNfeDevolucaoDialog
+          devolucao={nfeDialogDevolucao}
+          onClose={() => setNfeDialogDevolucao(null)}
+          onSuccess={() => setNfeDialogDevolucao(null)}
         />
       </div>
     </AppLayout>

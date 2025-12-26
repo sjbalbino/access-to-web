@@ -15,6 +15,7 @@ interface SaldoDisponivelResult {
   transferenciasEnviadas: number;
   devolucoes: number;
   kgTaxaArmazenagem: number;
+  notasDeposito: number; // Notas de depósito emitidas (CFOP 1905)
 }
 
 /**
@@ -29,7 +30,7 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
       const { inscricaoProdutorId, safraId, produtoId, localEntregaId } = filters;
 
       if (!inscricaoProdutorId || !safraId || !produtoId) {
-        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0, devolucoes: 0, kgTaxaArmazenagem: 0 };
+        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0, devolucoes: 0, kgTaxaArmazenagem: 0, notasDeposito: 0 };
       }
 
       // Buscar colheitas (producao_liquida_kg) - filtrar por local de entrega se especificado
@@ -109,7 +110,24 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         0
       );
 
+      // Buscar notas de depósito emitidas (CFOP 1905)
+      const { data: notasDepositoData, error: notasDepositoError } = await supabase
+        .from('notas_deposito_emitidas')
+        .select('quantidade_kg')
+        .eq('inscricao_produtor_id', inscricaoProdutorId)
+        .eq('safra_id', safraId)
+        .eq('produto_id', produtoId);
+
+      if (notasDepositoError) throw notasDepositoError;
+
+      const totalNotasDeposito = (notasDepositoData || []).reduce(
+        (sum, n) => sum + (n.quantidade_kg || 0), 
+        0
+      );
+
       // SALDO = Colheitas + Recebidas - Enviadas - Devoluções - kg_Taxa_Armazenagem
+      // Nota: Notas de Depósito não entram no cálculo do saldo de devolução
+      // pois representam outra operação (regularização fiscal), não baixa de saldo
       const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalKgTaxaArmazenagem;
 
       return {
@@ -119,6 +137,7 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         transferenciasEnviadas: totalEnviadas,
         devolucoes: totalDevolucoes,
         kgTaxaArmazenagem: totalKgTaxaArmazenagem,
+        notasDeposito: totalNotasDeposito,
       };
     },
     enabled: Boolean(filters.inscricaoProdutorId && filters.safraId && filters.produtoId),
