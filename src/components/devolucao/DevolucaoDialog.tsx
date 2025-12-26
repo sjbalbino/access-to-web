@@ -10,7 +10,7 @@ import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
 import { useInscricoesComSaldo, useSaldosDeposito } from '@/hooks/useSaldosDeposito';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { useSaldoDisponivelProdutor } from '@/hooks/useSaldoDisponivelProdutor';
-import { useCreateDevolucao, useUpdateDevolucao, DevolucaoDeposito } from '@/hooks/useDevolucoes';
+import { useCreateDevolucao, useUpdateDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
 import { toast } from 'sonner';
 import { CurrencyInput } from '@/components/ui/currency-input';
 

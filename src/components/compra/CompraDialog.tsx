@@ -9,7 +9,7 @@ import { useSilos } from '@/hooks/useSilos';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
 import { useInscricoesComSaldo } from '@/hooks/useSaldosDeposito';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
-import { useCreateCompraCereal, useUpdateCompraCereal, CompraCereal } from '@/hooks/useComprasCereais';
+import { useCreateCompraCereal, useUpdateCompraCereal, type CompraCereal } from '@/hooks/useComprasCereais';
 import { toast } from 'sonner';
 import { CurrencyInput } from '@/components/ui/currency-input';
 
