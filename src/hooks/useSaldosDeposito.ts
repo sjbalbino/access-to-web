@@ -131,22 +131,39 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
   });
 }
 
-// Hook para buscar todas as inscrições com saldo disponível
-// IMPORTANTE: Filtra apenas produtores (não sócios) para notas de depósito
-export function useInscricoesComSaldo(filters: { safraId?: string; granjaId?: string; produtoId?: string }) {
+// Hook para buscar inscrições com saldo agrupado por Local de Entrega
+export interface InscricaoComSaldoPorLocal {
+  id: string;
+  inscricao_estadual: string | null;
+  cpf_cnpj: string | null;
+  granja: string | null;
+  granja_id: string | null;
+  produtor_nome: string | null;
+  local_entrega_id: string | null;
+  local_entrega_nome: string | null;
+  total_depositado: number;
+}
+
+export function useInscricoesComSaldo(filters: { 
+  safraId?: string; 
+  granjaId?: string;
+  produtoId?: string; 
+  localEntregaId?: string;
+}) {
   return useQuery({
     queryKey: ['inscricoes_com_saldo', filters],
-    queryFn: async () => {
+    queryFn: async (): Promise<InscricaoComSaldoPorLocal[]> => {
       if (!filters.safraId) return [];
 
-      // Buscar todas as colheitas da safra
-      // Incluir tipo_produtor do produtor para filtrar apenas produtores
+      // Buscar todas as colheitas da safra com local de entrega
       let colheitasQuery = supabase
         .from('colheitas')
         .select(`
           inscricao_produtor_id,
           producao_liquida_kg,
           variedade_id,
+          local_entrega_terceiro_id,
+          local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(id, nome),
           inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
             id,
             inscricao_estadual,
@@ -164,52 +181,96 @@ export function useInscricoesComSaldo(filters: { safraId?: string; granjaId?: st
         colheitasQuery = colheitasQuery.eq('variedade_id', filters.produtoId);
       }
 
+      // Filtrar por local de entrega se especificado
+      if (filters.localEntregaId) {
+        colheitasQuery = colheitasQuery.eq('local_entrega_terceiro_id', filters.localEntregaId);
+      }
+
       const { data: colheitas, error } = await colheitasQuery;
       if (error) throw error;
 
-      // Agrupar por inscrição
-      const inscricaoMap = new Map<string, {
-        id: string;
-        inscricao_estadual: string | null;
-        cpf_cnpj: string | null;
-        granja: string | null;
-        granja_id: string | null;
-        produtor_nome: string | null;
-        total_depositado: number;
-      }>();
+      // Agrupar por inscrição + local de entrega
+      const inscricaoMap = new Map<string, InscricaoComSaldoPorLocal>();
 
       colheitas?.forEach((c: any) => {
         const inscId = c.inscricao_produtor_id;
+        const localId = c.local_entrega_terceiro_id;
         if (!inscId || !c.inscricao_produtor) return;
         
-        // Filtrar apenas produtores (não sócios) - notas de depósito são apenas para produtores
+        // Filtrar apenas produtores (não sócios)
         const tipoProdutor = c.inscricao_produtor.produtores?.tipo_produtor;
         if (tipoProdutor !== 'produtor') {
           return;
         }
-        
+
         // Filtrar por granja se especificado
         if (filters.granjaId && c.inscricao_produtor.granja_id !== filters.granjaId) {
           return;
         }
 
-        const existing = inscricaoMap.get(inscId);
+        // Chave única: inscrição + local de entrega
+        const key = `${inscId}_${localId || 'sem_local'}`;
+
+        const existing = inscricaoMap.get(key);
         if (existing) {
           existing.total_depositado += Number(c.producao_liquida_kg) || 0;
         } else {
-          inscricaoMap.set(inscId, {
+          inscricaoMap.set(key, {
             id: inscId,
             inscricao_estadual: c.inscricao_produtor.inscricao_estadual,
             cpf_cnpj: c.inscricao_produtor.cpf_cnpj,
             granja: c.inscricao_produtor.granja,
             granja_id: c.inscricao_produtor.granja_id,
             produtor_nome: c.inscricao_produtor.produtores?.nome || null,
+            local_entrega_id: localId,
+            local_entrega_nome: c.local_entrega?.nome || null,
             total_depositado: Number(c.producao_liquida_kg) || 0,
           });
         }
       });
 
       return Array.from(inscricaoMap.values()).filter(i => i.total_depositado > 0);
+    },
+    enabled: !!filters.safraId,
+  });
+}
+
+// Hook para buscar locais de entrega que têm colheitas
+export function useLocaisEntregaComColheitas(filters: { safraId?: string; produtoId?: string }) {
+  return useQuery({
+    queryKey: ['locais_entrega_com_colheitas', filters],
+    queryFn: async () => {
+      if (!filters.safraId) return [];
+
+      let query = supabase
+        .from('colheitas')
+        .select(`
+          local_entrega_terceiro_id,
+          local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(id, nome, is_sede)
+        `)
+        .eq('safra_id', filters.safraId)
+        .not('local_entrega_terceiro_id', 'is', null);
+
+      if (filters.produtoId) {
+        query = query.eq('variedade_id', filters.produtoId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Extrair locais únicos
+      const locaisMap = new Map<string, { id: string; nome: string; is_sede: boolean }>();
+      data?.forEach((c: any) => {
+        if (c.local_entrega && !locaisMap.has(c.local_entrega.id)) {
+          locaisMap.set(c.local_entrega.id, {
+            id: c.local_entrega.id,
+            nome: c.local_entrega.nome,
+            is_sede: c.local_entrega.is_sede || false,
+          });
+        }
+      });
+
+      return Array.from(locaisMap.values());
     },
     enabled: !!filters.safraId,
   });
