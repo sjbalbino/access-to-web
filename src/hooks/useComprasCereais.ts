@@ -43,7 +43,15 @@ export interface CompraCereal {
   nota_fiscal?: { id: string; numero: number; status: string };
 }
 
-export type CompraCerealInput = Omit<CompraCereal, 'id' | 'codigo' | 'created_at' | 'updated_at' | 'granja' | 'safra' | 'inscricao_comprador' | 'inscricao_vendedor' | 'produto' | 'silo' | 'nota_fiscal'>;
+export type CompraCerealInput = Partial<Omit<CompraCereal, 'id' | 'codigo' | 'created_at' | 'updated_at' | 'granja' | 'safra' | 'inscricao_comprador' | 'inscricao_vendedor' | 'produto' | 'silo' | 'nota_fiscal'>> & {
+  granja_id: string;
+  safra_id: string;
+  produto_id: string;
+  inscricao_comprador_id: string;
+  inscricao_vendedor_id: string;
+  quantidade_kg: number;
+  data_compra: string;
+};
 
 interface CompraFilters {
   granjaId?: string;
