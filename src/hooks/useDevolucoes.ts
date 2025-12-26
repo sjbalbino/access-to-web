@@ -45,7 +45,15 @@ export interface DevolucaoDeposito {
   nota_fiscal?: { id: string; numero: number; status: string };
 }
 
-export type DevolucaoInput = Omit<DevolucaoDeposito, 'id' | 'codigo' | 'created_at' | 'updated_at' | 'granja' | 'safra' | 'inscricao_emitente' | 'inscricao_produtor' | 'produto' | 'silo' | 'nota_fiscal'>;
+export type DevolucaoInput = Partial<Omit<DevolucaoDeposito, 'id' | 'codigo' | 'created_at' | 'updated_at' | 'granja' | 'safra' | 'inscricao_emitente' | 'inscricao_produtor' | 'produto' | 'silo' | 'nota_fiscal'>> & {
+  granja_id: string;
+  safra_id: string;
+  produto_id: string;
+  inscricao_emitente_id: string;
+  inscricao_produtor_id: string;
+  quantidade_kg: number;
+  data_devolucao: string;
+};
 
 interface DevolucaoFilters {
   granjaId?: string;
