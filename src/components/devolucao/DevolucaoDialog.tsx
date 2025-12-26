@@ -6,12 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSilos } from '@/hooks/useSilos';
-import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
-import { useInscricoesComSaldo } from '@/hooks/useSaldosDeposito';
+import { useInscricoesComSaldo, useLocaisEntregaComColheitas } from '@/hooks/useSaldosDeposito';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
-import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
 import { useSaldoDisponivelProdutor } from '@/hooks/useSaldoDisponivelProdutor';
 import { useCreateDevolucao, useUpdateDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
 import { toast } from 'sonner';
@@ -30,13 +28,12 @@ interface DevolucaoDialogProps {
 }
 
 export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros }: DevolucaoDialogProps) {
-  // Campos do formulário (incluindo seleção de granja, safra e produto)
-  const [granjaId, setGranjaId] = useState('');
+  // Campos do formulário - Granja removido, será obtido do Local de Entrega
   const [safraId, setSafraId] = useState('');
   const [produtoId, setProdutoId] = useState('');
+  const [localEntregaId, setLocalEntregaId] = useState('');
   const [dataDevolucao, setDataDevolucao] = useState(new Date().toISOString().split('T')[0]);
   const [siloId, setSiloId] = useState('');
-  const [localEntregaId, setLocalEntregaId] = useState('');
   const [inscricaoEmitenteId, setInscricaoEmitenteId] = useState('');
   const [inscricaoProdutorId, setInscricaoProdutorId] = useState('');
   const [quantidadeKg, setQuantidadeKg] = useState(0);
@@ -47,25 +44,30 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
   const [observacao, setObservacao] = useState('');
 
   // Dados de referência
-  const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
   const { data: produtos } = useProdutosSementes();
   const { data: silos } = useSilos();
-  const { data: locaisEntrega } = useLocaisEntrega(granjaId);
   const { data: inscricoesSocio } = useInscricoesSocio();
   
-  // Inscrições com saldo - agora filtra por produto também
-  const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
+  // Locais de entrega que têm colheitas para a safra/produto selecionado
+  const { data: locaisEntregaComColheitas } = useLocaisEntregaComColheitas({ 
     safraId, 
-    granjaId,
     produtoId 
   });
+  
+  // Inscrições com saldo - filtrado por safra, produto e local de entrega
+  const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
+    safraId, 
+    produtoId,
+    localEntregaId
+  });
 
-  // Saldo do produtor selecionado
+  // Saldo do produtor selecionado - agora inclui local de entrega
   const { data: saldoProdutor } = useSaldoDisponivelProdutor({
     inscricaoProdutorId,
     safraId,
     produtoId,
+    localEntregaId,
   });
 
   const createDevolucao = useCreateDevolucao();
@@ -77,12 +79,11 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
   useEffect(() => {
     if (devolucao) {
       // Modo edição - carregar dados da devolução
-      setGranjaId(devolucao.granja_id || '');
       setSafraId(devolucao.safra_id || '');
       setProdutoId(devolucao.produto_id || '');
+      setLocalEntregaId((devolucao as any).local_entrega_id || '');
       setDataDevolucao(devolucao.data_devolucao || new Date().toISOString().split('T')[0]);
       setSiloId(devolucao.silo_id || '');
-      setLocalEntregaId((devolucao as any).local_entrega_id || '');
       setInscricaoEmitenteId(devolucao.inscricao_emitente_id || '');
       setInscricaoProdutorId(devolucao.inscricao_produtor_id || '');
       setQuantidadeKg(devolucao.quantidade_kg || 0);
@@ -95,7 +96,6 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       // Modo novo - usar defaults dos filtros se disponível
       resetForm();
       if (defaultFiltros) {
-        if (defaultFiltros.granjaId) setGranjaId(defaultFiltros.granjaId);
         if (defaultFiltros.safraId) setSafraId(defaultFiltros.safraId);
         if (defaultFiltros.produtoId) setProdutoId(defaultFiltros.produtoId);
       }
@@ -114,12 +114,11 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
   }, [quantidadeKg, taxaArmazenagem]);
 
   const resetForm = () => {
-    setGranjaId('');
     setSafraId('');
     setProdutoId('');
+    setLocalEntregaId('');
     setDataDevolucao(new Date().toISOString().split('T')[0]);
     setSiloId('');
-    setLocalEntregaId('');
     setInscricaoEmitenteId('');
     setInscricaoProdutorId('');
     setQuantidadeKg(0);
@@ -130,14 +129,23 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     setObservacao('');
   };
 
-  // Limpar produtor quando mudar granja/safra/produto
+  // Limpar local de entrega e produtor quando mudar safra/produto
+  useEffect(() => {
+    setLocalEntregaId('');
+    setInscricaoProdutorId('');
+  }, [safraId, produtoId]);
+
+  // Limpar produtor quando mudar local de entrega
   useEffect(() => {
     setInscricaoProdutorId('');
-  }, [granjaId, safraId, produtoId]);
+  }, [localEntregaId]);
+
+  // Buscar granja_id do local de entrega selecionado
+  const localSelecionado = locaisEntregaComColheitas?.find(l => l.id === localEntregaId);
 
   const handleSubmit = async () => {
-    if (!granjaId || !safraId || !produtoId) {
-      toast.error('Selecione Granja, Safra e Produto');
+    if (!safraId || !produtoId) {
+      toast.error('Selecione Safra e Produto');
       return;
     }
 
@@ -148,10 +156,31 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
     const saldoDisponivel = saldoProdutor?.saldo || 0;
     const quantidadeOriginal = devolucao?.quantidade_kg || 0;
-    const saldoAjustado = saldoDisponivel + quantidadeOriginal;
+    const kgTaxaOriginal = devolucao?.kg_taxa_armazenagem || 0;
+    // Ao editar, adicionar de volta a quantidade e taxa original ao saldo
+    const saldoAjustado = saldoDisponivel + quantidadeOriginal + kgTaxaOriginal;
 
-    if (quantidadeKg > saldoAjustado) {
-      toast.error(`Quantidade excede o saldo disponível (${formatNumber(saldoAjustado, 3)} kg)`);
+    // A quantidade + kg de taxa não pode exceder o saldo
+    const totalDevolucao = quantidadeKg + kgTaxaArmazenagem;
+    if (totalDevolucao > saldoAjustado) {
+      toast.error(`Quantidade + Taxa (${formatNumber(totalDevolucao, 3)} kg) excede o saldo disponível (${formatNumber(saldoAjustado, 3)} kg)`);
+      return;
+    }
+
+    // Buscar granja_id do local de entrega ou usar uma granja padrão
+    // Para isso, precisamos buscar do banco
+    let granjaId = devolucao?.granja_id || '';
+    
+    if (localEntregaId && !granjaId) {
+      // Buscar granja do local de entrega
+      const { data: localData } = await import('@/integrations/supabase/client').then(m => 
+        m.supabase.from('locais_entrega').select('granja_id').eq('id', localEntregaId).maybeSingle()
+      );
+      granjaId = localData?.granja_id || '';
+    }
+
+    if (!granjaId) {
+      toast.error('Não foi possível identificar a granja. Selecione um Local de Entrega.');
       return;
     }
 
@@ -187,8 +216,6 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     }
   };
 
-  const produtoSelecionado = produtos?.find(p => p.id === produtoId);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -197,22 +224,8 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          {/* Seleção de Granja, Safra e Produto */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Granja *</Label>
-              <Select value={granjaId} onValueChange={setGranjaId} disabled={isEditing}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {granjas?.map(g => (
-                    <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          {/* Seleção de Safra e Produto */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Safra *</Label>
               <Select value={safraId} onValueChange={setSafraId} disabled={isEditing}>
@@ -244,28 +257,36 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Data da Devolução *</Label>
-              <Input
-                type="date"
-                value={dataDevolucao}
-                onChange={e => setDataDevolucao(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Local de Entrega</Label>
-              <Select value={localEntregaId} onValueChange={setLocalEntregaId}>
+              <Label>Local de Entrega *</Label>
+              <Select 
+                value={localEntregaId} 
+                onValueChange={setLocalEntregaId}
+                disabled={!safraId || !produtoId || isEditing}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue placeholder={
+                    !safraId || !produtoId 
+                      ? "Selecione safra e produto primeiro..." 
+                      : "Selecione..."
+                  } />
                 </SelectTrigger>
                 <SelectContent>
-                  {locaisEntrega?.map(l => (
+                  {locaisEntregaComColheitas?.map(l => (
                     <SelectItem key={l.id} value={l.id}>
                       {l.nome} {l.is_sede ? '(Sede)' : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Data da Devolução *</Label>
+              <Input
+                type="date"
+                value={dataDevolucao}
+                onChange={e => setDataDevolucao(e.target.value)}
+              />
             </div>
           </div>
 
@@ -306,33 +327,36 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
             <Select 
               value={inscricaoProdutorId} 
               onValueChange={setInscricaoProdutorId}
-              disabled={!granjaId || !safraId || !produtoId}
+              disabled={!safraId || !produtoId || !localEntregaId}
             >
               <SelectTrigger>
                 <SelectValue placeholder={
-                  !granjaId || !safraId || !produtoId 
-                    ? "Selecione granja, safra e produto primeiro..." 
+                  !safraId || !produtoId || !localEntregaId
+                    ? "Selecione safra, produto e local primeiro..." 
                     : "Selecione o produtor..."
                 } />
               </SelectTrigger>
               <SelectContent>
                 {inscricoesComSaldo?.map(i => (
                   <SelectItem key={i.id} value={i.id}>
-                    {i.produtor_nome} - IE: {i.inscricao_estadual} ({formatNumber(i.total_depositado, 3)} kg)
+                    {i.produtor_nome} - IE: {i.inscricao_estadual} ({formatNumber(i.total_depositado, 3)} kg depositados)
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {inscricaoProdutorId && saldoProdutor && (
-              <p className="text-sm text-muted-foreground">
-                Saldo disponível para devolução: <span className="font-medium">{formatNumber(saldoProdutor.saldo, 3)} kg</span>
-                <span className="text-xs ml-2">
-                  (Colheitas: {formatNumber(saldoProdutor.colheitas, 3)} + 
+              <div className="p-3 bg-muted rounded-md text-sm">
+                <p className="font-medium">
+                  Saldo disponível para devolução: <span className="text-primary">{formatNumber(saldoProdutor.saldo, 3)} kg</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Colheitas: {formatNumber(saldoProdutor.colheitas, 3)} + 
                   Recebidas: {formatNumber(saldoProdutor.transferenciasRecebidas, 3)} - 
                   Enviadas: {formatNumber(saldoProdutor.transferenciasEnviadas, 3)} - 
-                  Devoluções: {formatNumber(saldoProdutor.devolucoes, 3)})
-                </span>
-              </p>
+                  Devoluções: {formatNumber(saldoProdutor.devolucoes, 3)} - 
+                  Taxa Armaz.: {formatNumber(saldoProdutor.kgTaxaArmazenagem, 3)}
+                </p>
+              </div>
             )}
           </div>
 
@@ -382,8 +406,8 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
             <div className="space-y-2">
               <Label>Qtde. Armazenagem (kg)</Label>
               <Input
-                type="number"
-                value={formatNumber(kgTaxaArmazenagem, 3)}
+                type="text"
+                value={kgTaxaArmazenagem.toFixed(3).replace('.', ',')}
                 disabled
                 className="bg-muted"
               />
