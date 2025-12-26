@@ -133,7 +133,7 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
 
 // Hook para buscar todas as inscrições com saldo disponível
 // IMPORTANTE: Filtra apenas produtores (não sócios) para notas de depósito
-export function useInscricoesComSaldo(filters: { safraId?: string; granjaId?: string }) {
+export function useInscricoesComSaldo(filters: { safraId?: string; granjaId?: string; produtoId?: string }) {
   return useQuery({
     queryKey: ['inscricoes_com_saldo', filters],
     queryFn: async () => {
@@ -146,6 +146,7 @@ export function useInscricoesComSaldo(filters: { safraId?: string; granjaId?: st
         .select(`
           inscricao_produtor_id,
           producao_liquida_kg,
+          variedade_id,
           inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
             id,
             inscricao_estadual,
@@ -157,6 +158,11 @@ export function useInscricoesComSaldo(filters: { safraId?: string; granjaId?: st
         `)
         .eq('safra_id', filters.safraId)
         .not('inscricao_produtor_id', 'is', null);
+
+      // Filtrar por produto se especificado
+      if (filters.produtoId) {
+        colheitasQuery = colheitasQuery.eq('variedade_id', filters.produtoId);
+      }
 
       const { data: colheitas, error } = await colheitasQuery;
       if (error) throw error;

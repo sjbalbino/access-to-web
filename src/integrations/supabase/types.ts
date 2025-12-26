@@ -923,6 +923,7 @@ export type Database = {
           inscricao_produtor_id: string
           inscricao_recebe_taxa_id: string | null
           kg_taxa_armazenagem: number | null
+          local_entrega_id: string | null
           nota_fiscal_id: string | null
           observacao: string | null
           produto_id: string
@@ -945,6 +946,7 @@ export type Database = {
           inscricao_produtor_id: string
           inscricao_recebe_taxa_id?: string | null
           kg_taxa_armazenagem?: number | null
+          local_entrega_id?: string | null
           nota_fiscal_id?: string | null
           observacao?: string | null
           produto_id: string
@@ -967,6 +969,7 @@ export type Database = {
           inscricao_produtor_id?: string
           inscricao_recebe_taxa_id?: string | null
           kg_taxa_armazenagem?: number | null
+          local_entrega_id?: string | null
           nota_fiscal_id?: string | null
           observacao?: string | null
           produto_id?: string
@@ -1006,6 +1009,13 @@ export type Database = {
             columns: ["inscricao_recebe_taxa_id"]
             isOneToOne: false
             referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_deposito_local_entrega_id_fkey"
+            columns: ["local_entrega_id"]
+            isOneToOne: false
+            referencedRelation: "locais_entrega"
             referencedColumns: ["id"]
           },
           {
