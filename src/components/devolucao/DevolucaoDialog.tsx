@@ -129,16 +129,20 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     setObservacao('');
   };
 
-  // Limpar local de entrega e produtor quando mudar safra/produto
+  // Limpar local de entrega e produtor quando mudar safra/produto (apenas no modo novo)
   useEffect(() => {
-    setLocalEntregaId('');
-    setInscricaoProdutorId('');
-  }, [safraId, produtoId]);
+    if (!isEditing) {
+      setLocalEntregaId('');
+      setInscricaoProdutorId('');
+    }
+  }, [safraId, produtoId, isEditing]);
 
-  // Limpar produtor quando mudar local de entrega
+  // Limpar produtor quando mudar local de entrega (apenas no modo novo)
   useEffect(() => {
-    setInscricaoProdutorId('');
-  }, [localEntregaId]);
+    if (!isEditing) {
+      setInscricaoProdutorId('');
+    }
+  }, [localEntregaId, isEditing]);
 
   // Buscar granja_id do local de entrega selecionado
   const localSelecionado = locaisEntregaComColheitas?.find(l => l.id === localEntregaId);
