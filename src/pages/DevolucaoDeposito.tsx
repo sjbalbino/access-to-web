@@ -42,8 +42,6 @@ export default function DevolucaoDeposito() {
     setDialogOpen(true);
   };
 
-  const filtrosPreenchidos = granjaId && safraId && produtoId;
-
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -51,7 +49,7 @@ export default function DevolucaoDeposito() {
           title="Devolução de Depósito"
           description="CFOP 5949 - Devolução de mercadoria depositada (baixa saldo produtor)"
           actions={
-            <Button onClick={handleNovaDevolucao} disabled={!filtrosPreenchidos}>
+            <Button onClick={handleNovaDevolucao}>
               <Plus className="h-4 w-4 mr-2" /> Nova Devolução
             </Button>
           }
@@ -171,7 +169,7 @@ export default function DevolucaoDeposito() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           devolucao={devolucaoSelecionada}
-          filtros={{ granjaId, safraId, produtoId }}
+          defaultFiltros={{ granjaId, safraId, produtoId }}
         />
       </div>
     </AppLayout>
