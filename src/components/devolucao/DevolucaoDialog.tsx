@@ -360,6 +360,11 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                   Devoluções: {formatNumber(saldoProdutor.devolucoes, 3)} - 
                   Taxa Armaz.: {formatNumber(saldoProdutor.kgTaxaArmazenagem, 3)}
                 </p>
+                {saldoProdutor.notasDeposito > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    📄 Notas Depósito emitidas: <span className="font-medium">{formatNumber(saldoProdutor.notasDeposito, 3)} kg</span>
+                  </p>
+                )}
               </div>
             )}
           </div>
