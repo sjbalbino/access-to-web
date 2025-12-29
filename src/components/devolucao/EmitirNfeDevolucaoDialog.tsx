@@ -461,68 +461,68 @@ export function EmitirNfeDevolucaoDialog({
     }
   };
 
-  if (!devolucao) return null;
-
   return (
-    <Dialog open={!!devolucao} onOpenChange={() => !isProcessing && onClose()}>
+    <Dialog open={!!devolucao} onOpenChange={(open) => !open && !isProcessing && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Emitir NF-e - Devolução #{devolucao.codigo}</DialogTitle>
+          <DialogTitle>Emitir NF-e - Devolução #{devolucao?.codigo}</DialogTitle>
         </DialogHeader>
 
-        <div className="py-6">
-          {status.step === "idle" ? (
-            <div className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Emissão Automática - CFOP 5906</AlertTitle>
-                <AlertDescription>
-                  Será criada uma NF-e de retorno de mercadoria depositada.
-                  A nota será transmitida automaticamente à SEFAZ.
-                </AlertDescription>
-              </Alert>
+        {devolucao && (
+          <div className="py-6">
+            {status.step === "idle" ? (
+              <div className="space-y-4">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Emissão Automática - CFOP 5906</AlertTitle>
+                  <AlertDescription>
+                    Será criada uma NF-e de retorno de mercadoria depositada.
+                    A nota será transmitida automaticamente à SEFAZ.
+                  </AlertDescription>
+                </Alert>
 
-              <div className="text-sm space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Quantidade:</span>
-                  <span className="font-medium">{formatNumber(devolucao.quantidade_kg, 3)} kg</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Valor:</span>
-                  <span className="font-medium">
-                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(devolucao.valor_total || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Produtor:</span>
-                  <span className="font-medium">{devolucao.inscricao_produtor?.produtores?.nome || "-"}</span>
-                </div>
-                {(devolucao.taxa_armazenagem || 0) > 0 && (
+                <div className="text-sm space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Taxa Armazenagem:</span>
-                    <span className="font-medium">{formatNumber(devolucao.kg_taxa_armazenagem || 0, 3)} kg ({devolucao.taxa_armazenagem}%)</span>
+                    <span className="text-muted-foreground">Quantidade:</span>
+                    <span className="font-medium">{formatNumber(devolucao.quantidade_kg, 3)} kg</span>
                   </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="flex flex-col items-center gap-4">
-                {getStepIcon()}
-                <div className="text-center">
-                  <p className="font-medium">{status.message}</p>
-                  {status.details && (
-                    <p className="text-sm text-muted-foreground mt-1">{status.details}</p>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Valor:</span>
+                    <span className="font-medium">
+                      {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(devolucao.valor_total || 0)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Produtor:</span>
+                    <span className="font-medium">{devolucao.inscricao_produtor?.produtores?.nome || "-"}</span>
+                  </div>
+                  {(devolucao.taxa_armazenagem || 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Taxa Armazenagem:</span>
+                      <span className="font-medium">{formatNumber(devolucao.kg_taxa_armazenagem || 0, 3)} kg ({devolucao.taxa_armazenagem}%)</span>
+                    </div>
                   )}
                 </div>
               </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex flex-col items-center gap-4">
+                  {getStepIcon()}
+                  <div className="text-center">
+                    <p className="font-medium">{status.message}</p>
+                    {status.details && (
+                      <p className="text-sm text-muted-foreground mt-1">{status.details}</p>
+                    )}
+                  </div>
+                </div>
 
-              {status.step !== "success" && status.step !== "error" && (
-                <Progress value={status.progress} className="h-2" />
-              )}
-            </div>
-          )}
-        </div>
+                {status.step !== "success" && status.step !== "error" && (
+                  <Progress value={status.progress} className="h-2" />
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <DialogFooter>
           {status.step === "idle" && (
