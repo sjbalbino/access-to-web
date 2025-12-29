@@ -42,7 +42,7 @@ export default function CompraCereais() {
     setDialogOpen(true);
   };
 
-  const filtrosPreenchidos = granjaId && safraId && produtoId;
+  
 
   return (
     <AppLayout>
@@ -51,7 +51,7 @@ export default function CompraCereais() {
           title="Compra de Cereais"
           description="CFOP 1102 - Compra para comercialização (soma saldo sócio)"
           actions={
-            <Button onClick={handleNovaCompra} disabled={!filtrosPreenchidos}>
+            <Button onClick={handleNovaCompra}>
               <Plus className="h-4 w-4 mr-2" /> Nova Compra
             </Button>
           }
@@ -171,7 +171,6 @@ export default function CompraCereais() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           compra={compraSelecionada}
-          filtros={{ granjaId, safraId, produtoId }}
         />
       </div>
     </AppLayout>
