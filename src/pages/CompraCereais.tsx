@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit } from 'lucide-react';
+import { Plus, Trash2, Edit, Send } from 'lucide-react';
 import { useComprasCereais, useDeleteCompraCereal, type CompraCereal } from '@/hooks/useComprasCereais';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
@@ -15,6 +15,7 @@ import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { formatNumber } from '@/lib/formatters';
 import { format } from 'date-fns';
 import { CompraDialog } from '@/components/compra/CompraDialog';
+import { EmitirNfeCompraDialog } from '@/components/compra/EmitirNfeCompraDialog';
 
 export default function CompraCereais() {
   const [granjaId, setGranjaId] = useState<string>('');
@@ -24,12 +25,13 @@ export default function CompraCereais() {
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [compraSelecionada, setCompraSelecionada] = useState<CompraCereal | null>(null);
+  const [nfeDialogCompra, setNfeDialogCompra] = useState<CompraCereal | null>(null);
 
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
   const { data: produtos } = useProdutosSementes();
   
-  const { data: compras, isLoading } = useComprasCereais({ granjaId, safraId, produtoId });
+  const { data: compras, isLoading, refetch } = useComprasCereais({ granjaId, safraId, produtoId });
   const deleteCompra = useDeleteCompraCereal();
 
   const handleNovaCompra = () => {
@@ -42,7 +44,9 @@ export default function CompraCereais() {
     setDialogOpen(true);
   };
 
-  
+  const handleEmitirNfe = (compra: CompraCereal) => {
+    setNfeDialogCompra(compra);
+  };
 
   return (
     <AppLayout>
@@ -141,6 +145,15 @@ export default function CompraCereais() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
+                            onClick={() => handleEmitirNfe(c)}
+                            disabled={!!c.nota_fiscal_id}
+                            title={c.nota_fiscal_id ? 'NFe já emitida' : 'Emitir NFe'}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
                             onClick={() => handleEditarCompra(c)}
                             disabled={!!c.nota_fiscal_id}
                             title={c.nota_fiscal_id ? 'Não é possível editar - NFe emitida' : 'Editar'}
@@ -166,11 +179,21 @@ export default function CompraCereais() {
           </CardContent>
         </Card>
 
-        {/* Dialog */}
+        {/* Dialog de Compra */}
         <CompraDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           compra={compraSelecionada}
+        />
+
+        {/* Dialog de Emissão de NFe */}
+        <EmitirNfeCompraDialog
+          compra={nfeDialogCompra}
+          onClose={() => setNfeDialogCompra(null)}
+          onSuccess={() => {
+            setNfeDialogCompra(null);
+            refetch();
+          }}
         />
       </div>
     </AppLayout>
