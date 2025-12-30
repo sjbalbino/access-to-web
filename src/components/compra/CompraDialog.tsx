@@ -22,6 +22,7 @@ import { useInscricoesCompletas } from '@/hooks/useInscricoesCompletas';
 import { useCreateCompraCereal, useUpdateCompraCereal, type CompraCereal } from '@/hooks/useComprasCereais';
 import { useFocusNfe } from '@/hooks/useFocusNfe';
 import { NotaReferenciadaForm, NotaReferenciadaTemp } from '@/components/deposito/NotaReferenciadaForm';
+import { useNotasReferenciadasCompra, useSyncNotasReferenciadasCompra } from '@/hooks/useCompraCereaisNotasReferenciadas';
 import { toast } from 'sonner';
 import { toast as toastHook } from '@/hooks/use-toast';
 import { CurrencyInput } from '@/components/ui/currency-input';
@@ -88,6 +89,10 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
   const createCompra = useCreateCompraCereal();
   const updateCompra = useUpdateCompraCereal();
+  const syncNotasReferenciadas = useSyncNotasReferenciadasCompra();
+  
+  // Carregar notas referenciadas existentes da compra
+  const { data: notasExistentes } = useNotasReferenciadasCompra(compra?.id);
 
   const isEditing = !!compra;
   const emitente = inscricaoPrincipal?.emitente;
@@ -120,6 +125,24 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
     return cfops.find(c => c.codigo === codigoCfop);
   }, [cfops, inscricaoPrincipal?.uf, inscricaoVendedor?.uf]);
 
+  // Carregar notas referenciadas existentes quando abrir edição
+  useEffect(() => {
+    if (notasExistentes && notasExistentes.length > 0) {
+      const notas: NotaReferenciadaTemp[] = notasExistentes.map(n => ({
+        tipo: n.tipo as 'nfe' | 'nfp',
+        chave_nfe: n.chave_nfe || undefined,
+        nfp_uf: n.nfp_uf || undefined,
+        nfp_aamm: n.nfp_aamm || undefined,
+        nfp_cnpj: n.nfp_cnpj || undefined,
+        nfp_cpf: n.nfp_cpf || undefined,
+        nfp_ie: n.nfp_ie || undefined,
+        nfp_serie: n.nfp_serie ? parseInt(n.nfp_serie, 10) : undefined,
+        nfp_numero: n.nfp_numero ? parseInt(n.nfp_numero, 10) : undefined,
+      }));
+      setNotasReferenciadas(notas);
+    }
+  }, [notasExistentes]);
+
   useEffect(() => {
     if (compra) {
       setGranjaId(compra.granja_id || '');
@@ -133,7 +156,10 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
       setValorUnitarioKg(compra.valor_unitario_kg || 0);
       setValorTotal(compra.valor_total || 0);
       setObservacao(compra.observacao || '');
-      setNotasReferenciadas([]);
+      // Notas referenciadas são carregadas pelo useEffect acima (notasExistentes)
+      if (!compra.id) {
+        setNotasReferenciadas([]);
+      }
     } else {
       resetForm();
     }
@@ -201,20 +227,45 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
     observacao,
   });
 
-  // Apenas salvar a compra
+  // Converter notas temp para formato de input para sincronização
+  const notasParaSync = () => notasReferenciadas.map(n => ({
+    tipo: n.tipo,
+    chave_nfe: n.tipo === 'nfe' ? n.chave_nfe : null,
+    nfp_uf: n.tipo === 'nfp' ? n.nfp_uf : null,
+    nfp_aamm: n.tipo === 'nfp' ? n.nfp_aamm : null,
+    nfp_cnpj: n.tipo === 'nfp' ? n.nfp_cnpj : null,
+    nfp_cpf: n.tipo === 'nfp' ? n.nfp_cpf : null,
+    nfp_ie: n.tipo === 'nfp' ? n.nfp_ie : null,
+    nfp_modelo: n.tipo === 'nfp' ? '04' : null,
+    nfp_serie: n.tipo === 'nfp' ? String(n.nfp_serie || '') : null,
+    nfp_numero: n.tipo === 'nfp' ? String(n.nfp_numero || '') : null,
+  }));
+
+  // Apenas salvar a compra (com notas referenciadas)
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     const dados = getDadosCompra();
 
     try {
+      let compraId: string;
+      
       if (isEditing && compra) {
         await updateCompra.mutateAsync({ id: compra.id, ...dados });
+        compraId = compra.id;
         toast.success('Compra atualizada com sucesso!');
       } else {
-        await createCompra.mutateAsync(dados);
+        const novaCompra = await createCompra.mutateAsync(dados);
+        compraId = novaCompra.id;
         toast.success('Compra registrada com sucesso!');
       }
+      
+      // Sincronizar notas referenciadas
+      await syncNotasReferenciadas.mutateAsync({
+        compraId,
+        notas: notasParaSync(),
+      });
+      
       onOpenChange(false);
       resetForm();
     } catch (error) {

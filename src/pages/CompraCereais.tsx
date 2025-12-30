@@ -13,7 +13,7 @@ import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { formatNumber } from '@/lib/formatters';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { CompraDialog } from '@/components/compra/CompraDialog';
 import { EmitirNfeCompraDialog } from '@/components/compra/EmitirNfeCompraDialog';
 
@@ -130,7 +130,7 @@ export default function CompraCereais() {
                   ) : compras.map(c => (
                     <TableRow key={c.id}>
                       <TableCell>{c.codigo}</TableCell>
-                      <TableCell>{format(new Date(c.data_compra), 'dd/MM/yyyy')}</TableCell>
+                      <TableCell>{format(parseISO(c.data_compra), 'dd/MM/yyyy')}</TableCell>
                       <TableCell>{c.inscricao_vendedor?.produtores?.nome}</TableCell>
                       <TableCell>{c.produto?.nome}</TableCell>
                       <TableCell className="text-right">{formatNumber(c.quantidade_kg, 3)}</TableCell>
