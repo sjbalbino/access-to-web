@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -10,13 +10,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, CheckCircle2, XCircle, AlertCircle, ExternalLink } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, AlertCircle, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { CompraCereal, useUpdateCompraCereal } from "@/hooks/useComprasCereais";
-import { formatNumber } from "@/lib/formatters";
+import { formatNumber, formatCpf, formatCnpj } from "@/lib/formatters";
+import { NotaReferenciadaForm, NotaReferenciadaTemp } from "@/components/deposito/NotaReferenciadaForm";
 
 interface EmitirNfeCompraDialogProps {
   compra: CompraCereal | null;
@@ -24,7 +25,7 @@ interface EmitirNfeCompraDialogProps {
   onSuccess: () => void;
 }
 
-type EmissionStep = "idle" | "loading_data" | "creating_nfe" | "creating_item" | "sending" | "polling" | "success" | "error";
+type EmissionStep = "idle" | "loading_data" | "creating_nfe" | "creating_item" | "creating_ref" | "sending" | "polling" | "success" | "error";
 
 interface EmissionStatus {
   step: EmissionStep;
@@ -48,6 +49,42 @@ export function EmitirNfeCompraDialog({
   const [isProcessing, setIsProcessing] = useState(false);
   const updateCompra = useUpdateCompraCereal();
   const focusNfe = useFocusNfe();
+  
+  // Estado para notas referenciadas
+  const [notasReferenciadas, setNotasReferenciadas] = useState<NotaReferenciadaTemp[]>([]);
+  const [showNotaReferenciadaForm, setShowNotaReferenciadaForm] = useState(false);
+  const [inscricaoVendedorData, setInscricaoVendedorData] = useState<{
+    cpf_cnpj?: string | null;
+    inscricao_estadual?: string | null;
+    uf?: string | null;
+  } | null>(null);
+
+  // Buscar dados do vendedor quando o dialog abrir
+  useEffect(() => {
+    if (compra) {
+      supabase
+        .from("inscricoes_produtor")
+        .select("cpf_cnpj, inscricao_estadual, uf")
+        .eq("id", compra.inscricao_vendedor_id)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setInscricaoVendedorData(data);
+          }
+        });
+    } else {
+      setNotasReferenciadas([]);
+      setInscricaoVendedorData(null);
+    }
+  }, [compra]);
+
+  const handleAddNotaReferenciada = (nota: NotaReferenciadaTemp) => {
+    setNotasReferenciadas(prev => [...prev, nota]);
+  };
+
+  const handleRemoveNotaReferenciada = (index: number) => {
+    setNotasReferenciadas(prev => prev.filter((_, i) => i !== index));
+  };
 
   const cleanDigits = (value: string | null | undefined, maxLen?: number): string | null => {
     if (!value) return null;
@@ -274,6 +311,35 @@ export function EmitirNfeCompraDialog({
         throw new Error(`Erro ao criar item da nota: ${itemError.message}`);
       }
 
+      // 5. Criar notas referenciadas (NFP/NFe do vendedor)
+      if (notasReferenciadas.length > 0) {
+        setStatus({ step: "creating_ref", message: "Adicionando notas referenciadas...", progress: 50, notaFiscalId: notaFiscal.id });
+        
+        for (const notaRef of notasReferenciadas) {
+          const notaRefData = {
+            nota_fiscal_id: notaFiscal.id,
+            tipo: notaRef.tipo,
+            chave_nfe: notaRef.tipo === 'nfe' ? notaRef.chave_nfe : null,
+            nfp_uf: notaRef.tipo === 'nfp' ? notaRef.nfp_uf : null,
+            nfp_aamm: notaRef.tipo === 'nfp' ? notaRef.nfp_aamm : null,
+            nfp_cnpj: notaRef.tipo === 'nfp' ? notaRef.nfp_cnpj : null,
+            nfp_cpf: notaRef.tipo === 'nfp' ? notaRef.nfp_cpf : null,
+            nfp_ie: notaRef.tipo === 'nfp' ? notaRef.nfp_ie : null,
+            nfp_modelo: notaRef.tipo === 'nfp' ? '04' : null,
+            nfp_serie: notaRef.tipo === 'nfp' ? notaRef.nfp_serie : null,
+            nfp_numero: notaRef.tipo === 'nfp' ? notaRef.nfp_numero : null,
+          };
+          
+          const { error: refError } = await supabase
+            .from("notas_fiscais_referenciadas")
+            .insert(notaRefData);
+          
+          if (refError) {
+            console.warn("Aviso: erro ao inserir nota referenciada:", refError.message);
+          }
+        }
+      }
+
       setStatus({ step: "sending", message: "Enviando para SEFAZ...", progress: 60, notaFiscalId: notaFiscal.id });
 
       // 5. Preparar dados para emissão
@@ -497,6 +563,56 @@ export function EmitirNfeCompraDialog({
                     <span className="font-medium">{compra.inscricao_comprador?.produtores?.nome}</span>
                   </div>
                 </div>
+
+                {/* Seção de Notas Referenciadas */}
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm">Notas Referenciadas (NFP/NFe do Vendedor)</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowNotaReferenciadaForm(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Adicionar
+                    </Button>
+                  </div>
+                  
+                  {notasReferenciadas.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      Nenhuma nota referenciada adicionada
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {notasReferenciadas.map((nota, index) => (
+                        <div key={index} className="flex items-center justify-between bg-muted rounded-md px-3 py-2 text-sm">
+                          <div className="flex-1 min-w-0">
+                            {nota.tipo === 'nfe' ? (
+                              <span className="font-mono text-xs truncate block">
+                                NFe: {nota.chave_nfe?.substring(0, 20)}...
+                              </span>
+                            ) : (
+                              <span>
+                                NFP: {nota.nfp_uf} - Série {nota.nfp_serie} Nº {nota.nfp_numero}
+                                {nota.nfp_cpf && ` (${formatCpf(nota.nfp_cpf)})`}
+                                {nota.nfp_cnpj && ` (${formatCnpj(nota.nfp_cnpj)})`}
+                              </span>
+                            )}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveNotaReferenciada(index)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -545,6 +661,14 @@ export function EmitirNfeCompraDialog({
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Dialog para adicionar nota referenciada */}
+      <NotaReferenciadaForm
+        open={showNotaReferenciadaForm}
+        onOpenChange={setShowNotaReferenciadaForm}
+        onAdd={handleAddNotaReferenciada}
+        inscricao={inscricaoVendedorData}
+      />
     </Dialog>
   );
 }
