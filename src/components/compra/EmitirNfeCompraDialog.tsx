@@ -524,15 +524,15 @@ export function EmitirNfeCompraDialog({
 
   return (
     <Dialog open={!!compra} onOpenChange={(open) => !open && !isProcessing && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Emitir NF-e - Compra #{compra?.codigo}</DialogTitle>
         </DialogHeader>
 
         {compra && (
-          <div className="py-6">
+          <div className="py-4">
             {status.step === "idle" ? (
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Emissão Automática - CFOP 1102/2102</AlertTitle>
