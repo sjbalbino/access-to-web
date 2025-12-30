@@ -59,9 +59,15 @@ export function EmitirNfeCompraDialog({
     uf?: string | null;
   } | null>(null);
 
-  // Buscar dados do vendedor quando o dialog abrir
+  // Resetar estado e buscar dados do vendedor quando o dialog abrir
   useEffect(() => {
     if (compra) {
+      // Sempre resetar para o estado inicial ao abrir
+      setStatus({ step: "idle", message: "", progress: 0 });
+      setIsProcessing(false);
+      setShowNotaReferenciadaForm(false);
+      setNotasReferenciadas([]);
+      
       supabase
         .from("inscricoes_produtor")
         .select("cpf_cnpj, inscricao_estadual, uf")
@@ -566,8 +572,11 @@ export function EmitirNfeCompraDialog({
 
                 {/* Seção de Notas Referenciadas */}
                 <div className="border-t pt-4 mt-4">
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Se o produtor vendedor emitiu uma NFP ou NFe, adicione a referência abaixo antes de emitir.
+                  </p>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm">Notas Referenciadas (NFP/NFe do Vendedor)</span>
+                    <span className="font-medium text-sm">Notas Referenciadas ({notasReferenciadas.length})</span>
                     <Button
                       type="button"
                       variant="outline"
