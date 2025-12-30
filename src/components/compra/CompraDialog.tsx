@@ -589,7 +589,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
             .from('compras_cereais')
             .update({ 
               nota_fiscal_id: notaFiscal.id, 
-              status: 'faturada' 
+              status: 'nfe_emitida' 
             })
             .eq('id', compraId);
 
