@@ -39,10 +39,16 @@ export interface NotaReferenciadaTemp {
   nfp_numero?: number;
 }
 
+export interface NotaReferenciadaEdit extends NotaReferenciadaTemp {
+  id: string;
+}
+
 interface NotaReferenciadaFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdd: (nota: NotaReferenciadaTemp) => void;
+  onUpdate?: (id: string, nota: NotaReferenciadaTemp) => void;
+  editingNota?: NotaReferenciadaEdit | null;
   inscricao?: {
     cpf_cnpj?: string | null;
     inscricao_estadual?: string | null;
@@ -54,8 +60,11 @@ export function NotaReferenciadaForm({
   open, 
   onOpenChange, 
   onAdd,
+  onUpdate,
+  editingNota,
   inscricao 
 }: NotaReferenciadaFormProps) {
+  const isEditing = !!editingNota;
   const [tipo, setTipo] = useState<'nfe' | 'nfp'>('nfp');
   
   // Campos NFe
@@ -70,26 +79,39 @@ export function NotaReferenciadaForm({
   const [nfpSerie, setNfpSerie] = useState("");
   const [nfpNumero, setNfpNumero] = useState("");
 
-  // Preencher campos com dados da inscrição e AAMM padrão quando o dialog abrir
+  // Preencher campos com dados da nota em edição ou da inscrição
   useEffect(() => {
     if (open) {
-      // Sempre definir AAMM padrão com ano/mês atual
-      setNfpAamm(getCurrentAamm());
-      
-      if (inscricao) {
-        setNfpUf(inscricao.uf || "");
-        const cpfCnpjLimpo = inscricao.cpf_cnpj?.replace(/\D/g, "") || "";
-        if (cpfCnpjLimpo.length <= 11) {
-          setNfpCpf(cpfCnpjLimpo);
-          setNfpCnpj("");
-        } else {
-          setNfpCnpj(cpfCnpjLimpo);
-          setNfpCpf("");
+      if (editingNota) {
+        // Modo edição: preencher com dados da nota existente
+        setTipo(editingNota.tipo);
+        setChaveNfe(editingNota.chave_nfe || "");
+        setNfpUf(editingNota.nfp_uf || "");
+        setNfpAamm(editingNota.nfp_aamm || "");
+        setNfpCnpj(editingNota.nfp_cnpj || "");
+        setNfpCpf(editingNota.nfp_cpf || "");
+        setNfpIe(editingNota.nfp_ie || "");
+        setNfpSerie(editingNota.nfp_serie?.toString() || "");
+        setNfpNumero(editingNota.nfp_numero?.toString() || "");
+      } else {
+        // Modo adição: usar AAMM padrão e dados da inscrição
+        setNfpAamm(getCurrentAamm());
+        
+        if (inscricao) {
+          setNfpUf(inscricao.uf || "");
+          const cpfCnpjLimpo = inscricao.cpf_cnpj?.replace(/\D/g, "") || "";
+          if (cpfCnpjLimpo.length <= 11) {
+            setNfpCpf(cpfCnpjLimpo);
+            setNfpCnpj("");
+          } else {
+            setNfpCnpj(cpfCnpjLimpo);
+            setNfpCpf("");
+          }
+          setNfpIe(inscricao.inscricao_estadual || "");
         }
-        setNfpIe(inscricao.inscricao_estadual || "");
       }
     }
-  }, [open, inscricao]);
+  }, [open, inscricao, editingNota]);
 
   const resetForm = () => {
     setTipo('nfp');
@@ -106,6 +128,8 @@ export function NotaReferenciadaForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    let notaData: NotaReferenciadaTemp;
+
     if (tipo === 'nfe') {
       if (!chaveNfe || chaveNfe.length !== 44) {
         toast({
@@ -116,10 +140,10 @@ export function NotaReferenciadaForm({
         return;
       }
 
-      onAdd({
+      notaData = {
         tipo: 'nfe',
         chave_nfe: chaveNfe,
-      });
+      };
     } else {
       if (!nfpUf || !nfpAamm || !nfpIe || !nfpSerie || !nfpNumero) {
         toast({
@@ -148,7 +172,7 @@ export function NotaReferenciadaForm({
         return;
       }
 
-      onAdd({
+      notaData = {
         tipo: 'nfp',
         nfp_uf: nfpUf,
         nfp_aamm: nfpAamm,
@@ -157,7 +181,13 @@ export function NotaReferenciadaForm({
         nfp_ie: nfpIe,
         nfp_serie: parseInt(nfpSerie),
         nfp_numero: parseInt(nfpNumero),
-      });
+      };
+    }
+
+    if (isEditing && editingNota && onUpdate) {
+      onUpdate(editingNota.id, notaData);
+    } else {
+      onAdd(notaData);
     }
 
     resetForm();
@@ -168,7 +198,7 @@ export function NotaReferenciadaForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Adicionar Nota Referenciada</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar Nota Referenciada' : 'Adicionar Nota Referenciada'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -305,7 +335,7 @@ export function NotaReferenciadaForm({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">Adicionar</Button>
+            <Button type="submit">{isEditing ? 'Salvar' : 'Adicionar'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

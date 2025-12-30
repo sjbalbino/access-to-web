@@ -101,3 +101,37 @@ export function useDeleteNotaReferenciada() {
     },
   });
 }
+
+export function useUpdateNotaReferenciada() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, notaFiscalId, data }: { 
+      id: string; 
+      notaFiscalId: string; 
+      data: Partial<NotaReferenciadaInput> 
+    }) => {
+      const { error } = await supabase
+        .from('notas_fiscais_referenciadas')
+        .update(data)
+        .eq('id', id);
+      
+      if (error) throw error;
+      return notaFiscalId;
+    },
+    onSuccess: (notaFiscalId) => {
+      queryClient.invalidateQueries({ queryKey: ['notas_referenciadas', notaFiscalId] });
+      toast({
+        title: 'Nota referenciada atualizada',
+        description: 'Os dados foram salvos com sucesso.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro ao atualizar nota referenciada',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
