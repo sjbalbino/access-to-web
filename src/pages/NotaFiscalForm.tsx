@@ -58,8 +58,8 @@ import { cn } from "@/lib/utils";
 import { calculateTaxes, type TaxCalculatorInput } from "@/lib/taxCalculator";
 import { getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
 import { useNotasFiscaisDuplicatas } from "@/hooks/useNotasFiscaisDuplicatas";
-import { useNotasReferenciadas, useCreateNotaReferenciada, useDeleteNotaReferenciada } from "@/hooks/useNotasReferenciadas";
-import { NotaReferenciadaForm, NotaReferenciadaTemp } from "@/components/deposito/NotaReferenciadaForm";
+import { useNotasReferenciadas, useCreateNotaReferenciada, useDeleteNotaReferenciada, useUpdateNotaReferenciada } from "@/hooks/useNotasReferenciadas";
+import { NotaReferenciadaForm, NotaReferenciadaTemp, NotaReferenciadaEdit } from "@/components/deposito/NotaReferenciadaForm";
 
 const OPERACOES = [
   { value: 0, label: "Entrada" },
@@ -195,6 +195,7 @@ export default function NotaFiscalForm() {
     valor: 0,
   });
   const [isNotaReferenciadaDialogOpen, setIsNotaReferenciadaDialogOpen] = useState(false);
+  const [editingNotaReferenciada, setEditingNotaReferenciada] = useState<(NotaReferenciadaTemp & { id: string }) | null>(null);
 
   const existingNota = isEditing ? notasFiscais.find((n) => n.id === id) : null;
   
@@ -1717,6 +1718,49 @@ export default function NotaFiscalForm() {
     }
   };
 
+  const updateNotaReferenciada = useUpdateNotaReferenciada();
+
+  const handleEditNotaReferenciada = (nota: any) => {
+    setEditingNotaReferenciada({
+      id: nota.id,
+      tipo: nota.tipo,
+      chave_nfe: nota.chave_nfe || undefined,
+      nfp_uf: nota.nfp_uf || undefined,
+      nfp_aamm: nota.nfp_aamm || undefined,
+      nfp_cnpj: nota.nfp_cnpj || undefined,
+      nfp_cpf: nota.nfp_cpf || undefined,
+      nfp_ie: nota.nfp_ie || undefined,
+      nfp_serie: nota.nfp_serie || undefined,
+      nfp_numero: nota.nfp_numero || undefined,
+    });
+    setIsNotaReferenciadaDialogOpen(true);
+  };
+
+  const handleUpdateNotaReferenciada = async (notaRefId: string, nota: NotaReferenciadaTemp) => {
+    if (!id) return;
+    try {
+      await updateNotaReferenciada.mutateAsync({
+        id: notaRefId,
+        notaFiscalId: id,
+        data: {
+          tipo: nota.tipo,
+          chave_nfe: nota.chave_nfe || null,
+          nfp_uf: nota.nfp_uf || null,
+          nfp_aamm: nota.nfp_aamm || null,
+          nfp_cnpj: nota.nfp_cnpj || null,
+          nfp_cpf: nota.nfp_cpf || null,
+          nfp_ie: nota.nfp_ie || null,
+          nfp_modelo: nota.tipo === 'nfp' ? '04' : null,
+          nfp_serie: nota.nfp_serie || null,
+          nfp_numero: nota.nfp_numero || null,
+        },
+      });
+      setEditingNotaReferenciada(null);
+    } catch (error) {
+      // Erro já tratado no hook
+    }
+  };
+
   const renderReferencias = () => (
     <Card>
       <CardHeader className="pb-3">
@@ -1764,7 +1808,7 @@ export default function NotaFiscalForm() {
                 <TableHead>Tipo</TableHead>
                 <TableHead>Identificação</TableHead>
                 <TableHead>Detalhes</TableHead>
-                {!isReadOnly && <TableHead className="w-[80px]">Ações</TableHead>}
+                {!isReadOnly && <TableHead className="w-[100px]">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1793,14 +1837,23 @@ export default function NotaFiscalForm() {
                   </TableCell>
                   {!isReadOnly && (
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteNotaReferenciada(nota.id)}
-                        disabled={deleteNotaReferenciada.isPending}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditNotaReferenciada(nota)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteNotaReferenciada(nota.id)}
+                          disabled={deleteNotaReferenciada.isPending}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
@@ -1810,12 +1863,21 @@ export default function NotaFiscalForm() {
         )}
       </CardContent>
 
-      {/* Dialog para adicionar nota referenciada */}
+      {/* Dialog para adicionar/editar nota referenciada */}
       <NotaReferenciadaForm
         open={isNotaReferenciadaDialogOpen}
-        onOpenChange={setIsNotaReferenciadaDialogOpen}
+        onOpenChange={(open) => {
+          setIsNotaReferenciadaDialogOpen(open);
+          if (!open) setEditingNotaReferenciada(null);
+        }}
         onAdd={handleAddNotaReferenciada}
-        inscricao={null}
+        onUpdate={handleUpdateNotaReferenciada}
+        editingNota={editingNotaReferenciada}
+        inscricao={{
+          cpf_cnpj: formData.dest_cpf_cnpj,
+          inscricao_estadual: formData.dest_ie,
+          uf: formData.dest_uf,
+        }}
       />
     </Card>
   );
