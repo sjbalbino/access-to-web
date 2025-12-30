@@ -175,6 +175,7 @@ export default function NotaFiscalForm() {
   const { data: notasReferenciadas = [], isLoading: isLoadingReferencias } = useNotasReferenciadas(id);
   const createNotaReferenciada = useCreateNotaReferenciada();
   const deleteNotaReferenciada = useDeleteNotaReferenciada();
+  const updateNotaReferenciada = useUpdateNotaReferenciada();
 
   const [currentTab, setCurrentTab] = useState("emitente");
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
@@ -1717,8 +1718,6 @@ export default function NotaFiscalForm() {
       // Erro já tratado no hook
     }
   };
-
-  const updateNotaReferenciada = useUpdateNotaReferenciada();
 
   const handleEditNotaReferenciada = (nota: any) => {
     setEditingNotaReferenciada({
