@@ -663,6 +663,62 @@ export type Database = {
           },
         ]
       }
+      compras_cereais_notas_referenciadas: {
+        Row: {
+          chave_nfe: string | null
+          compra_id: string
+          created_at: string | null
+          id: string
+          nfp_aamm: string | null
+          nfp_cnpj: string | null
+          nfp_cpf: string | null
+          nfp_ie: string | null
+          nfp_modelo: string | null
+          nfp_numero: string | null
+          nfp_serie: string | null
+          nfp_uf: string | null
+          tipo: string
+        }
+        Insert: {
+          chave_nfe?: string | null
+          compra_id: string
+          created_at?: string | null
+          id?: string
+          nfp_aamm?: string | null
+          nfp_cnpj?: string | null
+          nfp_cpf?: string | null
+          nfp_ie?: string | null
+          nfp_modelo?: string | null
+          nfp_numero?: string | null
+          nfp_serie?: string | null
+          nfp_uf?: string | null
+          tipo: string
+        }
+        Update: {
+          chave_nfe?: string | null
+          compra_id?: string
+          created_at?: string | null
+          id?: string
+          nfp_aamm?: string | null
+          nfp_cnpj?: string | null
+          nfp_cpf?: string | null
+          nfp_ie?: string | null
+          nfp_modelo?: string | null
+          nfp_numero?: string | null
+          nfp_serie?: string | null
+          nfp_uf?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_cereais_notas_referenciadas_compra_id_fkey"
+            columns: ["compra_id"]
+            isOneToOne: false
+            referencedRelation: "compras_cereais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos_venda: {
         Row: {
           a_fixar: boolean | null
