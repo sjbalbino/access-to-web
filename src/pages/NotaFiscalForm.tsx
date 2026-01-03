@@ -310,6 +310,18 @@ export default function NotaFiscalForm() {
   const totalTabs = TABS.length;
   const overallProgress = Math.round((completedTabs / totalTabs) * 100);
 
+  // Normalizar dest_tipo de valores legados para o novo formato (NT 2025.002)
+  const normalizeDestTipo = (tipo: string | null | undefined): string => {
+    if (!tipo) return "1"; // Default: Pessoa Jurídica
+    // Se já é um valor válido (0, 1, 2, 3), retorna ele
+    if (["0", "1", "2", "3"].includes(tipo)) return tipo;
+    // Converter valores legados
+    if (tipo === "juridica" || tipo === "PJ" || tipo === "pj") return "1";
+    if (tipo === "fisica" || tipo === "PF" || tipo === "pf") return "0";
+    // Default para outros casos
+    return "1";
+  };
+
   // Load existing nota data
   useEffect(() => {
     if (existingNota) {
@@ -323,7 +335,7 @@ export default function NotaFiscalForm() {
         natureza_operacao: existingNota.natureza_operacao || "",
         finalidade: existingNota.finalidade ?? 1,
         cfop_id: existingNota.cfop_id || "",
-        dest_tipo: existingNota.dest_tipo || "PJ",
+        dest_tipo: normalizeDestTipo(existingNota.dest_tipo),
         dest_cpf_cnpj: existingNota.dest_cpf_cnpj || "",
         dest_nome: existingNota.dest_nome || "",
         dest_ie: existingNota.dest_ie || "",
