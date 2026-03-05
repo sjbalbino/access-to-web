@@ -20,6 +20,7 @@ interface ImportacaoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   config: TableConfig;
+  tenantId?: string;
   onImportComplete?: (count: number) => void;
 }
 
