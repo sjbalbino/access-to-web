@@ -434,6 +434,28 @@ export function AppSidebar() {
                           </Link>
                         </li>
                       )}
+                      {isAdmin && (
+                        <li>
+                          <Link
+                            to="/importar-dados"
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                              "hover:bg-sidebar-accent",
+                              location.pathname === "/importar-dados"
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                                : "text-sidebar-foreground"
+                            )}
+                          >
+                            <DatabaseBackup
+                              className={cn(
+                                "h-5 w-5 flex-shrink-0",
+                                location.pathname === "/importar-dados" ? "text-sidebar-primary-foreground" : "text-cyan-600"
+                              )}
+                            />
+                            <span className="font-medium">Importar Dados</span>
+                          </Link>
+                        </li>
+                      )}
                     </ul>
                   </CollapsibleContent>
                 </Collapsible>
