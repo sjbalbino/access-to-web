@@ -38,6 +38,7 @@ import EntradaColheita from "./pages/EntradaColheita";
 import DevolucaoDeposito from "./pages/DevolucaoDeposito";
 import CompraCereais from "./pages/CompraCereais";
 import Relatorios from "./pages/Relatorios";
+import ImportarDados from "./pages/ImportarDados";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
