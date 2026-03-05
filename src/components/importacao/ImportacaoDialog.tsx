@@ -20,12 +20,13 @@ interface ImportacaoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   config: TableConfig;
+  tenantId?: string;
   onImportComplete?: (count: number) => void;
 }
 
 type ImportStatus = 'idle' | 'parsing' | 'previewing' | 'importing' | 'done' | 'error';
 
-export function ImportacaoDialog({ open, onOpenChange, config, onImportComplete }: ImportacaoDialogProps) {
+export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImportComplete }: ImportacaoDialogProps) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [rawData, setRawData] = useState<Record<string, any>[]>([]);
@@ -138,6 +139,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, onImportComplete 
           if (validDbColumns.has(key)) {
             clean[key] = value;
           }
+        }
+        // Inject tenant_id for granjas table
+        if (config.tableName === 'granjas' && tenantId) {
+          clean['tenant_id'] = tenantId;
         }
         return clean;
       });
