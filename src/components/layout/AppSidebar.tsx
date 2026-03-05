@@ -150,7 +150,7 @@ export function AppSidebar() {
           updated[group.title] = true;
         }
       });
-      if (["/usuarios", "/tenants"].includes(location.pathname)) {
+      if (["/usuarios", "/tenants", "/importar-dados"].includes(location.pathname)) {
         updated["Administração"] = true;
       }
       return updated;
