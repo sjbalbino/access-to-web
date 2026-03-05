@@ -26,6 +26,7 @@ import {
   ShoppingCart,
   ArrowRightLeft,
   BarChart3,
+  DatabaseBackup,
   LucideIcon,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
