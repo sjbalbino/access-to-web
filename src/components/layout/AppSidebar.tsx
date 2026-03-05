@@ -137,7 +137,7 @@ export function AppSidebar() {
       initial[group.title] = isGroupActive(group.items);
     });
     // Administração
-    initial["Administração"] = ["/usuarios", "/tenants"].includes(location.pathname);
+    initial["Administração"] = ["/usuarios", "/tenants", "/importar-dados"].includes(location.pathname);
     return initial;
   });
 
