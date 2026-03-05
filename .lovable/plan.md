@@ -1,97 +1,94 @@
 
+## Relatorios Gerenciais e Extratos dos Produtores
 
-## Importacao de Dados do Sistema Legado (Access → Excel → AgroGestao)
+### Objetivo
+Criar uma nova pagina de Relatorios com tres relatorios principais em PDF:
+1. **Extrato do Produtor** - Movimentacao completa de um produtor (colheitas, transferencias, devolucoes, notas de deposito)
+2. **Relatorio de Colheitas** - Listagem de colheitas com filtros e totalizadores
+3. **Relatorio de Vendas** - Resumo dos contratos de venda com remessas
 
-### Abordagem
+---
 
-Criar uma pagina dedicada de **Importacao de Dados** com um fluxo guiado, tabela por tabela, respeitando a ordem de dependencias. O usuario exporta cada tabela do Access como Excel (.xlsx) e importa no sistema seguindo a sequencia correta.
+### Estrutura
 
-O projeto ja possui o padrao de importacao Excel funcionando (`ImportarUmidadesDialog` usando a lib `xlsx`). Vamos reutilizar esse mesmo padrao para todas as tabelas.
+#### 1. Nova pagina: `src/pages/Relatorios.tsx`
+Pagina central de relatorios com cards para cada tipo de relatorio. Cada card abre um dialog com filtros especificos e botao para gerar o PDF.
 
-### Ordem de importacao (dependencias)
-
+**Layout:**
 ```text
-1. Granjas           (sem dependencia)
-2. Safras            (sem dependencia)
-3. Culturas          (sem dependencia - ja importa via umidades)
-4. Produtos          (depende de granja)
-5. Silos             (depende de granja)
-6. Lavouras          (depende de granja)
-7. Produtores        (depende de granja)
-8. Inscricoes Prod.  (depende de produtor, granja)
-9. Placas            (sem dependencia)
-10. Transportadoras  (sem dependencia)
-11. Clientes/Forn.   (sem dependencia)
-12. Colheitas        (depende de inscricao, safra, lavoura, silo, produto, placa)
-13. Contratos Venda  (depende de safra, granja, inscricao, comprador, produto)
-14. Remessas Venda   (depende de contrato)
-15. Transferencias   (depende de inscricao, safra, produto)
-16. Devolucoes       (depende de inscricao, safra, produto)
-17. Notas Deposito   (depende de inscricao, safra, produto)
++--------------------------------------------------+
+| PageHeader: Relatorios Gerenciais                |
++--------------------------------------------------+
+| +----------------+ +----------------+ +---------+ |
+| | Extrato do     | | Relatorio de   | | Relat.  | |
+| | Produtor       | | Colheitas      | | Vendas  | |
+| | [Gerar]        | | [Gerar]        | | [Gerar] | |
+| +----------------+ +----------------+ +---------+ |
++--------------------------------------------------+
 ```
 
-### Implementacao
+#### 2. Novo arquivo: `src/lib/relatoriosPdf.ts`
+Funcoes de geracao de PDF seguindo o padrao ja existente em `contratoVendaPdf.ts` (jsPDF + autoTable).
 
-#### 1. Nova pagina: `src/pages/ImportarDados.tsx`
-- Wizard com lista de tabelas na ordem correta
-- Cada tabela mostra status: pendente, importada, com erros
-- Botao "Importar" por tabela abre dialog especifico
-- Indicador visual de progresso geral
+**2.1 - Extrato do Produtor**
+Filtros: Safra, Produtor/Inscricao, Produto, Periodo (data inicial/final)
 
-#### 2. Componente generico: `src/components/importacao/ImportacaoDialog.tsx`
-Dialog reutilizavel que recebe:
-- Nome da tabela destino
-- Mapeamento de colunas (nome Access → nome Supabase)
-- Funcao de transformacao/validacao
-- Funcao de resolucao de referencias (ex: buscar granja_id pelo codigo)
+Conteudo do PDF:
+- Cabecalho com dados do produtor (nome, CPF/CNPJ, inscricao estadual)
+- Secao COLHEITAS: tabela com data, lavoura, peso bruto, tara, liquido, umidade, impureza, descontos, producao liquida
+- Secao TRANSFERENCIAS RECEBIDAS: data, origem, quantidade kg
+- Secao TRANSFERENCIAS ENVIADAS: data, destino, quantidade kg
+- Secao DEVOLUCOES: data, quantidade, taxa armazenagem, kg taxa
+- Secao NOTAS DE DEPOSITO: data, nota fiscal, quantidade
+- RESUMO FINAL: Total Colheitas + Transf.Recebidas - Transf.Enviadas - Devolucoes - kg_Taxa = Saldo
 
-Funcionalidades:
-- Upload do Excel
-- Preview dos primeiros 10 registros
-- Mapeamento automatico de colunas (com fallback manual)
-- Validacao pre-importacao (campos obrigatorios, referencias)
-- Importacao em lotes de 100
-- Relatorio de erros/sucesso
+**2.2 - Relatorio de Colheitas**
+Filtros: Safra, Produto, Silo, Periodo, Tipo (propria/terceiro)
 
-#### 3. Configuracoes por tabela: `src/lib/importacaoConfig.ts`
-Arquivo com a configuracao de cada tabela:
-- Mapeamento de colunas Access → banco
-- Campos obrigatorios
-- Transformacoes (ex: converter "S"/"N" para boolean)
-- Resolucao de chaves estrangeiras (ex: buscar granja por codigo)
-- Opcao de limpar dados existentes
+Conteudo do PDF:
+- Tabela com: Data, Produtor, Lavoura, Placa, Peso Bruto, Tara, Liquido, Umidade%, Impureza%, Desc.Total, Prod.Liquida, Sacas
+- Totalizadores no rodape: Total Peso Bruto, Total Prod.Liquida, Total Sacas
+- Subtotais por produtor (opcional)
+
+**2.3 - Relatorio de Vendas**
+Filtros: Safra, Comprador, Periodo
+
+Conteudo do PDF:
+- Tabela de contratos: Numero, Data, Comprador, Produto, Qtde Contratada, Preco/kg, Valor Total, Carregado, Saldo
+- Totalizadores: Total Contratado, Total Carregado, Total Saldo, Valor Total
+- Detalhamento de remessas por contrato (opcional, com sub-tabela)
+
+#### 3. Novo componente: `src/components/relatorios/RelatorioDialog.tsx`
+Dialog reutilizavel com filtros dinamicos para cada tipo de relatorio. Contem selects para Safra, Produtor, Produto, datas, e botao "Gerar PDF".
 
 #### 4. Atualizacoes
-- `src/App.tsx`: rota `/importar-dados`
-- `src/components/layout/AppSidebar.tsx`: item "Importar Dados" no menu (grupo Administracao)
+- **`src/App.tsx`**: Adicionar rota `/relatorios`
+- **`src/components/layout/AppSidebar.tsx`**: Adicionar item "Relatorios" no grupo "Comercial" com icone `BarChart3`
 
-### Fluxo do usuario
-
-1. Exporta tabelas do Access como .xlsx (uma por tabela)
-2. Acessa pagina "Importar Dados"
-3. Segue a ordem sugerida (granjas primeiro, colheitas depois)
-4. Para cada tabela: upload Excel → preview → confirma → importa
-5. Sistema resolve codigos legados para UUIDs automaticamente (busca por codigo/nome)
-6. Ao final, relatorio de importacao completo
+---
 
 ### Secao Tecnica
 
-**Resolucao de referencias**: O sistema legado usa codigos numericos (ex: granja codigo "01"). Na importacao, o sistema busca o registro pelo codigo e substitui pelo UUID correspondente. Se nao encontrar, marca como erro.
+**Queries para o Extrato do Produtor:**
+- Colheitas: `SELECT * FROM colheitas WHERE inscricao_produtor_id = ? AND safra_id = ? [AND variedade_id = ?] [AND data_colheita BETWEEN ? AND ?]` com joins em lavouras, silos, placas, produtos
+- Transferencias recebidas: `SELECT * FROM transferencias_deposito WHERE inscricao_destino_id = ? AND safra_id = ?`
+- Transferencias enviadas: `SELECT * FROM transferencias_deposito WHERE inscricao_origem_id = ? AND safra_id = ?`
+- Devolucoes: `SELECT * FROM devolucoes_deposito WHERE inscricao_produtor_id = ? AND safra_id = ?`
+- Notas deposito: `SELECT * FROM notas_deposito_emitidas WHERE inscricao_produtor_id = ? AND safra_id = ?`
 
-**Transformacoes comuns**:
-- "S"/"N" ou "Sim"/"Nao" → `true`/`false`
-- Datas Access (serial number) → ISO date
-- Valores monetarios com virgula → numerico
-- Campos vazios → `null`
+**Queries para Relatorio de Colheitas:**
+- `SELECT * FROM colheitas` com joins em inscricoes_produtor, produtores, lavouras, silos, placas, produtos, filtrando por safra/produto/silo/periodo
 
-**Batch insert**: Insercoes em lotes de 100 registros para evitar timeout. Progress bar visual durante importacao.
+**Queries para Relatorio de Vendas:**
+- Usa `useContratosVenda` existente com filtros, e `remessas_venda` para detalhamento
 
-### Arquivos a criar
-- `src/pages/ImportarDados.tsx` (pagina wizard)
-- `src/components/importacao/ImportacaoDialog.tsx` (dialog generico)
-- `src/lib/importacaoConfig.ts` (configuracoes por tabela)
+**Geracao PDF:** Usa `jsPDF` + `jspdf-autotable` (ja instalados). Download direto via blob URL (mesmo padrao de `contratoVendaPdf.ts`).
 
-### Arquivos a modificar
-- `src/App.tsx` (nova rota)
-- `src/components/layout/AppSidebar.tsx` (novo item menu)
+**Formatacao:** Todas as colunas numericas/moeda alinhadas a direita, datas centralizadas, texto a esquerda. Formatacao brasileira (separador milhar ponto, decimal virgula).
 
+### Arquivos a criar/modificar
+- Criar: `src/pages/Relatorios.tsx`
+- Criar: `src/lib/relatoriosPdf.ts`
+- Criar: `src/components/relatorios/RelatorioDialog.tsx`
+- Modificar: `src/App.tsx` (nova rota)
+- Modificar: `src/components/layout/AppSidebar.tsx` (novo item menu)

@@ -26,6 +26,7 @@ import {
   ShoppingCart,
   ArrowRightLeft,
   BarChart3,
+  DatabaseBackup,
   LucideIcon,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -136,7 +137,7 @@ export function AppSidebar() {
       initial[group.title] = isGroupActive(group.items);
     });
     // Administração
-    initial["Administração"] = ["/usuarios", "/tenants"].includes(location.pathname);
+    initial["Administração"] = ["/usuarios", "/tenants", "/importar-dados"].includes(location.pathname);
     return initial;
   });
 
@@ -149,7 +150,7 @@ export function AppSidebar() {
           updated[group.title] = true;
         }
       });
-      if (["/usuarios", "/tenants"].includes(location.pathname)) {
+      if (["/usuarios", "/tenants", "/importar-dados"].includes(location.pathname)) {
         updated["Administração"] = true;
       }
       return updated;
@@ -369,6 +370,34 @@ export function AppSidebar() {
                         </Tooltip>
                       </li>
                     )}
+                    {isAdmin && (
+                      <li>
+                        <Tooltip delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <Link
+                              to="/importar-dados"
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                                "hover:bg-sidebar-accent",
+                                location.pathname === "/importar-dados"
+                                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                                  : "text-sidebar-foreground"
+                              )}
+                            >
+                              <DatabaseBackup
+                                className={cn(
+                                  "h-5 w-5 flex-shrink-0",
+                                  location.pathname === "/importar-dados" ? "text-sidebar-primary-foreground" : "text-cyan-600"
+                                )}
+                              />
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="bg-popover">
+                            Importar Dados
+                          </TooltipContent>
+                        </Tooltip>
+                      </li>
+                    )}
                   </ul>
                 </>
               ) : (
@@ -430,6 +459,28 @@ export function AppSidebar() {
                               )}
                             />
                             <span className="font-medium">Empresas Contratantes</span>
+                          </Link>
+                        </li>
+                      )}
+                      {isAdmin && (
+                        <li>
+                          <Link
+                            to="/importar-dados"
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                              "hover:bg-sidebar-accent",
+                              location.pathname === "/importar-dados"
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                                : "text-sidebar-foreground"
+                            )}
+                          >
+                            <DatabaseBackup
+                              className={cn(
+                                "h-5 w-5 flex-shrink-0",
+                                location.pathname === "/importar-dados" ? "text-sidebar-primary-foreground" : "text-cyan-600"
+                              )}
+                            />
+                            <span className="font-medium">Importar Dados</span>
                           </Link>
                         </li>
                       )}
