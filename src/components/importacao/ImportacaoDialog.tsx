@@ -140,6 +140,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             clean[key] = value;
           }
         }
+        // Inject tenant_id for granjas table
+        if (config.tableName === 'granjas' && tenantId) {
+          clean['tenant_id'] = tenantId;
+        }
         return clean;
       });
 
