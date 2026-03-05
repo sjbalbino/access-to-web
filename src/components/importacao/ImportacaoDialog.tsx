@@ -26,7 +26,7 @@ interface ImportacaoDialogProps {
 
 type ImportStatus = 'idle' | 'parsing' | 'previewing' | 'importing' | 'done' | 'error';
 
-export function ImportacaoDialog({ open, onOpenChange, config, onImportComplete }: ImportacaoDialogProps) {
+export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImportComplete }: ImportacaoDialogProps) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [rawData, setRawData] = useState<Record<string, any>[]>([]);
