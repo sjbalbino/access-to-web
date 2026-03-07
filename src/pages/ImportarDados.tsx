@@ -7,20 +7,64 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Database, Upload, CheckCircle2, Clock, AlertTriangle, Building } from 'lucide-react';
+import { Database, Upload, CheckCircle2, Clock, AlertTriangle, Building, Trash2, Loader2 } from 'lucide-react';
 import { tableConfigs, TableConfig } from '@/lib/importacaoConfig';
 import { ImportacaoDialog } from '@/components/importacao/ImportacaoDialog';
 import { useTenants } from '@/hooks/useTenants';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
 
 type TableStatus = 'pendente' | 'importada' | 'erro';
+
+const CLEANUP_STEPS = [
+  { label: 'Notas Depósito Emitidas', tables: ['notas_deposito_emitidas'] },
+  { label: 'Notas Ref. Compra + Compras Cereais', tables: ['compras_cereais_notas_referenciadas', 'compras_cereais'] },
+  { label: 'Devoluções Depósito', tables: ['devolucoes_deposito'] },
+  { label: 'Remessas Venda', tables: ['remessas_venda'] },
+  { label: 'Contratos Venda', tables: ['contratos_venda'] },
+  { label: 'Transferências Depósito', tables: ['transferencias_deposito'] },
+  { label: 'Colheitas', tables: ['colheitas'] },
+  { label: 'Aplicações, Plantios, Chuvas, etc.', tables: ['aplicacoes', 'plantios', 'chuvas', 'floracoes', 'insetos', 'plantas_invasoras', 'analises_solo', 'pivos'] },
+  { label: 'Controle Lavouras', tables: ['controle_lavouras'] },
+  { label: 'Notas Fiscais (itens/ref/notas)', tables: ['notas_fiscais_itens', 'notas_fiscais_referenciadas', 'notas_fiscais_duplicatas', 'notas_fiscais'] },
+  { label: 'Estoque Produtos', tables: ['estoque_produtos'] },
+  { label: 'Inscrições Produtor', tables: ['inscricoes_produtor'] },
+  { label: 'Emitentes NFe', tables: ['emitentes_nfe'] },
+  { label: 'Produtores', tables: ['produtores'] },
+  { label: 'Lavouras', tables: ['lavouras'] },
+  { label: 'Silos', tables: ['silos'] },
+  { label: 'Produtos', tables: ['produtos'] },
+  { label: 'Placas, Transportadoras, Clientes', tables: ['placas', 'transportadoras', 'clientes_fornecedores', 'locais_entrega'] },
+  { label: 'Safras, Culturas, Tabela Umidades, etc.', tables: ['safras', 'culturas', 'tabela_umidades', 'grupos_produtos', 'unidades_medida', 'cfops', 'ncm'] },
+  { label: 'Granjas', tables: ['granjas'] },
+];
 
 export default function ImportarDados() {
   const [statuses, setStatuses] = useState<Record<string, { status: TableStatus; count: number }>>({});
   const [activeConfig, setActiveConfig] = useState<TableConfig | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');
+  const [showCleanupDialog, setShowCleanupDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [cleaning, setCleaning] = useState(false);
+  const [cleanProgress, setCleanProgress] = useState(0);
+  const [cleanStep, setCleanStep] = useState('');
 
   const { data: tenants, isLoading: isLoadingTenants } = useTenants();
+  const queryClient = useQueryClient();
 
   const sortedConfigs = [...tableConfigs].sort((a, b) => a.order - b.order);
 
@@ -45,6 +89,53 @@ export default function ImportarDados() {
   };
 
   const selectedTenant = tenants?.find(t => t.id === selectedTenantId);
+
+  const handleCleanupRequest = () => {
+    setShowCleanupDialog(true);
+  };
+
+  const handleFirstConfirm = () => {
+    setShowCleanupDialog(false);
+    setConfirmText('');
+    setShowConfirmDialog(true);
+  };
+
+  const handleCleanup = async () => {
+    setShowConfirmDialog(false);
+    setConfirmText('');
+    setCleaning(true);
+    setCleanProgress(0);
+    setCleanStep('Iniciando limpeza...');
+
+    try {
+      for (let i = 0; i < CLEANUP_STEPS.length; i++) {
+        const step = CLEANUP_STEPS[i];
+        setCleanStep(step.label);
+        setCleanProgress(Math.round(((i) / CLEANUP_STEPS.length) * 100));
+
+        for (const table of step.tables) {
+          const { error } = await supabase
+            .from(table as any)
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000');
+
+          if (error) {
+            console.warn(`Erro ao limpar ${table}:`, error.message);
+          }
+        }
+      }
+
+      setCleanProgress(100);
+      setCleanStep('Concluído!');
+      setStatuses({});
+      queryClient.invalidateQueries();
+      toast.success('Base de dados limpa com sucesso! Apenas as empresas contratantes foram mantidas.');
+    } catch (err: any) {
+      toast.error(`Erro na limpeza: ${err.message}`);
+    } finally {
+      setCleaning(false);
+    }
+  };
 
   return (
     <AppLayout>
@@ -184,6 +275,49 @@ export default function ImportarDados() {
         })}
       </div>
 
+      {/* Cleanup section */}
+      <Card className="mt-6 border-destructive/30 bg-destructive/5">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-destructive flex items-center gap-2">
+                <Trash2 className="h-4 w-4" />
+                Limpar Base de Dados
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Remove todos os dados mantendo apenas as Empresas Contratantes. Use antes de reimportar dados.
+              </p>
+            </div>
+            <Button
+              variant="destructive"
+              disabled={cleaning}
+              onClick={handleCleanupRequest}
+            >
+              {cleaning ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  Limpando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Limpar Base
+                </>
+              )}
+            </Button>
+          </div>
+          {cleaning && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{cleanStep}</span>
+                <span className="text-muted-foreground">{cleanProgress}%</span>
+              </div>
+              <Progress value={cleanProgress} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Import dialog */}
       {activeConfig && (
         <ImportacaoDialog
@@ -194,6 +328,64 @@ export default function ImportarDados() {
           onImportComplete={(count) => handleImportComplete(activeConfig.key, count)}
         />
       )}
+
+      {/* First confirmation dialog */}
+      <AlertDialog open={showCleanupDialog} onOpenChange={setShowCleanupDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">⚠️ Limpar Base de Dados</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá <strong>remover permanentemente</strong> todos os dados do sistema, incluindo:
+              granjas, produtores, lavouras, silos, colheitas, notas fiscais, contratos, e todos os demais registros.
+              <br /><br />
+              <strong>Apenas as Empresas Contratantes (tenants) serão mantidas.</strong>
+              <br /><br />
+              Esta ação <strong>NÃO pode ser desfeita</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleFirstConfirm}
+            >
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Second confirmation dialog - type to confirm */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={(open) => { setShowConfirmDialog(open); if (!open) setConfirmText(''); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">Confirmação Final</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <p className="mb-3">
+                  Para confirmar a exclusão de todos os dados, digite <strong>LIMPAR</strong> no campo abaixo:
+                </p>
+                <Input
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder="Digite LIMPAR para confirmar"
+                  className="border-destructive/50"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmText('')}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={confirmText !== 'LIMPAR'}
+              onClick={handleCleanup}
+            >
+              Limpar Tudo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
