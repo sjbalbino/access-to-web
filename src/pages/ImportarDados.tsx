@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent } from '@/components/ui/card';
@@ -67,6 +67,34 @@ export default function ImportarDados() {
   const queryClient = useQueryClient();
 
   const sortedConfigs = [...tableConfigs].sort((a, b) => a.order - b.order);
+
+  // Check existing records in DB to auto-detect imported tables
+  const checkExistingRecords = useCallback(async () => {
+    if (!selectedTenantId) return;
+    const newStatuses: Record<string, { status: TableStatus; count: number }> = {};
+
+    for (const config of tableConfigs) {
+      try {
+        const { count, error } = await supabase
+          .from(config.tableName as any)
+          .select('*', { count: 'exact', head: true });
+
+        if (!error && count && count > 0) {
+          newStatuses[config.key] = { status: 'importada', count };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    setStatuses(prev => ({ ...prev, ...newStatuses }));
+  }, [selectedTenantId]);
+
+  useEffect(() => {
+    if (selectedTenantId) {
+      checkExistingRecords();
+    }
+  }, [selectedTenantId, checkExistingRecords]);
 
   const handleImportComplete = (key: string, count: number) => {
     setStatuses(prev => ({ ...prev, [key]: { status: 'importada', count } }));
