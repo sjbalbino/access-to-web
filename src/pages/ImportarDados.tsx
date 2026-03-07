@@ -275,6 +275,49 @@ export default function ImportarDados() {
         })}
       </div>
 
+      {/* Cleanup section */}
+      <Card className="mt-6 border-destructive/30 bg-destructive/5">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-destructive flex items-center gap-2">
+                <Trash2 className="h-4 w-4" />
+                Limpar Base de Dados
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Remove todos os dados mantendo apenas as Empresas Contratantes. Use antes de reimportar dados.
+              </p>
+            </div>
+            <Button
+              variant="destructive"
+              disabled={cleaning}
+              onClick={handleCleanupRequest}
+            >
+              {cleaning ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  Limpando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Limpar Base
+                </>
+              )}
+            </Button>
+          </div>
+          {cleaning && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{cleanStep}</span>
+                <span className="text-muted-foreground">{cleanProgress}%</span>
+              </div>
+              <Progress value={cleanProgress} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Import dialog */}
       {activeConfig && (
         <ImportacaoDialog
@@ -285,6 +328,64 @@ export default function ImportarDados() {
           onImportComplete={(count) => handleImportComplete(activeConfig.key, count)}
         />
       )}
+
+      {/* First confirmation dialog */}
+      <AlertDialog open={showCleanupDialog} onOpenChange={setShowCleanupDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">⚠️ Limpar Base de Dados</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá <strong>remover permanentemente</strong> todos os dados do sistema, incluindo:
+              granjas, produtores, lavouras, silos, colheitas, notas fiscais, contratos, e todos os demais registros.
+              <br /><br />
+              <strong>Apenas as Empresas Contratantes (tenants) serão mantidas.</strong>
+              <br /><br />
+              Esta ação <strong>NÃO pode ser desfeita</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleFirstConfirm}
+            >
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Second confirmation dialog - type to confirm */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={(open) => { setShowConfirmDialog(open); if (!open) setConfirmText(''); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">Confirmação Final</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <p className="mb-3">
+                  Para confirmar a exclusão de todos os dados, digite <strong>LIMPAR</strong> no campo abaixo:
+                </p>
+                <Input
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder="Digite LIMPAR para confirmar"
+                  className="border-destructive/50"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmText('')}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={confirmText !== 'LIMPAR'}
+              onClick={handleCleanup}
+            >
+              Limpar Tudo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
