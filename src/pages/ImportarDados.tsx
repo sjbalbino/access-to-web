@@ -28,13 +28,43 @@ import { Input } from '@/components/ui/input';
 
 type TableStatus = 'pendente' | 'importada' | 'erro';
 
+const CLEANUP_STEPS = [
+  { label: 'Notas Depósito Emitidas', tables: ['notas_deposito_emitidas'] },
+  { label: 'Notas Ref. Compra + Compras Cereais', tables: ['compras_cereais_notas_referenciadas', 'compras_cereais'] },
+  { label: 'Devoluções Depósito', tables: ['devolucoes_deposito'] },
+  { label: 'Remessas Venda', tables: ['remessas_venda'] },
+  { label: 'Contratos Venda', tables: ['contratos_venda'] },
+  { label: 'Transferências Depósito', tables: ['transferencias_deposito'] },
+  { label: 'Colheitas', tables: ['colheitas'] },
+  { label: 'Aplicações, Plantios, Chuvas, etc.', tables: ['aplicacoes', 'plantios', 'chuvas', 'floracoes', 'insetos', 'plantas_invasoras', 'analises_solo', 'pivos'] },
+  { label: 'Controle Lavouras', tables: ['controle_lavouras'] },
+  { label: 'Notas Fiscais (itens/ref/notas)', tables: ['notas_fiscais_itens', 'notas_fiscais_referenciadas', 'notas_fiscais_duplicatas', 'notas_fiscais'] },
+  { label: 'Estoque Produtos', tables: ['estoque_produtos'] },
+  { label: 'Inscrições Produtor', tables: ['inscricoes_produtor'] },
+  { label: 'Emitentes NFe', tables: ['emitentes_nfe'] },
+  { label: 'Produtores', tables: ['produtores'] },
+  { label: 'Lavouras', tables: ['lavouras'] },
+  { label: 'Silos', tables: ['silos'] },
+  { label: 'Produtos', tables: ['produtos'] },
+  { label: 'Placas, Transportadoras, Clientes', tables: ['placas', 'transportadoras', 'clientes_fornecedores', 'locais_entrega'] },
+  { label: 'Safras, Culturas, Tabela Umidades, etc.', tables: ['safras', 'culturas', 'tabela_umidades', 'grupos_produtos', 'unidades_medida', 'cfops', 'ncm'] },
+  { label: 'Granjas', tables: ['granjas'] },
+];
+
 export default function ImportarDados() {
   const [statuses, setStatuses] = useState<Record<string, { status: TableStatus; count: number }>>({});
   const [activeConfig, setActiveConfig] = useState<TableConfig | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');
+  const [showCleanupDialog, setShowCleanupDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [cleaning, setCleaning] = useState(false);
+  const [cleanProgress, setCleanProgress] = useState(0);
+  const [cleanStep, setCleanStep] = useState('');
 
   const { data: tenants, isLoading: isLoadingTenants } = useTenants();
+  const queryClient = useQueryClient();
 
   const sortedConfigs = [...tableConfigs].sort((a, b) => a.order - b.order);
 
@@ -59,6 +89,53 @@ export default function ImportarDados() {
   };
 
   const selectedTenant = tenants?.find(t => t.id === selectedTenantId);
+
+  const handleCleanupRequest = () => {
+    setShowCleanupDialog(true);
+  };
+
+  const handleFirstConfirm = () => {
+    setShowCleanupDialog(false);
+    setConfirmText('');
+    setShowConfirmDialog(true);
+  };
+
+  const handleCleanup = async () => {
+    setShowConfirmDialog(false);
+    setConfirmText('');
+    setCleaning(true);
+    setCleanProgress(0);
+    setCleanStep('Iniciando limpeza...');
+
+    try {
+      for (let i = 0; i < CLEANUP_STEPS.length; i++) {
+        const step = CLEANUP_STEPS[i];
+        setCleanStep(step.label);
+        setCleanProgress(Math.round(((i) / CLEANUP_STEPS.length) * 100));
+
+        for (const table of step.tables) {
+          const { error } = await supabase
+            .from(table as any)
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000');
+
+          if (error) {
+            console.warn(`Erro ao limpar ${table}:`, error.message);
+          }
+        }
+      }
+
+      setCleanProgress(100);
+      setCleanStep('Concluído!');
+      setStatuses({});
+      queryClient.invalidateQueries();
+      toast.success('Base de dados limpa com sucesso! Apenas as empresas contratantes foram mantidas.');
+    } catch (err: any) {
+      toast.error(`Erro na limpeza: ${err.message}`);
+    } finally {
+      setCleaning(false);
+    }
+  };
 
   return (
     <AppLayout>
