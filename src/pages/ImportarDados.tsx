@@ -7,10 +7,24 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Database, Upload, CheckCircle2, Clock, AlertTriangle, Building } from 'lucide-react';
+import { Database, Upload, CheckCircle2, Clock, AlertTriangle, Building, Trash2, Loader2 } from 'lucide-react';
 import { tableConfigs, TableConfig } from '@/lib/importacaoConfig';
 import { ImportacaoDialog } from '@/components/importacao/ImportacaoDialog';
 import { useTenants } from '@/hooks/useTenants';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
 
 type TableStatus = 'pendente' | 'importada' | 'erro';
 
