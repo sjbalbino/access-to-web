@@ -169,14 +169,16 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
       if (errors.length === 0) {
         toast.success(`${imported} registros importados com sucesso!`);
-        await queryClient.invalidateQueries({ queryKey: [config.key] });
-        await queryClient.invalidateQueries({ queryKey: [config.tableName] });
-        onImportComplete?.(imported);
-        setStatus('done');
       } else {
         toast.warning(`Importação parcial: ${imported} importados, ${errors.length} erros`);
-        setStatus('done');
       }
+
+      await queryClient.invalidateQueries({ queryKey: [config.key] });
+      await queryClient.invalidateQueries({ queryKey: [config.tableName] });
+      if (imported > 0) {
+        onImportComplete?.(imported);
+      }
+      setStatus('done');
     } catch (error: any) {
       toast.error('Erro na importação: ' + error.message);
       setImportErrors([error.message]);
