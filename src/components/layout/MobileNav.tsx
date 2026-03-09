@@ -28,6 +28,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTabs } from "@/contexts/TabsContext";
 import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
