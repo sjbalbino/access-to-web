@@ -348,10 +348,10 @@ export function AppSidebar() {
                       <li>
                         <Tooltip delayDuration={0}>
                           <TooltipTrigger asChild>
-                            <Link
-                              to="/tenants"
+                            <button
+                              onClick={() => openTab("/tenants")}
                               className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full",
                                 "hover:bg-sidebar-accent",
                                 location.pathname === "/tenants"
                                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
@@ -364,7 +364,7 @@ export function AppSidebar() {
                                   location.pathname === "/tenants" ? "text-sidebar-primary-foreground" : "text-amber-500"
                                 )}
                               />
-                            </Link>
+                            </button>
                           </TooltipTrigger>
                           <TooltipContent side="right" className="bg-popover">
                             Empresas Contratantes
