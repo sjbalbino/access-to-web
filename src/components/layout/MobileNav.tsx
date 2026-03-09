@@ -228,11 +228,10 @@ export function MobileNav() {
                   <ul className="space-y-1 mt-1">
                     {isAdmin && (
                       <li>
-                        <Link
-                          to="/usuarios"
-                          onClick={() => setOpen(false)}
+                        <button
+                          onClick={() => { openTab("/usuarios"); setOpen(false); }}
                           className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left",
                             "hover:bg-accent",
                             location.pathname === "/usuarios"
                               ? "bg-primary text-primary-foreground shadow-md"
@@ -246,7 +245,7 @@ export function MobileNav() {
                             )}
                           />
                           <span className="font-medium">Usuários</span>
-                        </Link>
+                        </button>
                       </li>
                     )}
                     {isSuperAdmin && (
