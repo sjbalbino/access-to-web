@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { MobileNav } from "./MobileNav";
+import { TabBar } from "./TabBar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Wheat } from "lucide-react";
 
@@ -17,7 +18,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <AppSidebar />
         </div>
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Mobile Header */}
           <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-background sticky top-0 z-40">
             <MobileNav />
@@ -27,8 +28,13 @@ export function AppLayout({ children }: AppLayoutProps) {
               </div>
               <span className="font-bold text-lg">AgroGestão</span>
             </div>
-            <div className="w-10" /> {/* Spacer for centering */}
+            <div className="w-10" />
           </header>
+
+          {/* Tab Bar */}
+          <div className="hidden md:block sticky top-0 z-30">
+            <TabBar />
+          </div>
 
           <main className="flex-1 overflow-auto">
             <div className="container py-4 md:py-6 px-3 md:px-8 max-w-7xl">

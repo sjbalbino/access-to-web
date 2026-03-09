@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
   Building2,
   Leaf,
@@ -28,6 +28,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTabs } from "@/contexts/TabsContext";
 import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
@@ -108,6 +109,7 @@ export function MobileNav() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
+  const { openTab } = useTabs();
 
   // Função para verificar se um grupo contém a rota ativa
   const isGroupActive = (items: MenuItem[]) =>
@@ -179,11 +181,10 @@ export function MobileNav() {
 
                       return (
                         <li key={item.path}>
-                          <Link
-                            to={item.path}
-                            onClick={() => setOpen(false)}
+                          <button
+                            onClick={() => { openTab(item.path); setOpen(false); }}
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left",
                               "hover:bg-accent",
                               isActive
                                 ? "bg-primary text-primary-foreground shadow-md"
@@ -197,7 +198,7 @@ export function MobileNav() {
                               )}
                             />
                             <span className="font-medium">{item.title}</span>
-                          </Link>
+                          </button>
                         </li>
                       );
                     })}
@@ -227,11 +228,10 @@ export function MobileNav() {
                   <ul className="space-y-1 mt-1">
                     {isAdmin && (
                       <li>
-                        <Link
-                          to="/usuarios"
-                          onClick={() => setOpen(false)}
+                        <button
+                          onClick={() => { openTab("/usuarios"); setOpen(false); }}
                           className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left",
                             "hover:bg-accent",
                             location.pathname === "/usuarios"
                               ? "bg-primary text-primary-foreground shadow-md"
@@ -245,16 +245,15 @@ export function MobileNav() {
                             )}
                           />
                           <span className="font-medium">Usuários</span>
-                        </Link>
+                        </button>
                       </li>
                     )}
                     {isSuperAdmin && (
                       <li>
-                        <Link
-                          to="/tenants"
-                          onClick={() => setOpen(false)}
+                        <button
+                          onClick={() => { openTab("/tenants"); setOpen(false); }}
                           className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left",
                             "hover:bg-accent",
                             location.pathname === "/tenants"
                               ? "bg-primary text-primary-foreground shadow-md"
@@ -268,7 +267,7 @@ export function MobileNav() {
                             )}
                           />
                           <span className="font-medium">Empresas Contratantes</span>
-                        </Link>
+                        </button>
                       </li>
                     )}
                   </ul>

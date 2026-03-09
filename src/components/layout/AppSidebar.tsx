@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useTabs } from "@/contexts/TabsContext";
 import {
   Building2,
   Leaf,
@@ -125,6 +126,7 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
+  const { openTab } = useTabs();
 
   // Função para verificar se um grupo contém a rota ativa
   const isGroupActive = (items: MenuItem[]) =>
@@ -169,10 +171,10 @@ export function AppSidebar() {
     return (
       <Tooltip delayDuration={0}>
         <TooltipTrigger asChild>
-          <Link
-            to={item.path}
+          <button
+            onClick={() => openTab(item.path)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left",
               "hover:bg-sidebar-accent",
               isActive
                 ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
@@ -188,7 +190,7 @@ export function AppSidebar() {
             {!collapsed && (
               <span className="font-medium">{item.title}</span>
             )}
-          </Link>
+          </button>
         </TooltipTrigger>
         {collapsed && (
           <TooltipContent side="right" className="bg-popover">
@@ -318,10 +320,10 @@ export function AppSidebar() {
                       <li>
                         <Tooltip delayDuration={0}>
                           <TooltipTrigger asChild>
-                            <Link
-                              to="/usuarios"
+                            <button
+                              onClick={() => openTab("/usuarios")}
                               className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full",
                                 "hover:bg-sidebar-accent",
                                 location.pathname === "/usuarios"
                                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
@@ -334,7 +336,7 @@ export function AppSidebar() {
                                   location.pathname === "/usuarios" ? "text-sidebar-primary-foreground" : "text-destructive"
                                 )}
                               />
-                            </Link>
+                            </button>
                           </TooltipTrigger>
                           <TooltipContent side="right" className="bg-popover">
                             Usuários
@@ -346,10 +348,10 @@ export function AppSidebar() {
                       <li>
                         <Tooltip delayDuration={0}>
                           <TooltipTrigger asChild>
-                            <Link
-                              to="/tenants"
+                            <button
+                              onClick={() => openTab("/tenants")}
                               className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full",
                                 "hover:bg-sidebar-accent",
                                 location.pathname === "/tenants"
                                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
@@ -362,7 +364,7 @@ export function AppSidebar() {
                                   location.pathname === "/tenants" ? "text-sidebar-primary-foreground" : "text-amber-500"
                                 )}
                               />
-                            </Link>
+                            </button>
                           </TooltipTrigger>
                           <TooltipContent side="right" className="bg-popover">
                             Empresas Contratantes
@@ -374,10 +376,10 @@ export function AppSidebar() {
                       <li>
                         <Tooltip delayDuration={0}>
                           <TooltipTrigger asChild>
-                            <Link
-                              to="/importar-dados"
+                            <button
+                              onClick={() => openTab("/importar-dados")}
                               className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full",
                                 "hover:bg-sidebar-accent",
                                 location.pathname === "/importar-dados"
                                   ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
@@ -390,7 +392,7 @@ export function AppSidebar() {
                                   location.pathname === "/importar-dados" ? "text-sidebar-primary-foreground" : "text-cyan-600"
                                 )}
                               />
-                            </Link>
+                            </button>
                           </TooltipTrigger>
                           <TooltipContent side="right" className="bg-popover">
                             Importar Dados
@@ -420,10 +422,10 @@ export function AppSidebar() {
                     <ul className="space-y-1 mt-1">
                       {isAdmin && (
                         <li>
-                          <Link
-                            to="/usuarios"
+                          <button
+                            onClick={() => openTab("/usuarios")}
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left",
                               "hover:bg-sidebar-accent",
                               location.pathname === "/usuarios"
                                 ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
@@ -437,15 +439,15 @@ export function AppSidebar() {
                               )}
                             />
                             <span className="font-medium">Usuários</span>
-                          </Link>
+                          </button>
                         </li>
                       )}
                       {isSuperAdmin && (
                         <li>
-                          <Link
-                            to="/tenants"
+                          <button
+                            onClick={() => openTab("/tenants")}
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left",
                               "hover:bg-sidebar-accent",
                               location.pathname === "/tenants"
                                 ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
@@ -459,15 +461,15 @@ export function AppSidebar() {
                               )}
                             />
                             <span className="font-medium">Empresas Contratantes</span>
-                          </Link>
+                          </button>
                         </li>
                       )}
                       {isAdmin && (
                         <li>
-                          <Link
-                            to="/importar-dados"
+                          <button
+                            onClick={() => openTab("/importar-dados")}
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left",
                               "hover:bg-sidebar-accent",
                               location.pathname === "/importar-dados"
                                 ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
@@ -481,7 +483,7 @@ export function AppSidebar() {
                               )}
                             />
                             <span className="font-medium">Importar Dados</span>
-                          </Link>
+                          </button>
                         </li>
                       )}
                     </ul>
