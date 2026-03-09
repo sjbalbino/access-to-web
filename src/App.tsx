@@ -88,8 +88,46 @@ const App = () => (
             <Route path="/importar-dados" element={<ProtectedRoute requireAdmin><ImportarDados /></ProtectedRoute>} />
             <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />
             <Route path="/tenants" element={<ProtectedRoute requireSuperAdmin><Tenants /></ProtectedRoute>} />
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/granjas" element={<ProtectedRoute><Granjas /></ProtectedRoute>} />
+            <Route path="/culturas" element={<ProtectedRoute><Culturas /></ProtectedRoute>} />
+            <Route path="/safras" element={<ProtectedRoute><Safras /></ProtectedRoute>} />
+            <Route path="/produtores" element={<ProtectedRoute><Produtores /></ProtectedRoute>} />
+            <Route path="/lavouras" element={<ProtectedRoute><Lavouras /></ProtectedRoute>} />
+            <Route path="/controle-lavoura" element={<ProtectedRoute><ControleLavoura /></ProtectedRoute>} />
+            <Route path="/entrada-colheita" element={<ProtectedRoute><EntradaColheita /></ProtectedRoute>} />
+            <Route path="/clientes-fornecedores" element={<ProtectedRoute><ClientesFornecedores /></ProtectedRoute>} />
+            <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
+            <Route path="/grupos-produtos" element={<ProtectedRoute><GruposProdutos /></ProtectedRoute>} />
+            <Route path="/unidades-medida" element={<ProtectedRoute><UnidadesMedida /></ProtectedRoute>} />
+            <Route path="/silos" element={<ProtectedRoute><Silos /></ProtectedRoute>} />
+            <Route path="/placas" element={<ProtectedRoute><Placas /></ProtectedRoute>} />
+            <Route path="/tabela-umidades" element={<ProtectedRoute><TabelaUmidades /></ProtectedRoute>} />
+            <Route path="/ncm" element={<ProtectedRoute><Ncm /></ProtectedRoute>} />
+            <Route path="/cfops" element={<ProtectedRoute><Cfops /></ProtectedRoute>} />
+            <Route path="/emitentes-nfe" element={<ProtectedRoute><EmitentesNfe /></ProtectedRoute>} />
+            <Route path="/notas-fiscais" element={<ProtectedRoute><NotasFiscais /></ProtectedRoute>} />
+            <Route path="/notas-fiscais/nova" element={<ProtectedRoute><NotaFiscalForm /></ProtectedRoute>} />
+            <Route path="/notas-fiscais/:id" element={<ProtectedRoute><NotaFiscalForm /></ProtectedRoute>} />
+            <Route path="/transportadoras" element={<ProtectedRoute><Transportadoras /></ProtectedRoute>} />
+            <Route path="/vendas-producao" element={<ProtectedRoute><VendasProducao /></ProtectedRoute>} />
+            <Route path="/vendas-producao/nova" element={<ProtectedRoute><VendaProducaoForm /></ProtectedRoute>} />
+            <Route path="/vendas-producao/:id" element={<ProtectedRoute><VendaProducaoForm /></ProtectedRoute>} />
+            <Route path="/vendas-producao/:id/remessas" element={<ProtectedRoute><RemessasVendaForm /></ProtectedRoute>} />
+            <Route path="/transferencias" element={<ProtectedRoute><Transferencias /></ProtectedRoute>} />
+            <Route path="/notas-deposito" element={<ProtectedRoute><NotasDeposito /></ProtectedRoute>} />
+            <Route path="/devolucao-deposito" element={<ProtectedRoute><DevolucaoDeposito /></ProtectedRoute>} />
+            <Route path="/compra-cereais" element={<ProtectedRoute><CompraCereais /></ProtectedRoute>} />
+            <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
+            <Route path="/locais-entrega" element={<ProtectedRoute><LocaisEntrega /></ProtectedRoute>} />
+            <Route path="/importar-dados" element={<ProtectedRoute requireAdmin><ImportarDados /></ProtectedRoute>} />
+            <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />
+            <Route path="/tenants" element={<ProtectedRoute requireSuperAdmin><Tenants /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </TabsProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
