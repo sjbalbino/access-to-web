@@ -109,6 +109,7 @@ export function MobileNav() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
+  const { openTab } = useTabs();
 
   // Função para verificar se um grupo contém a rota ativa
   const isGroupActive = (items: MenuItem[]) =>
