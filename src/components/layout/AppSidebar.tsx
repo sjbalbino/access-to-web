@@ -171,10 +171,10 @@ export function AppSidebar() {
     return (
       <Tooltip delayDuration={0}>
         <TooltipTrigger asChild>
-          <Link
-            to={item.path}
+          <button
+            onClick={() => openTab(item.path)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left",
               "hover:bg-sidebar-accent",
               isActive
                 ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
@@ -190,7 +190,7 @@ export function AppSidebar() {
             {!collapsed && (
               <span className="font-medium">{item.title}</span>
             )}
-          </Link>
+          </button>
         </TooltipTrigger>
         {collapsed && (
           <TooltipContent side="right" className="bg-popover">
