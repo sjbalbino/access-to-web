@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useTabs } from "@/contexts/TabsContext";
 import {
   Building2,
   Leaf,
