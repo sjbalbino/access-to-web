@@ -112,7 +112,10 @@ export default function PlanoContasGerencial() {
                   <DialogContent>
                     <DialogHeader><DialogTitle>{editingItem ? 'Editar' : 'Novo'} Centro de Custo</DialogTitle></DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="space-y-2"><Label>Código *</Label><Input value={formData.codigo} onChange={e => setFormData({ ...formData, codigo: e.target.value })} required /></div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2"><Label>Código *</Label><Input value={formData.codigo} onChange={e => setFormData({ ...formData, codigo: e.target.value })} required /></div>
+                        <div className="space-y-2"><Label>Ordem</Label><Input type="number" value={formData.ordem ?? 0} onChange={e => setFormData({ ...formData, ordem: parseInt(e.target.value) || 0 })} /></div>
+                      </div>
                       <div className="space-y-2"><Label>Descrição *</Label><Input value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} required /></div>
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
@@ -124,7 +127,10 @@ export default function PlanoContasGerencial() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="flex items-center gap-2"><Switch checked={formData.ativo ?? true} onCheckedChange={checked => setFormData({ ...formData, ativo: checked })} /><Label>Ativo</Label></div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2"><Switch checked={formData.imprimir ?? true} onCheckedChange={checked => setFormData({ ...formData, imprimir: checked })} /><Label>Imprimir</Label></div>
+                        <div className="flex items-center gap-2"><Switch checked={formData.ativo ?? true} onCheckedChange={checked => setFormData({ ...formData, ativo: checked })} /><Label>Ativo</Label></div>
+                      </div>
                       <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                         <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>{editingItem ? 'Salvar' : 'Criar'}</Button>
