@@ -149,11 +149,10 @@ export default function PlanoContasGerencial() {
                   const subs = getSubCentros(conta.id);
                   const isExpanded = expandedCentros[conta.id];
                   return (
-                    <div key={conta.id} className="border rounded-lg">
+                  <div key={conta.id} className="border rounded-lg">
                       <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 cursor-pointer" onClick={() => toggleExpand(conta.id)}>
                         <div className="flex items-center gap-3">
                           {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                          <span className="font-mono font-medium text-sm">{conta.codigo}</span>
                           <span className="font-medium">{conta.descricao}</span>
                           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', conta.tipo === 'receita' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
                             {conta.tipo === 'receita' ? 'Receita' : 'Despesa'}
