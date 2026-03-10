@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Plus, Pencil, Trash2, BookOpen, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { usePlanoContasGerencial, useCreatePlanoContaGerencial, useUpdatePlanoContaGerencial, useDeletePlanoContaGerencial, PlanoContaGerencialInput } from '@/hooks/usePlanoContasGerencial';
 import { useSubCentrosCusto, useCreateSubCentroCusto, useUpdateSubCentroCusto, useDeleteSubCentroCusto, SubCentroCustoInput } from '@/hooks/useSubCentrosCusto';
+import { useDreContas } from '@/hooks/useDreContas';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
