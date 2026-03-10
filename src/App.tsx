@@ -40,6 +40,8 @@ import EntradaColheita from "./pages/EntradaColheita";
 import DevolucaoDeposito from "./pages/DevolucaoDeposito";
 import CompraCereais from "./pages/CompraCereais";
 import Relatorios from "./pages/Relatorios";
+import LancamentosFinanceiros from "./pages/LancamentosFinanceiros";
+import DreEstrutura from "./pages/DreEstrutura";
 import ImportarDados from "./pages/ImportarDados";
 import NotFound from "./pages/NotFound";
 
@@ -87,6 +89,8 @@ const App = () => (
               <Route path="/devolucao-deposito" element={<ProtectedRoute><DevolucaoDeposito /></ProtectedRoute>} />
               <Route path="/compra-cereais" element={<ProtectedRoute><CompraCereais /></ProtectedRoute>} />
               <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
+              <Route path="/lancamentos-financeiros" element={<ProtectedRoute><LancamentosFinanceiros /></ProtectedRoute>} />
+              <Route path="/dre-estrutura" element={<ProtectedRoute><DreEstrutura /></ProtectedRoute>} />
               <Route path="/locais-entrega" element={<ProtectedRoute><LocaisEntrega /></ProtectedRoute>} />
               <Route path="/importar-dados" element={<ProtectedRoute requireAdmin><ImportarDados /></ProtectedRoute>} />
               <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />

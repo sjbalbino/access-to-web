@@ -28,6 +28,8 @@ import {
   ArrowRightLeft,
   BarChart3,
   DatabaseBackup,
+  DollarSign,
+  GitBranch,
   LucideIcon,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -90,6 +92,13 @@ const menuGroups: MenuGroup[] = [
       { title: "Notas Depósito", icon: FileText, path: "/notas-deposito", color: "text-amber-600" },
       { title: "Devolução Depósito", icon: ArrowRightLeft, path: "/devolucao-deposito", color: "text-orange-600" },
       { title: "Compra Cereais", icon: Wheat, path: "/compra-cereais", color: "text-yellow-600" },
+    ],
+  },
+  {
+    title: "Financeiro",
+    items: [
+      { title: "Lançamentos", icon: DollarSign, path: "/lancamentos-financeiros", color: "text-emerald-600" },
+      { title: "Estrutura DRE", icon: GitBranch, path: "/dre-estrutura", color: "text-blue-600" },
       { title: "Relatórios", icon: BarChart3, path: "/relatorios", color: "text-purple-600" },
     ],
   },
