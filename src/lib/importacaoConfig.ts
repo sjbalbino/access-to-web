@@ -310,7 +310,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Placas',
     tableName: 'placas',
     description: 'Veículos/placas',
-    order: 9,
+    order: 10,
     columns: [
       { accessName: 'placa', dbName: 'placa', required: true, transform: toStr },
       { accessName: 'descricao', dbName: 'descricao', transform: toStr },
