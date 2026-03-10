@@ -113,10 +113,9 @@ export default function PlanoContasGerencial() {
                     <DialogHeader><DialogTitle>{editingItem ? 'Editar' : 'Novo'} Centro de Custo</DialogTitle></DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label>Código *</Label><Input value={formData.codigo} onChange={e => setFormData({ ...formData, codigo: e.target.value })} required /></div>
+                        <div className="space-y-2"><Label>Descrição *</Label><Input value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} required /></div>
                         <div className="space-y-2"><Label>Ordem</Label><Input type="number" value={formData.ordem ?? 0} onChange={e => setFormData({ ...formData, ordem: parseInt(e.target.value) || 0 })} /></div>
                       </div>
-                      <div className="space-y-2"><Label>Descrição *</Label><Input value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} required /></div>
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
                         <Select value={formData.tipo || 'despesa'} onValueChange={v => setFormData({ ...formData, tipo: v })}>
