@@ -282,7 +282,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Inscrições Produtor',
     tableName: 'inscricoes_produtor',
     description: 'Inscrições estaduais dos produtores',
-    order: 8,
+    order: 9,
     dependsOn: ['produtores', 'granjas'],
     columns: [
       { accessName: 'cpf_cnpj', dbName: 'cpf_cnpj', transform: toStr },
