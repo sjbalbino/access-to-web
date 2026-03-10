@@ -124,7 +124,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Safras',
     tableName: 'safras',
     description: 'Períodos de safra (depende de Culturas)',
-    order: 4,
+    order: 3,
     dependsOn: ['culturas'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
