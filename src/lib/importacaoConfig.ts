@@ -95,11 +95,36 @@ export const tableConfigs: TableConfig[] = [
     ],
   },
   {
+    key: 'unidades_medida',
+    label: 'Unidades de Medida',
+    tableName: 'unidades_medida',
+    description: 'Unidades de medida (kg, L, un, etc)',
+    order: 2,
+    columns: [
+      { accessName: 'codigo', dbName: 'codigo', required: true, transform: toStr },
+      { accessName: 'descricao', dbName: 'descricao', required: true, transform: toStr },
+      { accessName: 'sigla', dbName: 'sigla', transform: toStr },
+      { accessName: 'ativa', dbName: 'ativa', transform: toBool },
+    ],
+  },
+  {
+    key: 'grupos_produtos',
+    label: 'Grupos de Produtos',
+    tableName: 'grupos_produtos',
+    description: 'Grupos/categorias de produtos',
+    order: 2,
+    columns: [
+      { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
+      { accessName: 'descricao', dbName: 'descricao', transform: toStr },
+      { accessName: 'ativo', dbName: 'ativo', transform: toBool },
+    ],
+  },
+  {
     key: 'safras',
     label: 'Safras',
     tableName: 'safras',
     description: 'Períodos de safra (depende de Culturas)',
-    order: 4,
+    order: 3,
     dependsOn: ['culturas'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
@@ -124,7 +149,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Culturas',
     tableName: 'culturas',
     description: 'Tipos de cultura (soja, milho, etc)',
-    order: 3,
+    order: 2,
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
@@ -139,7 +164,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Produtos',
     tableName: 'produtos',
     description: 'Produtos e variedades',
-    order: 4,
+    order: 5,
     dependsOn: ['granjas', 'unidades_medida', 'grupos_produtos', 'clientes_fornecedores'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
@@ -186,7 +211,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Silos',
     tableName: 'silos',
     description: 'Silos de armazenamento',
-    order: 5,
+    order: 6,
     dependsOn: ['granjas'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
@@ -206,7 +231,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Lavouras',
     tableName: 'lavouras',
     description: 'Áreas de plantio',
-    order: 6,
+    order: 7,
     dependsOn: ['granjas'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toInt },
@@ -227,7 +252,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Produtores',
     tableName: 'produtores',
     description: 'Produtores rurais',
-    order: 7,
+    order: 8,
     dependsOn: ['granjas'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
@@ -257,7 +282,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Inscrições Produtor',
     tableName: 'inscricoes_produtor',
     description: 'Inscrições estaduais dos produtores',
-    order: 8,
+    order: 9,
     dependsOn: ['produtores', 'granjas'],
     columns: [
       { accessName: 'cpf_cnpj', dbName: 'cpf_cnpj', transform: toStr },
@@ -285,7 +310,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Placas',
     tableName: 'placas',
     description: 'Veículos/placas',
-    order: 9,
+    order: 10,
     columns: [
       { accessName: 'placa', dbName: 'placa', required: true, transform: toStr },
       { accessName: 'descricao', dbName: 'descricao', transform: toStr },
@@ -300,7 +325,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Transportadoras',
     tableName: 'transportadoras',
     description: 'Empresas de transporte',
-    order: 10,
+    order: 11,
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'razao_social', dbName: 'razao_social', required: true, transform: toStr },
@@ -322,7 +347,8 @@ export const tableConfigs: TableConfig[] = [
     label: 'Clientes/Fornecedores',
     tableName: 'clientes_fornecedores',
     description: 'Clientes e fornecedores',
-    order: 11,
+    order: 4,
+    dependsOn: ['granjas'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
