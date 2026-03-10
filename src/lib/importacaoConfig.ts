@@ -95,6 +95,18 @@ export const tableConfigs: TableConfig[] = [
     ],
   },
   {
+    key: 'plano_contas_gerencial',
+    label: 'Plano Contas Gerencial',
+    tableName: 'plano_contas_gerencial',
+    description: 'Plano de contas gerencial',
+    order: 1,
+    columns: [
+      { accessName: 'codigo', dbName: 'codigo', required: true, transform: toStr },
+      { accessName: 'descricao', dbName: 'descricao', required: true, transform: toStr },
+      { accessName: 'ativo', dbName: 'ativo', transform: toBool },
+    ],
+  },
+  {
     key: 'unidades_medida',
     label: 'Unidades de Medida',
     tableName: 'unidades_medida',
@@ -111,12 +123,20 @@ export const tableConfigs: TableConfig[] = [
     key: 'grupos_produtos',
     label: 'Grupos de Produtos',
     tableName: 'grupos_produtos',
-    description: 'Grupos/categorias de produtos',
+    description: 'Grupos/categorias de produtos (depende de Plano Contas Gerencial)',
     order: 2,
+    dependsOn: ['plano_contas_gerencial'],
     columns: [
       { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
       { accessName: 'descricao', dbName: 'descricao', transform: toStr },
       { accessName: 'ativo', dbName: 'ativo', transform: toBool },
+      { accessName: 'maquinas_implementos', dbName: 'maquinas_implementos', transform: toBool },
+      { accessName: 'bens_benfeitorias', dbName: 'bens_benfeitorias', transform: toBool },
+      { accessName: 'insumos', dbName: 'insumos', transform: toBool },
+      { accessName: 'venda_producao', dbName: 'venda_producao', transform: toBool },
+    ],
+    references: [
+      { dbColumn: 'conta_gerencial_id', sourceColumn: 'conta_gerencial', lookupTable: 'plano_contas_gerencial', lookupColumn: 'codigo', lookupLabel: 'descricao' },
     ],
   },
   {
