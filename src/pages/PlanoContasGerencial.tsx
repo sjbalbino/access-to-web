@@ -31,13 +31,13 @@ export default function PlanoContasGerencial() {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState<PlanoContaGerencialInput>({ codigo: '', descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true });
+  const [formData, setFormData] = useState<PlanoContaGerencialInput>({ descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true });
   const [expandedCentros, setExpandedCentros] = useState<Record<string, boolean>>({});
 
   // Sub-centro dialog
   const [isSubDialogOpen, setIsSubDialogOpen] = useState(false);
   const [editingSub, setEditingSub] = useState<any>(null);
-  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', codigo: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true });
+  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true });
 
   const filteredContas = contas?.filter(c =>
     c.codigo.toLowerCase().includes(search.toLowerCase()) ||
@@ -46,8 +46,8 @@ export default function PlanoContasGerencial() {
 
   const getSubCentros = (centroId: string) => allSubCentros?.filter(s => s.centro_custo_id === centroId) || [];
 
-  const resetForm = () => { setFormData({ codigo: '', descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true }); setEditingItem(null); };
-  const resetSubForm = () => { setSubFormData({ centro_custo_id: '', codigo: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true }); setEditingSub(null); };
+  const resetForm = () => { setFormData({ descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true }); setEditingItem(null); };
+  const resetSubForm = () => { setSubFormData({ centro_custo_id: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true }); setEditingSub(null); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +59,7 @@ export default function PlanoContasGerencial() {
 
   const handleEdit = (item: any) => {
     setEditingItem(item);
-    setFormData({ codigo: item.codigo, descricao: item.descricao, tipo: item.tipo || 'despesa', ordem: item.ordem ?? 0, imprimir: item.imprimir ?? true, ativo: item.ativo ?? true });
+    setFormData({ descricao: item.descricao, tipo: item.tipo || 'despesa', ordem: item.ordem ?? 0, imprimir: item.imprimir ?? true, ativo: item.ativo ?? true });
     setIsDialogOpen(true);
   };
 
@@ -77,7 +77,7 @@ export default function PlanoContasGerencial() {
 
   const handleEditSub = (sub: any) => {
     setEditingSub(sub);
-    setSubFormData({ centro_custo_id: sub.centro_custo_id, codigo: sub.codigo, descricao: sub.descricao, codigo_dre: sub.codigo_dre, tipo: sub.tipo || 'despesa', incide_irf: sub.incide_irf ?? false, ativo: sub.ativo ?? true });
+    setSubFormData({ centro_custo_id: sub.centro_custo_id, descricao: sub.descricao, codigo_dre: sub.codigo_dre, tipo: sub.tipo || 'despesa', incide_irf: sub.incide_irf ?? false, ativo: sub.ativo ?? true });
     setIsSubDialogOpen(true);
   };
 
@@ -113,10 +113,9 @@ export default function PlanoContasGerencial() {
                     <DialogHeader><DialogTitle>{editingItem ? 'Editar' : 'Novo'} Centro de Custo</DialogTitle></DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label>Código *</Label><Input value={formData.codigo} onChange={e => setFormData({ ...formData, codigo: e.target.value })} required /></div>
+                        <div className="space-y-2"><Label>Descrição *</Label><Input value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} required /></div>
                         <div className="space-y-2"><Label>Ordem</Label><Input type="number" value={formData.ordem ?? 0} onChange={e => setFormData({ ...formData, ordem: parseInt(e.target.value) || 0 })} /></div>
                       </div>
-                      <div className="space-y-2"><Label>Descrição *</Label><Input value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} required /></div>
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
                         <Select value={formData.tipo || 'despesa'} onValueChange={v => setFormData({ ...formData, tipo: v })}>
@@ -150,11 +149,10 @@ export default function PlanoContasGerencial() {
                   const subs = getSubCentros(conta.id);
                   const isExpanded = expandedCentros[conta.id];
                   return (
-                    <div key={conta.id} className="border rounded-lg">
+                  <div key={conta.id} className="border rounded-lg">
                       <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 cursor-pointer" onClick={() => toggleExpand(conta.id)}>
                         <div className="flex items-center gap-3">
                           {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                          <span className="font-mono font-medium text-sm">{conta.codigo}</span>
                           <span className="font-medium">{conta.descricao}</span>
                           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', conta.tipo === 'receita' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
                             {conta.tipo === 'receita' ? 'Receita' : 'Despesa'}
@@ -174,21 +172,19 @@ export default function PlanoContasGerencial() {
                         <div className="border-t bg-muted/20 px-4 py-2">
                           <Table>
                              <TableHeader>
-                              <TableRow>
-                                <TableHead>Código</TableHead>
-                                <TableHead>Descrição</TableHead>
-                                <TableHead>D/C</TableHead>
-                                <TableHead>Código DRE</TableHead>
-                                <TableHead>IRF</TableHead>
-                                <TableHead>Status</TableHead>
-                                {canEdit && <TableHead className="w-24">Ações</TableHead>}
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {subs.map(sub => (
-                                <TableRow key={sub.id}>
-                                  <TableCell className="font-mono text-sm">{sub.codigo}</TableCell>
-                                  <TableCell>{sub.descricao}</TableCell>
+                               <TableRow>
+                                 <TableHead>Descrição</TableHead>
+                                 <TableHead>D/C</TableHead>
+                                 <TableHead>Código DRE</TableHead>
+                                 <TableHead>IRF</TableHead>
+                                 <TableHead>Status</TableHead>
+                                 {canEdit && <TableHead className="w-24">Ações</TableHead>}
+                               </TableRow>
+                             </TableHeader>
+                             <TableBody>
+                               {subs.map(sub => (
+                                 <TableRow key={sub.id}>
+                                   <TableCell>{sub.descricao}</TableCell>
                                   <TableCell>
                                     <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', sub.tipo === 'receita' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
                                       {sub.tipo === 'receita' ? 'Receita' : 'Despesa'}
@@ -241,7 +237,6 @@ export default function PlanoContasGerencial() {
         <DialogContent>
           <DialogHeader><DialogTitle>{editingSub ? 'Editar' : 'Novo'} Sub-Centro de Custo</DialogTitle></DialogHeader>
           <form onSubmit={handleSubSubmit} className="space-y-4">
-            <div className="space-y-2"><Label>Código *</Label><Input value={subFormData.codigo} onChange={e => setSubFormData({ ...subFormData, codigo: e.target.value })} required /></div>
             <div className="space-y-2"><Label>Descrição *</Label><Input value={subFormData.descricao} onChange={e => setSubFormData({ ...subFormData, descricao: e.target.value })} required /></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
