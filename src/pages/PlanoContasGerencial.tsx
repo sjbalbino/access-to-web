@@ -51,7 +51,7 @@ export default function PlanoContasGerencial() {
   const getSubCentros = (centroId: string) => allSubCentros?.filter(s => s.centro_custo_id === centroId) || [];
 
   const resetForm = () => { setFormData({ descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true }); setEditingItem(null); };
-  const resetSubForm = () => { setSubFormData({ centro_custo_id: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true }); setEditingSub(null); };
+  const resetSubForm = () => { setSubFormData({ centro_custo_id: '', descricao: '', codigo_dre: null, incide_irf: false, ativo: true }); setEditingSub(null); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
