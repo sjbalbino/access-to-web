@@ -7,6 +7,8 @@ export interface PlanoContaGerencial {
   codigo: string;
   descricao: string;
   tipo: string | null;
+  ordem: number | null;
+  imprimir: boolean | null;
   ativo: boolean | null;
   created_at: string;
   updated_at: string;

@@ -8,6 +8,8 @@ export interface SubCentroCusto {
   codigo: string;
   descricao: string;
   codigo_dre: string | null;
+  tipo: string | null;
+  incide_irf: boolean | null;
   ativo: boolean | null;
   created_at: string;
   updated_at: string;

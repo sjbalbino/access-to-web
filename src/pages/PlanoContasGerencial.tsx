@@ -31,13 +31,13 @@ export default function PlanoContasGerencial() {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState<PlanoContaGerencialInput>({ codigo: '', descricao: '', tipo: 'despesa', ativo: true });
+  const [formData, setFormData] = useState<PlanoContaGerencialInput>({ codigo: '', descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true });
   const [expandedCentros, setExpandedCentros] = useState<Record<string, boolean>>({});
 
   // Sub-centro dialog
   const [isSubDialogOpen, setIsSubDialogOpen] = useState(false);
   const [editingSub, setEditingSub] = useState<any>(null);
-  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', codigo: '', descricao: '', codigo_dre: null, ativo: true });
+  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', codigo: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true });
 
   const filteredContas = contas?.filter(c =>
     c.codigo.toLowerCase().includes(search.toLowerCase()) ||
@@ -46,8 +46,8 @@ export default function PlanoContasGerencial() {
 
   const getSubCentros = (centroId: string) => allSubCentros?.filter(s => s.centro_custo_id === centroId) || [];
 
-  const resetForm = () => { setFormData({ codigo: '', descricao: '', tipo: 'despesa', ativo: true }); setEditingItem(null); };
-  const resetSubForm = () => { setSubFormData({ centro_custo_id: '', codigo: '', descricao: '', codigo_dre: null, ativo: true }); setEditingSub(null); };
+  const resetForm = () => { setFormData({ codigo: '', descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true }); setEditingItem(null); };
+  const resetSubForm = () => { setSubFormData({ centro_custo_id: '', codigo: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true }); setEditingSub(null); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +59,7 @@ export default function PlanoContasGerencial() {
 
   const handleEdit = (item: any) => {
     setEditingItem(item);
-    setFormData({ codigo: item.codigo, descricao: item.descricao, tipo: item.tipo || 'despesa', ativo: item.ativo ?? true });
+    setFormData({ codigo: item.codigo, descricao: item.descricao, tipo: item.tipo || 'despesa', ordem: item.ordem ?? 0, imprimir: item.imprimir ?? true, ativo: item.ativo ?? true });
     setIsDialogOpen(true);
   };
 
@@ -77,7 +77,7 @@ export default function PlanoContasGerencial() {
 
   const handleEditSub = (sub: any) => {
     setEditingSub(sub);
-    setSubFormData({ centro_custo_id: sub.centro_custo_id, codigo: sub.codigo, descricao: sub.descricao, codigo_dre: sub.codigo_dre, ativo: sub.ativo ?? true });
+    setSubFormData({ centro_custo_id: sub.centro_custo_id, codigo: sub.codigo, descricao: sub.descricao, codigo_dre: sub.codigo_dre, tipo: sub.tipo || 'despesa', incide_irf: sub.incide_irf ?? false, ativo: sub.ativo ?? true });
     setIsSubDialogOpen(true);
   };
 
@@ -112,7 +112,10 @@ export default function PlanoContasGerencial() {
                   <DialogContent>
                     <DialogHeader><DialogTitle>{editingItem ? 'Editar' : 'Novo'} Centro de Custo</DialogTitle></DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="space-y-2"><Label>Código *</Label><Input value={formData.codigo} onChange={e => setFormData({ ...formData, codigo: e.target.value })} required /></div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2"><Label>Código *</Label><Input value={formData.codigo} onChange={e => setFormData({ ...formData, codigo: e.target.value })} required /></div>
+                        <div className="space-y-2"><Label>Ordem</Label><Input type="number" value={formData.ordem ?? 0} onChange={e => setFormData({ ...formData, ordem: parseInt(e.target.value) || 0 })} /></div>
+                      </div>
                       <div className="space-y-2"><Label>Descrição *</Label><Input value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} required /></div>
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
@@ -124,7 +127,10 @@ export default function PlanoContasGerencial() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="flex items-center gap-2"><Switch checked={formData.ativo ?? true} onCheckedChange={checked => setFormData({ ...formData, ativo: checked })} /><Label>Ativo</Label></div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2"><Switch checked={formData.imprimir ?? true} onCheckedChange={checked => setFormData({ ...formData, imprimir: checked })} /><Label>Imprimir</Label></div>
+                        <div className="flex items-center gap-2"><Switch checked={formData.ativo ?? true} onCheckedChange={checked => setFormData({ ...formData, ativo: checked })} /><Label>Ativo</Label></div>
+                      </div>
                       <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                         <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>{editingItem ? 'Salvar' : 'Criar'}</Button>
@@ -167,11 +173,13 @@ export default function PlanoContasGerencial() {
                       {isExpanded && subs.length > 0 && (
                         <div className="border-t bg-muted/20 px-4 py-2">
                           <Table>
-                            <TableHeader>
+                             <TableHeader>
                               <TableRow>
                                 <TableHead>Código</TableHead>
                                 <TableHead>Descrição</TableHead>
+                                <TableHead>D/C</TableHead>
                                 <TableHead>Código DRE</TableHead>
+                                <TableHead>IRF</TableHead>
                                 <TableHead>Status</TableHead>
                                 {canEdit && <TableHead className="w-24">Ações</TableHead>}
                               </TableRow>
@@ -181,7 +189,13 @@ export default function PlanoContasGerencial() {
                                 <TableRow key={sub.id}>
                                   <TableCell className="font-mono text-sm">{sub.codigo}</TableCell>
                                   <TableCell>{sub.descricao}</TableCell>
+                                  <TableCell>
+                                    <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', sub.tipo === 'receita' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
+                                      {sub.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                                    </span>
+                                  </TableCell>
                                   <TableCell className="font-mono text-sm">{sub.codigo_dre || '-'}</TableCell>
+                                  <TableCell>{sub.incide_irf ? 'Sim' : 'Não'}</TableCell>
                                   <TableCell>
                                     <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', sub.ativo ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
                                       {sub.ativo ? 'Ativo' : 'Inativo'}
@@ -229,8 +243,23 @@ export default function PlanoContasGerencial() {
           <form onSubmit={handleSubSubmit} className="space-y-4">
             <div className="space-y-2"><Label>Código *</Label><Input value={subFormData.codigo} onChange={e => setSubFormData({ ...subFormData, codigo: e.target.value })} required /></div>
             <div className="space-y-2"><Label>Descrição *</Label><Input value={subFormData.descricao} onChange={e => setSubFormData({ ...subFormData, descricao: e.target.value })} required /></div>
-            <div className="space-y-2"><Label>Código DRE</Label><Input value={subFormData.codigo_dre || ''} onChange={e => setSubFormData({ ...subFormData, codigo_dre: e.target.value || null })} /></div>
-            <div className="flex items-center gap-2"><Switch checked={subFormData.ativo ?? true} onCheckedChange={checked => setSubFormData({ ...subFormData, ativo: checked })} /><Label>Ativo</Label></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>D/C (Tipo)</Label>
+                <Select value={subFormData.tipo || 'despesa'} onValueChange={v => setSubFormData({ ...subFormData, tipo: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="receita">Receita</SelectItem>
+                    <SelectItem value="despesa">Despesa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Código DRE</Label><Input value={subFormData.codigo_dre || ''} onChange={e => setSubFormData({ ...subFormData, codigo_dre: e.target.value || null })} /></div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2"><Switch checked={subFormData.incide_irf ?? false} onCheckedChange={checked => setSubFormData({ ...subFormData, incide_irf: checked })} /><Label>Incide IRF</Label></div>
+              <div className="flex items-center gap-2"><Switch checked={subFormData.ativo ?? true} onCheckedChange={checked => setSubFormData({ ...subFormData, ativo: checked })} /><Label>Ativo</Label></div>
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsSubDialogOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={createSubMutation.isPending || updateSubMutation.isPending}>{editingSub ? 'Salvar' : 'Criar'}</Button>
