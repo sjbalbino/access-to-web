@@ -14,6 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Plus, Pencil, Trash2, BookOpen, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { usePlanoContasGerencial, useCreatePlanoContaGerencial, useUpdatePlanoContaGerencial, useDeletePlanoContaGerencial, PlanoContaGerencialInput } from '@/hooks/usePlanoContasGerencial';
 import { useSubCentrosCusto, useCreateSubCentroCusto, useUpdateSubCentroCusto, useDeleteSubCentroCusto, SubCentroCustoInput } from '@/hooks/useSubCentrosCusto';
+import { useDreContas } from '@/hooks/useDreContas';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,7 @@ export default function PlanoContasGerencial() {
   const { canEdit } = useAuth();
   const { data: contas, isLoading } = usePlanoContasGerencial();
   const { data: allSubCentros } = useSubCentrosCusto();
+  const { data: dreContas } = useDreContas();
   const createMutation = useCreatePlanoContaGerencial();
   const updateMutation = useUpdatePlanoContaGerencial();
   const deleteMutation = useDeletePlanoContaGerencial();
@@ -37,7 +39,10 @@ export default function PlanoContasGerencial() {
   // Sub-centro dialog
   const [isSubDialogOpen, setIsSubDialogOpen] = useState(false);
   const [editingSub, setEditingSub] = useState<any>(null);
-  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true });
+  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', descricao: '', codigo_dre: null, incide_irf: false, ativo: true });
+
+  // Filtra contas DRE acima do nível 2 (nível 3+)
+  const dreContasFiltered = dreContas?.filter(c => c.nivel > 2 && c.ativo) || [];
 
   const filteredContas = contas?.filter(c =>
     c.codigo.toLowerCase().includes(search.toLowerCase()) ||
@@ -47,7 +52,7 @@ export default function PlanoContasGerencial() {
   const getSubCentros = (centroId: string) => allSubCentros?.filter(s => s.centro_custo_id === centroId) || [];
 
   const resetForm = () => { setFormData({ descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true }); setEditingItem(null); };
-  const resetSubForm = () => { setSubFormData({ centro_custo_id: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true }); setEditingSub(null); };
+  const resetSubForm = () => { setSubFormData({ centro_custo_id: '', descricao: '', codigo_dre: null, incide_irf: false, ativo: true }); setEditingSub(null); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +82,7 @@ export default function PlanoContasGerencial() {
 
   const handleEditSub = (sub: any) => {
     setEditingSub(sub);
-    setSubFormData({ centro_custo_id: sub.centro_custo_id, descricao: sub.descricao, codigo_dre: sub.codigo_dre, tipo: sub.tipo || 'despesa', incide_irf: sub.incide_irf ?? false, ativo: sub.ativo ?? true });
+    setSubFormData({ centro_custo_id: sub.centro_custo_id, descricao: sub.descricao, codigo_dre: sub.codigo_dre, incide_irf: sub.incide_irf ?? false, ativo: sub.ativo ?? true });
     setIsSubDialogOpen(true);
   };
 
@@ -174,7 +179,6 @@ export default function PlanoContasGerencial() {
                              <TableHeader>
                                <TableRow>
                                  <TableHead>Descrição</TableHead>
-                                 <TableHead>D/C</TableHead>
                                  <TableHead>Código DRE</TableHead>
                                  <TableHead>IRF</TableHead>
                                  <TableHead>Status</TableHead>
@@ -185,11 +189,6 @@ export default function PlanoContasGerencial() {
                                {subs.map(sub => (
                                  <TableRow key={sub.id}>
                                    <TableCell>{sub.descricao}</TableCell>
-                                  <TableCell>
-                                    <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', sub.tipo === 'receita' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
-                                      {sub.tipo === 'receita' ? 'Receita' : 'Despesa'}
-                                    </span>
-                                  </TableCell>
                                   <TableCell className="font-mono text-sm">{sub.codigo_dre || '-'}</TableCell>
                                   <TableCell>{sub.incide_irf ? 'Sim' : 'Não'}</TableCell>
                                   <TableCell>
@@ -238,18 +237,16 @@ export default function PlanoContasGerencial() {
           <DialogHeader><DialogTitle>{editingSub ? 'Editar' : 'Novo'} Sub-Centro de Custo</DialogTitle></DialogHeader>
           <form onSubmit={handleSubSubmit} className="space-y-4">
             <div className="space-y-2"><Label>Descrição *</Label><Input value={subFormData.descricao} onChange={e => setSubFormData({ ...subFormData, descricao: e.target.value })} required /></div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>D/C (Tipo)</Label>
-                <Select value={subFormData.tipo || 'despesa'} onValueChange={v => setSubFormData({ ...subFormData, tipo: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="receita">Receita</SelectItem>
-                    <SelectItem value="despesa">Despesa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2"><Label>Código DRE</Label><Input value={subFormData.codigo_dre || ''} onChange={e => setSubFormData({ ...subFormData, codigo_dre: e.target.value || null })} /></div>
+            <div className="space-y-2">
+              <Label>Conta DRE</Label>
+              <Select value={subFormData.codigo_dre || ''} onValueChange={v => setSubFormData({ ...subFormData, codigo_dre: v || null })}>
+                <SelectTrigger><SelectValue placeholder="Selecione uma conta DRE" /></SelectTrigger>
+                <SelectContent>
+                  {dreContasFiltered.map(dre => (
+                    <SelectItem key={dre.id} value={dre.codigo}>{dre.codigo} - {dre.descricao}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2"><Switch checked={subFormData.incide_irf ?? false} onCheckedChange={checked => setSubFormData({ ...subFormData, incide_irf: checked })} /><Label>Incide IRF</Label></div>
