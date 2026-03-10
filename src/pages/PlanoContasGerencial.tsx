@@ -37,7 +37,7 @@ export default function PlanoContasGerencial() {
   // Sub-centro dialog
   const [isSubDialogOpen, setIsSubDialogOpen] = useState(false);
   const [editingSub, setEditingSub] = useState<any>(null);
-  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', codigo: '', descricao: '', codigo_dre: null, ativo: true });
+  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', codigo: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true });
 
   const filteredContas = contas?.filter(c =>
     c.codigo.toLowerCase().includes(search.toLowerCase()) ||
