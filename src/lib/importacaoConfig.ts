@@ -252,7 +252,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Produtores',
     tableName: 'produtores',
     description: 'Produtores rurais',
-    order: 7,
+    order: 8,
     dependsOn: ['granjas'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
