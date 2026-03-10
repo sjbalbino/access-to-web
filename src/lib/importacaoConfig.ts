@@ -325,7 +325,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Transportadoras',
     tableName: 'transportadoras',
     description: 'Empresas de transporte',
-    order: 10,
+    order: 11,
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'razao_social', dbName: 'razao_social', required: true, transform: toStr },
