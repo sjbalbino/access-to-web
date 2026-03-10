@@ -7,11 +7,21 @@ export interface GrupoProduto {
   nome: string;
   descricao: string | null;
   ativo: boolean | null;
+  conta_gerencial_id: string | null;
+  maquinas_implementos: boolean | null;
+  bens_benfeitorias: boolean | null;
+  insumos: boolean | null;
+  venda_producao: boolean | null;
   created_at: string;
   updated_at: string;
+  plano_contas_gerencial?: {
+    id: string;
+    codigo: string;
+    descricao: string;
+  } | null;
 }
 
-export type GrupoProdutoInput = Omit<GrupoProduto, 'id' | 'created_at' | 'updated_at'>;
+export type GrupoProdutoInput = Omit<GrupoProduto, 'id' | 'created_at' | 'updated_at' | 'plano_contas_gerencial'>;
 
 export function useGruposProdutos() {
   return useQuery({
@@ -19,7 +29,10 @@ export function useGruposProdutos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('grupos_produtos')
-        .select('*')
+        .select(`
+          *,
+          plano_contas_gerencial:conta_gerencial_id (id, codigo, descricao)
+        `)
         .order('nome');
       if (error) throw error;
       return data as GrupoProduto[];
