@@ -28,6 +28,8 @@ import {
   ArrowRightLeft,
   BarChart3,
   DatabaseBackup,
+  DollarSign,
+  GitBranch,
   LucideIcon,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
