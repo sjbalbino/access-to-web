@@ -173,11 +173,13 @@ export default function PlanoContasGerencial() {
                       {isExpanded && subs.length > 0 && (
                         <div className="border-t bg-muted/20 px-4 py-2">
                           <Table>
-                            <TableHeader>
+                             <TableHeader>
                               <TableRow>
                                 <TableHead>Código</TableHead>
                                 <TableHead>Descrição</TableHead>
+                                <TableHead>D/C</TableHead>
                                 <TableHead>Código DRE</TableHead>
+                                <TableHead>IRF</TableHead>
                                 <TableHead>Status</TableHead>
                                 {canEdit && <TableHead className="w-24">Ações</TableHead>}
                               </TableRow>
