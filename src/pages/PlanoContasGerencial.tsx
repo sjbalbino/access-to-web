@@ -237,7 +237,6 @@ export default function PlanoContasGerencial() {
         <DialogContent>
           <DialogHeader><DialogTitle>{editingSub ? 'Editar' : 'Novo'} Sub-Centro de Custo</DialogTitle></DialogHeader>
           <form onSubmit={handleSubSubmit} className="space-y-4">
-            <div className="space-y-2"><Label>Código *</Label><Input value={subFormData.codigo} onChange={e => setSubFormData({ ...subFormData, codigo: e.target.value })} required /></div>
             <div className="space-y-2"><Label>Descrição *</Label><Input value={subFormData.descricao} onChange={e => setSubFormData({ ...subFormData, descricao: e.target.value })} required /></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
