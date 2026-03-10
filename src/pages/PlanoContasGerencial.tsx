@@ -31,13 +31,13 @@ export default function PlanoContasGerencial() {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState<PlanoContaGerencialInput>({ codigo: '', descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true });
+  const [formData, setFormData] = useState<PlanoContaGerencialInput>({ descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true });
   const [expandedCentros, setExpandedCentros] = useState<Record<string, boolean>>({});
 
   // Sub-centro dialog
   const [isSubDialogOpen, setIsSubDialogOpen] = useState(false);
   const [editingSub, setEditingSub] = useState<any>(null);
-  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', codigo: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true });
+  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', descricao: '', codigo_dre: null, tipo: 'despesa', incide_irf: false, ativo: true });
 
   const filteredContas = contas?.filter(c =>
     c.codigo.toLowerCase().includes(search.toLowerCase()) ||
