@@ -98,6 +98,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Produtos", icon: Package, path: "/produtos", color: "text-amber-500" },
       { title: "Grupos Produtos", icon: FolderOpen, path: "/grupos-produtos", color: "text-violet-500" },
+      { title: "Plano Contas", icon: FolderOpen, path: "/plano-contas-gerencial", color: "text-emerald-600" },
       { title: "Unidades", icon: Ruler, path: "/unidades-medida", color: "text-sky-500" },
       { title: "Silos", icon: Warehouse, path: "/silos", color: "text-emerald-500" },
       { title: "Placas", icon: Truck, path: "/placas", color: "text-orange-500" },

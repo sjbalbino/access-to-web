@@ -48,6 +48,7 @@ export const routeMap: Record<string, RouteInfo> = {
   "/relatorios": { title: "Relatórios", icon: BarChart3, color: "text-purple-600" },
   "/produtos": { title: "Produtos", icon: Package, color: "text-amber-500" },
   "/grupos-produtos": { title: "Grupos Produtos", icon: FolderOpen, color: "text-violet-500" },
+  "/plano-contas-gerencial": { title: "Plano Contas", icon: FileText, color: "text-emerald-600" },
   "/unidades-medida": { title: "Unidades", icon: Ruler, color: "text-sky-500" },
   "/silos": { title: "Silos", icon: Warehouse, color: "text-emerald-500" },
   "/placas": { title: "Placas", icon: Truck, color: "text-orange-500" },

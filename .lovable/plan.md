@@ -1,64 +1,94 @@
 
+## Relatorios Gerenciais e Extratos dos Produtores
 
-## Adicionar campos ao cadastro de Grupos de Produtos
+### Objetivo
+Criar uma nova pagina de Relatorios com tres relatorios principais em PDF:
+1. **Extrato do Produtor** - Movimentacao completa de um produtor (colheitas, transferencias, devolucoes, notas de deposito)
+2. **Relatorio de Colheitas** - Listagem de colheitas com filtros e totalizadores
+3. **Relatorio de Vendas** - Resumo dos contratos de venda com remessas
 
-### 1. Criar tabela `plano_contas_gerencial` (migração)
+---
 
-```sql
-CREATE TABLE public.plano_contas_gerencial (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  codigo varchar NOT NULL,
-  descricao varchar NOT NULL,
-  ativo boolean DEFAULT true,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+### Estrutura
 
-ALTER TABLE public.plano_contas_gerencial ENABLE ROW LEVEL SECURITY;
+#### 1. Nova pagina: `src/pages/Relatorios.tsx`
+Pagina central de relatorios com cards para cada tipo de relatorio. Cada card abre um dialog com filtros especificos e botao para gerar o PDF.
 
--- RLS policies (mesma abordagem das demais tabelas)
-CREATE POLICY "Permitir leitura pública" ON public.plano_contas_gerencial FOR SELECT USING (true);
-CREATE POLICY "Operadores podem inserir" ON public.plano_contas_gerencial FOR INSERT WITH CHECK (can_edit(auth.uid()));
-CREATE POLICY "Operadores podem atualizar" ON public.plano_contas_gerencial FOR UPDATE USING (can_edit(auth.uid()));
-CREATE POLICY "Operadores podem excluir" ON public.plano_contas_gerencial FOR DELETE USING (can_edit(auth.uid()));
-
-CREATE TRIGGER update_plano_contas_gerencial_updated_at
-  BEFORE UPDATE ON public.plano_contas_gerencial
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+**Layout:**
+```text
++--------------------------------------------------+
+| PageHeader: Relatorios Gerenciais                |
++--------------------------------------------------+
+| +----------------+ +----------------+ +---------+ |
+| | Extrato do     | | Relatorio de   | | Relat.  | |
+| | Produtor       | | Colheitas      | | Vendas  | |
+| | [Gerar]        | | [Gerar]        | | [Gerar] | |
+| +----------------+ +----------------+ +---------+ |
++--------------------------------------------------+
 ```
 
-### 2. Adicionar colunas à tabela `grupos_produtos` (migração)
+#### 2. Novo arquivo: `src/lib/relatoriosPdf.ts`
+Funcoes de geracao de PDF seguindo o padrao ja existente em `contratoVendaPdf.ts` (jsPDF + autoTable).
 
-```sql
-ALTER TABLE public.grupos_produtos
-  ADD COLUMN conta_gerencial_id uuid REFERENCES public.plano_contas_gerencial(id),
-  ADD COLUMN maquinas_implementos boolean DEFAULT false,
-  ADD COLUMN bens_benfeitorias boolean DEFAULT false,
-  ADD COLUMN insumos boolean DEFAULT false,
-  ADD COLUMN venda_producao boolean DEFAULT false;
-```
+**2.1 - Extrato do Produtor**
+Filtros: Safra, Produtor/Inscricao, Produto, Periodo (data inicial/final)
 
-### 3. Criar hook `usePlanoContasGerencial` e CRUD page
+Conteudo do PDF:
+- Cabecalho com dados do produtor (nome, CPF/CNPJ, inscricao estadual)
+- Secao COLHEITAS: tabela com data, lavoura, peso bruto, tara, liquido, umidade, impureza, descontos, producao liquida
+- Secao TRANSFERENCIAS RECEBIDAS: data, origem, quantidade kg
+- Secao TRANSFERENCIAS ENVIADAS: data, destino, quantidade kg
+- Secao DEVOLUCOES: data, quantidade, taxa armazenagem, kg taxa
+- Secao NOTAS DE DEPOSITO: data, nota fiscal, quantidade
+- RESUMO FINAL: Total Colheitas + Transf.Recebidas - Transf.Enviadas - Devolucoes - kg_Taxa = Saldo
 
-- `src/hooks/usePlanoContasGerencial.ts` -- query + mutations
-- `src/pages/PlanoContasGerencial.tsx` -- CRUD completo (código, descrição, ativo)
-- Adicionar rota em `App.tsx` e item no sidebar/routeMap
+**2.2 - Relatorio de Colheitas**
+Filtros: Safra, Produto, Silo, Periodo, Tipo (propria/terceiro)
 
-### 4. Atualizar formulário e listagem de Grupos
+Conteudo do PDF:
+- Tabela com: Data, Produtor, Lavoura, Placa, Peso Bruto, Tara, Liquido, Umidade%, Impureza%, Desc.Total, Prod.Liquida, Sacas
+- Totalizadores no rodape: Total Peso Bruto, Total Prod.Liquida, Total Sacas
+- Subtotais por produtor (opcional)
 
-- `src/hooks/useGruposProdutos.ts` -- atualizar interface com novos campos, incluir join com `plano_contas_gerencial`
-- `src/pages/GruposProdutos.tsx`:
-  - Formulário: adicionar Select de Conta Gerencial + 4 checkboxes
-  - Tabela: adicionar coluna Conta Gerencial e indicadores dos checkboxes
+**2.3 - Relatorio de Vendas**
+Filtros: Safra, Comprador, Periodo
 
-### Arquivos a criar
-- `src/hooks/usePlanoContasGerencial.ts`
-- `src/pages/PlanoContasGerencial.tsx`
+Conteudo do PDF:
+- Tabela de contratos: Numero, Data, Comprador, Produto, Qtde Contratada, Preco/kg, Valor Total, Carregado, Saldo
+- Totalizadores: Total Contratado, Total Carregado, Total Saldo, Valor Total
+- Detalhamento de remessas por contrato (opcional, com sub-tabela)
 
-### Arquivos a modificar
-- `src/hooks/useGruposProdutos.ts`
-- `src/pages/GruposProdutos.tsx`
-- `src/App.tsx` (rota)
-- `src/lib/routeMap.ts` (mapa de rota)
-- `src/components/layout/AppSidebar.tsx` (menu)
+#### 3. Novo componente: `src/components/relatorios/RelatorioDialog.tsx`
+Dialog reutilizavel com filtros dinamicos para cada tipo de relatorio. Contem selects para Safra, Produtor, Produto, datas, e botao "Gerar PDF".
 
+#### 4. Atualizacoes
+- **`src/App.tsx`**: Adicionar rota `/relatorios`
+- **`src/components/layout/AppSidebar.tsx`**: Adicionar item "Relatorios" no grupo "Comercial" com icone `BarChart3`
+
+---
+
+### Secao Tecnica
+
+**Queries para o Extrato do Produtor:**
+- Colheitas: `SELECT * FROM colheitas WHERE inscricao_produtor_id = ? AND safra_id = ? [AND variedade_id = ?] [AND data_colheita BETWEEN ? AND ?]` com joins em lavouras, silos, placas, produtos
+- Transferencias recebidas: `SELECT * FROM transferencias_deposito WHERE inscricao_destino_id = ? AND safra_id = ?`
+- Transferencias enviadas: `SELECT * FROM transferencias_deposito WHERE inscricao_origem_id = ? AND safra_id = ?`
+- Devolucoes: `SELECT * FROM devolucoes_deposito WHERE inscricao_produtor_id = ? AND safra_id = ?`
+- Notas deposito: `SELECT * FROM notas_deposito_emitidas WHERE inscricao_produtor_id = ? AND safra_id = ?`
+
+**Queries para Relatorio de Colheitas:**
+- `SELECT * FROM colheitas` com joins em inscricoes_produtor, produtores, lavouras, silos, placas, produtos, filtrando por safra/produto/silo/periodo
+
+**Queries para Relatorio de Vendas:**
+- Usa `useContratosVenda` existente com filtros, e `remessas_venda` para detalhamento
+
+**Geracao PDF:** Usa `jsPDF` + `jspdf-autotable` (ja instalados). Download direto via blob URL (mesmo padrao de `contratoVendaPdf.ts`).
+
+**Formatacao:** Todas as colunas numericas/moeda alinhadas a direita, datas centralizadas, texto a esquerda. Formatacao brasileira (separador milhar ponto, decimal virgula).
+
+### Arquivos a criar/modificar
+- Criar: `src/pages/Relatorios.tsx`
+- Criar: `src/lib/relatoriosPdf.ts`
+- Criar: `src/components/relatorios/RelatorioDialog.tsx`
+- Modificar: `src/App.tsx` (nova rota)
+- Modificar: `src/components/layout/AppSidebar.tsx` (novo item menu)

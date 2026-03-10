@@ -1395,29 +1395,52 @@ export type Database = {
       grupos_produtos: {
         Row: {
           ativo: boolean | null
+          bens_benfeitorias: boolean | null
+          conta_gerencial_id: string | null
           created_at: string | null
           descricao: string | null
           id: string
+          insumos: boolean | null
+          maquinas_implementos: boolean | null
           nome: string
           updated_at: string | null
+          venda_producao: boolean | null
         }
         Insert: {
           ativo?: boolean | null
+          bens_benfeitorias?: boolean | null
+          conta_gerencial_id?: string | null
           created_at?: string | null
           descricao?: string | null
           id?: string
+          insumos?: boolean | null
+          maquinas_implementos?: boolean | null
           nome: string
           updated_at?: string | null
+          venda_producao?: boolean | null
         }
         Update: {
           ativo?: boolean | null
+          bens_benfeitorias?: boolean | null
+          conta_gerencial_id?: string | null
           created_at?: string | null
           descricao?: string | null
           id?: string
+          insumos?: boolean | null
+          maquinas_implementos?: boolean | null
           nome?: string
           updated_at?: string | null
+          venda_producao?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "grupos_produtos_conta_gerencial_id_fkey"
+            columns: ["conta_gerencial_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas_gerencial"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inscricoes_produtor: {
         Row: {
@@ -2571,6 +2594,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plano_contas_gerencial: {
+        Row: {
+          ativo: boolean | null
+          codigo: string
+          created_at: string | null
+          descricao: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          codigo: string
+          created_at?: string | null
+          descricao: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          codigo?: string
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       plantas_invasoras: {
         Row: {

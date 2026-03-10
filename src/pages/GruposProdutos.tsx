@@ -10,13 +10,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, FolderOpen, Search } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Pencil, Trash2, FolderOpen, Search, Check } from 'lucide-react';
 import { useGruposProdutos, useCreateGrupoProduto, useUpdateGrupoProduto, useDeleteGrupoProduto, GrupoProdutoInput } from '@/hooks/useGruposProdutos';
+import { usePlanoContasGerencial } from '@/hooks/usePlanoContasGerencial';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 export default function GruposProdutos() {
   const { canEdit } = useAuth();
   const { data: grupos, isLoading } = useGruposProdutos();
+  const { data: contasGerenciais } = usePlanoContasGerencial();
   const createMutation = useCreateGrupoProduto();
   const updateMutation = useUpdateGrupoProduto();
   const deleteMutation = useDeleteGrupoProduto();
@@ -28,6 +33,11 @@ export default function GruposProdutos() {
     nome: '',
     descricao: '',
     ativo: true,
+    conta_gerencial_id: null,
+    maquinas_implementos: false,
+    bens_benfeitorias: false,
+    insumos: false,
+    venda_producao: false,
   });
 
   const filteredGrupos = grupos?.filter(g => 
@@ -35,8 +45,10 @@ export default function GruposProdutos() {
     g.descricao?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const contasAtivas = contasGerenciais?.filter(c => c.ativo) ?? [];
+
   const resetForm = () => {
-    setFormData({ nome: '', descricao: '', ativo: true });
+    setFormData({ nome: '', descricao: '', ativo: true, conta_gerencial_id: null, maquinas_implementos: false, bens_benfeitorias: false, insumos: false, venda_producao: false });
     setEditingItem(null);
   };
 
@@ -57,6 +69,11 @@ export default function GruposProdutos() {
       nome: item.nome,
       descricao: item.descricao || '',
       ativo: item.ativo ?? true,
+      conta_gerencial_id: item.conta_gerencial_id || null,
+      maquinas_implementos: item.maquinas_implementos ?? false,
+      bens_benfeitorias: item.bens_benfeitorias ?? false,
+      insumos: item.insumos ?? false,
+      venda_producao: item.venda_producao ?? false,
     });
     setIsDialogOpen(true);
   };
@@ -100,7 +117,7 @@ export default function GruposProdutos() {
                       Novo Grupo
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-lg">
                     <DialogHeader>
                       <DialogTitle>{editingItem ? 'Editar' : 'Novo'} Grupo</DialogTitle>
                     </DialogHeader>
@@ -120,6 +137,70 @@ export default function GruposProdutos() {
                           onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                           rows={3}
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Conta Gerencial</Label>
+                        <Select
+                          value={formData.conta_gerencial_id || 'none'}
+                          onValueChange={(value) => setFormData({ ...formData, conta_gerencial_id: value === 'none' ? null : value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma conta gerencial" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhuma</SelectItem>
+                            {contasAtivas.map((conta) => (
+                              <SelectItem key={conta.id} value={conta.id}>
+                                {conta.codigo} - {conta.descricao}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-3 rounded-lg border p-4">
+                        <Label className="text-sm font-semibold">Classificação</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="maquinas"
+                              checked={formData.maquinas_implementos ?? false}
+                              onCheckedChange={(checked) => setFormData({ ...formData, maquinas_implementos: !!checked })}
+                            />
+                            <Label htmlFor="maquinas" className="text-sm font-normal cursor-pointer">
+                              Máquinas, Impl. e Veículos
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="bens"
+                              checked={formData.bens_benfeitorias ?? false}
+                              onCheckedChange={(checked) => setFormData({ ...formData, bens_benfeitorias: !!checked })}
+                            />
+                            <Label htmlFor="bens" className="text-sm font-normal cursor-pointer">
+                              Bens e Benfeitorias
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="insumos"
+                              checked={formData.insumos ?? false}
+                              onCheckedChange={(checked) => setFormData({ ...formData, insumos: !!checked })}
+                            />
+                            <Label htmlFor="insumos" className="text-sm font-normal cursor-pointer">
+                              Insumos
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="venda"
+                              checked={formData.venda_producao ?? false}
+                              onCheckedChange={(checked) => setFormData({ ...formData, venda_producao: !!checked })}
+                            />
+                            <Label htmlFor="venda" className="text-sm font-normal cursor-pointer">
+                              Venda da Produção
+                            </Label>
+                          </div>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Switch
@@ -155,6 +236,8 @@ export default function GruposProdutos() {
                   <TableRow>
                     <TableHead>Nome</TableHead>
                     <TableHead>Descrição</TableHead>
+                    <TableHead>Conta Gerencial</TableHead>
+                    <TableHead>Classificação</TableHead>
                     <TableHead>Status</TableHead>
                     {canEdit && <TableHead className="w-24">Ações</TableHead>}
                   </TableRow>
@@ -164,6 +247,20 @@ export default function GruposProdutos() {
                     <TableRow key={grupo.id}>
                       <TableCell className="font-medium">{grupo.nome}</TableCell>
                       <TableCell>{grupo.descricao || '-'}</TableCell>
+                      <TableCell>
+                        {grupo.plano_contas_gerencial
+                          ? `${grupo.plano_contas_gerencial.codigo} - ${grupo.plano_contas_gerencial.descricao}`
+                          : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {grupo.maquinas_implementos && <Badge variant="outline" className="text-xs">Máquinas</Badge>}
+                          {grupo.bens_benfeitorias && <Badge variant="outline" className="text-xs">Bens</Badge>}
+                          {grupo.insumos && <Badge variant="outline" className="text-xs">Insumos</Badge>}
+                          {grupo.venda_producao && <Badge variant="outline" className="text-xs">Venda</Badge>}
+                          {!grupo.maquinas_implementos && !grupo.bens_benfeitorias && !grupo.insumos && !grupo.venda_producao && '-'}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           grupo.ativo ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'

@@ -19,6 +19,7 @@ import Tenants from "./pages/Tenants";
 import ClientesFornecedores from "./pages/ClientesFornecedores";
 import Produtos from "./pages/Produtos";
 import GruposProdutos from "./pages/GruposProdutos";
+import PlanoContasGerencial from "./pages/PlanoContasGerencial";
 import UnidadesMedida from "./pages/UnidadesMedida";
 import Silos from "./pages/Silos";
 import Placas from "./pages/Placas";
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/clientes-fornecedores" element={<ProtectedRoute><ClientesFornecedores /></ProtectedRoute>} />
               <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
               <Route path="/grupos-produtos" element={<ProtectedRoute><GruposProdutos /></ProtectedRoute>} />
+              <Route path="/plano-contas-gerencial" element={<ProtectedRoute><PlanoContasGerencial /></ProtectedRoute>} />
               <Route path="/unidades-medida" element={<ProtectedRoute><UnidadesMedida /></ProtectedRoute>} />
               <Route path="/silos" element={<ProtectedRoute><Silos /></ProtectedRoute>} />
               <Route path="/placas" element={<ProtectedRoute><Placas /></ProtectedRoute>} />
