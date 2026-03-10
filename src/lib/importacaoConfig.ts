@@ -149,7 +149,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Culturas',
     tableName: 'culturas',
     description: 'Tipos de cultura (soja, milho, etc)',
-    order: 3,
+    order: 2,
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
