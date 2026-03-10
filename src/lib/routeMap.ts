@@ -4,6 +4,8 @@ import {
   Calendar,
   Users,
   Map,
+  DollarSign,
+  GitBranch,
   LayoutDashboard,
   Wheat,
   Shield,
