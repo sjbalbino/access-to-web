@@ -6,6 +6,7 @@ export interface PlanoContaGerencial {
   id: string;
   codigo: string;
   descricao: string;
+  tipo: string | null;
   ativo: boolean | null;
   created_at: string;
   updated_at: string;
@@ -22,7 +23,7 @@ export function usePlanoContasGerencial() {
         .select('*')
         .order('codigo');
       if (error) throw error;
-      return data as PlanoContaGerencial[];
+      return data as unknown as PlanoContaGerencial[];
     },
   });
 }
@@ -33,7 +34,7 @@ export function useCreatePlanoContaGerencial() {
     mutationFn: async (input: PlanoContaGerencialInput) => {
       const { data, error } = await supabase
         .from('plano_contas_gerencial')
-        .insert(input)
+        .insert(input as any)
         .select()
         .single();
       if (error) throw error;
@@ -41,10 +42,10 @@ export function useCreatePlanoContaGerencial() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plano_contas_gerencial'] });
-      toast.success('Conta gerencial criada com sucesso!');
+      toast.success('Centro de custo criado com sucesso!');
     },
     onError: (error) => {
-      toast.error('Erro ao criar conta gerencial: ' + error.message);
+      toast.error('Erro ao criar centro de custo: ' + error.message);
     },
   });
 }
@@ -55,7 +56,7 @@ export function useUpdatePlanoContaGerencial() {
     mutationFn: async ({ id, ...input }: Partial<PlanoContaGerencialInput> & { id: string }) => {
       const { data, error } = await supabase
         .from('plano_contas_gerencial')
-        .update(input)
+        .update(input as any)
         .eq('id', id)
         .select()
         .single();
@@ -64,10 +65,10 @@ export function useUpdatePlanoContaGerencial() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plano_contas_gerencial'] });
-      toast.success('Conta gerencial atualizada com sucesso!');
+      toast.success('Centro de custo atualizado com sucesso!');
     },
     onError: (error) => {
-      toast.error('Erro ao atualizar conta gerencial: ' + error.message);
+      toast.error('Erro ao atualizar centro de custo: ' + error.message);
     },
   });
 }
@@ -84,10 +85,10 @@ export function useDeletePlanoContaGerencial() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plano_contas_gerencial'] });
-      toast.success('Conta gerencial excluída com sucesso!');
+      toast.success('Centro de custo excluído com sucesso!');
     },
     onError: (error) => {
-      toast.error('Erro ao excluir conta gerencial: ' + error.message);
+      toast.error('Erro ao excluir centro de custo: ' + error.message);
     },
   });
 }
