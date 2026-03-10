@@ -347,7 +347,8 @@ export const tableConfigs: TableConfig[] = [
     label: 'Clientes/Fornecedores',
     tableName: 'clientes_fornecedores',
     description: 'Clientes e fornecedores',
-    order: 11,
+    order: 4,
+    dependsOn: ['granjas'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
