@@ -243,8 +243,23 @@ export default function PlanoContasGerencial() {
           <form onSubmit={handleSubSubmit} className="space-y-4">
             <div className="space-y-2"><Label>Código *</Label><Input value={subFormData.codigo} onChange={e => setSubFormData({ ...subFormData, codigo: e.target.value })} required /></div>
             <div className="space-y-2"><Label>Descrição *</Label><Input value={subFormData.descricao} onChange={e => setSubFormData({ ...subFormData, descricao: e.target.value })} required /></div>
-            <div className="space-y-2"><Label>Código DRE</Label><Input value={subFormData.codigo_dre || ''} onChange={e => setSubFormData({ ...subFormData, codigo_dre: e.target.value || null })} /></div>
-            <div className="flex items-center gap-2"><Switch checked={subFormData.ativo ?? true} onCheckedChange={checked => setSubFormData({ ...subFormData, ativo: checked })} /><Label>Ativo</Label></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>D/C (Tipo)</Label>
+                <Select value={subFormData.tipo || 'despesa'} onValueChange={v => setSubFormData({ ...subFormData, tipo: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="receita">Receita</SelectItem>
+                    <SelectItem value="despesa">Despesa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Código DRE</Label><Input value={subFormData.codigo_dre || ''} onChange={e => setSubFormData({ ...subFormData, codigo_dre: e.target.value || null })} /></div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2"><Switch checked={subFormData.incide_irf ?? false} onCheckedChange={checked => setSubFormData({ ...subFormData, incide_irf: checked })} /><Label>Incide IRF</Label></div>
+              <div className="flex items-center gap-2"><Switch checked={subFormData.ativo ?? true} onCheckedChange={checked => setSubFormData({ ...subFormData, ativo: checked })} /><Label>Ativo</Label></div>
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsSubDialogOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={createSubMutation.isPending || updateSubMutation.isPending}>{editingSub ? 'Salvar' : 'Criar'}</Button>
