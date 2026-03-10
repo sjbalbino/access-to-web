@@ -15,7 +15,7 @@ export interface SubCentroCusto {
   updated_at: string;
 }
 
-export type SubCentroCustoInput = Omit<SubCentroCusto, 'id' | 'created_at' | 'updated_at'>;
+export type SubCentroCustoInput = Omit<SubCentroCusto, 'id' | 'created_at' | 'updated_at' | 'codigo'> & { codigo?: string };
 
 export function useSubCentrosCusto(centroCustoId?: string) {
   return useQuery({
