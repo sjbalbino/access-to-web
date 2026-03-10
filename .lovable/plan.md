@@ -1,94 +1,111 @@
 
-## Relatorios Gerenciais e Extratos dos Produtores
 
-### Objetivo
-Criar uma nova pagina de Relatorios com tres relatorios principais em PDF:
-1. **Extrato do Produtor** - Movimentacao completa de um produtor (colheitas, transferencias, devolucoes, notas de deposito)
-2. **Relatorio de Colheitas** - Listagem de colheitas com filtros e totalizadores
-3. **Relatorio de Vendas** - Resumo dos contratos de venda com remessas
+## Relatórios de Gestão - Módulo Financeiro Completo
+
+### Visão Geral
+Criar o módulo financeiro completo com reestruturação do Plano de Contas Gerencial (hierarquia Centro de Custo → Sub-Centro), CRUD de Lançamentos Financeiros, estrutura do DRE, e 3 relatórios PDF.
 
 ---
 
-### Estrutura
+### 1. Migrações de Banco de Dados
 
-#### 1. Nova pagina: `src/pages/Relatorios.tsx`
-Pagina central de relatorios com cards para cada tipo de relatorio. Cada card abre um dialog com filtros especificos e botao para gerar o PDF.
+**a) Reestruturar `plano_contas_gerencial`** (agora = Centro de Custo)
+- Adicionar coluna `tipo` varchar (`receita` / `despesa`)
 
-**Layout:**
-```text
-+--------------------------------------------------+
-| PageHeader: Relatorios Gerenciais                |
-+--------------------------------------------------+
-| +----------------+ +----------------+ +---------+ |
-| | Extrato do     | | Relatorio de   | | Relat.  | |
-| | Produtor       | | Colheitas      | | Vendas  | |
-| | [Gerar]        | | [Gerar]        | | [Gerar] | |
-| +----------------+ +----------------+ +---------+ |
-+--------------------------------------------------+
-```
+**b) Criar tabela `sub_centros_custo`**
+- `id`, `centro_custo_id` (FK → plano_contas_gerencial), `codigo`, `descricao`, `codigo_dre`, `ativo`, timestamps
+- RLS: mesma abordagem (leitura pública, edição via `can_edit`)
 
-#### 2. Novo arquivo: `src/lib/relatoriosPdf.ts`
-Funcoes de geracao de PDF seguindo o padrao ja existente em `contratoVendaPdf.ts` (jsPDF + autoTable).
+**c) Criar tabela `dre_contas`** (estrutura hierárquica do DRE)
+- `id`, `codigo` (ex: "01", "01.01", "01.01.001"), `descricao`, `nivel` int, `parent_id` (self-ref), `tipo_saldo` (credito/debito), `ordem` int, `ativo`, timestamps
+- RLS: leitura pública, edição via `can_edit`
 
-**2.1 - Extrato do Produtor**
-Filtros: Safra, Produtor/Inscricao, Produto, Periodo (data inicial/final)
+**d) Criar tabela `lancamentos_financeiros`**
+- `id`, `granja_id` FK, `data_lancamento` date, `sub_centro_custo_id` FK, `dre_conta_id` FK (opcional), `descricao`, `valor` numeric, `tipo` (receita/despesa), `fornecedor_id` FK (clientes_fornecedores, opcional), `documento`, `observacoes`, timestamps
+- RLS: tenant isolation via `granja_belongs_to_tenant`
 
-Conteudo do PDF:
-- Cabecalho com dados do produtor (nome, CPF/CNPJ, inscricao estadual)
-- Secao COLHEITAS: tabela com data, lavoura, peso bruto, tara, liquido, umidade, impureza, descontos, producao liquida
-- Secao TRANSFERENCIAS RECEBIDAS: data, origem, quantidade kg
-- Secao TRANSFERENCIAS ENVIADAS: data, destino, quantidade kg
-- Secao DEVOLUCOES: data, quantidade, taxa armazenagem, kg taxa
-- Secao NOTAS DE DEPOSITO: data, nota fiscal, quantidade
-- RESUMO FINAL: Total Colheitas + Transf.Recebidas - Transf.Enviadas - Devolucoes - kg_Taxa = Saldo
-
-**2.2 - Relatorio de Colheitas**
-Filtros: Safra, Produto, Silo, Periodo, Tipo (propria/terceiro)
-
-Conteudo do PDF:
-- Tabela com: Data, Produtor, Lavoura, Placa, Peso Bruto, Tara, Liquido, Umidade%, Impureza%, Desc.Total, Prod.Liquida, Sacas
-- Totalizadores no rodape: Total Peso Bruto, Total Prod.Liquida, Total Sacas
-- Subtotais por produtor (opcional)
-
-**2.3 - Relatorio de Vendas**
-Filtros: Safra, Comprador, Periodo
-
-Conteudo do PDF:
-- Tabela de contratos: Numero, Data, Comprador, Produto, Qtde Contratada, Preco/kg, Valor Total, Carregado, Saldo
-- Totalizadores: Total Contratado, Total Carregado, Total Saldo, Valor Total
-- Detalhamento de remessas por contrato (opcional, com sub-tabela)
-
-#### 3. Novo componente: `src/components/relatorios/RelatorioDialog.tsx`
-Dialog reutilizavel com filtros dinamicos para cada tipo de relatorio. Contem selects para Safra, Produtor, Produto, datas, e botao "Gerar PDF".
-
-#### 4. Atualizacoes
-- **`src/App.tsx`**: Adicionar rota `/relatorios`
-- **`src/components/layout/AppSidebar.tsx`**: Adicionar item "Relatorios" no grupo "Comercial" com icone `BarChart3`
+**e) Atualizar `grupos_produtos`**
+- A FK `conta_gerencial_id` já aponta para `plano_contas_gerencial`, continua válida
 
 ---
 
-### Secao Tecnica
+### 2. Atualizar Plano de Contas Gerencial (CRUD hierárquico)
 
-**Queries para o Extrato do Produtor:**
-- Colheitas: `SELECT * FROM colheitas WHERE inscricao_produtor_id = ? AND safra_id = ? [AND variedade_id = ?] [AND data_colheita BETWEEN ? AND ?]` com joins em lavouras, silos, placas, produtos
-- Transferencias recebidas: `SELECT * FROM transferencias_deposito WHERE inscricao_destino_id = ? AND safra_id = ?`
-- Transferencias enviadas: `SELECT * FROM transferencias_deposito WHERE inscricao_origem_id = ? AND safra_id = ?`
-- Devolucoes: `SELECT * FROM devolucoes_deposito WHERE inscricao_produtor_id = ? AND safra_id = ?`
-- Notas deposito: `SELECT * FROM notas_deposito_emitidas WHERE inscricao_produtor_id = ? AND safra_id = ?`
+**`src/pages/PlanoContasGerencial.tsx`** - Reformular para:
+- Listar Centros de Custo com campo Tipo (Receita/Despesa)
+- Expandir cada centro para ver/gerenciar Sub-Centros de Custo
+- Formulário de Sub-Centro com: Código, Descrição, Código DRE
 
-**Queries para Relatorio de Colheitas:**
-- `SELECT * FROM colheitas` com joins em inscricoes_produtor, produtores, lavouras, silos, placas, produtos, filtrando por safra/produto/silo/periodo
+**Hooks**: `usePlanoContasGerencial.ts` (atualizar), criar `useSubCentrosCusto.ts`
 
-**Queries para Relatorio de Vendas:**
-- Usa `useContratosVenda` existente com filtros, e `remessas_venda` para detalhamento
+---
 
-**Geracao PDF:** Usa `jsPDF` + `jspdf-autotable` (ja instalados). Download direto via blob URL (mesmo padrao de `contratoVendaPdf.ts`).
+### 3. CRUD do DRE (Estrutura)
 
-**Formatacao:** Todas as colunas numericas/moeda alinhadas a direita, datas centralizadas, texto a esquerda. Formatacao brasileira (separador milhar ponto, decimal virgula).
+**`src/pages/DreEstrutura.tsx`** - Cadastro da estrutura hierárquica do DRE
+- Exibição em árvore (código hierárquico: 01 → 01.01 → 01.01.001)
+- CRUD de cada nível
 
-### Arquivos a criar/modificar
-- Criar: `src/pages/Relatorios.tsx`
-- Criar: `src/lib/relatoriosPdf.ts`
-- Criar: `src/components/relatorios/RelatorioDialog.tsx`
-- Modificar: `src/App.tsx` (nova rota)
-- Modificar: `src/components/layout/AppSidebar.tsx` (novo item menu)
+**Hook**: `useDreContas.ts`
+
+---
+
+### 4. CRUD de Lançamentos Financeiros
+
+**`src/pages/LancamentosFinanceiros.tsx`** - Tela principal do módulo financeiro
+- Listagem com filtros: Período, Centro de Custo, Tipo (Receita/Despesa), Granja
+- Formulário: Data, Descrição, Sub-Centro de Custo (select agrupado por Centro), Conta DRE, Valor, Tipo, Fornecedor, Documento, Obs
+- Totalizadores
+
+**Hook**: `useLancamentosFinanceiros.ts`
+
+---
+
+### 5. Três Relatórios PDF
+
+Adicionar ao painel de Relatórios (`src/pages/Relatorios.tsx`):
+
+**a) Demonstrativo Gerencial**
+- Filtros: Período, Tipo (Receitas/Despesas/Ambos), Agrupamento (Consolidado/Individual)
+- PDF: Agrupa lançamentos por Centro de Custo → Sub-Centro, com valores e % dentro do grupo e % do total geral
+- Baseado na imagem 26
+
+**b) Demonstrativo de Resultado (DRE)**
+- Filtros: Período
+- PDF: Estrutura hierárquica das contas DRE com Saldo Anterior, Valor do Período, %, Saldo Atual
+- Baseado na imagem 30
+
+**c) Despesas com Bens Móveis**
+- Filtros: Período, Opções (Geral Discriminado, Geral Totais, Individual por Bem, etc.)
+- PDF: Filtra lançamentos de grupos com flag `maquinas_implementos = true` no `grupos_produtos`
+
+**Arquivo**: `src/lib/relatoriosGestao.ts` (funções PDF separadas)
+
+---
+
+### 6. Navegação
+
+- Adicionar rotas: `/lancamentos-financeiros`, `/dre-estrutura`
+- Sidebar: Novo grupo "Financeiro" com itens: Lançamentos, DRE Estrutura
+- Atualizar `routeMap.ts`
+
+---
+
+### Arquivos a Criar
+- `src/hooks/useSubCentrosCusto.ts`
+- `src/hooks/useDreContas.ts`
+- `src/hooks/useLancamentosFinanceiros.ts`
+- `src/pages/LancamentosFinanceiros.tsx`
+- `src/pages/DreEstrutura.tsx`
+- `src/lib/relatoriosGestao.ts`
+
+### Arquivos a Modificar
+- `src/hooks/usePlanoContasGerencial.ts` (campo tipo)
+- `src/pages/PlanoContasGerencial.tsx` (hierarquia com sub-centros)
+- `src/pages/Relatorios.tsx` (3 novos cards)
+- `src/components/relatorios/RelatorioDialog.tsx` (novos tipos)
+- `src/App.tsx` (rotas)
+- `src/lib/routeMap.ts`
+- `src/components/layout/AppSidebar.tsx`
+- `src/lib/importacaoConfig.ts` (configs de importação para novas tabelas)
+
