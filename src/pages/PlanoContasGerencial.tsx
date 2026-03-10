@@ -172,21 +172,19 @@ export default function PlanoContasGerencial() {
                         <div className="border-t bg-muted/20 px-4 py-2">
                           <Table>
                              <TableHeader>
-                              <TableRow>
-                                <TableHead>Código</TableHead>
-                                <TableHead>Descrição</TableHead>
-                                <TableHead>D/C</TableHead>
-                                <TableHead>Código DRE</TableHead>
-                                <TableHead>IRF</TableHead>
-                                <TableHead>Status</TableHead>
-                                {canEdit && <TableHead className="w-24">Ações</TableHead>}
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {subs.map(sub => (
-                                <TableRow key={sub.id}>
-                                  <TableCell className="font-mono text-sm">{sub.codigo}</TableCell>
-                                  <TableCell>{sub.descricao}</TableCell>
+                               <TableRow>
+                                 <TableHead>Descrição</TableHead>
+                                 <TableHead>D/C</TableHead>
+                                 <TableHead>Código DRE</TableHead>
+                                 <TableHead>IRF</TableHead>
+                                 <TableHead>Status</TableHead>
+                                 {canEdit && <TableHead className="w-24">Ações</TableHead>}
+                               </TableRow>
+                             </TableHeader>
+                             <TableBody>
+                               {subs.map(sub => (
+                                 <TableRow key={sub.id}>
+                                   <TableCell>{sub.descricao}</TableCell>
                                   <TableCell>
                                     <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', sub.tipo === 'receita' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
                                       {sub.tipo === 'receita' ? 'Receita' : 'Despesa'}
