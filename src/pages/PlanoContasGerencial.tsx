@@ -236,18 +236,16 @@ export default function PlanoContasGerencial() {
           <DialogHeader><DialogTitle>{editingSub ? 'Editar' : 'Novo'} Sub-Centro de Custo</DialogTitle></DialogHeader>
           <form onSubmit={handleSubSubmit} className="space-y-4">
             <div className="space-y-2"><Label>Descrição *</Label><Input value={subFormData.descricao} onChange={e => setSubFormData({ ...subFormData, descricao: e.target.value })} required /></div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>D/C (Tipo)</Label>
-                <Select value={subFormData.tipo || 'despesa'} onValueChange={v => setSubFormData({ ...subFormData, tipo: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="receita">Receita</SelectItem>
-                    <SelectItem value="despesa">Despesa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2"><Label>Código DRE</Label><Input value={subFormData.codigo_dre || ''} onChange={e => setSubFormData({ ...subFormData, codigo_dre: e.target.value || null })} /></div>
+            <div className="space-y-2">
+              <Label>Conta DRE</Label>
+              <Select value={subFormData.codigo_dre || ''} onValueChange={v => setSubFormData({ ...subFormData, codigo_dre: v || null })}>
+                <SelectTrigger><SelectValue placeholder="Selecione uma conta DRE" /></SelectTrigger>
+                <SelectContent>
+                  {dreContasFiltered.map(dre => (
+                    <SelectItem key={dre.id} value={dre.codigo}>{dre.codigo} - {dre.descricao}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2"><Switch checked={subFormData.incide_irf ?? false} onCheckedChange={checked => setSubFormData({ ...subFormData, incide_irf: checked })} /><Label>Incide IRF</Label></div>
