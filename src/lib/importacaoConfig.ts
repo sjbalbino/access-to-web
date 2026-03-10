@@ -95,6 +95,31 @@ export const tableConfigs: TableConfig[] = [
     ],
   },
   {
+    key: 'unidades_medida',
+    label: 'Unidades de Medida',
+    tableName: 'unidades_medida',
+    description: 'Unidades de medida (kg, L, un, etc)',
+    order: 2,
+    columns: [
+      { accessName: 'codigo', dbName: 'codigo', required: true, transform: toStr },
+      { accessName: 'descricao', dbName: 'descricao', required: true, transform: toStr },
+      { accessName: 'sigla', dbName: 'sigla', transform: toStr },
+      { accessName: 'ativa', dbName: 'ativa', transform: toBool },
+    ],
+  },
+  {
+    key: 'grupos_produtos',
+    label: 'Grupos de Produtos',
+    tableName: 'grupos_produtos',
+    description: 'Grupos/categorias de produtos',
+    order: 2,
+    columns: [
+      { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
+      { accessName: 'descricao', dbName: 'descricao', transform: toStr },
+      { accessName: 'ativo', dbName: 'ativo', transform: toBool },
+    ],
+  },
+  {
     key: 'safras',
     label: 'Safras',
     tableName: 'safras',
