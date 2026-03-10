@@ -19,6 +19,7 @@ import Tenants from "./pages/Tenants";
 import ClientesFornecedores from "./pages/ClientesFornecedores";
 import Produtos from "./pages/Produtos";
 import GruposProdutos from "./pages/GruposProdutos";
+import PlanoContasGerencial from "./pages/PlanoContasGerencial";
 import UnidadesMedida from "./pages/UnidadesMedida";
 import Silos from "./pages/Silos";
 import Placas from "./pages/Placas";
