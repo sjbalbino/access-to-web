@@ -178,7 +178,6 @@ export default function PlanoContasGerencial() {
                              <TableHeader>
                                <TableRow>
                                  <TableHead>Descrição</TableHead>
-                                 <TableHead>D/C</TableHead>
                                  <TableHead>Código DRE</TableHead>
                                  <TableHead>IRF</TableHead>
                                  <TableHead>Status</TableHead>
@@ -189,11 +188,6 @@ export default function PlanoContasGerencial() {
                                {subs.map(sub => (
                                  <TableRow key={sub.id}>
                                    <TableCell>{sub.descricao}</TableCell>
-                                  <TableCell>
-                                    <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', sub.tipo === 'receita' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
-                                      {sub.tipo === 'receita' ? 'Receita' : 'Despesa'}
-                                    </span>
-                                  </TableCell>
                                   <TableCell className="font-mono text-sm">{sub.codigo_dre || '-'}</TableCell>
                                   <TableCell>{sub.incide_irf ? 'Sim' : 'Não'}</TableCell>
                                   <TableCell>
