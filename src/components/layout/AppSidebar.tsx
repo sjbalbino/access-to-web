@@ -96,6 +96,14 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
+    title: "Financeiro",
+    items: [
+      { title: "Lançamentos", icon: DollarSign, path: "/lancamentos-financeiros", color: "text-emerald-600" },
+      { title: "Estrutura DRE", icon: GitBranch, path: "/dre-estrutura", color: "text-blue-600" },
+      { title: "Relatórios", icon: BarChart3, path: "/relatorios", color: "text-purple-600" },
+    ],
+  },
+  {
     title: "Cadastros",
     items: [
       { title: "Produtos", icon: Package, path: "/produtos", color: "text-amber-500" },
