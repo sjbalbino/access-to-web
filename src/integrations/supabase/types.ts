@@ -1104,6 +1104,53 @@ export type Database = {
           },
         ]
       }
+      dre_contas: {
+        Row: {
+          ativo: boolean | null
+          codigo: string
+          created_at: string | null
+          descricao: string
+          id: string
+          nivel: number
+          ordem: number | null
+          parent_id: string | null
+          tipo_saldo: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          codigo: string
+          created_at?: string | null
+          descricao: string
+          id?: string
+          nivel?: number
+          ordem?: number | null
+          parent_id?: string | null
+          tipo_saldo?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          codigo?: string
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          nivel?: number
+          ordem?: number | null
+          parent_id?: string | null
+          tipo_saldo?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dre_contas_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "dre_contas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emitentes_nfe: {
         Row: {
           aliq_cbs_padrao: number | null
@@ -1579,6 +1626,93 @@ export type Database = {
             columns: ["controle_lavoura_id"]
             isOneToOne: false
             referencedRelation: "controle_lavouras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lancamentos_financeiros: {
+        Row: {
+          created_at: string | null
+          data_lancamento: string
+          descricao: string
+          documento: string | null
+          dre_conta_id: string | null
+          fornecedor_id: string | null
+          granja_id: string
+          id: string
+          observacoes: string | null
+          safra_id: string | null
+          sub_centro_custo_id: string | null
+          tipo: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string | null
+          data_lancamento?: string
+          descricao: string
+          documento?: string | null
+          dre_conta_id?: string | null
+          fornecedor_id?: string | null
+          granja_id: string
+          id?: string
+          observacoes?: string | null
+          safra_id?: string | null
+          sub_centro_custo_id?: string | null
+          tipo?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Update: {
+          created_at?: string | null
+          data_lancamento?: string
+          descricao?: string
+          documento?: string | null
+          dre_conta_id?: string | null
+          fornecedor_id?: string | null
+          granja_id?: string
+          id?: string
+          observacoes?: string | null
+          safra_id?: string | null
+          sub_centro_custo_id?: string | null
+          tipo?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lancamentos_financeiros_dre_conta_id_fkey"
+            columns: ["dre_conta_id"]
+            isOneToOne: false
+            referencedRelation: "dre_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_sub_centro_custo_id_fkey"
+            columns: ["sub_centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "sub_centros_custo"
             referencedColumns: ["id"]
           },
         ]
@@ -2602,6 +2736,7 @@ export type Database = {
           created_at: string | null
           descricao: string
           id: string
+          tipo: string | null
           updated_at: string | null
         }
         Insert: {
@@ -2610,6 +2745,7 @@ export type Database = {
           created_at?: string | null
           descricao: string
           id?: string
+          tipo?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -2618,6 +2754,7 @@ export type Database = {
           created_at?: string | null
           descricao?: string
           id?: string
+          tipo?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -3322,6 +3459,47 @@ export type Database = {
             columns: ["granja_id"]
             isOneToOne: false
             referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sub_centros_custo: {
+        Row: {
+          ativo: boolean | null
+          centro_custo_id: string
+          codigo: string
+          codigo_dre: string | null
+          created_at: string | null
+          descricao: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          centro_custo_id: string
+          codigo: string
+          codigo_dre?: string | null
+          created_at?: string | null
+          descricao: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          centro_custo_id?: string
+          codigo?: string
+          codigo_dre?: string | null
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_centros_custo_centro_custo_id_fkey"
+            columns: ["centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "plano_contas_gerencial"
             referencedColumns: ["id"]
           },
         ]
