@@ -22,6 +22,7 @@ export default function PlanoContasGerencial() {
   const { canEdit } = useAuth();
   const { data: contas, isLoading } = usePlanoContasGerencial();
   const { data: allSubCentros } = useSubCentrosCusto();
+  const { data: dreContas } = useDreContas();
   const createMutation = useCreatePlanoContaGerencial();
   const updateMutation = useUpdatePlanoContaGerencial();
   const deleteMutation = useDeletePlanoContaGerencial();
