@@ -47,7 +47,7 @@ const CLEANUP_STEPS = [
   { label: 'Silos', tables: ['silos'] },
   { label: 'Produtos', tables: ['produtos'] },
   { label: 'Placas, Transportadoras, Clientes', tables: ['placas', 'transportadoras', 'clientes_fornecedores', 'locais_entrega'] },
-  { label: 'Safras, Culturas, Tabela Umidades, etc.', tables: ['safras', 'culturas', 'tabela_umidades', 'grupos_produtos', 'unidades_medida', 'cfops', 'ncm'] },
+  { label: 'Safras, Culturas, Tabela Umidades, etc.', tables: ['safras', 'culturas', 'tabela_umidades', 'grupos_produtos', 'unidades_medida', 'plano_contas_gerencial', 'cfops', 'ncm'] },
   { label: 'Granjas', tables: ['granjas'] },
 ];
 
