@@ -33,7 +33,7 @@ export default function PlanoContasGerencial() {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState<PlanoContaGerencialInput>({ descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true });
+  const [formData, setFormData] = useState<PlanoContaGerencialInput>({ descricao: '', tipo: 'despesa', ativo: true });
   const [expandedCentros, setExpandedCentros] = useState<Record<string, boolean>>({});
 
   // Sub-centro dialog
