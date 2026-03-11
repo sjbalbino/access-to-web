@@ -176,7 +176,6 @@ export default function PlanoContasGerencial() {
                                <TableRow>
                                  <TableHead>Descrição</TableHead>
                                  <TableHead>Código DRE</TableHead>
-                                 <TableHead>IRF</TableHead>
                                  <TableHead>Status</TableHead>
                                  {canEdit && <TableHead className="w-24">Ações</TableHead>}
                                </TableRow>
