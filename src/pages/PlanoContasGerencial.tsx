@@ -39,7 +39,7 @@ export default function PlanoContasGerencial() {
   // Sub-centro dialog
   const [isSubDialogOpen, setIsSubDialogOpen] = useState(false);
   const [editingSub, setEditingSub] = useState<any>(null);
-  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', descricao: '', codigo_dre: null, incide_irf: false, ativo: true });
+  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', descricao: '', codigo_dre: null, ativo: true });
 
   // Filtra contas DRE acima do nível 2 (nível 3+)
   const dreContasFiltered = dreContas?.filter(c => c.nivel > 2 && c.ativo) || [];
@@ -52,7 +52,7 @@ export default function PlanoContasGerencial() {
   const getSubCentros = (centroId: string) => allSubCentros?.filter(s => s.centro_custo_id === centroId) || [];
 
   const resetForm = () => { setFormData({ descricao: '', tipo: 'despesa', ativo: true }); setEditingItem(null); };
-  const resetSubForm = () => { setSubFormData({ centro_custo_id: '', descricao: '', codigo_dre: null, incide_irf: false, ativo: true }); setEditingSub(null); };
+  const resetSubForm = () => { setSubFormData({ centro_custo_id: '', descricao: '', codigo_dre: null, ativo: true }); setEditingSub(null); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +82,7 @@ export default function PlanoContasGerencial() {
 
   const handleEditSub = (sub: any) => {
     setEditingSub(sub);
-    setSubFormData({ centro_custo_id: sub.centro_custo_id, descricao: sub.descricao, codigo_dre: sub.codigo_dre, incide_irf: sub.incide_irf ?? false, ativo: sub.ativo ?? true });
+    setSubFormData({ centro_custo_id: sub.centro_custo_id, descricao: sub.descricao, codigo_dre: sub.codigo_dre, ativo: sub.ativo ?? true });
     setIsSubDialogOpen(true);
   };
 
@@ -176,7 +176,6 @@ export default function PlanoContasGerencial() {
                                <TableRow>
                                  <TableHead>Descrição</TableHead>
                                  <TableHead>Código DRE</TableHead>
-                                 <TableHead>IRF</TableHead>
                                  <TableHead>Status</TableHead>
                                  {canEdit && <TableHead className="w-24">Ações</TableHead>}
                                </TableRow>
@@ -185,9 +184,8 @@ export default function PlanoContasGerencial() {
                                {subs.map(sub => (
                                  <TableRow key={sub.id}>
                                    <TableCell>{sub.descricao}</TableCell>
-                                  <TableCell className="font-mono text-sm">{sub.codigo_dre || '-'}</TableCell>
-                                  <TableCell>{sub.incide_irf ? 'Sim' : 'Não'}</TableCell>
-                                  <TableCell>
+                                   <TableCell className="font-mono text-sm">{sub.codigo_dre || '-'}</TableCell>
+                                   <TableCell>
                                     <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', sub.ativo ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
                                       {sub.ativo ? 'Ativo' : 'Inativo'}
                                     </span>
@@ -261,10 +259,7 @@ export default function PlanoContasGerencial() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2"><Switch checked={subFormData.incide_irf ?? false} onCheckedChange={checked => setSubFormData({ ...subFormData, incide_irf: checked })} /><Label>Incide IRF</Label></div>
-              <div className="flex items-center gap-2"><Switch checked={subFormData.ativo ?? true} onCheckedChange={checked => setSubFormData({ ...subFormData, ativo: checked })} /><Label>Ativo</Label></div>
-            </div>
+            <div className="flex items-center gap-2"><Switch checked={subFormData.ativo ?? true} onCheckedChange={checked => setSubFormData({ ...subFormData, ativo: checked })} /><Label>Ativo</Label></div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsSubDialogOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={createSubMutation.isPending || updateSubMutation.isPending}>{editingSub ? 'Salvar' : 'Criar'}</Button>
