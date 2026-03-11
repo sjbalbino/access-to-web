@@ -1,0 +1,1 @@
+ALTER TABLE public.sub_centros_custo ALTER COLUMN codigo SET DEFAULT '';
