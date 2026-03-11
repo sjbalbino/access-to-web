@@ -64,7 +64,7 @@ export default function PlanoContasGerencial() {
 
   const handleEdit = (item: any) => {
     setEditingItem(item);
-    setFormData({ descricao: item.descricao, tipo: item.tipo || 'despesa', ordem: item.ordem ?? 0, imprimir: item.imprimir ?? true, ativo: item.ativo ?? true });
+    setFormData({ descricao: item.descricao, tipo: item.tipo || 'despesa', ativo: item.ativo ?? true });
     setIsDialogOpen(true);
   };
 
