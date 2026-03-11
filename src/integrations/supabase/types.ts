@@ -3485,7 +3485,7 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           centro_custo_id: string
-          codigo: string
+          codigo?: string
           codigo_dre?: string | null
           created_at?: string | null
           descricao: string
