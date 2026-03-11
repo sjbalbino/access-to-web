@@ -82,7 +82,7 @@ export default function PlanoContasGerencial() {
 
   const handleEditSub = (sub: any) => {
     setEditingSub(sub);
-    setSubFormData({ centro_custo_id: sub.centro_custo_id, descricao: sub.descricao, codigo_dre: sub.codigo_dre, incide_irf: sub.incide_irf ?? false, ativo: sub.ativo ?? true });
+    setSubFormData({ centro_custo_id: sub.centro_custo_id, descricao: sub.descricao, codigo_dre: sub.codigo_dre, ativo: sub.ativo ?? true });
     setIsSubDialogOpen(true);
   };
 
