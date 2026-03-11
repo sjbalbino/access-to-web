@@ -21,7 +21,7 @@ export function useSubCentrosCusto(centroCustoId?: string) {
   return useQuery({
     queryKey: ['sub_centros_custo', centroCustoId],
     queryFn: async () => {
-      let query = supabase.from('sub_centros_custo' as any).select('*').order('codigo');
+      let query = supabase.from('sub_centros_custo' as any).select('*').order('descricao');
       if (centroCustoId) query = query.eq('centro_custo_id', centroCustoId);
       const { data, error } = await query;
       if (error) throw error;
