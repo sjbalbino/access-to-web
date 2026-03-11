@@ -33,7 +33,7 @@ export default function PlanoContasGerencial() {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState<PlanoContaGerencialInput>({ descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true });
+  const [formData, setFormData] = useState<PlanoContaGerencialInput>({ descricao: '', tipo: 'despesa', ativo: true });
   const [expandedCentros, setExpandedCentros] = useState<Record<string, boolean>>({});
 
   // Sub-centro dialog
@@ -51,7 +51,7 @@ export default function PlanoContasGerencial() {
 
   const getSubCentros = (centroId: string) => allSubCentros?.filter(s => s.centro_custo_id === centroId) || [];
 
-  const resetForm = () => { setFormData({ descricao: '', tipo: 'despesa', ordem: 0, imprimir: true, ativo: true }); setEditingItem(null); };
+  const resetForm = () => { setFormData({ descricao: '', tipo: 'despesa', ativo: true }); setEditingItem(null); };
   const resetSubForm = () => { setSubFormData({ centro_custo_id: '', descricao: '', codigo_dre: null, incide_irf: false, ativo: true }); setEditingSub(null); };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,7 +64,7 @@ export default function PlanoContasGerencial() {
 
   const handleEdit = (item: any) => {
     setEditingItem(item);
-    setFormData({ descricao: item.descricao, tipo: item.tipo || 'despesa', ordem: item.ordem ?? 0, imprimir: item.imprimir ?? true, ativo: item.ativo ?? true });
+    setFormData({ descricao: item.descricao, tipo: item.tipo || 'despesa', ativo: item.ativo ?? true });
     setIsDialogOpen(true);
   };
 
@@ -117,10 +117,7 @@ export default function PlanoContasGerencial() {
                   <DialogContent>
                     <DialogHeader><DialogTitle>{editingItem ? 'Editar' : 'Novo'} Centro de Custo</DialogTitle></DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2"><Label>Descrição *</Label><Input value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} required /></div>
-                        <div className="space-y-2"><Label>Ordem</Label><Input type="number" value={formData.ordem ?? 0} onChange={e => setFormData({ ...formData, ordem: parseInt(e.target.value) || 0 })} /></div>
-                      </div>
+                      <div className="space-y-2"><Label>Descrição *</Label><Input value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} required /></div>
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
                         <Select value={formData.tipo || 'despesa'} onValueChange={v => setFormData({ ...formData, tipo: v })}>
@@ -132,7 +129,6 @@ export default function PlanoContasGerencial() {
                         </Select>
                       </div>
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2"><Switch checked={formData.imprimir ?? true} onCheckedChange={checked => setFormData({ ...formData, imprimir: checked })} /><Label>Imprimir</Label></div>
                         <div className="flex items-center gap-2"><Switch checked={formData.ativo ?? true} onCheckedChange={checked => setFormData({ ...formData, ativo: checked })} /><Label>Ativo</Label></div>
                       </div>
                       <DialogFooter>

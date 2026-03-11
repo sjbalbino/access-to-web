@@ -104,8 +104,6 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'codigo', dbName: 'codigo', required: true, transform: toStr },
       { accessName: 'Grupo', dbName: 'descricao', required: true, transform: toStr },
       { accessName: 'Plano_recdesp', dbName: 'tipo', transform: (v: any) => { const n = toNumber(v); return n === 2 ? 'receita' : 'despesa'; } },
-      { accessName: 'plano_ordem', dbName: 'ordem', transform: toInt },
-      { accessName: 'plano_impr', dbName: 'imprimir', transform: toBool },
       { accessName: 'ativo', dbName: 'ativo', transform: toBool },
     ],
   },
