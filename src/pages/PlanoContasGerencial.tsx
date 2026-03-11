@@ -184,9 +184,8 @@ export default function PlanoContasGerencial() {
                                {subs.map(sub => (
                                  <TableRow key={sub.id}>
                                    <TableCell>{sub.descricao}</TableCell>
-                                  <TableCell className="font-mono text-sm">{sub.codigo_dre || '-'}</TableCell>
-                                  <TableCell>{sub.incide_irf ? 'Sim' : 'Não'}</TableCell>
-                                  <TableCell>
+                                   <TableCell className="font-mono text-sm">{sub.codigo_dre || '-'}</TableCell>
+                                   <TableCell>
                                     <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', sub.ativo ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
                                       {sub.ativo ? 'Ativo' : 'Inativo'}
                                     </span>
