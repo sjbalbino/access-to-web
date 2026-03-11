@@ -121,7 +121,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'ativo', dbName: 'ativo', transform: toBool },
     ],
     references: [
-      { dbColumn: 'centro_custo_id', sourceColumn: 'Grupo', lookupTable: 'plano_contas_gerencial', lookupColumn: 'codigo', lookupLabel: 'descricao' },
+      { dbColumn: 'centro_custo_id', sourceColumn: 'Grupo', lookupTable: 'plano_contas_gerencial', lookupColumn: 'descricao', lookupLabel: 'descricao' },
     ],
   },
   {

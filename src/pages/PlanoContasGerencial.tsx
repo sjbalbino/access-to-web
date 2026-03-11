@@ -259,10 +259,7 @@ export default function PlanoContasGerencial() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2"><Switch checked={subFormData.incide_irf ?? false} onCheckedChange={checked => setSubFormData({ ...subFormData, incide_irf: checked })} /><Label>Incide IRF</Label></div>
-              <div className="flex items-center gap-2"><Switch checked={subFormData.ativo ?? true} onCheckedChange={checked => setSubFormData({ ...subFormData, ativo: checked })} /><Label>Ativo</Label></div>
-            </div>
+            <div className="flex items-center gap-2"><Switch checked={subFormData.ativo ?? true} onCheckedChange={checked => setSubFormData({ ...subFormData, ativo: checked })} /><Label>Ativo</Label></div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsSubDialogOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={createSubMutation.isPending || updateSubMutation.isPending}>{editingSub ? 'Salvar' : 'Criar'}</Button>
