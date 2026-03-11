@@ -579,10 +579,10 @@ export async function resolveReferences(
   const resolved = rows.map((row, idx) => {
     const newRow = { ...row };
     for (const ref of references) {
-      const sourceValue = String(row[ref.sourceColumn] || '').trim();
+      const { value: rawVal, key: foundKey } = findColumnValue(row, ref.sourceColumn);
+      const sourceValue = String(rawVal || '').trim();
       if (!sourceValue) {
-        // FK is optional
-        delete newRow[ref.sourceColumn];
+        if (foundKey) delete newRow[foundKey];
         continue;
       }
       const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}`;
@@ -592,12 +592,29 @@ export async function resolveReferences(
       } else {
         errors.push(`Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" não encontrado`);
       }
-      delete newRow[ref.sourceColumn];
+      if (foundKey) delete newRow[foundKey];
     }
     return newRow;
   });
 
   return { resolved, errors };
+}
+
+// Normalize column name: lowercase, remove accents, trim
+function normalizeColName(name: any): string {
+  if (!name) return '';
+  return String(name).trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// Find column value with fuzzy matching (case-insensitive + accent-insensitive)
+function findColumnValue(row: Record<string, any>, accessName: string): { value: any; key: string | null } {
+  if (row[accessName] !== undefined) return { value: row[accessName], key: accessName };
+  const normalized = normalizeColName(accessName);
+  for (const key of Object.keys(row)) {
+    if (normalizeColName(key) === normalized) return { value: row[key], key };
+  }
+  return { value: undefined, key: null };
 }
 
 // Transform a row using column mappings
@@ -609,8 +626,7 @@ export function transformRow(
   const errors: string[] = [];
 
   for (const col of columns) {
-    // Try multiple variations of the column name
-    const value = row[col.accessName] ?? row[col.accessName.toUpperCase()] ?? row[col.accessName.toLowerCase()];
+    const { value } = findColumnValue(row, col.accessName);
     const transformed = col.transform ? col.transform(value) : value;
 
     if (col.required && (transformed === null || transformed === undefined || transformed === '')) {
@@ -623,11 +639,9 @@ export function transformRow(
   }
 
   // Also keep any columns that are used as reference source (they'll be resolved later)
+  const mappedNormalized = new Set(columns.map(c => normalizeColName(c.accessName)));
   for (const key of Object.keys(row)) {
-    const isMapping = columns.some(c => 
-      c.accessName === key || c.accessName.toUpperCase() === key || c.accessName.toLowerCase() === key
-    );
-    if (!isMapping) {
+    if (!mappedNormalized.has(normalizeColName(key))) {
       data[key] = row[key];
     }
   }
