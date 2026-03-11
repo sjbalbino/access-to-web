@@ -14,7 +14,7 @@ export interface PlanoContaGerencial {
   updated_at: string;
 }
 
-export type PlanoContaGerencialInput = Omit<PlanoContaGerencial, 'id' | 'created_at' | 'updated_at' | 'codigo'> & { codigo?: string };
+export type PlanoContaGerencialInput = Omit<PlanoContaGerencial, 'id' | 'created_at' | 'updated_at' | 'codigo' | 'ordem' | 'imprimir'> & { codigo?: string };
 
 export function usePlanoContasGerencial() {
   return useQuery({
