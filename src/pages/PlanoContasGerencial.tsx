@@ -39,7 +39,7 @@ export default function PlanoContasGerencial() {
   // Sub-centro dialog
   const [isSubDialogOpen, setIsSubDialogOpen] = useState(false);
   const [editingSub, setEditingSub] = useState<any>(null);
-  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', descricao: '', codigo_dre: null, incide_irf: false, ativo: true });
+  const [subFormData, setSubFormData] = useState<SubCentroCustoInput>({ centro_custo_id: '', descricao: '', codigo_dre: null, ativo: true });
 
   // Filtra contas DRE acima do nível 2 (nível 3+)
   const dreContasFiltered = dreContas?.filter(c => c.nivel > 2 && c.ativo) || [];
