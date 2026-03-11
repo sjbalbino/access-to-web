@@ -236,6 +236,23 @@ export default function PlanoContasGerencial() {
         <DialogContent>
           <DialogHeader><DialogTitle>{editingSub ? 'Editar' : 'Novo'} Sub-Centro de Custo</DialogTitle></DialogHeader>
           <form onSubmit={handleSubSubmit} className="space-y-4">
+            {/* Centro de Custo pai */}
+            <div className="space-y-2">
+              <Label>Centro de Custo</Label>
+              <div className="p-3 bg-muted rounded-md border">
+                <span className="font-medium">
+                  {contas?.find(c => c.id === subFormData.centro_custo_id)?.descricao || 'Centro de Custo selecionado'}
+                </span>
+                <span className={cn(
+                  'ml-2 px-2 py-0.5 rounded-full text-xs font-medium',
+                  contas?.find(c => c.id === subFormData.centro_custo_id)?.tipo === 'receita' 
+                    ? 'bg-success/10 text-success' 
+                    : 'bg-destructive/10 text-destructive'
+                )}>
+                  {contas?.find(c => c.id === subFormData.centro_custo_id)?.tipo === 'receita' ? 'Receita' : 'Despesa'}
+                </span>
+              </div>
+            </div>
             <div className="space-y-2"><Label>Descrição *</Label><Input value={subFormData.descricao} onChange={e => setSubFormData({ ...subFormData, descricao: e.target.value })} required /></div>
             <div className="space-y-2">
               <Label>Conta DRE</Label>
