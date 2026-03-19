@@ -379,23 +379,13 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                           <TableCell className="text-xs text-muted-foreground">{idx + 1}</TableCell>
                           <TableCell className="text-xs font-mono">{String(row.nome ?? '')}</TableCell>
                           <TableCell>
-                            <Select
-                              value={contaGerencialMap[idx] || ''}
-                              onValueChange={(val) =>
-                                setContaGerencialMap(prev => ({ ...prev, [idx]: val }))
-                              }
-                            >
-                              <SelectTrigger className="h-8 text-xs w-[250px]">
-                                <SelectValue placeholder="Selecione..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {subCentros.map(sub => (
-                                  <SelectItem key={sub.id} value={sub.id} className="text-xs">
-                                    {sub.centro_nome ? `${sub.centro_nome} → ` : ''}{sub.descricao}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                          <SubCentroCombobox
+                            value={contaGerencialMap[idx] || ''}
+                            onChange={(val) =>
+                              setContaGerencialMap(prev => ({ ...prev, [idx]: val }))
+                            }
+                            subCentros={subCentros}
+                          />
                           </TableCell>
                         </TableRow>
                       ))}
