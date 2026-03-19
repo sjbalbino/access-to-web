@@ -96,6 +96,24 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
   const needsContaGerencial = config.interactiveColumns?.includes('conta_gerencial_id');
 
+  const normalize = (s: string) =>
+    s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Auto-match sub-centros by name
+  useEffect(() => {
+    if (!needsContaGerencial || transformedData.length === 0 || subCentros.length === 0) return;
+    const autoMap: Record<number, string> = {};
+    transformedData.forEach((row, idx) => {
+      const nome = normalize(String(row.nome ?? ''));
+      if (!nome) return;
+      const match = subCentros.find(s => normalize(s.descricao) === nome);
+      if (match) autoMap[idx] = match.id;
+    });
+    if (Object.keys(autoMap).length > 0) {
+      setContaGerencialMap(prev => ({ ...autoMap, ...prev }));
+    }
+  }, [transformedData, subCentros, needsContaGerencial]);
+
   useEffect(() => {
     if (open && needsContaGerencial) {
       supabase
