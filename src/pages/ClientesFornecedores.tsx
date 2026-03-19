@@ -211,7 +211,7 @@ export default function ClientesFornecedores() {
       />
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2">
             <Building className="h-5 w-5 text-primary" />
             Lista de Clientes/Fornecedores
@@ -219,9 +219,9 @@ export default function ClientesFornecedores() {
           {canEdit && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="gap-2" size="sm">
                   <Plus className="h-4 w-4" />
-                  Novo Registro
+                  <span className="hidden sm:inline">Novo Registro</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -383,17 +383,17 @@ export default function ClientesFornecedores() {
             </Dialog>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-w-0">
           <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Tipo</TableHead>
-                <TableHead>CPF/CNPJ</TableHead>
-                <TableHead>Cidade/UF</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="hidden sm:table-cell">CPF/CNPJ</TableHead>
+                <TableHead className="hidden md:table-cell">Cidade/UF</TableHead>
+                <TableHead className="hidden md:table-cell">Contato</TableHead>
+                <TableHead className="hidden sm:table-cell">Status</TableHead>
                 {canEdit && <TableHead className="text-right">Ações</TableHead>}
               </TableRow>
             </TableHeader>
@@ -402,22 +402,22 @@ export default function ClientesFornecedores() {
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.nome}</TableCell>
                   <TableCell>{getTipoBadge(item.tipo)}</TableCell>
-                  <TableCell>{item.cpf_cnpj || '-'}</TableCell>
-                  <TableCell>{item.cidade ? `${item.cidade}/${item.uf}` : '-'}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">{item.cpf_cnpj || '-'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{item.cidade ? `${item.cidade}/${item.uf}` : '-'}</TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex flex-col gap-1 text-sm">
                       {item.telefone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {item.telefone}</span>}
                       {item.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {item.email}</span>}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <Badge variant={item.ativo ? 'default' : 'secondary'}>
                       {item.ativo ? 'Ativo' : 'Inativo'}
                     </Badge>
                   </TableCell>
                   {canEdit && (
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
