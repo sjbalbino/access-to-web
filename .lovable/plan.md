@@ -1,43 +1,20 @@
 
 
-## Plano: Importar Inscrições Estaduais de Clientes/Fornecedores
+## Plano: Corrigir layout mobile da lista de Clientes/Fornecedores
 
-### Problema
-No Access, as inscrições estaduais dos clientes/fornecedores ficavam em uma tabela separada, vinculada pelo código do cliente. Precisamos criar uma importação que leia essa planilha e atualize o campo `inscricao_estadual` na tabela `clientes_fornecedores` existente.
+### Problemas identificados
+1. **CardHeader com `flex-row`** força título e botão lado a lado, causando o deslocamento do botão "Novo Registro" em telas pequenas
+2. **Tabela com muitas colunas** dificulta scroll horizontal — em mobile, melhor mostrar apenas colunas essenciais ou usar layout de cards
 
-### Solução
-Adicionar uma nova entrada de importação no wizard chamada "IE Clientes/Fornecedores" que:
-1. Lê a planilha com colunas como `codigo_cliente` (ou similar) e `inscricao_estadual`
-2. Para cada linha, busca o cliente/fornecedor pelo `codigo` na tabela `clientes_fornecedores`
-3. Faz um UPDATE no campo `inscricao_estadual` do registro encontrado
+### Alterações em `src/pages/ClientesFornecedores.tsx`
 
-### Alterações
+1. **CardHeader responsivo**: Trocar `flex flex-row` por `flex flex-col sm:flex-row gap-2` para empilhar título e botão em mobile
+2. **Tabela mobile-friendly**: Ocultar colunas menos essenciais em mobile com `hidden md:table-cell` (Cidade/UF, Contato, Status), mantendo Nome, Tipo, CPF/CNPJ e Ações visíveis
+3. **Botão compacto em mobile**: Usar apenas ícone `+` em telas pequenas, texto completo em maiores
+4. **`min-w-0` no container** para garantir que o overflow-x-auto funcione corretamente dentro do Card
 
-**1. `src/lib/importacaoConfig.ts`**
-- Adicionar nova `TableConfig` com key `clientes_ie`, label "IE Clientes/Fornecedores"
-- `tableName`: `clientes_fornecedores` (mesma tabela, mas será update, não insert)
-- Adicionar flag `updateMode: true` na interface `TableConfig` para indicar que esta importação faz update ao invés de insert
-- Colunas: `codigo` (para lookup) e `inscricao_estadual` (valor a gravar)
-- `order`: 4.5 (logo após clientes), `dependsOn: ['clientes']`
-
-**2. `src/components/importacao/ImportacaoDialog.tsx`**
-- Detectar quando `config.updateMode === true`
-- No fluxo de importação, ao invés de inserir, fazer um loop:
-  - Para cada linha, buscar `clientes_fornecedores` pelo `codigo`
-  - Se encontrado, fazer `.update({ inscricao_estadual })` no registro
-- Exibir preview mostrando código do cliente e a IE que será gravada
-- Contabilizar quantos foram atualizados vs não encontrados
-
-**3. `src/pages/ImportarDados.tsx`**
-- Nenhuma alteração necessária (já renderiza todas as configs automaticamente)
-
-### Fluxo do usuário
-1. Importa "Clientes/Fornecedores" normalmente (sem IE)
-2. Importa "IE Clientes/Fornecedores" — seleciona a planilha separada de IEs
-3. Sistema localiza cada cliente pelo código e atualiza a `inscricao_estadual`
-4. Preview mostra quantos foram encontrados/atualizados
-
-### Arquivos a modificar
-- `src/lib/importacaoConfig.ts` — nova config + flag `updateMode`
-- `src/components/importacao/ImportacaoDialog.tsx` — lógica de update por lookup
+### Resultado
+- Header não quebra em mobile, botão fica abaixo do título
+- Tabela cabe na tela com as colunas essenciais, sem necessidade de scroll horizontal forçado
+- Colunas secundárias aparecem apenas em telas maiores
 
