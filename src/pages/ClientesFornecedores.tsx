@@ -438,6 +438,7 @@ export default function ClientesFornecedores() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
