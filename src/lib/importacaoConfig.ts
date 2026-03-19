@@ -15,6 +15,12 @@ export interface ReferenceResolver {
   lookupLabel?: string; // column to show as label
 }
 
+export interface UpdateModeConfig {
+  lookupColumn: string; // column in DB to match (e.g. 'codigo')
+  sourceColumn: string; // column from Excel with the lookup value
+  updateColumns: { sourceColumn: string; dbColumn: string }[];
+}
+
 export interface TableConfig {
   key: string;
   label: string;
@@ -25,6 +31,7 @@ export interface TableConfig {
   order: number;
   dependsOn?: string[];
   interactiveColumns?: string[];
+  updateMode?: UpdateModeConfig;
 }
 
 // Common transforms
@@ -408,6 +415,23 @@ export const tableConfigs: TableConfig[] = [
     references: [
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
     ],
+  },
+  {
+    key: 'clientes_ie',
+    label: 'IE Clientes/Fornecedores',
+    tableName: 'clientes_fornecedores',
+    description: 'Atualiza Inscrição Estadual dos clientes/fornecedores pelo código',
+    order: 4.5,
+    dependsOn: ['clientes'],
+    columns: [
+      { accessName: 'codigo', dbName: 'codigo', required: true, transform: toStr },
+      { accessName: 'inscricao_estadual', dbName: 'inscricao_estadual', required: true, transform: toStr },
+    ],
+    updateMode: {
+      lookupColumn: 'codigo',
+      sourceColumn: 'codigo',
+      updateColumns: [{ sourceColumn: 'inscricao_estadual', dbColumn: 'inscricao_estadual' }],
+    },
   },
   {
     key: 'colheitas',

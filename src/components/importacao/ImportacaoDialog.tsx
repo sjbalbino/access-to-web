@@ -212,6 +212,79 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     let imported = 0;
 
     try {
+      // UPDATE MODE: lookup by code and update fields
+      if (config.updateMode) {
+        const { lookupColumn, sourceColumn, updateColumns } = config.updateMode;
+        const errors: string[] = [];
+
+        for (let i = 0; i < transformedData.length; i++) {
+          const row = transformedData[i];
+          const lookupValue = row[sourceColumn];
+
+          if (!lookupValue) {
+            errors.push(`Linha ${i + 1}: ${sourceColumn} vazio, ignorada`);
+            setProgress(Math.round(((i + 1) / transformedData.length) * 100));
+            continue;
+          }
+
+          // Find existing record
+          const { data: existing, error: findErr } = await (supabase
+            .from(config.tableName as any)
+            .select('id') as any)
+            .eq(lookupColumn, lookupValue)
+            .limit(1);
+
+          if (findErr) {
+            errors.push(`Linha ${i + 1}: Erro ao buscar: ${findErr.message}`);
+            setProgress(Math.round(((i + 1) / transformedData.length) * 100));
+            continue;
+          }
+
+          if (!existing || existing.length === 0) {
+            errors.push(`Linha ${i + 1}: ${lookupColumn}="${lookupValue}" não encontrado`);
+            setProgress(Math.round(((i + 1) / transformedData.length) * 100));
+            continue;
+          }
+
+          // Build update payload
+          const updatePayload: Record<string, any> = {};
+          for (const uc of updateColumns) {
+            updatePayload[uc.dbColumn] = row[uc.sourceColumn] ?? null;
+          }
+
+          const { error: updateErr } = await (supabase
+            .from(config.tableName as any)
+            .update(updatePayload as any) as any)
+            .eq('id', (existing[0] as any).id);
+
+          if (updateErr) {
+            errors.push(`Linha ${i + 1}: Erro ao atualizar: ${updateErr.message}`);
+          } else {
+            imported++;
+          }
+
+          setProgress(Math.round(((i + 1) / transformedData.length) * 100));
+          setImportedCount(imported);
+        }
+
+        setImportErrors(errors);
+
+        if (errors.length === 0) {
+          toast.success(`${imported} registros atualizados com sucesso!`);
+        } else {
+          toast.warning(`Atualização parcial: ${imported} atualizados, ${errors.length} erros`);
+        }
+
+        await queryClient.invalidateQueries({ queryKey: [config.key] });
+        await queryClient.invalidateQueries({ queryKey: [config.tableName] });
+        if (imported > 0) {
+          onImportComplete?.(imported);
+        }
+        setStatus('done');
+        return;
+      }
+
+      // STANDARD INSERT MODE
       // Clear existing if requested
       if (clearExisting) {
         const { error } = await supabase
@@ -528,7 +601,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           </Button>
           {status === 'previewing' && (
             <Button onClick={handleImport} disabled={transformedData.length === 0}>
-              Importar {transformedData.length} registros
+              {config.updateMode ? 'Atualizar' : 'Importar'} {transformedData.length} registros
             </Button>
           )}
           {(status === 'done' || status === 'error') && (
