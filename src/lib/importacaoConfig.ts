@@ -15,6 +15,12 @@ export interface ReferenceResolver {
   lookupLabel?: string; // column to show as label
 }
 
+export interface UpdateModeConfig {
+  lookupColumn: string; // column in DB to match (e.g. 'codigo')
+  sourceColumn: string; // column from Excel with the lookup value
+  updateColumns: { sourceColumn: string; dbColumn: string }[];
+}
+
 export interface TableConfig {
   key: string;
   label: string;
@@ -25,6 +31,7 @@ export interface TableConfig {
   order: number;
   dependsOn?: string[];
   interactiveColumns?: string[];
+  updateMode?: UpdateModeConfig;
 }
 
 // Common transforms
