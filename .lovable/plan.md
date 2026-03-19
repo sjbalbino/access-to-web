@@ -1,24 +1,43 @@
 
 
-## Plano: Auto-preencher Sub-Centro de Custo pelo nome da planilha
+## Plano: Importar Inscrições Estaduais de Clientes/Fornecedores
 
 ### Problema
-Informar manualmente o sub-centro de custo para cada grupo de produtos é trabalhoso. A planilha já contém nomes que podem corresponder diretamente aos sub-centros cadastrados.
+No Access, as inscrições estaduais dos clientes/fornecedores ficavam em uma tabela separada, vinculada pelo código do cliente. Precisamos criar uma importação que leia essa planilha e atualize o campo `inscricao_estadual` na tabela `clientes_fornecedores` existente.
 
 ### Solução
-Após o parsing do arquivo e carregamento dos sub-centros, fazer um match automático: para cada grupo importado, buscar o primeiro sub-centro cuja `descricao` (normalizada) seja igual ao `nome` do grupo na planilha. O usuário ainda pode corrigir manualmente se necessário.
+Adicionar uma nova entrada de importação no wizard chamada "IE Clientes/Fornecedores" que:
+1. Lê a planilha com colunas como `codigo_cliente` (ou similar) e `inscricao_estadual`
+2. Para cada linha, busca o cliente/fornecedor pelo `codigo` na tabela `clientes_fornecedores`
+3. Faz um UPDATE no campo `inscricao_estadual` do registro encontrado
 
-### Alteração em `src/components/importacao/ImportacaoDialog.tsx`
+### Alterações
 
-Adicionar um `useEffect` que, quando `transformedData` e `subCentros` estiverem carregados (e `needsContaGerencial` for true):
+**1. `src/lib/importacaoConfig.ts`**
+- Adicionar nova `TableConfig` com key `clientes_ie`, label "IE Clientes/Fornecedores"
+- `tableName`: `clientes_fornecedores` (mesma tabela, mas será update, não insert)
+- Adicionar flag `updateMode: true` na interface `TableConfig` para indicar que esta importação faz update ao invés de insert
+- Colunas: `codigo` (para lookup) e `inscricao_estadual` (valor a gravar)
+- `order`: 4.5 (logo após clientes), `dependsOn: ['clientes']`
 
-1. Para cada registro `transformedData[idx]`, normalizar `row.nome` (lowercase, sem acentos, trim)
-2. Buscar em `subCentros` o primeiro item cuja `descricao` normalizada seja igual
-3. Se encontrado, preencher `contaGerencialMap[idx]` automaticamente
-4. Manter o combobox para o usuário corrigir os que não bateram ou ajustar
+**2. `src/components/importacao/ImportacaoDialog.tsx`**
+- Detectar quando `config.updateMode === true`
+- No fluxo de importação, ao invés de inserir, fazer um loop:
+  - Para cada linha, buscar `clientes_fornecedores` pelo `codigo`
+  - Se encontrado, fazer `.update({ inscricao_estadual })` no registro
+- Exibir preview mostrando código do cliente e a IE que será gravada
+- Contabilizar quantos foram atualizados vs não encontrados
 
-### Resultado
-- Grupos com nomes iguais aos sub-centros são preenchidos automaticamente
-- Grupos sem correspondência ficam vazios para seleção manual
-- Reduz drasticamente o trabalho manual
+**3. `src/pages/ImportarDados.tsx`**
+- Nenhuma alteração necessária (já renderiza todas as configs automaticamente)
+
+### Fluxo do usuário
+1. Importa "Clientes/Fornecedores" normalmente (sem IE)
+2. Importa "IE Clientes/Fornecedores" — seleciona a planilha separada de IEs
+3. Sistema localiza cada cliente pelo código e atualiza a `inscricao_estadual`
+4. Preview mostra quantos foram encontrados/atualizados
+
+### Arquivos a modificar
+- `src/lib/importacaoConfig.ts` — nova config + flag `updateMode`
+- `src/components/importacao/ImportacaoDialog.tsx` — lógica de update por lookup
 
