@@ -211,7 +211,7 @@ export default function ClientesFornecedores() {
       />
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2">
             <Building className="h-5 w-5 text-primary" />
             Lista de Clientes/Fornecedores
@@ -219,9 +219,9 @@ export default function ClientesFornecedores() {
           {canEdit && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
               <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="gap-2" size="sm">
                   <Plus className="h-4 w-4" />
-                  Novo Registro
+                  <span className="hidden sm:inline">Novo Registro</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
