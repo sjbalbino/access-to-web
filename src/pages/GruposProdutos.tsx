@@ -45,7 +45,7 @@ export default function GruposProdutos() {
     g.descricao?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const contasAtivas = contasGerenciais?.filter(c => c.ativo) ?? [];
+  const subCentrosAtivos = subCentros?.filter((c: any) => c.ativo) ?? [];
 
   const resetForm = () => {
     setFormData({ nome: '', descricao: '', ativo: true, conta_gerencial_id: null, maquinas_implementos: false, bens_benfeitorias: false, insumos: false, venda_producao: false });
