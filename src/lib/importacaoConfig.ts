@@ -24,6 +24,7 @@ export interface TableConfig {
   references?: ReferenceResolver[];
   order: number;
   dependsOn?: string[];
+  interactiveColumns?: string[];
 }
 
 // Common transforms
