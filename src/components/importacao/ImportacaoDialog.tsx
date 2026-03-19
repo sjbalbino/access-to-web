@@ -30,6 +30,54 @@ interface ImportacaoDialogProps {
 
 type ImportStatus = 'idle' | 'parsing' | 'previewing' | 'importing' | 'done' | 'error';
 
+interface SubCentroComboboxProps {
+  value: string;
+  onChange: (val: string) => void;
+  subCentros: { id: string; descricao: string; centro_nome: string }[];
+}
+
+function SubCentroCombobox({ value, onChange, subCentros }: SubCentroComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const selected = subCentros.find(s => s.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" aria-expanded={open} className="h-8 w-[280px] justify-between text-xs font-normal">
+          {selected ? (
+            <span className="truncate">{selected.centro_nome ? `${selected.centro_nome} → ` : ''}{selected.descricao}</span>
+          ) : (
+            <span className="text-muted-foreground">Selecione...</span>
+          )}
+          <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Pesquisar sub-centro..." className="text-xs" />
+          <CommandList>
+            <CommandEmpty className="text-xs py-4 text-center">Nenhum encontrado.</CommandEmpty>
+            <CommandGroup>
+              {subCentros.map(sub => (
+                <CommandItem
+                  key={sub.id}
+                  value={`${sub.centro_nome} ${sub.descricao}`}
+                  onSelect={() => { onChange(sub.id); setOpen(false); }}
+                  className="text-xs"
+                >
+                  <Check className={cn("mr-2 h-3 w-3", value === sub.id ? "opacity-100" : "opacity-0")} />
+                  {sub.centro_nome ? <span className="text-muted-foreground mr-1">{sub.centro_nome} →</span> : null}
+                  {sub.descricao}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImportComplete }: ImportacaoDialogProps) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
