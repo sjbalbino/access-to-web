@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2, FolderOpen, Search, Check } from 'lucide-react';
 import { useGruposProdutos, useCreateGrupoProduto, useUpdateGrupoProduto, useDeleteGrupoProduto, GrupoProdutoInput } from '@/hooks/useGruposProdutos';
-import { usePlanoContasGerencial } from '@/hooks/usePlanoContasGerencial';
+import { useSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 
