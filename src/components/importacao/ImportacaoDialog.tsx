@@ -601,7 +601,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           </Button>
           {status === 'previewing' && (
             <Button onClick={handleImport} disabled={transformedData.length === 0}>
-              Importar {transformedData.length} registros
+              {config.updateMode ? 'Atualizar' : 'Importar'} {transformedData.length} registros
             </Button>
           )}
           {(status === 'done' || status === 'error') && (
