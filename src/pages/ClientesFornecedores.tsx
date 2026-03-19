@@ -416,7 +416,7 @@ export default function ClientesFornecedores() {
                     </Badge>
                   </TableCell>
                   {canEdit && (
-                    <TableCell className="text-right">
+                    <TableCell className="text-right sticky right-0 bg-background">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                           <Pencil className="h-4 w-4" />
