@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 export default function GruposProdutos() {
   const { canEdit } = useAuth();
   const { data: grupos, isLoading } = useGruposProdutos();
-  const { data: contasGerenciais } = usePlanoContasGerencial();
+  const { data: subCentros } = useSubCentrosCusto();
   const createMutation = useCreateGrupoProduto();
   const updateMutation = useUpdateGrupoProduto();
   const deleteMutation = useDeleteGrupoProduto();
