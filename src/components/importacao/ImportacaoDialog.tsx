@@ -386,9 +386,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                                 <SelectValue placeholder="Selecione..." />
                               </SelectTrigger>
                               <SelectContent>
-                                {contasGerenciais.map(conta => (
-                                  <SelectItem key={conta.id} value={conta.id} className="text-xs">
-                                    {conta.codigo} - {conta.descricao}
+                                {subCentros.map(sub => (
+                                  <SelectItem key={sub.id} value={sub.id} className="text-xs">
+                                    {sub.centro_nome ? `${sub.centro_nome} → ` : ''}{sub.descricao}
                                   </SelectItem>
                                 ))}
                               </SelectContent>

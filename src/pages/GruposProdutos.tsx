@@ -248,8 +248,8 @@ export default function GruposProdutos() {
                       <TableCell className="font-medium">{grupo.nome}</TableCell>
                       <TableCell>{grupo.descricao || '-'}</TableCell>
                       <TableCell>
-                        {grupo.plano_contas_gerencial
-                          ? `${grupo.plano_contas_gerencial.codigo} - ${grupo.plano_contas_gerencial.descricao}`
+                        {grupo.sub_centros_custo
+                          ? grupo.sub_centros_custo.descricao
                           : '-'}
                       </TableCell>
                       <TableCell>
