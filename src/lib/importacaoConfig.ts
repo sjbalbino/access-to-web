@@ -417,6 +417,23 @@ export const tableConfigs: TableConfig[] = [
     ],
   },
   {
+    key: 'clientes_ie',
+    label: 'IE Clientes/Fornecedores',
+    tableName: 'clientes_fornecedores',
+    description: 'Atualiza Inscrição Estadual dos clientes/fornecedores pelo código',
+    order: 4.5,
+    dependsOn: ['clientes'],
+    columns: [
+      { accessName: 'codigo', dbName: 'codigo', required: true, transform: toStr },
+      { accessName: 'inscricao_estadual', dbName: 'inscricao_estadual', required: true, transform: toStr },
+    ],
+    updateMode: {
+      lookupColumn: 'codigo',
+      sourceColumn: 'codigo',
+      updateColumns: [{ sourceColumn: 'inscricao_estadual', dbColumn: 'inscricao_estadual' }],
+    },
+  },
+  {
     key: 'colheitas',
     label: 'Colheitas',
     tableName: 'colheitas',
