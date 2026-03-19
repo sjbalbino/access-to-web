@@ -342,7 +342,55 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             </Card>
           )}
 
-          {/* Import options */}
+          {/* Interactive conta gerencial assignment */}
+          {status === 'previewing' && needsContaGerencial && transformedData.length > 0 && (
+            <Card>
+              <CardContent className="pt-4">
+                <h4 className="font-medium mb-3 text-sm">
+                  Atribuir Conta Gerencial a cada grupo
+                </h4>
+                <ScrollArea className="h-[250px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs">#</TableHead>
+                        <TableHead className="text-xs">Nome</TableHead>
+                        <TableHead className="text-xs">Conta Gerencial</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {transformedData.map((row, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell className="text-xs text-muted-foreground">{idx + 1}</TableCell>
+                          <TableCell className="text-xs font-mono">{String(row.nome ?? '')}</TableCell>
+                          <TableCell>
+                            <Select
+                              value={contaGerencialMap[idx] || ''}
+                              onValueChange={(val) =>
+                                setContaGerencialMap(prev => ({ ...prev, [idx]: val }))
+                              }
+                            >
+                              <SelectTrigger className="h-8 text-xs w-[250px]">
+                                <SelectValue placeholder="Selecione..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {contasGerenciais.map(conta => (
+                                  <SelectItem key={conta.id} value={conta.id} className="text-xs">
+                                    {conta.codigo} - {conta.descricao}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+
           {status === 'previewing' && (
             <div className="flex items-center gap-2">
               <Switch checked={clearExisting} onCheckedChange={setClearExisting} id="clear-existing" />
