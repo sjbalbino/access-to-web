@@ -30,7 +30,7 @@ export function useGruposProdutos() {
         .from('grupos_produtos')
         .select(`
           *,
-          plano_contas_gerencial:conta_gerencial_id (id, codigo, descricao)
+          sub_centros_custo:conta_gerencial_id (id, descricao)
         `)
         .order('nome');
       if (error) throw error;

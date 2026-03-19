@@ -41,18 +41,30 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [importedCount, setImportedCount] = useState(0);
   const [excelColumns, setExcelColumns] = useState<string[]>([]);
   const [contaGerencialMap, setContaGerencialMap] = useState<Record<number, string>>({});
-  const [contasGerenciais, setContasGerenciais] = useState<{ id: string; codigo: string; descricao: string }[]>([]);
+  const [subCentros, setSubCentros] = useState<{ id: string; descricao: string; centro_nome: string }[]>([]);
 
   const needsContaGerencial = config.interactiveColumns?.includes('conta_gerencial_id');
 
   useEffect(() => {
     if (open && needsContaGerencial) {
       supabase
-        .from('plano_contas_gerencial')
-        .select('id, codigo, descricao')
-        .order('codigo')
-        .then(({ data }) => {
-          if (data) setContasGerenciais(data as any);
+        .from('sub_centros_custo' as any)
+        .select('id, descricao, centro_custo_id')
+        .order('descricao')
+        .then(async ({ data: subs }) => {
+          if (!subs) return;
+          // Fetch parent names
+          const centroIds = [...new Set((subs as any[]).map((s: any) => s.centro_custo_id))];
+          const { data: centros } = await supabase
+            .from('plano_contas_gerencial')
+            .select('id, descricao')
+            .in('id', centroIds);
+          const centroMap = new Map((centros || []).map((c: any) => [c.id, c.descricao]));
+          setSubCentros((subs as any[]).map((s: any) => ({
+            id: s.id,
+            descricao: s.descricao,
+            centro_nome: centroMap.get(s.centro_custo_id) || '',
+          })));
         });
     }
   }, [open, needsContaGerencial]);
