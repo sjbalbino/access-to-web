@@ -40,6 +40,22 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [progress, setProgress] = useState(0);
   const [importedCount, setImportedCount] = useState(0);
   const [excelColumns, setExcelColumns] = useState<string[]>([]);
+  const [contaGerencialMap, setContaGerencialMap] = useState<Record<number, string>>({});
+  const [contasGerenciais, setContasGerenciais] = useState<{ id: string; codigo: string; descricao: string }[]>([]);
+
+  const needsContaGerencial = config.interactiveColumns?.includes('conta_gerencial_id');
+
+  useEffect(() => {
+    if (open && needsContaGerencial) {
+      supabase
+        .from('plano_contas_gerencial')
+        .select('id, codigo, descricao')
+        .order('codigo')
+        .then(({ data }) => {
+          if (data) setContasGerenciais(data as any);
+        });
+    }
+  }, [open, needsContaGerencial]);
 
   const resetState = () => {
     setFile(null);
@@ -53,6 +69,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     setProgress(0);
     setImportedCount(0);
     setExcelColumns([]);
+    setContaGerencialMap({});
   };
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
