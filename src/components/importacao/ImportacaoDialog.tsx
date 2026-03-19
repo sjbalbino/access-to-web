@@ -169,7 +169,6 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         if (needsContaGerencial && contaGerencialMap[idx]) {
           clean['conta_gerencial_id'] = contaGerencialMap[idx];
         }
-        }
         return clean;
       });
 
