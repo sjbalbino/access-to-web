@@ -384,6 +384,7 @@ export default function ClientesFornecedores() {
           )}
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
