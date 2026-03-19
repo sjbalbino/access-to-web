@@ -14,14 +14,13 @@ export interface GrupoProduto {
   venda_producao: boolean | null;
   created_at: string;
   updated_at: string;
-  plano_contas_gerencial?: {
+  sub_centros_custo?: {
     id: string;
-    codigo: string;
     descricao: string;
   } | null;
 }
 
-export type GrupoProdutoInput = Omit<GrupoProduto, 'id' | 'created_at' | 'updated_at' | 'plano_contas_gerencial'>;
+export type GrupoProdutoInput = Omit<GrupoProduto, 'id' | 'created_at' | 'updated_at' | 'sub_centros_custo'>;
 
 export function useGruposProdutos() {
   return useQuery({
@@ -31,7 +30,7 @@ export function useGruposProdutos() {
         .from('grupos_produtos')
         .select(`
           *,
-          plano_contas_gerencial:conta_gerencial_id (id, codigo, descricao)
+          sub_centros_custo:conta_gerencial_id (id, descricao)
         `)
         .order('nome');
       if (error) throw error;

@@ -1484,7 +1484,7 @@ export type Database = {
             foreignKeyName: "grupos_produtos_conta_gerencial_id_fkey"
             columns: ["conta_gerencial_id"]
             isOneToOne: false
-            referencedRelation: "plano_contas_gerencial"
+            referencedRelation: "sub_centros_custo"
             referencedColumns: ["id"]
           },
         ]

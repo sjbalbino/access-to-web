@@ -14,14 +14,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2, FolderOpen, Search, Check } from 'lucide-react';
 import { useGruposProdutos, useCreateGrupoProduto, useUpdateGrupoProduto, useDeleteGrupoProduto, GrupoProdutoInput } from '@/hooks/useGruposProdutos';
-import { usePlanoContasGerencial } from '@/hooks/usePlanoContasGerencial';
+import { useSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 
 export default function GruposProdutos() {
   const { canEdit } = useAuth();
   const { data: grupos, isLoading } = useGruposProdutos();
-  const { data: contasGerenciais } = usePlanoContasGerencial();
+  const { data: subCentros } = useSubCentrosCusto();
   const createMutation = useCreateGrupoProduto();
   const updateMutation = useUpdateGrupoProduto();
   const deleteMutation = useDeleteGrupoProduto();
@@ -45,7 +45,7 @@ export default function GruposProdutos() {
     g.descricao?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const contasAtivas = contasGerenciais?.filter(c => c.ativo) ?? [];
+  const subCentrosAtivos = subCentros?.filter((c: any) => c.ativo) ?? [];
 
   const resetForm = () => {
     setFormData({ nome: '', descricao: '', ativo: true, conta_gerencial_id: null, maquinas_implementos: false, bens_benfeitorias: false, insumos: false, venda_producao: false });
@@ -139,19 +139,19 @@ export default function GruposProdutos() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Conta Gerencial</Label>
+                        <Label>Sub-Centro de Custo</Label>
                         <Select
                           value={formData.conta_gerencial_id || 'none'}
                           onValueChange={(value) => setFormData({ ...formData, conta_gerencial_id: value === 'none' ? null : value })}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione uma conta gerencial" />
+                            <SelectValue placeholder="Selecione um sub-centro" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">Nenhuma</SelectItem>
-                            {contasAtivas.map((conta) => (
-                              <SelectItem key={conta.id} value={conta.id}>
-                                {conta.codigo} - {conta.descricao}
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {subCentrosAtivos.map((sub: any) => (
+                              <SelectItem key={sub.id} value={sub.id}>
+                                {sub.descricao}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -248,8 +248,8 @@ export default function GruposProdutos() {
                       <TableCell className="font-medium">{grupo.nome}</TableCell>
                       <TableCell>{grupo.descricao || '-'}</TableCell>
                       <TableCell>
-                        {grupo.plano_contas_gerencial
-                          ? `${grupo.plano_contas_gerencial.codigo} - ${grupo.plano_contas_gerencial.descricao}`
+                        {grupo.sub_centros_custo
+                          ? grupo.sub_centros_custo.descricao
                           : '-'}
                       </TableCell>
                       <TableCell>
