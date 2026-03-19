@@ -139,19 +139,19 @@ export default function GruposProdutos() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Conta Gerencial</Label>
+                        <Label>Sub-Centro de Custo</Label>
                         <Select
                           value={formData.conta_gerencial_id || 'none'}
                           onValueChange={(value) => setFormData({ ...formData, conta_gerencial_id: value === 'none' ? null : value })}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione uma conta gerencial" />
+                            <SelectValue placeholder="Selecione um sub-centro" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">Nenhuma</SelectItem>
-                            {contasAtivas.map((conta) => (
-                              <SelectItem key={conta.id} value={conta.id}>
-                                {conta.codigo} - {conta.descricao}
+                            <SelectItem value="none">Nenhum</SelectItem>
+                            {subCentrosAtivos.map((sub: any) => (
+                              <SelectItem key={sub.id} value={sub.id}>
+                                {sub.descricao}
                               </SelectItem>
                             ))}
                           </SelectContent>
