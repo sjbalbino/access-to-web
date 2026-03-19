@@ -228,10 +228,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
 
           // Find existing record
-          const { data: existing, error: findErr } = await supabase
+          const { data: existing, error: findErr } = await (supabase
             .from(config.tableName as any)
-            .select('id')
-            .eq(lookupColumn as any, lookupValue)
+            .select('id') as any)
+            .eq(lookupColumn, lookupValue)
             .limit(1);
 
           if (findErr) {
