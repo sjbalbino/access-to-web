@@ -150,8 +150,11 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       if (config.references) {
         config.references.forEach(r => validDbColumns.add(r.dbColumn));
       }
+      if (config.interactiveColumns) {
+        config.interactiveColumns.forEach(c => validDbColumns.add(c));
+      }
 
-      const sanitizedRows = cleanRows.map(row => {
+      const sanitizedRows = cleanRows.map((row, idx) => {
         const clean: Record<string, any> = {};
         for (const [key, value] of Object.entries(row)) {
           if (validDbColumns.has(key)) {
@@ -161,6 +164,11 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         // Inject tenant_id for granjas table
         if (config.tableName === 'granjas' && tenantId) {
           clean['tenant_id'] = tenantId;
+        }
+        // Inject interactive conta_gerencial_id
+        if (needsContaGerencial && contaGerencialMap[idx]) {
+          clean['conta_gerencial_id'] = contaGerencialMap[idx];
+        }
         }
         return clean;
       });
