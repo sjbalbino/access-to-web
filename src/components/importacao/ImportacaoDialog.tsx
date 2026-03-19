@@ -252,10 +252,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             updatePayload[uc.dbColumn] = row[uc.sourceColumn] ?? null;
           }
 
-          const { error: updateErr } = await supabase
+          const { error: updateErr } = await (supabase
             .from(config.tableName as any)
-            .update(updatePayload as any)
-            .eq('id' as any, (existing[0] as any).id);
+            .update(updatePayload as any) as any)
+            .eq('id', (existing[0] as any).id);
 
           if (updateErr) {
             errors.push(`Linha ${i + 1}: Erro ao atualizar: ${updateErr.message}`);
