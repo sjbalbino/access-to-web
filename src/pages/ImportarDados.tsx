@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Database, Upload, CheckCircle2, Clock, AlertTriangle, Building, Trash2, Loader2 } from 'lucide-react';
+import { Database, Upload, CheckCircle2, Clock, AlertTriangle, Building, Trash2, Loader2, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { tableConfigs, TableConfig } from '@/lib/importacaoConfig';
 import { ImportacaoDialog } from '@/components/importacao/ImportacaoDialog';
 import { useTenants } from '@/hooks/useTenants';
@@ -117,6 +118,18 @@ export default function ImportarDados() {
   };
 
   const selectedTenant = tenants?.find(t => t.id === selectedTenantId);
+
+  const handleDownloadTemplate = (config: TableConfig) => {
+    const headers = config.columns.map(c => c.accessName);
+    const refHeaders = (config.references || []).map(r => r.sourceColumn);
+    const allHeaders = [...headers, ...refHeaders];
+    
+    const ws = XLSX.utils.aoa_to_sheet([allHeaders]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, config.label);
+    XLSX.writeFile(wb, `modelo_${config.key}.xlsx`);
+    toast.success(`Modelo "${config.label}" baixado!`);
+  };
 
   const handleCleanupRequest = () => {
     setShowCleanupDialog(true);
@@ -285,18 +298,28 @@ export default function ImportarDados() {
                     </p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant={status === 'importada' ? 'outline' : 'default'}
-                  disabled={!enabled}
-                  onClick={() => {
-                    setActiveConfig(config);
-                    setDialogOpen(true);
-                  }}
-                >
-                  <Upload className="h-4 w-4 mr-1" />
-                  {status === 'importada' ? 'Reimportar' : 'Importar'}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDownloadTemplate(config)}
+                    title="Baixar modelo Excel"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={status === 'importada' ? 'outline' : 'default'}
+                    disabled={!enabled}
+                    onClick={() => {
+                      setActiveConfig(config);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    <Upload className="h-4 w-4 mr-1" />
+                    {status === 'importada' ? 'Reimportar' : 'Importar'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );
