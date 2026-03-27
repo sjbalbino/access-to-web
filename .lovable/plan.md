@@ -1,20 +1,26 @@
 
 
-## Plano: Corrigir layout mobile da lista de Clientes/Fornecedores
+## Plano: Corrigir importação de Produtos
 
-### Problemas identificados
-1. **CardHeader com `flex-row`** força título e botão lado a lado, causando o deslocamento do botão "Novo Registro" em telas pequenas
-2. **Tabela com muitas colunas** dificulta scroll horizontal — em mobile, melhor mostrar apenas colunas essenciais ou usar layout de cards
+### Problemas
+1. **Unidade de medida "KG" não encontrada**: O cache de lookup em `resolveReferences` faz comparação case-sensitive. Se o banco tem "kg" e a planilha tem "KG", não encontra.
+2. **Campo `cust_medio` ausente**: A planilha do Access tem `cust_medio` que não está mapeado na config de produtos.
 
-### Alterações em `src/pages/ClientesFornecedores.tsx`
+O campo "nome" já está mapeado corretamente (linha 215) e o fuzzy matching já é case-insensitive — se a planilha realmente tem a coluna "nome", ela deveria funcionar. O problema real é provavelmente o lookup de referências.
 
-1. **CardHeader responsivo**: Trocar `flex flex-row` por `flex flex-col sm:flex-row gap-2` para empilhar título e botão em mobile
-2. **Tabela mobile-friendly**: Ocultar colunas menos essenciais em mobile com `hidden md:table-cell` (Cidade/UF, Contato, Status), mantendo Nome, Tipo, CPF/CNPJ e Ações visíveis
-3. **Botão compacto em mobile**: Usar apenas ícone `+` em telas pequenas, texto completo em maiores
-4. **`min-w-0` no container** para garantir que o overflow-x-auto funcione corretamente dentro do Card
+### Alterações em `src/lib/importacaoConfig.ts`
 
-### Resultado
-- Header não quebra em mobile, botão fica abaixo do título
-- Tabela cabe na tela com as colunas essenciais, sem necessidade de scroll horizontal forçado
-- Colunas secundárias aparecem apenas em telas maiores
+#### 1. Lookup case-insensitive no `resolveReferences`
+- Linha 592: normalizar chave do cache para lowercase → `cache[key.toLowerCase()] = item.id`
+- Linha 608: normalizar valor de busca para lowercase → `lookupCache[cacheKey]?.[sourceValue.toLowerCase()]`
+
+Isso resolve "KG" vs "kg", "Kg", etc. para todas as tabelas de referência.
+
+#### 2. Adicionar campo `cust_medio` na config de produtos
+- Adicionar nova coluna: `{ accessName: 'cust_medio', dbName: 'custo_medio', transform: toNumber }`
+- Verificar se a coluna `custo_medio` existe na tabela `produtos` no banco; se não, criar via migração.
+
+### Arquivos a modificar
+- `src/lib/importacaoConfig.ts` — case-insensitive lookup + novo campo `cust_medio`
+- Possível migração SQL se coluna `custo_medio` não existir na tabela `produtos`
 
