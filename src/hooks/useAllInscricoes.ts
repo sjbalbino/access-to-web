@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface InscricaoComProdutor {
   id: string;
   produtor_id: string | null;
+  nome: string | null;
   inscricao_estadual: string | null;
   tipo: string | null;
   ativa: boolean | null;
@@ -28,6 +29,7 @@ export function useAllInscricoes() {
         .select(`
           id,
           produtor_id,
+          nome,
           inscricao_estadual,
           tipo,
           ativa,

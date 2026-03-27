@@ -67,6 +67,7 @@ interface InscricoesTabProps {
 
 const emptyInscricao: InscricaoInput = {
   produtor_id: null,
+  nome: "",
   tipo: "",
   inscricao_estadual: "",
   cpf_cnpj: "",
@@ -128,6 +129,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
     setSelectedInscricao(inscricao);
     setFormData({
       produtor_id: inscricao.produtor_id,
+      nome: inscricao.nome || "",
       tipo: inscricao.tipo || "",
       inscricao_estadual: inscricao.inscricao_estadual || "",
       cpf_cnpj: inscricao.cpf_cnpj || "",
@@ -177,6 +179,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       await updateInscricao.mutateAsync({
         id: inscricao.id,
         produtor_id: inscricao.produtor_id,
+        nome: inscricao.nome,
         tipo: inscricao.tipo,
         inscricao_estadual: inscricao.inscricao_estadual,
         cpf_cnpj: inscricao.cpf_cnpj,
@@ -267,6 +270,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Nome</TableHead>
                 <TableHead>Tipo Contrato</TableHead>
                 <TableHead>Inscrição Estadual</TableHead>
                 <TableHead>CPF/CNPJ</TableHead>
@@ -281,6 +285,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
             <TableBody>
               {inscricoes.map((inscricao) => (
                 <TableRow key={inscricao.id}>
+                  <TableCell>{inscricao.nome || "-"}</TableCell>
                   <TableCell>
                     {TIPOS_CONTRATO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
                   </TableCell>
@@ -395,6 +400,15 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
             <div className="space-y-4">
               <h5 className="text-sm font-medium text-muted-foreground border-b pb-2">Dados da Inscrição</h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="nome">Nome / Razão Social</Label>
+                  <Input
+                    id="nome"
+                    value={formData.nome || ""}
+                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                    placeholder="Nome da inscrição (se diferente do produtor)"
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="tipo">Tipo de Contrato (opcional)</Label>
                   <Select

@@ -1,0 +1,1 @@
+ALTER TABLE public.inscricoes_produtor ADD COLUMN nome character varying;
