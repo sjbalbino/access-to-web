@@ -13,6 +13,8 @@ export interface ReferenceResolver {
   lookupTable: string; // table to look up
   lookupColumn: string; // column in lookup table to match
   lookupLabel?: string; // column to show as label
+  fallbackColumns?: string[]; // additional columns to try matching against
+  selfReference?: boolean; // true if references same table being imported (deferred)
 }
 
 export interface UpdateModeConfig {
@@ -43,7 +45,23 @@ const toBool = (v: any): boolean | null => {
 
 const toNumber = (v: any): number | null => {
   if (v === null || v === undefined || v === '') return null;
-  const n = typeof v === 'string' ? parseFloat(v.replace(',', '.')) : Number(v);
+  if (typeof v === 'number') return isNaN(v) ? null : v;
+  let s = String(v).trim().replace(/R\$\s*/gi, '').replace(/\s/g, '');
+  if (!s) return null;
+  // Detect format: if has both . and , check which is last (decimal separator)
+  const lastComma = s.lastIndexOf(',');
+  const lastDot = s.lastIndexOf('.');
+  if (lastComma > lastDot) {
+    // BR format: 1.234,56 → remove dots, replace comma with dot
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (lastDot > lastComma) {
+    // US format: 1,234.56 → remove commas
+    s = s.replace(/,/g, '');
+  } else if (lastComma >= 0 && lastDot < 0) {
+    // Only comma: 1234,56 → replace comma with dot
+    s = s.replace(',', '.');
+  }
+  const n = parseFloat(s);
   return isNaN(n) ? null : n;
 };
 
@@ -245,10 +263,10 @@ export const tableConfigs: TableConfig[] = [
     ],
     references: [
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
-      { dbColumn: 'unidade_medida_id', sourceColumn: 'unidade_medida', lookupTable: 'unidades_medida', lookupColumn: 'codigo', lookupLabel: 'descricao' },
+      { dbColumn: 'unidade_medida_id', sourceColumn: 'unidade_medida', lookupTable: 'unidades_medida', lookupColumn: 'sigla', lookupLabel: 'descricao', fallbackColumns: ['codigo', 'descricao'] },
       { dbColumn: 'fornecedor_id', sourceColumn: 'fornecedor', lookupTable: 'clientes_fornecedores', lookupColumn: 'nome', lookupLabel: 'nome' },
       { dbColumn: 'grupo_id', sourceColumn: 'grupo_produto', lookupTable: 'grupos_produtos', lookupColumn: 'nome', lookupLabel: 'nome' },
-      { dbColumn: 'produto_residuo_id', sourceColumn: 'produto_residuo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
+      { dbColumn: 'produto_residuo_id', sourceColumn: 'produto_residuo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', selfReference: true },
     ],
   },
   {
@@ -623,11 +641,12 @@ export async function resolveReferences(
   return { resolved, errors };
 }
 
-// Normalize column name: lowercase, remove accents, trim
+// Normalize column name: lowercase, remove accents, whitespace, underscores, punctuation
 function normalizeColName(name: any): string {
   if (!name) return '';
   return String(name).trim().toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\s_\-\.\/\\]/g, '');
 }
 
 // Find column value with fuzzy matching (case-insensitive + accent-insensitive)
