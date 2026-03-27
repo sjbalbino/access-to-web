@@ -39,6 +39,8 @@ export default function Placas() {
     proprietario: '',
     observacoes: '',
     ativa: true,
+    propriedade: 'propria',
+    peso_tara: 0,
   });
 
   const resetForm = () => {
@@ -54,6 +56,8 @@ export default function Placas() {
       proprietario: '',
       observacoes: '',
       ativa: true,
+      propriedade: 'propria',
+      peso_tara: 0,
     });
     setEditingItem(null);
   };
@@ -83,6 +87,8 @@ export default function Placas() {
       proprietario: item.proprietario || '',
       observacoes: item.observacoes || '',
       ativa: item.ativa,
+      propriedade: item.propriedade || 'propria',
+      peso_tara: item.peso_tara || 0,
     });
     setIsDialogOpen(true);
   };
@@ -197,10 +203,24 @@ export default function Placas() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Propriedade</Label>
+                      <Select value={formData.propriedade || 'propria'} onValueChange={(value) => setFormData({ ...formData, propriedade: value })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="propria">Própria</SelectItem>
+                          <SelectItem value="terceiros">Terceiros</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="space-y-2">
                       <Label>Capacidade (Kg)</Label>
                       <Input type="number" step="0.01" value={formData.capacidade_kg || ''} onChange={(e) => setFormData({ ...formData, capacidade_kg: parseFloat(e.target.value) || 0 })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Peso Tara (Kg)</Label>
+                      <Input type="number" step="0.01" value={formData.peso_tara || ''} onChange={(e) => setFormData({ ...formData, peso_tara: parseFloat(e.target.value) || 0 })} />
                     </div>
                     <div className="space-y-2">
                       <Label>Proprietário</Label>
@@ -233,9 +253,11 @@ export default function Placas() {
               <TableRow>
                 <TableHead>Placa</TableHead>
                 <TableHead>Tipo</TableHead>
+                <TableHead>Propriedade</TableHead>
                 <TableHead>Marca/Modelo</TableHead>
                 <TableHead>Ano</TableHead>
                 <TableHead className="text-right">Cap. (Kg)</TableHead>
+                <TableHead className="text-right">Tara (Kg)</TableHead>
                 <TableHead>Proprietário</TableHead>
                 <TableHead>Status</TableHead>
                 {canEdit && <TableHead className="text-right">Ações</TableHead>}
@@ -247,10 +269,16 @@ export default function Placas() {
                   <TableCell className="font-mono font-bold text-primary">{item.placa}</TableCell>
                   <TableCell>{getTipoBadge(item.tipo)}</TableCell>
                   <TableCell>
+                    <Badge variant={item.propriedade === 'terceiros' ? 'secondary' : 'default'}>
+                      {item.propriedade === 'terceiros' ? 'Terceiros' : 'Própria'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
                     {item.marca || item.modelo ? `${item.marca || ''} ${item.modelo || ''}`.trim() : '-'}
                   </TableCell>
                   <TableCell>{item.ano || '-'}</TableCell>
                   <TableCell className="text-right">{formatNumber(item.capacidade_kg)}</TableCell>
+                  <TableCell className="text-right">{formatNumber(item.peso_tara)}</TableCell>
                   <TableCell>
                     {item.proprietario && (
                       <span className="flex items-center gap-1">
@@ -280,7 +308,7 @@ export default function Placas() {
               ))}
               {(!placas || placas.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 8 : 7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={canEdit ? 10 : 9} className="text-center text-muted-foreground py-8">
                     Nenhuma placa cadastrada
                   </TableCell>
                 </TableRow>
