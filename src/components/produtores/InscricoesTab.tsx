@@ -179,6 +179,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       await updateInscricao.mutateAsync({
         id: inscricao.id,
         produtor_id: inscricao.produtor_id,
+        nome: inscricao.nome,
         tipo: inscricao.tipo,
         inscricao_estadual: inscricao.inscricao_estadual,
         cpf_cnpj: inscricao.cpf_cnpj,
