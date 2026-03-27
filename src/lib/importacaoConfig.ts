@@ -218,6 +218,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'ncm', dbName: 'ncm', transform: toStr },
       { accessName: 'peso_saco', dbName: 'peso_saco', transform: toNumber },
       { accessName: 'preco_custo', dbName: 'preco_custo', transform: toNumber },
+      { accessName: 'cust_medio', dbName: 'preco_custo', transform: toNumber },
       { accessName: 'preco_venda', dbName: 'preco_venda', transform: toNumber },
       { accessName: 'ativo', dbName: 'ativo', transform: toBool },
       { accessName: 'codigo_barras', dbName: 'codigo_barras', transform: toStr },
@@ -589,7 +590,10 @@ export async function resolveReferences(
       const cache: Record<string, string> = {};
       data?.forEach((item: any) => {
         const key = String(item[ref.lookupColumn] || '').trim();
-        if (key) cache[key] = item.id;
+        if (key) {
+          cache[key] = item.id;
+          cache[key.toLowerCase()] = item.id;
+        }
       });
       lookupCache[cacheKey] = cache;
     }
@@ -605,7 +609,7 @@ export async function resolveReferences(
         continue;
       }
       const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}`;
-      const uuid = lookupCache[cacheKey]?.[sourceValue];
+      const uuid = lookupCache[cacheKey]?.[sourceValue] || lookupCache[cacheKey]?.[sourceValue.toLowerCase()];
       if (uuid) {
         newRow[ref.dbColumn] = uuid;
       } else {
