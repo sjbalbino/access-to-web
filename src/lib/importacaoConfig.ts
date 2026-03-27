@@ -382,6 +382,8 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'tipo_veiculo', dbName: 'tipo_veiculo', transform: toStr },
       { accessName: 'capacidade_kg', dbName: 'capacidade_kg', transform: toNumber },
       { accessName: 'uf', dbName: 'uf', transform: toStr },
+      { accessName: 'propriedade', dbName: 'propriedade', transform: toStr },
+      { accessName: 'peso_tara', dbName: 'peso_tara', transform: toNumber },
       { accessName: 'ativa', dbName: 'ativa', transform: toBool },
     ],
   },
