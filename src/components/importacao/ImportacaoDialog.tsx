@@ -349,9 +349,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       if (selfRefs.length > 0 && imported > 0) {
         for (const ref of selfRefs) {
           // Build lookup map: codigo -> id from just-inserted records
-          const { data: insertedRecords } = await supabase
+          const { data: insertedRecords } = await (supabase
             .from(config.tableName as any)
-            .select(`id, ${ref.lookupColumn}` as any);
+            .select('*') as any);
           
           if (insertedRecords) {
             const codeToId: Record<string, string> = {};
@@ -370,10 +370,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
               const targetId = codeToId[sourceVal] || codeToId[sourceVal.toLowerCase()];
               const rowCode = String(row.codigo || '').trim();
               if (targetId && rowCode) {
-                await supabase
+                await (supabase
                   .from(config.tableName as any)
-                  .update({ [ref.dbColumn]: targetId } as any)
-                  .eq('codigo' as any, rowCode);
+                  .update({ [ref.dbColumn]: targetId } as any) as any)
+                  .eq('codigo', rowCode);
               }
             }
           }
