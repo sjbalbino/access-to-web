@@ -344,6 +344,42 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         setImportedCount(imported);
       }
 
+      // Post-insert: resolve self-references (e.g. produto_residuo_id)
+      const selfRefs = config.references?.filter(r => r.selfReference) || [];
+      if (selfRefs.length > 0 && imported > 0) {
+        for (const ref of selfRefs) {
+          // Build lookup map: codigo -> id from just-inserted records
+          const { data: insertedRecords } = await supabase
+            .from(config.tableName as any)
+            .select(`id, ${ref.lookupColumn}` as any);
+          
+          if (insertedRecords) {
+            const codeToId: Record<string, string> = {};
+            (insertedRecords as any[]).forEach((r: any) => {
+              const key = String(r[ref.lookupColumn] || '').trim();
+              if (key) {
+                codeToId[key] = r.id;
+                codeToId[key.toLowerCase()] = r.id;
+              }
+            });
+
+            // Update records that have self-reference values
+            for (const row of cleanRows) {
+              const sourceVal = String(row[ref.sourceColumn] || '').trim();
+              if (!sourceVal || sourceVal === '0' || sourceVal === '') continue;
+              const targetId = codeToId[sourceVal] || codeToId[sourceVal.toLowerCase()];
+              const rowCode = String(row.codigo || '').trim();
+              if (targetId && rowCode) {
+                await supabase
+                  .from(config.tableName as any)
+                  .update({ [ref.dbColumn]: targetId } as any)
+                  .eq('codigo' as any, rowCode);
+              }
+            }
+          }
+        }
+      }
+
       setImportErrors(errors);
 
       if (errors.length === 0) {
