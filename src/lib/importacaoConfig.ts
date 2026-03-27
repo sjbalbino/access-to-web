@@ -334,6 +334,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'celular', dbName: 'celular', transform: toStr },
       { accessName: 'email', dbName: 'email', transform: toStr },
       { accessName: 'tipo_produtor', dbName: 'tipo_produtor', transform: toStr },
+      { accessName: 'socios_tipo', dbName: 'tipo_produtor', transform: toStr },
       { accessName: 'ativo', dbName: 'ativo', transform: toBool },
     ],
     references: [

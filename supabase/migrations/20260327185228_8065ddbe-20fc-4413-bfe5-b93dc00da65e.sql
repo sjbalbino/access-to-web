@@ -1,0 +1,1 @@
+ALTER TABLE public.produtores DROP CONSTRAINT IF EXISTS produtores_cpf_cnpj_key;

@@ -335,7 +335,15 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         const { error } = await supabase.from(config.tableName as any).insert(batch as any);
 
         if (error) {
-          errors.push(`Lote ${Math.floor(i / batchSize) + 1}: ${error.message}`);
+          // Fallback: try inserting each row individually
+          for (let j = 0; j < batch.length; j++) {
+            const { error: rowErr } = await supabase.from(config.tableName as any).insert(batch[j] as any);
+            if (rowErr) {
+              errors.push(`Linha ${i + j + 1}: ${rowErr.message}`);
+            } else {
+              imported++;
+            }
+          }
         } else {
           imported += batch.length;
         }
