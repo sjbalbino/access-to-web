@@ -237,6 +237,8 @@ export default function EntradaColheita() {
         capacidade_kg: null,
         proprietario: null,
         observacoes: null,
+        propriedade: 'propria',
+        peso_tara: 0,
       });
       setFormEntrada(prev => ({ ...prev, placa_id: result.id }));
       setPlacaSearch("");
