@@ -1507,6 +1507,7 @@ export type Database = {
           inscricao_estadual: string | null
           is_emitente_principal: boolean | null
           logradouro: string | null
+          nome: string | null
           numero: string | null
           produtor_id: string | null
           telefone: string | null
@@ -1531,6 +1532,7 @@ export type Database = {
           inscricao_estadual?: string | null
           is_emitente_principal?: boolean | null
           logradouro?: string | null
+          nome?: string | null
           numero?: string | null
           produtor_id?: string | null
           telefone?: string | null
@@ -1555,6 +1557,7 @@ export type Database = {
           inscricao_estadual?: string | null
           is_emitente_principal?: boolean | null
           logradouro?: string | null
+          nome?: string | null
           numero?: string | null
           produtor_id?: string | null
           telefone?: string | null
