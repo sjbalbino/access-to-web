@@ -15,6 +15,8 @@ export type Placa = {
   proprietario: string | null;
   observacoes: string | null;
   ativa: boolean | null;
+  propriedade: string | null;
+  peso_tara: number | null;
   created_at: string;
   updated_at: string;
 };

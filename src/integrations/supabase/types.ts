@@ -2685,7 +2685,9 @@ export type Database = {
           marca: string | null
           modelo: string | null
           observacoes: string | null
+          peso_tara: number | null
           placa: string
+          propriedade: string | null
           proprietario: string | null
           tipo: string | null
           updated_at: string
@@ -2701,7 +2703,9 @@ export type Database = {
           marca?: string | null
           modelo?: string | null
           observacoes?: string | null
+          peso_tara?: number | null
           placa: string
+          propriedade?: string | null
           proprietario?: string | null
           tipo?: string | null
           updated_at?: string
@@ -2717,7 +2721,9 @@ export type Database = {
           marca?: string | null
           modelo?: string | null
           observacoes?: string | null
+          peso_tara?: number | null
           placa?: string
+          propriedade?: string | null
           proprietario?: string | null
           tipo?: string | null
           updated_at?: string
