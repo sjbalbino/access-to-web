@@ -598,19 +598,27 @@ export async function resolveReferences(
   const errors: string[] = [];
   const lookupCache: Record<string, Record<string, string>> = {};
 
-  // Build lookup caches
+  // Build lookup caches (skip self-references)
   for (const ref of references) {
+    if (ref.selfReference) continue;
+    
+    const allColumns = [ref.lookupColumn, ...(ref.fallbackColumns || [])];
+    const selectCols = ['id', ...new Set(allColumns)].join(', ');
     const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}`;
+    
     if (!lookupCache[cacheKey]) {
       const { data } = await supabase
         .from(ref.lookupTable as any)
-        .select(`id, ${ref.lookupColumn}`);
+        .select(selectCols);
       const cache: Record<string, string> = {};
       data?.forEach((item: any) => {
-        const key = String(item[ref.lookupColumn] || '').trim();
-        if (key) {
-          cache[key] = item.id;
-          cache[key.toLowerCase()] = item.id;
+        // Index by primary column
+        for (const col of allColumns) {
+          const key = String(item[col] || '').trim();
+          if (key) {
+            cache[key] = item.id;
+            cache[key.toLowerCase()] = item.id;
+          }
         }
       });
       lookupCache[cacheKey] = cache;
@@ -620,6 +628,17 @@ export async function resolveReferences(
   const resolved = rows.map((row, idx) => {
     const newRow = { ...row };
     for (const ref of references) {
+      if (ref.selfReference) {
+        // Skip self-references - handled post-insert
+        const { key: foundKey } = findColumnValue(row, ref.sourceColumn);
+        // Keep the raw value for post-insert resolution but don't set the FK
+        if (foundKey && foundKey !== ref.sourceColumn) {
+          newRow[ref.sourceColumn] = row[foundKey];
+          delete newRow[foundKey];
+        }
+        continue;
+      }
+      
       const { value: rawVal, key: foundKey } = findColumnValue(row, ref.sourceColumn);
       const sourceValue = String(rawVal || '').trim();
       if (!sourceValue) {
