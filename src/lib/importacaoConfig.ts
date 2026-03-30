@@ -438,6 +438,23 @@ export const tableConfigs: TableConfig[] = [
     ],
   },
   {
+    key: 'controle_lavouras',
+    label: 'Controle de Lavoura',
+    tableName: 'controle_lavouras',
+    description: 'Controle por safra/lavoura (área, plantio, cobertura)',
+    order: 11.5,
+    dependsOn: ['safras', 'lavouras'],
+    columns: [
+      { accessName: 'area_total', dbName: 'area_total', transform: toNumber },
+      { accessName: 'ha_plantado', dbName: 'ha_plantado', transform: toNumber },
+      { accessName: 'cobertura_solo', dbName: 'cobertura_solo', transform: toStr },
+    ],
+    references: [
+      { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
+      { dbColumn: 'lavoura_id', sourceColumn: 'lavoura_codigo', lookupTable: 'lavouras', lookupColumn: 'codigo', lookupLabel: 'nome' },
+    ],
+  },
+  {
     key: 'clientes',
     label: 'Clientes/Fornecedores',
     tableName: 'clientes_fornecedores',
