@@ -189,7 +189,38 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       // Resolve references if any
       if (config.references && config.references.length > 0) {
         const { resolved, errors: refErrors } = await resolveReferences(config.references, transformed);
-        setReferenceErrors(refErrors);
+        
+        // Composite lookup: controle_lavoura_id for colheitas (safra_id + lavoura_id)
+        if (config.key === 'colheitas') {
+          const compositeErrors: string[] = [];
+          // Build a cache of controle_lavouras
+          const { data: controles } = await supabase
+            .from('controle_lavouras')
+            .select('id, safra_id, lavoura_id');
+          
+          const ctrlMap = new Map<string, string>();
+          (controles || []).forEach((c: any) => {
+            ctrlMap.set(`${c.safra_id}|${c.lavoura_id}`, c.id);
+          });
+
+          for (let i = 0; i < resolved.length; i++) {
+            const row = resolved[i];
+            if (row.safra_id && row.lavoura_id) {
+              const key = `${row.safra_id}|${row.lavoura_id}`;
+              const ctrlId = ctrlMap.get(key);
+              if (ctrlId) {
+                row.controle_lavoura_id = ctrlId;
+              } else {
+                compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para safra/lavoura`);
+              }
+            }
+          }
+          
+          setReferenceErrors([...refErrors, ...compositeErrors]);
+        } else {
+          setReferenceErrors(refErrors);
+        }
+        
         setTransformedData(resolved);
       } else {
         setTransformedData(transformed);
