@@ -1,28 +1,20 @@
 
 
-## Plano: Adicionar importação separada de Controle de Lavoura
+## Plano: Adicionar campo `percentual_desconto` na importação de Colheitas
 
-### Contexto
-A tabela `controle_lavouras` possui campos (`area_total`, `ha_plantado`, `cobertura_solo`) que precisam ser importados do Access. A importação de colheitas depende desses registros existirem previamente.
+### Problema
+A importação de colheitas não inclui o campo `percentual_desconto` — o percentual de desconto da umidade que foi aplicado. Esse valor precisa ser persistido pois varia entre safras.
 
-### Alterações
+### Alteração
 
-#### 1. `src/lib/importacaoConfig.ts`
-- Adicionar nova config de importação **antes** de colheitas (order 11):
-  - Key: `controle_lavouras`
-  - Label: `Controle de Lavoura`
-  - dependsOn: `['safras', 'lavouras']`
-  - Campos: `area_total`, `ha_plantado`, `cobertura_solo`
-  - References: `safra_id` (via `safra_codigo` → `safras.codigo`), `lavoura_id` (via `lavoura_codigo` → `lavouras.codigo`)
-- Atualizar colheitas:
-  - Adicionar `'controle_lavouras'` ao `dependsOn`
-  - Adicionar reference: `controle_lavoura_id` via lookup composto (safra + lavoura)
+#### `src/lib/importacaoConfig.ts`
+Adicionar na lista de `columns` da config `colheitas`:
+```
+{ accessName: 'percentual_desconto', dbName: 'percentual_desconto', transform: toNumber }
+```
 
-#### 2. `src/components/importacao/ImportacaoDialog.tsx`
-- Adicionar lógica de resolução composta para colheitas: após resolver `safra_id` e `lavoura_id`, buscar `controle_lavouras` pela combinação e preencher `controle_lavoura_id`
-- Se não encontrar o controle_lavoura correspondente, registrar aviso no log
+Isso permitirá que a planilha Excel inclua a coluna `percentual_desconto` e o valor seja salvo no banco.
 
-### Arquivos impactados
-- `src/lib/importacaoConfig.ts`
-- `src/components/importacao/ImportacaoDialog.tsx`
+### Arquivo impactado
+- `src/lib/importacaoConfig.ts` (1 linha adicionada)
 
