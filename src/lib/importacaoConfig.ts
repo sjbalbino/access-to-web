@@ -507,7 +507,7 @@ export const tableConfigs: TableConfig[] = [
     tableName: 'colheitas',
     description: 'Registros de colheita/entrada',
     order: 12,
-    dependsOn: ['inscricoes', 'safras', 'lavouras', 'silos', 'produtos', 'placas'],
+    dependsOn: ['inscricoes', 'safras', 'lavouras', 'silos', 'produtos', 'placas', 'controle_lavouras'],
     columns: [
       { accessName: 'data_colheita', dbName: 'data_colheita', transform: toDate },
       { accessName: 'tipo_colheita', dbName: 'tipo_colheita', transform: toStr },
