@@ -93,6 +93,30 @@ const toInt = (v: any): number | null => {
   return n !== null ? Math.round(n) : null;
 };
 
+const toDigitsMax = (v: any, maxLen: number): string | null => {
+  const s = toStr(v);
+  if (!s) return null;
+  const digits = s.replace(/\D/g, '');
+  if (!digits) return null;
+  return digits.slice(0, maxLen);
+};
+
+const toAlphaMax = (v: any, maxLen: number): string | null => {
+  const s = toStr(v);
+  if (!s) return null;
+  const letters = s.replace(/[^a-zA-Z]/g, '').toUpperCase();
+  if (!letters) return null;
+  return letters.slice(0, maxLen);
+};
+
+const toPlate = (v: any): string | null => {
+  const s = toStr(v);
+  if (!s) return null;
+  const plate = s.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  if (!plate) return null;
+  return plate.slice(0, 7);
+};
+
 export const tableConfigs: TableConfig[] = [
   {
     key: 'granjas',
@@ -395,21 +419,21 @@ export const tableConfigs: TableConfig[] = [
     order: 11,
     columns: [
       { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
-      { accessName: 'cpf_cnpj', dbName: 'cpf_cnpj', transform: toStr },
-      { accessName: 'inscricao_estadual', dbName: 'inscricao_estadual', transform: toStr },
+      { accessName: 'cpf_cnpj', dbName: 'cpf_cnpj', transform: (v: any) => toDigitsMax(v, 14) },
+      { accessName: 'inscricao_estadual', dbName: 'inscricao_estadual', transform: (v: any) => toDigitsMax(v, 14) },
       { accessName: 'logradouro', dbName: 'logradouro', transform: toStr },
       { accessName: 'numero', dbName: 'numero', transform: toStr },
       { accessName: 'bairro', dbName: 'bairro', transform: toStr },
       { accessName: 'cidade', dbName: 'cidade', transform: toStr },
-      { accessName: 'uf', dbName: 'uf', transform: toStr },
-      { accessName: 'cep', dbName: 'cep', transform: toStr },
-      { accessName: 'telefone', dbName: 'telefone', transform: toStr },
+      { accessName: 'uf', dbName: 'uf', transform: (v: any) => toAlphaMax(v, 2) },
+      { accessName: 'cep', dbName: 'cep', transform: (v: any) => toDigitsMax(v, 8) },
+      { accessName: 'telefone', dbName: 'telefone', transform: (v: any) => toDigitsMax(v, 14) },
       { accessName: 'email', dbName: 'email', transform: toStr },
-      { accessName: 'placa_padrao', dbName: 'placa_padrao', transform: toStr },
-      { accessName: 'uf_placa_padrao', dbName: 'uf_placa_padrao', transform: toStr },
+      { accessName: 'placa_padrao', dbName: 'placa_padrao', transform: toPlate },
+      { accessName: 'uf_placa_padrao', dbName: 'uf_placa_padrao', transform: (v: any) => toAlphaMax(v, 2) },
       { accessName: 'rntc', dbName: 'rntc', transform: toStr },
       { accessName: 'motorista_padrao', dbName: 'motorista_padrao', transform: toStr },
-      { accessName: 'motorista_cpf_padrao', dbName: 'motorista_cpf_padrao', transform: toStr },
+      { accessName: 'motorista_cpf_padrao', dbName: 'motorista_cpf_padrao', transform: (v: any) => toDigitsMax(v, 14) },
       { accessName: 'ativa', dbName: 'ativa', transform: toBool },
     ],
   },
