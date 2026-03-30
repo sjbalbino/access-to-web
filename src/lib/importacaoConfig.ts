@@ -526,6 +526,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'kg_avariados', dbName: 'kg_avariados', transform: toNumber },
       { accessName: 'percentual_outros', dbName: 'percentual_outros', transform: toNumber },
       { accessName: 'kg_outros', dbName: 'kg_outros', transform: toNumber },
+      { accessName: 'percentual_desconto', dbName: 'percentual_desconto', transform: toNumber },
       { accessName: 'motorista', dbName: 'motorista', transform: toStr },
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
     ],
