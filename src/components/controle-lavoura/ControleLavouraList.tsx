@@ -101,13 +101,24 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
               className="pl-9"
             />
           </div>
+          <Select value={statusSafraFilter} onValueChange={(v) => setStatusSafraFilter(v)}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Status da safra" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="ativa">Ativas</SelectItem>
+              <SelectItem value="encerrada">Encerradas</SelectItem>
+              <SelectItem value="planejada">Planejadas</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={safraFilter || 'all'} onValueChange={(v) => setSafraFilter(v === 'all' ? null : v)}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Filtrar por safra" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as safras</SelectItem>
-              {safras.map((safra) => (
+              {filteredSafras.map((safra) => (
                 <SelectItem key={safra.id} value={safra.id}>
                   {safra.nome}
                 </SelectItem>
