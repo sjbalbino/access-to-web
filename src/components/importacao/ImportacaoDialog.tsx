@@ -350,6 +350,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       if (config.interactiveColumns) {
         config.interactiveColumns.forEach(c => validDbColumns.add(c));
       }
+      // Incluir controle_lavoura_id calculado no composite lookup de colheitas
+      if (config.key === 'colheitas') {
+        validDbColumns.add('controle_lavoura_id');
+      }
 
       const sanitizedRows = cleanRows.map((row, idx) => {
         const clean: Record<string, any> = {};
