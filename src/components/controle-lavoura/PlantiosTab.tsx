@@ -11,7 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { usePlantios, useCreatePlantio, useUpdatePlantio, useDeletePlantio, PlantioInput } from '@/hooks/usePlantios';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PlantiosTabProps {
