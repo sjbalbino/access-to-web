@@ -128,6 +128,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => onEdit(controle.id)}
                   >
+                    <TableCell>{controle.codigo || '-'}</TableCell>
                     <TableCell className="font-medium">{controle.safras?.nome || '-'}</TableCell>
                     <TableCell>{controle.lavouras?.nome || '-'}</TableCell>
                     <TableCell className="text-right">{controle.area_total?.toFixed(2) || '0.00'}</TableCell>

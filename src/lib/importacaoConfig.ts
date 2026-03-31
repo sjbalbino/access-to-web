@@ -536,6 +536,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'COL_vlrUnitario', dbName: 'valor_unitario', transform: toNumber },
       { accessName: 'motorista', dbName: 'motorista', transform: toStr },
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
+      { accessName: 'safra_codigo', dbName: '_safra_codigo', transform: toStr },
     ],
     references: [
       { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },

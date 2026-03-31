@@ -1,0 +1,1 @@
+ALTER TABLE public.controle_lavouras ADD COLUMN codigo character varying;
