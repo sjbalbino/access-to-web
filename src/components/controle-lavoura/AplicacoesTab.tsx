@@ -194,7 +194,7 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
                 aplicacoes?.map((aplicacao) => (
                   <TableRow key={aplicacao.id}>
                     <TableCell>
-                      {aplicacao.data_aplicacao ? format(new Date(aplicacao.data_aplicacao), 'dd/MM/yyyy') : '-'}
+                      {aplicacao.data_aplicacao ? format(parseISO(aplicacao.data_aplicacao), 'dd/MM/yyyy') : '-'}
                     </TableCell>
                     <TableCell>{aplicacao.produtos?.nome || '-'}</TableCell>
                     <TableCell>{aplicacao.produtos?.unidades_medida?.sigla || '-'}</TableCell>

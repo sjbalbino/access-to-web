@@ -108,8 +108,8 @@ export function FloracaoTab({ controleLavouraId, canEdit }: FloracaoTabProps) {
             ) : (
               floracoes.map((floracao) => (
                 <TableRow key={floracao.id}>
-                  <TableCell>{floracao.data_inicio ? format(new Date(floracao.data_inicio), 'dd/MM/yyyy') : '-'}</TableCell>
-                  <TableCell>{floracao.data_fim ? format(new Date(floracao.data_fim), 'dd/MM/yyyy') : '-'}</TableCell>
+                  <TableCell>{floracao.data_inicio ? format(parseISO(floracao.data_inicio), 'dd/MM/yyyy') : '-'}</TableCell>
+                  <TableCell>{floracao.data_fim ? format(parseISO(floracao.data_fim), 'dd/MM/yyyy') : '-'}</TableCell>
                   <TableCell className="text-right">{floracao.percentual_floracao?.toFixed(1)}%</TableCell>
                   <TableCell className="max-w-[200px] truncate">{floracao.observacoes || '-'}</TableCell>
                   {canEdit && (

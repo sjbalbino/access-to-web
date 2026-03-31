@@ -119,7 +119,7 @@ export function InsetosTab({ controleLavouraId, canEdit }: InsetosTabProps) {
             ) : (
               insetos.map((inseto) => (
                 <TableRow key={inseto.id}>
-                  <TableCell>{inseto.data_registro ? format(new Date(inseto.data_registro), 'dd/MM/yyyy') : '-'}</TableCell>
+                  <TableCell>{inseto.data_registro ? format(parseISO(inseto.data_registro), 'dd/MM/yyyy') : '-'}</TableCell>
                   <TableCell>{inseto.tipo_inseto || '-'}</TableCell>
                   <TableCell>
                     {NIVEIS_INFESTACAO.find(n => n.value === inseto.nivel_infestacao)?.label || inseto.nivel_infestacao || '-'}

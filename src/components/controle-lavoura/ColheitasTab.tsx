@@ -360,7 +360,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                           </TableCell>
                         )}
                         <TableCell className="text-sm">
-                          {colheita.data_colheita ? format(new Date(colheita.data_colheita), 'dd/MM/yy') : '-'}
+                          {colheita.data_colheita ? format(parseISO(colheita.data_colheita), 'dd/MM/yy') : '-'}
                         </TableCell>
                         <TableCell className="text-sm">{colheita.placas?.placa || '-'}</TableCell>
                         <TableCell className="text-right text-sm">{formatNumber(colheita.peso_bruto, 0)}</TableCell>

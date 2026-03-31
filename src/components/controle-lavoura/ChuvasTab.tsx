@@ -113,7 +113,7 @@ export function ChuvasTab({ controleLavouraId, canEdit }: ChuvasTabProps) {
               <>
                 {chuvas.map((chuva) => (
                   <TableRow key={chuva.id}>
-                    <TableCell>{chuva.data_chuva ? format(new Date(chuva.data_chuva), 'dd/MM/yyyy') : '-'}</TableCell>
+                    <TableCell>{chuva.data_chuva ? format(parseISO(chuva.data_chuva), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell className="text-right">{chuva.quantidade_mm?.toFixed(1) || '0,0'}</TableCell>
                     <TableCell className="text-right">{chuva.duracao_horas?.toFixed(1) || '0,0'}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{chuva.observacoes || '-'}</TableCell>

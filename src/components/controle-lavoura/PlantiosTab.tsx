@@ -186,7 +186,7 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
                   return (
                   <TableRow key={plantio.id}>
                     <TableCell>
-                      {plantio.data_plantio ? format(new Date(plantio.data_plantio), 'dd/MM/yyyy') : '-'}
+                      {plantio.data_plantio ? format(parseISO(plantio.data_plantio), 'dd/MM/yyyy') : '-'}
                     </TableCell>
                     <TableCell>{sementeNome || '-'}</TableCell>
                     <TableCell className="text-right">{plantio.area_plantada?.toLocaleString('pt-BR') || '0'}</TableCell>
