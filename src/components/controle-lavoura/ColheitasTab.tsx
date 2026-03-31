@@ -19,7 +19,7 @@ import { useAllInscricoes } from '@/hooks/useAllInscricoes';
 import { useInscricoesByProdutor } from '@/hooks/useInscricoesProdutor';
 import { useProdutores } from '@/hooks/useProdutores';
 import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
