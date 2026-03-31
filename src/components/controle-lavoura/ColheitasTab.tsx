@@ -78,6 +78,12 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ColheitaInput>(emptyColheita);
 
+  // Filtros e paginação (hooks devem ficar antes de early returns)
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
   const createMutation = useCreateColheita();
   const updateMutation = useUpdateColheita();
   const deleteMutation = useDeleteColheita();
