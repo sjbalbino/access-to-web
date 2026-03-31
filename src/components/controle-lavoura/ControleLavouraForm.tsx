@@ -20,6 +20,7 @@ interface ControleLavouraFormProps {
 export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: ControleLavouraFormProps) {
   const [safraId, setSafraId] = useState<string>(controleLavoura?.safra_id || '');
   const [lavouraId, setLavouraId] = useState<string>(controleLavoura?.lavoura_id || '');
+  const [codigo, setCodigo] = useState<string>(controleLavoura?.codigo || '');
   const [haPlantado, setHaPlantado] = useState<number>(controleLavoura?.ha_plantado || 0);
   const [coberturaSolo, setCoberturaSolo] = useState<string>(controleLavoura?.cobertura_solo || '');
 
