@@ -162,7 +162,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
     try {
       const data = await selectedFile.arrayBuffer();
-      const workbook = XLSX.read(data);
+      const workbook = XLSX.read(data, { cellDates: true });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
