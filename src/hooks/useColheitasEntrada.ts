@@ -6,7 +6,6 @@ export interface ColheitaPendente {
   id: string;
   controle_lavoura_id: string | null;
   safra_id: string | null;
-  lavoura_id: string;
   data_colheita: string | null;
   peso_bruto: number | null;
   peso_tara: number | null;
@@ -15,7 +14,6 @@ export interface ColheitaPendente {
   tipo_colheita: string | null;
   variedade_id: string | null;
   created_at: string;
-  lavouras?: { id: string; nome: string } | null;
   placas?: { id: string; placa: string } | null;
 }
 
