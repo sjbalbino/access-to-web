@@ -709,7 +709,8 @@ export async function resolveReferences(
         continue;
       }
       const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}`;
-      const uuid = lookupCache[cacheKey]?.[sourceValue] || lookupCache[cacheKey]?.[sourceValue.toLowerCase()];
+      const cache = lookupCache[cacheKey];
+      const uuid = cache?.[sourceValue] || cache?.[sourceValue.toLowerCase()] || cache?.[sourceValue.replace(/^0+/, '')] || cache?.[sourceValue.replace(/^0+/, '').toLowerCase()];
       if (uuid) {
         newRow[ref.dbColumn] = uuid;
       } else {
