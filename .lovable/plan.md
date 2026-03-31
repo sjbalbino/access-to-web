@@ -1,28 +1,46 @@
 
 
-## Plano: Vincular colheitas ao Controle de Lavoura apenas pelo `safra_codigo`
+## Plano: Remover campo `lavoura_id` da tabela `colheitas`
 
-### Problema
-O plano anterior tentava resolver `lavoura_id` separadamente via `lavouras.codigo`, mas a planilha não traz `lavoura_codigo` de forma confiável. O correto é usar apenas `safra_codigo` para encontrar o registro em `controle_lavouras` (que já contém o `lavoura_id`).
+### Contexto
+A tabela `colheitas` é filha de `controle_lavouras`, que já possui `lavoura_id`. O campo `lavoura_id` em `colheitas` é redundante. A vinculação na importação já é feita via `safra_codigo → controle_lavouras`.
 
 ### Alterações
 
-#### 1. `src/lib/importacaoConfig.ts` — config colheitas
-- **Remover** a referência `{ dbColumn: 'lavoura_id', sourceColumn: 'lavoura_codigo', lookupTable: 'lavouras', ... }` (linha 542)
+#### 1. Migração SQL — remover coluna e foreign key
+```sql
+ALTER TABLE public.colheitas DROP CONSTRAINT IF EXISTS colheitas_lavoura_id_fkey;
+ALTER TABLE public.colheitas DROP COLUMN IF EXISTS lavoura_id;
+```
 
-#### 2. `src/components/importacao/ImportacaoDialog.tsx` — composite lookup (linhas 193-217)
-Reescrever a lógica de composite lookup para:
-1. Buscar `controle_lavouras` com `select('id, safra_id, lavoura_id')`
-2. Buscar `safras` com `select('id, codigo')` para mapear `safra.codigo → safra.id`
-3. Construir cache: `safra_codigo → { controle_id, lavoura_id }` (normalizado sem zeros à esquerda)
-4. Para cada linha da planilha:
-   - Usar o valor de `safra_codigo` da planilha (campo original, antes da resolução de referência)
-   - Buscar no cache e setar `row.controle_lavoura_id` e `row.lavoura_id`
-   - Se não encontrar, registrar aviso
+#### 2. `src/hooks/useColheitas.ts`
+- Remover `lavoura_id` da interface `Colheita`
+- Remover `lavouras (id, nome)` do select da query (a lavoura vem via controle_lavoura)
+- Remover `lavoura_id: controle.lavoura_id` do `useCreateColheita`
 
-**Nota**: Se houver mais de um controle_lavoura para a mesma safra (safras com múltiplas lavouras), será necessário um critério adicional. Caso a planilha tenha `lavoura_codigo`, ele será usado como chave secundária. Caso contrário, o primeiro registro será utilizado.
+#### 3. `src/hooks/useColheitasEntrada.ts`
+- Remover `lavoura_id` de `ColheitaPendente`, `ColheitaEntradaInput`
+- Remover `lavoura_id` do select da query e do `lavouras (id, nome)` join
+- Remover `lavoura_id: input.lavoura_id` do insert em `useCreateColheitaEntrada`
+
+#### 4. `src/pages/EntradaColheita.tsx`
+- Onde usa `cl.lavoura_id` para filtrar/selecionar lavouras, buscar via `controle_lavouras.lavoura_id` (que já vem do hook de controle_lavouras, não da colheita)
+- Remover `lavoura_id: selectedLavouraId` do payload de criação de colheita
+
+#### 5. `src/components/importacao/ImportacaoDialog.tsx`
+- Remover `row.lavoura_id = match.lavoura_id` do composite lookup (linha 230)
+- Simplificar o cache para `safra_codigo → controle_id` apenas
+
+#### 6. `src/lib/importacaoConfig.ts`
+- Nenhuma alteração necessária (já não tem referência de `lavoura_id`)
+
+#### 7. Função SQL `calcular_saldo_deposito`
+- Não usa `lavoura_id` da colheita, não precisa alterar
 
 ### Arquivos impactados
-- `src/lib/importacaoConfig.ts` (remover 1 linha de referência)
-- `src/components/importacao/ImportacaoDialog.tsx` (reescrever ~25 linhas do composite lookup)
+- Migração SQL (nova)
+- `src/hooks/useColheitas.ts`
+- `src/hooks/useColheitasEntrada.ts`
+- `src/pages/EntradaColheita.tsx`
+- `src/components/importacao/ImportacaoDialog.tsx`
 
