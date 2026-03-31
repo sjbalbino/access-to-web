@@ -196,7 +196,7 @@ export default function NotasDeposito() {
                       <TableRow key={nota.id}>
                         <TableCell>
                           {nota.data_emissao 
-                            ? format(new Date(nota.data_emissao), "dd/MM/yyyy")
+                            ? format(parseISO(nota.data_emissao), "dd/MM/yyyy")
                             : "-"
                           }
                         </TableCell>

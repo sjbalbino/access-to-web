@@ -206,8 +206,8 @@ export default function VendasProducao() {
                           <TableCell>{contrato.safra?.nome || "-"}</TableCell>
                           <TableCell>
                             {contrato.data_contrato
-                              ? format(new Date(contrato.data_contrato), "dd/MM/yyyy", { locale: ptBR })
-                              : "-"}
+                               ? format(parseISO(contrato.data_contrato), "dd/MM/yyyy", { locale: ptBR })
+                               : "-"}
                           </TableCell>
                           <TableCell>{contrato.numero_contrato_comprador || "-"}</TableCell>
                           <TableCell className="text-right font-medium">

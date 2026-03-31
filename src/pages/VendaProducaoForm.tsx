@@ -793,7 +793,7 @@ export default function VendaProducaoForm() {
                       <TableRow key={r.id}>
                         <TableCell>{r.codigo}</TableCell>
                         <TableCell>
-                          {r.data_remessa ? format(new Date(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+                          {r.data_remessa ? format(parseISO(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                         </TableCell>
                         <TableCell>{r.placa || "-"}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.peso_bruto)}</TableCell>
