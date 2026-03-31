@@ -49,7 +49,7 @@ import { useGranjas } from "@/hooks/useGranjas";
 import { Spinner } from "@/components/ui/spinner";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { QuantityInput } from "@/components/ui/quantity-input";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface FormData {
