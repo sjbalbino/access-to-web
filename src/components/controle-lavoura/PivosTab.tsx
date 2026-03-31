@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { usePivos, useCreatePivo, useUpdatePivo, useDeletePivo, PivoInput } from '@/hooks/usePivos';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface PivosTabProps {
   controleLavouraId: string | null;
