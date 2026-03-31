@@ -50,7 +50,7 @@ export function useControleLavouras(safraId?: string | null, lavouraId?: string 
         .select(`
           *,
           lavouras:lavoura_id(id, nome, codigo, total_hectares),
-          safras:safra_id(id, nome, codigo, cultura_id, culturas:cultura_id(id, nome, informar_ph))
+          safras:safra_id(id, nome, codigo, status, cultura_id, culturas:cultura_id(id, nome, informar_ph))
         `)
         .order('created_at', { ascending: false });
 

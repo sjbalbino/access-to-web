@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ interface ControleLavouraListProps {
 
 export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraListProps) {
   const [safraFilter, setSafraFilter] = useState<string | null>(null);
+  const [statusSafraFilter, setStatusSafraFilter] = useState<string>('ativa');
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: safras = [] } = useSafras();
@@ -34,14 +35,35 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
     }
   };
 
-  const filteredControles = controles.filter(controle => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      controle.lavouras?.nome?.toLowerCase().includes(term) ||
-      controle.safras?.nome?.toLowerCase().includes(term)
-    );
-  });
+  const filteredSafras = useMemo(() => {
+    if (statusSafraFilter === 'all') return safras;
+    return safras.filter(s => s.status === statusSafraFilter);
+  }, [safras, statusSafraFilter]);
+
+  const filteredControles = useMemo(() => {
+    let result = controles.filter(controle => {
+      // Filtro por status da safra
+      if (statusSafraFilter !== 'all' && controle.safras?.status !== statusSafraFilter) {
+        return false;
+      }
+      // Filtro por texto
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        return (
+          controle.lavouras?.nome?.toLowerCase().includes(term) ||
+          controle.safras?.nome?.toLowerCase().includes(term)
+        );
+      }
+      return true;
+    });
+    // Ordenar por nome da lavoura em ordem alfabética
+    result.sort((a, b) => {
+      const nomeA = a.lavouras?.nome?.toLowerCase() || '';
+      const nomeB = b.lavouras?.nome?.toLowerCase() || '';
+      return nomeA.localeCompare(nomeB);
+    });
+    return result;
+  }, [controles, searchTerm, statusSafraFilter]);
 
   if (isLoading) {
     return (
