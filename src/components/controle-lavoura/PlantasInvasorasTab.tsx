@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { usePlantasInvasoras, useCreatePlantaInvasora, useUpdatePlantaInvasora, useDeletePlantaInvasora, PlantaInvasoraInput } from '@/hooks/usePlantasInvasoras';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface PlantasInvasorasTabProps {
   controleLavouraId: string | null;
