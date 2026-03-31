@@ -59,8 +59,11 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
       }
       return true;
     });
-    // Ordenar por nome da lavoura em ordem alfabética
+    // Ordenar por safra e depois por lavoura em ordem alfabética
     result.sort((a, b) => {
+      const safraA = a.safras?.nome?.toLowerCase() || '';
+      const safraB = b.safras?.nome?.toLowerCase() || '';
+      if (safraA !== safraB) return safraA.localeCompare(safraB);
       const nomeA = a.lavouras?.nome?.toLowerCase() || '';
       const nomeB = b.lavouras?.nome?.toLowerCase() || '';
       return nomeA.localeCompare(nomeB);
