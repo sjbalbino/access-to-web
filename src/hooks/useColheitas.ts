@@ -6,7 +6,6 @@ export interface Colheita {
   id: string;
   controle_lavoura_id: string | null;
   safra_id: string | null;
-  lavoura_id: string;
   data_colheita: string | null;
   area_colhida: number | null;
   producao_kg: number | null;
@@ -91,7 +90,6 @@ export function useColheitas(controleLavouraId: string | null) {
         .select(`
           *,
           safras (id, nome, cultura_id),
-          lavouras (id, nome),
           silos (id, nome),
           placas (id, placa),
           semente:produtos!colheitas_variedade_id_fkey (id, nome),
@@ -116,7 +114,7 @@ export function useCreateColheita() {
       // Buscar o controle_lavoura para obter safra_id e lavoura_id
       const { data: controle, error: controleError } = await supabase
         .from("controle_lavouras")
-        .select("safra_id, lavoura_id")
+        .select("safra_id")
         .eq("id", colheita.controle_lavoura_id)
         .single();
       
@@ -127,7 +125,6 @@ export function useCreateColheita() {
         .insert({
           ...colheita,
           safra_id: controle.safra_id,
-          lavoura_id: controle.lavoura_id,
         })
         .select()
         .single();

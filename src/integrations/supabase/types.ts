@@ -395,7 +395,6 @@ export type Database = {
           kg_impureza: number | null
           kg_outros: number | null
           kg_umidade: number | null
-          lavoura_id: string
           local_entrega_terceiro_id: string | null
           motorista: string | null
           observacoes: string | null
@@ -436,7 +435,6 @@ export type Database = {
           kg_impureza?: number | null
           kg_outros?: number | null
           kg_umidade?: number | null
-          lavoura_id: string
           local_entrega_terceiro_id?: string | null
           motorista?: string | null
           observacoes?: string | null
@@ -477,7 +475,6 @@ export type Database = {
           kg_impureza?: number | null
           kg_outros?: number | null
           kg_umidade?: number | null
-          lavoura_id?: string
           local_entrega_terceiro_id?: string | null
           motorista?: string | null
           observacoes?: string | null
@@ -515,13 +512,6 @@ export type Database = {
             columns: ["inscricao_produtor_id"]
             isOneToOne: false
             referencedRelation: "inscricoes_produtor"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "colheitas_lavoura_id_fkey"
-            columns: ["lavoura_id"]
-            isOneToOne: false
-            referencedRelation: "lavouras"
             referencedColumns: ["id"]
           },
           {

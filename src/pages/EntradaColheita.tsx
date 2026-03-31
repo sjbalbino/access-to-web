@@ -435,7 +435,6 @@ export default function EntradaColheita() {
       await createColheitaEntrada.mutateAsync({
         controle_lavoura_id: controleLavouraId,
         safra_id: safraId,
-        lavoura_id: selectedLavouraId,
         data_colheita: format(new Date(), "yyyy-MM-dd"),
         peso_bruto: formEntrada.peso_bruto,
         placa_id: formEntrada.placa_id || null,
@@ -1414,7 +1413,7 @@ export default function EntradaColheita() {
                               }}
                             >
                               <TableCell className="font-medium">
-                                {carga.lavouras?.nome}
+                                {controleLavouras.find(cl => cl.id === carga.controle_lavoura_id)?.lavouras?.nome || "-"}
                               </TableCell>
                               <TableCell>
                                 {carga.placas?.placa || "-"}

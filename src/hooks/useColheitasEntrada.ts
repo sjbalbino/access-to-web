@@ -6,7 +6,6 @@ export interface ColheitaPendente {
   id: string;
   controle_lavoura_id: string | null;
   safra_id: string | null;
-  lavoura_id: string;
   data_colheita: string | null;
   peso_bruto: number | null;
   peso_tara: number | null;
@@ -15,14 +14,12 @@ export interface ColheitaPendente {
   tipo_colheita: string | null;
   variedade_id: string | null;
   created_at: string;
-  lavouras?: { id: string; nome: string } | null;
   placas?: { id: string; placa: string } | null;
 }
 
 export interface ColheitaEntradaInput {
   controle_lavoura_id: string;
   safra_id: string;
-  lavoura_id: string;
   data_colheita: string;
   peso_bruto: number;
   placa_id: string | null;
@@ -67,7 +64,6 @@ export function useColheitasPendentes(safraId: string | null) {
           id,
           controle_lavoura_id,
           safra_id,
-          lavoura_id,
           data_colheita,
           peso_bruto,
           peso_tara,
@@ -76,7 +72,6 @@ export function useColheitasPendentes(safraId: string | null) {
           tipo_colheita,
           variedade_id,
           created_at,
-          lavouras (id, nome),
           placas (id, placa)
         `)
         .eq("safra_id", safraId)
@@ -103,7 +98,6 @@ export function useCreateColheitaEntrada() {
         .insert({
           controle_lavoura_id: input.controle_lavoura_id,
           safra_id: input.safra_id,
-          lavoura_id: input.lavoura_id,
           data_colheita: input.data_colheita,
           peso_bruto: input.peso_bruto,
           placa_id: input.placa_id,
