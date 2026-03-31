@@ -78,6 +78,12 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ColheitaInput>(emptyColheita);
 
+  // Filtros e paginação (hooks devem ficar antes de early returns)
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
   const createMutation = useCreateColheita();
   const updateMutation = useUpdateColheita();
   const deleteMutation = useDeleteColheita();
@@ -202,6 +208,34 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
     };
   }, [colheitas]);
 
+  const pageSize = 20;
+
+  // Filtrar colheitas
+  const filteredColheitas = useMemo(() => {
+    if (!colheitas) return [];
+    return colheitas.filter((c) => {
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const placa = c.placas?.placa?.toLowerCase() || '';
+        const produtor = c.inscricao_produtor?.produtores?.nome?.toLowerCase() || '';
+        const ie = c.inscricao_produtor?.inscricao_estadual?.toLowerCase() || '';
+        const motorista = (c.motorista || '').toLowerCase();
+        if (!placa.includes(term) && !produtor.includes(term) && !ie.includes(term) && !motorista.includes(term)) return false;
+      }
+      if (filterDateFrom && c.data_colheita && c.data_colheita < filterDateFrom) return false;
+      if (filterDateTo && c.data_colheita && c.data_colheita > filterDateTo) return false;
+      return true;
+    });
+  }, [colheitas, searchTerm, filterDateFrom, filterDateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredColheitas.length / pageSize));
+  const paginatedColheitas = filteredColheitas.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, filterDateFrom, filterDateTo]);
+
+  const colCount = (canEdit ? 1 : 0) + (informarPh ? 19 : 18);
+
   if (!controleLavouraId) {
     return (
       <Alert>
@@ -224,7 +258,6 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   };
 
   const handleEdit = (colheita: any) => {
-    // Encontrar o produtor associado à inscrição
     if (colheita.inscricao_produtor_id) {
       const inscricao = inscricoes?.find(i => i.id === colheita.inscricao_produtor_id);
       if (inscricao?.produtor_id) {
@@ -302,24 +335,46 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
 
   return (
     <div className="space-y-4">
-      {canEdit && (
-        <div className="flex justify-end">
-          <Button onClick={handleNew} className="gap-2">
+      {/* Filtros e botão */}
+      <div className="flex flex-col sm:flex-row gap-3 items-end">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar placa, produtor, IE, motorista..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex gap-2 items-end">
+          <div className="space-y-1">
+            <Label className="text-xs">De</Label>
+            <Input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="w-36" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Até</Label>
+            <Input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="w-36" />
+          </div>
+        </div>
+        {canEdit && (
+          <Button onClick={handleNew} className="gap-2 whitespace-nowrap">
             <Plus className="h-4 w-4" />
             Nova Colheita
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       <Card>
         <CardContent className="p-0">
           <ScrollArea className="w-full whitespace-nowrap">
-            <div className="min-w-[1600px]">
+            <div className="min-w-[1800px]">
               <Table>
                 <TableHeader>
                   <TableRow>
                     {canEdit && <TableHead className="w-20">Ações</TableHead>}
                     <TableHead className="w-24">Data</TableHead>
+                    <TableHead className="w-28">Produtor</TableHead>
+                    <TableHead className="w-28">IE</TableHead>
                     <TableHead className="w-20">Placa</TableHead>
                     <TableHead className="text-right w-20">Bruto</TableHead>
                     <TableHead className="text-right w-20">Tara</TableHead>
@@ -338,14 +393,14 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {colheitas?.length === 0 ? (
+                  {paginatedColheitas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={canEdit ? (informarPh ? 17 : 16) : (informarPh ? 16 : 15)} className="text-center text-muted-foreground py-8">
-                        Nenhuma colheita cadastrada
+                      <TableCell colSpan={colCount} className="text-center text-muted-foreground py-8">
+                        Nenhuma colheita encontrada
                       </TableCell>
                     </TableRow>
                   ) : (
-                    colheitas?.map((colheita) => (
+                    paginatedColheitas.map((colheita) => (
                       <TableRow key={colheita.id}>
                         {canEdit && (
                           <TableCell>
@@ -362,6 +417,10 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                         <TableCell className="text-sm">
                           {colheita.data_colheita ? format(parseISO(colheita.data_colheita), 'dd/MM/yy') : '-'}
                         </TableCell>
+                        <TableCell className="text-sm truncate max-w-[140px]" title={colheita.inscricao_produtor?.produtores?.nome || ''}>
+                          {colheita.inscricao_produtor?.produtores?.nome || '-'}
+                        </TableCell>
+                        <TableCell className="text-sm">{colheita.inscricao_produtor?.inscricao_estadual || '-'}</TableCell>
                         <TableCell className="text-sm">{colheita.placas?.placa || '-'}</TableCell>
                         <TableCell className="text-right text-sm">{formatNumber(colheita.peso_bruto, 0)}</TableCell>
                         <TableCell className="text-right text-sm">{formatNumber(colheita.peso_tara, 0)}</TableCell>
@@ -387,6 +446,23 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
             </div>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
+
+          {/* Paginação */}
+          {filteredColheitas.length > pageSize && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <span className="text-sm text-muted-foreground">
+                {filteredColheitas.length} registro(s) — Página {currentPage} de {totalPages}
+              </span>
+              <div className="flex gap-1">
+                <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)}>
+                  Anterior
+                </Button>
+                <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+                  Próxima
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
