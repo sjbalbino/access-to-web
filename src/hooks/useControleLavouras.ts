@@ -6,6 +6,7 @@ export interface ControleLavoura {
   id: string;
   lavoura_id: string;
   safra_id: string;
+  codigo: string | null;
   area_total: number | null;
   ha_plantado: number | null;
   cobertura_solo: string | null;
