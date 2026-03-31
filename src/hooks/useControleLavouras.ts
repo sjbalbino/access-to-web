@@ -22,6 +22,7 @@ export interface ControleLavoura {
     id: string;
     nome: string;
     codigo: string | null;
+    status: string | null;
     cultura_id: string | null;
     culturas?: {
       id: string;
