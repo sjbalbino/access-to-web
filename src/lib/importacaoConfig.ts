@@ -527,6 +527,12 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'percentual_outros', dbName: 'percentual_outros', transform: toNumber },
       { accessName: 'kg_outros', dbName: 'kg_outros', transform: toNumber },
       { accessName: 'percentual_desconto', dbName: 'percentual_desconto', transform: toNumber },
+      { accessName: 'COL_HORARIO', dbName: 'hora_entrada', transform: toStr },
+      { accessName: 'COL_HORASAIDA', dbName: 'hora_saida', transform: toStr },
+      { accessName: 'COL_PERCQEBRA', dbName: 'percentual_quebra', transform: toNumber },
+      { accessName: 'COL_BALANCEIRO', dbName: 'balanceiro', transform: toStr },
+      { accessName: 'COL_ROMANEIO', dbName: 'romaneio', transform: toInt },
+      { accessName: 'COL_vlrUnitario', dbName: 'valor_unitario', transform: toNumber },
       { accessName: 'motorista', dbName: 'motorista', transform: toStr },
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
     ],
@@ -537,6 +543,7 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'variedade_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'placa_id', sourceColumn: 'placa', lookupTable: 'placas', lookupColumn: 'placa', lookupLabel: 'placa' },
+      { dbColumn: 'local_entrega_terceiro_id', sourceColumn: 'col_localentrega', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome' },
     ],
   },
   {
@@ -668,6 +675,12 @@ export async function resolveReferences(
           if (key) {
             cache[key] = item.id;
             cache[key.toLowerCase()] = item.id;
+            // Also index without leading zeros for numeric codes
+            const noLeadingZeros = key.replace(/^0+/, '');
+            if (noLeadingZeros && noLeadingZeros !== key) {
+              cache[noLeadingZeros] = item.id;
+              cache[noLeadingZeros.toLowerCase()] = item.id;
+            }
           }
         }
       });
@@ -696,7 +709,8 @@ export async function resolveReferences(
         continue;
       }
       const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}`;
-      const uuid = lookupCache[cacheKey]?.[sourceValue] || lookupCache[cacheKey]?.[sourceValue.toLowerCase()];
+      const cache = lookupCache[cacheKey];
+      const uuid = cache?.[sourceValue] || cache?.[sourceValue.toLowerCase()] || cache?.[sourceValue.replace(/^0+/, '')] || cache?.[sourceValue.replace(/^0+/, '').toLowerCase()];
       if (uuid) {
         newRow[ref.dbColumn] = uuid;
       } else {

@@ -381,9 +381,12 @@ export type Database = {
       colheitas: {
         Row: {
           area_colhida: number | null
+          balanceiro: string | null
           controle_lavoura_id: string | null
           created_at: string
           data_colheita: string | null
+          hora_entrada: string | null
+          hora_saida: string | null
           id: string
           impureza: number | null
           inscricao_produtor_id: string | null
@@ -399,6 +402,7 @@ export type Database = {
           percentual_avariados: number | null
           percentual_desconto: number | null
           percentual_outros: number | null
+          percentual_quebra: number | null
           peso_bruto: number | null
           peso_tara: number | null
           ph: number | null
@@ -406,19 +410,24 @@ export type Database = {
           producao_kg: number | null
           producao_liquida_kg: number | null
           produtividade_sacas_ha: number | null
+          romaneio: number | null
           safra_id: string | null
           silo_id: string | null
           tipo_colheita: string | null
           total_sacos: number | null
           umidade: number | null
           updated_at: string
+          valor_unitario: number | null
           variedade_id: string | null
         }
         Insert: {
           area_colhida?: number | null
+          balanceiro?: string | null
           controle_lavoura_id?: string | null
           created_at?: string
           data_colheita?: string | null
+          hora_entrada?: string | null
+          hora_saida?: string | null
           id?: string
           impureza?: number | null
           inscricao_produtor_id?: string | null
@@ -434,6 +443,7 @@ export type Database = {
           percentual_avariados?: number | null
           percentual_desconto?: number | null
           percentual_outros?: number | null
+          percentual_quebra?: number | null
           peso_bruto?: number | null
           peso_tara?: number | null
           ph?: number | null
@@ -441,19 +451,24 @@ export type Database = {
           producao_kg?: number | null
           producao_liquida_kg?: number | null
           produtividade_sacas_ha?: number | null
+          romaneio?: number | null
           safra_id?: string | null
           silo_id?: string | null
           tipo_colheita?: string | null
           total_sacos?: number | null
           umidade?: number | null
           updated_at?: string
+          valor_unitario?: number | null
           variedade_id?: string | null
         }
         Update: {
           area_colhida?: number | null
+          balanceiro?: string | null
           controle_lavoura_id?: string | null
           created_at?: string
           data_colheita?: string | null
+          hora_entrada?: string | null
+          hora_saida?: string | null
           id?: string
           impureza?: number | null
           inscricao_produtor_id?: string | null
@@ -469,6 +484,7 @@ export type Database = {
           percentual_avariados?: number | null
           percentual_desconto?: number | null
           percentual_outros?: number | null
+          percentual_quebra?: number | null
           peso_bruto?: number | null
           peso_tara?: number | null
           ph?: number | null
@@ -476,12 +492,14 @@ export type Database = {
           producao_kg?: number | null
           producao_liquida_kg?: number | null
           produtividade_sacas_ha?: number | null
+          romaneio?: number | null
           safra_id?: string | null
           silo_id?: string | null
           tipo_colheita?: string | null
           total_sacos?: number | null
           umidade?: number | null
           updated_at?: string
+          valor_unitario?: number | null
           variedade_id?: string | null
         }
         Relationships: [
