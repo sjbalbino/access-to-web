@@ -69,6 +69,7 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
         const result = await createMutation.mutateAsync({
           safra_id: safraId,
           lavoura_id: lavouraId,
+          codigo: codigo || null,
           area_total: areaTotal,
           ha_plantado: haPlantado,
           cobertura_solo: coberturaSolo,
