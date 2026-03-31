@@ -35,7 +35,7 @@ import { Plus, Pencil, Truck, Trash2, FileText } from "lucide-react";
 import { useContratosVenda, useDeleteContratoVenda } from "@/hooks/useContratosVenda";
 import { useSafras } from "@/hooks/useSafras";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Spinner } from "@/components/ui/spinner";
 
