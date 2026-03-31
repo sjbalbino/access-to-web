@@ -1,41 +1,55 @@
 
-Objetivo: corrigir definitivamente a importação de **colheitas** para que o vínculo com a tabela pai seja feito por `safra_codigo -> controle_lavouras.codigo -> colheitas.controle_lavoura_id`, sem depender de `safra_id`.
 
-1) Diagnóstico (causa real do bug atual)
-- O lookup composto em `ImportacaoDialog.tsx` até encontra o controle, porém no saneamento final (`validDbColumns`) o campo calculado `controle_lavoura_id` não está autorizado para insert.
-- Resultado: o campo é removido antes do `.insert()`, e vai `NULL` para o banco.
-- Além disso, se `safra_codigo` vier vazio/com nome alternativo de coluna, hoje a linha pode passar sem erro e também ser inserida sem vínculo.
+## Plano: Corrigir conversão de datas na importação
 
-2) Correção no motor de importação (`src/components/importacao/ImportacaoDialog.tsx`)
-- No bloco de colheitas:
-  - Manter lookup em `controle_lavouras` por `codigo` (normalizado, sem zeros à esquerda).
-  - Ler `safra_codigo` com fallback robusto de cabeçalho (ex.: `safra_codigo`, `SAFRA_CODIGO`, `safras_codigo`).
-  - Se não houver código na linha: gerar erro de referência explícito.
-  - Se houver código e não encontrar controle: gerar erro de referência explícito.
-  - Se encontrar: preencher **somente** `row.controle_lavoura_id` (não preencher `row.safra_id`).
-- No saneamento antes do insert:
-  - Incluir `controle_lavoura_id` em `validDbColumns` quando `config.key === 'colheitas'`.
-  - Remover campos auxiliares (`_safra_codigo` e aliases) antes do insert.
+### Problema
+Ao importar colheitas, a data gravada no banco difere da data na planilha. Isso ocorre porque a biblioteca xlsx, sem a opção `cellDates`, retorna datas como números seriais do Excel. A função `toDate` converte corretamente, mas pode haver imprecisão de fuso horário dependendo do ambiente.
 
-3) Ajuste de configuração de importação (`src/lib/importacaoConfig.ts`)
-- Manter `safra_codigo` como coluna auxiliar no modelo da planilha.
-- Garantir que ela continue aparecendo no template de colheitas (já está), para o usuário sempre informar o código de vínculo correto.
+### Correção (2 pontos)
 
-4) Comportamento esperado após correção
-- Cada linha da planilha:
-  - lê `safra_codigo`,
-  - localiza `controle_lavouras.codigo`,
-  - grava `colheitas.controle_lavoura_id` com o `id` encontrado.
-- Linhas sem código ou sem correspondência não serão importadas silenciosamente; aparecerão em “avisos/erros de referência”.
-- `safra_id` deixa de ser usado nessa importação (fica fora da lógica de vínculo).
+#### 1. `src/components/importacao/ImportacaoDialog.tsx` — forçar `cellDates` e `raw: false`
+Na leitura do workbook (linha 165), passar opções para que o xlsx retorne datas como objetos Date nativos:
+```typescript
+const workbook = XLSX.read(data, { cellDates: true });
+```
+Isso garante que os valores de data cheguem à `toDate` como objetos `Date` e não como números seriais sujeitos a arredondamento.
 
-5) Validação pós-implementação
-- Teste com planilha contendo `safra_codigo` válido: confirmar `controle_lavoura_id` preenchido.
-- Teste com `safra_codigo` inválido/vazio: confirmar linha bloqueada com aviso.
-- Conferência no banco:
-  - Antes/depois da reimportação, verificar registros novos com `controle_lavoura_id IS NULL`.
-- Como os registros já importados com null não se autocorrigem, fazer reimportação desses dados após o patch (com limpeza seletiva dos registros inválidos, se necessário).
+#### 2. `src/lib/importacaoConfig.ts` — tornar `toDate` à prova de fuso horário
+Alterar a função `toDate` para usar métodos UTC em vez de `toISOString()`, e mover a verificação de `Date` para antes da verificação de `string`:
 
-Arquivos impactados
-- `src/components/importacao/ImportacaoDialog.tsx` (correção principal)
-- `src/lib/importacaoConfig.ts` (garantia de coluna auxiliar no template)
+```typescript
+const toDate = (v: any): string | null => {
+  if (v === null || v === undefined || v === '') return null;
+  if (v instanceof Date) {
+    // Usar UTC para evitar deslocamento de fuso
+    const yyyy = v.getUTCFullYear();
+    const mm = String(v.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(v.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  if (typeof v === 'number') {
+    const utcMs = Math.round((v - 25569) * 86400 * 1000);
+    const d = new Date(utcMs);
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  if (typeof v === 'string') {
+    const parts = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (parts) return `${parts[3]}-${parts[2]}-${parts[1]}`;
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.split('T')[0];
+  }
+  return null;
+};
+```
+
+Mudanças:
+- `Date` instanceof verificado **antes** de `string` (evita que Date caia em `.toString()` e falhe no regex)
+- `Math.round` no cálculo de ms (evita imprecisão de ponto flutuante)
+- Usa `getUTCFullYear/Month/Date` em vez de `toISOString` (comportamento idêntico, mas mais explícito)
+
+### Arquivos impactados
+- `src/components/importacao/ImportacaoDialog.tsx` (1 linha)
+- `src/lib/importacaoConfig.ts` (~15 linhas na função `toDate`)
+
