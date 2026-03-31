@@ -510,6 +510,7 @@ export const tableConfigs: TableConfig[] = [
     order: 12,
     dependsOn: ['inscricoes', 'safras', 'lavouras', 'silos', 'produtos', 'placas', 'controle_lavouras'],
     columns: [
+      { accessName: 'COL_CODIGO', dbName: 'codigo', transform: toStr },
       { accessName: 'data_colheita', dbName: 'data_colheita', transform: toDate },
       { accessName: 'tipo_colheita', dbName: 'tipo_colheita', transform: toStr },
       { accessName: 'peso_bruto', dbName: 'peso_bruto', transform: toNumber },

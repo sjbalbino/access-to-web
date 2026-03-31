@@ -382,6 +382,7 @@ export type Database = {
         Row: {
           area_colhida: number | null
           balanceiro: string | null
+          codigo: string | null
           controle_lavoura_id: string | null
           created_at: string
           data_colheita: string | null
@@ -422,6 +423,7 @@ export type Database = {
         Insert: {
           area_colhida?: number | null
           balanceiro?: string | null
+          codigo?: string | null
           controle_lavoura_id?: string | null
           created_at?: string
           data_colheita?: string | null
@@ -462,6 +464,7 @@ export type Database = {
         Update: {
           area_colhida?: number | null
           balanceiro?: string | null
+          codigo?: string | null
           controle_lavoura_id?: string | null
           created_at?: string
           data_colheita?: string | null
