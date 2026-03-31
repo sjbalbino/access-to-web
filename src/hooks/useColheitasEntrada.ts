@@ -20,7 +20,6 @@ export interface ColheitaPendente {
 export interface ColheitaEntradaInput {
   controle_lavoura_id: string;
   safra_id: string;
-  lavoura_id: string;
   data_colheita: string;
   peso_bruto: number;
   placa_id: string | null;
