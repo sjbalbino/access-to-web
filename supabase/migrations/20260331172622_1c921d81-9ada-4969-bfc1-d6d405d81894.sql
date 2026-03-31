@@ -1,0 +1,1 @@
+ALTER TABLE public.colheitas ADD COLUMN codigo character varying;

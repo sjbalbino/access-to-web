@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export interface Colheita {
   id: string;
+  codigo: string | null;
   controle_lavoura_id: string | null;
   safra_id: string | null;
   data_colheita: string | null;
