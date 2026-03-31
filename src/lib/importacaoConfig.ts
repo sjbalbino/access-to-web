@@ -675,6 +675,12 @@ export async function resolveReferences(
           if (key) {
             cache[key] = item.id;
             cache[key.toLowerCase()] = item.id;
+            // Also index without leading zeros for numeric codes
+            const noLeadingZeros = key.replace(/^0+/, '');
+            if (noLeadingZeros && noLeadingZeros !== key) {
+              cache[noLeadingZeros] = item.id;
+              cache[noLeadingZeros.toLowerCase()] = item.id;
+            }
           }
         }
       });
