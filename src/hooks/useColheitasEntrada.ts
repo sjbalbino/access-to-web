@@ -98,7 +98,6 @@ export function useCreateColheitaEntrada() {
         .insert({
           controle_lavoura_id: input.controle_lavoura_id,
           safra_id: input.safra_id,
-          lavoura_id: input.lavoura_id,
           data_colheita: input.data_colheita,
           peso_bruto: input.peso_bruto,
           placa_id: input.placa_id,

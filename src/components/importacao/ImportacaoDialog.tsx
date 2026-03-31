@@ -209,13 +209,13 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             }
           });
           
-          // Cache: safra_codigo → { controle_id, lavoura_id }
+          // Cache: safra_codigo → controle_id
           // Se houver múltiplos controles para a mesma safra, usa o primeiro encontrado
-          const ctrlMap = new Map<string, { controle_id: string; lavoura_id: string }>();
+          const ctrlMap = new Map<string, string>();
           (controles || []).forEach((c: any) => {
             const safraCodigo = safraIdToCodigo.get(c.safra_id);
             if (safraCodigo && !ctrlMap.has(safraCodigo)) {
-              ctrlMap.set(safraCodigo, { controle_id: c.id, lavoura_id: c.lavoura_id });
+              ctrlMap.set(safraCodigo, c.id);
             }
           });
 
@@ -224,10 +224,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             // Usar o valor original da planilha (safra_codigo) para buscar
             const safraCodigo = String(jsonData[i]?.['safra_codigo'] || '').trim().replace(/^0+/, '');
             if (safraCodigo) {
-              const match = ctrlMap.get(safraCodigo);
-              if (match) {
-                row.controle_lavoura_id = match.controle_id;
-                row.lavoura_id = match.lavoura_id;
+              const controleId = ctrlMap.get(safraCodigo);
+              if (controleId) {
+                row.controle_lavoura_id = controleId;
               } else {
                 compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para safra código "${safraCodigo}"`);
               }

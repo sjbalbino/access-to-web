@@ -125,7 +125,6 @@ export function useCreateColheita() {
         .insert({
           ...colheita,
           safra_id: controle.safra_id,
-          lavoura_id: controle.lavoura_id,
         })
         .select()
         .single();
