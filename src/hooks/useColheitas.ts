@@ -114,7 +114,7 @@ export function useCreateColheita() {
       // Buscar o controle_lavoura para obter safra_id e lavoura_id
       const { data: controle, error: controleError } = await supabase
         .from("controle_lavouras")
-        .select("safra_id, lavoura_id")
+        .select("safra_id")
         .eq("id", colheita.controle_lavoura_id)
         .single();
       

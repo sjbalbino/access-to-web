@@ -190,7 +190,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       if (config.references && config.references.length > 0) {
         const { resolved, errors: refErrors } = await resolveReferences(config.references, transformed);
         
-        // Composite lookup: controle_lavoura_id + lavoura_id for colheitas (via safra_codigo)
+        // Composite lookup: controle_lavoura_id for colheitas (via safra_codigo)
         if (config.key === 'colheitas') {
           const compositeErrors: string[] = [];
           
