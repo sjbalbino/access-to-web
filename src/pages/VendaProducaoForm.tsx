@@ -49,7 +49,7 @@ import { useGranjas } from "@/hooks/useGranjas";
 import { Spinner } from "@/components/ui/spinner";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { QuantityInput } from "@/components/ui/quantity-input";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface FormData {
@@ -793,7 +793,7 @@ export default function VendaProducaoForm() {
                       <TableRow key={r.id}>
                         <TableCell>{r.codigo}</TableCell>
                         <TableCell>
-                          {r.data_remessa ? format(new Date(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+                          {r.data_remessa ? format(parseISO(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                         </TableCell>
                         <TableCell>{r.placa || "-"}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.peso_bruto)}</TableCell>

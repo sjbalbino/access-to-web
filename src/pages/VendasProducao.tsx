@@ -35,7 +35,7 @@ import { Plus, Pencil, Truck, Trash2, FileText } from "lucide-react";
 import { useContratosVenda, useDeleteContratoVenda } from "@/hooks/useContratosVenda";
 import { useSafras } from "@/hooks/useSafras";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -206,8 +206,8 @@ export default function VendasProducao() {
                           <TableCell>{contrato.safra?.nome || "-"}</TableCell>
                           <TableCell>
                             {contrato.data_contrato
-                              ? format(new Date(contrato.data_contrato), "dd/MM/yyyy", { locale: ptBR })
-                              : "-"}
+                               ? format(parseISO(contrato.data_contrato), "dd/MM/yyyy", { locale: ptBR })
+                               : "-"}
                           </TableCell>
                           <TableCell>{contrato.numero_contrato_comprador || "-"}</TableCell>
                           <TableCell className="text-right font-medium">

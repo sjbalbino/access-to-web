@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useAnalisesSolo, useCreateAnaliseSolo, useUpdateAnaliseSolo, useDeleteAnaliseSolo, AnaliseSoloInput } from '@/hooks/useAnalisesSolo';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface AnaliseTabProps {
   controleLavouraId: string | null;
@@ -122,7 +122,7 @@ export function AnaliseTab({ controleLavouraId, canEdit }: AnaliseTabProps) {
             ) : (
               analises.map((analise) => (
                 <TableRow key={analise.id}>
-                  <TableCell>{analise.data_coleta ? format(new Date(analise.data_coleta), 'dd/MM/yyyy') : '-'}</TableCell>
+                  <TableCell>{analise.data_coleta ? format(parseISO(analise.data_coleta), 'dd/MM/yyyy') : '-'}</TableCell>
                   <TableCell>{analise.laboratorio || '-'}</TableCell>
                   <TableCell className="text-right">{analise.ph?.toFixed(2) || '-'}</TableCell>
                   <TableCell className="text-right">{analise.materia_organica?.toFixed(2) || '-'}</TableCell>

@@ -48,7 +48,7 @@ import {
 import { useSilos } from "@/hooks/useSilos";
 import { useTransportadoras } from "@/hooks/useTransportadoras";
 import { Spinner } from "@/components/ui/spinner";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PesarBrutoDialog } from "@/components/remessas/PesarBrutoDialog";
 import { EditarRemessaDialog } from "@/components/remessas/EditarRemessaDialog";
@@ -813,7 +813,7 @@ export default function RemessasVendaForm() {
                         <TableRow key={r.id}>
                           <TableCell className="font-medium">{r.codigo}</TableCell>
                           <TableCell>
-                            {r.data_remessa ? format(new Date(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+                            {r.data_remessa ? format(parseISO(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                           </TableCell>
                           <TableCell>{r.transportadora?.nome || "-"}</TableCell>
                           <TableCell>{r.placa || "-"}</TableCell>

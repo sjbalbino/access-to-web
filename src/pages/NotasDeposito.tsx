@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -196,7 +196,7 @@ export default function NotasDeposito() {
                       <TableRow key={nota.id}>
                         <TableCell>
                           {nota.data_emissao 
-                            ? format(new Date(nota.data_emissao), "dd/MM/yyyy")
+                            ? format(parseISO(nota.data_emissao), "dd/MM/yyyy")
                             : "-"
                           }
                         </TableCell>

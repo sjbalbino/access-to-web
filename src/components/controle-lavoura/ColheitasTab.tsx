@@ -19,7 +19,7 @@ import { useAllInscricoes } from '@/hooks/useAllInscricoes';
 import { useInscricoesByProdutor } from '@/hooks/useInscricoesProdutor';
 import { useProdutores } from '@/hooks/useProdutores';
 import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
@@ -360,7 +360,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                           </TableCell>
                         )}
                         <TableCell className="text-sm">
-                          {colheita.data_colheita ? format(new Date(colheita.data_colheita), 'dd/MM/yy') : '-'}
+                          {colheita.data_colheita ? format(parseISO(colheita.data_colheita), 'dd/MM/yy') : '-'}
                         </TableCell>
                         <TableCell className="text-sm">{colheita.placas?.placa || '-'}</TableCell>
                         <TableCell className="text-right text-sm">{formatNumber(colheita.peso_bruto, 0)}</TableCell>

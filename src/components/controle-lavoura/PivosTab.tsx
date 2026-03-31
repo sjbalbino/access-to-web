@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { usePivos, useCreatePivo, useUpdatePivo, useDeletePivo, PivoInput } from '@/hooks/usePivos';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface PivosTabProps {
   controleLavouraId: string | null;
@@ -117,7 +117,7 @@ export function PivosTab({ controleLavouraId, canEdit }: PivosTabProps) {
               <>
                 {pivos.map((pivo) => (
                   <TableRow key={pivo.id}>
-                    <TableCell>{pivo.data_irrigacao ? format(new Date(pivo.data_irrigacao), 'dd/MM/yyyy') : '-'}</TableCell>
+                    <TableCell>{pivo.data_irrigacao ? format(parseISO(pivo.data_irrigacao), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell className="text-right">{pivo.lamina_mm?.toFixed(1) || '0,0'}</TableCell>
                     <TableCell className="text-right">{pivo.duracao_horas?.toFixed(1) || '0,0'}</TableCell>
                     <TableCell className="text-right">{pivo.energia_kwh?.toFixed(1) || '0,0'}</TableCell>

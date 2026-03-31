@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { usePlantasInvasoras, useCreatePlantaInvasora, useUpdatePlantaInvasora, useDeletePlantaInvasora, PlantaInvasoraInput } from '@/hooks/usePlantasInvasoras';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface PlantasInvasorasTabProps {
   controleLavouraId: string | null;
@@ -119,7 +119,7 @@ export function PlantasInvasorasTab({ controleLavouraId, canEdit }: PlantasInvas
             ) : (
               plantas.map((planta) => (
                 <TableRow key={planta.id}>
-                  <TableCell>{planta.data_registro ? format(new Date(planta.data_registro), 'dd/MM/yyyy') : '-'}</TableCell>
+                  <TableCell>{planta.data_registro ? format(parseISO(planta.data_registro), 'dd/MM/yyyy') : '-'}</TableCell>
                   <TableCell>{planta.tipo_planta || '-'}</TableCell>
                   <TableCell>
                     {NIVEIS_INFESTACAO.find(n => n.value === planta.nivel_infestacao)?.label || planta.nivel_infestacao || '-'}
