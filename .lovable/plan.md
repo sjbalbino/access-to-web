@@ -1,55 +1,22 @@
 
 
-## Plano: Corrigir conversão de datas na importação
+## Plano: Corrigir exibição de datas com fuso horário
 
 ### Problema
-Ao importar colheitas, a data gravada no banco difere da data na planilha. Isso ocorre porque a biblioteca xlsx, sem a opção `cellDates`, retorna datas como números seriais do Excel. A função `toDate` converte corretamente, mas pode haver imprecisão de fuso horário dependendo do ambiente.
+A data está **correta no banco de dados**. O erro ocorre na **exibição na tela**: `new Date('2026-03-28')` cria um objeto Date em meia-noite UTC, que no fuso horário do Brasil (UTC-3) vira 27/03 às 21h — e `format()` exibe o dia anterior.
 
-### Correção (2 pontos)
+### Solução
+Substituir `new Date(dateStr)` por `parseISO(dateStr)` do date-fns (já usado no projeto em `CompraCereais.tsx`) ou adicionar `T00:00:00` à string para forçar interpretação local. O `parseISO` é o padrão mais limpo.
 
-#### 1. `src/components/importacao/ImportacaoDialog.tsx` — forçar `cellDates` e `raw: false`
-Na leitura do workbook (linha 165), passar opções para que o xlsx retorne datas como objetos Date nativos:
-```typescript
-const workbook = XLSX.read(data, { cellDates: true });
-```
-Isso garante que os valores de data cheguem à `toDate` como objetos `Date` e não como números seriais sujeitos a arredondamento.
+### Arquivo: `src/components/controle-lavoura/ColheitasTab.tsx`
+- Linha 363: trocar `format(new Date(colheita.data_colheita), 'dd/MM/yy')` por `format(parseISO(colheita.data_colheita), 'dd/MM/yy')`
+- Adicionar import de `parseISO` do `date-fns`
 
-#### 2. `src/lib/importacaoConfig.ts` — tornar `toDate` à prova de fuso horário
-Alterar a função `toDate` para usar métodos UTC em vez de `toISOString()`, e mover a verificação de `Date` para antes da verificação de `string`:
+### Verificação adicional
+Buscar e corrigir o mesmo padrão em todos os arquivos que exibem datas de colheita ou outras datas do banco usando `new Date(string)` sem `T00:00:00`:
+- `src/pages/EntradaColheita.tsx` — verificar se há exibição de `data_colheita` com `new Date()`
+- Outros componentes que usem `format(new Date(dateString), ...)` para datas sem hora
 
-```typescript
-const toDate = (v: any): string | null => {
-  if (v === null || v === undefined || v === '') return null;
-  if (v instanceof Date) {
-    // Usar UTC para evitar deslocamento de fuso
-    const yyyy = v.getUTCFullYear();
-    const mm = String(v.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(v.getUTCDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-  if (typeof v === 'number') {
-    const utcMs = Math.round((v - 25569) * 86400 * 1000);
-    const d = new Date(utcMs);
-    const yyyy = d.getUTCFullYear();
-    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(d.getUTCDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-  if (typeof v === 'string') {
-    const parts = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (parts) return `${parts[3]}-${parts[2]}-${parts[1]}`;
-    if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.split('T')[0];
-  }
-  return null;
-};
-```
-
-Mudanças:
-- `Date` instanceof verificado **antes** de `string` (evita que Date caia em `.toString()` e falhe no regex)
-- `Math.round` no cálculo de ms (evita imprecisão de ponto flutuante)
-- Usa `getUTCFullYear/Month/Date` em vez de `toISOString` (comportamento idêntico, mas mais explícito)
-
-### Arquivos impactados
-- `src/components/importacao/ImportacaoDialog.tsx` (1 linha)
-- `src/lib/importacaoConfig.ts` (~15 linhas na função `toDate`)
+### Impacto
+Correção pontual de display. Nenhuma alteração no banco ou na lógica de importação.
 
