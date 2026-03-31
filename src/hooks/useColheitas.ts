@@ -51,6 +51,7 @@ export interface Colheita {
 
 export type ColheitaInput = {
   controle_lavoura_id: string;
+  codigo?: string | null;
   data_colheita: string | null;
   area_colhida: number | null;
   producao_kg: number | null;
