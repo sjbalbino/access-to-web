@@ -11,7 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Plus, Pencil, Trash2, AlertCircle } from 'lucide-react';
 import { useAplicacoes, useCreateAplicacao, useUpdateAplicacao, useDeleteAplicacao, AplicacaoInput, TipoAplicacao, TIPOS_APLICACAO } from '@/hooks/useAplicacoes';
 import { useProdutosByGrupo, TIPO_GRUPO_MAP } from '@/hooks/useProdutosByGrupo';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AplicacoesTabProps {
