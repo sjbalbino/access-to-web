@@ -79,6 +79,7 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
       } else if (controleLavoura) {
         await updateMutation.mutateAsync({
           id: controleLavoura.id,
+          codigo: codigo || null,
           ha_plantado: haPlantado,
           cobertura_solo: coberturaSolo,
         });
