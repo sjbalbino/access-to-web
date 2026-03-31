@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useInsetos, useCreateInseto, useUpdateInseto, useDeleteInseto, InsetoInput } from '@/hooks/useInsetos';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface InsetosTabProps {
   controleLavouraId: string | null;
