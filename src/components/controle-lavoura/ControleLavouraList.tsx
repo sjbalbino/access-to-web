@@ -36,8 +36,11 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
   };
 
   const filteredSafras = useMemo(() => {
-    if (statusSafraFilter === 'all') return safras;
-    return safras.filter(s => s.status === statusSafraFilter);
+    let result = safras;
+    if (statusSafraFilter !== 'all') {
+      result = result.filter(s => s.status === statusSafraFilter);
+    }
+    return [...result].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
   }, [safras, statusSafraFilter]);
 
   const filteredControles = useMemo(() => {
