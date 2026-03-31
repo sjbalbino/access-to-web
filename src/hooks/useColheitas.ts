@@ -90,7 +90,6 @@ export function useColheitas(controleLavouraId: string | null) {
         .select(`
           *,
           safras (id, nome, cultura_id),
-          lavouras (id, nome),
           silos (id, nome),
           placas (id, placa),
           semente:produtos!colheitas_variedade_id_fkey (id, nome),
