@@ -445,6 +445,7 @@ export const tableConfigs: TableConfig[] = [
     order: 11.5,
     dependsOn: ['safras', 'lavouras'],
     columns: [
+      { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'area_total', dbName: 'area_total', transform: toNumber },
       { accessName: 'ha_plantado', dbName: 'ha_plantado', transform: toNumber },
       { accessName: 'cobertura_solo', dbName: 'cobertura_solo', transform: toStr },
