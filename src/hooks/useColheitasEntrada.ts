@@ -64,7 +64,6 @@ export function useColheitasPendentes(safraId: string | null) {
           id,
           controle_lavoura_id,
           safra_id,
-          lavoura_id,
           data_colheita,
           peso_bruto,
           peso_tara,
@@ -73,7 +72,6 @@ export function useColheitasPendentes(safraId: string | null) {
           tipo_colheita,
           variedade_id,
           created_at,
-          lavouras (id, nome),
           placas (id, placa)
         `)
         .eq("safra_id", safraId)
