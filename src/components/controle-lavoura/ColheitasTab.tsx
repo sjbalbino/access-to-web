@@ -306,13 +306,6 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
     );
   }
 
-  // Filtros
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterDateFrom, setFilterDateFrom] = useState('');
-  const [filterDateTo, setFilterDateTo] = useState('');
-
-  // Paginação
-  const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
 
   // Filtrar colheitas
