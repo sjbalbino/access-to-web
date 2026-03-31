@@ -112,6 +112,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Código</TableHead>
                   <TableHead>Safra</TableHead>
                   <TableHead>Lavoura</TableHead>
                   <TableHead className="text-right">Área Total (ha)</TableHead>
