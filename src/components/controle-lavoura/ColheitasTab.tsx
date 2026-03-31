@@ -208,6 +208,34 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
     };
   }, [colheitas]);
 
+  const pageSize = 20;
+
+  // Filtrar colheitas
+  const filteredColheitas = useMemo(() => {
+    if (!colheitas) return [];
+    return colheitas.filter((c) => {
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const placa = c.placas?.placa?.toLowerCase() || '';
+        const produtor = c.inscricao_produtor?.produtores?.nome?.toLowerCase() || '';
+        const ie = c.inscricao_produtor?.inscricao_estadual?.toLowerCase() || '';
+        const motorista = (c.motorista || '').toLowerCase();
+        if (!placa.includes(term) && !produtor.includes(term) && !ie.includes(term) && !motorista.includes(term)) return false;
+      }
+      if (filterDateFrom && c.data_colheita && c.data_colheita < filterDateFrom) return false;
+      if (filterDateTo && c.data_colheita && c.data_colheita > filterDateTo) return false;
+      return true;
+    });
+  }, [colheitas, searchTerm, filterDateFrom, filterDateTo]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredColheitas.length / pageSize));
+  const paginatedColheitas = filteredColheitas.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, filterDateFrom, filterDateTo]);
+
+  const colCount = (canEdit ? 1 : 0) + (informarPh ? 19 : 18);
+
   if (!controleLavouraId) {
     return (
       <Alert>
@@ -230,7 +258,6 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   };
 
   const handleEdit = (colheita: any) => {
-    // Encontrar o produtor associado à inscrição
     if (colheita.inscricao_produtor_id) {
       const inscricao = inscricoes?.find(i => i.id === colheita.inscricao_produtor_id);
       if (inscricao?.produtor_id) {
@@ -305,34 +332,6 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
       </div>
     );
   }
-
-  const pageSize = 20;
-
-  // Filtrar colheitas
-  const filteredColheitas = useMemo(() => {
-    if (!colheitas) return [];
-    return colheitas.filter((c) => {
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const placa = c.placas?.placa?.toLowerCase() || '';
-        const produtor = c.inscricao_produtor?.produtores?.nome?.toLowerCase() || '';
-        const ie = c.inscricao_produtor?.inscricao_estadual?.toLowerCase() || '';
-        const motorista = (c.motorista || '').toLowerCase();
-        if (!placa.includes(term) && !produtor.includes(term) && !ie.includes(term) && !motorista.includes(term)) return false;
-      }
-      if (filterDateFrom && c.data_colheita && c.data_colheita < filterDateFrom) return false;
-      if (filterDateTo && c.data_colheita && c.data_colheita > filterDateTo) return false;
-      return true;
-    });
-  }, [colheitas, searchTerm, filterDateFrom, filterDateTo]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredColheitas.length / pageSize));
-  const paginatedColheitas = filteredColheitas.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  // Reset page when filters change
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, filterDateFrom, filterDateTo]);
-
-  const colCount = (canEdit ? 1 : 0) + (informarPh ? 19 : 18);
 
   return (
     <div className="space-y-4">
