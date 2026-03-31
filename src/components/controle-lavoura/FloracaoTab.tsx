@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useFloracoes, useCreateFloracao, useUpdateFloracao, useDeleteFloracao, FloracaoInput } from '@/hooks/useFloracoes';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface FloracaoTabProps {
   controleLavouraId: string | null;
