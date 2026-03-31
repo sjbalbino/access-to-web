@@ -194,41 +194,34 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         if (config.key === 'colheitas') {
           const compositeErrors: string[] = [];
           
-          // Buscar controle_lavouras e safras para construir cache por safra_codigo
-          const [{ data: controles }, { data: safras }] = await Promise.all([
-            supabase.from('controle_lavouras').select('id, safra_id, lavoura_id'),
-            supabase.from('safras').select('id, codigo'),
-          ]);
+          // Buscar controle_lavouras pelo campo codigo para cache direto
+          const { data: controles } = await supabase
+            .from('controle_lavouras')
+            .select('id, safra_id, codigo');
           
-          // Mapear safra_id → safra_codigo (normalizado)
-          const safraIdToCodigo = new Map<string, string>();
-          (safras || []).forEach((s: any) => {
-            if (s.codigo) {
-              const norm = String(s.codigo).replace(/^0+/, '') || s.codigo;
-              safraIdToCodigo.set(s.id, norm);
-            }
-          });
-          
-          // Cache: safra_codigo → { controle_id, safra_id }
-          // Se houver múltiplos controles para a mesma safra, usa o primeiro encontrado
+          // Cache: controle_lavouras.codigo (normalizado) → { controle_id, safra_id }
           const ctrlMap = new Map<string, { controle_id: string; safra_id: string }>();
           (controles || []).forEach((c: any) => {
-            const safraCodigo = safraIdToCodigo.get(c.safra_id);
-            if (safraCodigo && !ctrlMap.has(safraCodigo)) {
-              ctrlMap.set(safraCodigo, { controle_id: c.id, safra_id: c.safra_id });
+            if (c.codigo) {
+              const norm = String(c.codigo).trim().replace(/^0+/, '') || c.codigo;
+              if (!ctrlMap.has(norm)) {
+                ctrlMap.set(norm, { controle_id: c.id, safra_id: c.safra_id });
+              }
             }
           });
 
           for (let i = 0; i < resolved.length; i++) {
             const row = resolved[i];
-            const safraCodigo = String(jsonData[i]?.['safra_codigo'] || '').trim().replace(/^0+/, '');
-            if (safraCodigo) {
-              const match = ctrlMap.get(safraCodigo);
+            const codigoControle = String(row._safra_codigo || jsonData[i]?.['safra_codigo'] || '').trim().replace(/^0+/, '');
+            // Limpar campo auxiliar antes do insert
+            delete (row as any)._safra_codigo;
+            if (codigoControle) {
+              const match = ctrlMap.get(codigoControle);
               if (match) {
                 row.controle_lavoura_id = match.controle_id;
                 row.safra_id = match.safra_id;
               } else {
-                compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para safra código "${safraCodigo}"`);
+                compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"`);
               }
             }
           }

@@ -445,6 +445,7 @@ export const tableConfigs: TableConfig[] = [
     order: 11.5,
     dependsOn: ['safras', 'lavouras'],
     columns: [
+      { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'area_total', dbName: 'area_total', transform: toNumber },
       { accessName: 'ha_plantado', dbName: 'ha_plantado', transform: toNumber },
       { accessName: 'cobertura_solo', dbName: 'cobertura_solo', transform: toStr },
@@ -535,6 +536,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'COL_vlrUnitario', dbName: 'valor_unitario', transform: toNumber },
       { accessName: 'motorista', dbName: 'motorista', transform: toStr },
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
+      { accessName: 'safra_codigo', dbName: '_safra_codigo', transform: toStr },
     ],
     references: [
       { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },

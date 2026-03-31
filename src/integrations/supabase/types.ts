@@ -896,6 +896,7 @@ export type Database = {
         Row: {
           area_total: number | null
           cobertura_solo: string | null
+          codigo: string | null
           created_at: string
           ha_plantado: number | null
           id: string
@@ -906,6 +907,7 @@ export type Database = {
         Insert: {
           area_total?: number | null
           cobertura_solo?: string | null
+          codigo?: string | null
           created_at?: string
           ha_plantado?: number | null
           id?: string
@@ -916,6 +918,7 @@ export type Database = {
         Update: {
           area_total?: number | null
           cobertura_solo?: string | null
+          codigo?: string | null
           created_at?: string
           ha_plantado?: number | null
           id?: string

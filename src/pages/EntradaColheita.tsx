@@ -425,6 +425,7 @@ export default function EntradaColheita() {
         const novoControle = await createControleLavoura.mutateAsync({
           safra_id: safraId,
           lavoura_id: selectedLavouraId,
+          codigo: null,
           area_total: lavoura?.total_hectares || null,
           ha_plantado: null,
           cobertura_solo: null,
