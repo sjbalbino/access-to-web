@@ -67,19 +67,25 @@ const toNumber = (v: any): number | null => {
 
 const toDate = (v: any): string | null => {
   if (v === null || v === undefined || v === '') return null;
+  if (v instanceof Date) {
+    const yyyy = v.getUTCFullYear();
+    const mm = String(v.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(v.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
   if (typeof v === 'number') {
-    // Excel serial date
-    const d = new Date((v - 25569) * 86400 * 1000);
-    return d.toISOString().split('T')[0];
+    const utcMs = Math.round((v - 25569) * 86400 * 1000);
+    const d = new Date(utcMs);
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
   if (typeof v === 'string') {
-    // Try DD/MM/YYYY
     const parts = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
     if (parts) return `${parts[3]}-${parts[2]}-${parts[1]}`;
-    // Try ISO
     if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.split('T')[0];
   }
-  if (v instanceof Date) return v.toISOString().split('T')[0];
   return null;
 };
 
