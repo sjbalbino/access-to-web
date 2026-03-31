@@ -42,6 +42,7 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
     if (controleLavoura && mode === 'edit') {
       setSafraId(controleLavoura.safra_id);
       setLavouraId(controleLavoura.lavoura_id);
+      setCodigo(controleLavoura.codigo || '');
       setHaPlantado(controleLavoura.ha_plantado || 0);
       setCoberturaSolo(controleLavoura.cobertura_solo || '');
     }
