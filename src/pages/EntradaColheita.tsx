@@ -1413,7 +1413,7 @@ export default function EntradaColheita() {
                               }}
                             >
                               <TableCell className="font-medium">
-                                {carga.lavouras?.nome}
+                                {controleLavouras.find(cl => cl.id === carga.controle_lavoura_id)?.lavouras?.nome || "-"}
                               </TableCell>
                               <TableCell>
                                 {carga.placas?.placa || "-"}
