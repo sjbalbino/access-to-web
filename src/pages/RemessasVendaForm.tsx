@@ -48,7 +48,7 @@ import {
 import { useSilos } from "@/hooks/useSilos";
 import { useTransportadoras } from "@/hooks/useTransportadoras";
 import { Spinner } from "@/components/ui/spinner";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PesarBrutoDialog } from "@/components/remessas/PesarBrutoDialog";
 import { EditarRemessaDialog } from "@/components/remessas/EditarRemessaDialog";
