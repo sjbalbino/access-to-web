@@ -6,7 +6,6 @@ export interface Colheita {
   id: string;
   controle_lavoura_id: string | null;
   safra_id: string | null;
-  lavoura_id: string;
   data_colheita: string | null;
   area_colhida: number | null;
   producao_kg: number | null;
