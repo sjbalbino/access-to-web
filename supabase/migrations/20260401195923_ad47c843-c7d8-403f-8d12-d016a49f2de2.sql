@@ -1,0 +1,1 @@
+ALTER TABLE contratos_venda ALTER COLUMN numero TYPE varchar USING numero::varchar;

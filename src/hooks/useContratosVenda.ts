@@ -5,7 +5,7 @@ import { toast } from "sonner";
 export interface ContratoVenda {
   id: string;
   granja_id: string | null;
-  numero: number;
+  numero: string;
   safra_id: string | null;
   produto_id: string | null;
   data_contrato: string;
@@ -58,13 +58,13 @@ export interface ContratoVenda {
   saldo_kg?: number;
 }
 
-export type ContratoVendaInsert = Partial<Omit<ContratoVenda, "id" | "created_at" | "updated_at" | "safra" | "produto" | "comprador" | "inscricao_produtor" | "total_carregado_kg" | "saldo_kg">> & { numero: number; data_contrato: string };
+export type ContratoVendaInsert = Partial<Omit<ContratoVenda, "id" | "created_at" | "updated_at" | "safra" | "produto" | "comprador" | "inscricao_produtor" | "total_carregado_kg" | "saldo_kg">> & { numero: string; data_contrato: string };
 export type ContratoVendaUpdate = Partial<ContratoVendaInsert>;
 
 interface ContratoVendaFiltros {
   safra_id?: string;
   comprador_id?: string;
-  numero?: number;
+  numero?: string;
 }
 
 export function useContratosVenda(filtros?: ContratoVendaFiltros) {
@@ -194,7 +194,8 @@ export function useProximoNumeroContrato(safraId?: string) {
       }
 
       const { data } = await query;
-      return (data?.[0]?.numero || 0) + 1;
+      const lastNumero = parseInt(data?.[0]?.numero || "0", 10);
+      return String(isNaN(lastNumero) ? 1 : lastNumero + 1);
     },
   });
 }

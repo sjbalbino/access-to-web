@@ -561,7 +561,7 @@ export const tableConfigs: TableConfig[] = [
     order: 13,
     dependsOn: ['safras', 'granjas', 'inscricoes', 'clientes', 'produtos'],
     columns: [
-      { accessName: 'numero', dbName: 'numero', required: true, transform: toInt },
+      { accessName: 'numero', dbName: 'numero', required: true, transform: toStr },
       { accessName: 'data_contrato', dbName: 'data_contrato', required: true, transform: toDate },
       { accessName: 'quantidade_kg', dbName: 'quantidade_kg', transform: toNumber },
       { accessName: 'quantidade_sacos', dbName: 'quantidade_sacos', transform: toNumber },

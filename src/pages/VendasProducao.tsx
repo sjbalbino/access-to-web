@@ -51,7 +51,7 @@ export default function VendasProducao() {
   const { data: contratos, isLoading } = useContratosVenda({
     safra_id: filtroSafra || undefined,
     comprador_id: filtroComprador || undefined,
-    numero: filtroNumero ? parseInt(filtroNumero) : undefined,
+    numero: filtroNumero || undefined,
   });
   const deleteContrato = useDeleteContratoVenda();
 
@@ -144,7 +144,7 @@ export default function VendasProducao() {
               <div className="space-y-2">
                 <Label>Nº Contrato</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={filtroNumero}
                   onChange={(e) => setFiltroNumero(e.target.value)}
                   placeholder="Número"

@@ -756,7 +756,7 @@ export type Database = {
           local_entrega_uf: string | null
           modalidade_frete: number | null
           nota_venda: string | null
-          numero: number
+          numero: string
           numero_contrato_comprador: string | null
           observacoes: string | null
           percentual_comissao: number | null
@@ -798,7 +798,7 @@ export type Database = {
           local_entrega_uf?: string | null
           modalidade_frete?: number | null
           nota_venda?: string | null
-          numero: number
+          numero: string
           numero_contrato_comprador?: string | null
           observacoes?: string | null
           percentual_comissao?: number | null
@@ -840,7 +840,7 @@ export type Database = {
           local_entrega_uf?: string | null
           modalidade_frete?: number | null
           nota_venda?: string | null
-          numero?: number
+          numero?: string
           numero_contrato_comprador?: string | null
           observacoes?: string | null
           percentual_comissao?: number | null
