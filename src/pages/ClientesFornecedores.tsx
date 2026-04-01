@@ -512,6 +512,17 @@ export default function ClientesFornecedores() {
             </TableBody>
           </Table>
           </div>
+          {totalPaginas > 1 && (
+            <div className="flex items-center justify-between pt-4">
+              <span className="text-sm text-muted-foreground">
+                {dadosFiltrados.length} registro(s) — Página {paginaAtual} de {totalPaginas}
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={paginaAtual <= 1} onClick={() => setPaginaAtual(p => p - 1)}>Anterior</Button>
+                <Button variant="outline" size="sm" disabled={paginaAtual >= totalPaginas} onClick={() => setPaginaAtual(p => p + 1)}>Próxima</Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
