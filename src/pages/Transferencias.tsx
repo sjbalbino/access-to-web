@@ -205,7 +205,6 @@ export default function Transferencias() {
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(t.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
