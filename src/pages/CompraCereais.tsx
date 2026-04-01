@@ -119,19 +119,19 @@ export default function CompraCereais() {
           <CardHeader>
             <CardTitle>Compras Registradas</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 overflow-hidden">
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Cód</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Vendedor</TableHead>
-                    <TableHead>Produto</TableHead>
+                    <TableHead className="hidden sm:table-cell">Produto</TableHead>
                     <TableHead className="text-right">Qtde (kg)</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
+                    <TableHead className="text-right hidden sm:table-cell">Valor</TableHead>
+                    <TableHead className="hidden md:table-cell">Status</TableHead>
+                    <TableHead className="sticky right-0 bg-background">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -143,42 +143,24 @@ export default function CompraCereais() {
                     <TableRow key={c.id}>
                       <TableCell>{c.codigo}</TableCell>
                       <TableCell>{format(parseISO(c.data_compra), 'dd/MM/yyyy')}</TableCell>
-                      <TableCell>{c.inscricao_vendedor?.produtores?.nome}</TableCell>
-                      <TableCell>{c.produto?.nome}</TableCell>
+                      <TableCell className="max-w-[150px] truncate">{c.inscricao_vendedor?.produtores?.nome}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{c.produto?.nome}</TableCell>
                       <TableCell className="text-right">{formatNumber(c.quantidade_kg, 3)}</TableCell>
-                      <TableCell className="text-right">R$ {formatNumber(c.valor_total, 2)}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-right hidden sm:table-cell">R$ {formatNumber(c.valor_total, 2)}</TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <Badge variant={c.status === 'nfe_emitida' ? 'default' : 'secondary'}>
                           {c.status === 'nfe_emitida' ? 'NFe Emitida' : 'Pendente'}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="sticky right-0 bg-background">
                         <div className="flex gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleEmitirNfe(c)}
-                            disabled={!!c.nota_fiscal_id}
-                            title={c.nota_fiscal_id ? 'NFe já emitida' : 'Emitir NFe'}
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => handleEmitirNfe(c)} disabled={!!c.nota_fiscal_id} title={c.nota_fiscal_id ? 'NFe já emitida' : 'Emitir NFe'}>
                             <Send className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleEditarCompra(c)}
-                            disabled={!!c.nota_fiscal_id}
-                            title={c.nota_fiscal_id ? 'Não é possível editar - NFe emitida' : 'Editar'}
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => handleEditarCompra(c)} disabled={!!c.nota_fiscal_id}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => deleteCompra.mutate(c.id)}
-                            disabled={!!c.nota_fiscal_id}
-                            title={c.nota_fiscal_id ? 'Não é possível excluir - NFe emitida' : 'Excluir'}
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => deleteCompra.mutate(c.id)} disabled={!!c.nota_fiscal_id}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -187,13 +169,9 @@ export default function CompraCereais() {
                   ))}
                 </TableBody>
               </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+            </div>
+            <div className="px-4">
+              <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
             </div>
           </CardContent>
         </Card>

@@ -257,98 +257,68 @@ export default function EmitentesNfe() {
         </div>
 
         <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Granja</TableHead>
-                <TableHead>CNPJ</TableHead>
-                <TableHead>IE</TableHead>
-                <TableHead>Ambiente</TableHead>
-                <TableHead>Série</TableHead>
-                <TableHead>API</TableHead>
-                <TableHead>Status</TableHead>
-                {canEdit && <TableHead className="w-24">Ações</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dadosPaginados.map((emitente) => (
-                <TableRow key={emitente.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      {emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "-"}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {emitente.granja?.cnpj || "-"}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {emitente.granja?.inscricao_estadual || "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={emitente.ambiente === 1 ? "default" : "secondary"}>
-                      {AMBIENTES.find((a) => a.value === emitente.ambiente)?.label || "-"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{emitente.serie_nfe}</TableCell>
-                  <TableCell>
-                    {emitente.api_configurada ? (
-                      <Badge variant="default">
-                        {API_PROVIDERS.find((p) => p.value === emitente.api_provider)?.label || "Configurada"}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Não configurada</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={emitente.ativo ? "default" : "secondary"}>
-                      {emitente.ativo ? "Ativo" : "Inativo"}
-                    </Badge>
-                  </TableCell>
-                  {canEdit && (
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(emitente)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedEmitente(emitente);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+          <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Granja</TableHead>
+                  <TableHead className="hidden sm:table-cell">CNPJ</TableHead>
+                  <TableHead className="hidden md:table-cell">IE</TableHead>
+                  <TableHead className="hidden sm:table-cell">Ambiente</TableHead>
+                  <TableHead className="hidden md:table-cell">Série</TableHead>
+                  <TableHead className="hidden md:table-cell">API</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  {canEdit && <TableHead className="w-24 sticky right-0 bg-background">Ações</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dadosPaginados.map((emitente) => (
+                  <TableRow key={emitente.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                        <span className="max-w-[150px] truncate">{emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "-"}</span>
                       </div>
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              {emitentes.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={canEdit ? 8 : 7}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    Nenhum emitente configurado
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+                    <TableCell className="font-mono text-sm hidden sm:table-cell">{emitente.granja?.cnpj || "-"}</TableCell>
+                    <TableCell className="font-mono text-sm hidden md:table-cell">{emitente.granja?.inscricao_estadual || "-"}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant={emitente.ambiente === 1 ? "default" : "secondary"}>
+                        {AMBIENTES.find((a) => a.value === emitente.ambiente)?.label || "-"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{emitente.serie_nfe}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {emitente.api_configurada ? (
+                        <Badge variant="default">{API_PROVIDERS.find((p) => p.value === emitente.api_provider)?.label || "Configurada"}</Badge>
+                      ) : (
+                        <Badge variant="outline">Não configurada</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant={emitente.ativo ? "default" : "secondary"}>{emitente.ativo ? "Ativo" : "Inativo"}</Badge>
+                    </TableCell>
+                    {canEdit && (
+                      <TableCell className="sticky right-0 bg-background">
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(emitente)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => { setSelectedEmitente(emitente); setIsDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+                {emitentes.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={canEdit ? 8 : 7} className="text-center py-8 text-muted-foreground">Nenhum emitente configurado</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="px-4">
+            <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
+          </div>
         </div>
 
         {/* Dialog de Criação/Edição */}

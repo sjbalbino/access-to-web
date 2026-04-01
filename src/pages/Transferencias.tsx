@@ -166,16 +166,16 @@ export default function Transferencias() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="min-w-[600px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-20">Código</TableHead>
-                      <TableHead className="w-28">Data</TableHead>
-                      <TableHead>Safra</TableHead>
-                      <TableHead>Produto</TableHead>
-                      <TableHead>Origem → Destino</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead className="hidden sm:table-cell">Safra</TableHead>
+                      <TableHead className="hidden sm:table-cell">Produto</TableHead>
+                      <TableHead className="hidden md:table-cell">Origem → Destino</TableHead>
                       <TableHead className="text-right">Quantidade</TableHead>
-                      <TableHead className="w-24 text-center">Ações</TableHead>
+                      <TableHead className="w-24 text-center sticky right-0 bg-background">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -187,38 +187,22 @@ export default function Transferencias() {
                         <TableCell>
                           {new Date(t.data_transferencia).toLocaleDateString('pt-BR')}
                         </TableCell>
-                        <TableCell>{t.safra?.nome || "-"}</TableCell>
-                        <TableCell>{t.produto?.nome || "-"}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">{t.safra?.nome || "-"}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{t.produto?.nome || "-"}</TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <div className="flex items-center gap-1 text-sm">
-                            <span className="font-medium">
-                              {t.inscricao_origem?.produtores?.nome || t.inscricao_origem?.inscricao_estadual || "-"}
-                            </span>
+                            <span className="font-medium">{t.inscricao_origem?.produtores?.nome || t.inscricao_origem?.inscricao_estadual || "-"}</span>
                             <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                            <span className="font-medium">
-                              {t.inscricao_destino?.produtores?.nome || t.inscricao_destino?.inscricao_estadual || "-"}
-                            </span>
+                            <span className="font-medium">{t.inscricao_destino?.produtores?.nome || t.inscricao_destino?.inscricao_estadual || "-"}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatNumber(t.quantidade_kg)} kg
-                        </TableCell>
-                        <TableCell>
+                        <TableCell className="text-right font-medium">{formatNumber(t.quantidade_kg)} kg</TableCell>
+                        <TableCell className="sticky right-0 bg-background">
                           <div className="flex items-center justify-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleEditarTransferencia(t)}
-                            >
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditarTransferencia(t)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => setDeleteId(t.id)}
-                            >
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(t.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>

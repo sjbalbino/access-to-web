@@ -259,63 +259,55 @@ export default function Placas() {
             </Dialog>
           )}
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Placa</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Propriedade</TableHead>
-                <TableHead>Marca/Modelo</TableHead>
-                <TableHead>Ano</TableHead>
-                <TableHead className="text-right">Cap. (Kg)</TableHead>
-                <TableHead className="text-right">Tara (Kg)</TableHead>
-                <TableHead>Proprietário</TableHead>
-                <TableHead>Status</TableHead>
-                {canEdit && <TableHead className="text-right">Ações</TableHead>}
+        <CardContent className="p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Placa</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead className="hidden sm:table-cell">Propriedade</TableHead>
+                  <TableHead className="hidden md:table-cell">Marca/Modelo</TableHead>
+                  <TableHead className="hidden md:table-cell">Ano</TableHead>
+                  <TableHead className="text-right hidden sm:table-cell">Cap. (Kg)</TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">Tara (Kg)</TableHead>
+                  <TableHead className="hidden lg:table-cell">Proprietário</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  {canEdit && <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {dadosPaginados?.map((item: any) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-mono font-bold text-primary">{item.placa}</TableCell>
-                  <TableCell>{getTipoBadge(item.tipo)}</TableCell>
-                  <TableCell>
-                    <Badge variant={item.propriedade === 'terceiros' ? 'secondary' : 'default'}>
-                      {item.propriedade === 'terceiros' ? 'Terceiros' : 'Própria'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {item.marca || item.modelo ? `${item.marca || ''} ${item.modelo || ''}`.trim() : '-'}
-                  </TableCell>
-                  <TableCell>{item.ano || '-'}</TableCell>
-                  <TableCell className="text-right">{formatNumber(item.capacidade_kg)}</TableCell>
-                  <TableCell className="text-right">{formatNumber(item.peso_tara)}</TableCell>
-                  <TableCell>
-                    {item.proprietario && (
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3 text-muted-foreground" />
-                        {item.proprietario}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={item.ativa ? 'default' : 'secondary'}>
-                      {item.ativa ? 'Ativa' : 'Inativa'}
-                    </Badge>
-                  </TableCell>
-                  {canEdit && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
+                    <TableCell className="font-mono font-bold text-primary">{item.placa}</TableCell>
+                    <TableCell>{getTipoBadge(item.tipo)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant={item.propriedade === 'terceiros' ? 'secondary' : 'default'}>
+                        {item.propriedade === 'terceiros' ? 'Terceiros' : 'Própria'}
+                      </Badge>
                     </TableCell>
-                  )}
+                    <TableCell className="hidden md:table-cell">
+                      {item.marca || item.modelo ? `${item.marca || ''} ${item.modelo || ''}`.trim() : '-'}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{item.ano || '-'}</TableCell>
+                    <TableCell className="text-right hidden sm:table-cell">{formatNumber(item.capacidade_kg)}</TableCell>
+                    <TableCell className="text-right hidden lg:table-cell">{formatNumber(item.peso_tara)}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {item.proprietario && (
+                        <span className="flex items-center gap-1"><User className="h-3 w-3 text-muted-foreground" />{item.proprietario}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant={item.ativa ? 'default' : 'secondary'}>{item.ativa ? 'Ativa' : 'Inativa'}</Badge>
+                    </TableCell>
+                    {canEdit && (
+                      <TableCell className="text-right sticky right-0 bg-background">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </div>
+                      </TableCell>
+                    )}
                 </TableRow>
               ))}
               {(!placas || placas.length === 0) && (
@@ -327,13 +319,10 @@ export default function Placas() {
               )}
             </TableBody>
           </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+          </div>
+          <div className="px-4">
+            <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
+          </div>
         </CardContent>
       </Card>
     </div>

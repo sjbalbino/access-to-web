@@ -295,19 +295,20 @@ export default function Silos() {
               </Dialog>
             )}
           </CardHeader>
-          <CardContent>
-            <Table>
+          <CardContent className="p-0 overflow-hidden">
+            <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Código</TableHead>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead className="text-right">Cap. (Kg)</TableHead>
-                  <TableHead className="text-right">Cap. (Sacas)</TableHead>
-                  <TableHead>Localização</TableHead>
-                  <TableHead>Status</TableHead>
-                  {canEdit && <TableHead className="text-right">Ações</TableHead>}
+                  <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+                  <TableHead className="hidden md:table-cell">Empresa</TableHead>
+                  <TableHead className="text-right hidden sm:table-cell">Cap. (Kg)</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">Cap. (Sacas)</TableHead>
+                  <TableHead className="hidden lg:table-cell">Localização</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  {canEdit && <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -315,18 +316,18 @@ export default function Silos() {
                   <TableRow key={item.id}>
                     <TableCell className="font-mono">{item.codigo || '-'}</TableCell>
                     <TableCell className="font-medium">{item.nome}</TableCell>
-                    <TableCell>{getTipoBadge(item.tipo)}</TableCell>
-                    <TableCell>{item.empresa?.razao_social || '-'}</TableCell>
-                    <TableCell className="text-right">{formatNumber(item.capacidade_kg)}</TableCell>
-                    <TableCell className="text-right">{formatNumber(item.capacidade_sacas)}</TableCell>
-                    <TableCell>{item.localizacao || '-'}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">{getTipoBadge(item.tipo)}</TableCell>
+                    <TableCell className="hidden md:table-cell">{item.empresa?.razao_social || '-'}</TableCell>
+                    <TableCell className="text-right hidden sm:table-cell">{formatNumber(item.capacidade_kg)}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{formatNumber(item.capacidade_sacas)}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{item.localizacao || '-'}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant={item.ativo ? 'default' : 'secondary'}>
                         {item.ativo ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
                     {canEdit && (
-                      <TableCell className="text-right">
+                      <TableCell className="text-right sticky right-0 bg-background">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                             <Pencil className="h-4 w-4" />
@@ -348,13 +349,10 @@ export default function Silos() {
                 )}
               </TableBody>
             </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+            </div>
+            <div className="px-4">
+              <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
+            </div>
           </CardContent>
         </Card>
       </div>

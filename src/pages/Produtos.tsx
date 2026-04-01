@@ -649,47 +649,40 @@ export default function Produtos() {
             </Dialog>
           )}
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+          <Table className="min-w-[500px]">
             <TableHeader>
               <TableRow>
-                <TableHead>Código</TableHead>
+                <TableHead className="hidden sm:table-cell">Código</TableHead>
                 <TableHead>Nome</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Grupo</TableHead>
-                <TableHead>Unidade</TableHead>
-                <TableHead className="text-right">Estoque</TableHead>
-                <TableHead className="text-right">Preço Venda</TableHead>
-                <TableHead>Status</TableHead>
-                {canEdit && <TableHead className="text-right">Ações</TableHead>}
+                <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+                <TableHead className="hidden md:table-cell">Grupo</TableHead>
+                <TableHead className="hidden md:table-cell">Unidade</TableHead>
+                <TableHead className="text-right hidden sm:table-cell">Estoque</TableHead>
+                <TableHead className="text-right hidden lg:table-cell">Preço Venda</TableHead>
+                <TableHead className="hidden sm:table-cell">Status</TableHead>
+                {canEdit && <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {dadosPaginados?.map((item: any) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-mono">{item.codigo || '-'}</TableCell>
-                  <TableCell className="font-medium">{item.nome}</TableCell>
-                  <TableCell>{getTipoBadge(item.tipo)}</TableCell>
-                  <TableCell>{item.grupo || '-'}</TableCell>
-                  <TableCell>{item.unidade_medida?.sigla || item.unidade_medida?.codigo || '-'}</TableCell>
-                  <TableCell className="text-right">{item.estoque_atual?.toLocaleString('pt-BR') || '0'}</TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(item.preco_venda)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={item.ativo ? 'default' : 'secondary'}>
-                      {item.ativo ? 'Ativo' : 'Inativo'}
-                    </Badge>
+                  <TableCell className="font-mono hidden sm:table-cell">{item.codigo || '-'}</TableCell>
+                  <TableCell className="font-medium max-w-[200px] truncate">{item.nome}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{getTipoBadge(item.tipo)}</TableCell>
+                  <TableCell className="hidden md:table-cell">{item.grupo || '-'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{item.unidade_medida?.sigla || item.unidade_medida?.codigo || '-'}</TableCell>
+                  <TableCell className="text-right hidden sm:table-cell">{item.estoque_atual?.toLocaleString('pt-BR') || '0'}</TableCell>
+                  <TableCell className="text-right hidden lg:table-cell">{formatCurrency(item.preco_venda)}</TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <Badge variant={item.ativo ? 'default' : 'secondary'}>{item.ativo ? 'Ativo' : 'Inativo'}</Badge>
                   </TableCell>
                   {canEdit && (
-                    <TableCell className="text-right">
+                    <TableCell className="text-right sticky right-0 bg-background">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}><Pencil className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                       </div>
                     </TableCell>
                   )}
@@ -697,20 +690,15 @@ export default function Produtos() {
               ))}
               {(!produtos || produtos.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 9 : 8} className="text-center text-muted-foreground py-8">
-                    Nenhum produto cadastrado
-                  </TableCell>
+                  <TableCell colSpan={canEdit ? 9 : 8} className="text-center text-muted-foreground py-8">Nenhum produto cadastrado</TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+          </div>
+          <div className="px-4">
+            <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
+          </div>
         </CardContent>
       </Card>
     </div>

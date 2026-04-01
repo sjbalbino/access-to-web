@@ -153,37 +153,37 @@ export default function LancamentosFinanceiros() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Centro/Sub</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead>Fornecedor</TableHead>
-                      <TableHead>Doc.</TableHead>
-                      {canEdit && <TableHead className="w-24">Ações</TableHead>}
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead className="hidden md:table-cell">Centro/Sub</TableHead>
+                    <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="hidden lg:table-cell">Fornecedor</TableHead>
+                    <TableHead className="hidden lg:table-cell">Doc.</TableHead>
+                    {canEdit && <TableHead className="w-24 sticky right-0 bg-background">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {dadosPaginados.map((l: any) => (
                       <TableRow key={l.id}>
                         <TableCell className="whitespace-nowrap">{fmtDate(l.data_lancamento)}</TableCell>
-                        <TableCell>{l.descricao}</TableCell>
-                        <TableCell className="text-sm">
+                        <TableCell className="max-w-[150px] truncate">{l.descricao}</TableCell>
+                        <TableCell className="text-sm hidden md:table-cell">
                           {l.sub_centros_custo ? (
                             <span>{l.sub_centros_custo.plano_contas_gerencial?.descricao} → {l.sub_centros_custo.descricao}</span>
                           ) : '-'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', l.tipo === 'receita' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
                             {l.tipo === 'receita' ? 'Receita' : 'Despesa'}
                           </span>
                         </TableCell>
                         <TableCell className="text-right font-medium">{fmtCurrency(Number(l.valor))}</TableCell>
-                        <TableCell className="text-sm">{l.clientes_fornecedores?.nome || '-'}</TableCell>
-                        <TableCell className="text-sm">{l.documento || '-'}</TableCell>
+                        <TableCell className="text-sm hidden lg:table-cell">{l.clientes_fornecedores?.nome || '-'}</TableCell>
+                        <TableCell className="text-sm hidden lg:table-cell">{l.documento || '-'}</TableCell>
                         {canEdit && (
-                          <TableCell>
+                          <TableCell className="sticky right-0 bg-background">
                             <div className="flex gap-1">
                               <Button variant="ghost" size="icon" onClick={() => handleEdit(l)}><Pencil className="h-4 w-4" /></Button>
                               <Button variant="ghost" size="icon" onClick={() => handleDelete(l.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>

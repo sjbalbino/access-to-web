@@ -259,64 +259,42 @@ export default function Transportadoras() {
               </Empty>
             ) : (
               <div className="border rounded-lg overflow-hidden">
-                <Table>
+                <div className="overflow-x-auto">
+                <Table className="min-w-[500px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nome</TableHead>
-                      <TableHead>CPF/CNPJ</TableHead>
-                      <TableHead>Cidade/UF</TableHead>
-                      <TableHead>Placa Padrão</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-24">Ações</TableHead>
+                      <TableHead className="hidden sm:table-cell">CPF/CNPJ</TableHead>
+                      <TableHead className="hidden md:table-cell">Cidade/UF</TableHead>
+                      <TableHead className="hidden md:table-cell">Placa Padrão</TableHead>
+                      <TableHead className="hidden sm:table-cell">Status</TableHead>
+                      <TableHead className="w-24 sticky right-0 bg-background">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {dadosPaginados.map((transportadora) => (
                       <TableRow key={transportadora.id}>
-                        <TableCell className="font-medium">{transportadora.nome}</TableCell>
-                        <TableCell className="font-mono text-sm">{transportadora.cpf_cnpj || "-"}</TableCell>
-                        <TableCell>
-                          {transportadora.cidade && transportadora.uf
-                            ? `${transportadora.cidade}/${transportadora.uf}`
-                            : "-"}
+                        <TableCell className="font-medium max-w-[200px] truncate">{transportadora.nome}</TableCell>
+                        <TableCell className="font-mono text-sm hidden sm:table-cell">{transportadora.cpf_cnpj || "-"}</TableCell>
+                        <TableCell className="hidden md:table-cell">{transportadora.cidade && transportadora.uf ? `${transportadora.cidade}/${transportadora.uf}` : "-"}</TableCell>
+                        <TableCell className="font-mono hidden md:table-cell">{transportadora.placa_padrao || "-"}</TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge variant={transportadora.ativa ? "default" : "secondary"}>{transportadora.ativa ? "Ativa" : "Inativa"}</Badge>
                         </TableCell>
-                        <TableCell className="font-mono">
-                          {transportadora.placa_padrao || "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={transportadora.ativa ? "default" : "secondary"}>
-                            {transportadora.ativa ? "Ativa" : "Inativa"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
+                        <TableCell className="sticky right-0 bg-background">
                           <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleOpenDialog(transportadora)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(transportadora.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(transportadora)}><Pencil className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(transportadora.id)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+                </div>
+                <div className="px-4">
+                  <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
+                </div>
               </div>
             )}
           </CardContent>

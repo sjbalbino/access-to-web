@@ -316,82 +316,66 @@ export default function Cfops() {
         </div>
 
         <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-24">Código</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead className="w-40">Natureza Op.</TableHead>
-                <TableHead className="w-32">Tipo</TableHead>
-                <TableHead className="w-20">Status</TableHead>
-                {canEdit && <TableHead className="w-24">Ações</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dadosPaginados.map((cfop) => (
-                <TableRow key={cfop.id}>
-                  <TableCell className="font-mono font-medium">
-                    {cfop.codigo}
-                  </TableCell>
-                  <TableCell className="max-w-md truncate">
-                    {cfop.descricao}
-                  </TableCell>
-                  <TableCell>{cfop.natureza_operacao || "-"}</TableCell>
-                  <TableCell>
-                    <Badge variant={getTipoBadgeVariant(cfop.tipo)}>
-                      {TIPOS_CFOP.find((t) => t.value === cfop.tipo)?.label ||
-                        cfop.tipo}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={cfop.ativo ? "default" : "secondary"}>
-                      {cfop.ativo ? "Ativo" : "Inativo"}
-                    </Badge>
-                  </TableCell>
-                  {canEdit && (
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(cfop)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedCfop(cfop);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              {filteredCfops.length === 0 && (
+          <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={canEdit ? 6 : 5}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    Nenhum CFOP encontrado
-                  </TableCell>
+                  <TableHead className="w-24">Código</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="hidden md:table-cell">Natureza Op.</TableHead>
+                  <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  {canEdit && <TableHead className="w-24 sticky right-0 bg-background">Ações</TableHead>}
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+              </TableHeader>
+              <TableBody>
+                {dadosPaginados.map((cfop) => (
+                  <TableRow key={cfop.id}>
+                    <TableCell className="font-mono font-medium">
+                      {cfop.codigo}
+                    </TableCell>
+                    <TableCell className="max-w-[200px] truncate">
+                      {cfop.descricao}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{cfop.natureza_operacao || "-"}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant={getTipoBadgeVariant(cfop.tipo)}>
+                        {TIPOS_CFOP.find((t) => t.value === cfop.tipo)?.label ||
+                          cfop.tipo}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant={cfop.ativo ? "default" : "secondary"}>
+                        {cfop.ativo ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </TableCell>
+                    {canEdit && (
+                      <TableCell className="sticky right-0 bg-background">
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(cfop)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => { setSelectedCfop(cfop); setIsDeleteDialogOpen(true); }}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+                {filteredCfops.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={canEdit ? 6 : 5} className="text-center py-8 text-muted-foreground">
+                      Nenhum CFOP encontrado
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="px-4">
+            <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
+          </div>
         </div>
 
         {/* Dialog de Criação/Edição */}

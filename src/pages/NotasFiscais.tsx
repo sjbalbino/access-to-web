@@ -239,160 +239,82 @@ export default function NotasFiscais() {
         </div>
 
         <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-20">Número</TableHead>
-                <TableHead className="w-20">Série</TableHead>
-                <TableHead>Destinatário</TableHead>
-                <TableHead>Natureza Op.</TableHead>
-                <TableHead className="w-32">Data Emissão</TableHead>
-                <TableHead className="text-right w-32">Valor Total</TableHead>
-                <TableHead className="w-28">Status</TableHead>
-                {canEdit && <TableHead className="w-40">Ações</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dadosPaginados.map((nota) => (
-                <TableRow key={nota.id}>
-                  <TableCell className="font-mono">
-                    {nota.numero || "-"}
-                  </TableCell>
-                  <TableCell className="font-mono">
-                    {nota.serie || "-"}
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium truncate max-w-[200px]">
-                        {nota.dest_nome || "-"}
-                      </div>
-                      <div className="text-xs text-muted-foreground font-mono">
-                        {formatCpfCnpj(nota.dest_cpf_cnpj) || "-"}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="truncate max-w-[150px]">
-                    {nota.natureza_operacao}
-                  </TableCell>
-                  <TableCell>
-                    {nota.data_emissao
-                      ? format(new Date(nota.data_emissao.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", {
-                          locale: ptBR,
-                        })
-                      : "-"}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(nota.total_nota)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(nota.status)}>
-                      {getStatusLabel(nota.status)}
-                    </Badge>
-                  </TableCell>
-                  {canEdit && (
+          <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-20">Número</TableHead>
+                  <TableHead className="hidden md:table-cell w-20">Série</TableHead>
+                  <TableHead>Destinatário</TableHead>
+                  <TableHead className="hidden lg:table-cell">Natureza Op.</TableHead>
+                  <TableHead className="hidden sm:table-cell">Data Emissão</TableHead>
+                  <TableHead className="text-right hidden sm:table-cell">Valor Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  {canEdit && <TableHead className="sticky right-0 bg-background">Ações</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dadosPaginados.map((nota) => (
+                  <TableRow key={nota.id}>
+                    <TableCell className="font-mono">{nota.numero || "-"}</TableCell>
+                    <TableCell className="font-mono hidden md:table-cell">{nota.serie || "-"}</TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => navigate(`/notas-fiscais/${nota.id}`)}
-                          title="Visualizar/Editar"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        
-                        {/* Download DANFE */}
-                        {(nota.status === "autorizado" || nota.status === "autorizada") && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDownload(nota, "danfe")}
-                            title="Download DANFE"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
-                        
-                        {/* Download XML */}
-                        {(nota.status === "autorizado" || nota.status === "autorizada") && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDownload(nota, "xml")}
-                            title="Download XML"
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                        )}
-                        
-                        {/* Carta de Correção */}
-                        {(nota.status === "autorizado" || nota.status === "autorizada") && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedNota(nota);
-                              setIsCartaCorrecaoDialogOpen(true);
-                            }}
-                            title="Carta de Correção"
-                          >
-                            <FileEdit className="h-4 w-4" />
-                          </Button>
-                        )}
-                        
-                        {/* Cancelar NF-e */}
-                        {(nota.status === "autorizado" || nota.status === "autorizada") && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedNota(nota);
-                              setIsCancelDialogOpen(true);
-                            }}
-                            title="Cancelar NF-e"
-                          >
-                            <XCircle className="h-4 w-4" />
-                          </Button>
-                        )}
-                        
-                        {/* Excluir Rascunho */}
-                        {nota.status === "rascunho" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedNota(nota);
-                              setIsDeleteDialogOpen(true);
-                            }}
-                            title="Excluir"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                      <div>
+                        <div className="font-medium truncate max-w-[150px]">{nota.dest_nome || "-"}</div>
+                        <div className="text-xs text-muted-foreground font-mono hidden sm:block">{formatCpfCnpj(nota.dest_cpf_cnpj) || "-"}</div>
                       </div>
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              {filteredNotas.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={canEdit ? 8 : 7}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    Nenhuma nota fiscal encontrada
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+                    <TableCell className="truncate max-w-[150px] hidden lg:table-cell">{nota.natureza_operacao}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {nota.data_emissao ? format(new Date(nota.data_emissao.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+                    </TableCell>
+                    <TableCell className="text-right font-medium hidden sm:table-cell">{formatCurrency(nota.total_nota)}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(nota.status)}>{getStatusLabel(nota.status)}</Badge>
+                    </TableCell>
+                    {canEdit && (
+                      <TableCell className="sticky right-0 bg-background">
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Visualizar/Editar">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {(nota.status === "autorizado" || nota.status === "autorizada") && (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => handleDownload(nota, "danfe")} title="Download DANFE">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => handleDownload(nota, "xml")} title="Download XML">
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => { setSelectedNota(nota); setIsCartaCorrecaoDialogOpen(true); }} title="Carta de Correção">
+                                <FileEdit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => { setSelectedNota(nota); setIsCancelDialogOpen(true); }} title="Cancelar NF-e">
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {nota.status === "rascunho" && (
+                            <Button variant="ghost" size="icon" onClick={() => { setSelectedNota(nota); setIsDeleteDialogOpen(true); }} title="Excluir">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+                {filteredNotas.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={canEdit ? 8 : 7} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal encontrada</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="px-4">
+            <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
+          </div>
         </div>
 
         {/* Dialog de Confirmação de Exclusão */}

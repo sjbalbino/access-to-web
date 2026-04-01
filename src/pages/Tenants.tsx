@@ -242,53 +242,32 @@ export default function Tenants() {
           </Empty>
         ) : (
           <>
-          <Table>
+          <div className="overflow-x-auto">
+          <Table className="min-w-[500px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Razão Social</TableHead>
-                <TableHead>Nome Fantasia</TableHead>
-                <TableHead>CNPJ</TableHead>
-                <TableHead>Cidade/UF</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="hidden sm:table-cell">Nome Fantasia</TableHead>
+                <TableHead className="hidden md:table-cell">CNPJ</TableHead>
+                <TableHead className="hidden md:table-cell">Cidade/UF</TableHead>
+                <TableHead className="hidden sm:table-cell">Status</TableHead>
+                <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {dadosPaginados?.map((tenant) => (
                 <TableRow key={tenant.id}>
-                  <TableCell className="font-medium">
-                    {tenant.razao_social}
+                  <TableCell className="font-medium max-w-[200px] truncate">{tenant.razao_social}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{tenant.nome_fantasia || "-"}</TableCell>
+                  <TableCell className="hidden md:table-cell">{tenant.cnpj || "-"}</TableCell>
+                  <TableCell className="hidden md:table-cell">{tenant.cidade && tenant.uf ? `${tenant.cidade}/${tenant.uf}` : "-"}</TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <Badge variant={tenant.ativo ? "default" : "secondary"}>{tenant.ativo ? "Ativa" : "Inativa"}</Badge>
                   </TableCell>
-                  <TableCell>{tenant.nome_fantasia || "-"}</TableCell>
-                  <TableCell>{tenant.cnpj || "-"}</TableCell>
-                  <TableCell>
-                    {tenant.cidade && tenant.uf
-                      ? `${tenant.cidade}/${tenant.uf}`
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={tenant.ativo ? "default" : "secondary"}>
-                      {tenant.ativo ? "Ativa" : "Inativa"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right sticky right-0 bg-background">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(tenant)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => {
-                          setTenantToDelete(tenant);
-                          setIsDeleteDialogOpen(true);
-                        }}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(tenant)}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => { setTenantToDelete(tenant); setIsDeleteDialogOpen(true); }}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -297,13 +276,10 @@ export default function Tenants() {
               ))}
             </TableBody>
           </Table>
-          <TablePagination
-            paginaAtual={paginaAtual}
-            totalPaginas={totalPaginas}
-            totalRegistros={totalRegistros}
-            setPaginaAtual={setPaginaAtual}
-            gerarNumerosPaginas={gerarNumerosPaginas}
-          />
+          </div>
+          <div className="px-4">
+            <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
+          </div>
           </>
         )}
       </div>
