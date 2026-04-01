@@ -176,8 +176,6 @@ export default function Tenants() {
     }
   };
 
-  if (isLoading) {
-
   const {
     dadosPaginados,
     paginaAtual,
@@ -187,6 +185,7 @@ export default function Tenants() {
     gerarNumerosPaginas,
   } = usePaginacao(filteredTenants || []);
 
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-[400px]">

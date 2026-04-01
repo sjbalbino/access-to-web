@@ -174,8 +174,6 @@ export default function NotasFiscais() {
     await focusNfe.downloadArquivo(ref, tipo, nota.id);
   };
 
-  if (isLoading) {
-
   const {
     dadosPaginados,
     paginaAtual,
@@ -185,6 +183,7 @@ export default function NotasFiscais() {
     gerarNumerosPaginas,
   } = usePaginacao(filteredNotas || []);
 
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">

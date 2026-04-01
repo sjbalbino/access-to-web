@@ -251,8 +251,6 @@ export default function Cfops() {
     }
   };
 
-  if (isLoading) {
-
   const {
     dadosPaginados,
     paginaAtual,
@@ -262,6 +260,7 @@ export default function Cfops() {
     gerarNumerosPaginas,
   } = usePaginacao(filteredCfops || []);
 
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">

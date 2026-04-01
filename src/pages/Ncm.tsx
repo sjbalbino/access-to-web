@@ -75,8 +75,6 @@ export default function Ncm() {
     item.descricao.toLowerCase().includes(searchTerm.toLowerCase())
   ) ?? [];
 
-  if (isLoading) {
-
   const {
     dadosPaginados,
     paginaAtual,
@@ -86,6 +84,7 @@ export default function Ncm() {
     gerarNumerosPaginas,
   } = usePaginacao(filteredNcm || []);
 
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-96">

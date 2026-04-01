@@ -207,8 +207,6 @@ export default function EmitentesNfe() {
     }
   };
 
-  if (isLoading) {
-
   const {
     dadosPaginados,
     paginaAtual,
@@ -218,6 +216,7 @@ export default function EmitentesNfe() {
     gerarNumerosPaginas,
   } = usePaginacao(emitentes || []);
 
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">

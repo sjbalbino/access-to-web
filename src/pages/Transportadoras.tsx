@@ -202,8 +202,6 @@ export default function Transportadoras() {
     }
   };
 
-  if (isLoading) {
-
   const {
     dadosPaginados,
     paginaAtual,
@@ -213,6 +211,7 @@ export default function Transportadoras() {
     gerarNumerosPaginas,
   } = usePaginacao(filteredTransportadoras || []);
 
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
