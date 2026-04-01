@@ -251,7 +251,7 @@ export default function Produtos() {
     totalRegistros,
     setPaginaAtual,
     gerarNumerosPaginas,
-  } = usePaginacao(filteredProdutos || []);
+  } = usePaginacao(produtos || []);
 
     return () => clearTimeout(timer);
   }, [ncmSearch]);
