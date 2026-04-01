@@ -260,7 +260,7 @@ export default function GruposProdutos() {
                     <TableRow key={grupo.id}>
                       <TableCell className="font-medium">{grupo.nome}</TableCell>
                       <TableCell className="text-muted-foreground">{grupo.descricao || '-'}</TableCell>
-                      <TableCell className="text-sm">{grupo.sub_centros_custo ? `${grupo.sub_centros_custo.plano_contas_gerencial?.descricao} → ${grupo.sub_centros_custo.descricao}` : '-'}</TableCell>
+                      <TableCell className="text-sm">{grupo.sub_centros_custo ? grupo.sub_centros_custo.descricao : '-'}</TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {grupo.insumos && <Badge variant="outline" className="text-xs">Insumos</Badge>}
