@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -31,7 +31,20 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, ArrowLeft, Save, Truck, FileText, Printer } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { ChevronDown, ChevronUp, ArrowLeft, Save, Truck, FileText, Printer, Search } from "lucide-react";
 import { gerarExtratoContrato } from "@/lib/contratoVendaPdf";
 import {
   useContratoVenda,
@@ -46,6 +59,9 @@ import { useProdutos } from "@/hooks/useProdutos";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { useGranjas } from "@/hooks/useGranjas";
+import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
+import { useCnpjLookup } from "@/hooks/useCnpjLookup";
+import { useCepLookup } from "@/hooks/useCepLookup";
 import { Spinner } from "@/components/ui/spinner";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { QuantityInput } from "@/components/ui/quantity-input";
