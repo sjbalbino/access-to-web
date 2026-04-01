@@ -5,7 +5,7 @@ import { toast } from "sonner";
 export interface ContratoVenda {
   id: string;
   granja_id: string | null;
-  numero: number;
+  numero: string;
   safra_id: string | null;
   produto_id: string | null;
   data_contrato: string;
