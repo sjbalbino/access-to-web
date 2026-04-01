@@ -187,6 +187,7 @@ export default function NotasDeposito() {
                 Nenhuma nota de depósito encontrada
               </div>
             ) : (
+              <>
               <Table>
                 <TableHeader>
                   <TableRow>
