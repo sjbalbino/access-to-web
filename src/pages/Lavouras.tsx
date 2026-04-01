@@ -48,6 +48,8 @@ import {
 import { useGranjas } from "@/hooks/useGranjas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const emptyLavoura: LavouraInput = {
   nome: "",
@@ -129,6 +131,16 @@ export default function Lavouras() {
     setFormData(newData);
   };
 
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredLavouras || []);
+
+
   return (
     <AppLayout>
       <PageHeader
@@ -182,7 +194,7 @@ export default function Lavouras() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLavouras.map((lavoura: any) => (
+                  {dadosPaginados.map((lavoura: any) => (
                     <TableRow key={lavoura.id}>
                       <TableCell className="font-medium">{lavoura.nome}</TableCell>
                       <TableCell>{lavoura.granja?.razao_social || "-"}</TableCell>
@@ -226,6 +238,13 @@ export default function Lavouras() {
                   ))}
                 </TableBody>
               </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
             </div>
           ) : (
             <div className="text-center py-12">

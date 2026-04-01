@@ -38,6 +38,8 @@ import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { formatCpf, formatPlaca, unformatDocument, validateCnpj, validateCpf } from "@/lib/formatters";
 import { toast } from "sonner";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const UFS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
@@ -201,6 +203,16 @@ export default function Transportadoras() {
   };
 
   if (isLoading) {
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredTransportadoras || []);
+
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
@@ -260,7 +272,7 @@ export default function Transportadoras() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredTransportadoras.map((transportadora) => (
+                    {dadosPaginados.map((transportadora) => (
                       <TableRow key={transportadora.id}>
                         <TableCell className="font-medium">{transportadora.nome}</TableCell>
                         <TableCell className="font-mono text-sm">{transportadora.cpf_cnpj || "-"}</TableCell>
@@ -299,6 +311,13 @@ export default function Transportadoras() {
                     ))}
                   </TableBody>
                 </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
               </div>
             )}
           </CardContent>

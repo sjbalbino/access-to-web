@@ -49,6 +49,8 @@ import { ptBR } from "date-fns/locale";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { toast } from "sonner";
 import { formatCpfCnpj } from "@/lib/formatters";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },
@@ -173,6 +175,16 @@ export default function NotasFiscais() {
   };
 
   if (isLoading) {
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredNotas || []);
+
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
@@ -242,7 +254,7 @@ export default function NotasFiscais() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredNotas.map((nota) => (
+              {dadosPaginados.map((nota) => (
                 <TableRow key={nota.id}>
                   <TableCell className="font-mono">
                     {nota.numero || "-"}
@@ -375,6 +387,13 @@ export default function NotasFiscais() {
               )}
             </TableBody>
           </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
         </div>
 
         {/* Dialog de Confirmação de Exclusão */}

@@ -47,6 +47,8 @@ import {
 import { useCulturas } from "@/hooks/useCulturas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const emptySafra: SafraInput = {
   codigo: "",
@@ -128,6 +130,16 @@ export default function Safras() {
     }
   };
 
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredSafras || []);
+
+
   return (
     <AppLayout>
       <PageHeader
@@ -181,7 +193,7 @@ export default function Safras() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredSafras.map((safra: any) => (
+                  {dadosPaginados.map((safra: any) => (
                     <TableRow key={safra.id}>
                       <TableCell className="font-medium">{safra.codigo || "-"}</TableCell>
                       <TableCell className="font-medium">{safra.nome}</TableCell>
@@ -221,6 +233,13 @@ export default function Safras() {
                   ))}
                 </TableBody>
               </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
             </div>
           ) : (
             <div className="text-center py-12">

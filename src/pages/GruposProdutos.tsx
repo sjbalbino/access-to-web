@@ -17,6 +17,8 @@ import { useGruposProdutos, useCreateGrupoProduto, useUpdateGrupoProduto, useDel
 import { useSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function GruposProdutos() {
   const { canEdit } = useAuth();
@@ -83,6 +85,16 @@ export default function GruposProdutos() {
       await deleteMutation.mutateAsync(id);
     }
   };
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredGrupos || []);
+
 
   return (
     <AppLayout>
@@ -243,7 +255,7 @@ export default function GruposProdutos() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredGrupos.map((grupo) => (
+                  {dadosPaginados.map((grupo) => (
                     <TableRow key={grupo.id}>
                       <TableCell className="font-medium">{grupo.nome}</TableCell>
                       <TableCell>{grupo.descricao || '-'}</TableCell>
@@ -284,6 +296,13 @@ export default function GruposProdutos() {
                   ))}
                 </TableBody>
               </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
             ) : (
               <div className="text-center py-12">
                 <FolderOpen className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />

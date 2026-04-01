@@ -12,6 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Ruler } from 'lucide-react';
 import { useUnidadesMedida, useCreateUnidadeMedida, useUpdateUnidadeMedida, useDeleteUnidadeMedida, UnidadeMedidaInsert } from '@/hooks/useUnidadesMedida';
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function UnidadesMedida() {
   const { canEdit } = useAuth();
@@ -70,6 +72,16 @@ export default function UnidadesMedida() {
   if (isLoading) {
     return <div className="p-8">Carregando...</div>;
   }
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(unidades || []);
+
 
   return (
     <AppLayout>
@@ -133,7 +145,7 @@ export default function UnidadesMedida() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {unidades?.map((item) => (
+              {dadosPaginados?.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-mono font-medium">{item.codigo}</TableCell>
                   <TableCell>{item.descricao}</TableCell>
@@ -166,6 +178,13 @@ export default function UnidadesMedida() {
               )}
             </TableBody>
           </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
         </CardContent>
       </Card>
     </div>

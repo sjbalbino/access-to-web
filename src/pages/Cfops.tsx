@@ -115,6 +115,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const TIPOS_CFOP = [
   { value: "entrada", label: "Entrada" },
@@ -250,6 +252,16 @@ export default function Cfops() {
   };
 
   if (isLoading) {
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredCfops || []);
+
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
@@ -317,7 +329,7 @@ export default function Cfops() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCfops.map((cfop) => (
+              {dadosPaginados.map((cfop) => (
                 <TableRow key={cfop.id}>
                   <TableCell className="font-mono font-medium">
                     {cfop.codigo}
@@ -374,6 +386,13 @@ export default function Cfops() {
               )}
             </TableBody>
           </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
         </div>
 
         {/* Dialog de Criação/Edição */}

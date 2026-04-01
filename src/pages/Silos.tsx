@@ -19,6 +19,8 @@ import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
 import { useEstoqueSilos } from '@/hooks/useEstoqueSilos';
 import { SiloEstoqueVisual } from '@/components/silos/SiloEstoqueVisual';
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function Silos() {
   const { canEdit } = useAuth();
@@ -128,6 +130,16 @@ export default function Silos() {
   if (isLoading) {
     return <div className="p-8">Carregando...</div>;
   }
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(silos || []);
+
 
   return (
     <AppLayout>
@@ -299,7 +311,7 @@ export default function Silos() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {silos?.map((item: any) => (
+                {dadosPaginados?.map((item: any) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-mono">{item.codigo || '-'}</TableCell>
                     <TableCell className="font-medium">{item.nome}</TableCell>
@@ -336,6 +348,13 @@ export default function Silos() {
                 )}
               </TableBody>
             </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
           </CardContent>
         </Card>
       </div>

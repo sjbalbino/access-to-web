@@ -16,6 +16,8 @@ import { Plus, Pencil, Trash2, Truck, Car, User } from 'lucide-react';
 import { usePlacas, useCreatePlaca, useUpdatePlaca, useDeletePlaca, PlacaInsert } from '@/hooks/usePlacas';
 import { useGranjas } from '@/hooks/useGranjas';
 import { formatPlaca } from '@/lib/formatters';
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function Placas() {
   const { canEdit } = useAuth();
@@ -120,6 +122,16 @@ export default function Placas() {
   if (isLoading) {
     return <div className="p-8">Carregando...</div>;
   }
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(placas || []);
+
 
   return (
     <AppLayout>
@@ -264,7 +276,7 @@ export default function Placas() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {placas?.map((item: any) => (
+              {dadosPaginados?.map((item: any) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-mono font-bold text-primary">{item.placa}</TableCell>
                   <TableCell>{getTipoBadge(item.tipo)}</TableCell>
@@ -315,6 +327,13 @@ export default function Placas() {
               )}
             </TableBody>
           </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
         </CardContent>
       </Card>
     </div>

@@ -45,6 +45,8 @@ import {
 } from "@/hooks/useTenants";
 import { useCepLookup } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const emptyTenant: TenantInput = {
   codigo: "",
@@ -175,6 +177,16 @@ export default function Tenants() {
   };
 
   if (isLoading) {
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredTenants || []);
+
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -242,7 +254,7 @@ export default function Tenants() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTenants?.map((tenant) => (
+              {dadosPaginados?.map((tenant) => (
                 <TableRow key={tenant.id}>
                   <TableCell className="font-medium">
                     {tenant.razao_social}
@@ -285,6 +297,13 @@ export default function Tenants() {
               ))}
             </TableBody>
           </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
         )}
       </div>
 

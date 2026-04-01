@@ -54,6 +54,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { formatCpf, formatCpfCnpj, formatTelefone, validateCpf, validateCnpj } from "@/lib/formatters";
 import { toast } from "sonner";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const TIPOS_PRODUTOR = [
   { value: "produtor", label: "Produtor" },
@@ -286,6 +288,16 @@ export default function Produtores() {
     setSelectedProdutorId(null);
   };
 
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredProdutores || []);
+
+
   return (
     <AppLayout>
       <PageHeader
@@ -370,7 +382,7 @@ export default function Produtores() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProdutores.map((produtor: any) => (
+                  {dadosPaginados.map((produtor: any) => (
                     <TableRow
                       key={produtor.id}
                       onClick={() => handleSelect(produtor)}
@@ -410,6 +422,13 @@ export default function Produtores() {
                   ))}
                 </TableBody>
               </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
             </div>
           ) : (
             <div className="text-center py-8">
