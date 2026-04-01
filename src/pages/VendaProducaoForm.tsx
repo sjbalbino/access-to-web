@@ -513,7 +513,7 @@ export default function VendaProducaoForm() {
                 <Input type="date" {...register("data_contrato")} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Nota de Venda</Label>
                 <Input {...register("nota_venda")} placeholder="Número da nota" />
@@ -522,7 +522,7 @@ export default function VendaProducaoForm() {
                 <Label>Nº Contrato Comprador</Label>
                 <Input {...register("numero_contrato_comprador")} placeholder="Contrato do comprador" />
               </div>
-              <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+              <div className="space-y-2">
                 <Label>Vendedor (Parceiro)</Label>
                 <Select value={watch("inscricao_produtor_id")} onValueChange={(v) => setValue("inscricao_produtor_id", v)}>
                   <SelectTrigger>
@@ -536,6 +536,10 @@ export default function VendaProducaoForm() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Data Prev. Recebimento</Label>
+                <Input type="date" {...register("data_recebimento")} />
               </div>
             </div>
           </CardContent>
