@@ -666,7 +666,7 @@ export default function Produtos() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {produtos?.map((item: any) => (
+              {dadosPaginados?.map((item: any) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-mono">{item.codigo || '-'}</TableCell>
                   <TableCell className="font-medium">{item.nome}</TableCell>

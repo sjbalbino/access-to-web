@@ -200,7 +200,7 @@ export default function NotasDeposito() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {notasEmitidas.map((nota) => {
+                  {dadosPaginados.map((nota) => {
                     const nfStatus = nota.nota_fiscal?.status;
                     const canDelete = !nfStatus || nfStatus === 'rascunho';
                     
