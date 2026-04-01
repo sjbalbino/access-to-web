@@ -76,6 +76,8 @@ interface FormData {
   local_entrega_cidade: string;
   local_entrega_uf: string;
   local_entrega_cep: string;
+  local_entrega_codigo_ibge: string;
+  data_recebimento: string;
   corretor: string;
   percentual_comissao: number | null;
   valor_comissao: number | null;
@@ -135,6 +137,8 @@ export default function VendaProducaoForm() {
       local_entrega_cidade: "",
       local_entrega_uf: "",
       local_entrega_cep: "",
+      local_entrega_codigo_ibge: "",
+      data_recebimento: "",
       corretor: "",
       percentual_comissao: null,
       valor_comissao: null,
@@ -239,6 +243,8 @@ export default function VendaProducaoForm() {
         local_entrega_cidade: contrato.local_entrega_cidade || "",
         local_entrega_uf: contrato.local_entrega_uf || "",
         local_entrega_cep: contrato.local_entrega_cep || "",
+        local_entrega_codigo_ibge: (contrato as any).local_entrega_codigo_ibge || "",
+        data_recebimento: contrato.data_recebimento || "",
         corretor: contrato.corretor || "",
         percentual_comissao: contrato.percentual_comissao,
         valor_comissao: contrato.valor_comissao,
@@ -297,6 +303,8 @@ export default function VendaProducaoForm() {
       local_entrega_cidade: data.local_entrega_cidade || null,
       local_entrega_uf: data.local_entrega_uf || null,
       local_entrega_cep: data.local_entrega_cep || null,
+      local_entrega_codigo_ibge: data.local_entrega_codigo_ibge || null,
+      data_recebimento: data.data_recebimento || null,
       corretor: data.corretor || null,
       percentual_comissao: data.percentual_comissao,
       valor_comissao: data.valor_comissao,
@@ -605,6 +613,10 @@ export default function VendaProducaoForm() {
                   <Input {...register("local_entrega_cep")} />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Cód. IBGE</Label>
+                <Input {...register("local_entrega_codigo_ibge")} placeholder="Código IBGE" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -739,7 +751,7 @@ export default function VendaProducaoForm() {
             <CardTitle>Frete e Observações</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Modalidade Frete</Label>
                 <Select 
@@ -756,6 +768,10 @@ export default function VendaProducaoForm() {
                     <SelectItem value="9">9 - Sem Frete</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Data Prevista Recebimento</Label>
+                <Input type="date" {...register("data_recebimento")} />
               </div>
             </div>
             <div className="space-y-2">

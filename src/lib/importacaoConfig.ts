@@ -472,7 +472,14 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
       { accessName: 'nome_fantasia', dbName: 'nome_fantasia', transform: toStr },
-      { accessName: 'tipo', dbName: 'tipo', transform: toStr },
+      { accessName: 'tipo', dbName: 'tipo', transform: (v: any) => {
+        if (v === null || v === undefined || v === '') return 'ambos';
+        const s = String(v).trim().toUpperCase();
+        if (s === 'C' || s === 'CLIENTE') return 'cliente';
+        if (s === 'F' || s === 'FORNECEDOR') return 'fornecedor';
+        if (s === 'A' || s === 'AMBOS') return 'ambos';
+        return 'ambos';
+      } },
       { accessName: 'tipo_pessoa', dbName: 'tipo_pessoa', transform: toStr },
       { accessName: 'cpf_cnpj', dbName: 'cpf_cnpj', transform: toStr },
       { accessName: 'inscricao_estadual', dbName: 'inscricao_estadual', transform: toStr },
@@ -573,7 +580,13 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'fechada', dbName: 'fechada', transform: toBool },
       { accessName: 'exportacao', dbName: 'exportacao', transform: toBool },
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
-      { accessName: 'tipo_venda', dbName: 'tipo_venda', transform: toStr },
+      { accessName: 'tipo_venda', dbName: 'tipo_venda', transform: (v: any) => {
+        if (v === null || v === undefined || v === '') return 'industria';
+        const s = String(v).trim();
+        if (s === '1') return 'industria';
+        if (s === '2') return 'semente';
+        return s.toLowerCase();
+      } },
       { accessName: 'corretor', dbName: 'corretor', transform: toStr },
       { accessName: 'numero_contrato_comprador', dbName: 'numero_contrato_comprador', transform: toStr },
       { accessName: 'nota_venda', dbName: 'nota_venda', transform: toStr },
@@ -593,6 +606,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'local_entrega_cidade', dbName: 'local_entrega_cidade', transform: toStr },
       { accessName: 'local_entrega_uf', dbName: 'local_entrega_uf', transform: toStr },
       { accessName: 'local_entrega_cep', dbName: 'local_entrega_cep', transform: toStr },
+      { accessName: 'local_entrega_codigo_ibge', dbName: 'local_entrega_codigo_ibge', transform: toStr },
     ],
     references: [
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
