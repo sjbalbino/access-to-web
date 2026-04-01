@@ -230,6 +230,7 @@ export default function LocaisEntrega() {
                 <Spinner className="h-8 w-8" />
               </div>
             ) : (
+              <>
               <Table>
                 <TableHeader>
                   <TableRow>
