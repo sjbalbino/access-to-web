@@ -41,6 +41,8 @@ import {
 } from "@/hooks/useCulturas";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const emptyCultura: CulturaInput = {
   codigo: "",
@@ -106,6 +108,16 @@ export default function Culturas() {
     }
   };
 
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredCulturas || []);
+
+
   return (
     <AppLayout>
       <PageHeader
@@ -160,7 +172,7 @@ export default function Culturas() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCulturas.map((cultura) => (
+                  {dadosPaginados.map((cultura) => (
                     <TableRow key={cultura.id}>
                       <TableCell className="font-medium">{cultura.codigo || "-"}</TableCell>
                       <TableCell className="font-medium">{cultura.nome}</TableCell>
@@ -215,6 +227,13 @@ export default function Culturas() {
                   ))}
                 </TableBody>
               </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
             </div>
           ) : (
             <div className="text-center py-12">

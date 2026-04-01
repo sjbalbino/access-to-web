@@ -17,6 +17,8 @@ import { useSubCentrosCusto, useCreateSubCentroCusto, useUpdateSubCentroCusto, u
 import { useDreContas } from '@/hooks/useDreContas';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function PlanoContasGerencial() {
   const { canEdit } = useAuth();
@@ -98,6 +100,16 @@ export default function PlanoContasGerencial() {
 
   const toggleExpand = (id: string) => setExpandedCentros(prev => ({ ...prev, [id]: !prev[id] }));
 
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredContas || []);
+
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -146,7 +158,7 @@ export default function PlanoContasGerencial() {
               <div className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
             ) : filteredContas && filteredContas.length > 0 ? (
               <div className="space-y-1">
-                {filteredContas.map(conta => {
+                {dadosPaginados.map(conta => {
                   const subs = getSubCentros(conta.id);
                   const isExpanded = expandedCentros[conta.id];
                   return (
@@ -202,6 +214,13 @@ export default function PlanoContasGerencial() {
                               ))}
                             </TableBody>
                           </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
                         </div>
                       )}
                       {isExpanded && subs.length === 0 && (

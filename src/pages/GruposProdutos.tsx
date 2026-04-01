@@ -17,6 +17,8 @@ import { useGruposProdutos, useCreateGrupoProduto, useUpdateGrupoProduto, useDel
 import { useSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function GruposProdutos() {
   const { canEdit } = useAuth();
@@ -83,6 +85,16 @@ export default function GruposProdutos() {
       await deleteMutation.mutateAsync(id);
     }
   };
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredGrupos || []);
+
 
   return (
     <AppLayout>
@@ -231,6 +243,7 @@ export default function GruposProdutos() {
                 ))}
               </div>
             ) : filteredGrupos && filteredGrupos.length > 0 ? (
+              <>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -243,30 +256,23 @@ export default function GruposProdutos() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredGrupos.map((grupo) => (
+                  {dadosPaginados.map((grupo) => (
                     <TableRow key={grupo.id}>
                       <TableCell className="font-medium">{grupo.nome}</TableCell>
-                      <TableCell>{grupo.descricao || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground">{grupo.descricao || '-'}</TableCell>
+                      <TableCell className="text-sm">{grupo.sub_centros_custo ? `${grupo.sub_centros_custo.plano_contas_gerencial?.descricao} → ${grupo.sub_centros_custo.descricao}` : '-'}</TableCell>
                       <TableCell>
-                        {grupo.sub_centros_custo
-                          ? grupo.sub_centros_custo.descricao
-                          : '-'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {grupo.maquinas_implementos && <Badge variant="outline" className="text-xs">Máquinas</Badge>}
-                          {grupo.bens_benfeitorias && <Badge variant="outline" className="text-xs">Bens</Badge>}
+                        <div className="flex gap-1 flex-wrap">
                           {grupo.insumos && <Badge variant="outline" className="text-xs">Insumos</Badge>}
                           {grupo.venda_producao && <Badge variant="outline" className="text-xs">Venda</Badge>}
-                          {!grupo.maquinas_implementos && !grupo.bens_benfeitorias && !grupo.insumos && !grupo.venda_producao && '-'}
+                          {grupo.maquinas_implementos && <Badge variant="outline" className="text-xs">Máquinas</Badge>}
+                          {grupo.bens_benfeitorias && <Badge variant="outline" className="text-xs">Bens</Badge>}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          grupo.ativo ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
-                        }`}>
+                        <Badge variant={grupo.ativo ? 'default' : 'secondary'}>
                           {grupo.ativo ? 'Ativo' : 'Inativo'}
-                        </span>
+                        </Badge>
                       </TableCell>
                       {canEdit && (
                         <TableCell>
@@ -284,6 +290,14 @@ export default function GruposProdutos() {
                   ))}
                 </TableBody>
               </Table>
+              <TablePagination
+                paginaAtual={paginaAtual}
+                totalPaginas={totalPaginas}
+                totalRegistros={totalRegistros}
+                setPaginaAtual={setPaginaAtual}
+                gerarNumerosPaginas={gerarNumerosPaginas}
+              />
+              </>
             ) : (
               <div className="text-center py-12">
                 <FolderOpen className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />

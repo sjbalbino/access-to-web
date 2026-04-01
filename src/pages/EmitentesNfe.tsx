@@ -46,6 +46,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const AMBIENTES = [
   { value: 1, label: "Produção" },
@@ -206,6 +208,16 @@ export default function EmitentesNfe() {
   };
 
   if (isLoading) {
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(emitentes || []);
+
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
@@ -260,7 +272,7 @@ export default function EmitentesNfe() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {emitentes.map((emitente) => (
+              {dadosPaginados.map((emitente) => (
                 <TableRow key={emitente.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
@@ -331,6 +343,13 @@ export default function EmitentesNfe() {
               )}
             </TableBody>
           </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
         </div>
 
         {/* Dialog de Criação/Edição */}

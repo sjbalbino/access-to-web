@@ -1506,6 +1506,27 @@ export type Database = {
           },
         ]
       }
+      ibge_municipios: {
+        Row: {
+          codigo_ibge: string
+          id: string
+          nome: string
+          uf: string
+        }
+        Insert: {
+          codigo_ibge: string
+          id?: string
+          nome: string
+          uf: string
+        }
+        Update: {
+          codigo_ibge?: string
+          id?: string
+          nome?: string
+          uf?: string
+        }
+        Relationships: []
+      }
       inscricoes_produtor: {
         Row: {
           ativa: boolean | null

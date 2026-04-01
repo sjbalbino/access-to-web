@@ -13,6 +13,8 @@ import { Plus, Pencil, Trash2, Search, FileText } from 'lucide-react';
 import { useNcm, useCreateNcm, useUpdateNcm, useDeleteNcm, Ncm as NcmType, NcmInput } from '@/hooks/useNcm';
 import { useAuth } from '@/contexts/AuthContext';
 import { Spinner } from '@/components/ui/spinner';
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function Ncm() {
   const { canEdit } = useAuth();
@@ -74,6 +76,16 @@ export default function Ncm() {
   ) ?? [];
 
   if (isLoading) {
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredNcm || []);
+
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-96">
@@ -214,6 +226,13 @@ export default function Ncm() {
               )}
             </TableBody>
           </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
         </CardContent>
       </Card>
     </AppLayout>

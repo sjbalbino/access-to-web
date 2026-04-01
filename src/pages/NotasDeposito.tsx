@@ -26,6 +26,8 @@ import { useProdutos } from "@/hooks/useProdutos";
 import { useNotasDepositoEmitidas, useDeleteNotaDepositoEmitida } from "@/hooks/useNotasDepositoEmitidas";
 import { formatNumber } from "@/lib/formatters";
 import { NotaDepositoFormDialog } from "@/components/deposito/NotaDepositoFormDialog";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function NotasDeposito() {
   const navigate = useNavigate();
@@ -83,6 +85,16 @@ export default function NotasDeposito() {
 
   // Produtos do tipo cereais para filtro
   const produtosCereais = produtos.filter(p => p.tipo === 'cereal' || p.grupo === 'Cereais');
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(notasEmitidas || []);
+
 
   return (
     <AppLayout>
@@ -175,6 +187,7 @@ export default function NotasDeposito() {
                 Nenhuma nota de depósito encontrada
               </div>
             ) : (
+              <>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -188,7 +201,7 @@ export default function NotasDeposito() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {notasEmitidas.map((nota) => {
+                  {dadosPaginados.map((nota) => {
                     const nfStatus = nota.nota_fiscal?.status;
                     const canDelete = !nfStatus || nfStatus === 'rascunho';
                     
@@ -249,6 +262,14 @@ export default function NotasDeposito() {
                   })}
                 </TableBody>
               </Table>
+              <TablePagination
+                paginaAtual={paginaAtual}
+                totalPaginas={totalPaginas}
+                totalRegistros={totalRegistros}
+                setPaginaAtual={setPaginaAtual}
+                gerarNumerosPaginas={gerarNumerosPaginas}
+              />
+              </>
             )}
           </CardContent>
         </Card>

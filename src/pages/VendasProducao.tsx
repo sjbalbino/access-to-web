@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,6 +63,15 @@ export default function VendasProducao() {
   const totalVendido = contratos?.reduce((acc, c) => acc + (Number(c.quantidade_kg) || 0), 0) || 0;
   const totalCarregado = contratos?.reduce((acc, c) => acc + (c.total_carregado_kg || 0), 0) || 0;
   const totalSaldo = contratos?.reduce((acc, c) => acc + (c.saldo_kg || 0), 0) || 0;
+
+  const {
+    dadosPaginados: contratosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(contratos || []);
 
   const handleExcluir = async () => {
     if (contratoExcluir) {
@@ -199,7 +210,7 @@ export default function VendasProducao() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      contratos?.map((contrato) => (
+                      contratosPaginados?.map((contrato) => (
                         <TableRow key={contrato.id}>
                           <TableCell className="font-medium">{contrato.numero}</TableCell>
                           <TableCell>{contrato.comprador?.nome || "-"}</TableCell>
@@ -265,6 +276,13 @@ export default function VendasProducao() {
                 </Table>
               </div>
             )}
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
           </CardContent>
         </Card>
 

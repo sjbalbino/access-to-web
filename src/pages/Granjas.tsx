@@ -42,6 +42,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const emptyGranja: GranjaInput = {
   razao_social: "",
@@ -167,6 +169,16 @@ export default function Granjas() {
     }
   };
 
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredGranjas || []);
+
+
   return (
     <AppLayout>
       <PageHeader
@@ -220,7 +232,7 @@ export default function Granjas() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredGranjas.map((granja) => (
+                  {dadosPaginados.map((granja) => (
                     <TableRow key={granja.id}>
                       <TableCell>
                         <div>
@@ -277,6 +289,13 @@ export default function Granjas() {
                   ))}
                 </TableBody>
               </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
             </div>
           ) : (
             <div className="text-center py-12">

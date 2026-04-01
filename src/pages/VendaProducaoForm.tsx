@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -31,7 +31,20 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp, ArrowLeft, Save, Truck, FileText, Printer } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { ChevronDown, ChevronUp, ArrowLeft, Save, Truck, FileText, Printer, Search } from "lucide-react";
 import { gerarExtratoContrato } from "@/lib/contratoVendaPdf";
 import {
   useContratoVenda,
@@ -46,6 +59,9 @@ import { useProdutos } from "@/hooks/useProdutos";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { useGranjas } from "@/hooks/useGranjas";
+import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
+import { useCnpjLookup } from "@/hooks/useCnpjLookup";
+import { useCepLookup } from "@/hooks/useCepLookup";
 import { Spinner } from "@/components/ui/spinner";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { QuantityInput } from "@/components/ui/quantity-input";
@@ -99,6 +115,7 @@ export default function VendaProducaoForm() {
   const [corretorOpen, setCorretorOpen] = useState(false);
   const [loadedContractId, setLoadedContractId] = useState<string | null>(null);
   const [formResetDone, setFormResetDone] = useState(!isEditing);
+  const [cidadeOpen, setCidadeOpen] = useState(false);
 
   const { data: contrato, isLoading: loadingContrato } = useContratoVenda(id);
   const { data: remessas } = useRemessasVenda(id);
@@ -108,6 +125,9 @@ export default function VendaProducaoForm() {
   const { data: clientes } = useClientesFornecedores();
   const { data: inscricoes } = useAllInscricoes();
   const { data: granjas } = useGranjas();
+
+  const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
+  const { isLoading: cepLoading, fetchCep } = useCepLookup();
 
   const createContrato = useCreateContratoVenda();
   const updateContrato = useUpdateContratoVenda();
@@ -180,6 +200,41 @@ export default function VendaProducaoForm() {
   const valorTotal = watch("valor_total");
   const vendaEntregaFutura = watch("venda_entrega_futura");
   const aFixar = watch("a_fixar");
+  const localEntregaUf = watch("local_entrega_uf");
+
+  // IBGE municipalities filtered by UF
+  const { data: municipios } = useIbgeMunicipios(localEntregaUf);
+
+  // CNPJ lookup for local de entrega
+  const handleCnpjLocalEntregaBlur = async () => {
+    const cnpj = watch("local_entrega_cnpj_cpf");
+    if (!cnpj) return;
+    const data = await fetchCnpj(cnpj);
+    if (data) {
+      setValue("local_entrega_nome", data.razao_social || "");
+      setValue("local_entrega_ie", "");
+      setValue("local_entrega_logradouro", data.logradouro || "");
+      setValue("local_entrega_numero", data.numero || "");
+      setValue("local_entrega_complemento", data.complemento || "");
+      setValue("local_entrega_bairro", data.bairro || "");
+      setValue("local_entrega_cidade", data.cidade || "");
+      setValue("local_entrega_uf", data.uf || "");
+      setValue("local_entrega_cep", data.cep || "");
+    }
+  };
+
+  // CEP lookup for local de entrega
+  const handleCepLocalEntregaBlur = async () => {
+    const cep = watch("local_entrega_cep");
+    if (!cep) return;
+    const data = await fetchCep(cep);
+    if (data) {
+      setValue("local_entrega_logradouro", data.logradouro || "");
+      setValue("local_entrega_bairro", data.bairro || "");
+      setValue("local_entrega_cidade", data.localidade || "");
+      setValue("local_entrega_uf", data.uf || "");
+    }
+  };
 
   // Calculate if contract is closed (saldo <= 0)
   const isContratoFechado = contrato && (contrato.saldo_kg || 0) <= 0;
@@ -458,7 +513,7 @@ export default function VendaProducaoForm() {
                 <Input type="date" {...register("data_contrato")} />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Nota de Venda</Label>
                 <Input {...register("nota_venda")} placeholder="Número da nota" />
@@ -467,7 +522,7 @@ export default function VendaProducaoForm() {
                 <Label>Nº Contrato Comprador</Label>
                 <Input {...register("numero_contrato_comprador")} placeholder="Contrato do comprador" />
               </div>
-              <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+              <div className="space-y-2">
                 <Label>Vendedor (Parceiro)</Label>
                 <Select value={watch("inscricao_produtor_id")} onValueChange={(v) => setValue("inscricao_produtor_id", v)}>
                   <SelectTrigger>
@@ -481,6 +536,10 @@ export default function VendaProducaoForm() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Data Prev. Recebimento</Label>
+                <Input type="date" {...register("data_recebimento")} />
               </div>
             </div>
           </CardContent>
@@ -567,13 +626,17 @@ export default function VendaProducaoForm() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Nome / Razão Social</Label>
-                <Input {...register("local_entrega_nome")} />
-              </div>
               <div className="space-y-2">
                 <Label>CNPJ/CPF</Label>
-                <Input {...register("local_entrega_cnpj_cpf")} />
+                <Input
+                  {...register("local_entrega_cnpj_cpf")}
+                  onBlur={handleCnpjLocalEntregaBlur}
+                  placeholder={cnpjLoading ? "Buscando..." : ""}
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-1 lg:col-span-2">
+                <Label>Nome / Razão Social</Label>
+                <Input {...register("local_entrega_nome")} />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -581,16 +644,24 @@ export default function VendaProducaoForm() {
                 <Label>IE</Label>
                 <Input {...register("local_entrega_ie")} />
               </div>
-              <div className="space-y-2 sm:col-span-1 lg:col-span-2">
+              <div className="space-y-2">
+                <Label>CEP</Label>
+                <Input
+                  {...register("local_entrega_cep")}
+                  onBlur={handleCepLocalEntregaBlur}
+                  placeholder={cepLoading ? "Buscando..." : ""}
+                />
+              </div>
+              <div className="space-y-2 lg:col-span-2">
                 <Label>Logradouro</Label>
                 <Input {...register("local_entrega_logradouro")} />
               </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Número</Label>
                 <Input {...register("local_entrega_numero")} />
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Complemento</Label>
                 <Input {...register("local_entrega_complemento")} />
@@ -600,22 +671,59 @@ export default function VendaProducaoForm() {
                 <Input {...register("local_entrega_bairro")} />
               </div>
               <div className="space-y-2">
-                <Label>Cidade</Label>
-                <Input {...register("local_entrega_cidade")} />
+                <Label>UF</Label>
+                <Select value={watch("local_entrega_uf")} onValueChange={(v) => setValue("local_entrega_uf", v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="UF" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map(uf => (
+                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-2">
-                  <Label>UF</Label>
-                  <Input {...register("local_entrega_uf")} maxLength={2} />
-                </div>
-                <div className="space-y-2">
-                  <Label>CEP</Label>
-                  <Input {...register("local_entrega_cep")} />
-                </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2 lg:col-span-2">
+                <Label>Cidade</Label>
+                <Popover open={cidadeOpen} onOpenChange={setCidadeOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {watch("local_entrega_cidade") || "Selecione a cidade..."}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar cidade..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          {!localEntregaUf ? "Selecione a UF primeiro" : "Nenhuma cidade encontrada"}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {municipios?.map((m) => (
+                            <CommandItem
+                              key={m.id}
+                              value={`${m.nome} - ${m.codigo_ibge}`}
+                              onSelect={() => {
+                                setValue("local_entrega_cidade", m.nome);
+                                setValue("local_entrega_codigo_ibge", m.codigo_ibge);
+                                setCidadeOpen(false);
+                              }}
+                            >
+                              {m.nome} ({m.codigo_ibge})
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label>Cód. IBGE</Label>
-                <Input {...register("local_entrega_codigo_ibge")} placeholder="Código IBGE" />
+                <Input {...register("local_entrega_codigo_ibge")} placeholder="Código IBGE" readOnly className="bg-muted" />
               </div>
             </div>
           </CardContent>
@@ -751,7 +859,7 @@ export default function VendaProducaoForm() {
             <CardTitle>Frete e Observações</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Modalidade Frete</Label>
                 <Select 
@@ -768,10 +876,6 @@ export default function VendaProducaoForm() {
                     <SelectItem value="9">9 - Sem Frete</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Data Prevista Recebimento</Label>
-                <Input type="date" {...register("data_recebimento")} />
               </div>
             </div>
             <div className="space-y-2">

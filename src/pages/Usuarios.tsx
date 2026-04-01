@@ -34,6 +34,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Users, Shield, ShieldCheck, Eye, UserPlus, Search, Building2, Briefcase } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenants } from "@/hooks/useTenants";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 type AppRole = "admin" | "operador" | "visualizador" | "gerente";
 
@@ -308,6 +310,16 @@ export default function Usuarios() {
     return matchesSearch && user.tenant_id === profile?.tenant_id;
   });
 
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredUsers || []);
+
+
   return (
     <AppLayout>
       <PageHeader
@@ -452,6 +464,13 @@ export default function Usuarios() {
             )}
           </TableBody>
         </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
       </div>
 
       {/* Create User Dialog */}

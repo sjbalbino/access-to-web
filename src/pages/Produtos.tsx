@@ -55,6 +55,8 @@ const CST_IPI = [
 // CST IBS/CBS e IS (Reforma Tributária) - Importados do módulo centralizado
 import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
 import { CLASSIFICACAO_TRIBUTARIA, getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function Produtos() {
   const { canEdit } = useAuth();
@@ -242,6 +244,15 @@ export default function Produtos() {
         searchNcm(ncmSearch);
       }
     }, 300);
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(produtos || []);
+
     return () => clearTimeout(timer);
   }, [ncmSearch]);
 
@@ -654,7 +665,7 @@ export default function Produtos() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {produtos?.map((item: any) => (
+              {dadosPaginados?.map((item: any) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-mono">{item.codigo || '-'}</TableCell>
                   <TableCell className="font-medium">{item.nome}</TableCell>
@@ -693,6 +704,13 @@ export default function Produtos() {
               )}
             </TableBody>
           </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
         </CardContent>
       </Card>
     </div>
