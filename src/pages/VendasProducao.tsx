@@ -64,6 +64,15 @@ export default function VendasProducao() {
   const totalCarregado = contratos?.reduce((acc, c) => acc + (c.total_carregado_kg || 0), 0) || 0;
   const totalSaldo = contratos?.reduce((acc, c) => acc + (c.saldo_kg || 0), 0) || 0;
 
+  const {
+    dadosPaginados: contratosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(contratos || []);
+
   const handleExcluir = async () => {
     if (contratoExcluir) {
       await deleteContrato.mutateAsync(contratoExcluir);
