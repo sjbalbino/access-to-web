@@ -626,13 +626,17 @@ export default function VendaProducaoForm() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Nome / Razão Social</Label>
-                <Input {...register("local_entrega_nome")} />
-              </div>
               <div className="space-y-2">
                 <Label>CNPJ/CPF</Label>
-                <Input {...register("local_entrega_cnpj_cpf")} />
+                <Input
+                  {...register("local_entrega_cnpj_cpf")}
+                  onBlur={handleCnpjLocalEntregaBlur}
+                  placeholder={cnpjLoading ? "Buscando..." : ""}
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-1 lg:col-span-2">
+                <Label>Nome / Razão Social</Label>
+                <Input {...register("local_entrega_nome")} />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -640,16 +644,24 @@ export default function VendaProducaoForm() {
                 <Label>IE</Label>
                 <Input {...register("local_entrega_ie")} />
               </div>
-              <div className="space-y-2 sm:col-span-1 lg:col-span-2">
+              <div className="space-y-2">
+                <Label>CEP</Label>
+                <Input
+                  {...register("local_entrega_cep")}
+                  onBlur={handleCepLocalEntregaBlur}
+                  placeholder={cepLoading ? "Buscando..." : ""}
+                />
+              </div>
+              <div className="space-y-2 lg:col-span-2">
                 <Label>Logradouro</Label>
                 <Input {...register("local_entrega_logradouro")} />
               </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Número</Label>
                 <Input {...register("local_entrega_numero")} />
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Complemento</Label>
                 <Input {...register("local_entrega_complemento")} />
@@ -659,22 +671,59 @@ export default function VendaProducaoForm() {
                 <Input {...register("local_entrega_bairro")} />
               </div>
               <div className="space-y-2">
-                <Label>Cidade</Label>
-                <Input {...register("local_entrega_cidade")} />
+                <Label>UF</Label>
+                <Select value={watch("local_entrega_uf")} onValueChange={(v) => setValue("local_entrega_uf", v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="UF" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map(uf => (
+                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-2">
-                  <Label>UF</Label>
-                  <Input {...register("local_entrega_uf")} maxLength={2} />
-                </div>
-                <div className="space-y-2">
-                  <Label>CEP</Label>
-                  <Input {...register("local_entrega_cep")} />
-                </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-2 lg:col-span-2">
+                <Label>Cidade</Label>
+                <Popover open={cidadeOpen} onOpenChange={setCidadeOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {watch("local_entrega_cidade") || "Selecione a cidade..."}
+                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar cidade..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          {!localEntregaUf ? "Selecione a UF primeiro" : "Nenhuma cidade encontrada"}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {municipios?.map((m) => (
+                            <CommandItem
+                              key={m.id}
+                              value={`${m.nome} - ${m.codigo_ibge}`}
+                              onSelect={() => {
+                                setValue("local_entrega_cidade", m.nome);
+                                setValue("local_entrega_codigo_ibge", m.codigo_ibge);
+                                setCidadeOpen(false);
+                              }}
+                            >
+                              {m.nome} ({m.codigo_ibge})
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label>Cód. IBGE</Label>
-                <Input {...register("local_entrega_codigo_ibge")} placeholder="Código IBGE" />
+                <Input {...register("local_entrega_codigo_ibge")} placeholder="Código IBGE" readOnly className="bg-muted" />
               </div>
             </div>
           </CardContent>
