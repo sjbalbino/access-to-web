@@ -103,14 +103,14 @@ export default function Ncm() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por código ou descrição..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-80"
+                className="w-full sm:w-80"
               />
             </div>
             {canEdit && (
