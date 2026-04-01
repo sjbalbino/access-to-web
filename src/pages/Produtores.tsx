@@ -374,11 +374,11 @@ export default function Produtores() {
               <Table>
                 <TableHeader className="sticky top-0 bg-background z-10">
                   <TableRow>
-                    <TableHead className="w-24">Tipo</TableHead>
+                    <TableHead className="hidden sm:table-cell w-24">Tipo</TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead>CPF/CNPJ</TableHead>
-                    <TableHead>Empresa</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden sm:table-cell">CPF/CNPJ</TableHead>
+                    <TableHead className="hidden md:table-cell">Empresa</TableHead>
+                    <TableHead className="hidden sm:table-cell">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
