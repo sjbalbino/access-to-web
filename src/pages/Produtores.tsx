@@ -392,29 +392,16 @@ export default function Produtores() {
                           : "hover:bg-muted/50"
                       }`}
                     >
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            produtor.tipo_produtor === "socio"
-                              ? "bg-secondary text-secondary-foreground"
-                              : "bg-accent/10 text-accent"
-                          }`}
-                        >
-                          {TIPOS_PRODUTOR.find((t) => t.value === produtor.tipo_produtor)?.label ||
-                            "Produtor"}
+                      <TableCell className="hidden sm:table-cell">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${produtor.tipo_produtor === "socio" ? "bg-secondary text-secondary-foreground" : "bg-accent/10 text-accent"}`}>
+                          {TIPOS_PRODUTOR.find((t) => t.value === produtor.tipo_produtor)?.label || "Produtor"}
                         </span>
                       </TableCell>
                       <TableCell className="font-medium">{produtor.nome}</TableCell>
-                      <TableCell className="font-mono">{formatCpfCnpj(produtor.cpf_cnpj) || "-"}</TableCell>
-                      <TableCell>{produtor.granja?.razao_social || "-"}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            produtor.ativo
-                              ? "bg-success/10 text-success"
-                              : "bg-destructive/10 text-destructive"
-                          }`}
-                        >
+                      <TableCell className="font-mono hidden sm:table-cell">{formatCpfCnpj(produtor.cpf_cnpj) || "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell">{produtor.granja?.razao_social || "-"}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${produtor.ativo ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
                           {produtor.ativo ? "Ativo" : "Inativo"}
                         </span>
                       </TableCell>
