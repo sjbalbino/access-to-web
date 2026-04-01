@@ -472,7 +472,14 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
       { accessName: 'nome_fantasia', dbName: 'nome_fantasia', transform: toStr },
-      { accessName: 'tipo', dbName: 'tipo', transform: toStr },
+      { accessName: 'tipo', dbName: 'tipo', transform: (v: any) => {
+        if (v === null || v === undefined || v === '') return 'ambos';
+        const s = String(v).trim().toUpperCase();
+        if (s === 'C' || s === 'CLIENTE') return 'cliente';
+        if (s === 'F' || s === 'FORNECEDOR') return 'fornecedor';
+        if (s === 'A' || s === 'AMBOS') return 'ambos';
+        return 'ambos';
+      } },
       { accessName: 'tipo_pessoa', dbName: 'tipo_pessoa', transform: toStr },
       { accessName: 'cpf_cnpj', dbName: 'cpf_cnpj', transform: toStr },
       { accessName: 'inscricao_estadual', dbName: 'inscricao_estadual', transform: toStr },
