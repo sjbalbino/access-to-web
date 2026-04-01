@@ -115,6 +115,7 @@ export default function VendaProducaoForm() {
   const [corretorOpen, setCorretorOpen] = useState(false);
   const [loadedContractId, setLoadedContractId] = useState<string | null>(null);
   const [formResetDone, setFormResetDone] = useState(!isEditing);
+  const [cidadeOpen, setCidadeOpen] = useState(false);
 
   const { data: contrato, isLoading: loadingContrato } = useContratoVenda(id);
   const { data: remessas } = useRemessasVenda(id);
@@ -124,6 +125,9 @@ export default function VendaProducaoForm() {
   const { data: clientes } = useClientesFornecedores();
   const { data: inscricoes } = useAllInscricoes();
   const { data: granjas } = useGranjas();
+
+  const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
+  const { isLoading: cepLoading, fetchCep } = useCepLookup();
 
   const createContrato = useCreateContratoVenda();
   const updateContrato = useUpdateContratoVenda();
