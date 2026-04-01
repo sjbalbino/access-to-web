@@ -262,13 +262,14 @@ export default function NotasDeposito() {
                   })}
                 </TableBody>
               </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+              <TablePagination
+                paginaAtual={paginaAtual}
+                totalPaginas={totalPaginas}
+                totalRegistros={totalRegistros}
+                setPaginaAtual={setPaginaAtual}
+                gerarNumerosPaginas={gerarNumerosPaginas}
+              />
+              </>
             )}
           </CardContent>
         </Card>

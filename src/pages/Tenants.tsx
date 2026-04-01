@@ -242,6 +242,7 @@ export default function Tenants() {
             </EmptyHeader>
           </Empty>
         ) : (
+          <>
           <Table>
             <TableHeader>
               <TableRow>
