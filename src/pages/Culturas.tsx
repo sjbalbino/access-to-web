@@ -161,14 +161,14 @@ export default function Culturas() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                   <TableRow>
                     <TableHead>Código</TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Peso Saco Indústria</TableHead>
-                    <TableHead>Peso Saco Semente</TableHead>
-                    <TableHead>Informar PH</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead className="hidden sm:table-cell">Peso Indústria</TableHead>
+                    <TableHead className="hidden sm:table-cell">Peso Semente</TableHead>
+                    <TableHead className="hidden md:table-cell">PH</TableHead>
+                    <TableHead className="hidden sm:table-cell">Status</TableHead>
+                    <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
