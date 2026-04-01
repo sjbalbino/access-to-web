@@ -58,7 +58,7 @@ export interface ContratoVenda {
   saldo_kg?: number;
 }
 
-export type ContratoVendaInsert = Partial<Omit<ContratoVenda, "id" | "created_at" | "updated_at" | "safra" | "produto" | "comprador" | "inscricao_produtor" | "total_carregado_kg" | "saldo_kg">> & { numero: number; data_contrato: string };
+export type ContratoVendaInsert = Partial<Omit<ContratoVenda, "id" | "created_at" | "updated_at" | "safra" | "produto" | "comprador" | "inscricao_produtor" | "total_carregado_kg" | "saldo_kg">> & { numero: string; data_contrato: string };
 export type ContratoVendaUpdate = Partial<ContratoVendaInsert>;
 
 interface ContratoVendaFiltros {
