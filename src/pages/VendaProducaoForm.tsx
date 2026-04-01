@@ -613,6 +613,10 @@ export default function VendaProducaoForm() {
                   <Input {...register("local_entrega_cep")} />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Cód. IBGE</Label>
+                <Input {...register("local_entrega_codigo_ibge")} placeholder="Código IBGE" />
+              </div>
             </div>
           </CardContent>
         </Card>
