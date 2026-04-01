@@ -93,7 +93,7 @@ export default function NotasDeposito() {
     totalRegistros,
     setPaginaAtual,
     gerarNumerosPaginas,
-  } = usePaginacao(notas || []);
+  } = usePaginacao(notasEmitidas || []);
 
 
   return (
