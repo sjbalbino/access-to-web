@@ -469,7 +469,7 @@ export default function ClientesFornecedores() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clientesFornecedores?.map((item) => (
+              {dadosPaginados.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.nome}</TableCell>
                   <TableCell>{getTipoBadge(item.tipo)}</TableCell>
