@@ -298,13 +298,14 @@ export default function Tenants() {
               ))}
             </TableBody>
           </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+          <TablePagination
+            paginaAtual={paginaAtual}
+            totalPaginas={totalPaginas}
+            totalRegistros={totalRegistros}
+            setPaginaAtual={setPaginaAtual}
+            gerarNumerosPaginas={gerarNumerosPaginas}
+          />
+          </>
         )}
       </div>
 
