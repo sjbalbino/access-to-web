@@ -276,6 +276,13 @@ export default function VendasProducao() {
                 </Table>
               </div>
             )}
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
           </CardContent>
         </Card>
 
