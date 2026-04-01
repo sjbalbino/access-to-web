@@ -417,7 +417,44 @@ export default function ClientesFornecedores() {
             </Dialog>
           )}
         </CardHeader>
-        <CardContent className="min-w-0">
+        <CardContent className="min-w-0 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Nome / Razão Social</Label>
+              <Input placeholder="Buscar..." value={filtroNome} onChange={e => { setFiltroNome(e.target.value); setPaginaAtual(1); }} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">CPF/CNPJ</Label>
+              <Input placeholder="Buscar..." value={filtroCpfCnpj} onChange={e => { setFiltroCpfCnpj(e.target.value); setPaginaAtual(1); }} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Tipo</Label>
+              <Select value={filtroTipo} onValueChange={v => { setFiltroTipo(v); setPaginaAtual(1); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="cliente">Cliente</SelectItem>
+                  <SelectItem value="fornecedor">Fornecedor</SelectItem>
+                  <SelectItem value="ambos">Ambos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Cidade</Label>
+              <Input placeholder="Buscar..." value={filtroCidade} onChange={e => { setFiltroCidade(e.target.value); setPaginaAtual(1); }} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Status</Label>
+              <Select value={filtroAtivo} onValueChange={v => { setFiltroAtivo(v); setPaginaAtual(1); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ativo">Ativos</SelectItem>
+                  <SelectItem value="inativo">Inativos</SelectItem>
+                  <SelectItem value="todos">Todos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="overflow-x-auto">
           <Table>
             <TableHeader>
