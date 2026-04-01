@@ -500,10 +500,12 @@ export default function ClientesFornecedores() {
                   )}
                 </TableRow>
               ))}
-              {(!clientesFornecedores || clientesFornecedores.length === 0) && (
+              {dadosPaginados.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={canEdit ? 7 : 6} className="text-center text-muted-foreground py-8">
-                    Nenhum cliente/fornecedor cadastrado
+                    {dadosFiltrados.length === 0 && (clientesFornecedores?.length || 0) > 0
+                      ? 'Nenhum registro encontrado com os filtros aplicados'
+                      : 'Nenhum cliente/fornecedor cadastrado'}
                   </TableCell>
                 </TableRow>
               )}
