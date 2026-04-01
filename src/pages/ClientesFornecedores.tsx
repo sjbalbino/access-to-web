@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
@@ -30,8 +30,42 @@ export default function ClientesFornecedores() {
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
   const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
 
+  const [filtroNome, setFiltroNome] = useState('');
+  const [filtroCpfCnpj, setFiltroCpfCnpj] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [filtroCidade, setFiltroCidade] = useState('');
+  const [filtroAtivo, setFiltroAtivo] = useState('ativo');
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 20;
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+
+  const dadosFiltrados = useMemo(() => {
+    let dados = clientesFornecedores || [];
+    if (filtroNome) {
+      const termo = filtroNome.toLowerCase();
+      dados = dados.filter(i => i.nome?.toLowerCase().includes(termo) || i.nome_fantasia?.toLowerCase().includes(termo));
+    }
+    if (filtroCpfCnpj) {
+      const termo = filtroCpfCnpj.replace(/\D/g, '');
+      dados = dados.filter(i => i.cpf_cnpj?.replace(/\D/g, '').includes(termo));
+    }
+    if (filtroTipo !== 'todos') {
+      dados = dados.filter(i => i.tipo === filtroTipo);
+    }
+    if (filtroCidade) {
+      const termo = filtroCidade.toLowerCase();
+      dados = dados.filter(i => i.cidade?.toLowerCase().includes(termo));
+    }
+    if (filtroAtivo !== 'todos') {
+      dados = dados.filter(i => filtroAtivo === 'ativo' ? i.ativo : !i.ativo);
+    }
+    return dados;
+  }, [clientesFornecedores, filtroNome, filtroCpfCnpj, filtroTipo, filtroCidade, filtroAtivo]);
+
+  const totalPaginas = Math.max(1, Math.ceil(dadosFiltrados.length / itensPorPagina));
+  const dadosPaginados = dadosFiltrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
   const [formData, setFormData] = useState<ClienteFornecedorInsert>({
     granja_id: null,
     tipo: 'ambos',
@@ -383,7 +417,44 @@ export default function ClientesFornecedores() {
             </Dialog>
           )}
         </CardHeader>
-        <CardContent className="min-w-0">
+        <CardContent className="min-w-0 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Nome / Razão Social</Label>
+              <Input placeholder="Buscar..." value={filtroNome} onChange={e => { setFiltroNome(e.target.value); setPaginaAtual(1); }} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">CPF/CNPJ</Label>
+              <Input placeholder="Buscar..." value={filtroCpfCnpj} onChange={e => { setFiltroCpfCnpj(e.target.value); setPaginaAtual(1); }} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Tipo</Label>
+              <Select value={filtroTipo} onValueChange={v => { setFiltroTipo(v); setPaginaAtual(1); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="cliente">Cliente</SelectItem>
+                  <SelectItem value="fornecedor">Fornecedor</SelectItem>
+                  <SelectItem value="ambos">Ambos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Cidade</Label>
+              <Input placeholder="Buscar..." value={filtroCidade} onChange={e => { setFiltroCidade(e.target.value); setPaginaAtual(1); }} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Status</Label>
+              <Select value={filtroAtivo} onValueChange={v => { setFiltroAtivo(v); setPaginaAtual(1); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ativo">Ativos</SelectItem>
+                  <SelectItem value="inativo">Inativos</SelectItem>
+                  <SelectItem value="todos">Todos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -398,7 +469,7 @@ export default function ClientesFornecedores() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clientesFornecedores?.map((item) => (
+              {dadosPaginados.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.nome}</TableCell>
                   <TableCell>{getTipoBadge(item.tipo)}</TableCell>
@@ -429,16 +500,29 @@ export default function ClientesFornecedores() {
                   )}
                 </TableRow>
               ))}
-              {(!clientesFornecedores || clientesFornecedores.length === 0) && (
+              {dadosPaginados.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={canEdit ? 7 : 6} className="text-center text-muted-foreground py-8">
-                    Nenhum cliente/fornecedor cadastrado
+                    {dadosFiltrados.length === 0 && (clientesFornecedores?.length || 0) > 0
+                      ? 'Nenhum registro encontrado com os filtros aplicados'
+                      : 'Nenhum cliente/fornecedor cadastrado'}
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
           </div>
+          {totalPaginas > 1 && (
+            <div className="flex items-center justify-between pt-4">
+              <span className="text-sm text-muted-foreground">
+                {dadosFiltrados.length} registro(s) — Página {paginaAtual} de {totalPaginas}
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={paginaAtual <= 1} onClick={() => setPaginaAtual(p => p - 1)}>Anterior</Button>
+                <Button variant="outline" size="sm" disabled={paginaAtual >= totalPaginas} onClick={() => setPaginaAtual(p => p + 1)}>Próxima</Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
