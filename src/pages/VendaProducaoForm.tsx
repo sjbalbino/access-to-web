@@ -200,6 +200,41 @@ export default function VendaProducaoForm() {
   const valorTotal = watch("valor_total");
   const vendaEntregaFutura = watch("venda_entrega_futura");
   const aFixar = watch("a_fixar");
+  const localEntregaUf = watch("local_entrega_uf");
+
+  // IBGE municipalities filtered by UF
+  const { data: municipios } = useIbgeMunicipios(localEntregaUf);
+
+  // CNPJ lookup for local de entrega
+  const handleCnpjLocalEntregaBlur = async () => {
+    const cnpj = watch("local_entrega_cnpj_cpf");
+    if (!cnpj) return;
+    const data = await fetchCnpj(cnpj);
+    if (data) {
+      setValue("local_entrega_nome", data.razao_social || "");
+      setValue("local_entrega_ie", "");
+      setValue("local_entrega_logradouro", data.logradouro || "");
+      setValue("local_entrega_numero", data.numero || "");
+      setValue("local_entrega_complemento", data.complemento || "");
+      setValue("local_entrega_bairro", data.bairro || "");
+      setValue("local_entrega_cidade", data.cidade || "");
+      setValue("local_entrega_uf", data.uf || "");
+      setValue("local_entrega_cep", data.cep || "");
+    }
+  };
+
+  // CEP lookup for local de entrega
+  const handleCepLocalEntregaBlur = async () => {
+    const cep = watch("local_entrega_cep");
+    if (!cep) return;
+    const data = await fetchCep(cep);
+    if (data) {
+      setValue("local_entrega_logradouro", data.logradouro || "");
+      setValue("local_entrega_bairro", data.bairro || "");
+      setValue("local_entrega_cidade", data.localidade || "");
+      setValue("local_entrega_uf", data.uf || "");
+    }
+  };
 
   // Calculate if contract is closed (saldo <= 0)
   const isContratoFechado = contrato && (contrato.saldo_kg || 0) <= 0;
