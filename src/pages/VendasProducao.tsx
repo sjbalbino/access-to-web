@@ -210,7 +210,7 @@ export default function VendasProducao() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      contratos?.map((contrato) => (
+                      contratosPaginados?.map((contrato) => (
                         <TableRow key={contrato.id}>
                           <TableCell className="font-medium">{contrato.numero}</TableCell>
                           <TableCell>{contrato.comprador?.nome || "-"}</TableCell>
