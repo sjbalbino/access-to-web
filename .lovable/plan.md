@@ -1,59 +1,41 @@
 
 
-## Plano: Adicionar campos faltantes na importação de Contratos de Venda
+## Plano: Alterar campo Nº Contrato para texto alfanumérico
 
-### Campos na tabela `contratos_venda` que estao ausentes no modelo de importação
+### Problema
+O campo `numero` em `contratos_venda` é do tipo `integer` no banco e `number` no formulário. O usuário precisa que seja alfanumérico (ex: "CV-001", "2026/015").
 
-| Campo DB | Tipo | Presente? |
-|---|---|---|
-| `nota_venda` | varchar | Falta |
-| `percentual_comissao` | numeric | Falta |
-| `valor_comissao` | numeric | Falta |
-| `data_pagamento_comissao` | date | Falta |
-| `data_recebimento` | date | Falta |
-| `remessa_deposito` | boolean | Falta |
-| `retorno_deposito` | boolean | Falta |
-| `local_entrega_nome` | varchar | Falta |
-| `local_entrega_cnpj_cpf` | varchar | Falta |
-| `local_entrega_ie` | varchar | Falta |
-| `local_entrega_logradouro` | varchar | Falta |
-| `local_entrega_numero` | varchar | Falta |
-| `local_entrega_complemento` | varchar | Falta |
-| `local_entrega_bairro` | varchar | Falta |
-| `local_entrega_cidade` | varchar | Falta |
-| `local_entrega_uf` | varchar | Falta |
-| `local_entrega_cep` | varchar | Falta |
+### Alterações
 
-Campos ja mapeados: `numero`, `data_contrato`, `quantidade_kg`, `quantidade_sacos`, `preco_kg`, `valor_total`, `modalidade_frete`, `venda_entrega_futura`, `a_fixar`, `fechada`, `exportacao`, `observacoes`, `tipo_venda`, `corretor`, `numero_contrato_comprador`.
-
-### Alteracao
-
-**Arquivo:** `src/lib/importacaoConfig.ts` (secao `contratos_venda`, ~linha 575)
-
-Adicionar as seguintes linhas ao array `columns`:
-
-```typescript
-{ accessName: 'nota_venda', dbName: 'nota_venda', transform: toStr },
-{ accessName: 'percentual_comissao', dbName: 'percentual_comissao', transform: toNumber },
-{ accessName: 'valor_comissao', dbName: 'valor_comissao', transform: toNumber },
-{ accessName: 'data_pagamento_comissao', dbName: 'data_pagamento_comissao', transform: toDate },
-{ accessName: 'data_recebimento', dbName: 'data_recebimento', transform: toDate },
-{ accessName: 'remessa_deposito', dbName: 'remessa_deposito', transform: toBool },
-{ accessName: 'retorno_deposito', dbName: 'retorno_deposito', transform: toBool },
-{ accessName: 'local_entrega_nome', dbName: 'local_entrega_nome', transform: toStr },
-{ accessName: 'local_entrega_cnpj_cpf', dbName: 'local_entrega_cnpj_cpf', transform: toStr },
-{ accessName: 'local_entrega_ie', dbName: 'local_entrega_ie', transform: toStr },
-{ accessName: 'local_entrega_logradouro', dbName: 'local_entrega_logradouro', transform: toStr },
-{ accessName: 'local_entrega_numero', dbName: 'local_entrega_numero', transform: toStr },
-{ accessName: 'local_entrega_complemento', dbName: 'local_entrega_complemento', transform: toStr },
-{ accessName: 'local_entrega_bairro', dbName: 'local_entrega_bairro', transform: toStr },
-{ accessName: 'local_entrega_cidade', dbName: 'local_entrega_cidade', transform: toStr },
-{ accessName: 'local_entrega_uf', dbName: 'local_entrega_uf', transform: toStr },
-{ accessName: 'local_entrega_cep', dbName: 'local_entrega_cep', transform: toStr },
+#### 1. Migração de banco de dados
+Alterar o tipo da coluna `numero` de `integer` para `varchar`:
+```sql
+ALTER TABLE contratos_venda ALTER COLUMN numero TYPE varchar USING numero::varchar;
 ```
 
-### Impacto
-- 1 arquivo alterado: `src/lib/importacaoConfig.ts` (~17 linhas adicionadas)
-- O modelo de download passara a incluir todos esses cabecalhos
-- A importacao passara a gravar esses campos quando presentes na planilha
+#### 2. Hook `useContratosVenda.ts`
+- Alterar tipo de `numero` na interface de `number` para `string`
+- Alterar `ContratoVendaInsert` para aceitar `numero: string`
+- No filtro, trocar `.eq("numero", filtros.numero)` para usar string
+- Em `useProximoNumeroContrato`, manter lógica mas retornar string
+
+#### 3. Formulário `VendaProducaoForm.tsx`
+- Alterar `FormData.numero` de `number` para `string`
+- Remover `type="number"` e `valueAsNumber: true` do input
+- Remover `readOnly` para permitir edição manual
+- Default value: `""` em vez de `0`
+
+#### 4. Listagem `VendasProducao.tsx`
+- Filtro: remover `parseInt()`, usar string diretamente
+- Remover `type="number"` do input de filtro
+
+#### 5. Importação `importacaoConfig.ts`
+- Alterar transform do campo `numero` de `toNumber` para `toStr` (se aplicável)
+
+### Arquivos alterados
+- 1 migração SQL
+- `src/hooks/useContratosVenda.ts`
+- `src/pages/VendaProducaoForm.tsx`
+- `src/pages/VendasProducao.tsx`
+- `src/lib/importacaoConfig.ts` (verificar)
 
