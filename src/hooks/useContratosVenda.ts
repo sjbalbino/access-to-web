@@ -64,7 +64,7 @@ export type ContratoVendaUpdate = Partial<ContratoVendaInsert>;
 interface ContratoVendaFiltros {
   safra_id?: string;
   comprador_id?: string;
-  numero?: number;
+  numero?: string;
 }
 
 export function useContratosVenda(filtros?: ContratoVendaFiltros) {
