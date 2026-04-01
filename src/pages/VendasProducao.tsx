@@ -51,7 +51,7 @@ export default function VendasProducao() {
   const { data: contratos, isLoading } = useContratosVenda({
     safra_id: filtroSafra || undefined,
     comprador_id: filtroComprador || undefined,
-    numero: filtroNumero ? parseInt(filtroNumero) : undefined,
+    numero: filtroNumero || undefined,
   });
   const deleteContrato = useDeleteContratoVenda();
 
