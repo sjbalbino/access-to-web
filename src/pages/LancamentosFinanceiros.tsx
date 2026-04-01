@@ -153,15 +153,15 @@ export default function LancamentosFinanceiros() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Centro/Sub</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                      <TableHead>Fornecedor</TableHead>
-                      <TableHead>Doc.</TableHead>
-                      {canEdit && <TableHead className="w-24">Ações</TableHead>}
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead className="hidden md:table-cell">Centro/Sub</TableHead>
+                    <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="hidden lg:table-cell">Fornecedor</TableHead>
+                    <TableHead className="hidden lg:table-cell">Doc.</TableHead>
+                    {canEdit && <TableHead className="w-24 sticky right-0 bg-background">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
