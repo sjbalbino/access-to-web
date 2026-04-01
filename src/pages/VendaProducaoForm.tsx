@@ -112,7 +112,7 @@ export default function VendaProducaoForm() {
 
   const { register, handleSubmit, watch, setValue, reset } = useForm<FormData>({
     defaultValues: {
-      numero: 0,
+      numero: "",
       safra_id: "",
       produto_id: "",
       data_contrato: "",
