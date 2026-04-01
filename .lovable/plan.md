@@ -1,22 +1,59 @@
 
 
-## Plano: Corrigir exibição de datas com fuso horário
+## Plano: Adicionar campos faltantes na importação de Contratos de Venda
 
-### Problema
-A data está **correta no banco de dados**. O erro ocorre na **exibição na tela**: `new Date('2026-03-28')` cria um objeto Date em meia-noite UTC, que no fuso horário do Brasil (UTC-3) vira 27/03 às 21h — e `format()` exibe o dia anterior.
+### Campos na tabela `contratos_venda` que estao ausentes no modelo de importação
 
-### Solução
-Substituir `new Date(dateStr)` por `parseISO(dateStr)` do date-fns (já usado no projeto em `CompraCereais.tsx`) ou adicionar `T00:00:00` à string para forçar interpretação local. O `parseISO` é o padrão mais limpo.
+| Campo DB | Tipo | Presente? |
+|---|---|---|
+| `nota_venda` | varchar | Falta |
+| `percentual_comissao` | numeric | Falta |
+| `valor_comissao` | numeric | Falta |
+| `data_pagamento_comissao` | date | Falta |
+| `data_recebimento` | date | Falta |
+| `remessa_deposito` | boolean | Falta |
+| `retorno_deposito` | boolean | Falta |
+| `local_entrega_nome` | varchar | Falta |
+| `local_entrega_cnpj_cpf` | varchar | Falta |
+| `local_entrega_ie` | varchar | Falta |
+| `local_entrega_logradouro` | varchar | Falta |
+| `local_entrega_numero` | varchar | Falta |
+| `local_entrega_complemento` | varchar | Falta |
+| `local_entrega_bairro` | varchar | Falta |
+| `local_entrega_cidade` | varchar | Falta |
+| `local_entrega_uf` | varchar | Falta |
+| `local_entrega_cep` | varchar | Falta |
 
-### Arquivo: `src/components/controle-lavoura/ColheitasTab.tsx`
-- Linha 363: trocar `format(new Date(colheita.data_colheita), 'dd/MM/yy')` por `format(parseISO(colheita.data_colheita), 'dd/MM/yy')`
-- Adicionar import de `parseISO` do `date-fns`
+Campos ja mapeados: `numero`, `data_contrato`, `quantidade_kg`, `quantidade_sacos`, `preco_kg`, `valor_total`, `modalidade_frete`, `venda_entrega_futura`, `a_fixar`, `fechada`, `exportacao`, `observacoes`, `tipo_venda`, `corretor`, `numero_contrato_comprador`.
 
-### Verificação adicional
-Buscar e corrigir o mesmo padrão em todos os arquivos que exibem datas de colheita ou outras datas do banco usando `new Date(string)` sem `T00:00:00`:
-- `src/pages/EntradaColheita.tsx` — verificar se há exibição de `data_colheita` com `new Date()`
-- Outros componentes que usem `format(new Date(dateString), ...)` para datas sem hora
+### Alteracao
+
+**Arquivo:** `src/lib/importacaoConfig.ts` (secao `contratos_venda`, ~linha 575)
+
+Adicionar as seguintes linhas ao array `columns`:
+
+```typescript
+{ accessName: 'nota_venda', dbName: 'nota_venda', transform: toStr },
+{ accessName: 'percentual_comissao', dbName: 'percentual_comissao', transform: toNumber },
+{ accessName: 'valor_comissao', dbName: 'valor_comissao', transform: toNumber },
+{ accessName: 'data_pagamento_comissao', dbName: 'data_pagamento_comissao', transform: toDate },
+{ accessName: 'data_recebimento', dbName: 'data_recebimento', transform: toDate },
+{ accessName: 'remessa_deposito', dbName: 'remessa_deposito', transform: toBool },
+{ accessName: 'retorno_deposito', dbName: 'retorno_deposito', transform: toBool },
+{ accessName: 'local_entrega_nome', dbName: 'local_entrega_nome', transform: toStr },
+{ accessName: 'local_entrega_cnpj_cpf', dbName: 'local_entrega_cnpj_cpf', transform: toStr },
+{ accessName: 'local_entrega_ie', dbName: 'local_entrega_ie', transform: toStr },
+{ accessName: 'local_entrega_logradouro', dbName: 'local_entrega_logradouro', transform: toStr },
+{ accessName: 'local_entrega_numero', dbName: 'local_entrega_numero', transform: toStr },
+{ accessName: 'local_entrega_complemento', dbName: 'local_entrega_complemento', transform: toStr },
+{ accessName: 'local_entrega_bairro', dbName: 'local_entrega_bairro', transform: toStr },
+{ accessName: 'local_entrega_cidade', dbName: 'local_entrega_cidade', transform: toStr },
+{ accessName: 'local_entrega_uf', dbName: 'local_entrega_uf', transform: toStr },
+{ accessName: 'local_entrega_cep', dbName: 'local_entrega_cep', transform: toStr },
+```
 
 ### Impacto
-Correção pontual de display. Nenhuma alteração no banco ou na lógica de importação.
+- 1 arquivo alterado: `src/lib/importacaoConfig.ts` (~17 linhas adicionadas)
+- O modelo de download passara a incluir todos esses cabecalhos
+- A importacao passara a gravar esses campos quando presentes na planilha
 
