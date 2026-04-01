@@ -244,13 +244,6 @@ export default function Produtos() {
         searchNcm(ncmSearch);
       }
     }, 300);
-    return () => clearTimeout(timer);
-  }, [ncmSearch]);
-
-  if (isLoading) {
-    return <div className="p-8">Carregando...</div>;
-  }
-
   const {
     dadosPaginados,
     paginaAtual,
@@ -260,6 +253,12 @@ export default function Produtos() {
     gerarNumerosPaginas,
   } = usePaginacao(filteredProdutos || []);
 
+    return () => clearTimeout(timer);
+  }, [ncmSearch]);
+
+  if (isLoading) {
+    return <div className="p-8">Carregando...</div>;
+  }
 
   return (
     <AppLayout>
