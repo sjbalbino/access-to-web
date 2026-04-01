@@ -30,8 +30,42 @@ export default function ClientesFornecedores() {
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
   const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
 
+  const [filtroNome, setFiltroNome] = useState('');
+  const [filtroCpfCnpj, setFiltroCpfCnpj] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [filtroCidade, setFiltroCidade] = useState('');
+  const [filtroAtivo, setFiltroAtivo] = useState('ativo');
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 20;
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+
+  const dadosFiltrados = useMemo(() => {
+    let dados = clientesFornecedores || [];
+    if (filtroNome) {
+      const termo = filtroNome.toLowerCase();
+      dados = dados.filter(i => i.nome?.toLowerCase().includes(termo) || i.nome_fantasia?.toLowerCase().includes(termo));
+    }
+    if (filtroCpfCnpj) {
+      const termo = filtroCpfCnpj.replace(/\D/g, '');
+      dados = dados.filter(i => i.cpf_cnpj?.replace(/\D/g, '').includes(termo));
+    }
+    if (filtroTipo !== 'todos') {
+      dados = dados.filter(i => i.tipo === filtroTipo);
+    }
+    if (filtroCidade) {
+      const termo = filtroCidade.toLowerCase();
+      dados = dados.filter(i => i.cidade?.toLowerCase().includes(termo));
+    }
+    if (filtroAtivo !== 'todos') {
+      dados = dados.filter(i => filtroAtivo === 'ativo' ? i.ativo : !i.ativo);
+    }
+    return dados;
+  }, [clientesFornecedores, filtroNome, filtroCpfCnpj, filtroTipo, filtroCidade, filtroAtivo]);
+
+  const totalPaginas = Math.max(1, Math.ceil(dadosFiltrados.length / itensPorPagina));
+  const dadosPaginados = dadosFiltrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
   const [formData, setFormData] = useState<ClienteFornecedorInsert>({
     granja_id: null,
     tipo: 'ambos',
