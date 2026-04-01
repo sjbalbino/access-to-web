@@ -76,6 +76,8 @@ interface FormData {
   local_entrega_cidade: string;
   local_entrega_uf: string;
   local_entrega_cep: string;
+  local_entrega_codigo_ibge: string;
+  data_recebimento: string;
   corretor: string;
   percentual_comissao: number | null;
   valor_comissao: number | null;
