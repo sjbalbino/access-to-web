@@ -186,32 +186,26 @@ export default function Lavouras() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Granja</TableHead>
-                    <TableHead>Total Ha</TableHead>
-                    <TableHead>Área Plantio</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead className="hidden sm:table-cell">Granja</TableHead>
+                    <TableHead className="hidden md:table-cell">Total Ha</TableHead>
+                    <TableHead className="hidden md:table-cell">Área Plantio</TableHead>
+                    <TableHead className="hidden sm:table-cell">Status</TableHead>
+                    <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {dadosPaginados.map((lavoura: any) => (
                     <TableRow key={lavoura.id}>
                       <TableCell className="font-medium">{lavoura.nome}</TableCell>
-                      <TableCell>{lavoura.granja?.razao_social || "-"}</TableCell>
-                      <TableCell>{lavoura.total_hectares?.toLocaleString("pt-BR") || 0}</TableCell>
-                      <TableCell>{lavoura.area_plantio?.toLocaleString("pt-BR") || 0}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            lavoura.ativa
-                              ? "bg-success/10 text-success"
-                              : "bg-destructive/10 text-destructive"
-                          }`}
-                        >
+                      <TableCell className="hidden sm:table-cell">{lavoura.granja?.razao_social || "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell">{lavoura.total_hectares?.toLocaleString("pt-BR") || 0}</TableCell>
+                      <TableCell className="hidden md:table-cell">{lavoura.area_plantio?.toLocaleString("pt-BR") || 0}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${lavoura.ativa ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
                           {lavoura.ativa ? "Ativa" : "Inativa"}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right sticky right-0 bg-background">
                         {canEdit && (
                           <div className="flex justify-end gap-2">
                             <Button

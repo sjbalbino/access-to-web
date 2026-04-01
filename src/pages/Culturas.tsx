@@ -176,31 +176,19 @@ export default function Culturas() {
                     <TableRow key={cultura.id}>
                       <TableCell className="font-medium">{cultura.codigo || "-"}</TableCell>
                       <TableCell className="font-medium">{cultura.nome}</TableCell>
-                      <TableCell>{cultura.peso_saco_industria || 60} kg</TableCell>
-                      <TableCell>{cultura.peso_saco_semente || 60} kg</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            cultura.informar_ph
-                              ? "bg-info/10 text-info"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
+                      <TableCell className="hidden sm:table-cell">{cultura.peso_saco_industria || 60} kg</TableCell>
+                      <TableCell className="hidden sm:table-cell">{cultura.peso_saco_semente || 60} kg</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${cultura.informar_ph ? "bg-info/10 text-info" : "bg-muted text-muted-foreground"}`}>
                           {cultura.informar_ph ? "Sim" : "Não"}
                         </span>
                       </TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            cultura.ativa
-                              ? "bg-success/10 text-success"
-                              : "bg-destructive/10 text-destructive"
-                          }`}
-                        >
+                      <TableCell className="hidden sm:table-cell">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${cultura.ativa ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
                           {cultura.ativa ? "Ativa" : "Inativa"}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right sticky right-0 bg-background">
                         {canEdit && (
                           <div className="flex justify-end gap-2">
                             <Button

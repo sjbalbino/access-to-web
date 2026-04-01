@@ -184,29 +184,27 @@ export default function Safras() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Código</TableHead>
+                    <TableHead className="hidden sm:table-cell">Código</TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Cultura</TableHead>
-                    <TableHead>Ano Colheita</TableHead>
+                    <TableHead className="hidden sm:table-cell">Cultura</TableHead>
+                    <TableHead className="hidden md:table-cell">Ano Colheita</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {dadosPaginados.map((safra: any) => (
                     <TableRow key={safra.id}>
-                      <TableCell className="font-medium">{safra.codigo || "-"}</TableCell>
+                      <TableCell className="font-medium hidden sm:table-cell">{safra.codigo || "-"}</TableCell>
                       <TableCell className="font-medium">{safra.nome}</TableCell>
-                      <TableCell>{safra.culturas?.nome || "-"}</TableCell>
-                      <TableCell>{safra.ano_colheita || "-"}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{safra.culturas?.nome || "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell">{safra.ano_colheita || "-"}</TableCell>
                       <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(safra.status)}`}
-                        >
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(safra.status)}`}>
                           {safra.status}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right sticky right-0 bg-background">
                         {canEdit && (
                           <div className="flex justify-end gap-2">
                             <Button

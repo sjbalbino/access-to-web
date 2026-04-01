@@ -224,11 +224,11 @@ export default function Granjas() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Razão Social</TableHead>
-                    <TableHead>CPF/CNPJ</TableHead>
-                    <TableHead>Cidade/UF</TableHead>
-                    <TableHead>Hectares</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead className="hidden sm:table-cell">CPF/CNPJ</TableHead>
+                    <TableHead className="hidden md:table-cell">Cidade/UF</TableHead>
+                    <TableHead className="hidden md:table-cell">Hectares</TableHead>
+                    <TableHead className="hidden sm:table-cell">Status</TableHead>
+                    <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -242,27 +242,19 @@ export default function Granjas() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{granja.cpf || granja.cnpj || "-"}</TableCell>
-                      <TableCell>
-                        {granja.cidade && granja.uf
-                          ? `${granja.cidade}/${granja.uf}`
-                          : "-"}
+                      <TableCell className="hidden sm:table-cell">{granja.cpf || granja.cnpj || "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {granja.cidade && granja.uf ? `${granja.cidade}/${granja.uf}` : "-"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {granja.total_hectares?.toLocaleString("pt-BR") || 0}
                       </TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            granja.ativa
-                              ? "bg-success/10 text-success"
-                              : "bg-destructive/10 text-destructive"
-                          }`}
-                        >
+                      <TableCell className="hidden sm:table-cell">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${granja.ativa ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
                           {granja.ativa ? "Ativa" : "Inativa"}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right sticky right-0 bg-background">
                         {canEdit && (
                           <div className="flex justify-end gap-2">
                             <Button
