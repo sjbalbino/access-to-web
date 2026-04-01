@@ -324,7 +324,6 @@ export default function Placas() {
             <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
           </div>
         </CardContent>
-        </CardContent>
       </Card>
     </div>
     </AppLayout>
