@@ -137,6 +137,8 @@ export default function VendaProducaoForm() {
       local_entrega_cidade: "",
       local_entrega_uf: "",
       local_entrega_cep: "",
+      local_entrega_codigo_ibge: "",
+      data_recebimento: "",
       corretor: "",
       percentual_comissao: null,
       valor_comissao: null,
