@@ -295,19 +295,20 @@ export default function Silos() {
               </Dialog>
             )}
           </CardHeader>
-          <CardContent>
-            <Table>
+          <CardContent className="p-0 overflow-hidden">
+            <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Código</TableHead>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead className="text-right">Cap. (Kg)</TableHead>
-                  <TableHead className="text-right">Cap. (Sacas)</TableHead>
-                  <TableHead>Localização</TableHead>
-                  <TableHead>Status</TableHead>
-                  {canEdit && <TableHead className="text-right">Ações</TableHead>}
+                  <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+                  <TableHead className="hidden md:table-cell">Empresa</TableHead>
+                  <TableHead className="text-right hidden sm:table-cell">Cap. (Kg)</TableHead>
+                  <TableHead className="text-right hidden md:table-cell">Cap. (Sacas)</TableHead>
+                  <TableHead className="hidden lg:table-cell">Localização</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  {canEdit && <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
