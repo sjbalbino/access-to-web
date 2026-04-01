@@ -751,7 +751,7 @@ export default function VendaProducaoForm() {
             <CardTitle>Frete e Observações</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Modalidade Frete</Label>
                 <Select 
@@ -768,6 +768,10 @@ export default function VendaProducaoForm() {
                     <SelectItem value="9">9 - Sem Frete</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Data Prevista Recebimento</Label>
+                <Input type="date" {...register("data_recebimento")} />
               </div>
             </div>
             <div className="space-y-2">
