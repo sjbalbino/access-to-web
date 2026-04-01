@@ -1,0 +1,1 @@
+ALTER TABLE contratos_venda ADD COLUMN local_entrega_codigo_ibge varchar;

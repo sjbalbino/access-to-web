@@ -748,6 +748,7 @@ export type Database = {
           local_entrega_cep: string | null
           local_entrega_cidade: string | null
           local_entrega_cnpj_cpf: string | null
+          local_entrega_codigo_ibge: string | null
           local_entrega_complemento: string | null
           local_entrega_ie: string | null
           local_entrega_logradouro: string | null
@@ -790,6 +791,7 @@ export type Database = {
           local_entrega_cep?: string | null
           local_entrega_cidade?: string | null
           local_entrega_cnpj_cpf?: string | null
+          local_entrega_codigo_ibge?: string | null
           local_entrega_complemento?: string | null
           local_entrega_ie?: string | null
           local_entrega_logradouro?: string | null
@@ -832,6 +834,7 @@ export type Database = {
           local_entrega_cep?: string | null
           local_entrega_cidade?: string | null
           local_entrega_cnpj_cpf?: string | null
+          local_entrega_codigo_ibge?: string | null
           local_entrega_complemento?: string | null
           local_entrega_ie?: string | null
           local_entrega_logradouro?: string | null
