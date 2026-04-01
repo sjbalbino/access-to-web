@@ -259,20 +259,21 @@ export default function Placas() {
             </Dialog>
           )}
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Placa</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Propriedade</TableHead>
-                <TableHead>Marca/Modelo</TableHead>
-                <TableHead>Ano</TableHead>
-                <TableHead className="text-right">Cap. (Kg)</TableHead>
-                <TableHead className="text-right">Tara (Kg)</TableHead>
-                <TableHead>Proprietário</TableHead>
-                <TableHead>Status</TableHead>
-                {canEdit && <TableHead className="text-right">Ações</TableHead>}
+        <CardContent className="p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table className="min-w-[600px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Placa</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead className="hidden sm:table-cell">Propriedade</TableHead>
+                  <TableHead className="hidden md:table-cell">Marca/Modelo</TableHead>
+                  <TableHead className="hidden md:table-cell">Ano</TableHead>
+                  <TableHead className="text-right hidden sm:table-cell">Cap. (Kg)</TableHead>
+                  <TableHead className="text-right hidden lg:table-cell">Tara (Kg)</TableHead>
+                  <TableHead className="hidden lg:table-cell">Proprietário</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  {canEdit && <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
