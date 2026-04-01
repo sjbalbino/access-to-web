@@ -144,7 +144,7 @@ export default function VendasProducao() {
               <div className="space-y-2">
                 <Label>Nº Contrato</Label>
                 <Input
-                  type="number"
+                  type="text"
                   value={filtroNumero}
                   onChange={(e) => setFiltroNumero(e.target.value)}
                   placeholder="Número"

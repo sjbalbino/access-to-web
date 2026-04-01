@@ -194,7 +194,8 @@ export function useProximoNumeroContrato(safraId?: string) {
       }
 
       const { data } = await query;
-      return (data?.[0]?.numero || 0) + 1;
+      const lastNumero = parseInt(data?.[0]?.numero || "0", 10);
+      return String(isNaN(lastNumero) ? 1 : lastNumero + 1);
     },
   });
 }
