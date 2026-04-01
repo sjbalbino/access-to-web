@@ -243,6 +243,8 @@ export default function VendaProducaoForm() {
         local_entrega_cidade: contrato.local_entrega_cidade || "",
         local_entrega_uf: contrato.local_entrega_uf || "",
         local_entrega_cep: contrato.local_entrega_cep || "",
+        local_entrega_codigo_ibge: (contrato as any).local_entrega_codigo_ibge || "",
+        data_recebimento: contrato.data_recebimento || "",
         corretor: contrato.corretor || "",
         percentual_comissao: contrato.percentual_comissao,
         valor_comissao: contrato.valor_comissao,
