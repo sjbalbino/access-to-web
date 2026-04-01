@@ -606,6 +606,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'local_entrega_cidade', dbName: 'local_entrega_cidade', transform: toStr },
       { accessName: 'local_entrega_uf', dbName: 'local_entrega_uf', transform: toStr },
       { accessName: 'local_entrega_cep', dbName: 'local_entrega_cep', transform: toStr },
+      { accessName: 'local_entrega_codigo_ibge', dbName: 'local_entrega_codigo_ibge', transform: toStr },
     ],
     references: [
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },

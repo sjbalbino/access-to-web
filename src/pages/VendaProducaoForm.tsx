@@ -303,6 +303,8 @@ export default function VendaProducaoForm() {
       local_entrega_cidade: data.local_entrega_cidade || null,
       local_entrega_uf: data.local_entrega_uf || null,
       local_entrega_cep: data.local_entrega_cep || null,
+      local_entrega_codigo_ibge: data.local_entrega_codigo_ibge || null,
+      data_recebimento: data.data_recebimento || null,
       corretor: data.corretor || null,
       percentual_comissao: data.percentual_comissao,
       valor_comissao: data.valor_comissao,

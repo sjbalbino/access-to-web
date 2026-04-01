@@ -28,6 +28,7 @@ export interface ContratoVenda {
   local_entrega_cidade: string | null;
   local_entrega_uf: string | null;
   local_entrega_cep: string | null;
+  local_entrega_codigo_ibge: string | null;
   corretor: string | null;
   percentual_comissao: number | null;
   valor_comissao: number | null;
