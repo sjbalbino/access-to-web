@@ -580,7 +580,13 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'fechada', dbName: 'fechada', transform: toBool },
       { accessName: 'exportacao', dbName: 'exportacao', transform: toBool },
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
-      { accessName: 'tipo_venda', dbName: 'tipo_venda', transform: toStr },
+      { accessName: 'tipo_venda', dbName: 'tipo_venda', transform: (v: any) => {
+        if (v === null || v === undefined || v === '') return 'industria';
+        const s = String(v).trim();
+        if (s === '1') return 'industria';
+        if (s === '2') return 'semente';
+        return s.toLowerCase();
+      } },
       { accessName: 'corretor', dbName: 'corretor', transform: toStr },
       { accessName: 'numero_contrato_comprador', dbName: 'numero_contrato_comprador', transform: toStr },
       { accessName: 'nota_venda', dbName: 'nota_venda', transform: toStr },
