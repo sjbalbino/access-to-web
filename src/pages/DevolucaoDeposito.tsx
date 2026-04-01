@@ -16,6 +16,8 @@ import { formatNumber } from '@/lib/formatters';
 import { format } from 'date-fns';
 import { DevolucaoDialog } from '@/components/devolucao/DevolucaoDialog';
 import { EmitirNfeDevolucaoDialog } from '@/components/devolucao/EmitirNfeDevolucaoDialog';
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function DevolucaoDeposito() {
   const [granjaId, setGranjaId] = useState<string>('');
@@ -45,6 +47,16 @@ export default function DevolucaoDeposito() {
     setDevolucaoSelecionada(devolucao);
     setDialogOpen(true);
   };
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(devolucoes || []);
+
 
   return (
     <AppLayout>
@@ -125,7 +137,7 @@ export default function DevolucaoDeposito() {
                     <TableRow><TableCell colSpan={8} className="text-center">Carregando...</TableCell></TableRow>
                   ) : !devolucoes?.length ? (
                     <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Nenhuma devolução encontrada</TableCell></TableRow>
-                  ) : devolucoes.map(d => (
+                  ) : dadosPaginados.map(d => (
                     <TableRow key={d.id}>
                       <TableCell>{d.codigo}</TableCell>
                       <TableCell>{format(new Date(d.data_devolucao), 'dd/MM/yyyy')}</TableCell>
@@ -173,6 +185,13 @@ export default function DevolucaoDeposito() {
                   ))}
                 </TableBody>
               </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
             </div>
           </CardContent>
         </Card>

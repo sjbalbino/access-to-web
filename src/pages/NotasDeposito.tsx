@@ -26,6 +26,8 @@ import { useProdutos } from "@/hooks/useProdutos";
 import { useNotasDepositoEmitidas, useDeleteNotaDepositoEmitida } from "@/hooks/useNotasDepositoEmitidas";
 import { formatNumber } from "@/lib/formatters";
 import { NotaDepositoFormDialog } from "@/components/deposito/NotaDepositoFormDialog";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function NotasDeposito() {
   const navigate = useNavigate();
@@ -83,6 +85,16 @@ export default function NotasDeposito() {
 
   // Produtos do tipo cereais para filtro
   const produtosCereais = produtos.filter(p => p.tipo === 'cereal' || p.grupo === 'Cereais');
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(notas || []);
+
 
   return (
     <AppLayout>
@@ -249,6 +261,13 @@ export default function NotasDeposito() {
                   })}
                 </TableBody>
               </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
             )}
           </CardContent>
         </Card>

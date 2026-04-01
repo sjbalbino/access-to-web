@@ -21,6 +21,8 @@ import { usePlanoContasGerencial } from '@/hooks/usePlanoContasGerencial';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function LancamentosFinanceiros() {
   const { canEdit } = useAuth();
@@ -103,6 +105,16 @@ export default function LancamentosFinanceiros() {
   const fmtCurrency = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const fmtDate = (d: string) => { try { return format(new Date(d + 'T12:00:00'), 'dd/MM/yyyy'); } catch { return d; } };
 
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(lancamentos || []);
+
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -153,7 +165,7 @@ export default function LancamentosFinanceiros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {lancamentos.map((l: any) => (
+                    {dadosPaginados.map((l: any) => (
                       <TableRow key={l.id}>
                         <TableCell className="whitespace-nowrap">{fmtDate(l.data_lancamento)}</TableCell>
                         <TableCell>{l.descricao}</TableCell>
@@ -182,6 +194,13 @@ export default function LancamentosFinanceiros() {
                     ))}
                   </TableBody>
                 </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
               </div>
             ) : (
               <div className="text-center py-12">

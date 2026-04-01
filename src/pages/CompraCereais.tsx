@@ -16,6 +16,8 @@ import { formatNumber } from '@/lib/formatters';
 import { format, parseISO } from 'date-fns';
 import { CompraDialog } from '@/components/compra/CompraDialog';
 import { EmitirNfeCompraDialog } from '@/components/compra/EmitirNfeCompraDialog';
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function CompraCereais() {
   const [granjaId, setGranjaId] = useState<string>('');
@@ -47,6 +49,16 @@ export default function CompraCereais() {
   const handleEmitirNfe = (compra: CompraCereal) => {
     setNfeDialogCompra(compra);
   };
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(compras || []);
+
 
   return (
     <AppLayout>
@@ -127,7 +139,7 @@ export default function CompraCereais() {
                     <TableRow><TableCell colSpan={8} className="text-center">Carregando...</TableCell></TableRow>
                   ) : !compras?.length ? (
                     <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Nenhuma compra encontrada</TableCell></TableRow>
-                  ) : compras.map(c => (
+                  ) : dadosPaginados.map(c => (
                     <TableRow key={c.id}>
                       <TableCell>{c.codigo}</TableCell>
                       <TableCell>{format(parseISO(c.data_compra), 'dd/MM/yyyy')}</TableCell>
@@ -175,6 +187,13 @@ export default function CompraCereais() {
                   ))}
                 </TableBody>
               </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
             </div>
           </CardContent>
         </Card>

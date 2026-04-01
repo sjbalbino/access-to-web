@@ -24,6 +24,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 export default function Transferencias() {
   // Filtros para a lista
@@ -64,6 +66,16 @@ export default function Transferencias() {
       setDeleteId(null);
     }
   };
+
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(transferencias || []);
+
 
   return (
     <AppLayout>
@@ -167,7 +179,7 @@ export default function Transferencias() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transferencias.map((t) => (
+                    {dadosPaginados.map((t) => (
                       <TableRow key={t.id}>
                         <TableCell>
                           <Badge variant="outline">#{t.codigo}</Badge>
@@ -215,6 +227,13 @@ export default function Transferencias() {
                     ))}
                   </TableBody>
                 </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
               </div>
             )}
           </CardContent>

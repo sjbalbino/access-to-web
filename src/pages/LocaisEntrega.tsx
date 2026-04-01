@@ -17,6 +17,8 @@ import { useLocaisEntrega, useCreateLocalEntrega, useUpdateLocalEntrega, useDele
 import { useGranjas } from "@/hooks/useGranjas";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
+import { usePaginacao } from "@/hooks/usePaginacao";
+import { TablePagination } from "@/components/ui/table-pagination";
 
 const UF_OPTIONS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", 
@@ -164,6 +166,16 @@ export default function LocaisEntrega() {
     }
   };
 
+  const {
+    dadosPaginados,
+    paginaAtual,
+    totalPaginas,
+    totalRegistros,
+    setPaginaAtual,
+    gerarNumerosPaginas,
+  } = usePaginacao(filteredLocais || []);
+
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -238,7 +250,7 @@ export default function LocaisEntrega() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredLocais.map((local) => (
+                    dadosPaginados.map((local) => (
                       <TableRow key={local.id}>
                         <TableCell className="font-mono">{local.codigo || "-"}</TableCell>
                         <TableCell>
@@ -276,6 +288,13 @@ export default function LocaisEntrega() {
                   )}
                 </TableBody>
               </Table>
+            <TablePagination
+              paginaAtual={paginaAtual}
+              totalPaginas={totalPaginas}
+              totalRegistros={totalRegistros}
+              setPaginaAtual={setPaginaAtual}
+              gerarNumerosPaginas={gerarNumerosPaginas}
+            />
             )}
           </CardContent>
         </Card>
