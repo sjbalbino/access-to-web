@@ -316,18 +316,18 @@ export default function Silos() {
                   <TableRow key={item.id}>
                     <TableCell className="font-mono">{item.codigo || '-'}</TableCell>
                     <TableCell className="font-medium">{item.nome}</TableCell>
-                    <TableCell>{getTipoBadge(item.tipo)}</TableCell>
-                    <TableCell>{item.empresa?.razao_social || '-'}</TableCell>
-                    <TableCell className="text-right">{formatNumber(item.capacidade_kg)}</TableCell>
-                    <TableCell className="text-right">{formatNumber(item.capacidade_sacas)}</TableCell>
-                    <TableCell>{item.localizacao || '-'}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">{getTipoBadge(item.tipo)}</TableCell>
+                    <TableCell className="hidden md:table-cell">{item.empresa?.razao_social || '-'}</TableCell>
+                    <TableCell className="text-right hidden sm:table-cell">{formatNumber(item.capacidade_kg)}</TableCell>
+                    <TableCell className="text-right hidden md:table-cell">{formatNumber(item.capacidade_sacas)}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{item.localizacao || '-'}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant={item.ativo ? 'default' : 'secondary'}>
                         {item.ativo ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </TableCell>
                     {canEdit && (
-                      <TableCell className="text-right">
+                      <TableCell className="text-right sticky right-0 bg-background">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                             <Pencil className="h-4 w-4" />
