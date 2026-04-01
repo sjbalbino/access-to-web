@@ -1,52 +1,79 @@
 
+## Plano: Melhorias no formulário de Venda e paginação global
 
-## Plano: Corrigir importacao e adicionar campo data_recebimento no formulario
+### 1. Mover "Data Prevista Recebimento" para seção de dados da venda
+- **Arquivo:** `src/pages/VendaProducaoForm.tsx`
+- Reposicionar o campo `data_recebimento` da seção atual para junto dos dados principais da venda (perto de data_contrato, safra, produto)
 
-### Problemas identificados
+### 2. Tabela IBGE de Municípios + Select Cidade com código IBGE
+- **Migração SQL:** Criar tabela `ibge_municipios` com colunas: `codigo_ibge`, `nome`, `uf`
+- **Carga de dados:** Popular via script com todos os municípios brasileiros (API IBGE)
+- **Arquivo:** `src/pages/VendaProducaoForm.tsx` — Substituir campo texto "Cidade" do local de entrega por um Combobox pesquisável que lista municípios da tabela IBGE, auto-preenchendo `local_entrega_codigo_ibge` e `local_entrega_cidade` ao selecionar
+- **Hook:** Criar `useIbgeMunicipios.ts` para buscar municípios filtrados por UF
 
-1. **`tipo_venda` nos contratos**: Todos os 190 registros tem valor "1" em vez de "industria". Precisa normalizar no banco e no transform de importacao.
-2. **`local_entrega_codigo_ibge`**: Coluna nao existe na tabela `contratos_venda`. Precisa criar e adicionar ao config de importacao.
-3. **`data_recebimento`**: Ja existe no banco e no config de importacao, mas NAO aparece no formulario `VendaProducaoForm.tsx`.
-4. **`tipo` em clientes_fornecedores**: 132 registros com "C", 1 com "F", 1 com "A" em vez de "cliente"/"fornecedor"/"ambos". Precisa normalizar e ajustar transform.
+### 3. Busca CNPJ no "Local de Entrega"
+- **Arquivo:** `src/pages/VendaProducaoForm.tsx`
+- Adicionar `onBlur` no campo CNPJ do local de entrega para chamar `useCnpjLookup`
+- Auto-preencher: nome, IE, logradouro, número, complemento, bairro, cidade, UF, CEP
 
-### Alteracoes
+### 4. Busca CEP no "Local de Entrega"
+- **Arquivo:** `src/pages/VendaProducaoForm.tsx`
+- Adicionar `onBlur` no campo CEP do local de entrega para chamar `useCepLookup`
+- Auto-preencher: logradouro, bairro, cidade, UF
 
-#### 1. Migracao SQL
-```sql
--- Adicionar coluna codigo IBGE
-ALTER TABLE contratos_venda ADD COLUMN local_entrega_codigo_ibge varchar;
+### 5. Paginação em todas as listas do sistema
+Criar um componente/hook reutilizável `usePaginacao` e aplicar em todas as páginas de listagem:
 
--- Normalizar tipo_venda: '1' -> 'industria', '2' -> 'semente'
-UPDATE contratos_venda SET tipo_venda = 'industria' WHERE tipo_venda = '1';
-UPDATE contratos_venda SET tipo_venda = 'semente' WHERE tipo_venda = '2';
+**Páginas que precisam de paginação (não têm ainda):**
+- `Cfops.tsx`
+- `Placas.tsx`
+- `NotasDeposito.tsx`
+- `NotasFiscais.tsx`
+- `Transportadoras.tsx`
+- `Produtores.tsx`
+- `Produtos.tsx`
+- `GruposProdutos.tsx`
+- `Culturas.tsx`
+- `Safras.tsx`
+- `Silos.tsx`
+- `Lavouras.tsx`
+- `Granjas.tsx`
+- `Ncm.tsx`
+- `UnidadesMedida.tsx`
+- `LocaisEntrega.tsx`
+- `EmitentesNfe.tsx`
+- `EntradaColheita.tsx`
+- `CompraCereais.tsx`
+- `DevolucaoDeposito.tsx`
+- `Transferencias.tsx`
+- `VendasProducao.tsx`
+- `LancamentosFinanceiros.tsx`
+- `DreEstrutura.tsx`
+- `PlanoContasGerencial.tsx`
+- `Tenants.tsx`
+- `Usuarios.tsx`
+- `RemessasVendaForm.tsx` (lista de remessas)
 
--- Normalizar tipo em clientes_fornecedores
-UPDATE clientes_fornecedores SET tipo = 'cliente' WHERE tipo IN ('C', 'c');
-UPDATE clientes_fornecedores SET tipo = 'fornecedor' WHERE tipo IN ('F', 'f');
-UPDATE clientes_fornecedores SET tipo = 'ambos' WHERE tipo IN ('A', 'a');
-UPDATE clientes_fornecedores SET tipo = 'ambos' WHERE tipo IS NULL OR tipo = '';
-```
+**Hook reutilizável:** `src/hooks/usePaginacao.ts`
+- Recebe array de dados e itens por página (default 20)
+- Retorna: dadosPaginados, paginaAtual, totalPaginas, setPaginaAtual, gerarNumerosPaginas
 
-#### 2. `src/lib/importacaoConfig.ts`
-- Adicionar `local_entrega_codigo_ibge` com `toStr` na config de contratos_venda
-- Alterar transform de `tipo_venda` para normalizar: mapear '1'->'industria', '2'->'semente', default manter valor
-- Alterar transform de `tipo` em clientes para normalizar: 'C'->'cliente', 'F'->'fornecedor', 'A'->'ambos', default 'ambos'
+**Componente reutilizável:** `src/components/ui/table-pagination.tsx`
+- Componente pronto com Anterior/Próximo, números de página, contagem de registros
 
-#### 3. `src/pages/VendaProducaoForm.tsx`
-- Adicionar `data_recebimento: string` no FormData
-- Adicionar `local_entrega_codigo_ibge: string` no FormData
-- Adicionar default values para ambos
-- Carregar valores do contrato existente no reset
-- Incluir no payload de submit
-- Adicionar campo de data (input date) para "Data Prevista Recebimento" na UI
-- Adicionar campo texto para "Codigo IBGE" do local de entrega
+### Ordem de execução
+1. Hook + componente de paginação reutilizável
+2. Migração tabela IBGE + carga de dados
+3. Hook useIbgeMunicipios
+4. Alterações no VendaProducaoForm (data recebimento, CNPJ, CEP, cidade IBGE)
+5. Aplicar paginação em todas as páginas
 
-#### 4. `src/hooks/useContratosVenda.ts`
-- Adicionar `local_entrega_codigo_ibge` na interface `ContratoVenda`
+### Arquivos criados
+- `src/hooks/usePaginacao.ts`
+- `src/components/ui/table-pagination.tsx`
+- `src/hooks/useIbgeMunicipios.ts`
+- 1 migração SQL (tabela ibge_municipios)
 
 ### Arquivos alterados
-- 1 migracao SQL (nova coluna + normalizacao de dados)
-- `src/lib/importacaoConfig.ts`
 - `src/pages/VendaProducaoForm.tsx`
-- `src/hooks/useContratosVenda.ts`
-
+- ~28 páginas de listagem (adicionar paginação)
