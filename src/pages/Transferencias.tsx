@@ -166,16 +166,16 @@ export default function Transferencias() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="min-w-[600px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-20">Código</TableHead>
-                      <TableHead className="w-28">Data</TableHead>
-                      <TableHead>Safra</TableHead>
-                      <TableHead>Produto</TableHead>
-                      <TableHead>Origem → Destino</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead className="hidden sm:table-cell">Safra</TableHead>
+                      <TableHead className="hidden sm:table-cell">Produto</TableHead>
+                      <TableHead className="hidden md:table-cell">Origem → Destino</TableHead>
                       <TableHead className="text-right">Quantidade</TableHead>
-                      <TableHead className="w-24 text-center">Ações</TableHead>
+                      <TableHead className="w-24 text-center sticky right-0 bg-background">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
