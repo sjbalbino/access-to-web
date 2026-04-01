@@ -180,26 +180,26 @@ export default function VendasProducao() {
 
         {/* Tabela */}
         <Card>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-hidden">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Spinner />
               </div>
             ) : (
-              <div className="overflow-x-auto -mx-4 sm:mx-0">
-                <Table className="min-w-[900px]">
+              <div className="overflow-x-auto">
+                <Table className="min-w-[700px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-16">Nº</TableHead>
-                      <TableHead className="min-w-[150px]">Comprador</TableHead>
-                      <TableHead className="min-w-[100px]">Safra</TableHead>
-                      <TableHead className="min-w-[90px]">Data</TableHead>
-                      <TableHead className="min-w-[100px]">Contrato</TableHead>
-                      <TableHead className="text-right min-w-[100px]">Vendido</TableHead>
-                      <TableHead className="text-right min-w-[100px]">Carregado</TableHead>
-                      <TableHead className="text-right min-w-[100px]">Saldo</TableHead>
-                      <TableHead className="min-w-[90px]">Status</TableHead>
-                      <TableHead className="text-right min-w-[100px]">Ações</TableHead>
+                      <TableHead className="min-w-[120px]">Comprador</TableHead>
+                      <TableHead className="hidden sm:table-cell">Safra</TableHead>
+                      <TableHead className="min-w-[80px]">Data</TableHead>
+                      <TableHead className="hidden md:table-cell">Contrato</TableHead>
+                      <TableHead className="text-right">Vendido</TableHead>
+                      <TableHead className="text-right hidden lg:table-cell">Carregado</TableHead>
+                      <TableHead className="text-right hidden lg:table-cell">Saldo</TableHead>
+                      <TableHead className="hidden sm:table-cell">Status</TableHead>
+                      <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -213,26 +213,26 @@ export default function VendasProducao() {
                       contratosPaginados?.map((contrato) => (
                         <TableRow key={contrato.id}>
                           <TableCell className="font-medium">{contrato.numero}</TableCell>
-                          <TableCell>{contrato.comprador?.nome || "-"}</TableCell>
-                          <TableCell>{contrato.safra?.nome || "-"}</TableCell>
+                          <TableCell className="max-w-[150px] truncate">{contrato.comprador?.nome || "-"}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{contrato.safra?.nome || "-"}</TableCell>
                           <TableCell>
                             {contrato.data_contrato
                                ? format(parseISO(contrato.data_contrato), "dd/MM/yyyy", { locale: ptBR })
                                : "-"}
                           </TableCell>
-                          <TableCell>{contrato.numero_contrato_comprador || "-"}</TableCell>
+                          <TableCell className="hidden md:table-cell">{contrato.numero_contrato_comprador || "-"}</TableCell>
                           <TableCell className="text-right font-medium">
                             {formatNumber(contrato.quantidade_kg)}
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right hidden lg:table-cell">
                             {formatNumber(contrato.total_carregado_kg)}
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right hidden lg:table-cell">
                             <span className={contrato.saldo_kg && contrato.saldo_kg < 0 ? "text-destructive" : ""}>
                               {formatNumber(contrato.saldo_kg)}
                             </span>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             {contrato.fechada ? (
                               <Badge variant="secondary">Fechada</Badge>
                             ) : contrato.saldo_kg && contrato.saldo_kg <= 0 ? (
@@ -241,7 +241,7 @@ export default function VendasProducao() {
                               <Badge variant="outline">Em Aberto</Badge>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="sticky right-0 bg-background">
                             <div className="flex justify-end gap-1">
                               <Button
                                 variant="ghost"
@@ -276,13 +276,15 @@ export default function VendasProducao() {
                 </Table>
               </div>
             )}
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
+            <div className="px-4">
+              <TablePagination
+                paginaAtual={paginaAtual}
+                totalPaginas={totalPaginas}
+                totalRegistros={totalRegistros}
+                setPaginaAtual={setPaginaAtual}
+                gerarNumerosPaginas={gerarNumerosPaginas}
+              />
+            </div>
           </CardContent>
         </Card>
 
