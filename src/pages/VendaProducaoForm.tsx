@@ -53,7 +53,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface FormData {
-  numero: number;
+  numero: string;
   safra_id: string;
   produto_id: string;
   data_contrato: string;
