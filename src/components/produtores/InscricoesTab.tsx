@@ -327,10 +327,9 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   </TableCell>
                   <TableCell>
                     {inscricao.granja_id
-                      ? granjas?.find(e => e.id === inscricao.granja_id)?.nome_fantasia 
-                        || granjas?.find(e => e.id === inscricao.granja_id)?.razao_social 
+                      ? granjas?.find(e => e.id === inscricao.granja_id)?.razao_social 
                         || "-"
-                      : inscricao.granja || "-"}
+                      : "-"}
                   </TableCell>
                   <TableCell>
                     {inscricao.emitente ? (
