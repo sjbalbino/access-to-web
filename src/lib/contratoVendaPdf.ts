@@ -277,7 +277,7 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
         formatNumber(r.kg_remessa || r.kg_nota, 0),
         formatCurrency(r.valor_nota),
         getStatusRemessa(r.status),
-        (r.notas_fiscais?.numero || r.nota_fiscal?.numero)?.toString() || "-",
+        (r.notas_fiscais?.numero || r.nota_fiscal?.numero)?.toString() || r.numero_nota_legado || "-",
       ]);
 
     autoTable(doc, {
