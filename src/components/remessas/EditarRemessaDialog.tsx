@@ -287,6 +287,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={kgNota || ""}
                     onChange={(e) => setKgNota(Number(e.target.value))}
                     className="text-right font-bold"
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
