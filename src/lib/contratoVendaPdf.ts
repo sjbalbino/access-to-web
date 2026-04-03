@@ -24,6 +24,7 @@ interface RemessaData {
     numero?: number | null;
     status?: string | null;
   } | null;
+  numero_nota_legado?: string | null;
 }
 
 interface ContratoData {
