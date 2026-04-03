@@ -3236,6 +3236,7 @@ export type Database = {
           contrato_venda_id: string
           created_at: string
           data_remessa: string
+          hora_remessa: string | null
           id: string
           impureza: number | null
           kg_desconto_impureza: number | null
@@ -3255,6 +3256,7 @@ export type Database = {
           motorista: string | null
           motorista_cpf: string | null
           nota_fiscal_id: string | null
+          numero_nota_legado: string | null
           observacoes: string | null
           peso_bruto: number | null
           peso_liquido: number | null
@@ -3283,6 +3285,7 @@ export type Database = {
           contrato_venda_id: string
           created_at?: string
           data_remessa: string
+          hora_remessa?: string | null
           id?: string
           impureza?: number | null
           kg_desconto_impureza?: number | null
@@ -3302,6 +3305,7 @@ export type Database = {
           motorista?: string | null
           motorista_cpf?: string | null
           nota_fiscal_id?: string | null
+          numero_nota_legado?: string | null
           observacoes?: string | null
           peso_bruto?: number | null
           peso_liquido?: number | null
@@ -3330,6 +3334,7 @@ export type Database = {
           contrato_venda_id?: string
           created_at?: string
           data_remessa?: string
+          hora_remessa?: string | null
           id?: string
           impureza?: number | null
           kg_desconto_impureza?: number | null
@@ -3349,6 +3354,7 @@ export type Database = {
           motorista?: string | null
           motorista_cpf?: string | null
           nota_fiscal_id?: string | null
+          numero_nota_legado?: string | null
           observacoes?: string | null
           peso_bruto?: number | null
           peso_liquido?: number | null

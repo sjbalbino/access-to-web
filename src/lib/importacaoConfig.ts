@@ -650,7 +650,17 @@ export const tableConfigs: TableConfig[] = [
         if (v === null || v === undefined || v === '') return 'pendente';
         return String(v).trim().toLowerCase();
       } },
+      { accessName: 'remcancelada', dbName: 'status', transform: (v: any) => {
+        if (v === null || v === undefined || v === '') return undefined;
+        const s = String(v).trim().toUpperCase();
+        if (s === 'S' || s === 'SIM' || s === 'TRUE' || s === '1' || s === '-1') return 'cancelada';
+        return undefined;
+      } },
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
+      { accessName: 'remnota', dbName: 'numero_nota_legado', transform: toStr },
+      { accessName: 'remhora', dbName: 'hora_remessa', transform: toStr },
+      { accessName: 'remcnpjcpfentrega', dbName: 'local_entrega_cnpj_cpf', transform: toStr },
+      { accessName: 'reminscestadualentrega', dbName: 'local_entrega_ie', transform: toStr },
       { accessName: 'placa', dbName: 'placa', transform: toStr },
       { accessName: 'uf_placa', dbName: 'uf_placa', transform: toStr },
       { accessName: 'local_entrega_nome', dbName: 'local_entrega_nome', transform: toStr },

@@ -47,6 +47,8 @@ export interface RemessaVenda {
   local_entrega_cidade: string | null;
   local_entrega_uf: string | null;
   local_entrega_cep: string | null;
+  numero_nota_legado?: string | null;
+  hora_remessa?: string | null;
   created_at: string;
   updated_at: string;
   // Joins
