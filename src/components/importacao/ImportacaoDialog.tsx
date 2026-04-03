@@ -503,7 +503,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 <strong>Colunas esperadas:</strong>{' '}
                 {config.columns.map(c => c.accessName).join(', ')}
                 {config.references && config.references.length > 0 && (
-                  <>, {config.references.map(r => r.sourceColumn).join(', ')}</>
+                  <>, {config.references.flatMap(r => r.compositeSourceColumn ? [r.sourceColumn, r.compositeSourceColumn] : [r.sourceColumn]).join(', ')}</>
                 )}
               </div>
             </div>
@@ -519,7 +519,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                     const mapped = config.columns.some(c =>
                       c.accessName === col || c.accessName.toUpperCase() === col || c.accessName.toLowerCase() === col
                     ) || config.references?.some(r =>
-                      r.sourceColumn === col || r.sourceColumn.toUpperCase() === col
+                      r.sourceColumn === col || r.sourceColumn.toUpperCase() === col ||
+                      (r.compositeSourceColumn && (r.compositeSourceColumn === col || r.compositeSourceColumn.toUpperCase() === col))
                     );
                     return (
                       <Badge key={col} variant={mapped ? 'default' : 'outline'} className="text-xs">
