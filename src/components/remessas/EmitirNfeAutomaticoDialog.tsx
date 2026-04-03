@@ -532,7 +532,7 @@ export function EmitirNfeAutomaticoDialog({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Comprador:</span>
-                  <span className="font-medium">{contrato?.comprador?.nome || "-"}</span>
+                  <span className="font-medium">{contrato?.comprador?.nome}{contrato?.comprador?.nome_fantasia ? ` (${contrato.comprador.nome_fantasia})` : ''}</span>
                 </div>
               </div>
             </div>
