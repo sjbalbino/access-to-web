@@ -3696,6 +3696,7 @@ export type Database = {
           quantidade_kg: number
           safra_id: string | null
           silo_id: string | null
+          tipo: string | null
           updated_at: string
         }
         Insert: {
@@ -3714,6 +3715,7 @@ export type Database = {
           quantidade_kg?: number
           safra_id?: string | null
           silo_id?: string | null
+          tipo?: string | null
           updated_at?: string
         }
         Update: {
@@ -3732,6 +3734,7 @@ export type Database = {
           quantidade_kg?: number
           safra_id?: string | null
           silo_id?: string | null
+          tipo?: string | null
           updated_at?: string
         }
         Relationships: [

@@ -39,6 +39,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
   const [localEntradaId, setLocalEntradaId] = useState("");
   const [quantidadeKg, setQuantidadeKg] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [tipo, setTipo] = useState("");
 
   const [origemOpen, setOrigemOpen] = useState(false);
   const [destinoOpen, setDestinoOpen] = useState(false);
@@ -74,6 +75,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
       setLocalEntradaId(transferencia.local_entrada_id || "");
       setQuantidadeKg(String(transferencia.quantidade_kg || ""));
       setObservacoes(transferencia.observacoes || "");
+      setTipo(transferencia.tipo || "");
     } else {
       resetForm();
     }
@@ -90,6 +92,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
     setLocalEntradaId("");
     setQuantidadeKg("");
     setObservacoes("");
+    setTipo("");
     setOrigemSearch("");
     setDestinoSearch("");
   };
@@ -168,6 +171,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
       silo_id: siloId || null,
       quantidade_kg: quantidade,
       observacoes: observacoes || null,
+      tipo: tipo || null,
       local_saida_id: localSaidaId,
       local_entrada_id: localEntradaId,
     };
@@ -263,6 +267,21 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Tipo */}
+          <div className="space-y-2">
+            <Label>Tipo</Label>
+            <Select value={tipo || "__none__"} onValueChange={(v) => setTipo(v === "__none__" ? "" : v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Nenhum</SelectItem>
+                <SelectItem value="industria">Indústria</SelectItem>
+                <SelectItem value="semente">Semente</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* SAÍDA (Origem) */}

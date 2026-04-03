@@ -697,6 +697,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'codigo', dbName: 'codigo', transform: toInt },
       { accessName: 'data_transferencia', dbName: 'data_transferencia', transform: toDate },
       { accessName: 'quantidade_kg', dbName: 'quantidade_kg', transform: toNumber },
+      { accessName: 'tipo', dbName: 'tipo', transform: toStr },
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
     ],
     references: [

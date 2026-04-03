@@ -1,0 +1,1 @@
+ALTER TABLE public.transferencias_deposito ADD COLUMN tipo character varying DEFAULT NULL;
