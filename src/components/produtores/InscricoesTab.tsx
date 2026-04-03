@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +34,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, FileText, Building2, Banknote, Crown } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Plus, Pencil, Trash2, FileText, Building2, Banknote, Crown, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -54,6 +67,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCpfCnpj, formatTelefone } from "@/lib/formatters";
 import { useProdutor } from "@/hooks/useProdutores";
+import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
+import { cn } from "@/lib/utils";
 
 // Tipos de contrato para a inscrição (opcional - para regras de negócio futuras)
 const TIPOS_CONTRATO = [
