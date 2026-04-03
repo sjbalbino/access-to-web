@@ -450,6 +450,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={ufPlaca}
                     onChange={(e) => setUfPlaca(e.target.value.toUpperCase())}
                     maxLength={2}
+                    disabled={isReadOnly}
                   />
                 </div>
               </div>
