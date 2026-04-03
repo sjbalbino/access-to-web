@@ -92,6 +92,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
     setLocalEntradaId("");
     setQuantidadeKg("");
     setObservacoes("");
+    setTipo("");
     setOrigemSearch("");
     setDestinoSearch("");
   };
