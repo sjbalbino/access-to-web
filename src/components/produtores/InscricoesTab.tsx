@@ -239,7 +239,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
           ...formData,
           logradouro: data.logradouro || formData.logradouro,
           bairro: data.bairro || formData.bairro,
-          cidade: data.localidade || formData.cidade,
+          cidade: data.ibge || data.localidade || formData.cidade,
           uf: newUf,
         });
       }
