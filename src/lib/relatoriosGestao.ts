@@ -182,7 +182,7 @@ export function gerarBensMoveisPdf(despesas: BensMoveisDespesa[], periodo: strin
     ]);
     autoTable(doc, {
       startY: 28,
-      head: [['Data', 'Grupo', 'Produto', 'Descrição', 'Documento', 'Valor (R$)']],
+      head: [[{ content: 'Data', styles: { halign: 'center' } }, 'Grupo', 'Produto', 'Descrição', 'Documento', { content: 'Valor (R$)', styles: { halign: 'right' } }]],
       body: rows,
       styles: { fontSize: 8 },
       headStyles: { fillColor: [60, 60, 60] },
