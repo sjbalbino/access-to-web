@@ -39,6 +39,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
   const [localEntradaId, setLocalEntradaId] = useState("");
   const [quantidadeKg, setQuantidadeKg] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [tipo, setTipo] = useState("");
 
   const [origemOpen, setOrigemOpen] = useState(false);
   const [destinoOpen, setDestinoOpen] = useState(false);
