@@ -327,10 +327,9 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   </TableCell>
                   <TableCell>
                     {inscricao.granja_id
-                      ? granjas?.find(e => e.id === inscricao.granja_id)?.nome_fantasia 
-                        || granjas?.find(e => e.id === inscricao.granja_id)?.razao_social 
+                      ? granjas?.find(e => e.id === inscricao.granja_id)?.razao_social 
                         || "-"
-                      : inscricao.granja || "-"}
+                      : "-"}
                   </TableCell>
                   <TableCell>
                     {inscricao.emitente ? (
@@ -466,7 +465,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                       <SelectValue placeholder="Selecione a granja" />
                     </SelectTrigger>
                     <SelectContent>
-                      {granjas?.filter(e => e.ativa).map((granja) => (
+                      {granjas?.map((granja) => (
                         <SelectItem key={granja.id} value={granja.id}>
                           {granja.nome_fantasia || granja.razao_social}
                         </SelectItem>
