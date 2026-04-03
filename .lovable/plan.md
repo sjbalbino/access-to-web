@@ -1,23 +1,25 @@
 
-## Plano: Bloquear salvamento em remessas NFe e validar contrato
 
-### Problemas
+## Plano: Corrigir proteção de remessas "Carregado/NFe"
 
-1. **Remessa "Carregado/NFe" ainda permite salvar**: O `fieldset disabled` impede interacao visual, mas o botao "Salvar" ainda aparece e pode ser clicado (o `fieldset` nao desabilita botoes no `DialogFooter` que esta fora do fieldset). Alem disso, `handleSalvar` nao verifica `isReadOnly`.
+### Problema raiz
 
-2. **Contratos novos aceitam quantidade e preco zerados**: O `onSubmit` em `VendaProducaoForm.tsx` nao valida se `quantidade_kg` e `preco_kg` sao maiores que zero.
+O `<fieldset disabled>` não funciona com componentes Select do Radix UI (usado pelo shadcn/ui). Os selects e inputs customizados ignoram o atributo `disabled` herdado do fieldset, permitindo que o usuário altere dados mesmo em modo "somente leitura". Além disso, ao salvar, o status é recalculado por `determinarStatus()` que retorna "carregado" (ignorando o status original "carregado_nfe").
 
-### Alteracoes
+### Alterações
 
-#### 1. `src/components/remessas/EditarRemessaDialog.tsx`
-- Adicionar guard no inicio de `handleSalvar`: `if (isReadOnly) return;`
-- Isso garante protecao mesmo que o botao seja acessivel de alguma forma
+#### `src/components/remessas/EditarRemessaDialog.tsx`
 
-#### 2. `src/pages/VendaProducaoForm.tsx`
-- No `onSubmit` (linha 330), adicionar validacoes antes do payload:
-  - Se `!isEditing` (novo contrato): exigir `quantidade_kg > 0` e `preco_kg > 0`
-  - Exibir `toast.error` especifico para cada campo zerado
+1. **Remover `fieldset disabled`** e passar `disabled={isReadOnly}` individualmente para cada Input, Select e Textarea
+2. **Preservar status original no salvamento**: em `handleSalvar`, manter o status existente da remessa quando `status === "carregado_nfe"` em vez de recalcular via `determinarStatus()`
+3. **Adicionar `readOnly` nos inputs numéricos** para impedir digitação quando `isReadOnly`
+
+Isso garante que:
+- Todos os campos ficam efetivamente desabilitados visualmente e funcionalmente
+- O botão "Salvar" continua oculto (já implementado)
+- O guard `if (isReadOnly) return` continua como proteção extra
+- Se por algum motivo salvar for acionado, o status original é preservado
 
 ### Arquivos alterados
-- `src/components/remessas/EditarRemessaDialog.tsx` (1 linha — guard em handleSalvar)
-- `src/pages/VendaProducaoForm.tsx` (validacoes de quantidade e preco)
+- `src/components/remessas/EditarRemessaDialog.tsx`
+
