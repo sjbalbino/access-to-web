@@ -72,9 +72,9 @@ import { cn } from "@/lib/utils";
 
 // Tipos de contrato para a inscrição (opcional - para regras de negócio futuras)
 const TIPOS_CONTRATO = [
-  { value: "parceria", label: "Parceria" },
-  { value: "arrendamento", label: "Arrendamento" },
-  { value: "terceiros", label: "Terceiros" },
+  { value: "1", label: "Parceria" },
+  { value: "2", label: "Arrendamento" },
+  { value: "3", label: "Terceiros" },
 ];
 
 interface InscricoesTabProps {
