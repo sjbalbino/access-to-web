@@ -789,7 +789,6 @@ export default function RemessasVendaForm() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Cód</TableHead>
                       <TableHead>Data</TableHead>
                       <TableHead>Transportadora</TableHead>
                       <TableHead>Placa</TableHead>
@@ -805,14 +804,13 @@ export default function RemessasVendaForm() {
                   <TableBody>
                     {remessas?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                           Nenhuma remessa cadastrada
                         </TableCell>
                       </TableRow>
                     ) : (
                       remessas?.map((r) => (
                         <TableRow key={r.id}>
-                          <TableCell className="font-medium">{r.codigo}</TableCell>
                           <TableCell>
                             {r.data_remessa ? format(parseISO(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                           </TableCell>
