@@ -75,6 +75,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
       setLocalEntradaId(transferencia.local_entrada_id || "");
       setQuantidadeKg(String(transferencia.quantidade_kg || ""));
       setObservacoes(transferencia.observacoes || "");
+      setTipo(transferencia.tipo || "");
     } else {
       resetForm();
     }
