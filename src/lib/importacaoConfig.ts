@@ -15,6 +15,8 @@ export interface ReferenceResolver {
   lookupLabel?: string; // column to show as label
   fallbackColumns?: string[]; // additional columns to try matching against
   selfReference?: boolean; // true if references same table being imported (deferred)
+  compositeSourceColumn?: string; // extra column in Excel for disambiguation (e.g. producer name)
+  compositeColumns?: string[]; // columns in lookup table to build composite key
 }
 
 export interface UpdateModeConfig {
