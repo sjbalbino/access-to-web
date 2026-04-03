@@ -174,6 +174,7 @@ export default function Transferencias() {
                       <TableHead className="hidden sm:table-cell">Safra</TableHead>
                       <TableHead className="hidden sm:table-cell">Produto</TableHead>
                       <TableHead className="hidden md:table-cell">Origem → Destino</TableHead>
+                      <TableHead className="hidden sm:table-cell">Tipo</TableHead>
                       <TableHead className="text-right">Quantidade</TableHead>
                       <TableHead className="w-24 text-center sticky right-0 bg-background">Ações</TableHead>
                     </TableRow>
