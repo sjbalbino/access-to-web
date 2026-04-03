@@ -692,7 +692,7 @@ export const tableConfigs: TableConfig[] = [
     tableName: 'transferencias_deposito',
     description: 'Transferências entre depósitos',
     order: 15,
-    dependsOn: ['inscricoes', 'safras', 'produtos'],
+    dependsOn: ['inscricoes', 'safras', 'produtos', 'granjas', 'silos', 'locais_entrega'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toInt },
       { accessName: 'data_transferencia', dbName: 'data_transferencia', transform: toDate },
@@ -704,7 +704,11 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'inscricao_destino_id', sourceColumn: 'inscricao_destino_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
-      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
+      { dbColumn: 'granja_origem_id', sourceColumn: 'granja_origem_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
+      { dbColumn: 'granja_destino_id', sourceColumn: 'granja_destino_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
+      { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome' },
+      { dbColumn: 'local_saida_id', sourceColumn: 'local_saida_codigo', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome' },
+      { dbColumn: 'local_entrada_id', sourceColumn: 'local_entrada_codigo', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome' },
     ],
   },
   {
