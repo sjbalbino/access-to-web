@@ -379,6 +379,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={impureza || ""}
                     onChange={(e) => setImpureza(Number(e.target.value))}
                     className="text-right"
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
