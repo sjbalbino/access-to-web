@@ -434,7 +434,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 <div className="space-y-2">
                   <Label htmlFor="tipo">Tipo de Contrato (opcional)</Label>
                   <Select
-                    value={formData.tipo || ""}
+                    value={formData.tipo || undefined}
                     onValueChange={(value) => setFormData({ ...formData, tipo: value })}
                   >
                     <SelectTrigger>
@@ -452,7 +452,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 <div className="space-y-2">
                   <Label htmlFor="granja_id">Granja</Label>
                   <Select
-                    value={formData.granja_id || ""}
+                    value={formData.granja_id || undefined}
                     onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
                   >
                     <SelectTrigger>
