@@ -844,8 +844,8 @@ export default function RemessasVendaForm() {
                           </TableCell>
                           <TableCell>
                             <div className="flex justify-end gap-1">
-                              {/* Botão Editar para status "pendente" ou "carregando" sem NFe */}
-                              {(r.status === "pendente" || r.status === "carregando") && !r.nota_fiscal_id && (
+                              {/* Botão Editar para qualquer status sem NFe emitida */}
+                              {r.status !== "carregado_nfe" && !r.nota_fiscal_id && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
