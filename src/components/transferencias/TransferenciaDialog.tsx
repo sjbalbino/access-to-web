@@ -171,6 +171,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
       silo_id: siloId || null,
       quantidade_kg: quantidade,
       observacoes: observacoes || null,
+      tipo: tipo || null,
       local_saida_id: localSaidaId,
       local_entrada_id: localEntradaId,
     };
