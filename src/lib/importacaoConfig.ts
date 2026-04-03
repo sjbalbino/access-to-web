@@ -668,7 +668,7 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'contrato_venda_id', sourceColumn: 'contrato_numero', lookupTable: 'contratos_venda', lookupColumn: 'numero', lookupLabel: 'numero' },
       { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'variedade_id', sourceColumn: 'variedade_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
-      { dbColumn: 'transportadora_id', sourceColumn: 'transportadora_codigo', lookupTable: 'transportadoras', lookupColumn: 'codigo', lookupLabel: 'nome' },
+      { dbColumn: 'transportadora_id', sourceColumn: 'transportadora_nome', lookupTable: 'transportadoras', lookupColumn: 'nome', lookupLabel: 'nome' },
       { dbColumn: 'placa_id', sourceColumn: 'placa_codigo', lookupTable: 'placas', lookupColumn: 'placa', lookupLabel: 'placa' },
     ],
   },
