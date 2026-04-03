@@ -198,11 +198,11 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            Editar Remessa #{remessa.codigo}
+            {isReadOnly ? "Visualizar" : "Editar"} Remessa #{remessa.codigo}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <fieldset disabled={isReadOnly} className="space-y-4 py-4">
           {/* Card 1: Dados da Remessa */}
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader className="py-3">
