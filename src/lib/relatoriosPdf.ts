@@ -434,7 +434,16 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
 
   autoTable(doc, {
     startY: 27,
-    head: [["Nº", "Data", "Comprador", "Produto", "Qtde (kg)", "Preço/kg", "Valor Total", "Carregado", "Saldo"]],
+    head: [[
+      { content: "Nº", styles: { halign: "right" } },
+      { content: "Data", styles: { halign: "center" } },
+      "Comprador", "Produto",
+      { content: "Qtde (kg)", styles: { halign: "right" } },
+      { content: "Preço/kg", styles: { halign: "right" } },
+      { content: "Valor Total", styles: { halign: "right" } },
+      { content: "Carregado", styles: { halign: "right" } },
+      { content: "Saldo", styles: { halign: "right" } },
+    ]],
     body,
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [66, 66, 66], textColor: 255 },
