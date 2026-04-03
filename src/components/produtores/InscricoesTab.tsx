@@ -114,7 +114,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const deleteInscricao = useDeleteInscricao();
   const { canEdit } = useAuth();
   const { isLoading: isLoadingCep, fetchCep } = useCepLookup();
-  const { data: allMunicipios } = useIbgeMunicipios();
+  const { data: allMunicipios, isLoading: isLoadingMunicipios } = useIbgeMunicipios();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
