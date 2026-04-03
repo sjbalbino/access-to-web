@@ -63,7 +63,7 @@ export function gerarDemonstrativoGerencialPdf(data: DemonstrativoGerencialData)
 
   autoTable(doc, {
     startY: 28,
-    head: [['Centro', 'Código', 'Sub-Centro', 'Valor (R$)', '% Grupo']],
+    head: [['Centro', 'Código', 'Sub-Centro', { content: 'Valor (R$)', styles: { halign: 'right' } }, { content: '% Grupo', styles: { halign: 'right' } }]],
     body: rows,
     styles: { fontSize: 8 },
     headStyles: { fillColor: [60, 60, 60] },
