@@ -319,7 +319,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
               <Label>Comprador</Label>
               <Select value={compradorId} onValueChange={setCompradorId}>
                 <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
-                <SelectContent><SelectItem value="all">Todos</SelectItem>{compradores.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                <SelectContent><SelectItem value="all">Todos</SelectItem>{compradores.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           )}
