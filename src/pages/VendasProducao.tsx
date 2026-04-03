@@ -146,7 +146,7 @@ export default function VendasProducao() {
                     <SelectItem value="__all__">Todos</SelectItem>
                     {compradores?.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.nome}
+                        {c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>

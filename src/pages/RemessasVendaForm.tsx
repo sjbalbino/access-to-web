@@ -386,7 +386,7 @@ export default function RemessasVendaForm() {
                 Remessas - Contrato #{contrato.numero}
               </h1>
               <p className="text-muted-foreground">
-                {contrato.comprador?.nome} • {contrato.safra?.nome}
+                {contrato.comprador?.nome}{contrato.comprador?.nome_fantasia ? ` (${contrato.comprador.nome_fantasia})` : ''} • {contrato.safra?.nome}
               </p>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant="secondary" className="text-base font-semibold">

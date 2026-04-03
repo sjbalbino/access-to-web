@@ -180,7 +180,7 @@ export default function LancamentosFinanceiros() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right font-medium">{fmtCurrency(Number(l.valor))}</TableCell>
-                        <TableCell className="text-sm hidden lg:table-cell">{l.clientes_fornecedores?.nome || '-'}</TableCell>
+                        <TableCell className="text-sm hidden lg:table-cell">{l.clientes_fornecedores?.nome_fantasia ? `${l.clientes_fornecedores.nome} (${l.clientes_fornecedores.nome_fantasia})` : l.clientes_fornecedores?.nome || '-'}</TableCell>
                         <TableCell className="text-sm hidden lg:table-cell">{l.documento || '-'}</TableCell>
                         {canEdit && (
                           <TableCell className="sticky right-0 bg-background">
