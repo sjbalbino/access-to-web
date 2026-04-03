@@ -41,7 +41,7 @@ export function useLancamentosFinanceiros(filtros?: FiltrosLancamento) {
           granjas:granja_id(razao_social),
           sub_centros_custo:sub_centro_custo_id(codigo, descricao, plano_contas_gerencial:centro_custo_id(codigo, descricao)),
           dre_contas:dre_conta_id(codigo, descricao),
-          clientes_fornecedores:fornecedor_id(nome),
+          clientes_fornecedores:fornecedor_id(nome, nome_fantasia),
           safras:safra_id(nome)
         `)
         .order('data_lancamento', { ascending: false });

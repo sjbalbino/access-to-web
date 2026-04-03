@@ -146,7 +146,7 @@ export default function VendasProducao() {
                     <SelectItem value="__all__">Todos</SelectItem>
                     {compradores?.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.nome}
+                        {c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -213,7 +213,7 @@ export default function VendasProducao() {
                       contratosPaginados?.map((contrato) => (
                         <TableRow key={contrato.id}>
                           <TableCell className="font-medium">{contrato.numero}</TableCell>
-                          <TableCell className="max-w-[150px] truncate">{contrato.comprador?.nome || "-"}</TableCell>
+                          <TableCell className="max-w-[200px] truncate">{contrato.comprador?.nome_fantasia ? `${contrato.comprador.nome} (${contrato.comprador.nome_fantasia})` : contrato.comprador?.nome || "-"}</TableCell>
                           <TableCell className="hidden sm:table-cell">{contrato.safra?.nome || "-"}</TableCell>
                           <TableCell>
                             {contrato.data_contrato

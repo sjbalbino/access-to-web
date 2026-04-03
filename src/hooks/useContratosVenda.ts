@@ -47,7 +47,7 @@ export interface ContratoVenda {
   // Joins
   safra?: { id: string; nome: string } | null;
   produto?: { id: string; nome: string } | null;
-  comprador?: { id: string; nome: string; cpf_cnpj: string | null } | null;
+  comprador?: { id: string; nome: string; nome_fantasia?: string | null; cpf_cnpj: string | null } | null;
   inscricao_produtor?: { 
     id: string; 
     granja: string | null; 
@@ -78,7 +78,7 @@ export function useContratosVenda(filtros?: ContratoVendaFiltros) {
           *,
           safra:safras(id, nome),
           produto:produtos(id, nome),
-          comprador:clientes_fornecedores(id, nome, cpf_cnpj),
+          comprador:clientes_fornecedores(id, nome, nome_fantasia, cpf_cnpj),
           inscricao_produtor:inscricoes_produtor(
             id, granja, inscricao_estadual,
             produtor:produtores(id, nome)
@@ -136,7 +136,7 @@ export function useContratoVenda(id: string | undefined) {
           *,
           safra:safras(id, nome),
           produto:produtos(id, nome, tipo),
-          comprador:clientes_fornecedores(id, nome, cpf_cnpj),
+          comprador:clientes_fornecedores(id, nome, nome_fantasia, cpf_cnpj),
           inscricao_produtor:inscricoes_produtor(
             id, granja, inscricao_estadual,
             produtor:produtores(id, nome)

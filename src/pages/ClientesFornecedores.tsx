@@ -471,7 +471,12 @@ export default function ClientesFornecedores() {
             <TableBody>
               {dadosPaginados.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.nome}</TableCell>
+                  <TableCell className="font-medium">
+                    {item.nome}
+                    {item.nome_fantasia && item.nome_fantasia.toLowerCase() !== item.nome.toLowerCase() && (
+                      <span className="text-muted-foreground text-xs ml-1">({item.nome_fantasia})</span>
+                    )}
+                  </TableCell>
                   <TableCell>{getTipoBadge(item.tipo)}</TableCell>
                   <TableCell className="hidden sm:table-cell">{item.cpf_cnpj || '-'}</TableCell>
                   <TableCell className="hidden md:table-cell">{item.cidade ? `${item.cidade}/${item.uf}` : '-'}</TableCell>

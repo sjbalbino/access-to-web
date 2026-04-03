@@ -572,7 +572,7 @@ export default function VendaProducaoForm() {
                   <SelectContent>
                     {compradores?.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.nome} {c.cpf_cnpj ? `- ${c.cpf_cnpj}` : ""}
+                        {c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''} {c.cpf_cnpj ? `- ${c.cpf_cnpj}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>

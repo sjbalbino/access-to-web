@@ -180,7 +180,7 @@ export default function LancamentosFinanceiros() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right font-medium">{fmtCurrency(Number(l.valor))}</TableCell>
-                        <TableCell className="text-sm hidden lg:table-cell">{l.clientes_fornecedores?.nome || '-'}</TableCell>
+                        <TableCell className="text-sm hidden lg:table-cell">{l.clientes_fornecedores?.nome_fantasia ? `${l.clientes_fornecedores.nome} (${l.clientes_fornecedores.nome_fantasia})` : l.clientes_fornecedores?.nome || '-'}</TableCell>
                         <TableCell className="text-sm hidden lg:table-cell">{l.documento || '-'}</TableCell>
                         {canEdit && (
                           <TableCell className="sticky right-0 bg-background">
@@ -275,7 +275,7 @@ export default function LancamentosFinanceiros() {
                 <Label>Fornecedor</Label>
                 <Select value={formData.fornecedor_id || 'none'} onValueChange={v => setFormData({ ...formData, fornecedor_id: v === 'none' ? null : v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent><SelectItem value="none">Nenhum</SelectItem>{clientes?.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="none">Nenhum</SelectItem>{clientes?.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
