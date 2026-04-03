@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +34,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, FileText, Building2, Banknote, Crown } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Plus, Pencil, Trash2, FileText, Building2, Banknote, Crown, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -54,6 +67,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCpfCnpj, formatTelefone } from "@/lib/formatters";
 import { useProdutor } from "@/hooks/useProdutores";
+import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
+import { cn } from "@/lib/utils";
 
 // Tipos de contrato para a inscrição (opcional - para regras de negócio futuras)
 const TIPOS_CONTRATO = [
@@ -103,10 +118,14 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedInscricao, setSelectedInscricao] = useState<InscricaoProdutor | null>(null);
   const [formData, setFormData] = useState<InscricaoInput>(emptyInscricao);
+  const [cidadeOpen, setCidadeOpen] = useState(false);
+  const [ufCidade, setUfCidade] = useState<string>("");
+  const { data: municipios } = useIbgeMunicipios(ufCidade || undefined);
 
   const handleNew = () => {
     setSelectedInscricao(null);
-    // Preencher automaticamente com dados do produtor
+    const uf = produtor?.uf || "";
+    setUfCidade(uf);
     setFormData({ 
       ...emptyInscricao, 
       produtor_id: produtorId,
@@ -117,7 +136,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       complemento: produtor?.complemento || "",
       bairro: produtor?.bairro || "",
       cidade: produtor?.cidade || "",
-      uf: produtor?.uf || "",
+      uf: uf,
       telefone: produtor?.telefone || "",
       email: produtor?.email || "",
       granja_id: produtor?.granja_id || null,
@@ -127,6 +146,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
   const handleEdit = (inscricao: InscricaoProdutor) => {
     setSelectedInscricao(inscricao);
+    setUfCidade(inscricao.uf || "");
     setFormData({
       produtor_id: inscricao.produtor_id,
       nome: inscricao.nome || "",
@@ -213,12 +233,14 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
     if (cep.length === 8) {
       const data = await fetchCep(cep);
       if (data) {
+        const newUf = data.uf || formData.uf || "";
+        setUfCidade(newUf);
         setFormData({
           ...formData,
           logradouro: data.logradouro || formData.logradouro,
           bairro: data.bairro || formData.bairro,
-          cidade: data.localidade || formData.cidade,
-          uf: data.uf || formData.uf,
+          cidade: data.ibge || data.localidade || formData.cidade,
+          uf: newUf,
         });
       }
     }
@@ -412,7 +434,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 <div className="space-y-2">
                   <Label htmlFor="tipo">Tipo de Contrato (opcional)</Label>
                   <Select
-                    value={formData.tipo || ""}
+                    value={formData.tipo || undefined}
                     onValueChange={(value) => setFormData({ ...formData, tipo: value })}
                   >
                     <SelectTrigger>
@@ -430,7 +452,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 <div className="space-y-2">
                   <Label htmlFor="granja_id">Granja</Label>
                   <Select
-                    value={formData.granja_id || ""}
+                    value={formData.granja_id || undefined}
                     onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
                   >
                     <SelectTrigger>
@@ -513,22 +535,68 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                     onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2 md:col-span-3">
-                  <Label htmlFor="cidade">Cidade</Label>
-                  <Input
-                    id="cidade"
-                    value={formData.cidade || ""}
-                    onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="uf">UF</Label>
-                  <Input
-                    id="uf"
-                    value={formData.uf || ""}
-                    onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
-                    maxLength={2}
-                  />
+                  <Select
+                    value={formData.uf || undefined}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, uf: value, cidade: "" });
+                      setUfCidade(value);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="UF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"].map(uf => (
+                        <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 md:col-span-3">
+                  <Label>Cidade</Label>
+                  <Popover open={cidadeOpen} onOpenChange={setCidadeOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={cidadeOpen}
+                        className="w-full justify-between font-normal"
+                      >
+                        {formData.cidade
+                          ? (() => {
+                              const mun = municipios?.find(m => m.codigo_ibge === formData.cidade || m.nome === formData.cidade);
+                              return mun ? `${mun.nome} (${mun.codigo_ibge})` : formData.cidade;
+                            })()
+                          : "Selecione a cidade"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar município..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum município encontrado. {!formData.uf && "Selecione a UF primeiro."}</CommandEmpty>
+                          <CommandGroup>
+                            {municipios?.map((mun) => (
+                              <CommandItem
+                                key={mun.id}
+                                value={`${mun.nome} ${mun.codigo_ibge}`}
+                                onSelect={() => {
+                                  setFormData({ ...formData, cidade: mun.codigo_ibge });
+                                  setCidadeOpen(false);
+                                }}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", formData.cidade === mun.codigo_ibge ? "opacity-100" : "opacity-0")} />
+                                {mun.nome} <span className="ml-1 text-muted-foreground text-xs">({mun.codigo_ibge})</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             </div>
