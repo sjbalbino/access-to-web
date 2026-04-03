@@ -17,6 +17,7 @@ export interface TransferenciaDeposito {
   observacoes: string | null;
   local_saida_id: string | null;
   local_entrada_id: string | null;
+  tipo: string | null;
   created_at: string;
   updated_at: string;
   // Joins

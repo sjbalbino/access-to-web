@@ -197,6 +197,9 @@ export default function Transferencias() {
                             <span className="font-medium">{t.inscricao_destino?.produtores?.nome || t.inscricao_destino?.inscricao_estadual || "-"}</span>
                           </div>
                         </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          {t.tipo === 'industria' ? 'Indústria' : t.tipo === 'semente' ? 'Semente' : '-'}
+                        </TableCell>
                         <TableCell className="text-right font-medium">{formatNumber(t.quantidade_kg)} kg</TableCell>
                         <TableCell className="sticky right-0 bg-background">
                           <div className="flex items-center justify-center gap-1">

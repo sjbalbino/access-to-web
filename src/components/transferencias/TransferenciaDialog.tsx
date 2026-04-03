@@ -269,6 +269,21 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
             </div>
           </div>
 
+          {/* Tipo */}
+          <div className="space-y-2">
+            <Label>Tipo</Label>
+            <Select value={tipo || "__none__"} onValueChange={(v) => setTipo(v === "__none__" ? "" : v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Nenhum</SelectItem>
+                <SelectItem value="industria">Indústria</SelectItem>
+                <SelectItem value="semente">Semente</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* SAÍDA (Origem) */}
           <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
             <h4 className="font-medium text-sm text-muted-foreground">SAÍDA (Origem)</h4>
