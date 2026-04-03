@@ -583,7 +583,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
               />
             </CardContent>
           </Card>
-        </fieldset>
+        </div>
 
         {isReadOnly && (
           <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800 flex items-center gap-2">
