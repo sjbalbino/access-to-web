@@ -579,6 +579,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                 onChange={(e) => setObservacoes(e.target.value)}
                 placeholder="Observações da remessa..."
                 rows={3}
+                disabled={isReadOnly}
               />
             </CardContent>
           </Card>
