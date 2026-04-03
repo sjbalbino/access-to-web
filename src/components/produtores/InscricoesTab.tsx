@@ -323,9 +323,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   <TableCell className="font-medium">{inscricao.inscricao_estadual || "-"}</TableCell>
                   <TableCell className="font-mono">{formatCpfCnpj(inscricao.cpf_cnpj) || "-"}</TableCell>
                   <TableCell>
-                    {inscricao.cidade && inscricao.uf
-                      ? `${inscricao.cidade}/${inscricao.uf}`
-                      : inscricao.cidade || inscricao.uf || "-"}
+                    {resolveCidade(inscricao.cidade)}
                   </TableCell>
                   <TableCell>
                     {inscricao.granja_id
