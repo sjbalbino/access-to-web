@@ -789,7 +789,6 @@ export default function RemessasVendaForm() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Cód</TableHead>
                       <TableHead>Data</TableHead>
                       <TableHead>Transportadora</TableHead>
                       <TableHead>Placa</TableHead>
