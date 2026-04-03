@@ -368,6 +368,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={umidade || ""}
                     onChange={(e) => setUmidade(Number(e.target.value))}
                     className="text-right"
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
