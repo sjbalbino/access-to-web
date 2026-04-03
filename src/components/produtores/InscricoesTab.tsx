@@ -572,7 +572,8 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                       >
                         {formData.cidade
                           ? (() => {
-                              const mun = municipios?.find(m => m.codigo_ibge === formData.cidade || m.nome === formData.cidade);
+                              const mun = municipios?.find(m => m.codigo_ibge === formData.cidade || m.nome === formData.cidade)
+                                || allMunicipios?.find(m => m.codigo_ibge === formData.cidade || m.nome === formData.cidade);
                               return mun ? `${mun.nome} (${mun.codigo_ibge})` : formData.cidade;
                             })()
                           : "Selecione a cidade"}
