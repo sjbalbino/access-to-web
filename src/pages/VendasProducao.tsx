@@ -213,7 +213,7 @@ export default function VendasProducao() {
                       contratosPaginados?.map((contrato) => (
                         <TableRow key={contrato.id}>
                           <TableCell className="font-medium">{contrato.numero}</TableCell>
-                          <TableCell className="max-w-[150px] truncate">{contrato.comprador?.nome || "-"}</TableCell>
+                          <TableCell className="max-w-[200px] truncate">{contrato.comprador?.nome_fantasia ? `${contrato.comprador.nome} (${contrato.comprador.nome_fantasia})` : contrato.comprador?.nome || "-"}</TableCell>
                           <TableCell className="hidden sm:table-cell">{contrato.safra?.nome || "-"}</TableCell>
                           <TableCell>
                             {contrato.data_contrato
