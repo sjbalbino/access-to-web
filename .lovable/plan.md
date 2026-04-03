@@ -1,31 +1,20 @@
 
 
-## Plano: Adicionar campo Ativa/Inativa no formulário de Granja
+## Plano: Atualizar Inscrições Estaduais sem granja
 
 ### Problema
-O formulário de cadastro/edição de granjas não possui o campo para alterar o status (ativa/inativa). Também é necessário corrigir a granja existente que está com `ativa = false`.
+562 de 563 inscrições estaduais estão sem o campo `granja_id` preenchido.
 
 ### Solução
+Executar um UPDATE via insert tool para definir `granja_id` da única granja cadastrada (`9ee8bf67-f322-4415-9dfc-2ab123ecffaa` - AGROPECUARIA GRINGS) em todas as inscrições que estejam com `granja_id IS NULL`.
 
-**1. Migração SQL** — Ativar granjas existentes:
 ```sql
-UPDATE granjas SET ativa = true WHERE ativa = false;
+UPDATE inscricoes_produtor 
+SET granja_id = '9ee8bf67-f322-4415-9dfc-2ab123ecffaa' 
+WHERE granja_id IS NULL;
 ```
 
-**2. Código** (`src/pages/Granjas.tsx`) — Adicionar um `Switch` no formulário, após o campo E-mail (antes dos botões), com label "Ativa":
-```typescript
-<div className="flex items-center gap-2 md:col-span-2">
-  <Switch
-    checked={formData.ativa ?? true}
-    onCheckedChange={(checked) => setFormData({ ...formData, ativa: checked })}
-  />
-  <Label>Granja Ativa</Label>
-</div>
-```
-
-Importar o componente `Switch` de `@/components/ui/switch`.
-
-### Arquivos alterados
-- `src/pages/Granjas.tsx` (adicionar Switch + import)
-- Nova migração SQL para corrigir dados existentes
+### Impacto
+- 562 registros atualizados
+- Nenhuma alteração de código necessária
 
