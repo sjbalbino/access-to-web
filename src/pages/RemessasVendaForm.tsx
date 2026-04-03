@@ -811,7 +811,6 @@ export default function RemessasVendaForm() {
                     ) : (
                       remessas?.map((r) => (
                         <TableRow key={r.id}>
-                          <TableCell className="font-medium">{r.codigo}</TableCell>
                           <TableCell>
                             {r.data_remessa ? format(parseISO(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                           </TableCell>
