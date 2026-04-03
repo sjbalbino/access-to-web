@@ -6,56 +6,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Users, Plus, Pencil, Trash2, Loader2, Phone, Mail } from "lucide-react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Users, Plus, Search, Loader2, Trash2, Save } from "lucide-react";
-import {
-  useProdutores,
-  useCreateProdutor,
-  useUpdateProdutor,
-  useDeleteProdutor,
-  ProdutorInput,
+  useProdutores, useCreateProdutor, useUpdateProdutor, useDeleteProdutor, ProdutorInput,
 } from "@/hooks/useProdutores";
 import { useGranjas } from "@/hooks/useGranjas";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { InscricoesTab } from "@/components/produtores/InscricoesTab";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
 import { formatCpf, formatCpfCnpj, formatTelefone, validateCpf, validateCnpj } from "@/lib/formatters";
 import { toast } from "sonner";
-import { usePaginacao } from "@/hooks/usePaginacao";
-import { TablePagination } from "@/components/ui/table-pagination";
 
 const TIPOS_PRODUTOR = [
   { value: "produtor", label: "Produtor" },
@@ -99,74 +71,76 @@ export default function Produtores() {
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
   const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
 
-  const [selectedProdutorId, setSelectedProdutorId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [filterTipo, setFilterTipo] = useState<string>("todos");
-  const [filterStatus, setFilterStatus] = useState<string>("ativos");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [newFormData, setNewFormData] = useState<ProdutorInput>(emptyProdutor);
-  const [editFormData, setEditFormData] = useState<ProdutorInput>(emptyProdutor);
+  // Filtros
+  const [filtroNome, setFiltroNome] = useState("");
+  const [filtroCpfCnpj, setFiltroCpfCnpj] = useState("");
+  const [filtroTipo, setFiltroTipo] = useState("todos");
+  const [filtroCidade, setFiltroCidade] = useState("");
+  const [filtroAtivo, setFiltroAtivo] = useState("ativo");
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 20;
 
-  // Filtra produtores pela busca, tipo e status
-  const filteredProdutores = useMemo(() => {
-    return produtores?.filter((p: any) => {
-      const matchesSearch =
-        p.nome.toLowerCase().includes(search.toLowerCase()) ||
-        p.cpf_cnpj?.includes(search);
-      const matchesTipo =
-        filterTipo === "todos" || p.tipo_produtor === filterTipo;
-      const matchesStatus =
-        filterStatus === "todos" ||
-        (filterStatus === "ativos" && p.ativo !== false) ||
-        (filterStatus === "inativos" && p.ativo === false);
-      return matchesSearch && matchesTipo && matchesStatus;
-    });
-  }, [produtores, search, filterTipo, filterStatus]);
+  // Dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [formData, setFormData] = useState<ProdutorInput>(emptyProdutor);
 
-  // Produtor selecionado
-  const selectedProdutor = useMemo(() => {
-    return produtores?.find((p: any) => p.id === selectedProdutorId);
-  }, [produtores, selectedProdutorId]);
+  // Inscrições dialog
+  const [inscricoesDialogOpen, setInscricoesDialogOpen] = useState(false);
+  const [inscricoesProdutorId, setInscricoesProdutorId] = useState<string | null>(null);
+  const [inscricoesProdutorNome, setInscricoesProdutorNome] = useState("");
 
-  // Índice do produtor selecionado na lista filtrada
-  const selectedIndex = useMemo(() => {
-    if (!selectedProdutorId || !filteredProdutores) return -1;
-    return filteredProdutores.findIndex((p: any) => p.id === selectedProdutorId);
-  }, [filteredProdutores, selectedProdutorId]);
+  const dadosFiltrados = useMemo(() => {
+    let dados = produtores || [];
+    if (filtroNome) {
+      const termo = filtroNome.toLowerCase();
+      dados = dados.filter((p: any) => p.nome?.toLowerCase().includes(termo));
+    }
+    if (filtroCpfCnpj) {
+      const termo = filtroCpfCnpj.replace(/\D/g, "");
+      dados = dados.filter((p: any) => p.cpf_cnpj?.replace(/\D/g, "").includes(termo));
+    }
+    if (filtroTipo !== "todos") {
+      dados = dados.filter((p: any) => p.tipo_produtor === filtroTipo);
+    }
+    if (filtroCidade) {
+      const termo = filtroCidade.toLowerCase();
+      dados = dados.filter((p: any) => p.cidade?.toLowerCase().includes(termo));
+    }
+    if (filtroAtivo !== "todos") {
+      dados = dados.filter((p: any) => filtroAtivo === "ativo" ? p.ativo !== false : p.ativo === false);
+    }
+    return dados;
+  }, [produtores, filtroNome, filtroCpfCnpj, filtroTipo, filtroCidade, filtroAtivo]);
 
-  // Atualiza o formulário de edição quando muda a seleção
-  const handleSelect = (produtor: any) => {
-    setSelectedProdutorId(produtor.id);
-    setEditFormData({
-      nome: produtor.nome,
-      tipo_pessoa: produtor.tipo_pessoa || "fisica",
-      tipo_produtor: produtor.tipo_produtor || "produtor",
-      cpf_cnpj: produtor.cpf_cnpj || "",
-      identidade: produtor.identidade || "",
-      granja_id: produtor.granja_id,
-      logradouro: produtor.logradouro || "",
-      numero: produtor.numero || "",
-      complemento: produtor.complemento || "",
-      bairro: produtor.bairro || "",
-      cidade: produtor.cidade || "",
-      uf: produtor.uf || "",
-      cep: produtor.cep || "",
-      telefone: produtor.telefone || "",
-      celular: produtor.celular || "",
-      email: produtor.email || "",
-      ativo: produtor.ativo ?? true,
-    });
+  const totalPaginas = Math.max(1, Math.ceil(dadosFiltrados.length / itensPorPagina));
+  const dadosPaginados = dadosFiltrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
+
+  const resetForm = () => {
+    setFormData(emptyProdutor);
+    setEditingItem(null);
   };
 
-  const handleCnpjBlurNew = async (cnpj: string) => {
-    if (newFormData.tipo_pessoa !== "juridica") return;
+  const handleCepBlur = async (cep: string) => {
+    const data = await fetchCep(cep);
+    if (data) {
+      setFormData((prev) => ({
+        ...prev,
+        logradouro: data.logradouro || prev.logradouro,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.localidade || prev.cidade,
+        uf: data.uf || prev.uf,
+      }));
+    }
+  };
+
+  const handleCnpjBlur = async (cnpj: string) => {
+    if (formData.tipo_pessoa !== "juridica") return;
     const cleanCnpj = cnpj.replace(/\D/g, "");
     if (cleanCnpj.length !== 14) return;
-    
     const data = await fetchCnpj(cnpj);
     if (data) {
-      setNewFormData((prev) => ({
+      setFormData((prev) => ({
         ...prev,
         nome: data.razao_social || prev.nome,
         logradouro: data.logradouro || prev.logradouro,
@@ -182,777 +156,353 @@ export default function Produtores() {
     }
   };
 
-  const handleCnpjBlurEdit = async (cnpj: string) => {
-    if (editFormData.tipo_pessoa !== "juridica") return;
-    const cleanCnpj = cnpj.replace(/\D/g, "");
-    if (cleanCnpj.length !== 14) return;
-    
-    const data = await fetchCnpj(cnpj);
-    if (data) {
-      setEditFormData((prev) => ({
-        ...prev,
-        nome: data.razao_social || prev.nome,
-        logradouro: data.logradouro || prev.logradouro,
-        numero: data.numero || prev.numero,
-        complemento: data.complemento || prev.complemento,
-        bairro: data.bairro || prev.bairro,
-        cidade: data.cidade || prev.cidade,
-        uf: data.uf || prev.uf,
-        cep: data.cep?.replace(/\D/g, "") || prev.cep,
-        telefone: data.telefone || prev.telefone,
-        email: data.email || prev.email,
-      }));
-    }
-  };
-
-  const handleCepBlurNew = async (cep: string) => {
-    const data = await fetchCep(cep);
-    if (data) {
-      setNewFormData((prev) => ({
-        ...prev,
-        logradouro: data.logradouro || prev.logradouro,
-        bairro: data.bairro || prev.bairro,
-        cidade: data.localidade || prev.cidade,
-        uf: data.uf || prev.uf,
-      }));
-    }
-  };
-
-  const handleCepBlurEdit = async (cep: string) => {
-    const data = await fetchCep(cep);
-    if (data) {
-      setEditFormData((prev) => ({
-        ...prev,
-        logradouro: data.logradouro || prev.logradouro,
-        bairro: data.bairro || prev.bairro,
-        cidade: data.localidade || prev.cidade,
-        uf: data.uf || prev.uf,
-      }));
-    }
-  };
-
-  const handleNew = () => {
-    setNewFormData(emptyProdutor);
-    setDialogOpen(true);
-  };
-
-  const handleSaveNew = async () => {
-    // Validar CPF/CNPJ se informado
-    if (newFormData.cpf_cnpj && newFormData.cpf_cnpj.length > 0) {
-      if (newFormData.tipo_pessoa === "fisica") {
-        if (!validateCpf(newFormData.cpf_cnpj)) {
-          toast.error("CPF inválido!");
-          return;
-        }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.cpf_cnpj && formData.cpf_cnpj.length > 0) {
+      const doc = formData.cpf_cnpj.replace(/\D/g, "");
+      if (formData.tipo_pessoa === "fisica" || formData.tipo_pessoa === "produtor_rural") {
+        if (doc.length > 0 && !validateCpf(doc)) { toast.error("CPF inválido!"); return; }
       } else {
-        if (!validateCnpj(newFormData.cpf_cnpj)) {
-          toast.error("CNPJ inválido!");
-          return;
-        }
+        if (doc.length > 0 && !validateCnpj(doc)) { toast.error("CNPJ inválido!"); return; }
       }
     }
+    if (editingItem) {
+      await updateProdutor.mutateAsync({ id: editingItem.id, ...formData });
+    } else {
+      await createProdutor.mutateAsync(formData);
+    }
+    setIsDialogOpen(false);
+    resetForm();
+  };
 
-    const newProdutor = await createProdutor.mutateAsync(newFormData);
-    setDialogOpen(false);
-    if (newProdutor) {
-      setSelectedProdutorId(newProdutor.id);
-      handleSelect(newProdutor);
+  const handleEdit = (item: any) => {
+    setEditingItem(item);
+    setFormData({
+      nome: item.nome,
+      tipo_pessoa: item.tipo_pessoa || "fisica",
+      tipo_produtor: item.tipo_produtor || "produtor",
+      cpf_cnpj: item.cpf_cnpj || "",
+      identidade: item.identidade || "",
+      granja_id: item.granja_id,
+      logradouro: item.logradouro || "",
+      numero: item.numero || "",
+      complemento: item.complemento || "",
+      bairro: item.bairro || "",
+      cidade: item.cidade || "",
+      uf: item.uf || "",
+      cep: item.cep || "",
+      telefone: item.telefone || "",
+      celular: item.celular || "",
+      email: item.email || "",
+      ativo: item.ativo ?? true,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este registro?")) {
+      await deleteProdutor.mutateAsync(id);
     }
   };
 
-  const handleSaveEdit = async () => {
-    if (!selectedProdutorId) return;
+  const handleOpenInscricoes = (item: any) => {
+    setInscricoesProdutorId(item.id);
+    setInscricoesProdutorNome(item.nome);
+    setInscricoesDialogOpen(true);
+  };
 
-    // Validar CPF/CNPJ se informado
-    if (editFormData.cpf_cnpj && editFormData.cpf_cnpj.length > 0) {
-      if (editFormData.tipo_pessoa === "fisica") {
-        if (!validateCpf(editFormData.cpf_cnpj)) {
-          toast.error("CPF inválido!");
-          return;
-        }
-      } else {
-        if (!validateCnpj(editFormData.cpf_cnpj)) {
-          toast.error("CNPJ inválido!");
-          return;
-        }
-      }
+  const getTipoBadge = (tipo: string) => {
+    switch (tipo) {
+      case "socio":
+        return <Badge className="bg-secondary text-secondary-foreground">Sócio</Badge>;
+      default:
+        return <Badge className="bg-accent/80 text-accent-foreground">Produtor</Badge>;
     }
-
-    await updateProdutor.mutateAsync({ id: selectedProdutorId, ...editFormData });
   };
 
-  const handleDelete = async () => {
-    if (!selectedProdutorId) return;
-    await deleteProdutor.mutateAsync(selectedProdutorId);
-    setDeleteDialogOpen(false);
-    setSelectedProdutorId(null);
-  };
+  const isFisica = formData.tipo_pessoa === "fisica" || formData.tipo_pessoa === "produtor_rural";
 
-  const {
-    dadosPaginados,
-    paginaAtual,
-    totalPaginas,
-    totalRegistros,
-    setPaginaAtual,
-    gerarNumerosPaginas,
-  } = usePaginacao(filteredProdutores || []);
-
+  if (isLoading) {
+    return <div className="p-8">Carregando...</div>;
+  }
 
   return (
     <AppLayout>
-      <PageHeader
-        title="Cadastro de Sócios e Produtores"
-        description="Produtores depositam produção para devolução/compra. Sócios são parceiros na Granja."
-        icon={<Users className="h-6 w-6" />}
-        iconColor="bg-accent/10 text-accent"
-        actions={
-          canEdit && (
-            <Button onClick={handleNew} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo
-            </Button>
-          )
-        }
-      />
+      <div className="space-y-6">
+        <PageHeader
+          title="Cadastro de Sócios e Produtores"
+          description="Produtores depositam produção para devolução/compra. Sócios são parceiros na Granja."
+          icon={<Users className="h-6 w-6" />}
+        />
 
-      {/* Lista de Produtores/Sócios */}
-      <Card className="mb-4">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <CardTitle className="text-lg">Lista de Sócios e Produtores</CardTitle>
-              {filteredProdutores && (
-                <span className="text-sm text-muted-foreground">
-                  {selectedIndex >= 0
-                    ? `Reg: ${selectedIndex + 1} de ${filteredProdutores.length}`
-                    : `${filteredProdutores.length} registros`}
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="ativos">Ativos</SelectItem>
-                  <SelectItem value="inativos">Inativos</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterTipo} onValueChange={setFilterTipo}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="produtor">Produtores</SelectItem>
-                  <SelectItem value="socio">Sócios</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome/CPF..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Lista de Sócios e Produtores
+            </CardTitle>
+            {canEdit && (
+              <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+                <Button className="gap-2" size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Novo Registro</span>
+                </Button>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{editingItem ? "Editar" : "Novo"} Produtor/Sócio</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Tipo</Label>
+                        <Select value={formData.tipo_produtor || "produtor"} onValueChange={(v) => setFormData({ ...formData, tipo_produtor: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {TIPOS_PRODUTOR.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Tipo Pessoa</Label>
+                        <Select value={formData.tipo_pessoa || "fisica"} onValueChange={(v) => setFormData({ ...formData, tipo_pessoa: v, cpf_cnpj: "" })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {TIPOS_PESSOA.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{isFisica ? "CPF" : "CNPJ"}</Label>
+                        <div className="relative">
+                          <Input
+                            value={isFisica ? formatCpf(formData.cpf_cnpj || "") : formatCnpj(formData.cpf_cnpj || "")}
+                            onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value.replace(/\D/g, "") })}
+                            onBlur={(e) => handleCnpjBlur(e.target.value)}
+                            placeholder={isFisica ? "000.000.000-00" : "00.000.000/0000-00"}
+                            maxLength={isFisica ? 14 : 18}
+                          />
+                          {cnpjLoading && formData.tipo_pessoa === "juridica" && (
+                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Identidade</Label>
+                        <Input value={formData.identidade || ""} onChange={(e) => setFormData({ ...formData, identidade: e.target.value })} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Nome Completo *</Label>
+                        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Granja</Label>
+                        <Select value={formData.granja_id || ""} onValueChange={(v) => setFormData({ ...formData, granja_id: v || null })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            {granjas?.map((g) => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>CEP</Label>
+                        <div className="relative">
+                          <Input
+                            value={formData.cep || ""}
+                            onChange={(e) => setFormData({ ...formData, cep: formatCep(e.target.value) })}
+                            onBlur={(e) => handleCepBlur(e.target.value)}
+                            placeholder="00000-000"
+                            maxLength={9}
+                          />
+                          {cepLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                        </div>
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Logradouro</Label>
+                        <Input value={formData.logradouro || ""} onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Número</Label>
+                        <Input value={formData.numero || ""} onChange={(e) => setFormData({ ...formData, numero: e.target.value })} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Complemento</Label>
+                        <Input value={formData.complemento || ""} onChange={(e) => setFormData({ ...formData, complemento: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Bairro</Label>
+                        <Input value={formData.bairro || ""} onChange={(e) => setFormData({ ...formData, bairro: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Cidade</Label>
+                        <Input value={formData.cidade || ""} onChange={(e) => setFormData({ ...formData, cidade: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>UF</Label>
+                        <Input value={formData.uf || ""} onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })} maxLength={2} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Telefone</Label>
+                        <Input value={formatTelefone(formData.telefone || "")} onChange={(e) => setFormData({ ...formData, telefone: e.target.value.replace(/\D/g, "") })} placeholder="(00) 0000-0000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Celular</Label>
+                        <Input value={formatTelefone(formData.celular || "")} onChange={(e) => setFormData({ ...formData, celular: e.target.value.replace(/\D/g, "") })} placeholder="(00) 00000-0000" />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>E-mail</Label>
+                        <Input type="email" value={formData.email || ""} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Switch checked={formData.ativo ?? true} onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })} />
+                      <Label>Ativo</Label>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                      <Button type="submit" disabled={!formData.nome || createProdutor.isPending || updateProdutor.isPending}>
+                        {(createProdutor.isPending || updateProdutor.isPending) ? "Salvando..." : "Salvar"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+          </CardHeader>
+          <CardContent className="min-w-0 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Nome</Label>
+                <Input placeholder="Buscar..." value={filtroNome} onChange={(e) => { setFiltroNome(e.target.value); setPaginaAtual(1); }} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">CPF/CNPJ</Label>
+                <Input placeholder="Buscar..." value={filtroCpfCnpj} onChange={(e) => { setFiltroCpfCnpj(e.target.value); setPaginaAtual(1); }} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Tipo</Label>
+                <Select value={filtroTipo} onValueChange={(v) => { setFiltroTipo(v); setPaginaAtual(1); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="produtor">Produtores</SelectItem>
+                    <SelectItem value="socio">Sócios</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Cidade</Label>
+                <Input placeholder="Buscar..." value={filtroCidade} onChange={(e) => { setFiltroCidade(e.target.value); setPaginaAtual(1); }} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Status</Label>
+                <Select value={filtroAtivo} onValueChange={(v) => { setFiltroAtivo(v); setPaginaAtual(1); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ativo">Ativos</SelectItem>
+                    <SelectItem value="inativo">Inativos</SelectItem>
+                    <SelectItem value="todos">Todos</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {isLoading ? (
-            <div className="space-y-2">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : filteredProdutores && filteredProdutores.length > 0 ? (
-            <div className="overflow-x-auto max-h-[280px] overflow-y-auto border rounded-md">
+            <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="sticky top-0 bg-background z-10">
+                <TableHeader>
                   <TableRow>
-                    <TableHead className="hidden sm:table-cell w-24">Tipo</TableHead>
                     <TableHead>Nome</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead className="hidden sm:table-cell">CPF/CNPJ</TableHead>
-                    <TableHead className="hidden md:table-cell">Empresa</TableHead>
+                    <TableHead className="hidden md:table-cell">Cidade/UF</TableHead>
+                    <TableHead className="hidden md:table-cell">Contato</TableHead>
                     <TableHead className="hidden sm:table-cell">Status</TableHead>
+                    {canEdit && <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {dadosPaginados.map((produtor: any) => (
-                    <TableRow
-                      key={produtor.id}
-                      onClick={() => handleSelect(produtor)}
-                      className={`cursor-pointer transition-colors ${
-                        selectedProdutorId === produtor.id
-                          ? "bg-primary/10 hover:bg-primary/15"
-                          : "hover:bg-muted/50"
-                      }`}
-                    >
-                      <TableCell className="hidden sm:table-cell">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${produtor.tipo_produtor === "socio" ? "bg-secondary text-secondary-foreground" : "bg-accent/10 text-accent"}`}>
-                          {TIPOS_PRODUTOR.find((t) => t.value === produtor.tipo_produtor)?.label || "Produtor"}
-                        </span>
+                  {dadosPaginados.map((item: any) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.nome}</TableCell>
+                      <TableCell>{getTipoBadge(item.tipo_produtor)}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{formatCpfCnpj(item.cpf_cnpj) || "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell">{item.cidade ? `${item.cidade}/${item.uf}` : "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="flex flex-col gap-1 text-sm">
+                          {item.telefone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {formatTelefone(item.telefone)}</span>}
+                          {item.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {item.email}</span>}
+                        </div>
                       </TableCell>
-                      <TableCell className="font-medium">{produtor.nome}</TableCell>
-                      <TableCell className="font-mono hidden sm:table-cell">{formatCpfCnpj(produtor.cpf_cnpj) || "-"}</TableCell>
-                      <TableCell className="hidden md:table-cell">{produtor.granja?.razao_social || "-"}</TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${produtor.ativo ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
-                          {produtor.ativo ? "Ativo" : "Inativo"}
-                        </span>
+                        <Badge variant={item.ativo !== false ? "default" : "secondary"}>
+                          {item.ativo !== false ? "Ativo" : "Inativo"}
+                        </Badge>
                       </TableCell>
+                      {canEdit && (
+                        <TableCell className="text-right sticky right-0 bg-background">
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" title="Inscrições" onClick={() => handleOpenInscricoes(item)}>
+                              <Users className="h-4 w-4 text-primary" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
+                  {dadosPaginados.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={canEdit ? 7 : 6} className="text-center text-muted-foreground py-8">
+                        {dadosFiltrados.length === 0 && (produtores?.length || 0) > 0
+                          ? "Nenhum registro encontrado com os filtros aplicados"
+                          : "Nenhum produtor/sócio cadastrado"}
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <Users className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
-              <p className="text-muted-foreground">
-                {search || filterTipo !== "todos"
-                  ? "Nenhum registro encontrado com os filtros aplicados"
-                  : "Nenhum produtor/sócio cadastrado"}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Dados do Selecionado */}
-      {selectedProdutor && (
-        <>
-          <Card className="mb-4">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">
-                  Dados: {selectedProdutor.nome}
-                </CardTitle>
-                {canEdit && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setDeleteDialogOpen(true)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Excluir
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSaveEdit}
-                      disabled={!editFormData.nome || updateProdutor.isPending}
-                    >
-                      <Save className="h-4 w-4 mr-1" />
-                      {updateProdutor.isPending ? "Salvando..." : "Salvar"}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label>Tipo</Label>
-                  <Select
-                    value={editFormData.tipo_produtor || "produtor"}
-                    onValueChange={(value) =>
-                      setEditFormData({ ...editFormData, tipo_produtor: value })
-                    }
-                    disabled={!canEdit}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIPOS_PRODUTOR.map((tipo) => (
-                        <SelectItem key={tipo.value} value={tipo.value}>
-                          {tipo.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Tipo Pessoa</Label>
-                  <Select
-                    value={editFormData.tipo_pessoa || "fisica"}
-                    onValueChange={(value) =>
-                      setEditFormData({ ...editFormData, tipo_pessoa: value })
-                    }
-                    disabled={!canEdit}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIPOS_PESSOA.map((tipo) => (
-                        <SelectItem key={tipo.value} value={tipo.value}>
-                          {tipo.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>{editFormData.tipo_pessoa === "fisica" || editFormData.tipo_pessoa === "produtor_rural" ? "CPF" : "CNPJ"}</Label>
-                  <div className="relative">
-                    <Input
-                      value={editFormData.tipo_pessoa === "fisica" || editFormData.tipo_pessoa === "produtor_rural"
-                        ? formatCpf(editFormData.cpf_cnpj || "") 
-                        : formatCnpj(editFormData.cpf_cnpj || "")}
-                      onChange={(e) =>
-                        setEditFormData({ ...editFormData, cpf_cnpj: e.target.value.replace(/\D/g, "") })
-                      }
-                      onBlur={(e) => handleCnpjBlurEdit(e.target.value)}
-                      disabled={!canEdit}
-                      placeholder={editFormData.tipo_pessoa === "fisica" || editFormData.tipo_pessoa === "produtor_rural" ? "000.000.000-00" : "00.000.000/0000-00"}
-                      maxLength={editFormData.tipo_pessoa === "fisica" || editFormData.tipo_pessoa === "produtor_rural" ? 14 : 18}
-                    />
-                    {cnpjLoading && editFormData.tipo_pessoa === "juridica" && (
-                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Identidade</Label>
-                  <Input
-                    value={editFormData.identidade || ""}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, identidade: e.target.value })
-                    }
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="space-y-2 lg:col-span-2">
-                  <Label>Nome *</Label>
-                  <Input
-                    value={editFormData.nome}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, nome: e.target.value })
-                    }
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Granja</Label>
-                  <Select
-                    value={editFormData.granja_id || ""}
-                    onValueChange={(value) =>
-                      setEditFormData({ ...editFormData, granja_id: value || null })
-                    }
-                    disabled={!canEdit}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {granjas?.map((granja) => (
-                        <SelectItem key={granja.id} value={granja.id}>
-                          {granja.razao_social}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <div className="flex items-center gap-3 h-10">
-                    <Switch
-                      checked={editFormData.ativo}
-                      onCheckedChange={(checked) =>
-                        setEditFormData({ ...editFormData, ativo: checked })
-                      }
-                      disabled={!canEdit}
-                    />
-                    <span className={`text-sm font-medium ${editFormData.ativo ? "text-success" : "text-destructive"}`}>
-                      {editFormData.ativo ? "Ativo" : "Inativo"}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>CEP</Label>
-                  <div className="relative">
-                    <Input
-                      value={editFormData.cep || ""}
-                      onChange={(e) =>
-                        setEditFormData({ ...editFormData, cep: formatCep(e.target.value) })
-                      }
-                      onBlur={(e) => handleCepBlurEdit(e.target.value)}
-                      placeholder="00000-000"
-                      maxLength={9}
-                      disabled={!canEdit}
-                    />
-                    {cepLoading && (
-                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2 lg:col-span-2">
-                  <Label>Logradouro</Label>
-                  <Input
-                    value={editFormData.logradouro || ""}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, logradouro: e.target.value })
-                    }
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Número</Label>
-                  <Input
-                    value={editFormData.numero || ""}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, numero: e.target.value })
-                    }
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Complemento</Label>
-                  <Input
-                    value={editFormData.complemento || ""}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, complemento: e.target.value })
-                    }
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Bairro</Label>
-                  <Input
-                    value={editFormData.bairro || ""}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, bairro: e.target.value })
-                    }
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cidade</Label>
-                  <Input
-                    value={editFormData.cidade || ""}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, cidade: e.target.value })
-                    }
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>UF</Label>
-                  <Input
-                    value={editFormData.uf || ""}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, uf: e.target.value.toUpperCase() })
-                    }
-                    maxLength={2}
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Telefone</Label>
-                  <Input
-                    value={formatTelefone(editFormData.telefone || "")}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, telefone: e.target.value.replace(/\D/g, "") })
-                    }
-                    placeholder="(00) 0000-0000"
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Celular</Label>
-                  <Input
-                    value={formatTelefone(editFormData.celular || "")}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, celular: e.target.value.replace(/\D/g, "") })
-                    }
-                    placeholder="(00) 00000-0000"
-                    disabled={!canEdit}
-                  />
-                </div>
-                <div className="space-y-2 lg:col-span-2">
-                  <Label>E-mail</Label>
-                  <Input
-                    type="email"
-                    value={editFormData.email || ""}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, email: e.target.value })
-                    }
-                    disabled={!canEdit}
-                  />
+            {totalPaginas > 1 && (
+              <div className="flex items-center justify-between pt-4">
+                <span className="text-sm text-muted-foreground">
+                  {dadosFiltrados.length} registro(s) — Página {paginaAtual} de {totalPaginas}
+                </span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={paginaAtual <= 1} onClick={() => setPaginaAtual((p) => p - 1)}>Anterior</Button>
+                  <Button variant="outline" size="sm" disabled={paginaAtual >= totalPaginas} onClick={() => setPaginaAtual((p) => p + 1)}>Próxima</Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-          {/* Tabs de Detalhe */}
-          <Card>
-            <Tabs defaultValue="inscricoes">
-              <CardHeader className="pb-0">
-                <TabsList>
-                  <TabsTrigger value="inscricoes">Inscrições Estaduais</TabsTrigger>
-                  <TabsTrigger value="nfe" disabled>
-                    Emitente NFe
-                  </TabsTrigger>
-                  <TabsTrigger value="conta" disabled>
-                    Conta Bancária
-                  </TabsTrigger>
-                </TabsList>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <TabsContent value="inscricoes" className="mt-0">
-                  <InscricoesTab produtorId={selectedProdutor.id} />
-                </TabsContent>
-                <TabsContent value="nfe" className="mt-0">
-                  <p className="text-muted-foreground text-center py-8">
-                    Funcionalidade em desenvolvimento
-                  </p>
-                </TabsContent>
-                <TabsContent value="conta" className="mt-0">
-                  <p className="text-muted-foreground text-center py-8">
-                    Funcionalidade em desenvolvimento
-                  </p>
-                </TabsContent>
-              </CardContent>
-            </Tabs>
-          </Card>
-        </>
-      )}
-
-      {/* Create Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      {/* Inscrições Dialog */}
+      <Dialog open={inscricoesDialogOpen} onOpenChange={setInscricoesDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Novo Produtor/Sócio</DialogTitle>
+            <DialogTitle>Inscrições Estaduais — {inscricoesProdutorNome}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Tipo</Label>
-              <Select
-                value={newFormData.tipo_produtor || "produtor"}
-                onValueChange={(value) =>
-                  setNewFormData({ ...newFormData, tipo_produtor: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIPOS_PRODUTOR.map((tipo) => (
-                    <SelectItem key={tipo.value} value={tipo.value}>
-                      {tipo.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Tipo de Pessoa</Label>
-              <Select
-                value={newFormData.tipo_pessoa || "fisica"}
-                onValueChange={(value) =>
-                  setNewFormData({ ...newFormData, tipo_pessoa: value, cpf_cnpj: "" })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIPOS_PESSOA.map((tipo) => (
-                    <SelectItem key={tipo.value} value={tipo.value}>
-                      {tipo.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* CPF/CNPJ primeiro quando PJ */}
-            <div className="space-y-2">
-              <Label>{newFormData.tipo_pessoa === "fisica" || newFormData.tipo_pessoa === "produtor_rural" ? "CPF" : "CNPJ"}</Label>
-              <div className="relative">
-                <Input
-                  value={newFormData.tipo_pessoa === "fisica" || newFormData.tipo_pessoa === "produtor_rural"
-                    ? formatCpf(newFormData.cpf_cnpj || "") 
-                    : formatCnpj(newFormData.cpf_cnpj || "")}
-                  onChange={(e) => setNewFormData({ ...newFormData, cpf_cnpj: e.target.value.replace(/\D/g, "") })}
-                  onBlur={(e) => handleCnpjBlurNew(e.target.value)}
-                  placeholder={newFormData.tipo_pessoa === "fisica" || newFormData.tipo_pessoa === "produtor_rural" ? "000.000.000-00" : "00.000.000/0000-00"}
-                  maxLength={newFormData.tipo_pessoa === "fisica" || newFormData.tipo_pessoa === "produtor_rural" ? 14 : 18}
-                />
-                {cnpjLoading && newFormData.tipo_pessoa === "juridica" && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Identidade</Label>
-              <Input
-                value={newFormData.identidade || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, identidade: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Nome Completo *</Label>
-              <Input
-                value={newFormData.nome}
-                onChange={(e) => setNewFormData({ ...newFormData, nome: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Granja</Label>
-              <Select
-                value={newFormData.granja_id || ""}
-                onValueChange={(value) =>
-                  setNewFormData({ ...newFormData, granja_id: value || null })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma granja" />
-                </SelectTrigger>
-                <SelectContent>
-                  {granjas?.map((granja) => (
-                    <SelectItem key={granja.id} value={granja.id}>
-                      {granja.razao_social}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>CEP</Label>
-              <div className="relative">
-                <Input
-                  value={newFormData.cep || ""}
-                  onChange={(e) => setNewFormData({ ...newFormData, cep: formatCep(e.target.value) })}
-                  onBlur={(e) => handleCepBlurNew(e.target.value)}
-                  placeholder="00000-000"
-                  maxLength={9}
-                />
-                {cepLoading && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Logradouro</Label>
-              <Input
-                value={newFormData.logradouro || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, logradouro: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Número</Label>
-              <Input
-                value={newFormData.numero || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, numero: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Complemento</Label>
-              <Input
-                value={newFormData.complemento || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, complemento: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Bairro</Label>
-              <Input
-                value={newFormData.bairro || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, bairro: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Cidade</Label>
-              <Input
-                value={newFormData.cidade || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, cidade: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>UF</Label>
-              <Input
-                value={newFormData.uf || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, uf: e.target.value.toUpperCase() })}
-                maxLength={2}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input
-                value={formatTelefone(newFormData.telefone || "")}
-                onChange={(e) => setNewFormData({ ...newFormData, telefone: e.target.value.replace(/\D/g, "") })}
-                placeholder="(00) 0000-0000"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Celular</Label>
-              <Input
-                value={formatTelefone(newFormData.celular || "")}
-                onChange={(e) => setNewFormData({ ...newFormData, celular: e.target.value.replace(/\D/g, "") })}
-                placeholder="(00) 00000-0000"
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>E-mail</Label>
-              <Input
-                type="email"
-                value={newFormData.email || ""}
-                onChange={(e) => setNewFormData({ ...newFormData, email: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSaveNew}
-              disabled={!newFormData.nome || createProdutor.isPending}
-            >
-              {createProdutor.isPending ? "Salvando..." : "Salvar e Continuar"}
-            </Button>
-          </div>
+          {inscricoesProdutorId && <InscricoesTab produtorId={inscricoesProdutorId} />}
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Deseja remover "{selectedProdutor?.nome}"?
-              <br /><br />
-              <strong>Se houver movimentação</strong> (inscrições ou notas fiscais vinculadas), 
-              o cadastro será <strong>marcado como inativo</strong>.
-              <br /><br />
-              <strong>Se não houver movimentação</strong>, o cadastro será <strong>excluído permanentemente</strong>.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AppLayout>
   );
 }
