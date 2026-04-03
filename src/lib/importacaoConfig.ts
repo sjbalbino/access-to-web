@@ -775,8 +775,9 @@ export async function resolveReferences(
     if (ref.selfReference) continue;
     
     const allColumns = [ref.lookupColumn, ...(ref.fallbackColumns || [])];
-    const selectCols = ['id', ...new Set(allColumns)].join(', ');
-    const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}`;
+    const compositeExtraCols = ref.compositeColumns || [];
+    const selectCols = ['id', ...new Set([...allColumns, ...compositeExtraCols])].join(', ');
+    const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}`;
     
     if (!lookupCache[cacheKey]) {
       const { data } = await supabase
@@ -790,11 +791,19 @@ export async function resolveReferences(
           if (key) {
             cache[key] = item.id;
             cache[key.toLowerCase()] = item.id;
-            // Also index without leading zeros for numeric codes
             const noLeadingZeros = key.replace(/^0+/, '');
             if (noLeadingZeros && noLeadingZeros !== key) {
               cache[noLeadingZeros] = item.id;
               cache[noLeadingZeros.toLowerCase()] = item.id;
+            }
+            // Build composite keys (e.g. "IE|nome") for disambiguation
+            if (compositeExtraCols.length > 0) {
+              const compositeValues = compositeExtraCols.map(c => String(item[c] || '').trim().toLowerCase());
+              const compositeKey = `${key.toLowerCase()}|${compositeValues.join('|')}`;
+              cache[compositeKey] = item.id;
+              if (noLeadingZeros && noLeadingZeros !== key) {
+                cache[`${noLeadingZeros.toLowerCase()}|${compositeValues.join('|')}`] = item.id;
+              }
             }
           }
         }
@@ -807,9 +816,7 @@ export async function resolveReferences(
     const newRow = { ...row };
     for (const ref of references) {
       if (ref.selfReference) {
-        // Skip self-references - handled post-insert
         const { key: foundKey } = findColumnValue(row, ref.sourceColumn);
-        // Keep the raw value for post-insert resolution but don't set the FK
         if (foundKey && foundKey !== ref.sourceColumn) {
           newRow[ref.sourceColumn] = row[foundKey];
           delete newRow[foundKey];
@@ -819,19 +826,46 @@ export async function resolveReferences(
       
       const { value: rawVal, key: foundKey } = findColumnValue(row, ref.sourceColumn);
       const sourceValue = String(rawVal || '').trim();
+
+      // Read and clean composite column if present
+      let compositeFoundKey: string | null = null;
+      let compositeValue = '';
+      if (ref.compositeSourceColumn) {
+        const { value: cv, key: ck } = findColumnValue(row, ref.compositeSourceColumn);
+        compositeValue = String(cv || '').trim().toLowerCase();
+        compositeFoundKey = ck;
+      }
+
       if (!sourceValue) {
         if (foundKey) delete newRow[foundKey];
+        if (compositeFoundKey) delete newRow[compositeFoundKey];
         continue;
       }
-      const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}`;
+
+      const compositeExtraCols = ref.compositeColumns || [];
+      const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}`;
       const cache = lookupCache[cacheKey];
-      const uuid = cache?.[sourceValue] || cache?.[sourceValue.toLowerCase()] || cache?.[sourceValue.replace(/^0+/, '')] || cache?.[sourceValue.replace(/^0+/, '').toLowerCase()];
+
+      let uuid: string | undefined;
+
+      // Try composite key first if available
+      if (compositeValue && compositeExtraCols.length > 0) {
+        const compKey = `${sourceValue.toLowerCase()}|${compositeValue}`;
+        uuid = cache?.[compKey];
+      }
+
+      // Fallback to simple key
+      if (!uuid) {
+        uuid = cache?.[sourceValue] || cache?.[sourceValue.toLowerCase()] || cache?.[sourceValue.replace(/^0+/, '')] || cache?.[sourceValue.replace(/^0+/, '').toLowerCase()];
+      }
+
       if (uuid) {
         newRow[ref.dbColumn] = uuid;
       } else {
         errors.push(`Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" não encontrado`);
       }
       if (foundKey) delete newRow[foundKey];
+      if (compositeFoundKey) delete newRow[compositeFoundKey];
     }
     return newRow;
   });
