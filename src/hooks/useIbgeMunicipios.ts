@@ -10,12 +10,13 @@ export interface IbgeMunicipio {
 
 export function useIbgeMunicipios(uf?: string) {
   return useQuery({
-    queryKey: ["ibge_municipios", uf],
+    queryKey: ["ibge_municipios", uf || "all"],
     queryFn: async () => {
       let query = supabase
         .from("ibge_municipios")
         .select("*")
-        .order("nome");
+        .order("nome")
+        .limit(6000);
 
       if (uf) {
         query = query.eq("uf", uf.toUpperCase());
@@ -25,6 +26,5 @@ export function useIbgeMunicipios(uf?: string) {
       if (error) throw error;
       return data as IbgeMunicipio[];
     },
-    enabled: !!uf,
   });
 }
