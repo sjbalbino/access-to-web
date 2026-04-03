@@ -356,6 +356,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                       value={ph || ""}
                       onChange={(e) => setPh(Number(e.target.value))}
                       className="text-right"
+                      disabled={isReadOnly}
                     />
                   </div>
                 )}
