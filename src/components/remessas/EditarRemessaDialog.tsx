@@ -336,8 +336,8 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Silo *</Label>
-                  <Select value={siloId} onValueChange={setSiloId}>
-                    <SelectTrigger>
+                  <Select value={siloId} onValueChange={setSiloId} disabled={isReadOnly}>
+                    <SelectTrigger disabled={isReadOnly}>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
