@@ -345,7 +345,18 @@ export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosText
 
   autoTable(doc, {
     startY: 27,
-    head: [["Data", "Produtor", "Lavoura", "Placa", "P.Bruto", "Tara", "Líquido", "Umid.", "Imp.", "Desc.", "Prod.Líq.", "Sacas"]],
+    head: [[
+      { content: "Data", styles: { halign: "center" } },
+      "Produtor", "Lavoura", "Placa",
+      { content: "P.Bruto", styles: { halign: "right" } },
+      { content: "Tara", styles: { halign: "right" } },
+      { content: "Líquido", styles: { halign: "right" } },
+      { content: "Umid.", styles: { halign: "right" } },
+      { content: "Imp.", styles: { halign: "right" } },
+      { content: "Desc.", styles: { halign: "right" } },
+      { content: "Prod.Líq.", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
+    ]],
     body,
     styles: { fontSize: 7, cellPadding: 1.5 },
     headStyles: { fillColor: [66, 66, 66], textColor: 255 },
