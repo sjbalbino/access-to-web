@@ -184,7 +184,11 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     doc.text("TRANSFERÊNCIAS ENVIADAS", 14, yPos);
     autoTable(doc, {
       startY: yPos + 2,
-      head: [["Data", "Destino", "Quantidade (kg)"]],
+      head: [[
+        { content: "Data", styles: { halign: "center" } },
+        "Destino",
+        { content: "Quantidade (kg)", styles: { halign: "right" } },
+      ]],
       body: data.transferenciasEnviadas.map(t => [formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0)]),
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
