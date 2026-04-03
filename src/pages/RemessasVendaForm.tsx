@@ -820,7 +820,7 @@ export default function RemessasVendaForm() {
                           <TableCell>{r.placa || "-"}</TableCell>
                           <TableCell className="text-right">{formatNumber(r.kg_remessa)}</TableCell>
                           <TableCell className="text-right font-medium">{formatNumber(r.kg_nota)}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(r.valor_nota)}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(Number(r.valor_nota) > 0 ? r.valor_nota : r.valor_remessa)}</TableCell>
                           <TableCell>{r.silo?.nome || "-"}</TableCell>
                           <TableCell>
                             {r.status === "carregado_nfe" || r.nota_fiscal_id ? (
