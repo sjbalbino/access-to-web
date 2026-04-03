@@ -26,5 +26,6 @@ export function useIbgeMunicipios(uf?: string) {
       if (error) throw error;
       return data as IbgeMunicipio[];
     },
+    staleTime: 1000 * 60 * 30, // 30 minutes cache
   });
 }
