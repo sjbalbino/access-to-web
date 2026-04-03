@@ -271,7 +271,6 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
     const remessasData = remessas
       .filter(r => r.status !== "cancelada")
       .map((r) => [
-        r.codigo?.toString() || "-",
         formatDate(r.data_carregamento || r.data_remessa),
         r.placa || "-",
         r.motorista || "-",
@@ -283,19 +282,18 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
 
     autoTable(doc, {
       startY: yPos + 3,
-      head: [["Cód", "Data", "Placa", "Motorista", "Kg", "Valor", "Status", "NFe"]],
+      head: [["Data", "Placa", "Motorista", "Kg", "Valor", "Status", "NFe"]],
       body: remessasData,
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
       columnStyles: {
-        0: { halign: "right", cellWidth: 12 },   // Cód (numérico) - direita
-        1: { halign: "center", cellWidth: 22 },  // Data - centro
-        2: { halign: "left", cellWidth: 20 },    // Placa (texto) - esquerda
-        3: { halign: "left", cellWidth: 32 },    // Motorista (texto) - esquerda
-        4: { halign: "right", cellWidth: 20 },   // Kg (numérico) - direita
-        5: { halign: "right", cellWidth: 24 },   // Valor (moeda) - direita
-        6: { halign: "left", cellWidth: 24 },    // Status (texto) - esquerda
-        7: { halign: "right", cellWidth: 18 },   // NFe (numérico) - direita
+        0: { halign: "center", cellWidth: 22 },  // Data - centro
+        1: { halign: "left", cellWidth: 22 },    // Placa (texto) - esquerda
+        2: { halign: "left", cellWidth: 36 },    // Motorista (texto) - esquerda
+        3: { halign: "right", cellWidth: 22 },   // Kg (numérico) - direita
+        4: { halign: "right", cellWidth: 26 },   // Valor (moeda) - direita
+        5: { halign: "left", cellWidth: 26 },    // Status (texto) - esquerda
+        6: { halign: "right", cellWidth: 20 },   // NFe (numérico) - direita
       },
     });
   }
