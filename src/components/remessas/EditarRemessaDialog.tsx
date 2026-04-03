@@ -56,6 +56,8 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
   const updateRemessa = useUpdateRemessaVenda();
   const { user, profile } = useAuth();
 
+  const isReadOnly = remessa?.status === "carregado_nfe" || !!remessa?.nota_fiscal_id;
+
   const [dataRemessa, setDataRemessa] = useState("");
   const [pesoTara, setPesoTara] = useState(0);
   const [pesoBruto, setPesoBruto] = useState(0);
@@ -196,11 +198,11 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            Editar Remessa #{remessa.codigo}
+            {isReadOnly ? "Visualizar" : "Editar"} Remessa #{remessa.codigo}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <fieldset disabled={isReadOnly} className="space-y-4 py-4">
           {/* Card 1: Dados da Remessa */}
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader className="py-3">
@@ -569,15 +571,24 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
               />
             </CardContent>
           </Card>
-        </div>
+        </fieldset>
+
+        {isReadOnly && (
+          <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800 flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Remessa com NFe emitida — não é possível editar
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancelar
+            {isReadOnly ? "Fechar" : "Cancelar"}
           </Button>
-          <Button onClick={handleSalvar} disabled={updateRemessa.isPending}>
-            Salvar
-          </Button>
+          {!isReadOnly && (
+            <Button onClick={handleSalvar} disabled={updateRemessa.isPending}>
+              Salvar
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
