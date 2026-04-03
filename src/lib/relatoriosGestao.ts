@@ -63,7 +63,7 @@ export function gerarDemonstrativoGerencialPdf(data: DemonstrativoGerencialData)
 
   autoTable(doc, {
     startY: 28,
-    head: [['Centro', 'Código', 'Sub-Centro', 'Valor (R$)', '% Grupo']],
+    head: [['Centro', 'Código', 'Sub-Centro', { content: 'Valor (R$)', styles: { halign: 'right' } }, { content: '% Grupo', styles: { halign: 'right' } }]],
     body: rows,
     styles: { fontSize: 8 },
     headStyles: { fillColor: [60, 60, 60] },
@@ -112,7 +112,7 @@ export function gerarDrePdf(data: DreReportData) {
 
   autoTable(doc, {
     startY: 28,
-    head: [['Código', 'Descrição', 'Saldo Anterior', 'Valor Período', '%', 'Saldo Atual']],
+    head: [['Código', 'Descrição', { content: 'Saldo Anterior', styles: { halign: 'right' } }, { content: 'Valor Período', styles: { halign: 'right' } }, { content: '%', styles: { halign: 'right' } }, { content: 'Saldo Atual', styles: { halign: 'right' } }]],
     body: rows,
     styles: { fontSize: 8 },
     headStyles: { fillColor: [60, 60, 60] },
@@ -160,7 +160,7 @@ export function gerarBensMoveisPdf(despesas: BensMoveisDespesa[], periodo: strin
     ]);
     autoTable(doc, {
       startY: 28,
-      head: [['Grupo', 'Total (R$)', '%']],
+      head: [['Grupo', { content: 'Total (R$)', styles: { halign: 'right' } }, { content: '%', styles: { halign: 'right' } }]],
       body: rows,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [60, 60, 60] },
@@ -182,7 +182,7 @@ export function gerarBensMoveisPdf(despesas: BensMoveisDespesa[], periodo: strin
     ]);
     autoTable(doc, {
       startY: 28,
-      head: [['Data', 'Grupo', 'Produto', 'Descrição', 'Documento', 'Valor (R$)']],
+      head: [[{ content: 'Data', styles: { halign: 'center' } }, 'Grupo', 'Produto', 'Descrição', 'Documento', { content: 'Valor (R$)', styles: { halign: 'right' } }]],
       body: rows,
       styles: { fontSize: 8 },
       headStyles: { fillColor: [60, 60, 60] },

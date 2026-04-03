@@ -135,7 +135,17 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     ]);
     autoTable(doc, {
       startY: yPos + 2,
-      head: [["Data", "Lavoura", "P.Bruto", "Tara", "Líquido", "Umid.", "Imp.", "Desc.", "Prod.Líq."]],
+      head: [[
+        { content: "Data", styles: { halign: "center" } },
+        "Lavoura",
+        { content: "P.Bruto", styles: { halign: "right" } },
+        { content: "Tara", styles: { halign: "right" } },
+        { content: "Líquido", styles: { halign: "right" } },
+        { content: "Umid.", styles: { halign: "right" } },
+        { content: "Imp.", styles: { halign: "right" } },
+        { content: "Desc.", styles: { halign: "right" } },
+        { content: "Prod.Líq.", styles: { halign: "right" } },
+      ]],
       body: colheitasBody,
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
@@ -155,7 +165,11 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     doc.text("TRANSFERÊNCIAS RECEBIDAS", 14, yPos);
     autoTable(doc, {
       startY: yPos + 2,
-      head: [["Data", "Origem", "Quantidade (kg)"]],
+      head: [[
+        { content: "Data", styles: { halign: "center" } },
+        "Origem",
+        { content: "Quantidade (kg)", styles: { halign: "right" } },
+      ]],
       body: data.transferenciasRecebidas.map(t => [formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0)]),
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
@@ -170,7 +184,11 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     doc.text("TRANSFERÊNCIAS ENVIADAS", 14, yPos);
     autoTable(doc, {
       startY: yPos + 2,
-      head: [["Data", "Destino", "Quantidade (kg)"]],
+      head: [[
+        { content: "Data", styles: { halign: "center" } },
+        "Destino",
+        { content: "Quantidade (kg)", styles: { halign: "right" } },
+      ]],
       body: data.transferenciasEnviadas.map(t => [formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0)]),
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
@@ -185,7 +203,12 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     doc.text("DEVOLUÇÕES", 14, yPos);
     autoTable(doc, {
       startY: yPos + 2,
-      head: [["Data", "Quantidade (kg)", "Taxa Armaz. (%)", "Kg Taxa"]],
+      head: [[
+        { content: "Data", styles: { halign: "center" } },
+        { content: "Quantidade (kg)", styles: { halign: "right" } },
+        { content: "Taxa Armaz. (%)", styles: { halign: "right" } },
+        { content: "Kg Taxa", styles: { halign: "right" } },
+      ]],
       body: data.devolucoes.map(d => [
         formatDate(d.data_devolucao),
         formatNumber(d.quantidade_kg, 0),
@@ -205,7 +228,11 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     doc.text("NOTAS DE DEPÓSITO", 14, yPos);
     autoTable(doc, {
       startY: yPos + 2,
-      head: [["Data", "Nota Fiscal", "Quantidade (kg)"]],
+      head: [[
+        { content: "Data", styles: { halign: "center" } },
+        "Nota Fiscal",
+        { content: "Quantidade (kg)", styles: { halign: "right" } },
+      ]],
       body: data.notasDeposito.map(n => [formatDate(n.data_emissao), n.nota_fiscal_numero || "-", formatNumber(n.quantidade_kg, 0)]),
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
@@ -318,7 +345,18 @@ export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosText
 
   autoTable(doc, {
     startY: 27,
-    head: [["Data", "Produtor", "Lavoura", "Placa", "P.Bruto", "Tara", "Líquido", "Umid.", "Imp.", "Desc.", "Prod.Líq.", "Sacas"]],
+    head: [[
+      { content: "Data", styles: { halign: "center" } },
+      "Produtor", "Lavoura", "Placa",
+      { content: "P.Bruto", styles: { halign: "right" } },
+      { content: "Tara", styles: { halign: "right" } },
+      { content: "Líquido", styles: { halign: "right" } },
+      { content: "Umid.", styles: { halign: "right" } },
+      { content: "Imp.", styles: { halign: "right" } },
+      { content: "Desc.", styles: { halign: "right" } },
+      { content: "Prod.Líq.", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
+    ]],
     body,
     styles: { fontSize: 7, cellPadding: 1.5 },
     headStyles: { fillColor: [66, 66, 66], textColor: 255 },
@@ -396,7 +434,16 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
 
   autoTable(doc, {
     startY: 27,
-    head: [["Nº", "Data", "Comprador", "Produto", "Qtde (kg)", "Preço/kg", "Valor Total", "Carregado", "Saldo"]],
+    head: [[
+      { content: "Nº", styles: { halign: "right" } },
+      { content: "Data", styles: { halign: "center" } },
+      "Comprador", "Produto",
+      { content: "Qtde (kg)", styles: { halign: "right" } },
+      { content: "Preço/kg", styles: { halign: "right" } },
+      { content: "Valor Total", styles: { halign: "right" } },
+      { content: "Carregado", styles: { halign: "right" } },
+      { content: "Saldo", styles: { halign: "right" } },
+    ]],
     body,
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [66, 66, 66], textColor: 255 },

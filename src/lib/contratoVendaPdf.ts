@@ -283,7 +283,14 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
 
     autoTable(doc, {
       startY: yPos + 3,
-      head: [["Data", "Placa", "Motorista", "Kg", "Valor", "Status", "NFe"]],
+      head: [[
+        { content: "Data", styles: { halign: "center" } },
+        "Placa", "Motorista",
+        { content: "Kg", styles: { halign: "right" } },
+        { content: "Valor", styles: { halign: "right" } },
+        "Status",
+        { content: "NFe", styles: { halign: "right" } },
+      ]],
       body: remessasData,
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
