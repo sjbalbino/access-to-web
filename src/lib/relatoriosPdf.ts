@@ -135,7 +135,17 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     ]);
     autoTable(doc, {
       startY: yPos + 2,
-      head: [["Data", "Lavoura", "P.Bruto", "Tara", "Líquido", "Umid.", "Imp.", "Desc.", "Prod.Líq."]],
+      head: [[
+        { content: "Data", styles: { halign: "center" } },
+        "Lavoura",
+        { content: "P.Bruto", styles: { halign: "right" } },
+        { content: "Tara", styles: { halign: "right" } },
+        { content: "Líquido", styles: { halign: "right" } },
+        { content: "Umid.", styles: { halign: "right" } },
+        { content: "Imp.", styles: { halign: "right" } },
+        { content: "Desc.", styles: { halign: "right" } },
+        { content: "Prod.Líq.", styles: { halign: "right" } },
+      ]],
       body: colheitasBody,
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
