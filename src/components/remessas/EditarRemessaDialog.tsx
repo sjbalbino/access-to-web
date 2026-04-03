@@ -56,6 +56,8 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
   const updateRemessa = useUpdateRemessaVenda();
   const { user, profile } = useAuth();
 
+  const isReadOnly = remessa?.status === "carregado_nfe" || !!remessa?.nota_fiscal_id;
+
   const [dataRemessa, setDataRemessa] = useState("");
   const [pesoTara, setPesoTara] = useState(0);
   const [pesoBruto, setPesoBruto] = useState(0);
