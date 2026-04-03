@@ -78,7 +78,7 @@ export function useContratosVenda(filtros?: ContratoVendaFiltros) {
           *,
           safra:safras(id, nome),
           produto:produtos(id, nome),
-          comprador:clientes_fornecedores(id, nome, cpf_cnpj),
+          comprador:clientes_fornecedores(id, nome, nome_fantasia, cpf_cnpj),
           inscricao_produtor:inscricoes_produtor(
             id, granja, inscricao_estadual,
             produtor:produtores(id, nome)
