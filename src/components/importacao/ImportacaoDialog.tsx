@@ -503,7 +503,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 <strong>Colunas esperadas:</strong>{' '}
                 {config.columns.map(c => c.accessName).join(', ')}
                 {config.references && config.references.length > 0 && (
-                  <>, {config.references.map(r => r.sourceColumn).join(', ')}</>
+                  <>, {config.references.flatMap(r => r.compositeSourceColumn ? [r.sourceColumn, r.compositeSourceColumn] : [r.sourceColumn]).join(', ')}</>
                 )}
               </div>
             </div>
