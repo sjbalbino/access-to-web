@@ -158,7 +158,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const gerarVendas = async () => {
     if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
-    let query = supabase.from("contratos_venda").select(`id, numero, data_contrato, quantidade_kg, preco_kg, valor_total, comprador:clientes_fornecedores(nome), produto:produtos(nome)`).eq("safra_id", safraId);
+    let query = supabase.from("contratos_venda").select(`id, numero, data_contrato, quantidade_kg, preco_kg, valor_total, comprador:clientes_fornecedores(nome, nome_fantasia), produto:produtos(nome)`).eq("safra_id", safraId);
     if (compradorId) query = query.eq("comprador_id", compradorId);
     if (dataInicial) query = query.gte("data_contrato", dataInicial);
     if (dataFinal) query = query.lte("data_contrato", dataFinal);
