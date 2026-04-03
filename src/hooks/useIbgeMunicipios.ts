@@ -15,7 +15,8 @@ export function useIbgeMunicipios(uf?: string) {
       let query = supabase
         .from("ibge_municipios")
         .select("*")
-        .order("nome");
+        .order("nome")
+        .limit(6000);
 
       if (uf) {
         query = query.eq("uf", uf.toUpperCase());
