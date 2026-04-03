@@ -121,7 +121,11 @@ export default function ImportarDados() {
 
   const handleDownloadTemplate = (config: TableConfig) => {
     const headers = config.columns.map(c => c.accessName);
-    const refHeaders = (config.references || []).map(r => r.sourceColumn);
+    const refHeaders = (config.references || []).flatMap(r => 
+      r.compositeSourceColumn 
+        ? [r.sourceColumn, r.compositeSourceColumn] 
+        : [r.sourceColumn]
+    );
     const allHeaders = [...headers, ...refHeaders];
     
     const ws = XLSX.utils.aoa_to_sheet([allHeaders]);
