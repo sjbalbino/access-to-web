@@ -535,22 +535,68 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                     onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2 md:col-span-3">
-                  <Label htmlFor="cidade">Cidade</Label>
-                  <Input
-                    id="cidade"
-                    value={formData.cidade || ""}
-                    onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="uf">UF</Label>
-                  <Input
-                    id="uf"
-                    value={formData.uf || ""}
-                    onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
-                    maxLength={2}
-                  />
+                  <Select
+                    value={formData.uf || undefined}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, uf: value, cidade: "" });
+                      setUfCidade(value);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="UF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"].map(uf => (
+                        <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 md:col-span-3">
+                  <Label>Cidade</Label>
+                  <Popover open={cidadeOpen} onOpenChange={setCidadeOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={cidadeOpen}
+                        className="w-full justify-between font-normal"
+                      >
+                        {formData.cidade
+                          ? (() => {
+                              const mun = municipios?.find(m => m.codigo_ibge === formData.cidade || m.nome === formData.cidade);
+                              return mun ? `${mun.nome} (${mun.codigo_ibge})` : formData.cidade;
+                            })()
+                          : "Selecione a cidade"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Buscar município..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum município encontrado. {!formData.uf && "Selecione a UF primeiro."}</CommandEmpty>
+                          <CommandGroup>
+                            {municipios?.map((mun) => (
+                              <CommandItem
+                                key={mun.id}
+                                value={`${mun.nome} ${mun.codigo_ibge}`}
+                                onSelect={() => {
+                                  setFormData({ ...formData, cidade: mun.codigo_ibge });
+                                  setCidadeOpen(false);
+                                }}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", formData.cidade === mun.codigo_ibge ? "opacity-100" : "opacity-0")} />
+                                {mun.nome} <span className="ml-1 text-muted-foreground text-xs">({mun.codigo_ibge})</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             </div>
