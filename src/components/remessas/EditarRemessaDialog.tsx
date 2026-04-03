@@ -432,6 +432,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={motoristaCpf}
                     onChange={(e) => setMotoristaCpf(formatCpf(e.target.value))}
                     maxLength={14}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
