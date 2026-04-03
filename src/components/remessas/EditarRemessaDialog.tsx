@@ -202,7 +202,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
           </DialogTitle>
         </DialogHeader>
 
-        <fieldset disabled={isReadOnly} className="space-y-4 py-4">
+        <div className="space-y-4 py-4">
           {/* Card 1: Dados da Remessa */}
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader className="py-3">
