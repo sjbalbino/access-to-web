@@ -113,13 +113,14 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const deleteInscricao = useDeleteInscricao();
   const { canEdit } = useAuth();
   const { isLoading: isLoadingCep, fetchCep } = useCepLookup();
-  const { data: municipios } = useIbgeMunicipios(formData.uf || undefined);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedInscricao, setSelectedInscricao] = useState<InscricaoProdutor | null>(null);
   const [formData, setFormData] = useState<InscricaoInput>(emptyInscricao);
   const [cidadeOpen, setCidadeOpen] = useState(false);
+  const [ufCidade, setUfCidade] = useState<string>("");
+  const { data: municipios } = useIbgeMunicipios(ufCidade || undefined);
 
   const handleNew = () => {
     setSelectedInscricao(null);
