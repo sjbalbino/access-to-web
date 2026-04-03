@@ -124,11 +124,23 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const [ufCidade, setUfCidade] = useState<string>("");
   const { data: municipios } = useIbgeMunicipios(ufCidade || undefined);
 
+  // Mapa de lookup para resolver código IBGE -> nome do município
+  const municipiosMap = useMemo(() => {
+    const map = new Map<string, { nome: string; uf: string }>();
+    allMunicipios?.forEach(m => {
+      map.set(m.codigo_ibge, { nome: m.nome, uf: m.uf });
+    });
+    return map;
+  }, [allMunicipios]);
+
   // Helper to resolve IBGE code to city name
   const resolveCidade = (codigo: string | null) => {
     if (!codigo) return "-";
-    const mun = allMunicipios?.find(m => m.codigo_ibge === codigo);
-    return mun ? `${mun.nome}/${mun.uf}` : codigo;
+    const mun = municipiosMap.get(codigo);
+    if (mun) return `${mun.nome}/${mun.uf}`;
+    // Fallback: pode ser que o campo já contenha o nome da cidade
+    if (codigo.length > 7 || isNaN(Number(codigo))) return codigo;
+    return codigo;
   };
 
   const handleNew = () => {
