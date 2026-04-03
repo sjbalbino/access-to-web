@@ -921,7 +921,7 @@ export default function RemessasVendaForm() {
                     const ativas = remessas.filter(r => r.status !== "cancelada");
                     const totalKgRemessa = ativas.reduce((s, r) => s + (Number(r.kg_remessa) || 0), 0);
                     const totalKgNota = ativas.reduce((s, r) => s + (Number(r.kg_nota) || 0), 0);
-                    const totalValorNota = ativas.reduce((s, r) => s + (Number(r.valor_nota) || 0), 0);
+                    const totalValorNota = ativas.reduce((s, r) => s + (Number(r.valor_nota) > 0 ? Number(r.valor_nota) : (Number(r.valor_remessa) || 0)), 0);
                     return (
                       <TableFooter>
                         <TableRow className="font-bold">

@@ -573,13 +573,22 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
           </Card>
         </div>
 
+        {isReadOnly && (
+          <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800 flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Remessa com NFe emitida — não é possível editar
+          </div>
+        )}
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancelar
+            {isReadOnly ? "Fechar" : "Cancelar"}
           </Button>
-          <Button onClick={handleSalvar} disabled={updateRemessa.isPending}>
-            Salvar
-          </Button>
+          {!isReadOnly && (
+            <Button onClick={handleSalvar} disabled={updateRemessa.isPending}>
+              Salvar
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
