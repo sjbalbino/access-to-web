@@ -193,7 +193,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
 
   return (
     <Dialog open={!!remessa} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Editar Remessa #{remessa.codigo}
