@@ -112,7 +112,7 @@ export function gerarDrePdf(data: DreReportData) {
 
   autoTable(doc, {
     startY: 28,
-    head: [['Código', 'Descrição', 'Saldo Anterior', 'Valor Período', '%', 'Saldo Atual']],
+    head: [['Código', 'Descrição', { content: 'Saldo Anterior', styles: { halign: 'right' } }, { content: 'Valor Período', styles: { halign: 'right' } }, { content: '%', styles: { halign: 'right' } }, { content: 'Saldo Atual', styles: { halign: 'right' } }]],
     body: rows,
     styles: { fontSize: 8 },
     headStyles: { fillColor: [60, 60, 60] },
