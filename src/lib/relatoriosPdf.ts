@@ -203,7 +203,12 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     doc.text("DEVOLUÇÕES", 14, yPos);
     autoTable(doc, {
       startY: yPos + 2,
-      head: [["Data", "Quantidade (kg)", "Taxa Armaz. (%)", "Kg Taxa"]],
+      head: [[
+        { content: "Data", styles: { halign: "center" } },
+        { content: "Quantidade (kg)", styles: { halign: "right" } },
+        { content: "Taxa Armaz. (%)", styles: { halign: "right" } },
+        { content: "Kg Taxa", styles: { halign: "right" } },
+      ]],
       body: data.devolucoes.map(d => [
         formatDate(d.data_devolucao),
         formatNumber(d.quantidade_kg, 0),
