@@ -114,6 +114,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const deleteInscricao = useDeleteInscricao();
   const { canEdit } = useAuth();
   const { isLoading: isLoadingCep, fetchCep } = useCepLookup();
+  const { data: allMunicipios } = useIbgeMunicipios();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -122,6 +123,13 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const [cidadeOpen, setCidadeOpen] = useState(false);
   const [ufCidade, setUfCidade] = useState<string>("");
   const { data: municipios } = useIbgeMunicipios(ufCidade || undefined);
+
+  // Helper to resolve IBGE code to city name
+  const resolveCidade = (codigo: string | null) => {
+    if (!codigo) return "-";
+    const mun = allMunicipios?.find(m => m.codigo_ibge === codigo);
+    return mun ? `${mun.nome}/${mun.uf}` : codigo;
+  };
 
   const handleNew = () => {
     setSelectedInscricao(null);
