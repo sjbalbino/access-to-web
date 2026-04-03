@@ -465,7 +465,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                       <SelectValue placeholder="Selecione a granja" />
                     </SelectTrigger>
                     <SelectContent>
-                      {granjas?.filter(e => e.ativa).map((granja) => (
+                      {granjas?.map((granja) => (
                         <SelectItem key={granja.id} value={granja.id}>
                           {granja.nome_fantasia || granja.razao_social}
                         </SelectItem>
