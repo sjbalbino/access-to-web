@@ -1,25 +1,38 @@
 
 
-## Plano: Corrigir proteção de remessas "Carregado/NFe"
+## Plano: Adicionar campo "Tipo" nas Transferências de Depósito
 
-### Problema raiz
+### O que será feito
 
-O `<fieldset disabled>` não funciona com componentes Select do Radix UI (usado pelo shadcn/ui). Os selects e inputs customizados ignoram o atributo `disabled` herdado do fieldset, permitindo que o usuário altere dados mesmo em modo "somente leitura". Além disso, ao salvar, o status é recalculado por `determinarStatus()` que retorna "carregado" (ignorando o status original "carregado_nfe").
+Adicionar o campo "Tipo" (Indústria / Semente) na tabela `transferencias_deposito`, no formulário de transferência e na configuração de importação.
 
-### Alterações
+### Etapas
 
-#### `src/components/remessas/EditarRemessaDialog.tsx`
+#### 1. Migração de banco de dados
+Adicionar coluna `tipo` (varchar) à tabela `transferencias_deposito`:
+```sql
+ALTER TABLE public.transferencias_deposito
+ADD COLUMN tipo character varying DEFAULT NULL;
+```
 
-1. **Remover `fieldset disabled`** e passar `disabled={isReadOnly}` individualmente para cada Input, Select e Textarea
-2. **Preservar status original no salvamento**: em `handleSalvar`, manter o status existente da remessa quando `status === "carregado_nfe"` em vez de recalcular via `determinarStatus()`
-3. **Adicionar `readOnly` nos inputs numéricos** para impedir digitação quando `isReadOnly`
+#### 2. `src/components/transferencias/TransferenciaDialog.tsx`
+- Adicionar estado `tipo` com Select para escolher "Indústria" ou "Semente"
+- Incluir `tipo` no payload de criação/edição
+- Preencher campo ao editar transferência existente
 
-Isso garante que:
-- Todos os campos ficam efetivamente desabilitados visualmente e funcionalmente
-- O botão "Salvar" continua oculto (já implementado)
-- O guard `if (isReadOnly) return` continua como proteção extra
-- Se por algum motivo salvar for acionado, o status original é preservado
+#### 3. `src/hooks/useTransferenciasDeposito.ts`
+- Adicionar `tipo` à interface `TransferenciaDeposito`
+
+#### 4. `src/pages/Transferencias.tsx`
+- Exibir coluna "Tipo" na tabela de listagem
+
+#### 5. `src/lib/importacaoConfig.ts`
+- Restaurar o campo `tipo` na configuração de importação (foi removido antes porque a coluna não existia no banco)
 
 ### Arquivos alterados
-- `src/components/remessas/EditarRemessaDialog.tsx`
+- Migração SQL (nova coluna)
+- `src/hooks/useTransferenciasDeposito.ts`
+- `src/components/transferencias/TransferenciaDialog.tsx`
+- `src/pages/Transferencias.tsx`
+- `src/lib/importacaoConfig.ts`
 
