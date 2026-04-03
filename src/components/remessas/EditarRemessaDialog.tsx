@@ -159,7 +159,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       return;
     }
 
-    const status = determinarStatus();
+    const status = remessa.status === "carregado_nfe" ? "carregado_nfe" : determinarStatus();
 
     await updateRemessa.mutateAsync({
       id: remessa.id,
