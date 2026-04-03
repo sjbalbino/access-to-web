@@ -441,6 +441,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={placa}
                     onChange={(e) => setPlaca(e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase())}
                     maxLength={7}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
