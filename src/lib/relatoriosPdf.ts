@@ -228,7 +228,11 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     doc.text("NOTAS DE DEPÓSITO", 14, yPos);
     autoTable(doc, {
       startY: yPos + 2,
-      head: [["Data", "Nota Fiscal", "Quantidade (kg)"]],
+      head: [[
+        { content: "Data", styles: { halign: "center" } },
+        "Nota Fiscal",
+        { content: "Quantidade (kg)", styles: { halign: "right" } },
+      ]],
       body: data.notasDeposito.map(n => [formatDate(n.data_emissao), n.nota_fiscal_numero || "-", formatNumber(n.quantidade_kg, 0)]),
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
