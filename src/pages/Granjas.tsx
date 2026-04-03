@@ -459,7 +459,14 @@ export default function Granjas() {
                 value={formData.email || ""}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
+            <div className="flex items-center gap-2 md:col-span-2">
+              <Switch
+                checked={formData.ativa ?? true}
+                onCheckedChange={(checked) => setFormData({ ...formData, ativa: checked })}
+              />
+              <Label>Granja Ativa</Label>
             </div>
+          </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
