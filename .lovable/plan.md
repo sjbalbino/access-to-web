@@ -1,24 +1,32 @@
 
 
-## Plano: Expandir dialog de edição e adicionar totais na lista de remessas
+## Plano: Proteger remessas "Carregado/NFe" e exibir valor nota legado
 
-### Problemas identificados
+### Problemas
 
-1. **Dialog de edição muito estreito** (800px): o grid de 7 colunas com valores (Kgs Remessa, Sacos Remessa, Kgs Nota, Sacos Nota, Preço Kg, Vlr Remessa, Vlr Nota) fica comprimido, cortando campos como "Vlr Nota".
+1. **Remessas com status "carregado_nfe" permitem edição**: O dialog de edição abre e permite salvar alterações mesmo quando o status é "carregado_nfe" (sem nota fiscal vinculada no novo sistema, apenas legado).
 
-2. **Lista de remessas sem linha de totais**: não há totalização de Kg Remessa, Kg Nota e Valor Nota no rodapé da tabela.
+2. **Valor Nota não aparece na lista**: O campo `valor_nota` está com valor 0 no banco para registros legados. A planilha do sistema legado provavelmente não tinha coluna `valor_nota` separada — o valor da nota é o mesmo que `valor_remessa`. A coluna na UI mostra R$ 0,00.
 
 ### Alterações
 
-#### 1. `src/components/remessas/EditarRemessaDialog.tsx`
-- Aumentar largura máxima do dialog de `sm:max-w-[800px]` para `sm:max-w-[1100px]`
-- Isso permite que os 7 campos de valores sejam exibidos sem corte
+#### 1. `src/components/remessas/EditarRemessaDialog.tsx` — Modo somente leitura
+- Detectar se a remessa tem status `carregado_nfe` (com ou sem `nota_fiscal_id`)
+- Quando `carregado_nfe`: desabilitar todos os campos (adicionar `disabled` nos inputs/selects)
+- Ocultar botão "Salvar" e exibir banner informativo "Remessa com NFe emitida — não é possível editar"
+- Manter o dialog funcional apenas para visualização
 
-#### 2. `src/pages/RemessasVendaForm.tsx`
-- Adicionar `TableFooter` com linha de totais calculados (soma de `kg_remessa`, `kg_nota`, `valor_nota`) das remessas não canceladas
-- Usar `formatNumber` e `formatCurrency` para exibir os totais na mesma formatação das células
+#### 2. `src/pages/RemessasVendaForm.tsx` — Exibir valor nota com fallback
+- Na coluna "Valor Nota", usar fallback: `valor_nota > 0 ? valor_nota : valor_remessa`
+- Isso garante que registros legados (onde `valor_nota` = 0 mas `valor_remessa` tem valor) exibam o valor correto
+- Aplicar mesma lógica no cálculo do footer de totais
+
+#### 3. Migração SQL — Normalizar `valor_nota` legado
+- Atualizar registros onde `valor_nota = 0` e `valor_remessa > 0` para copiar `valor_remessa` para `valor_nota`
+- Isso corrige os dados na fonte, evitando workarounds na UI
 
 ### Arquivos alterados
-- `src/components/remessas/EditarRemessaDialog.tsx` (1 linha — max-width)
-- `src/pages/RemessasVendaForm.tsx` (adicionar footer com totais)
+- `src/components/remessas/EditarRemessaDialog.tsx` (modo read-only para carregado_nfe)
+- `src/pages/RemessasVendaForm.tsx` (fallback valor_nota na lista)
+- 1 migração SQL (normalizar valor_nota)
 
