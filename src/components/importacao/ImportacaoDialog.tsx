@@ -519,7 +519,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                     const mapped = config.columns.some(c =>
                       c.accessName === col || c.accessName.toUpperCase() === col || c.accessName.toLowerCase() === col
                     ) || config.references?.some(r =>
-                      r.sourceColumn === col || r.sourceColumn.toUpperCase() === col
+                      r.sourceColumn === col || r.sourceColumn.toUpperCase() === col ||
+                      (r.compositeSourceColumn && (r.compositeSourceColumn === col || r.compositeSourceColumn.toUpperCase() === col))
                     );
                     return (
                       <Badge key={col} variant={mapped ? 'default' : 'outline'} className="text-xs">
