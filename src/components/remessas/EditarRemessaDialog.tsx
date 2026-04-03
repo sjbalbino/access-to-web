@@ -159,7 +159,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       return;
     }
 
-    const status = determinarStatus();
+    const status = remessa.status === "carregado_nfe" ? "carregado_nfe" : determinarStatus();
 
     await updateRemessa.mutateAsync({
       id: remessa.id,
@@ -202,7 +202,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
           </DialogTitle>
         </DialogHeader>
 
-        <fieldset disabled={isReadOnly} className="space-y-4 py-4">
+        <div className="space-y-4 py-4">
           {/* Card 1: Dados da Remessa */}
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader className="py-3">
@@ -220,6 +220,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     type="date"
                     value={dataRemessa}
                     onChange={(e) => setDataRemessa(e.target.value)}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
@@ -230,6 +231,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={pesoTara || ""}
                     onChange={(e) => setPesoTara(Number(e.target.value))}
                     className="text-right"
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
@@ -240,6 +242,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={pesoBruto || ""}
                     onChange={(e) => setPesoBruto(Number(e.target.value))}
                     className="text-right"
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
@@ -284,6 +287,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={kgNota || ""}
                     onChange={(e) => setKgNota(Number(e.target.value))}
                     className="text-right font-bold"
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
@@ -332,8 +336,8 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Silo *</Label>
-                  <Select value={siloId} onValueChange={setSiloId}>
-                    <SelectTrigger>
+                  <Select value={siloId} onValueChange={setSiloId} disabled={isReadOnly}>
+                    <SelectTrigger disabled={isReadOnly}>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -352,6 +356,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                       value={ph || ""}
                       onChange={(e) => setPh(Number(e.target.value))}
                       className="text-right"
+                      disabled={isReadOnly}
                     />
                   </div>
                 )}
@@ -363,6 +368,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={umidade || ""}
                     onChange={(e) => setUmidade(Number(e.target.value))}
                     className="text-right"
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
@@ -373,6 +379,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={impureza || ""}
                     onChange={(e) => setImpureza(Number(e.target.value))}
                     className="text-right"
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
@@ -400,8 +407,8 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
-                  <Select value={transportadoraId} onValueChange={setTransportadoraId}>
-                    <SelectTrigger>
+                  <Select value={transportadoraId} onValueChange={setTransportadoraId} disabled={isReadOnly}>
+                    <SelectTrigger disabled={isReadOnly}>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -416,6 +423,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Input
                     value={motorista}
                     onChange={(e) => setMotorista(e.target.value)}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
@@ -424,6 +432,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={motoristaCpf}
                     onChange={(e) => setMotoristaCpf(formatCpf(e.target.value))}
                     maxLength={14}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
@@ -432,6 +441,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={placa}
                     onChange={(e) => setPlaca(e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase())}
                     maxLength={7}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
@@ -440,6 +450,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     value={ufPlaca}
                     onChange={(e) => setUfPlaca(e.target.value.toUpperCase())}
                     maxLength={2}
+                    disabled={isReadOnly}
                   />
                 </div>
               </div>
@@ -568,10 +579,11 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                 onChange={(e) => setObservacoes(e.target.value)}
                 placeholder="Observações da remessa..."
                 rows={3}
+                disabled={isReadOnly}
               />
             </CardContent>
           </Card>
-        </fieldset>
+        </div>
 
         {isReadOnly && (
           <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800 flex items-center gap-2">
