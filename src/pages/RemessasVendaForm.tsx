@@ -835,8 +835,8 @@ export default function RemessasVendaForm() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {r.nota_fiscal?.numero ? (
-                              <span className="text-xs">{r.nota_fiscal.numero}</span>
+                            {r.nota_fiscal?.numero || r.numero_nota_legado ? (
+                              <span className="text-xs">{r.nota_fiscal?.numero || r.numero_nota_legado}</span>
                             ) : (
                               "-"
                             )}
