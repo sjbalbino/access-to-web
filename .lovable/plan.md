@@ -1,24 +1,31 @@
 
 
-## Plano: Incluir colunas compostas no modelo de importação
+## Plano: Adicionar campo Ativa/Inativa no formulário de Granja
 
 ### Problema
-A função `handleDownloadTemplate` em `ImportarDados.tsx` gera os cabeçalhos do modelo Excel usando apenas `sourceColumn` das referências, ignorando `compositeSourceColumn`. Por isso, as colunas `inscricao_origem_nome` e `inscricao_destino_nome` não aparecem no modelo baixado.
+O formulário de cadastro/edição de granjas não possui o campo para alterar o status (ativa/inativa). Também é necessário corrigir a granja existente que está com `ativa = false`.
 
-### Correção
+### Solução
 
-**Arquivo:** `src/pages/ImportarDados.tsx`
-
-Alterar a linha que monta `refHeaders` para incluir também os `compositeSourceColumn` quando existirem:
-
-```typescript
-const refHeaders = (config.references || []).flatMap(r => 
-  r.compositeSourceColumn 
-    ? [r.sourceColumn, r.compositeSourceColumn] 
-    : [r.sourceColumn]
-);
+**1. Migração SQL** — Ativar granjas existentes:
+```sql
+UPDATE granjas SET ativa = true WHERE ativa = false;
 ```
 
-### Resultado
-O modelo Excel de Transferências passará a incluir as colunas `inscricao_origem_nome` e `inscricao_destino_nome`, permitindo ao usuário preencher o nome do produtor para desambiguar inscrições com a mesma IE.
+**2. Código** (`src/pages/Granjas.tsx`) — Adicionar um `Switch` no formulário, após o campo E-mail (antes dos botões), com label "Ativa":
+```typescript
+<div className="flex items-center gap-2 md:col-span-2">
+  <Switch
+    checked={formData.ativa ?? true}
+    onCheckedChange={(checked) => setFormData({ ...formData, ativa: checked })}
+  />
+  <Label>Granja Ativa</Label>
+</div>
+```
+
+Importar o componente `Switch` de `@/components/ui/switch`.
+
+### Arquivos alterados
+- `src/pages/Granjas.tsx` (adicionar Switch + import)
+- Nova migração SQL para corrigir dados existentes
 
