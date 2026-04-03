@@ -145,7 +145,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
   };
 
   const handleSalvar = async () => {
-    if (!remessa) return;
+    if (!remessa || isReadOnly) return;
 
     if (!siloId) {
       toast.error("Silo é obrigatório!");
