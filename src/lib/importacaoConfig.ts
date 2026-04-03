@@ -703,8 +703,8 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
     ],
     references: [
-      { dbColumn: 'inscricao_origem_id', sourceColumn: 'inscricao_origem_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },
-      { dbColumn: 'inscricao_destino_id', sourceColumn: 'inscricao_destino_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },
+      { dbColumn: 'inscricao_origem_id', sourceColumn: 'inscricao_origem_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_origem_nome', compositeColumns: ['nome'] },
+      { dbColumn: 'inscricao_destino_id', sourceColumn: 'inscricao_destino_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_destino_nome', compositeColumns: ['nome'] },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'granja_origem_id', sourceColumn: 'granja_origem_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
