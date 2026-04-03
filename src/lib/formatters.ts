@@ -184,3 +184,15 @@ export function formatNumber(value: number | null | undefined, decimals: number 
     maximumFractionDigits: decimals,
   });
 }
+
+/**
+ * Formata nome + nome fantasia para exibição em listas
+ * Ex: "Empresa ABC (Fantasia XYZ)"
+ */
+export function formatNomeFantasia(nome: string | null | undefined, nomeFantasia: string | null | undefined): string {
+  if (!nome) return "-";
+  if (nomeFantasia && nomeFantasia.trim() && nomeFantasia.trim().toLowerCase() !== nome.trim().toLowerCase()) {
+    return `${nome} (${nomeFantasia})`;
+  }
+  return nome;
+}
