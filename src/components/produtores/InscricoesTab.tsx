@@ -124,7 +124,8 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
   const handleNew = () => {
     setSelectedInscricao(null);
-    // Preencher automaticamente com dados do produtor
+    const uf = produtor?.uf || "";
+    setUfCidade(uf);
     setFormData({ 
       ...emptyInscricao, 
       produtor_id: produtorId,
@@ -135,7 +136,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       complemento: produtor?.complemento || "",
       bairro: produtor?.bairro || "",
       cidade: produtor?.cidade || "",
-      uf: produtor?.uf || "",
+      uf: uf,
       telefone: produtor?.telefone || "",
       email: produtor?.email || "",
       granja_id: produtor?.granja_id || null,
