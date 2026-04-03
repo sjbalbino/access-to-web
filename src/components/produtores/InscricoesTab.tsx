@@ -233,12 +233,14 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
     if (cep.length === 8) {
       const data = await fetchCep(cep);
       if (data) {
+        const newUf = data.uf || formData.uf || "";
+        setUfCidade(newUf);
         setFormData({
           ...formData,
           logradouro: data.logradouro || formData.logradouro,
           bairro: data.bairro || formData.bairro,
           cidade: data.localidade || formData.cidade,
-          uf: data.uf || formData.uf,
+          uf: newUf,
         });
       }
     }
