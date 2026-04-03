@@ -275,7 +275,7 @@ export default function LancamentosFinanceiros() {
                 <Label>Fornecedor</Label>
                 <Select value={formData.fornecedor_id || 'none'} onValueChange={v => setFormData({ ...formData, fornecedor_id: v === 'none' ? null : v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent><SelectItem value="none">Nenhum</SelectItem>{clientes?.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="none">Nenhum</SelectItem>{clientes?.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
