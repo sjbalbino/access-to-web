@@ -804,7 +804,7 @@ export default function RemessasVendaForm() {
                   <TableBody>
                     {remessas?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                           Nenhuma remessa cadastrada
                         </TableCell>
                       </TableRow>
