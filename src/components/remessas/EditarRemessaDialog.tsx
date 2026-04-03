@@ -423,6 +423,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Input
                     value={motorista}
                     onChange={(e) => setMotorista(e.target.value)}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
