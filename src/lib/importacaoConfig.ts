@@ -15,6 +15,8 @@ export interface ReferenceResolver {
   lookupLabel?: string; // column to show as label
   fallbackColumns?: string[]; // additional columns to try matching against
   selfReference?: boolean; // true if references same table being imported (deferred)
+  compositeSourceColumn?: string; // extra column in Excel for disambiguation (e.g. producer name)
+  compositeColumns?: string[]; // columns in lookup table to build composite key
 }
 
 export interface UpdateModeConfig {
@@ -701,8 +703,8 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
     ],
     references: [
-      { dbColumn: 'inscricao_origem_id', sourceColumn: 'inscricao_origem_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },
-      { dbColumn: 'inscricao_destino_id', sourceColumn: 'inscricao_destino_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },
+      { dbColumn: 'inscricao_origem_id', sourceColumn: 'inscricao_origem_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_origem_nome', compositeColumns: ['nome'] },
+      { dbColumn: 'inscricao_destino_id', sourceColumn: 'inscricao_destino_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_destino_nome', compositeColumns: ['nome'] },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'granja_origem_id', sourceColumn: 'granja_origem_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
@@ -773,8 +775,9 @@ export async function resolveReferences(
     if (ref.selfReference) continue;
     
     const allColumns = [ref.lookupColumn, ...(ref.fallbackColumns || [])];
-    const selectCols = ['id', ...new Set(allColumns)].join(', ');
-    const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}`;
+    const compositeExtraCols = ref.compositeColumns || [];
+    const selectCols = ['id', ...new Set([...allColumns, ...compositeExtraCols])].join(', ');
+    const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}`;
     
     if (!lookupCache[cacheKey]) {
       const { data } = await supabase
@@ -788,11 +791,19 @@ export async function resolveReferences(
           if (key) {
             cache[key] = item.id;
             cache[key.toLowerCase()] = item.id;
-            // Also index without leading zeros for numeric codes
             const noLeadingZeros = key.replace(/^0+/, '');
             if (noLeadingZeros && noLeadingZeros !== key) {
               cache[noLeadingZeros] = item.id;
               cache[noLeadingZeros.toLowerCase()] = item.id;
+            }
+            // Build composite keys (e.g. "IE|nome") for disambiguation
+            if (compositeExtraCols.length > 0) {
+              const compositeValues = compositeExtraCols.map(c => String(item[c] || '').trim().toLowerCase());
+              const compositeKey = `${key.toLowerCase()}|${compositeValues.join('|')}`;
+              cache[compositeKey] = item.id;
+              if (noLeadingZeros && noLeadingZeros !== key) {
+                cache[`${noLeadingZeros.toLowerCase()}|${compositeValues.join('|')}`] = item.id;
+              }
             }
           }
         }
@@ -805,9 +816,7 @@ export async function resolveReferences(
     const newRow = { ...row };
     for (const ref of references) {
       if (ref.selfReference) {
-        // Skip self-references - handled post-insert
         const { key: foundKey } = findColumnValue(row, ref.sourceColumn);
-        // Keep the raw value for post-insert resolution but don't set the FK
         if (foundKey && foundKey !== ref.sourceColumn) {
           newRow[ref.sourceColumn] = row[foundKey];
           delete newRow[foundKey];
@@ -817,19 +826,46 @@ export async function resolveReferences(
       
       const { value: rawVal, key: foundKey } = findColumnValue(row, ref.sourceColumn);
       const sourceValue = String(rawVal || '').trim();
+
+      // Read and clean composite column if present
+      let compositeFoundKey: string | null = null;
+      let compositeValue = '';
+      if (ref.compositeSourceColumn) {
+        const { value: cv, key: ck } = findColumnValue(row, ref.compositeSourceColumn);
+        compositeValue = String(cv || '').trim().toLowerCase();
+        compositeFoundKey = ck;
+      }
+
       if (!sourceValue) {
         if (foundKey) delete newRow[foundKey];
+        if (compositeFoundKey) delete newRow[compositeFoundKey];
         continue;
       }
-      const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}`;
+
+      const compositeExtraCols = ref.compositeColumns || [];
+      const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}`;
       const cache = lookupCache[cacheKey];
-      const uuid = cache?.[sourceValue] || cache?.[sourceValue.toLowerCase()] || cache?.[sourceValue.replace(/^0+/, '')] || cache?.[sourceValue.replace(/^0+/, '').toLowerCase()];
+
+      let uuid: string | undefined;
+
+      // Try composite key first if available
+      if (compositeValue && compositeExtraCols.length > 0) {
+        const compKey = `${sourceValue.toLowerCase()}|${compositeValue}`;
+        uuid = cache?.[compKey];
+      }
+
+      // Fallback to simple key
+      if (!uuid) {
+        uuid = cache?.[sourceValue] || cache?.[sourceValue.toLowerCase()] || cache?.[sourceValue.replace(/^0+/, '')] || cache?.[sourceValue.replace(/^0+/, '').toLowerCase()];
+      }
+
       if (uuid) {
         newRow[ref.dbColumn] = uuid;
       } else {
         errors.push(`Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" não encontrado`);
       }
       if (foundKey) delete newRow[foundKey];
+      if (compositeFoundKey) delete newRow[compositeFoundKey];
     }
     return newRow;
   });
