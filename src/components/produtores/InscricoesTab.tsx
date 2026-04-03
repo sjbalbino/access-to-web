@@ -146,6 +146,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
   const handleEdit = (inscricao: InscricaoProdutor) => {
     setSelectedInscricao(inscricao);
+    setUfCidade(inscricao.uf || "");
     setFormData({
       produtor_id: inscricao.produtor_id,
       nome: inscricao.nome || "",
