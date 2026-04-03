@@ -74,6 +74,7 @@ import { cn } from "@/lib/utils";
 const TIPOS_CONTRATO = [
   { value: "parceria", label: "Parceria" },
   { value: "arrendamento", label: "Arrendamento" },
+  { value: "terceiros", label: "Terceiros" },
 ];
 
 interface InscricoesTabProps {
