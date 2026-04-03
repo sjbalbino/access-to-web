@@ -917,6 +917,23 @@ export default function RemessasVendaForm() {
                       ))
                     )}
                   </TableBody>
+                  {remessas && remessas.length > 0 && (() => {
+                    const ativas = remessas.filter(r => r.status !== "cancelada");
+                    const totalKgRemessa = ativas.reduce((s, r) => s + (Number(r.kg_remessa) || 0), 0);
+                    const totalKgNota = ativas.reduce((s, r) => s + (Number(r.kg_nota) || 0), 0);
+                    const totalValorNota = ativas.reduce((s, r) => s + (Number(r.valor_nota) || 0), 0);
+                    return (
+                      <TableFooter>
+                        <TableRow className="font-bold">
+                          <TableCell colSpan={4} className="text-right">Totais:</TableCell>
+                          <TableCell className="text-right">{formatNumber(totalKgRemessa)}</TableCell>
+                          <TableCell className="text-right">{formatNumber(totalKgNota)}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(totalValorNota)}</TableCell>
+                          <TableCell colSpan={4} />
+                        </TableRow>
+                      </TableFooter>
+                    );
+                  })()}
                 </Table>
               </div>
             )}
