@@ -648,7 +648,11 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'balanceiro', dbName: 'balanceiro', transform: toStr },
       { accessName: 'status', dbName: 'status', transform: (v: any) => {
         if (v === null || v === undefined || v === '') return 'pendente';
-        return String(v).trim().toLowerCase();
+        const s = String(v).trim();
+        if (s === '1') return 'carregando';
+        if (s === '2') return 'carregado';
+        if (s === '3') return 'carregado_nfe';
+        return s.toLowerCase();
       } },
       { accessName: 'remcancelada', dbName: 'status', transform: (v: any) => {
         if (v === null || v === undefined || v === '') return undefined;
