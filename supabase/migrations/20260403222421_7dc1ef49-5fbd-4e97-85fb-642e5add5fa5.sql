@@ -1,0 +1,1 @@
+UPDATE inscricoes_produtor SET tipo = 'terceiros' WHERE tipo = '3';
