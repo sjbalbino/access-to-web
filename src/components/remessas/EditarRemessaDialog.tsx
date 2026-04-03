@@ -220,6 +220,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                     type="date"
                     value={dataRemessa}
                     onChange={(e) => setDataRemessa(e.target.value)}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="space-y-2">
