@@ -334,6 +334,17 @@ export default function VendaProducaoForm() {
       return;
     }
 
+    if (!isEditing) {
+      if (!data.quantidade_kg || data.quantidade_kg <= 0) {
+        toast.error("Informe a quantidade vendida (Kg) para o contrato");
+        return;
+      }
+      if (!data.preco_kg || data.preco_kg <= 0) {
+        toast.error("Informe o preço por Kg para o contrato");
+        return;
+      }
+    }
+
     const payload: ContratoVendaInsert = {
       numero: data.numero,
       data_contrato: data.data_contrato,
