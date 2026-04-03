@@ -692,11 +692,12 @@ export const tableConfigs: TableConfig[] = [
     tableName: 'transferencias_deposito',
     description: 'Transferências entre depósitos',
     order: 15,
-    dependsOn: ['inscricoes', 'safras', 'produtos', 'granjas', 'silos', 'locais_entrega'],
+    dependsOn: ['inscricoes', 'safras', 'produtos', 'granjas', 'silos'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toInt },
       { accessName: 'data_transferencia', dbName: 'data_transferencia', transform: toDate },
       { accessName: 'quantidade_kg', dbName: 'quantidade_kg', transform: toNumber },
+      { accessName: 'tipo', dbName: 'tipo', transform: toStr },
       { accessName: 'observacao', dbName: 'observacao', transform: toStr },
     ],
     references: [
