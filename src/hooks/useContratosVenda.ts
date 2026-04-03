@@ -47,7 +47,7 @@ export interface ContratoVenda {
   // Joins
   safra?: { id: string; nome: string } | null;
   produto?: { id: string; nome: string } | null;
-  comprador?: { id: string; nome: string; cpf_cnpj: string | null } | null;
+  comprador?: { id: string; nome: string; nome_fantasia?: string | null; cpf_cnpj: string | null } | null;
   inscricao_produtor?: { 
     id: string; 
     granja: string | null; 
