@@ -1,21 +1,40 @@
-## Plano: Nota Referenciada na Devolução de Depósito
+
+
+## Plano: Somar kg de taxa de armazenagem no saldo do Sócio Emitente
 
 ### Problema
-A NF-e de devolução de depósito (CFOP 5906/6906) exige, conforme NT da SEFAZ, a chave da NFe/NFP referenciada (nota de depósito emitida pelo produtor). Atualmente não existe campo para informar essa chave.
+Quando uma devolução de depósito é registrada com taxa de armazenagem, os kgs cobrados (`kg_taxa_armazenagem`) deveriam ser somados ao saldo do sócio emitente (`inscricao_recebe_taxa_id` / `inscricao_emitente_id`), mas o hook `useSaldoSocio` não considera essa entrada.
 
 ### Solução
 
-**1. Migração SQL** — Adicionar campo `nfe_referenciada` na tabela `devolucoes_deposito`:
-```sql
-ALTER TABLE devolucoes_deposito ADD COLUMN nfe_referenciada VARCHAR;
+**Arquivo: `src/hooks/useSaldoSocio.ts`**
+
+Adicionar uma nova consulta à tabela `devolucoes_deposito` para somar `kg_taxa_armazenagem` onde `inscricao_recebe_taxa_id` (ou `inscricao_emitente_id`) corresponde ao sócio, filtrando devoluções canceladas. Esse total será somado ao saldo.
+
+- Adicionar campo `kgTaxaArmazenagem` na interface `SaldoSocioResult`
+- Buscar `SUM(kg_taxa_armazenagem)` de `devolucoes_deposito` onde `inscricao_emitente_id = inscricaoSocioId` e `status != 'cancelada'`
+- Atualizar fórmula: `Saldo = Colheitas + Recebidas + Compras + kgTaxaArmazenagem - Enviadas - Vendas`
+
+### Detalhes técnicos
+
+```typescript
+// Nova query em useSaldoSocio
+const taxaResult = await supabase
+  .from('devolucoes_deposito')
+  .select('kg_taxa_armazenagem')
+  .eq('inscricao_emitente_id', inscricaoSocioId)
+  .eq('safra_id', safraId)
+  .eq('produto_id', produtoId)
+  .neq('status', 'cancelada');
+
+const totalKgTaxa = taxaResult.data?.reduce(
+  (sum, d) => sum + (d.kg_taxa_armazenagem || 0), 0
+) || 0;
+
+// Fórmula atualizada
+const saldo = totalColheitas + totalRecebidas + totalCompras + totalKgTaxa - totalEnviadas - totalVendasProducao;
 ```
 
-**2. Formulário de Devolução (`DevolucaoDialog.tsx`)** — Adicionar campo "Chave NFe Referenciada" (44 dígitos) no formulário de criação/edição.
-
-**3. Emissão de NFe (`EmitirNfeDevolucaoDialog.tsx`)** — Incluir a chave referenciada no payload enviado à SEFAZ, usando o campo `nfe_referenciada` da nota fiscal e passando no mapeamento Focus NFe.
-
 ### Arquivos alterados
-- Nova migração SQL (adicionar coluna)
-- `src/components/devolucao/DevolucaoDialog.tsx` (campo input)
-- `src/components/devolucao/EmitirNfeDevolucaoDialog.tsx` (incluir referência na emissão)
-- `src/hooks/useDevolucoes.ts` (incluir campo na interface)
+- `src/hooks/useSaldoSocio.ts`
+
