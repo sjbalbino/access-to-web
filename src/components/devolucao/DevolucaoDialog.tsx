@@ -128,6 +128,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     setValorTotal(0);
     setTaxaArmazenagem(0);
     setKgTaxaArmazenagem(0);
+    setNfeReferenciada('');
     setObservacao('');
   };
 
