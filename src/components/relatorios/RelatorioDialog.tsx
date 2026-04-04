@@ -84,6 +84,25 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     }
   };
 
+  const colheitasSelect = `
+    data_colheita,
+    peso_bruto,
+    peso_tara,
+    producao_kg,
+    umidade,
+    impureza,
+    kg_desconto_total,
+    producao_liquida_kg,
+    total_sacos,
+    placas(placa),
+    inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
+      produtores:produtor_id(nome)
+    ),
+    controle_lavoura:controle_lavouras!colheitas_controle_lavoura_id_fkey(
+      lavouras(nome)
+    )
+  `;
+
   // ========== Existing reports ==========
   const gerarExtrato = async () => {
     if (!safraId || !inscricaoId) {
@@ -94,12 +113,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const safra = safras?.find(s => s.id === safraId);
     const produto = produtoId ? produtos?.find(p => p.id === produtoId) : null;
 
-    let colheitasQuery = supabase.from("colheitas").select("data_colheita, peso_bruto, peso_tara, producao_kg, umidade, impureza, kg_desconto_total, producao_liquida_kg, lavouras(nome)")
-      .eq("inscricao_produtor_id", inscricaoId).eq("safra_id", safraId);
+    let colheitasQuery = supabase
+      .from("colheitas")
+      .select(colheitasSelect)
+      .eq("inscricao_produtor_id", inscricaoId)
+      .eq("safra_id", safraId);
     if (produtoId) colheitasQuery = colheitasQuery.eq("variedade_id", produtoId);
     if (dataInicial) colheitasQuery = colheitasQuery.gte("data_colheita", dataInicial);
     if (dataFinal) colheitasQuery = colheitasQuery.lte("data_colheita", dataFinal);
-    const { data: colheitas } = await colheitasQuery.order("data_colheita");
+    const { data: colheitas, error: colheitasError } = await colheitasQuery.order("data_colheita");
+    if (colheitasError) throw colheitasError;
 
     let trRecQuery = supabase.from("transferencias_deposito").select("data_transferencia, quantidade_kg, inscricao_origem:inscricoes_produtor!transferencias_deposito_inscricao_origem_id_fkey(granja, produtores(nome))")
       .eq("inscricao_destino_id", inscricaoId).eq("safra_id", safraId);
@@ -131,7 +154,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
       cpfCnpj: null, inscricaoEstadual: inscricao?.inscricao_estadual || null,
       safraNome: safra?.nome || "-", produtoNome: produto?.nome || null,
-      colheitas: (colheitas || []).map((c: any) => ({ data_colheita: c.data_colheita, lavoura: c.lavouras?.nome, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg })),
+      colheitas: (colheitas || []).map((c: any) => ({ data_colheita: c.data_colheita, lavoura: c.controle_lavoura?.lavouras?.nome || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg })),
       transferenciasRecebidas: (trRec || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_origem?.produtores?.nome || t.inscricao_origem?.granja || null, quantidade_kg: t.quantidade_kg })),
       transferenciasEnviadas: (trEnv || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_destino?.produtores?.nome || t.inscricao_destino?.granja || null, quantidade_kg: t.quantidade_kg })),
       devolucoes: (devolucoes || []).map((d: any) => ({ data_devolucao: d.data_devolucao, quantidade_kg: d.quantidade_kg, taxa_armazenagem: d.taxa_armazenagem, kg_taxa_armazenagem: d.kg_taxa_armazenagem })),
@@ -142,17 +165,18 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const gerarColheitas = async () => {
     if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
-    let query = supabase.from("colheitas").select(`data_colheita, peso_bruto, peso_tara, producao_kg, umidade, impureza, kg_desconto_total, producao_liquida_kg, total_sacos, inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(produtores(nome)), lavouras(nome), placas(placa)`).eq("safra_id", safraId);
+    let query = supabase.from("colheitas").select(colheitasSelect).eq("safra_id", safraId);
     if (produtoId) query = query.eq("variedade_id", produtoId);
     if (siloId) query = query.eq("silo_id", siloId);
     if (dataInicial) query = query.gte("data_colheita", dataInicial);
     if (dataFinal) query = query.lte("data_colheita", dataFinal);
-    const { data } = await query.order("data_colheita");
+    const { data, error } = await query.order("data_colheita");
+    if (error) throw error;
     if (!data || data.length === 0) { toast({ title: "Sem dados", description: "Nenhuma colheita encontrada." }); return; }
     const safra = safras?.find(s => s.id === safraId);
     const prod = produtoId ? produtos?.find(p => p.id === produtoId) : null;
     const filtros = [`Safra: ${safra?.nome || "-"}`, prod ? `Produto: ${prod.nome}` : null].filter(Boolean).join(" | ");
-    const mapped: RelColheita[] = data.map((c: any) => ({ data_colheita: c.data_colheita, produtor_nome: c.inscricao_produtor?.produtores?.nome || null, lavoura_nome: c.lavouras?.nome || null, placa: c.placas?.placa || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg, total_sacos: c.total_sacos }));
+    const mapped: RelColheita[] = data.map((c: any) => ({ data_colheita: c.data_colheita, produtor_nome: c.inscricao_produtor?.produtores?.nome || null, lavoura_nome: c.controle_lavoura?.lavouras?.nome || null, placa: c.placas?.placa || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg, total_sacos: c.total_sacos }));
     gerarRelatorioColheitasPdf(mapped, filtros);
   };
 
