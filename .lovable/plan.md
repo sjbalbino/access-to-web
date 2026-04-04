@@ -1,52 +1,35 @@
 
 
-## Plano: Corrigir cálculo de saldo quando NFe é cancelada
+## Plano: Unificar cadastro de Produtor/Sócio com Inscrições Estaduais em uma única tela
 
 ### Problema
-Quando uma NFe é cancelada na SEFAZ, o sistema apenas atualiza o status em `notas_fiscais` para "cancelada", mas **não propaga** essa informação para as tabelas que afetam o cálculo de saldo. Três cenários estão com falha:
-
-1. **Notas de Depósito (CFOP 1905)**: Registro em `notas_deposito_emitidas` permanece ativo mesmo com a NFe cancelada, reduzindo indevidamente o saldo à emitir.
-2. **Devoluções de Depósito**: O status da devolução não é atualizado para "cancelada" quando a NFe vinculada é cancelada, porém o filtro `.neq('status', 'cancelada')` já existe nos hooks. O problema é que o status nunca muda.
-3. **Compras de Cereais**: Mesma situação -- `compras_cereais.status` não é atualizado, e o `useSaldoSocio` não filtra por status.
+Atualmente o fluxo exige: (1) abrir dialog, preencher dados do produtor, salvar, dialog fecha; (2) localizar o produtor na lista, clicar no ícone de inscrições, abrir outro dialog para cadastrar a Inscrição Estadual. Isso é lento e confuso.
 
 ### Solução
+Transformar o dialog de cadastro/edição em um formulário com **abas (Tabs)**: "Dados do Produtor" e "Inscrições Estaduais".
 
-**1. Edge Function `focus-nfe-cancelar`** -- Adicionar lógica de propagação após cancelamento bem-sucedido:
-
-Após atualizar `notas_fiscais.status = 'cancelada'`, o edge function deve:
-- Buscar `devolucoes_deposito` onde `nota_fiscal_id = notaFiscalId` e atualizar `status = 'cancelada'`
-- Buscar `notas_deposito_emitidas` onde `nota_fiscal_id = notaFiscalId` e **deletar** o registro (ou marcar como inativo)
-- Buscar `compras_cereais` onde `nota_fiscal_id = notaFiscalId` e atualizar `status = 'cancelada'`
-
-**2. Hook `useSaldoSocio`** -- Adicionar filtro de status nas compras:
-
-```typescript
-// Compras: excluir canceladas
-.neq('status', 'cancelada')
-```
-
-**3. Hook `useSaldosDeposito`** -- Filtrar notas de depósito com NFe cancelada:
-
-Fazer join com `notas_fiscais` para excluir registros cuja NFe tenha `status = 'cancelada'`, ou confiar na deleção feita pelo edge function.
+- **Novo cadastro**: O formulário abre na aba "Dados do Produtor". Ao salvar, o produtor é criado no banco e o dialog **permanece aberto**, alternando automaticamente para a aba "Inscrições Estaduais" com uma primeira inscrição já pré-preenchida com os dados do cadastro (CPF/CNPJ, endereço, telefone, email, granja).
+- **Edição**: O dialog abre com ambas as abas disponíveis. O usuário pode alternar livremente entre dados do produtor e inscrições.
+- A aba "Inscrições Estaduais" reutiliza o componente `InscricoesTab` já existente (que já pré-preenche dados do produtor ao criar nova inscrição).
 
 ### Detalhes técnicos
 
-A abordagem mais robusta é deletar/propagar no edge function (solução na fonte), complementada por filtros defensivos nos hooks.
+**Arquivo: `src/pages/Produtores.tsx`**
 
-**Arquivo: `supabase/functions/focus-nfe-cancelar/index.ts`**
-- Após `supabase.from("notas_fiscais").update(...)`, adicionar:
-  - `DELETE FROM notas_deposito_emitidas WHERE nota_fiscal_id = notaFiscalId`
-  - `UPDATE devolucoes_deposito SET status = 'cancelada' WHERE nota_fiscal_id = notaFiscalId`
-  - `UPDATE compras_cereais SET status = 'cancelada' WHERE nota_fiscal_id = notaFiscalId`
+1. Adicionar componente `Tabs` (já existe em `src/components/ui/tabs.tsx`) ao `DialogContent` do formulário de produtor.
+2. Criar estado `activeTab` para controlar a aba ativa (`"dados"` | `"inscricoes"`).
+3. No `handleSubmit` para **novo** produtor:
+   - Após `createProdutor.mutateAsync`, armazenar o `id` retornado no `editingItem`.
+   - Não fechar o dialog. Mudar `activeTab` para `"inscricoes"`.
+   - Chamar automaticamente a criação da 1ª inscrição com dados do produtor (CPF/CNPJ, endereço, granja, etc.) via `createInscricao.mutateAsync`.
+4. Para **edição**, o dialog abre com ambas as abas habilitadas.
+5. A aba "Inscrições" renderiza `<InscricoesTab produtorId={editingItem.id} />`.
+6. Expandir o `DialogContent` para `max-w-5xl` para comportar a tabela de inscrições.
+7. Remover o dialog separado de inscrições (`inscricoesDialogOpen`) e o botão de ícone na tabela, mantendo apenas o botão de editar (que agora abre o dialog unificado com acesso às inscrições).
 
-**Arquivo: `src/hooks/useSaldoSocio.ts`**
-- Adicionar `.neq('status', 'cancelada')` na query de `compras_cereais`
-
-**Arquivo: `src/hooks/useSaldosDeposito.ts`**
-- Adicionar join/filtro para excluir `notas_deposito_emitidas` cujo `nota_fiscal_id` tenha nota com status cancelada (filtro defensivo)
+**Arquivo: `src/components/produtores/InscricoesTab.tsx`**
+- Sem alterações estruturais. Já possui lógica de pré-preenchimento com dados do produtor.
 
 ### Arquivos alterados
-- `supabase/functions/focus-nfe-cancelar/index.ts` (propagação de cancelamento)
-- `src/hooks/useSaldoSocio.ts` (filtro compras canceladas)
-- `src/hooks/useSaldosDeposito.ts` (filtro defensivo notas depósito)
+- `src/pages/Produtores.tsx`
 
