@@ -126,8 +126,10 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         0
       );
 
-      // SALDO = Colheitas + Recebidas - Enviadas - Devoluções - kg_Taxa_Armazenagem - Notas de Depósito
-      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalKgTaxaArmazenagem - totalNotasDeposito;
+      // SALDO = Colheitas + Recebidas - Enviadas - Devoluções - kg_Taxa_Armazenagem
+      // Nota: Notas de Depósito não entram no cálculo do saldo de devolução
+      // pois representam outra operação (regularização fiscal), não baixa de saldo
+      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalKgTaxaArmazenagem;
 
       return {
         saldo,
