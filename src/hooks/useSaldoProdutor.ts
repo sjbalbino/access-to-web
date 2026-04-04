@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveSaldoProdutoIds } from '@/lib/produtoSaldo';
 
 interface SaldoProdutorFilters {
   inscricaoProdutorId?: string;
@@ -24,13 +25,15 @@ export function useSaldoProdutor(filters: SaldoProdutorFilters) {
         return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0 };
       }
 
+      const produtoIds = await resolveSaldoProdutoIds(produtoId);
+
       // Buscar colheitas (producao_liquida_kg)
       const { data: colheitasData, error: colheitasError } = await supabase
         .from('colheitas')
         .select('producao_liquida_kg')
         .eq('inscricao_produtor_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('variedade_id', produtoId);
+        .in('variedade_id', produtoIds);
 
       if (colheitasError) throw colheitasError;
 
@@ -45,7 +48,7 @@ export function useSaldoProdutor(filters: SaldoProdutorFilters) {
         .select('quantidade_kg')
         .eq('inscricao_destino_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId);
+        .in('produto_id', produtoIds);
 
       if (recebidosError) throw recebidosError;
 
@@ -60,7 +63,7 @@ export function useSaldoProdutor(filters: SaldoProdutorFilters) {
         .select('quantidade_kg')
         .eq('inscricao_origem_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId);
+        .in('produto_id', produtoIds);
 
       if (enviadosError) throw enviadosError;
 
