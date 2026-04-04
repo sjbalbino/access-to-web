@@ -128,6 +128,7 @@ export function useDevolucao(id: string | null) {
           ),
           produto:produtos(id, nome),
           silo:silos(id, nome),
+          local_entrega:locais_entrega!devolucoes_deposito_local_entrega_id_fkey(id, nome, is_sede),
           nota_fiscal:notas_fiscais(id, numero, status)
         `)
         .eq('id', id)
