@@ -17,6 +17,7 @@ export interface ReferenceResolver {
   selfReference?: boolean; // true if references same table being imported (deferred)
   compositeSourceColumn?: string; // extra column in Excel for disambiguation (e.g. producer name)
   compositeColumns?: string[]; // columns in lookup table to build composite key
+  required?: boolean; // if true, empty source value generates an error (for NOT NULL FK columns)
 }
 
 export interface UpdateModeConfig {
@@ -743,12 +744,14 @@ export const tableConfigs: TableConfig[] = [
       }},
     ],
     references: [
-      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'] },
-      { dbColumn: 'inscricao_emitente_id', sourceColumn: 'inscricao_emitente_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_emitente_nome', compositeColumns: ['nome'] },
-      { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
-      { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
-      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
+      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'], required: true },
+      { dbColumn: 'inscricao_emitente_id', sourceColumn: 'inscricao_emitente_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_emitente_nome', compositeColumns: ['nome'], required: true },
+      { dbColumn: 'inscricao_recebe_taxa_id', sourceColumn: 'inscricao_recebe_taxa_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_recebe_taxa_nome', compositeColumns: ['nome'] },
+      { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
+      { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
+      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
       { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome' },
+      { dbColumn: 'local_entrega_id', sourceColumn: 'local_entrega_codigo', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome' },
     ],
   },
   {
@@ -849,6 +852,9 @@ export async function resolveReferences(
       }
 
       if (!sourceValue) {
+        if (ref.required) {
+          errors.push(`Linha ${idx + 1}: Campo obrigatório "${ref.sourceColumn}" está vazio para ${ref.dbColumn}`);
+        }
         if (foundKey) delete newRow[foundKey];
         if (compositeFoundKey) delete newRow[compositeFoundKey];
         continue;
