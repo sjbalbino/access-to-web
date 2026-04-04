@@ -12,6 +12,7 @@ interface SaldoSocioResult {
   colheitas: number;
   transferenciasRecebidas: number;
   compras: number;
+  kgTaxaArmazenagem: number;
   transferenciasEnviadas: number;
   vendasProducao: number;
 }
