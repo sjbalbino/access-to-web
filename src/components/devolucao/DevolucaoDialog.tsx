@@ -92,6 +92,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       setValorTotal(devolucao.valor_total || 0);
       setTaxaArmazenagem(devolucao.taxa_armazenagem || 0);
       setKgTaxaArmazenagem(devolucao.kg_taxa_armazenagem || 0);
+      setNfeReferenciada((devolucao as any).nfe_referenciada || '');
       setObservacao(devolucao.observacao || '');
     } else {
       // Modo novo - usar defaults dos filtros se disponível
