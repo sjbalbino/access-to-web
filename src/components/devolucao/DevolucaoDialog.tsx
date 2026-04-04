@@ -41,6 +41,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
   const [valorTotal, setValorTotal] = useState(0);
   const [taxaArmazenagem, setTaxaArmazenagem] = useState(0);
   const [kgTaxaArmazenagem, setKgTaxaArmazenagem] = useState(0);
+  const [inscricaoRecebeTaxaId, setInscricaoRecebeTaxaId] = useState('');
   const [nfeReferenciada, setNfeReferenciada] = useState('');
   const [observacao, setObservacao] = useState('');
 
