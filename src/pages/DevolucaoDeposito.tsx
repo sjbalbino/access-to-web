@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Edit, Send } from 'lucide-react';
 import { useDevolucoes, useDeleteDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
+import { useAllInscricoes } from '@/hooks/useAllInscricoes';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
@@ -23,6 +24,7 @@ export default function DevolucaoDeposito() {
   const [granjaId, setGranjaId] = useState<string>('');
   const [safraId, setSafraId] = useState<string>('');
   const [produtoId, setProdutoId] = useState<string>('');
+  const [produtorId, setProdutorId] = useState<string>('');
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,9 +36,28 @@ export default function DevolucaoDeposito() {
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
   const { data: produtos } = useProdutosSementes();
+  const { data: allInscricoes } = useAllInscricoes();
+  
+  const produtoresUnicos = useMemo(() => {
+    if (!allInscricoes) return [];
+    const map = new Map<string, string>();
+    allInscricoes.forEach(i => {
+      if (i.produtores?.id && i.produtores?.nome) {
+        map.set(i.produtores.id, i.produtores.nome);
+      }
+    });
+    return Array.from(map.entries()).map(([id, nome]) => ({ id, nome })).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [allInscricoes]);
   
   const { data: devolucoes, isLoading } = useDevolucoes({ granjaId, safraId, produtoId });
   const deleteDevolucao = useDeleteDevolucao();
+
+  // Filtro local por produtor
+  const devolucoesFiltradas = useMemo(() => {
+    if (!devolucoes) return [];
+    if (!produtorId) return devolucoes;
+    return devolucoes.filter(d => d.inscricao_produtor?.produtores?.nome === produtoresUnicos.find(p => p.id === produtorId)?.nome);
+  }, [devolucoes, produtorId, produtoresUnicos]);
 
   const handleNovaDevolucao = () => {
     setDevolucaoSelecionada(null);
@@ -55,7 +76,7 @@ export default function DevolucaoDeposito() {
     totalRegistros,
     setPaginaAtual,
     gerarNumerosPaginas,
-  } = usePaginacao(devolucoes || []);
+  } = usePaginacao(devolucoesFiltradas);
 
 
   return (
@@ -74,7 +95,7 @@ export default function DevolucaoDeposito() {
         {/* Filtros */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <Label>Granja</Label>
                 <Select value={granjaId} onValueChange={setGranjaId}>
@@ -103,6 +124,17 @@ export default function DevolucaoDeposito() {
                   <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     {produtos?.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Produtor</Label>
+                <Select value={produtorId} onValueChange={setProdutorId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {produtoresUnicos.map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                     ))}
                   </SelectContent>
