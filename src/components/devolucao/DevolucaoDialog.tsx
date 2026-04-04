@@ -82,7 +82,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       // Modo edição - carregar dados da devolução
       setSafraId(devolucao.safra_id || '');
       setProdutoId(devolucao.produto_id || '');
-      setLocalEntregaId((devolucao as any).local_entrega_id || '');
+      setLocalEntregaId(devolucao.local_entrega_id || '');
       setDataDevolucao(devolucao.data_devolucao || new Date().toISOString().split('T')[0]);
       setSiloId(devolucao.silo_id || '');
       setInscricaoEmitenteId(devolucao.inscricao_emitente_id || '');
@@ -92,7 +92,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       setValorTotal(devolucao.valor_total || 0);
       setTaxaArmazenagem(devolucao.taxa_armazenagem || 0);
       setKgTaxaArmazenagem(devolucao.kg_taxa_armazenagem || 0);
-      setNfeReferenciada((devolucao as any).nfe_referenciada || '');
+      setNfeReferenciada(devolucao.nfe_referenciada || '');
       setObservacao(devolucao.observacao || '');
     } else {
       // Modo novo - usar defaults dos filtros se disponível
@@ -267,9 +267,9 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
             <div className="space-y-2">
               <Label>Local de Entrega *</Label>
               <Select 
-                value={localEntregaId} 
+                value={localEntregaId || undefined} 
                 onValueChange={setLocalEntregaId}
-                disabled={!safraId || !produtoId || isEditing}
+                disabled={!safraId || !produtoId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={
@@ -279,6 +279,12 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                   } />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* Garantir que o local atual apareça na edição */}
+                  {isEditing && devolucao?.local_entrega && !locaisEntregaComColheitas?.some(l => l.id === devolucao.local_entrega_id) && (
+                    <SelectItem key={devolucao.local_entrega_id!} value={devolucao.local_entrega_id!}>
+                      {devolucao.local_entrega.nome} {devolucao.local_entrega.is_sede ? '(Sede)' : ''}
+                    </SelectItem>
+                  )}
                   {locaisEntregaComColheitas?.map(l => (
                     <SelectItem key={l.id} value={l.id}>
                       {l.nome} {l.is_sede ? '(Sede)' : ''}
@@ -333,7 +339,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
           <div className="space-y-2">
             <Label>Produtor (Destinatário) *</Label>
             <Select 
-              value={inscricaoProdutorId} 
+              value={inscricaoProdutorId || undefined} 
               onValueChange={setInscricaoProdutorId}
               disabled={!safraId || !produtoId || !localEntregaId}
             >
@@ -345,6 +351,12 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                 } />
               </SelectTrigger>
               <SelectContent>
+                {/* Garantir que o produtor atual apareça na edição */}
+                {isEditing && devolucao?.inscricao_produtor && !inscricoesComSaldo?.some(i => i.id === devolucao.inscricao_produtor_id) && (
+                  <SelectItem key={devolucao.inscricao_produtor_id} value={devolucao.inscricao_produtor_id}>
+                    {devolucao.inscricao_produtor.produtores?.nome} - IE: {devolucao.inscricao_produtor.inscricao_estadual}
+                  </SelectItem>
+                )}
                 {inscricoesComSaldo?.map(i => (
                   <SelectItem key={i.id} value={i.id}>
                     {i.produtor_nome} - IE: {i.inscricao_estadual} ({formatNumber(i.total_depositado, 3)} kg depositados)

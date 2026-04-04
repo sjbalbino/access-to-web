@@ -11,6 +11,7 @@ export interface DevolucaoDeposito {
   inscricao_produtor_id: string;
   produto_id: string;
   silo_id: string | null;
+  local_entrega_id: string | null;
   data_devolucao: string;
   quantidade_kg: number;
   valor_unitario: number;
@@ -43,6 +44,7 @@ export interface DevolucaoDeposito {
   };
   produto?: { id: string; nome: string };
   silo?: { id: string; nome: string };
+  local_entrega?: { id: string; nome: string; is_sede: boolean } | null;
   nota_fiscal?: { id: string; numero: number; status: string };
 }
 
@@ -82,6 +84,7 @@ export function useDevolucoes(filters?: DevolucaoFilters) {
           ),
           produto:produtos(id, nome),
           silo:silos(id, nome),
+          local_entrega:locais_entrega!devolucoes_deposito_local_entrega_id_fkey(id, nome, is_sede),
           nota_fiscal:notas_fiscais(id, numero, status)
         `)
         .order('codigo', { ascending: false });
@@ -125,6 +128,7 @@ export function useDevolucao(id: string | null) {
           ),
           produto:produtos(id, nome),
           silo:silos(id, nome),
+          local_entrega:locais_entrega!devolucoes_deposito_local_entrega_id_fkey(id, nome, is_sede),
           nota_fiscal:notas_fiscais(id, numero, status)
         `)
         .eq('id', id)
