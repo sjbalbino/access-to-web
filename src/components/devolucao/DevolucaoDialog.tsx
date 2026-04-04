@@ -82,7 +82,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       // Modo edição - carregar dados da devolução
       setSafraId(devolucao.safra_id || '');
       setProdutoId(devolucao.produto_id || '');
-      setLocalEntregaId((devolucao as any).local_entrega_id || '');
+      setLocalEntregaId(devolucao.local_entrega_id || '');
       setDataDevolucao(devolucao.data_devolucao || new Date().toISOString().split('T')[0]);
       setSiloId(devolucao.silo_id || '');
       setInscricaoEmitenteId(devolucao.inscricao_emitente_id || '');
@@ -92,7 +92,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       setValorTotal(devolucao.valor_total || 0);
       setTaxaArmazenagem(devolucao.taxa_armazenagem || 0);
       setKgTaxaArmazenagem(devolucao.kg_taxa_armazenagem || 0);
-      setNfeReferenciada((devolucao as any).nfe_referenciada || '');
+      setNfeReferenciada(devolucao.nfe_referenciada || '');
       setObservacao(devolucao.observacao || '');
     } else {
       // Modo novo - usar defaults dos filtros se disponível
