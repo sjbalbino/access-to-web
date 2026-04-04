@@ -738,8 +738,14 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'valor_total', dbName: 'valor_total', transform: toNumber },
       { accessName: 'observacao', dbName: 'observacao', transform: toStr },
       { accessName: 'nfe_referenciada', dbName: 'nfe_referenciada', transform: toStr },
-      { accessName: 'status', dbName: 'status', transform: (v: any) => {
-        if (v === true || v === 'true' || v === '1' || v === 1 || String(v).toLowerCase() === 'sim' || String(v).toLowerCase() === 'cancelada') return 'cancelada';
+      { accessName: 'status', dbName: 'status', transform: (v: any, row?: Record<string, any>) => {
+        const isTruthy = (val: any) => val === true || val === 'true' || val === '1' || val === 1 || val === -1 || val === '-1' || String(val ?? '').toLowerCase() === 'sim';
+        if (isTruthy(v)) return 'cancelada';
+        // Check DevEmitida from raw row
+        if (row) {
+          const emitidaKey = Object.keys(row).find(k => k.replace(/[^a-z0-9]/gi, '').toLowerCase() === 'devemitida');
+          if (emitidaKey && isTruthy(row[emitidaKey])) return 'nfe_emitida';
+        }
         return 'pendente';
       }},
     ],
