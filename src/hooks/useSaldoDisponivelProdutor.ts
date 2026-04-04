@@ -20,7 +20,7 @@ interface SaldoDisponivelResult {
 
 /**
  * Hook para calcular saldo disponível do PRODUTOR para devolução
- * Fórmula: Saldo = Colheitas + Transf.Recebidas - Transf.Enviadas - Devoluções - kg_Taxa_Armazenagem
+ * Fórmula: Saldo = Colheitas + Transf.Recebidas - Transf.Enviadas - Devoluções - kg_Taxa_Armazenagem - Notas de Depósito
  * Agrupado por: Inscrição + Safra + Produto + Local de Entrega
  */
 export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilters) {
@@ -33,7 +33,6 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0, devolucoes: 0, kgTaxaArmazenagem: 0, notasDeposito: 0 };
       }
 
-      // Buscar colheitas (producao_liquida_kg) - filtrar por local de entrega se especificado
       let colheitasQuery = supabase
         .from('colheitas')
         .select('producao_liquida_kg')
@@ -49,43 +48,40 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
       if (colheitasError) throw colheitasError;
 
       const totalColheitas = (colheitasData || []).reduce(
-        (sum, c) => sum + (c.producao_liquida_kg || 0), 
+        (sum, c) => sum + (c.producao_liquida_kg || 0),
         0
       );
 
-      // Buscar transferências recebidas (inscricao_destino_id)
-      // TODO: Se transferências também precisarem filtrar por local, adicionar aqui
       const { data: recebidosData, error: recebidosError } = await supabase
         .from('transferencias_deposito')
         .select('quantidade_kg')
         .eq('inscricao_destino_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId);
+        .eq('produto_id', produtoId)
+        .or(localEntregaId ? `local_entrada_id.eq.${localEntregaId}` : 'id.not.is.null');
 
       if (recebidosError) throw recebidosError;
 
       const totalRecebidas = (recebidosData || []).reduce(
-        (sum, t) => sum + (t.quantidade_kg || 0), 
+        (sum, t) => sum + (t.quantidade_kg || 0),
         0
       );
 
-      // Buscar transferências enviadas (inscricao_origem_id)
       const { data: enviadosData, error: enviadosError } = await supabase
         .from('transferencias_deposito')
         .select('quantidade_kg')
         .eq('inscricao_origem_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId);
+        .eq('produto_id', produtoId)
+        .or(localEntregaId ? `local_saida_id.eq.${localEntregaId}` : 'id.not.is.null');
 
       if (enviadosError) throw enviadosError;
 
       const totalEnviadas = (enviadosData || []).reduce(
-        (sum, t) => sum + (t.quantidade_kg || 0), 
+        (sum, t) => sum + (t.quantidade_kg || 0),
         0
       );
 
-      // Buscar devoluções já realizadas - incluir kg_taxa_armazenagem
-      // Filtrar por local de entrega se especificado
       let devolucoesQuery = supabase
         .from('devolucoes_deposito')
         .select('quantidade_kg, kg_taxa_armazenagem')
@@ -102,34 +98,49 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
       if (devolucoesError) throw devolucoesError;
 
       const totalDevolucoes = (devolucoesData || []).reduce(
-        (sum, d) => sum + (d.quantidade_kg || 0), 
+        (sum, d) => sum + (d.quantidade_kg || 0),
         0
       );
 
       const totalKgTaxaArmazenagem = (devolucoesData || []).reduce(
-        (sum, d) => sum + (d.kg_taxa_armazenagem || 0), 
+        (sum, d) => sum + (d.kg_taxa_armazenagem || 0),
         0
       );
 
-      // Buscar notas de depósito emitidas (CFOP 1905)
       const { data: notasDepositoData, error: notasDepositoError } = await supabase
         .from('notas_deposito_emitidas')
-        .select('quantidade_kg')
+        .select('quantidade_kg, nota_fiscal_id')
         .eq('inscricao_produtor_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
         .eq('produto_id', produtoId);
 
       if (notasDepositoError) throw notasDepositoError;
 
-      const totalNotasDeposito = (notasDepositoData || []).reduce(
-        (sum, n) => sum + (n.quantidade_kg || 0), 
+      let notasFiltradas = notasDepositoData || [];
+      const notaFiscalIds = notasFiltradas.map((n: any) => n.nota_fiscal_id).filter(Boolean);
+      if (notaFiscalIds.length > 0) {
+        const { data: nfCanceladas, error: nfCanceladasError } = await supabase
+          .from('notas_fiscais')
+          .select('id')
+          .in('id', notaFiscalIds)
+          .eq('status', 'cancelada');
+
+        if (nfCanceladasError) throw nfCanceladasError;
+
+        const canceladasSet = new Set((nfCanceladas || []).map((n: any) => n.id));
+        if (canceladasSet.size > 0) {
+          notasFiltradas = notasFiltradas.filter(
+            (n: any) => !n.nota_fiscal_id || !canceladasSet.has(n.nota_fiscal_id)
+          );
+        }
+      }
+
+      const totalNotasDeposito = notasFiltradas.reduce(
+        (sum: number, n: any) => sum + (n.quantidade_kg || 0),
         0
       );
 
-      // SALDO = Colheitas + Recebidas - Enviadas - Devoluções - kg_Taxa_Armazenagem
-      // Nota: Notas de Depósito não entram no cálculo do saldo de devolução
-      // pois representam outra operação (regularização fiscal), não baixa de saldo
-      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalKgTaxaArmazenagem;
+      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalKgTaxaArmazenagem - totalNotasDeposito;
 
       return {
         saldo,
@@ -144,3 +155,4 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
     enabled: Boolean(filters.inscricaoProdutorId && filters.safraId && filters.produtoId),
   });
 }
+
