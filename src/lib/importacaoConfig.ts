@@ -919,7 +919,7 @@ export function transformRow(
 
   for (const col of columns) {
     const { value } = findColumnValue(row, col.accessName);
-    const transformed = col.transform ? col.transform(value) : value;
+    const transformed = col.transform ? col.transform(value, row) : value;
 
     if (col.required && (transformed === null || transformed === undefined || transformed === '')) {
       errors.push(`Campo obrigatório "${col.accessName}" está vazio`);
