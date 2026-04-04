@@ -431,6 +431,19 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
           </div>
 
           <div className="space-y-2">
+            <Label>Chave NFe/NFP Referenciada</Label>
+            <Input
+              value={nfeReferenciada}
+              onChange={e => setNfeReferenciada(e.target.value.replace(/\D/g, '').slice(0, 44))}
+              placeholder="44 dígitos da chave NFe/NFP do produtor"
+              maxLength={44}
+            />
+            <p className="text-xs text-muted-foreground">
+              Chave da nota de depósito emitida pelo produtor (obrigatória para emissão da NF-e)
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label>Observações</Label>
             <Textarea
               value={observacao}
