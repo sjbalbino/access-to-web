@@ -520,6 +520,14 @@ export function EmitirNfeDevolucaoDialog({
                       <span className="font-medium">{formatNumber(devolucao.kg_taxa_armazenagem || 0, 3)} kg ({devolucao.taxa_armazenagem}%)</span>
                     </div>
                   )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">NFe Referenciada:</span>
+                    <span className="font-medium text-xs">
+                      {(devolucao as any).nfe_referenciada 
+                        ? `${((devolucao as any).nfe_referenciada as string).slice(0, 22)}...` 
+                        : <span className="text-destructive">Não informada</span>}
+                    </span>
+                  </div>
                 </div>
               </div>
             ) : (
