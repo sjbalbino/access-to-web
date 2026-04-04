@@ -123,6 +123,40 @@ serve(async (req) => {
         console.error("Erro ao atualizar nota fiscal no banco:", updateError);
       } else {
         console.log("Nota fiscal atualizada com sucesso no banco de dados");
+
+        // Propagar cancelamento para tabelas relacionadas
+        // 1. Deletar notas de depósito emitidas vinculadas
+        const { error: delNotasDepError } = await supabase
+          .from("notas_deposito_emitidas")
+          .delete()
+          .eq("nota_fiscal_id", notaFiscalId);
+        if (delNotasDepError) {
+          console.error("Erro ao deletar notas_deposito_emitidas:", delNotasDepError);
+        } else {
+          console.log("notas_deposito_emitidas removidas para NFe cancelada");
+        }
+
+        // 2. Cancelar devoluções de depósito vinculadas
+        const { error: updDevError } = await supabase
+          .from("devolucoes_deposito")
+          .update({ status: "cancelada" })
+          .eq("nota_fiscal_id", notaFiscalId);
+        if (updDevError) {
+          console.error("Erro ao cancelar devolucoes_deposito:", updDevError);
+        } else {
+          console.log("devolucoes_deposito canceladas para NFe cancelada");
+        }
+
+        // 3. Cancelar compras de cereais vinculadas
+        const { error: updCompraError } = await supabase
+          .from("compras_cereais")
+          .update({ status: "cancelada" })
+          .eq("nota_fiscal_id", notaFiscalId);
+        if (updCompraError) {
+          console.error("Erro ao cancelar compras_cereais:", updCompraError);
+        } else {
+          console.log("compras_cereais canceladas para NFe cancelada");
+        }
       }
     }
 
