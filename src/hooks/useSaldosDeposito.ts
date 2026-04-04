@@ -242,13 +242,14 @@ export function useLocaisEntregaComColheitas(filters: { safraId?: string; produt
     queryFn: async () => {
       if (!filters.safraId) return [];
 
+      // Buscar colheitas com local de entrega - com ou sem safra_id
       let query = supabase
         .from('colheitas')
         .select(`
           local_entrega_terceiro_id,
+          safra_id,
           local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(id, nome, is_sede)
         `)
-        .eq('safra_id', filters.safraId)
         .not('local_entrega_terceiro_id', 'is', null);
 
       if (filters.produtoId) {
@@ -258,9 +259,14 @@ export function useLocaisEntregaComColheitas(filters: { safraId?: string; produt
       const { data, error } = await query;
       if (error) throw error;
 
+      // Filtrar por safra: incluir colheitas da safra selecionada OU sem safra
+      const filtered = data?.filter((c: any) => 
+        !c.safra_id || c.safra_id === filters.safraId
+      );
+
       // Extrair locais únicos
       const locaisMap = new Map<string, { id: string; nome: string; is_sede: boolean }>();
-      data?.forEach((c: any) => {
+      filtered?.forEach((c: any) => {
         if (c.local_entrega && !locaisMap.has(c.local_entrega.id)) {
           locaisMap.set(c.local_entrega.id, {
             id: c.local_entrega.id,
