@@ -1,40 +1,52 @@
 
 
-## Plano: Somar kg de taxa de armazenagem no saldo do Sócio Emitente
+## Plano: Corrigir cálculo de saldo quando NFe é cancelada
 
 ### Problema
-Quando uma devolução de depósito é registrada com taxa de armazenagem, os kgs cobrados (`kg_taxa_armazenagem`) deveriam ser somados ao saldo do sócio emitente (`inscricao_recebe_taxa_id` / `inscricao_emitente_id`), mas o hook `useSaldoSocio` não considera essa entrada.
+Quando uma NFe é cancelada na SEFAZ, o sistema apenas atualiza o status em `notas_fiscais` para "cancelada", mas **não propaga** essa informação para as tabelas que afetam o cálculo de saldo. Três cenários estão com falha:
+
+1. **Notas de Depósito (CFOP 1905)**: Registro em `notas_deposito_emitidas` permanece ativo mesmo com a NFe cancelada, reduzindo indevidamente o saldo à emitir.
+2. **Devoluções de Depósito**: O status da devolução não é atualizado para "cancelada" quando a NFe vinculada é cancelada, porém o filtro `.neq('status', 'cancelada')` já existe nos hooks. O problema é que o status nunca muda.
+3. **Compras de Cereais**: Mesma situação -- `compras_cereais.status` não é atualizado, e o `useSaldoSocio` não filtra por status.
 
 ### Solução
 
-**Arquivo: `src/hooks/useSaldoSocio.ts`**
+**1. Edge Function `focus-nfe-cancelar`** -- Adicionar lógica de propagação após cancelamento bem-sucedido:
 
-Adicionar uma nova consulta à tabela `devolucoes_deposito` para somar `kg_taxa_armazenagem` onde `inscricao_recebe_taxa_id` (ou `inscricao_emitente_id`) corresponde ao sócio, filtrando devoluções canceladas. Esse total será somado ao saldo.
+Após atualizar `notas_fiscais.status = 'cancelada'`, o edge function deve:
+- Buscar `devolucoes_deposito` onde `nota_fiscal_id = notaFiscalId` e atualizar `status = 'cancelada'`
+- Buscar `notas_deposito_emitidas` onde `nota_fiscal_id = notaFiscalId` e **deletar** o registro (ou marcar como inativo)
+- Buscar `compras_cereais` onde `nota_fiscal_id = notaFiscalId` e atualizar `status = 'cancelada'`
 
-- Adicionar campo `kgTaxaArmazenagem` na interface `SaldoSocioResult`
-- Buscar `SUM(kg_taxa_armazenagem)` de `devolucoes_deposito` onde `inscricao_emitente_id = inscricaoSocioId` e `status != 'cancelada'`
-- Atualizar fórmula: `Saldo = Colheitas + Recebidas + Compras + kgTaxaArmazenagem - Enviadas - Vendas`
+**2. Hook `useSaldoSocio`** -- Adicionar filtro de status nas compras:
+
+```typescript
+// Compras: excluir canceladas
+.neq('status', 'cancelada')
+```
+
+**3. Hook `useSaldosDeposito`** -- Filtrar notas de depósito com NFe cancelada:
+
+Fazer join com `notas_fiscais` para excluir registros cuja NFe tenha `status = 'cancelada'`, ou confiar na deleção feita pelo edge function.
 
 ### Detalhes técnicos
 
-```typescript
-// Nova query em useSaldoSocio
-const taxaResult = await supabase
-  .from('devolucoes_deposito')
-  .select('kg_taxa_armazenagem')
-  .eq('inscricao_emitente_id', inscricaoSocioId)
-  .eq('safra_id', safraId)
-  .eq('produto_id', produtoId)
-  .neq('status', 'cancelada');
+A abordagem mais robusta é deletar/propagar no edge function (solução na fonte), complementada por filtros defensivos nos hooks.
 
-const totalKgTaxa = taxaResult.data?.reduce(
-  (sum, d) => sum + (d.kg_taxa_armazenagem || 0), 0
-) || 0;
+**Arquivo: `supabase/functions/focus-nfe-cancelar/index.ts`**
+- Após `supabase.from("notas_fiscais").update(...)`, adicionar:
+  - `DELETE FROM notas_deposito_emitidas WHERE nota_fiscal_id = notaFiscalId`
+  - `UPDATE devolucoes_deposito SET status = 'cancelada' WHERE nota_fiscal_id = notaFiscalId`
+  - `UPDATE compras_cereais SET status = 'cancelada' WHERE nota_fiscal_id = notaFiscalId`
 
-// Fórmula atualizada
-const saldo = totalColheitas + totalRecebidas + totalCompras + totalKgTaxa - totalEnviadas - totalVendasProducao;
-```
+**Arquivo: `src/hooks/useSaldoSocio.ts`**
+- Adicionar `.neq('status', 'cancelada')` na query de `compras_cereais`
+
+**Arquivo: `src/hooks/useSaldosDeposito.ts`**
+- Adicionar join/filtro para excluir `notas_deposito_emitidas` cujo `nota_fiscal_id` tenha nota com status cancelada (filtro defensivo)
 
 ### Arquivos alterados
-- `src/hooks/useSaldoSocio.ts`
+- `supabase/functions/focus-nfe-cancelar/index.ts` (propagação de cancelamento)
+- `src/hooks/useSaldoSocio.ts` (filtro compras canceladas)
+- `src/hooks/useSaldosDeposito.ts` (filtro defensivo notas depósito)
 
