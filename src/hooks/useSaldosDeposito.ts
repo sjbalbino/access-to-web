@@ -133,7 +133,7 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
       });
 
       // Subtrair notas emitidas
-      notasEmitidas?.forEach((n: any) => {
+      notasFiltradas.forEach((n: any) => {
         const produtoId = n.produto_id;
         if (!produtoId) return;
         
