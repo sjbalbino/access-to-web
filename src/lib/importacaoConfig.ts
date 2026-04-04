@@ -4,7 +4,7 @@ export interface ColumnMapping {
   accessName: string; // column name in Access/Excel
   dbName: string; // column name in Supabase
   required?: boolean;
-  transform?: (value: any) => any;
+  transform?: (value: any, row?: Record<string, any>) => any;
 }
 
 export interface ReferenceResolver {
@@ -738,8 +738,14 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'valor_total', dbName: 'valor_total', transform: toNumber },
       { accessName: 'observacao', dbName: 'observacao', transform: toStr },
       { accessName: 'nfe_referenciada', dbName: 'nfe_referenciada', transform: toStr },
-      { accessName: 'status', dbName: 'status', transform: (v: any) => {
-        if (v === true || v === 'true' || v === '1' || v === 1 || String(v).toLowerCase() === 'sim' || String(v).toLowerCase() === 'cancelada') return 'cancelada';
+      { accessName: 'status', dbName: 'status', transform: (v: any, row?: Record<string, any>) => {
+        const isTruthy = (val: any) => val === true || val === 'true' || val === '1' || val === 1 || val === -1 || val === '-1' || String(val ?? '').toLowerCase() === 'sim';
+        if (isTruthy(v)) return 'cancelada';
+        // Check DevEmitida from raw row
+        if (row) {
+          const emitidaKey = Object.keys(row).find(k => k.replace(/[^a-z0-9]/gi, '').toLowerCase() === 'devemitida');
+          if (emitidaKey && isTruthy(row[emitidaKey])) return 'nfe_emitida';
+        }
         return 'pendente';
       }},
     ],
@@ -919,7 +925,7 @@ export function transformRow(
 
   for (const col of columns) {
     const { value } = findColumnValue(row, col.accessName);
-    const transformed = col.transform ? col.transform(value) : value;
+    const transformed = col.transform ? col.transform(value, row) : value;
 
     if (col.required && (transformed === null || transformed === undefined || transformed === '')) {
       errors.push(`Campo obrigatório "${col.accessName}" está vazio`);
