@@ -205,6 +205,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       valor_total: valorTotal,
       taxa_armazenagem: taxaArmazenagem,
       kg_taxa_armazenagem: kgTaxaArmazenagem,
+      nfe_referenciada: nfeReferenciada || null,
       observacao,
     };
 
