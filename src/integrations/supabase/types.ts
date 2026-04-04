@@ -997,6 +997,7 @@ export type Database = {
           inscricao_recebe_taxa_id: string | null
           kg_taxa_armazenagem: number | null
           local_entrega_id: string | null
+          nfe_referenciada: string | null
           nota_fiscal_id: string | null
           observacao: string | null
           produto_id: string
@@ -1020,6 +1021,7 @@ export type Database = {
           inscricao_recebe_taxa_id?: string | null
           kg_taxa_armazenagem?: number | null
           local_entrega_id?: string | null
+          nfe_referenciada?: string | null
           nota_fiscal_id?: string | null
           observacao?: string | null
           produto_id: string
@@ -1043,6 +1045,7 @@ export type Database = {
           inscricao_recebe_taxa_id?: string | null
           kg_taxa_armazenagem?: number | null
           local_entrega_id?: string | null
+          nfe_referenciada?: string | null
           nota_fiscal_id?: string | null
           observacao?: string | null
           produto_id?: string
