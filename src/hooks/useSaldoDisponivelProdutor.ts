@@ -52,13 +52,18 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         0
       );
 
-      const { data: recebidosData, error: recebidosError } = await supabase
+      let recebidosQuery = supabase
         .from('transferencias_deposito')
         .select('quantidade_kg')
         .eq('inscricao_destino_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId)
-        .or(localEntregaId ? `local_entrada_id.eq.${localEntregaId}` : 'id.not.is.null');
+        .eq('produto_id', produtoId);
+
+      if (localEntregaId) {
+        recebidosQuery = recebidosQuery.eq('local_entrada_id', localEntregaId);
+      }
+
+      const { data: recebidosData, error: recebidosError } = await recebidosQuery;
 
       if (recebidosError) throw recebidosError;
 
@@ -67,15 +72,18 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         0
       );
 
-      const { data: enviadosData, error: enviadosError } = await supabase
+      let enviadosQuery = supabase
         .from('transferencias_deposito')
         .select('quantidade_kg')
         .eq('inscricao_origem_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId)
-        .or(localEntregaId ? `local_saida_id.eq.${localEntregaId}` : 'id.not.is.null');
+        .eq('produto_id', produtoId);
 
-      if (enviadosError) throw enviadosError;
+      if (localEntregaId) {
+        enviadosQuery = enviadosQuery.eq('local_saida_id', localEntregaId);
+      }
+
+      const { data: enviadosData, error: enviadosError } = await enviadosQuery;
 
       const totalEnviadas = (enviadosData || []).reduce(
         (sum, t) => sum + (t.quantidade_kg || 0),

@@ -175,6 +175,9 @@ export function useCreateDevolucao() {
       queryClient.invalidateQueries({ queryKey: ['devolucoes_deposito'] });
       queryClient.invalidateQueries({ queryKey: ['proximo_codigo_devolucao'] });
       queryClient.invalidateQueries({ queryKey: ['saldo_disponivel_produtor'] });
+      queryClient.invalidateQueries({ queryKey: ['inscricoes_com_saldo'] });
+      queryClient.invalidateQueries({ queryKey: ['saldos_deposito'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_socio'] });
       toast({
         title: 'Sucesso',
         description: 'Devolução criada com sucesso.',
@@ -209,6 +212,9 @@ export function useUpdateDevolucao() {
       queryClient.invalidateQueries({ queryKey: ['devolucoes_deposito'] });
       queryClient.invalidateQueries({ queryKey: ['devolucao_deposito'] });
       queryClient.invalidateQueries({ queryKey: ['saldo_disponivel_produtor'] });
+      queryClient.invalidateQueries({ queryKey: ['inscricoes_com_saldo'] });
+      queryClient.invalidateQueries({ queryKey: ['saldos_deposito'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_socio'] });
       toast({
         title: 'Sucesso',
         description: 'Devolução atualizada com sucesso.',
@@ -240,6 +246,9 @@ export function useDeleteDevolucao() {
       queryClient.invalidateQueries({ queryKey: ['devolucoes_deposito'] });
       queryClient.invalidateQueries({ queryKey: ['proximo_codigo_devolucao'] });
       queryClient.invalidateQueries({ queryKey: ['saldo_disponivel_produtor'] });
+      queryClient.invalidateQueries({ queryKey: ['inscricoes_com_saldo'] });
+      queryClient.invalidateQueries({ queryKey: ['saldos_deposito'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_socio'] });
       toast({
         title: 'Sucesso',
         description: 'Devolução excluída com sucesso.',

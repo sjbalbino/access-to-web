@@ -96,6 +96,10 @@ export function useCreateTransferenciaDeposito() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transferencias_deposito'] });
       queryClient.invalidateQueries({ queryKey: ['saldos_deposito'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_produtor'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_disponivel_produtor'] });
+      queryClient.invalidateQueries({ queryKey: ['inscricoes_com_saldo'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_socio'] });
       toast({
         title: 'Transferência registrada',
         description: 'A transferência foi registrada com sucesso.',
@@ -129,6 +133,10 @@ export function useUpdateTransferenciaDeposito() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transferencias_deposito'] });
       queryClient.invalidateQueries({ queryKey: ['saldos_deposito'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_produtor'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_disponivel_produtor'] });
+      queryClient.invalidateQueries({ queryKey: ['inscricoes_com_saldo'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_socio'] });
       toast({
         title: 'Transferência atualizada',
         description: 'A transferência foi atualizada com sucesso.',
@@ -159,6 +167,10 @@ export function useDeleteTransferenciaDeposito() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transferencias_deposito'] });
       queryClient.invalidateQueries({ queryKey: ['saldos_deposito'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_produtor'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_disponivel_produtor'] });
+      queryClient.invalidateQueries({ queryKey: ['inscricoes_com_saldo'] });
+      queryClient.invalidateQueries({ queryKey: ['saldo_socio'] });
       toast({
         title: 'Transferência excluída',
         description: 'A transferência foi excluída com sucesso.',

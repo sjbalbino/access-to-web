@@ -166,6 +166,7 @@ export interface InscricaoComSaldoPorLocal {
   local_entrega_id: string | null;
   local_entrega_nome: string | null;
   total_depositado: number;
+  saldo_disponivel: number;
 }
 
 export function useInscricoesComSaldo(filters: { 
@@ -179,7 +180,6 @@ export function useInscricoesComSaldo(filters: {
     queryFn: async (): Promise<InscricaoComSaldoPorLocal[]> => {
       if (!filters.safraId) return [];
 
-      // Buscar todas as colheitas da safra com local de entrega
       let colheitasQuery = supabase
         .from('colheitas')
         .select(`
@@ -200,44 +200,28 @@ export function useInscricoesComSaldo(filters: {
         .eq('safra_id', filters.safraId)
         .not('inscricao_produtor_id', 'is', null);
 
-      // Filtrar por produto se especificado
-      if (filters.produtoId) {
-        colheitasQuery = colheitasQuery.eq('variedade_id', filters.produtoId);
-      }
-
-      // Filtrar por local de entrega se especificado
-      if (filters.localEntregaId) {
-        colheitasQuery = colheitasQuery.eq('local_entrega_terceiro_id', filters.localEntregaId);
-      }
+      if (filters.produtoId) colheitasQuery = colheitasQuery.eq('variedade_id', filters.produtoId);
+      if (filters.localEntregaId) colheitasQuery = colheitasQuery.eq('local_entrega_terceiro_id', filters.localEntregaId);
 
       const { data: colheitas, error } = await colheitasQuery;
       if (error) throw error;
 
-      // Agrupar por inscrição + local de entrega
       const inscricaoMap = new Map<string, InscricaoComSaldoPorLocal>();
 
       colheitas?.forEach((c: any) => {
         const inscId = c.inscricao_produtor_id;
         const localId = c.local_entrega_terceiro_id;
         if (!inscId || !c.inscricao_produtor) return;
-        
-        // Filtrar apenas produtores (não sócios)
+
         const tipoProdutor = c.inscricao_produtor.produtores?.tipo_produtor;
-        if (tipoProdutor !== 'produtor') {
-          return;
-        }
+        if (tipoProdutor !== 'produtor') return;
+        if (filters.granjaId && c.inscricao_produtor.granja_id !== filters.granjaId) return;
 
-        // Filtrar por granja se especificado
-        if (filters.granjaId && c.inscricao_produtor.granja_id !== filters.granjaId) {
-          return;
-        }
-
-        // Chave única: inscrição + local de entrega
         const key = `${inscId}_${localId || 'sem_local'}`;
-
         const existing = inscricaoMap.get(key);
         if (existing) {
           existing.total_depositado += Number(c.producao_liquida_kg) || 0;
+          existing.saldo_disponivel += Number(c.producao_liquida_kg) || 0;
         } else {
           inscricaoMap.set(key, {
             id: inscId,
@@ -249,15 +233,96 @@ export function useInscricoesComSaldo(filters: {
             local_entrega_id: localId,
             local_entrega_nome: c.local_entrega?.nome || null,
             total_depositado: Number(c.producao_liquida_kg) || 0,
+            saldo_disponivel: Number(c.producao_liquida_kg) || 0,
           });
         }
       });
 
-      return Array.from(inscricaoMap.values()).filter(i => i.total_depositado > 0);
+      if (!filters.produtoId) {
+        return Array.from(inscricaoMap.values()).filter(i => i.total_depositado > 0);
+      }
+
+      const [recebidasRes, enviadasRes, devolucoesRes, notasRes] = await Promise.all([
+        supabase
+          .from('transferencias_deposito')
+          .select('inscricao_destino_id, quantidade_kg, local_entrada_id')
+          .eq('safra_id', filters.safraId)
+          .eq('produto_id', filters.produtoId)
+          .then((r) => r),
+        supabase
+          .from('transferencias_deposito')
+          .select('inscricao_origem_id, quantidade_kg, local_saida_id')
+          .eq('safra_id', filters.safraId)
+          .eq('produto_id', filters.produtoId)
+          .then((r) => r),
+        supabase
+          .from('devolucoes_deposito')
+          .select('inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem, local_entrega_id')
+          .eq('safra_id', filters.safraId)
+          .eq('produto_id', filters.produtoId)
+          .neq('status', 'cancelada')
+          .then((r) => r),
+        supabase
+          .from('notas_deposito_emitidas')
+          .select('inscricao_produtor_id, quantidade_kg, nota_fiscal_id')
+          .eq('safra_id', filters.safraId)
+          .eq('produto_id', filters.produtoId)
+          .then((r) => r),
+      ]);
+
+      if (recebidasRes.error) throw recebidasRes.error;
+      if (enviadasRes.error) throw enviadasRes.error;
+      if (devolucoesRes.error) throw devolucoesRes.error;
+      if (notasRes.error) throw notasRes.error;
+
+      (recebidasRes.data || []).forEach((t: any) => {
+        const key = `${t.inscricao_destino_id}_${t.local_entrada_id || 'sem_local'}`;
+        const existing = inscricaoMap.get(key);
+        if (existing) existing.saldo_disponivel += Number(t.quantidade_kg) || 0;
+      });
+
+      (enviadasRes.data || []).forEach((t: any) => {
+        const key = `${t.inscricao_origem_id}_${t.local_saida_id || 'sem_local'}`;
+        const existing = inscricaoMap.get(key);
+        if (existing) existing.saldo_disponivel -= Number(t.quantidade_kg) || 0;
+      });
+
+      (devolucoesRes.data || []).forEach((d: any) => {
+        const key = `${d.inscricao_produtor_id}_${d.local_entrega_id || 'sem_local'}`;
+        const existing = inscricaoMap.get(key);
+        if (existing) {
+          existing.saldo_disponivel -= (Number(d.quantidade_kg) || 0) + (Number(d.kg_taxa_armazenagem) || 0);
+        }
+      });
+
+      let notasFiltradas = notasRes.data || [];
+      const notaFiscalIds = notasFiltradas.map((n: any) => n.nota_fiscal_id).filter(Boolean);
+      if (notaFiscalIds.length > 0) {
+        const { data: nfCanceladas, error: nfCanceladasError } = await supabase
+          .from('notas_fiscais')
+          .select('id')
+          .in('id', notaFiscalIds)
+          .eq('status', 'cancelada');
+
+        if (nfCanceladasError) throw nfCanceladasError;
+        const canceladasSet = new Set((nfCanceladas || []).map((n: any) => n.id));
+        notasFiltradas = notasFiltradas.filter((n: any) => !n.nota_fiscal_id || !canceladasSet.has(n.nota_fiscal_id));
+      }
+
+      notasFiltradas.forEach((n: any) => {
+        for (const existing of inscricaoMap.values()) {
+          if (existing.id === n.inscricao_produtor_id) {
+            existing.saldo_disponivel -= Number(n.quantidade_kg) || 0;
+          }
+        }
+      });
+
+      return Array.from(inscricaoMap.values()).filter(i => i.saldo_disponivel > 0);
     },
     enabled: !!filters.safraId,
   });
 }
+
 
 // Hook para buscar locais de entrega que têm colheitas
 export function useLocaisEntregaComColheitas(filters: { safraId?: string; produtoId?: string }) {
