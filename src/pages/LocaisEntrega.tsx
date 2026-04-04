@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -75,8 +75,14 @@ export default function LocaisEntrega() {
     return matchesSearch && matchesGranja;
   });
 
+  // Calcular próximo código automaticamente
+  const proximoCodigo = useMemo(() => {
+    const codigos = locais.map(l => parseInt(l.codigo || '0', 10)).filter(n => !isNaN(n));
+    return String((codigos.length > 0 ? Math.max(...codigos) : 0) + 1);
+  }, [locais]);
+
   const handleNew = () => {
-    setFormData(emptyLocal);
+    setFormData({ ...emptyLocal, codigo: proximoCodigo });
     setEditingId(null);
     setIsDialogOpen(true);
   };
