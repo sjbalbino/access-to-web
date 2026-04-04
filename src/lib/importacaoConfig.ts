@@ -738,7 +738,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'valor_total', dbName: 'valor_total', transform: toNumber },
       { accessName: 'observacao', dbName: 'observacao', transform: toStr },
       { accessName: 'nfe_referenciada', dbName: 'nfe_referenciada', transform: toStr },
-      { accessName: 'status', dbName: 'status', transform: (v: any, row?: Record<string, any>) => {
+      { accessName: 'DevCancelada', dbName: 'status', transform: (v: any, row?: Record<string, any>) => {
         const isTruthy = (val: any) => val === true || val === 'true' || val === '1' || val === 1 || val === -1 || val === '-1' || String(val ?? '').toLowerCase() === 'sim';
         if (isTruthy(v)) return 'cancelada';
         // Check DevEmitida from raw row
@@ -748,6 +748,7 @@ export const tableConfigs: TableConfig[] = [
         }
         return 'pendente';
       }},
+      { accessName: 'DevEmitida', dbName: '_dev_emitida_ignore', transform: () => undefined },
     ],
     references: [
       { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'], required: true },
