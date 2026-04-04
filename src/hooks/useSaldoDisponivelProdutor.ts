@@ -91,7 +91,8 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         .select('quantidade_kg, kg_taxa_armazenagem')
         .eq('inscricao_produtor_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId);
+        .eq('produto_id', produtoId)
+        .neq('status', 'cancelada');
 
       if (localEntregaId) {
         devolucoesQuery = devolucoesQuery.eq('local_entrega_id', localEntregaId);
