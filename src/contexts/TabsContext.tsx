@@ -50,23 +50,49 @@ export function TabsProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Helper: get the base route segment (e.g. "/vendas-producao/nova" → "/vendas-producao")
+  const getBaseRoute = useCallback((path: string) => {
+    if (path === "/") return "/";
+    const segments = path.split("/").filter(Boolean);
+    return "/" + segments[0];
+  }, []);
+
   // Sync active tab with current route on mount and browser navigation
   useEffect(() => {
     const currentPath = location.pathname;
-    setActiveTabState(currentPath);
     
-    // If navigated to a path not in tabs (e.g. direct URL), add it
     setTabs((prev) => {
-      const exists = prev.some((t) => t.path === currentPath);
-      if (!exists) {
-        const info = getRouteInfo(currentPath);
-        const newTabs = [...prev, { path: currentPath, title: info.title, icon: info.icon, color: info.color }];
+      const exactMatch = prev.find((t) => t.path === currentPath);
+      if (exactMatch) {
+        // Tab already exists with exact path — just activate it
+        setActiveTabState(currentPath);
+        return prev;
+      }
+
+      // Check if a tab with the same base route exists (e.g. /vendas-producao vs /vendas-producao/nova)
+      const baseRoute = getBaseRoute(currentPath);
+      const baseMatch = prev.find((t) => getBaseRoute(t.path) === baseRoute && t.path !== "/");
+
+      if (baseMatch) {
+        // Update the existing tab's path to the new sub-route
+        const newTabs = prev.map((t) =>
+          t.path === baseMatch.path
+            ? { ...t, path: currentPath, title: getRouteInfo(currentPath).title }
+            : t
+        );
         saveTabs(newTabs);
+        setActiveTabState(currentPath);
         return newTabs;
       }
-      return prev;
+
+      // No match — add new tab
+      const info = getRouteInfo(currentPath);
+      const newTabs = [...prev, { path: currentPath, title: info.title, icon: info.icon, color: info.color }];
+      saveTabs(newTabs);
+      setActiveTabState(currentPath);
+      return newTabs;
     });
-  }, [location.pathname]);
+  }, [location.pathname, getBaseRoute]);
 
   const openTab = useCallback(
     (path: string) => {
