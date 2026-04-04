@@ -339,7 +339,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
           <div className="space-y-2">
             <Label>Produtor (Destinatário) *</Label>
             <Select 
-              value={inscricaoProdutorId} 
+              value={inscricaoProdutorId || undefined} 
               onValueChange={setInscricaoProdutorId}
               disabled={!safraId || !produtoId || !localEntregaId}
             >
@@ -351,6 +351,12 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                 } />
               </SelectTrigger>
               <SelectContent>
+                {/* Garantir que o produtor atual apareça na edição */}
+                {isEditing && devolucao?.inscricao_produtor && !inscricoesComSaldo?.some(i => i.id === devolucao.inscricao_produtor_id) && (
+                  <SelectItem key={devolucao.inscricao_produtor_id} value={devolucao.inscricao_produtor_id}>
+                    {devolucao.inscricao_produtor.produtores?.nome} - IE: {devolucao.inscricao_produtor.inscricao_estadual}
+                  </SelectItem>
+                )}
                 {inscricoesComSaldo?.map(i => (
                   <SelectItem key={i.id} value={i.id}>
                     {i.produtor_nome} - IE: {i.inscricao_estadual} ({formatNumber(i.total_depositado, 3)} kg depositados)
