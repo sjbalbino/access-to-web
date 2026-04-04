@@ -93,6 +93,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       setValorTotal(devolucao.valor_total || 0);
       setTaxaArmazenagem(devolucao.taxa_armazenagem || 0);
       setKgTaxaArmazenagem(devolucao.kg_taxa_armazenagem || 0);
+      setInscricaoRecebeTaxaId(devolucao.inscricao_recebe_taxa_id || '');
       setNfeReferenciada(devolucao.nfe_referenciada || '');
       setObservacao(devolucao.observacao || '');
     } else {
