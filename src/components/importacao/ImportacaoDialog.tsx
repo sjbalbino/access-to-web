@@ -78,6 +78,15 @@ function SubCentroCombobox({ value, onChange, subCentros }: SubCentroComboboxPro
   );
 }
 
+function extractErroredLineNumbers(errors: string[]) {
+  return new Set(
+    errors
+      .map((error) => error.match(/^Linha\s+(\d+):/i)?.[1])
+      .filter((line): line is string => Boolean(line))
+      .map(Number)
+  );
+}
+
 export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImportComplete }: ImportacaoDialogProps) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
@@ -165,7 +174,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       const workbook = XLSX.read(data, { cellDates: true });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
+      const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { defval: '' });
 
       if (jsonData.length === 0) {
         toast.error('Planilha vazia');
@@ -247,7 +256,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   }, [config]);
 
   const handleImport = async () => {
-    if (transformedData.length === 0) return;
+    if (transformedData.length === 0 || (!config.updateMode && validRowCount === 0)) {
+      toast.error('Nenhuma linha válida para importar');
+      return;
+    }
 
     setStatus('importing');
     setProgress(0);
@@ -337,9 +349,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         if (error) throw error;
       }
 
-      // Filter out rows that had reference errors (keep only clean rows)
+      // Filter out rows that had transform/reference errors (keep only clean rows)
       const cleanRows = transformedData.filter((_, idx) => {
-        return !referenceErrors.some(e => e.startsWith(`Linha ${idx + 1}:`));
+        return !invalidLineNumbers.has(idx + 1);
       });
 
       // Remove extra columns not in the mapping or references
@@ -457,6 +469,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   };
 
   const totalErrors = transformErrors.length + referenceErrors.length;
+  const invalidLineNumbers = extractErroredLineNumbers([...transformErrors, ...referenceErrors]);
+  const validRowCount = transformedData.filter((_, idx) => !invalidLineNumbers.has(idx + 1)).length;
+  const importTargetCount = config.updateMode ? transformedData.length : validRowCount;
   const previewColumns = config.columns.slice(0, 6);
 
   return (
@@ -541,6 +556,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                   <AlertTriangle className="h-4 w-4" />
                   {totalErrors} aviso(s) encontrado(s)
                 </h4>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Essas linhas não serão importadas; o restante seguirá normalmente.
+                </p>
                 <ScrollArea className="max-h-[120px]">
                   <ul className="text-xs space-y-1 text-muted-foreground">
                     {[...transformErrors, ...referenceErrors].slice(0, 20).map((e, i) => (
@@ -558,7 +576,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             <Card>
               <CardContent className="pt-4">
                 <h4 className="font-medium mb-3 text-sm">
-                  Pré-visualização ({rawData.length} registros, mostrando primeiros 10)
+                  Pré-visualização ({rawData.length} registros, {validRowCount} válidos, mostrando primeiros 10)
                 </h4>
                 <ScrollArea className="h-[200px]">
                   <Table>
@@ -645,7 +663,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                   <span className="text-sm font-medium">Importando...</span>
                 </div>
                 <Progress value={progress} />
-                <p className="text-xs text-muted-foreground">{importedCount} de {transformedData.length} registros</p>
+                <p className="text-xs text-muted-foreground">{importedCount} de {importTargetCount} registros</p>
               </CardContent>
             </Card>
           )}
@@ -692,8 +710,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             {status === 'done' ? 'Fechar' : 'Cancelar'}
           </Button>
           {status === 'previewing' && (
-            <Button onClick={handleImport} disabled={transformedData.length === 0}>
-              {config.updateMode ? 'Atualizar' : 'Importar'} {transformedData.length} registros
+            <Button onClick={handleImport} disabled={importTargetCount === 0}>
+              {config.updateMode ? 'Atualizar' : 'Importar'} {importTargetCount} registros
             </Button>
           )}
           {(status === 'done' || status === 'error') && (
