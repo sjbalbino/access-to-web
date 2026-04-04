@@ -736,6 +736,11 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'valor_unitario', dbName: 'valor_unitario', transform: toNumber },
       { accessName: 'valor_total', dbName: 'valor_total', transform: toNumber },
       { accessName: 'observacao', dbName: 'observacao', transform: toStr },
+      { accessName: 'nfe_referenciada', dbName: 'nfe_referenciada', transform: toStr },
+      { accessName: 'status', dbName: 'status', transform: (v: any) => {
+        if (v === true || v === 'true' || v === '1' || v === 1 || String(v).toLowerCase() === 'sim' || String(v).toLowerCase() === 'cancelada') return 'cancelada';
+        return 'pendente';
+      }},
     ],
     references: [
       { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },
@@ -743,6 +748,7 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
+      { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome' },
     ],
   },
   {
