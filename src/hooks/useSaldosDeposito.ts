@@ -58,12 +58,36 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
         .select(`
           produto_id,
           quantidade_kg,
+          nota_fiscal_id,
           produto:produtos(id, nome)
         `)
         .eq('inscricao_produtor_id', filters.inscricaoProdutorId)
         .eq('safra_id', filters.safraId);
 
       if (notasError) throw notasError;
+
+      // Filtro defensivo: excluir notas cujo NFe foi cancelada
+      let notasFiltradas = notasEmitidas || [];
+      if (notasFiltradas.length > 0) {
+        const notaFiscalIds = notasFiltradas
+          .map((n: any) => n.nota_fiscal_id)
+          .filter(Boolean);
+        
+        if (notaFiscalIds.length > 0) {
+          const { data: nfCanceladas } = await supabase
+            .from('notas_fiscais')
+            .select('id')
+            .in('id', notaFiscalIds)
+            .eq('status', 'cancelada');
+          
+          const canceladasSet = new Set((nfCanceladas || []).map((n: any) => n.id));
+          if (canceladasSet.size > 0) {
+            notasFiltradas = notasFiltradas.filter(
+              (n: any) => !n.nota_fiscal_id || !canceladasSet.has(n.nota_fiscal_id)
+            );
+          }
+        }
+      }
 
       // Agrupar por produto
       const saldosPorProduto = new Map<string, SaldoDeposito>();
