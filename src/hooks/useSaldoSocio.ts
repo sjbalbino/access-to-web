@@ -12,6 +12,7 @@ interface SaldoSocioResult {
   colheitas: number;
   transferenciasRecebidas: number;
   compras: number;
+  kgTaxaArmazenagem: number;
   transferenciasEnviadas: number;
   vendasProducao: number;
 }
@@ -27,7 +28,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       const { inscricaoSocioId, safraId, produtoId } = filters;
 
       if (!inscricaoSocioId || !safraId || !produtoId) {
-        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, compras: 0, transferenciasEnviadas: 0, vendasProducao: 0 };
+        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, compras: 0, kgTaxaArmazenagem: 0, transferenciasEnviadas: 0, vendasProducao: 0 };
       }
 
       // Buscar colheitas
@@ -90,18 +91,35 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
         totalEnviadas += (t.quantidade_kg as number) || 0;
       }
 
+      // Buscar kg de taxa de armazenagem recebidos (sócio emitente)
+      const taxaResult = await supabase
+        .from('devolucoes_deposito')
+        .select('kg_taxa_armazenagem')
+        .eq('inscricao_emitente_id', inscricaoSocioId)
+        .eq('safra_id', safraId)
+        .eq('produto_id', produtoId)
+        .neq('status', 'cancelada');
+
+      if (taxaResult.error) throw taxaResult.error;
+
+      let totalKgTaxa = 0;
+      for (const d of taxaResult.data || []) {
+        totalKgTaxa += (d.kg_taxa_armazenagem as number) || 0;
+      }
+
       // Vendas da produção - simplificado para evitar problemas de tipo
       // TODO: Implementar RPC function para calcular vendas
       const totalVendasProducao = 0;
 
-      // SALDO = Colheitas + Recebidas + Compras - Enviadas - Vendas
-      const saldo = totalColheitas + totalRecebidas + totalCompras - totalEnviadas - totalVendasProducao;
+      // SALDO = Colheitas + Recebidas + Compras + kgTaxaArmazenagem - Enviadas - Vendas
+      const saldo = totalColheitas + totalRecebidas + totalCompras + totalKgTaxa - totalEnviadas - totalVendasProducao;
 
       return {
         saldo,
         colheitas: totalColheitas,
         transferenciasRecebidas: totalRecebidas,
         compras: totalCompras,
+        kgTaxaArmazenagem: totalKgTaxa,
         transferenciasEnviadas: totalEnviadas,
         vendasProducao: totalVendasProducao,
       };
