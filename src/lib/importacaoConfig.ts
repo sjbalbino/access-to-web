@@ -17,6 +17,7 @@ export interface ReferenceResolver {
   selfReference?: boolean; // true if references same table being imported (deferred)
   compositeSourceColumn?: string; // extra column in Excel for disambiguation (e.g. producer name)
   compositeColumns?: string[]; // columns in lookup table to build composite key
+  required?: boolean; // if true, empty source value generates an error (for NOT NULL FK columns)
 }
 
 export interface UpdateModeConfig {
