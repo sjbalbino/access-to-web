@@ -150,6 +150,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
     setFormData({ 
       ...emptyInscricao, 
       produtor_id: produtorId,
+      nome: produtor?.nome || "",
       cpf_cnpj: produtor?.cpf_cnpj || "",
       cep: produtor?.cep || "",
       logradouro: produtor?.logradouro || "",
