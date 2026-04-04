@@ -447,6 +447,22 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
           </div>
 
           <div className="space-y-2">
+            <Label>Sócio que recebe a armazenagem</Label>
+            <Select value={inscricaoRecebeTaxaId || undefined} onValueChange={setInscricaoRecebeTaxaId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o sócio..." />
+              </SelectTrigger>
+              <SelectContent>
+                {inscricoesSocio?.map(i => (
+                  <SelectItem key={i.id} value={i.id}>
+                    {i.produtores?.nome} - IE: {i.inscricao_estadual}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label>Chave NFe/NFP Referenciada</Label>
             <Input
               value={nfeReferenciada}
