@@ -41,6 +41,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
   const [valorTotal, setValorTotal] = useState(0);
   const [taxaArmazenagem, setTaxaArmazenagem] = useState(0);
   const [kgTaxaArmazenagem, setKgTaxaArmazenagem] = useState(0);
+  const [inscricaoRecebeTaxaId, setInscricaoRecebeTaxaId] = useState('');
   const [nfeReferenciada, setNfeReferenciada] = useState('');
   const [observacao, setObservacao] = useState('');
 
@@ -92,6 +93,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       setValorTotal(devolucao.valor_total || 0);
       setTaxaArmazenagem(devolucao.taxa_armazenagem || 0);
       setKgTaxaArmazenagem(devolucao.kg_taxa_armazenagem || 0);
+      setInscricaoRecebeTaxaId(devolucao.inscricao_recebe_taxa_id || '');
       setNfeReferenciada(devolucao.nfe_referenciada || '');
       setObservacao(devolucao.observacao || '');
     } else {
@@ -128,6 +130,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     setValorTotal(0);
     setTaxaArmazenagem(0);
     setKgTaxaArmazenagem(0);
+    setInscricaoRecebeTaxaId('');
     setNfeReferenciada('');
     setObservacao('');
   };
@@ -205,6 +208,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       valor_total: valorTotal,
       taxa_armazenagem: taxaArmazenagem,
       kg_taxa_armazenagem: kgTaxaArmazenagem,
+      inscricao_recebe_taxa_id: inscricaoRecebeTaxaId || null,
       nfe_referenciada: nfeReferenciada || null,
       observacao,
     };
@@ -440,6 +444,22 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                 Calculado: {formatNumber(quantidadeKg, 3)} kg × {formatNumber(taxaArmazenagem, 2)}%
               </p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Sócio que recebe a armazenagem</Label>
+            <Select value={inscricaoRecebeTaxaId || undefined} onValueChange={setInscricaoRecebeTaxaId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o sócio..." />
+              </SelectTrigger>
+              <SelectContent>
+                {inscricoesSocio?.map(i => (
+                  <SelectItem key={i.id} value={i.id}>
+                    {i.produtores?.nome} - IE: {i.inscricao_estadual}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
