@@ -76,7 +76,7 @@ export default function DevolucaoDeposito() {
     totalRegistros,
     setPaginaAtual,
     gerarNumerosPaginas,
-  } = usePaginacao(devolucoes || []);
+  } = usePaginacao(devolucoesFiltradas);
 
 
   return (
