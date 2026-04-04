@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Users, Plus, Pencil, Trash2, Loader2, Phone, Mail } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, Plus, Pencil, Trash2, Loader2, Phone, Mail, FileText } from "lucide-react";
 import {
   useProdutores, useCreateProdutor, useUpdateProdutor, useDeleteProdutor, ProdutorInput,
 } from "@/hooks/useProdutores";
@@ -26,6 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { InscricoesTab } from "@/components/produtores/InscricoesTab";
+import { useCreateInscricao } from "@/hooks/useInscricoesProdutor";
 import { formatCpf, formatCpfCnpj, formatTelefone, validateCpf, validateCnpj } from "@/lib/formatters";
 import { toast } from "sonner";
 
@@ -67,6 +68,7 @@ export default function Produtores() {
   const createProdutor = useCreateProdutor();
   const updateProdutor = useUpdateProdutor();
   const deleteProdutor = useDeleteProdutor();
+  const createInscricao = useCreateInscricao();
   const { canEdit } = useAuth();
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
   const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
@@ -84,11 +86,7 @@ export default function Produtores() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<ProdutorInput>(emptyProdutor);
-
-  // Inscrições dialog
-  const [inscricoesDialogOpen, setInscricoesDialogOpen] = useState(false);
-  const [inscricoesProdutorId, setInscricoesProdutorId] = useState<string | null>(null);
-  const [inscricoesProdutorNome, setInscricoesProdutorNome] = useState("");
+  const [activeTab, setActiveTab] = useState<string>("dados");
 
   const dadosFiltrados = useMemo(() => {
     let dados = produtores || [];
@@ -119,6 +117,7 @@ export default function Produtores() {
   const resetForm = () => {
     setFormData(emptyProdutor);
     setEditingItem(null);
+    setActiveTab("dados");
   };
 
   const handleCepBlur = async (cep: string) => {
@@ -168,11 +167,40 @@ export default function Produtores() {
     }
     if (editingItem) {
       await updateProdutor.mutateAsync({ id: editingItem.id, ...formData });
+      toast.success("Produtor atualizado com sucesso!");
     } else {
-      await createProdutor.mutateAsync(formData);
+      const result = await createProdutor.mutateAsync(formData);
+      // Manter dialog aberto, setar o item criado e criar 1ª inscrição
+      setEditingItem(result);
+      try {
+        await createInscricao.mutateAsync({
+          produtor_id: result.id,
+          nome: formData.nome || "",
+          tipo: "",
+          inscricao_estadual: "",
+          cpf_cnpj: formData.cpf_cnpj || "",
+          cep: formData.cep || "",
+          logradouro: formData.logradouro || "",
+          numero: formData.numero || "",
+          complemento: formData.complemento || "",
+          bairro: formData.bairro || "",
+          cidade: formData.cidade || "",
+          uf: formData.uf || "",
+          telefone: formData.telefone || "",
+          email: formData.email || "",
+          granja: "",
+          granja_id: formData.granja_id || null,
+          ativa: true,
+          emitente_id: null,
+          conta_bancaria: null,
+          is_emitente_principal: false,
+        });
+      } catch {
+        // Inscrição pode falhar por granja_id nulo; não bloquear o fluxo
+      }
+      setActiveTab("inscricoes");
+      return; // Não fechar o dialog
     }
-    setIsDialogOpen(false);
-    resetForm();
   };
 
   const handleEdit = (item: any) => {
@@ -196,6 +224,7 @@ export default function Produtores() {
       email: item.email || "",
       ativo: item.ativo ?? true,
     });
+    setActiveTab("dados");
     setIsDialogOpen(true);
   };
 
@@ -203,12 +232,6 @@ export default function Produtores() {
     if (confirm("Tem certeza que deseja excluir este registro?")) {
       await deleteProdutor.mutateAsync(id);
     }
-  };
-
-  const handleOpenInscricoes = (item: any) => {
-    setInscricoesProdutorId(item.id);
-    setInscricoesProdutorNome(item.nome);
-    setInscricoesDialogOpen(true);
   };
 
   const getTipoBadge = (tipo: string) => {
@@ -242,144 +265,10 @@ export default function Produtores() {
               Lista de Sócios e Produtores
             </CardTitle>
             {canEdit && (
-              <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-                <Button className="gap-2" size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Novo Registro</span>
-                </Button>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>{editingItem ? "Editar" : "Novo"} Produtor/Sócio</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label>Tipo</Label>
-                        <Select value={formData.tipo_produtor || "produtor"} onValueChange={(v) => setFormData({ ...formData, tipo_produtor: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {TIPOS_PRODUTOR.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Tipo Pessoa</Label>
-                        <Select value={formData.tipo_pessoa || "fisica"} onValueChange={(v) => setFormData({ ...formData, tipo_pessoa: v, cpf_cnpj: "" })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {TIPOS_PESSOA.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>{isFisica ? "CPF" : "CNPJ"}</Label>
-                        <div className="relative">
-                          <Input
-                            value={isFisica ? formatCpf(formData.cpf_cnpj || "") : formatCnpj(formData.cpf_cnpj || "")}
-                            onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value.replace(/\D/g, "") })}
-                            onBlur={(e) => handleCnpjBlur(e.target.value)}
-                            placeholder={isFisica ? "000.000.000-00" : "00.000.000/0000-00"}
-                            maxLength={isFisica ? 14 : 18}
-                          />
-                          {cnpjLoading && formData.tipo_pessoa === "juridica" && (
-                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Identidade</Label>
-                        <Input value={formData.identidade || ""} onChange={(e) => setFormData({ ...formData, identidade: e.target.value })} />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2 md:col-span-2">
-                        <Label>Nome Completo *</Label>
-                        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Granja</Label>
-                        <Select value={formData.granja_id || ""} onValueChange={(v) => setFormData({ ...formData, granja_id: v || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
-                            {granjas?.map((g) => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label>CEP</Label>
-                        <div className="relative">
-                          <Input
-                            value={formData.cep || ""}
-                            onChange={(e) => setFormData({ ...formData, cep: formatCep(e.target.value) })}
-                            onBlur={(e) => handleCepBlur(e.target.value)}
-                            placeholder="00000-000"
-                            maxLength={9}
-                          />
-                          {cepLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
-                        </div>
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label>Logradouro</Label>
-                        <Input value={formData.logradouro || ""} onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Número</Label>
-                        <Input value={formData.numero || ""} onChange={(e) => setFormData({ ...formData, numero: e.target.value })} />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label>Complemento</Label>
-                        <Input value={formData.complemento || ""} onChange={(e) => setFormData({ ...formData, complemento: e.target.value })} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Bairro</Label>
-                        <Input value={formData.bairro || ""} onChange={(e) => setFormData({ ...formData, bairro: e.target.value })} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Cidade</Label>
-                        <Input value={formData.cidade || ""} onChange={(e) => setFormData({ ...formData, cidade: e.target.value })} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>UF</Label>
-                        <Input value={formData.uf || ""} onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })} maxLength={2} />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label>Telefone</Label>
-                        <Input value={formatTelefone(formData.telefone || "")} onChange={(e) => setFormData({ ...formData, telefone: e.target.value.replace(/\D/g, "") })} placeholder="(00) 0000-0000" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Celular</Label>
-                        <Input value={formatTelefone(formData.celular || "")} onChange={(e) => setFormData({ ...formData, celular: e.target.value.replace(/\D/g, "") })} placeholder="(00) 00000-0000" />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label>E-mail</Label>
-                        <Input type="email" value={formData.email || ""} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Switch checked={formData.ativo ?? true} onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })} />
-                      <Label>Ativo</Label>
-                    </div>
-
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                      <Button type="submit" disabled={!formData.nome || createProdutor.isPending || updateProdutor.isPending}>
-                        {(createProdutor.isPending || updateProdutor.isPending) ? "Salvando..." : "Salvar"}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <Button className="gap-2" size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Novo Registro</span>
+              </Button>
             )}
           </CardHeader>
           <CardContent className="min-w-0 space-y-4">
@@ -453,9 +342,6 @@ export default function Produtores() {
                       {canEdit && (
                         <TableCell className="text-right sticky right-0 bg-background">
                           <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" title="Inscrições" onClick={() => handleOpenInscricoes(item)}>
-                              <Users className="h-4 w-4 text-primary" />
-                            </Button>
                             <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -494,13 +380,158 @@ export default function Produtores() {
         </Card>
       </div>
 
-      {/* Inscrições Dialog */}
-      <Dialog open={inscricoesDialogOpen} onOpenChange={setInscricoesDialogOpen}>
+      {/* Dialog unificado com abas */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Inscrições Estaduais — {inscricoesProdutorNome}</DialogTitle>
+            <DialogTitle>{editingItem ? "Editar" : "Novo"} Produtor/Sócio</DialogTitle>
           </DialogHeader>
-          {inscricoesProdutorId && <InscricoesTab produtorId={inscricoesProdutorId} />}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="dados">
+                <Users className="h-4 w-4 mr-2" />
+                Dados do Produtor
+              </TabsTrigger>
+              <TabsTrigger value="inscricoes" disabled={!editingItem}>
+                <FileText className="h-4 w-4 mr-2" />
+                Inscrições Estaduais
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dados">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Tipo</Label>
+                    <Select value={formData.tipo_produtor || "produtor"} onValueChange={(v) => setFormData({ ...formData, tipo_produtor: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TIPOS_PRODUTOR.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tipo Pessoa</Label>
+                    <Select value={formData.tipo_pessoa || "fisica"} onValueChange={(v) => setFormData({ ...formData, tipo_pessoa: v, cpf_cnpj: "" })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TIPOS_PESSOA.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{isFisica ? "CPF" : "CNPJ"}</Label>
+                    <div className="relative">
+                      <Input
+                        value={isFisica ? formatCpf(formData.cpf_cnpj || "") : formatCnpj(formData.cpf_cnpj || "")}
+                        onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value.replace(/\D/g, "") })}
+                        onBlur={(e) => handleCnpjBlur(e.target.value)}
+                        placeholder={isFisica ? "000.000.000-00" : "00.000.000/0000-00"}
+                        maxLength={isFisica ? 14 : 18}
+                      />
+                      {cnpjLoading && formData.tipo_pessoa === "juridica" && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Identidade</Label>
+                    <Input value={formData.identidade || ""} onChange={(e) => setFormData({ ...formData, identidade: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Nome Completo *</Label>
+                    <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Granja</Label>
+                    <Select value={formData.granja_id || ""} onValueChange={(v) => setFormData({ ...formData, granja_id: v || null })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {granjas?.map((g) => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>CEP</Label>
+                    <div className="relative">
+                      <Input
+                        value={formData.cep || ""}
+                        onChange={(e) => setFormData({ ...formData, cep: formatCep(e.target.value) })}
+                        onBlur={(e) => handleCepBlur(e.target.value)}
+                        placeholder="00000-000"
+                        maxLength={9}
+                      />
+                      {cepLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                    </div>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Logradouro</Label>
+                    <Input value={formData.logradouro || ""} onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Número</Label>
+                    <Input value={formData.numero || ""} onChange={(e) => setFormData({ ...formData, numero: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Complemento</Label>
+                    <Input value={formData.complemento || ""} onChange={(e) => setFormData({ ...formData, complemento: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Bairro</Label>
+                    <Input value={formData.bairro || ""} onChange={(e) => setFormData({ ...formData, bairro: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cidade</Label>
+                    <Input value={formData.cidade || ""} onChange={(e) => setFormData({ ...formData, cidade: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>UF</Label>
+                    <Input value={formData.uf || ""} onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })} maxLength={2} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Telefone</Label>
+                    <Input value={formatTelefone(formData.telefone || "")} onChange={(e) => setFormData({ ...formData, telefone: e.target.value.replace(/\D/g, "") })} placeholder="(00) 0000-0000" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Celular</Label>
+                    <Input value={formatTelefone(formData.celular || "")} onChange={(e) => setFormData({ ...formData, celular: e.target.value.replace(/\D/g, "") })} placeholder="(00) 00000-0000" />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>E-mail</Label>
+                    <Input type="email" value={formData.email || ""} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch checked={formData.ativo ?? true} onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })} />
+                  <Label>Ativo</Label>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                  <Button type="submit" disabled={!formData.nome || createProdutor.isPending || updateProdutor.isPending}>
+                    {(createProdutor.isPending || updateProdutor.isPending) ? "Salvando..." : editingItem ? "Salvar" : "Salvar e Continuar"}
+                  </Button>
+                </div>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="inscricoes">
+              {editingItem && <InscricoesTab produtorId={editingItem.id} />}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </AppLayout>
