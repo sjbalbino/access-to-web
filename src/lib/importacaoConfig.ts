@@ -4,7 +4,7 @@ export interface ColumnMapping {
   accessName: string; // column name in Access/Excel
   dbName: string; // column name in Supabase
   required?: boolean;
-  transform?: (value: any) => any;
+  transform?: (value: any, row?: Record<string, any>) => any;
 }
 
 export interface ReferenceResolver {
