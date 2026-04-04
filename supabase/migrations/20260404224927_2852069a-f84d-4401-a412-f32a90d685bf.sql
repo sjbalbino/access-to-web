@@ -1,0 +1,1 @@
+UPDATE colheitas SET safra_id = cl.safra_id FROM controle_lavouras cl WHERE colheitas.controle_lavoura_id = cl.id AND colheitas.safra_id IS NULL AND cl.safra_id IS NOT NULL;
