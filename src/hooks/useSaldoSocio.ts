@@ -28,7 +28,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       const { inscricaoSocioId, safraId, produtoId } = filters;
 
       if (!inscricaoSocioId || !safraId || !produtoId) {
-        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, compras: 0, transferenciasEnviadas: 0, vendasProducao: 0 };
+        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, compras: 0, kgTaxaArmazenagem: 0, transferenciasEnviadas: 0, vendasProducao: 0 };
       }
 
       // Buscar colheitas
