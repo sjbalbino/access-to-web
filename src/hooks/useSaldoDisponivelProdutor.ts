@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveSaldoProdutoIds } from '@/lib/produtoSaldo';
 
 interface SaldoDisponivelProdutorFilters {
   inscricaoProdutorId?: string;
@@ -33,12 +34,14 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0, devolucoes: 0, kgTaxaArmazenagem: 0, notasDeposito: 0 };
       }
 
+      const produtoIds = await resolveSaldoProdutoIds(produtoId);
+
       let colheitasQuery = supabase
         .from('colheitas')
         .select('producao_liquida_kg')
         .eq('inscricao_produtor_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('variedade_id', produtoId);
+        .in('variedade_id', produtoIds);
 
       if (localEntregaId) {
         colheitasQuery = colheitasQuery.eq('local_entrega_terceiro_id', localEntregaId);
@@ -57,7 +60,7 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         .select('quantidade_kg')
         .eq('inscricao_destino_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId);
+        .in('produto_id', produtoIds);
 
       if (localEntregaId) {
         recebidosQuery = recebidosQuery.eq('local_entrada_id', localEntregaId);
@@ -77,7 +80,7 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         .select('quantidade_kg')
         .eq('inscricao_origem_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId);
+        .in('produto_id', produtoIds);
 
       if (localEntregaId) {
         enviadosQuery = enviadosQuery.eq('local_saida_id', localEntregaId);
@@ -95,7 +98,7 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         .select('quantidade_kg, kg_taxa_armazenagem')
         .eq('inscricao_produtor_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId)
+        .in('produto_id', produtoIds)
         .neq('status', 'cancelada');
 
       if (localEntregaId) {
@@ -120,7 +123,7 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         .select('quantidade_kg, nota_fiscal_id')
         .eq('inscricao_produtor_id', inscricaoProdutorId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId);
+        .in('produto_id', produtoIds);
 
       if (notasDepositoError) throw notasDepositoError;
 

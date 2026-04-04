@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveSaldoProdutoIds } from '@/lib/produtoSaldo';
 
 export interface SaldoDeposito {
   inscricao_produtor_id: string;
@@ -180,6 +181,8 @@ export function useInscricoesComSaldo(filters: {
     queryFn: async (): Promise<InscricaoComSaldoPorLocal[]> => {
       if (!filters.safraId) return [];
 
+      const produtoIds = filters.produtoId ? await resolveSaldoProdutoIds(filters.produtoId) : null;
+
       let colheitasQuery = supabase
         .from('colheitas')
         .select(`
@@ -200,7 +203,7 @@ export function useInscricoesComSaldo(filters: {
         .eq('safra_id', filters.safraId)
         .not('inscricao_produtor_id', 'is', null);
 
-      if (filters.produtoId) colheitasQuery = colheitasQuery.eq('variedade_id', filters.produtoId);
+      if (produtoIds?.length) colheitasQuery = colheitasQuery.in('variedade_id', produtoIds);
       if (filters.localEntregaId) colheitasQuery = colheitasQuery.eq('local_entrega_terceiro_id', filters.localEntregaId);
 
       const { data: colheitas, error } = await colheitasQuery;
@@ -247,26 +250,26 @@ export function useInscricoesComSaldo(filters: {
           .from('transferencias_deposito')
           .select('inscricao_destino_id, quantidade_kg, local_entrada_id')
           .eq('safra_id', filters.safraId)
-          .eq('produto_id', filters.produtoId)
+          .in('produto_id', produtoIds || [filters.produtoId])
           .then((r) => r),
         supabase
           .from('transferencias_deposito')
           .select('inscricao_origem_id, quantidade_kg, local_saida_id')
           .eq('safra_id', filters.safraId)
-          .eq('produto_id', filters.produtoId)
+          .in('produto_id', produtoIds || [filters.produtoId])
           .then((r) => r),
         supabase
           .from('devolucoes_deposito')
           .select('inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem, local_entrega_id')
           .eq('safra_id', filters.safraId)
-          .eq('produto_id', filters.produtoId)
+          .in('produto_id', produtoIds || [filters.produtoId])
           .neq('status', 'cancelada')
           .then((r) => r),
         supabase
           .from('notas_deposito_emitidas')
           .select('inscricao_produtor_id, quantidade_kg, nota_fiscal_id')
           .eq('safra_id', filters.safraId)
-          .eq('produto_id', filters.produtoId)
+          .in('produto_id', produtoIds || [filters.produtoId])
           .then((r) => r),
       ]);
 
@@ -331,6 +334,8 @@ export function useLocaisEntregaComColheitas(filters: { safraId?: string; produt
     queryFn: async () => {
       if (!filters.safraId) return [];
 
+      const produtoIds = filters.produtoId ? await resolveSaldoProdutoIds(filters.produtoId) : null;
+
       // Buscar colheitas com local de entrega - com ou sem safra_id
       let query = supabase
         .from('colheitas')
@@ -341,8 +346,8 @@ export function useLocaisEntregaComColheitas(filters: { safraId?: string; produt
         `)
         .not('local_entrega_terceiro_id', 'is', null);
 
-      if (filters.produtoId) {
-        query = query.eq('variedade_id', filters.produtoId);
+      if (produtoIds?.length) {
+        query = query.in('variedade_id', produtoIds);
       }
 
       const { data, error } = await query;
