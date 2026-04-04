@@ -850,6 +850,9 @@ export async function resolveReferences(
       }
 
       if (!sourceValue) {
+        if (ref.required) {
+          errors.push(`Linha ${idx + 1}: Campo obrigatório "${ref.sourceColumn}" está vazio para ${ref.dbColumn}`);
+        }
         if (foundKey) delete newRow[foundKey];
         if (compositeFoundKey) delete newRow[compositeFoundKey];
         continue;
