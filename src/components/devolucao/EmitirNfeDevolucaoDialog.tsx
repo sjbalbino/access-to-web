@@ -279,6 +279,24 @@ export function EmitirNfeDevolucaoDialog({
         throw new Error(`Erro ao criar item da nota: ${itemError.message}`);
       }
 
+      // 4b. Inserir nota referenciada (chave NFe/NFP do produtor)
+      const chaveRef = (devolucao as any).nfe_referenciada;
+      if (chaveRef && chaveRef.length === 44) {
+        const { error: refError } = await supabase
+          .from("notas_fiscais_referenciadas")
+          .insert({
+            nota_fiscal_id: notaFiscal.id,
+            tipo: "nfe",
+            chave_nfe: chaveRef,
+          });
+
+        if (refError) {
+          console.warn("Aviso: não foi possível inserir nota referenciada:", refError.message);
+        }
+      } else if (!chaveRef || chaveRef.length !== 44) {
+        throw new Error("Chave da NFe/NFP referenciada é obrigatória (44 dígitos). Edite a devolução e informe a chave antes de emitir.");
+      }
+
       setStatus({ step: "sending", message: "Enviando para SEFAZ...", progress: 60, notaFiscalId: notaFiscal.id });
 
       // 5. Preparar dados para emissão
