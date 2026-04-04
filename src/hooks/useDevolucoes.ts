@@ -19,6 +19,7 @@ export interface DevolucaoDeposito {
   kg_taxa_armazenagem: number;
   inscricao_recebe_taxa_id: string | null;
   nota_fiscal_id: string | null;
+  nfe_referenciada: string | null;
   status: string;
   observacao: string | null;
   created_at: string;

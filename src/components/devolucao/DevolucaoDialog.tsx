@@ -41,6 +41,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
   const [valorTotal, setValorTotal] = useState(0);
   const [taxaArmazenagem, setTaxaArmazenagem] = useState(0);
   const [kgTaxaArmazenagem, setKgTaxaArmazenagem] = useState(0);
+  const [nfeReferenciada, setNfeReferenciada] = useState('');
   const [observacao, setObservacao] = useState('');
 
   // Dados de referência
@@ -91,6 +92,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       setValorTotal(devolucao.valor_total || 0);
       setTaxaArmazenagem(devolucao.taxa_armazenagem || 0);
       setKgTaxaArmazenagem(devolucao.kg_taxa_armazenagem || 0);
+      setNfeReferenciada((devolucao as any).nfe_referenciada || '');
       setObservacao(devolucao.observacao || '');
     } else {
       // Modo novo - usar defaults dos filtros se disponível
@@ -126,6 +128,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     setValorTotal(0);
     setTaxaArmazenagem(0);
     setKgTaxaArmazenagem(0);
+    setNfeReferenciada('');
     setObservacao('');
   };
 
@@ -202,6 +205,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       valor_total: valorTotal,
       taxa_armazenagem: taxaArmazenagem,
       kg_taxa_armazenagem: kgTaxaArmazenagem,
+      nfe_referenciada: nfeReferenciada || null,
       observacao,
     };
 
@@ -424,6 +428,19 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                 Calculado: {formatNumber(quantidadeKg, 3)} kg × {formatNumber(taxaArmazenagem, 2)}%
               </p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Chave NFe/NFP Referenciada</Label>
+            <Input
+              value={nfeReferenciada}
+              onChange={e => setNfeReferenciada(e.target.value.replace(/\D/g, '').slice(0, 44))}
+              placeholder="44 dígitos da chave NFe/NFP do produtor"
+              maxLength={44}
+            />
+            <p className="text-xs text-muted-foreground">
+              Chave da nota de depósito emitida pelo produtor (obrigatória para emissão da NF-e)
+            </p>
           </div>
 
           <div className="space-y-2">

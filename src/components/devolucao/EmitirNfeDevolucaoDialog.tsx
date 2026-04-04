@@ -279,6 +279,24 @@ export function EmitirNfeDevolucaoDialog({
         throw new Error(`Erro ao criar item da nota: ${itemError.message}`);
       }
 
+      // 4b. Inserir nota referenciada (chave NFe/NFP do produtor)
+      const chaveRef = (devolucao as any).nfe_referenciada;
+      if (chaveRef && chaveRef.length === 44) {
+        const { error: refError } = await supabase
+          .from("notas_fiscais_referenciadas")
+          .insert({
+            nota_fiscal_id: notaFiscal.id,
+            tipo: "nfe",
+            chave_nfe: chaveRef,
+          });
+
+        if (refError) {
+          console.warn("Aviso: não foi possível inserir nota referenciada:", refError.message);
+        }
+      } else if (!chaveRef || chaveRef.length !== 44) {
+        throw new Error("Chave da NFe/NFP referenciada é obrigatória (44 dígitos). Edite a devolução e informe a chave antes de emitir.");
+      }
+
       setStatus({ step: "sending", message: "Enviando para SEFAZ...", progress: 60, notaFiscalId: notaFiscal.id });
 
       // 5. Preparar dados para emissão
@@ -502,6 +520,14 @@ export function EmitirNfeDevolucaoDialog({
                       <span className="font-medium">{formatNumber(devolucao.kg_taxa_armazenagem || 0, 3)} kg ({devolucao.taxa_armazenagem}%)</span>
                     </div>
                   )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">NFe Referenciada:</span>
+                    <span className="font-medium text-xs">
+                      {(devolucao as any).nfe_referenciada 
+                        ? `${((devolucao as any).nfe_referenciada as string).slice(0, 22)}...` 
+                        : <span className="text-destructive">Não informada</span>}
+                    </span>
+                  </div>
                 </div>
               </div>
             ) : (

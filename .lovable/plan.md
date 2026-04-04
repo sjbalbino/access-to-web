@@ -1,20 +1,21 @@
-
-
-## Plano: Atualizar Inscrições Estaduais sem granja
+## Plano: Nota Referenciada na Devolução de Depósito
 
 ### Problema
-562 de 563 inscrições estaduais estão sem o campo `granja_id` preenchido.
+A NF-e de devolução de depósito (CFOP 5906/6906) exige, conforme NT da SEFAZ, a chave da NFe/NFP referenciada (nota de depósito emitida pelo produtor). Atualmente não existe campo para informar essa chave.
 
 ### Solução
-Executar um UPDATE via insert tool para definir `granja_id` da única granja cadastrada (`9ee8bf67-f322-4415-9dfc-2ab123ecffaa` - AGROPECUARIA GRINGS) em todas as inscrições que estejam com `granja_id IS NULL`.
 
+**1. Migração SQL** — Adicionar campo `nfe_referenciada` na tabela `devolucoes_deposito`:
 ```sql
-UPDATE inscricoes_produtor 
-SET granja_id = '9ee8bf67-f322-4415-9dfc-2ab123ecffaa' 
-WHERE granja_id IS NULL;
+ALTER TABLE devolucoes_deposito ADD COLUMN nfe_referenciada VARCHAR;
 ```
 
-### Impacto
-- 562 registros atualizados
-- Nenhuma alteração de código necessária
+**2. Formulário de Devolução (`DevolucaoDialog.tsx`)** — Adicionar campo "Chave NFe Referenciada" (44 dígitos) no formulário de criação/edição.
 
+**3. Emissão de NFe (`EmitirNfeDevolucaoDialog.tsx`)** — Incluir a chave referenciada no payload enviado à SEFAZ, usando o campo `nfe_referenciada` da nota fiscal e passando no mapeamento Focus NFe.
+
+### Arquivos alterados
+- Nova migração SQL (adicionar coluna)
+- `src/components/devolucao/DevolucaoDialog.tsx` (campo input)
+- `src/components/devolucao/EmitirNfeDevolucaoDialog.tsx` (incluir referência na emissão)
+- `src/hooks/useDevolucoes.ts` (incluir campo na interface)

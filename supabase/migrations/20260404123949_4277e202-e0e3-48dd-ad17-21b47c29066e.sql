@@ -1,0 +1,1 @@
+ALTER TABLE public.devolucoes_deposito ADD COLUMN nfe_referenciada VARCHAR;
