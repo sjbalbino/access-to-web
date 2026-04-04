@@ -67,7 +67,8 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
         .select('quantidade_kg')
         .eq('inscricao_comprador_id', inscricaoSocioId)
         .eq('safra_id', safraId)
-        .eq('produto_id', produtoId);
+        .eq('produto_id', produtoId)
+        .neq('status', 'cancelada');
 
       if (comprasResult.error) throw comprasResult.error;
 
