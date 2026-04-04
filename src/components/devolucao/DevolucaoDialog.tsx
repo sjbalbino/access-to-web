@@ -267,9 +267,9 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
             <div className="space-y-2">
               <Label>Local de Entrega *</Label>
               <Select 
-                value={localEntregaId} 
+                value={localEntregaId || undefined} 
                 onValueChange={setLocalEntregaId}
-                disabled={!safraId || !produtoId || isEditing}
+                disabled={!safraId || !produtoId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={
@@ -279,6 +279,12 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                   } />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* Garantir que o local atual apareça na edição */}
+                  {isEditing && devolucao?.local_entrega && !locaisEntregaComColheitas?.some(l => l.id === devolucao.local_entrega_id) && (
+                    <SelectItem key={devolucao.local_entrega_id!} value={devolucao.local_entrega_id!}>
+                      {devolucao.local_entrega.nome} {devolucao.local_entrega.is_sede ? '(Sede)' : ''}
+                    </SelectItem>
+                  )}
                   {locaisEntregaComColheitas?.map(l => (
                     <SelectItem key={l.id} value={l.id}>
                       {l.nome} {l.is_sede ? '(Sede)' : ''}
