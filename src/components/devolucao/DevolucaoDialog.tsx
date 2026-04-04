@@ -363,7 +363,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                 )}
                 {inscricoesComSaldo?.map(i => (
                   <SelectItem key={i.id} value={i.id}>
-                    {i.produtor_nome} - IE: {i.inscricao_estadual} ({formatNumber(i.total_depositado, 3)} kg depositados)
+                    {i.produtor_nome} - IE: {i.inscricao_estadual} (Saldo: {formatNumber(i.saldo_disponivel, 3)} kg)
                   </SelectItem>
                 ))}
               </SelectContent>
