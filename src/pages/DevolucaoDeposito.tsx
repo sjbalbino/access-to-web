@@ -24,6 +24,7 @@ export default function DevolucaoDeposito() {
   const [granjaId, setGranjaId] = useState<string>('');
   const [safraId, setSafraId] = useState<string>('');
   const [produtoId, setProdutoId] = useState<string>('');
+  const [produtorId, setProdutorId] = useState<string>('');
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -35,9 +36,28 @@ export default function DevolucaoDeposito() {
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
   const { data: produtos } = useProdutosSementes();
+  const { data: allInscricoes } = useAllInscricoes();
+  
+  const produtoresUnicos = useMemo(() => {
+    if (!allInscricoes) return [];
+    const map = new Map<string, string>();
+    allInscricoes.forEach(i => {
+      if (i.produtores?.id && i.produtores?.nome) {
+        map.set(i.produtores.id, i.produtores.nome);
+      }
+    });
+    return Array.from(map.entries()).map(([id, nome]) => ({ id, nome })).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [allInscricoes]);
   
   const { data: devolucoes, isLoading } = useDevolucoes({ granjaId, safraId, produtoId });
   const deleteDevolucao = useDeleteDevolucao();
+
+  // Filtro local por produtor
+  const devolucoesFiltradas = useMemo(() => {
+    if (!devolucoes) return [];
+    if (!produtorId) return devolucoes;
+    return devolucoes.filter(d => d.inscricao_produtor?.produtores?.nome === produtoresUnicos.find(p => p.id === produtorId)?.nome);
+  }, [devolucoes, produtorId, produtoresUnicos]);
 
   const handleNovaDevolucao = () => {
     setDevolucaoSelecionada(null);
