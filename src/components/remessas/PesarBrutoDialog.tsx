@@ -102,10 +102,11 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
   }, [transportadoraId, transportadoras]);
 
   const formatNumber = (value: number, decimals: number = 0) => {
+    const rounded = decimals === 0 ? Math.round(value) : value;
     return new Intl.NumberFormat("pt-BR", {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    }).format(value);
+    }).format(rounded);
   };
 
   const formatCurrency = (value: number) => {

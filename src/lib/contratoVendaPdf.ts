@@ -83,12 +83,13 @@ const formatCurrency = (value: number | null | undefined): string => {
   }).format(value);
 };
 
-const formatNumber = (value: number | null | undefined, decimals = 3): string => {
+const formatNumber = (value: number | null | undefined, decimals = 0): string => {
   if (value === null || value === undefined) return "-";
+  const rounded = decimals === 0 ? Math.round(value) : value;
   return new Intl.NumberFormat("pt-BR", {
-    minimumFractionDigits: 0,
+    minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(value);
+  }).format(rounded);
 };
 
 const formatDate = (dateStr: string | null | undefined): string => {

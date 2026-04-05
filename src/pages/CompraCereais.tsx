@@ -12,7 +12,7 @@ import { useComprasCereais, useDeleteCompraCereal, type CompraCereal } from '@/h
 import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
-import { formatNumber } from '@/lib/formatters';
+import { formatNumber, formatKg } from '@/lib/formatters';
 import { format, parseISO } from 'date-fns';
 import { CompraDialog } from '@/components/compra/CompraDialog';
 import { EmitirNfeCompraDialog } from '@/components/compra/EmitirNfeCompraDialog';
@@ -145,7 +145,7 @@ export default function CompraCereais() {
                       <TableCell>{format(parseISO(c.data_compra), 'dd/MM/yyyy')}</TableCell>
                       <TableCell className="max-w-[150px] truncate">{c.inscricao_vendedor?.produtores?.nome}</TableCell>
                       <TableCell className="hidden sm:table-cell">{c.produto?.nome}</TableCell>
-                      <TableCell className="text-right">{formatNumber(c.quantidade_kg, 3)}</TableCell>
+                      <TableCell className="text-right">{formatKg(c.quantidade_kg)}</TableCell>
                       <TableCell className="text-right hidden sm:table-cell">R$ {formatNumber(c.valor_total, 2)}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         <Badge variant={c.status === 'nfe_emitida' ? 'default' : 'secondary'}>

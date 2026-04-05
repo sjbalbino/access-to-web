@@ -12,7 +12,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useTransferenciasDeposito, useDeleteTransferenciaDeposito, TransferenciaDeposito } from "@/hooks/useTransferenciasDeposito";
-import { formatNumber } from "@/lib/formatters";
+import { formatNumber, formatKg } from "@/lib/formatters";
 import { TransferenciaDialog } from "@/components/transferencias/TransferenciaDialog";
 import {
   AlertDialog,
@@ -200,7 +200,7 @@ export default function Transferencias() {
                         <TableCell className="hidden sm:table-cell">
                           {t.tipo === 'industria' ? 'Indústria' : t.tipo === 'semente' ? 'Semente' : '-'}
                         </TableCell>
-                        <TableCell className="text-right font-medium">{formatNumber(t.quantidade_kg)} kg</TableCell>
+                        <TableCell className="text-right font-medium">{formatKg(t.quantidade_kg)} kg</TableCell>
                         <TableCell className="sticky right-0 bg-background">
                           <div className="flex items-center justify-center gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditarTransferencia(t)}>

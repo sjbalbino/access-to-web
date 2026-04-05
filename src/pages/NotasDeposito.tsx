@@ -24,7 +24,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useNotasDepositoEmitidas, useDeleteNotaDepositoEmitida } from "@/hooks/useNotasDepositoEmitidas";
-import { formatNumber } from "@/lib/formatters";
+import { formatNumber, formatKg } from "@/lib/formatters";
 import { NotaDepositoFormDialog } from "@/components/deposito/NotaDepositoFormDialog";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -227,7 +227,7 @@ export default function NotasDeposito() {
                         </TableCell>
                         <TableCell>{nota.produto?.nome || "-"}</TableCell>
                         <TableCell className="text-right">
-                          {formatNumber(nota.quantidade_kg, 3)} kg
+                          {formatKg(nota.quantidade_kg)} kg
                         </TableCell>
                         <TableCell>
                           {getStatusBadge(nfStatus)}

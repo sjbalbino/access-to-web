@@ -14,7 +14,7 @@ import { useSaldoDisponivelProdutor } from '@/hooks/useSaldoDisponivelProdutor';
 import { useCreateDevolucao, useUpdateDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
 import { toast } from 'sonner';
 import { CurrencyInput } from '@/components/ui/currency-input';
-import { formatNumber } from '@/lib/formatters';
+import { formatNumber, formatKg } from '@/lib/formatters';
 
 interface DevolucaoDialogProps {
   open: boolean;
@@ -173,7 +173,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     // A quantidade + kg de taxa não pode exceder o saldo
     const totalDevolucao = quantidadeKg + kgTaxaArmazenagem;
     if (totalDevolucao > saldoAjustado) {
-      toast.error(`Quantidade + Taxa (${formatNumber(totalDevolucao, 3)} kg) excede o saldo disponível (${formatNumber(saldoAjustado, 3)} kg)`);
+      toast.error(`Quantidade + Taxa (${formatKg(totalDevolucao)} kg) excede o saldo disponível (${formatKg(saldoAjustado)} kg)`);
       return;
     }
 
@@ -363,7 +363,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                 )}
                 {inscricoesComSaldo?.map(i => (
                   <SelectItem key={i.id} value={i.id}>
-                    {i.produtor_nome} - IE: {i.inscricao_estadual} (Saldo: {formatNumber(i.saldo_disponivel, 3)} kg)
+                    {i.produtor_nome} - IE: {i.inscricao_estadual} (Saldo: {formatKg(i.saldo_disponivel)} kg)
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -371,18 +371,18 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
             {inscricaoProdutorId && saldoProdutor && (
               <div className="p-3 bg-muted rounded-md text-sm">
                 <p className="font-medium">
-                  Saldo disponível para devolução: <span className="text-primary">{formatNumber(saldoProdutor.saldo, 3)} kg</span>
+                  Saldo disponível para devolução: <span className="text-primary">{formatKg(saldoProdutor.saldo)} kg</span>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Colheitas: {formatNumber(saldoProdutor.colheitas, 3)} + 
-                  Recebidas: {formatNumber(saldoProdutor.transferenciasRecebidas, 3)} - 
-                  Enviadas: {formatNumber(saldoProdutor.transferenciasEnviadas, 3)} - 
-                  Devoluções: {formatNumber(saldoProdutor.devolucoes, 3)} - 
-                  Taxa Armaz.: {formatNumber(saldoProdutor.kgTaxaArmazenagem, 3)}
+                  Colheitas: {formatKg(saldoProdutor.colheitas)} + 
+                  Recebidas: {formatKg(saldoProdutor.transferenciasRecebidas)} - 
+                  Enviadas: {formatKg(saldoProdutor.transferenciasEnviadas)} - 
+                  Devoluções: {formatKg(saldoProdutor.devolucoes)} - 
+                  Taxa Armaz.: {formatKg(saldoProdutor.kgTaxaArmazenagem)}
                 </p>
                 {saldoProdutor.notasDeposito > 0 && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    📄 Notas Depósito emitidas: <span className="font-medium">{formatNumber(saldoProdutor.notasDeposito, 3)} kg</span>
+                    📄 Notas Depósito emitidas: <span className="font-medium">{formatKg(saldoProdutor.notasDeposito)} kg</span>
                   </p>
                 )}
               </div>
@@ -441,7 +441,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                 className="bg-muted"
               />
               <p className="text-xs text-muted-foreground">
-                Calculado: {formatNumber(quantidadeKg, 3)} kg × {formatNumber(taxaArmazenagem, 2)}%
+                Calculado: {formatKg(quantidadeKg)} kg × {formatNumber(taxaArmazenagem, 2)}%
               </p>
             </div>
           </div>

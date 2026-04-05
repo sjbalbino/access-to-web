@@ -330,10 +330,11 @@ export default function RemessasVendaForm() {
 
   const formatNumber = (value: number | null | undefined, decimals: number = 0) => {
     if (value === null || value === undefined) return "-";
+    const rounded = decimals === 0 ? Math.round(value) : value;
     return new Intl.NumberFormat("pt-BR", {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
-    }).format(value);
+    }).format(rounded);
   };
 
   const formatCurrency = (value: number | null | undefined) => {

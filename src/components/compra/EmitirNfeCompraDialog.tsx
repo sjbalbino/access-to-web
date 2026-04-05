@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { CompraCereal, useUpdateCompraCereal } from "@/hooks/useComprasCereais";
-import { formatNumber, formatCpf, formatCnpj } from "@/lib/formatters";
+import { formatNumber, formatKg, formatCpf, formatCnpj } from "@/lib/formatters";
 import { NotaReferenciadaForm, NotaReferenciadaTemp } from "@/components/deposito/NotaReferenciadaForm";
 
 interface EmitirNfeCompraDialogProps {
@@ -550,7 +550,7 @@ export function EmitirNfeCompraDialog({
                 <div className="grid gap-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Quantidade:</span>
-                    <span className="font-medium">{formatNumber(compra.quantidade_kg, 3)} kg</span>
+                    <span className="font-medium">{formatKg(compra.quantidade_kg)} kg</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Valor Unitário:</span>

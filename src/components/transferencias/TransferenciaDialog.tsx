@@ -19,7 +19,7 @@ import { useAllInscricoes, InscricaoComProdutor } from "@/hooks/useAllInscricoes
 import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useSaldoProdutor } from "@/hooks/useSaldoProdutor";
 import { useCreateTransferenciaDeposito, useUpdateTransferenciaDeposito, TransferenciaDeposito } from "@/hooks/useTransferenciasDeposito";
-import { formatNumber } from "@/lib/formatters";
+import { formatNumber, formatKg } from "@/lib/formatters";
 import { toast } from "@/hooks/use-toast";
 
 interface TransferenciaDialogProps {
@@ -151,7 +151,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
     if (!isEditing && saldoOrigem && quantidade > saldoOrigem.saldo) {
       toast({
         title: "Saldo insuficiente",
-        description: `Saldo disponível: ${formatNumber(saldoOrigem.saldo)} kg`,
+        description: `Saldo disponível: ${formatKg(saldoOrigem.saldo)} kg`,
         variant: "destructive",
       });
       return;
@@ -339,7 +339,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
               
               {safraId && produtoId && inscricaoOrigemId && saldoOrigem && (
                 <p className="text-sm text-muted-foreground">
-                  Saldo disponível: <span className="font-medium text-foreground">{formatNumber(saldoOrigem.saldo)} kg</span>
+                  Saldo disponível: <span className="font-medium text-foreground">{formatKg(saldoOrigem.saldo)} kg</span>
                 </p>
               )}
             </div>

@@ -35,7 +35,7 @@ import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
 import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrincipal";
-import { formatNumber, formatCpfCnpj } from "@/lib/formatters";
+import { formatNumber, formatKg, formatCpfCnpj } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { NotaReferenciadaForm, NotaReferenciadaTemp } from "@/components/deposito/NotaReferenciadaForm";
@@ -234,7 +234,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
     if (saldoProduto && qtdKg > saldoProduto.saldo_a_emitir_kg) {
       toast({
         title: "Quantidade inválida",
-        description: `A quantidade informada (${formatNumber(qtdKg)} kg) é maior que o saldo disponível (${formatNumber(saldoProduto.saldo_a_emitir_kg)} kg).`,
+        description: `A quantidade informada (${formatKg(qtdKg)} kg) é maior que o saldo disponível (${formatKg(saldoProduto.saldo_a_emitir_kg)} kg).`,
         variant: "destructive",
       });
       return;
@@ -710,12 +710,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                               className={produtoId === s.produto_id ? "bg-accent" : ""}
                             >
                               <TableCell className="font-medium">{s.produto_nome}</TableCell>
-                              <TableCell className="text-right">{formatNumber(s.depositado_kg)} kg</TableCell>
-                              <TableCell className="text-right">{formatNumber(s.transferencias_recebidas_kg)} kg</TableCell>
-                              <TableCell className="text-right">{formatNumber(s.notas_emitidas_kg)} kg</TableCell>
+                              <TableCell className="text-right">{formatKg(s.depositado_kg)} kg</TableCell>
+                              <TableCell className="text-right">{formatKg(s.transferencias_recebidas_kg)} kg</TableCell>
+                              <TableCell className="text-right">{formatKg(s.notas_emitidas_kg)} kg</TableCell>
                               <TableCell className="text-right font-medium">
                                 <Badge variant={s.saldo_a_emitir_kg > 0 ? "default" : "secondary"}>
-                                  {formatNumber(s.saldo_a_emitir_kg)} kg
+                                  {formatKg(s.saldo_a_emitir_kg)} kg
                                 </Badge>
                               </TableCell>
                             </TableRow>
@@ -807,7 +807,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                           <SelectContent>
                             {saldos.filter(s => s.saldo_a_emitir_kg > 0).map((s) => (
                               <SelectItem key={s.produto_id} value={s.produto_id}>
-                                {s.produto_nome} (Saldo: {formatNumber(s.saldo_a_emitir_kg)} kg)
+                                {s.produto_nome} (Saldo: {formatKg(s.saldo_a_emitir_kg)} kg)
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -827,7 +827,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                         />
                         {saldoProduto && (
                           <p className="text-xs text-muted-foreground">
-                            Máximo disponível: {formatNumber(saldoProduto.saldo_a_emitir_kg)} kg
+                            Máximo disponível: {formatKg(saldoProduto.saldo_a_emitir_kg)} kg
                           </p>
                         )}
                       </div>

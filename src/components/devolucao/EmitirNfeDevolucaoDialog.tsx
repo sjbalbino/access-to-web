@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { DevolucaoDeposito, useUpdateDevolucao } from "@/hooks/useDevolucoes";
-import { formatNumber } from "@/lib/formatters";
+import { formatNumber, formatKg } from "@/lib/formatters";
 
 interface EmitirNfeDevolucaoDialogProps {
   devolucao: DevolucaoDeposito | null;
@@ -183,7 +183,7 @@ export function EmitirNfeDevolucaoDialog({
       const infoComplementarParts: string[] = [];
       infoComplementarParts.push(`Devolução de Depósito Cód. ${devolucao.codigo}`);
       if (devolucao.taxa_armazenagem && devolucao.taxa_armazenagem > 0) {
-        infoComplementarParts.push(`Taxa de Armazenagem: ${devolucao.taxa_armazenagem}% (${formatNumber(devolucao.kg_taxa_armazenagem || 0, 3)} kg)`);
+        infoComplementarParts.push(`Taxa de Armazenagem: ${devolucao.taxa_armazenagem}% (${formatKg(devolucao.kg_taxa_armazenagem || 0)} kg)`);
       }
       if (devolucao.observacao) {
         infoComplementarParts.push(`Obs: ${devolucao.observacao}`);
@@ -502,7 +502,7 @@ export function EmitirNfeDevolucaoDialog({
                 <div className="text-sm space-y-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Quantidade:</span>
-                    <span className="font-medium">{formatNumber(devolucao.quantidade_kg, 3)} kg</span>
+                    <span className="font-medium">{formatKg(devolucao.quantidade_kg)} kg</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Valor:</span>
@@ -517,7 +517,7 @@ export function EmitirNfeDevolucaoDialog({
                   {(devolucao.taxa_armazenagem || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Taxa Armazenagem:</span>
-                      <span className="font-medium">{formatNumber(devolucao.kg_taxa_armazenagem || 0, 3)} kg ({devolucao.taxa_armazenagem}%)</span>
+                      <span className="font-medium">{formatKg(devolucao.kg_taxa_armazenagem || 0)} kg ({devolucao.taxa_armazenagem}%)</span>
                     </div>
                   )}
                   <div className="flex justify-between">
