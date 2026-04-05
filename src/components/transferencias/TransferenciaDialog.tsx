@@ -19,7 +19,7 @@ import { useAllInscricoes, InscricaoComProdutor } from "@/hooks/useAllInscricoes
 import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useSaldoProdutor } from "@/hooks/useSaldoProdutor";
 import { useCreateTransferenciaDeposito, useUpdateTransferenciaDeposito, TransferenciaDeposito } from "@/hooks/useTransferenciasDeposito";
-import { formatNumber } from "@/lib/formatters";
+import { formatNumber, formatKg } from "@/lib/formatters";
 import { toast } from "@/hooks/use-toast";
 
 interface TransferenciaDialogProps {
