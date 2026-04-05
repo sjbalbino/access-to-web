@@ -4,7 +4,6 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Edit, Send } from 'lucide-react';
@@ -18,6 +17,7 @@ import { CompraDialog } from '@/components/compra/CompraDialog';
 import { EmitirNfeCompraDialog } from '@/components/compra/EmitirNfeCompraDialog';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { ComboboxFilter } from '@/components/ui/combobox-filter';
 
 export default function CompraCereais() {
   const [granjaId, setGranjaId] = useState<string>('');
