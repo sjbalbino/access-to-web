@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { DevolucaoDeposito, useUpdateDevolucao } from "@/hooks/useDevolucoes";
-import { formatNumber } from "@/lib/formatters";
+import { formatNumber, formatKg } from "@/lib/formatters";
 
 interface EmitirNfeDevolucaoDialogProps {
   devolucao: DevolucaoDeposito | null;
