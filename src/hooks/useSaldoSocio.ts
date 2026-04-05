@@ -97,6 +97,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       for (const t of enviadosResult.data || []) {
         totalEnviadas += (t.quantidade_kg as number) || 0;
       }
+      totalEnviadas = Math.round(totalEnviadas);
 
       // Buscar kg de taxa de armazenagem recebidos (sócio emitente)
       const taxaResult = await supabase
