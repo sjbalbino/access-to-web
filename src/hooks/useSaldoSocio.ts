@@ -64,6 +64,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       for (const t of recebidosResult.data || []) {
         totalRecebidas += (t.quantidade_kg as number) || 0;
       }
+      totalRecebidas = Math.round(totalRecebidas);
 
       // Buscar compras de cereais
       const comprasResult = await supabase
