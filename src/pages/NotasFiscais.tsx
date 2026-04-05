@@ -51,6 +51,7 @@ import { toast } from "sonner";
 import { formatCpfCnpj } from "@/lib/formatters";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { ComboboxFilter } from "@/components/ui/combobox-filter";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },
