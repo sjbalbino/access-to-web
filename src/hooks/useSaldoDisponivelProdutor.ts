@@ -108,15 +108,15 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
       const { data: devolucoesData, error: devolucoesError } = await devolucoesQuery;
       if (devolucoesError) throw devolucoesError;
 
-      const totalDevolucoes = (devolucoesData || []).reduce(
+      const totalDevolucoes = Math.round((devolucoesData || []).reduce(
         (sum, d) => sum + (d.quantidade_kg || 0),
         0
-      );
+      ));
 
-      const totalKgTaxaArmazenagem = (devolucoesData || []).reduce(
+      const totalKgTaxaArmazenagem = Math.round((devolucoesData || []).reduce(
         (sum, d) => sum + (d.kg_taxa_armazenagem || 0),
         0
-      );
+      ));
 
       const { data: notasDepositoData, error: notasDepositoError } = await supabase
         .from('notas_deposito_emitidas')
