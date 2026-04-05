@@ -114,6 +114,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       for (const d of taxaResult.data || []) {
         totalKgTaxa += (d.kg_taxa_armazenagem as number) || 0;
       }
+      totalKgTaxa = Math.round(totalKgTaxa);
 
       // Vendas da produção - simplificado para evitar problemas de tipo
       // TODO: Implementar RPC function para calcular vendas
