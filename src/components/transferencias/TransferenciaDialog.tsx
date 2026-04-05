@@ -151,7 +151,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
     if (!isEditing && saldoOrigem && quantidade > saldoOrigem.saldo) {
       toast({
         title: "Saldo insuficiente",
-        description: `Saldo disponível: ${formatNumber(saldoOrigem.saldo)} kg`,
+        description: `Saldo disponível: ${formatKg(saldoOrigem.saldo)} kg`,
         variant: "destructive",
       });
       return;
