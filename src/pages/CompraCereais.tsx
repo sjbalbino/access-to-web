@@ -12,7 +12,7 @@ import { useComprasCereais, useDeleteCompraCereal, type CompraCereal } from '@/h
 import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
-import { formatNumber } from '@/lib/formatters';
+import { formatNumber, formatKg } from '@/lib/formatters';
 import { format, parseISO } from 'date-fns';
 import { CompraDialog } from '@/components/compra/CompraDialog';
 import { EmitirNfeCompraDialog } from '@/components/compra/EmitirNfeCompraDialog';
