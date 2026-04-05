@@ -50,10 +50,10 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
       const { data: colheitasData, error: colheitasError } = await colheitasQuery;
       if (colheitasError) throw colheitasError;
 
-      const totalColheitas = (colheitasData || []).reduce(
+      const totalColheitas = Math.round((colheitasData || []).reduce(
         (sum, c) => sum + (c.producao_liquida_kg || 0),
         0
-      );
+      ));
 
       let recebidosQuery = supabase
         .from('transferencias_deposito')
