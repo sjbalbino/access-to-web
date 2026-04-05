@@ -119,10 +119,6 @@ export default function Placas() {
     return Math.round(value).toLocaleString('pt-BR');
   };
 
-  if (isLoading) {
-    return <div className="p-8">Carregando...</div>;
-  }
-
   const {
     dadosPaginados,
     paginaAtual,
@@ -131,6 +127,10 @@ export default function Placas() {
     setPaginaAtual,
     gerarNumerosPaginas,
   } = usePaginacao(placas || []);
+
+  if (isLoading) {
+    return <div className="p-8">Carregando...</div>;
+  }
 
 
   return (
