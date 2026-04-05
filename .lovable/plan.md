@@ -1,28 +1,39 @@
 
 
-## Plano: Corrigir erros de importação de Devoluções de Depósito
+## Plano: Atualizar modelo de importação das Notas de Depósito
 
 ### Problema
-Linhas específicas (1668, 1747, 1893, 1958, 2135) falham com `null value in column "inscricao_produtor_id"` porque a Inscrição Estadual na planilha não encontra correspondência na tabela `inscricoes_produtor`. Isso ocorre porque o lookup simples por IE não é suficiente quando há produtores diferentes com a mesma IE — exatamente o mesmo problema que já foi resolvido em Transferências de Depósito com o uso de **composite lookup** (IE + Nome).
+A configuração de importação de Notas de Depósito referencia colunas que não existem na tabela `notas_deposito_emitidas`:
+- `codigo` — não existe na tabela
+- `observacao` — não existe na tabela  
+- `inscricao_emitente_id` — não existe na tabela
 
-### Solução
+A tabela possui apenas: `id`, `nota_fiscal_id`, `granja_id`, `inscricao_produtor_id`, `safra_id`, `produto_id`, `quantidade_kg`, `data_emissao`, `created_at`.
 
-**Arquivo: `src/lib/importacaoConfig.ts`**
+### Alterações
 
-Adicionar `compositeSourceColumn` e `compositeColumns` nas referências de `inscricao_produtor_id` e `inscricao_emitente_id` da configuração `devolucoes_deposito`, seguindo o mesmo padrão usado em `transferencias_deposito`:
+**Arquivo: `src/lib/importacaoConfig.ts`** (bloco `notas_deposito`, linhas 771-783)
 
+1. **Remover** a coluna `codigo` (linha 772)
+2. **Remover** a coluna `observacao` (linha 775)
+3. **Remover** a referência `inscricao_emitente_id` (linha 779) — coluna não existe na tabela
+
+Configuração corrigida:
 ```typescript
-// Antes
-{ dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },
-{ dbColumn: 'inscricao_emitente_id', sourceColumn: 'inscricao_emitente_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },
-
-// Depois
-{ dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'] },
-{ dbColumn: 'inscricao_emitente_id', sourceColumn: 'inscricao_emitente_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_emitente_nome', compositeColumns: ['nome'] },
+columns: [
+  { accessName: 'data_emissao', dbName: 'data_emissao', transform: toDate },
+  { accessName: 'quantidade_kg', dbName: 'quantidade_kg', transform: toNumber },
+],
+references: [
+  { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'] },
+  { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
+  { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
+  { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
+],
 ```
 
-O modelo Excel gerado pelo botão "Baixar Modelo" já inclui automaticamente colunas compostas quando configuradas, então a planilha passará a ter as colunas `inscricao_produtor_nome` e `inscricao_emitente_nome` para desambiguação.
+O modelo Excel gerado pelo botão "Baixar Modelo" será atualizado automaticamente, contendo apenas as colunas válidas: `data_emissao`, `quantidade_kg`, `inscricao_produtor_ie`, `inscricao_produtor_nome`, `safra_codigo`, `produto_codigo`, `granja_codigo`.
 
-### Arquivos alterados
+### Arquivo alterado
 - `src/lib/importacaoConfig.ts`
 
