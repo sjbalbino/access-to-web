@@ -48,6 +48,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       for (const c of colheitasResult.data || []) {
         totalColheitas += (c.producao_liquida_kg as number) || 0;
       }
+      totalColheitas = Math.round(totalColheitas);
 
       // Buscar transferências recebidas
       const recebidosResult = await supabase
