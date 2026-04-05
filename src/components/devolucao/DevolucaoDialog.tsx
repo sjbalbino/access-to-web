@@ -173,7 +173,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     // A quantidade + kg de taxa não pode exceder o saldo
     const totalDevolucao = quantidadeKg + kgTaxaArmazenagem;
     if (totalDevolucao > saldoAjustado) {
-      toast.error(`Quantidade + Taxa (${formatNumber(totalDevolucao, 3)} kg) excede o saldo disponível (${formatNumber(saldoAjustado, 3)} kg)`);
+      toast.error(`Quantidade + Taxa (${formatKg(totalDevolucao)} kg) excede o saldo disponível (${formatKg(saldoAjustado)} kg)`);
       return;
     }
 
