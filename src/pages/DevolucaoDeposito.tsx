@@ -28,6 +28,12 @@ export default function DevolucaoDeposito() {
   const [produtoId, setProdutoId] = useState<string>('');
   const [produtorId, setProdutorId] = useState<string>('');
   
+  // Popover open states
+  const [granjaOpen, setGranjaOpen] = useState(false);
+  const [safraOpen, setSafraOpen] = useState(false);
+  const [produtoOpen, setProdutoOpen] = useState(false);
+  const [produtorOpen, setProdutorOpen] = useState(false);
+  
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [devolucaoSelecionada, setDevolucaoSelecionada] = useState<DevolucaoDeposito | null>(null);
