@@ -104,49 +104,133 @@ export default function DevolucaoDeposito() {
         <Card>
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Granja */}
               <div>
                 <Label>Granja</Label>
-                <Select value={granjaId} onValueChange={setGranjaId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {granjas?.map(g => (
-                      <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={granjaOpen} onOpenChange={setGranjaOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {granjaId ? granjas?.find(g => g.id === granjaId)?.razao_social : "Todos"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar granja..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhuma granja encontrada.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem onSelect={() => { setGranjaId(''); setGranjaOpen(false); }}>
+                            <Check className={cn("mr-2 h-4 w-4", !granjaId ? "opacity-100" : "opacity-0")} />
+                            Todos
+                          </CommandItem>
+                          {granjas?.map(g => (
+                            <CommandItem key={g.id} value={g.razao_social} onSelect={() => { setGranjaId(g.id); setGranjaOpen(false); }}>
+                              <Check className={cn("mr-2 h-4 w-4", granjaId === g.id ? "opacity-100" : "opacity-0")} />
+                              {g.razao_social}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
+              {/* Safra */}
               <div>
                 <Label>Safra</Label>
-                <Select value={safraId} onValueChange={setSafraId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {safras?.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={safraOpen} onOpenChange={setSafraOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {safraId ? safras?.find(s => s.id === safraId)?.nome : "Todos"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar safra..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhuma safra encontrada.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem onSelect={() => { setSafraId(''); setSafraOpen(false); }}>
+                            <Check className={cn("mr-2 h-4 w-4", !safraId ? "opacity-100" : "opacity-0")} />
+                            Todos
+                          </CommandItem>
+                          {safras?.map(s => (
+                            <CommandItem key={s.id} value={s.nome} onSelect={() => { setSafraId(s.id); setSafraOpen(false); }}>
+                              <Check className={cn("mr-2 h-4 w-4", safraId === s.id ? "opacity-100" : "opacity-0")} />
+                              {s.nome}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
+              {/* Produto */}
               <div>
                 <Label>Produto</Label>
-                <Select value={produtoId} onValueChange={setProdutoId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {produtos?.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={produtoOpen} onOpenChange={setProdutoOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {produtoId ? produtos?.find(p => p.id === produtoId)?.nome : "Todos"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar produto..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem onSelect={() => { setProdutoId(''); setProdutoOpen(false); }}>
+                            <Check className={cn("mr-2 h-4 w-4", !produtoId ? "opacity-100" : "opacity-0")} />
+                            Todos
+                          </CommandItem>
+                          {produtos?.map(p => (
+                            <CommandItem key={p.id} value={p.nome} onSelect={() => { setProdutoId(p.id); setProdutoOpen(false); }}>
+                              <Check className={cn("mr-2 h-4 w-4", produtoId === p.id ? "opacity-100" : "opacity-0")} />
+                              {p.nome}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
+              {/* Produtor */}
               <div>
                 <Label>Produtor</Label>
-                <Select value={produtorId} onValueChange={setProdutorId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {produtoresUnicos.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={produtorOpen} onOpenChange={setProdutorOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      <span className="truncate">{produtorId ? produtoresUnicos.find(p => p.id === produtorId)?.nome : "Todos"}</span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[350px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar produtor..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum produtor encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem onSelect={() => { setProdutorId(''); setProdutorOpen(false); }}>
+                            <Check className={cn("mr-2 h-4 w-4", !produtorId ? "opacity-100" : "opacity-0")} />
+                            Todos
+                          </CommandItem>
+                          {produtoresUnicos.map(p => (
+                            <CommandItem key={p.id} value={p.nome} onSelect={() => { setProdutorId(p.id); setProdutorOpen(false); }}>
+                              <Check className={cn("mr-2 h-4 w-4", produtorId === p.id ? "opacity-100" : "opacity-0")} />
+                              {p.nome}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </CardContent>
