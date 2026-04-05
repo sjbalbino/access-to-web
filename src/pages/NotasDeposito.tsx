@@ -233,7 +233,7 @@ export default function NotasDeposito() {
                                 <Eye className="h-4 w-4" />
                               </Button>
                             )}
-                            {/* Editar NF-e (rascunho ou rejeitada) */}
+                            {/* Editar NF-e (rascunho ou rejeitada com NF-e vinculada) */}
                             {canEdit && nota.nota_fiscal_id && (
                               <Button
                                 variant="ghost"
@@ -241,6 +241,21 @@ export default function NotasDeposito() {
                                 className="h-8 w-8"
                                 onClick={() => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`)}
                                 title="Editar nota fiscal"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {/* Editar registro (rascunho sem NF-e vinculada - importados) */}
+                            {canEdit && !nota.nota_fiscal_id && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                  setEditNotaId(nota.id);
+                                  setFormDialogOpen(true);
+                                }}
+                                title="Editar / Emitir NF-e"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
