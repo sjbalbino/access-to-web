@@ -550,7 +550,7 @@ export function EmitirNfeCompraDialog({
                 <div className="grid gap-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Quantidade:</span>
-                    <span className="font-medium">{formatNumber(compra.quantidade_kg, 3)} kg</span>
+                    <span className="font-medium">{formatKg(compra.quantidade_kg)} kg</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Valor Unitário:</span>

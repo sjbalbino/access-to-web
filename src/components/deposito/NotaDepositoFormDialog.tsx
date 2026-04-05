@@ -827,7 +827,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                         />
                         {saldoProduto && (
                           <p className="text-xs text-muted-foreground">
-                            Máximo disponível: {formatNumber(saldoProduto.saldo_a_emitir_kg)} kg
+                            Máximo disponível: {formatKg(saldoProduto.saldo_a_emitir_kg)} kg
                           </p>
                         )}
                       </div>
