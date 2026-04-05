@@ -39,6 +39,7 @@ export default function NotasDeposito() {
   
   // Dialog de formulário
   const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editNotaId, setEditNotaId] = useState<string | null>(null);
   
   // Exclusão
   const [deleteNotaId, setDeleteNotaId] = useState<string | null>(null);
