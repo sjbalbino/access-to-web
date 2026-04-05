@@ -397,8 +397,8 @@ export default function VendaProducaoForm() {
     if (value === null || value === undefined) return "-";
     return new Intl.NumberFormat("pt-BR", {
       minimumFractionDigits: 0,
-      maximumFractionDigits: 3,
-    }).format(value);
+      maximumFractionDigits: 0,
+    }).format(Math.round(value));
   };
 
   const formatCurrency = (value: number | null | undefined) => {

@@ -124,7 +124,7 @@ export default function Silos() {
 
   const formatNumber = (value: number | null) => {
     if (value === null || value === undefined) return '-';
-    return value.toLocaleString('pt-BR');
+    return Math.round(value).toLocaleString('pt-BR');
   };
 
   if (isLoading) {
