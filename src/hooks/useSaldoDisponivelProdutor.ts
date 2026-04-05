@@ -50,10 +50,10 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
       const { data: colheitasData, error: colheitasError } = await colheitasQuery;
       if (colheitasError) throw colheitasError;
 
-      const totalColheitas = (colheitasData || []).reduce(
+      const totalColheitas = Math.round((colheitasData || []).reduce(
         (sum, c) => sum + (c.producao_liquida_kg || 0),
         0
-      );
+      ));
 
       let recebidosQuery = supabase
         .from('transferencias_deposito')
@@ -70,10 +70,10 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
 
       if (recebidosError) throw recebidosError;
 
-      const totalRecebidas = (recebidosData || []).reduce(
+      const totalRecebidas = Math.round((recebidosData || []).reduce(
         (sum, t) => sum + (t.quantidade_kg || 0),
         0
-      );
+      ));
 
       let enviadosQuery = supabase
         .from('transferencias_deposito')
@@ -88,10 +88,10 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
 
       const { data: enviadosData, error: enviadosError } = await enviadosQuery;
 
-      const totalEnviadas = (enviadosData || []).reduce(
+      const totalEnviadas = Math.round((enviadosData || []).reduce(
         (sum, t) => sum + (t.quantidade_kg || 0),
         0
-      );
+      ));
 
       let devolucoesQuery = supabase
         .from('devolucoes_deposito')
@@ -108,15 +108,15 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
       const { data: devolucoesData, error: devolucoesError } = await devolucoesQuery;
       if (devolucoesError) throw devolucoesError;
 
-      const totalDevolucoes = (devolucoesData || []).reduce(
+      const totalDevolucoes = Math.round((devolucoesData || []).reduce(
         (sum, d) => sum + (d.quantidade_kg || 0),
         0
-      );
+      ));
 
-      const totalKgTaxaArmazenagem = (devolucoesData || []).reduce(
+      const totalKgTaxaArmazenagem = Math.round((devolucoesData || []).reduce(
         (sum, d) => sum + (d.kg_taxa_armazenagem || 0),
         0
-      );
+      ));
 
       const { data: notasDepositoData, error: notasDepositoError } = await supabase
         .from('notas_deposito_emitidas')
@@ -146,10 +146,10 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         }
       }
 
-      const totalNotasDeposito = notasFiltradas.reduce(
+      const totalNotasDeposito = Math.round(notasFiltradas.reduce(
         (sum: number, n: any) => sum + (n.quantidade_kg || 0),
         0
-      );
+      ));
 
       const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalKgTaxaArmazenagem - totalNotasDeposito;
 

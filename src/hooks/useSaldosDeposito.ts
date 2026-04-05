@@ -109,7 +109,7 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
           saldo_a_emitir_kg: 0,
         };
         
-        existing.depositado_kg += Number(c.producao_liquida_kg) || 0;
+        existing.depositado_kg += Math.round(Number(c.producao_liquida_kg) || 0);
         saldosPorProduto.set(produtoId, existing);
       });
 
@@ -129,7 +129,7 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
           saldo_a_emitir_kg: 0,
         };
         
-        existing.transferencias_recebidas_kg += Number(t.quantidade_kg) || 0;
+        existing.transferencias_recebidas_kg += Math.round(Number(t.quantidade_kg) || 0);
         saldosPorProduto.set(produtoId, existing);
       });
 
@@ -140,7 +140,7 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
         
         const existing = saldosPorProduto.get(produtoId);
         if (existing) {
-          existing.notas_emitidas_kg += Number(n.quantidade_kg) || 0;
+          existing.notas_emitidas_kg += Math.round(Number(n.quantidade_kg) || 0);
         }
       });
 
@@ -223,8 +223,8 @@ export function useInscricoesComSaldo(filters: {
         const key = `${inscId}_${localId || 'sem_local'}`;
         const existing = inscricaoMap.get(key);
         if (existing) {
-          existing.total_depositado += Number(c.producao_liquida_kg) || 0;
-          existing.saldo_disponivel += Number(c.producao_liquida_kg) || 0;
+        existing.total_depositado += Math.round(Number(c.producao_liquida_kg) || 0);
+          existing.saldo_disponivel += Math.round(Number(c.producao_liquida_kg) || 0);
         } else {
           inscricaoMap.set(key, {
             id: inscId,
@@ -235,8 +235,8 @@ export function useInscricoesComSaldo(filters: {
             produtor_nome: c.inscricao_produtor.produtores?.nome || null,
             local_entrega_id: localId,
             local_entrega_nome: c.local_entrega?.nome || null,
-            total_depositado: Number(c.producao_liquida_kg) || 0,
-            saldo_disponivel: Number(c.producao_liquida_kg) || 0,
+            total_depositado: Math.round(Number(c.producao_liquida_kg) || 0),
+            saldo_disponivel: Math.round(Number(c.producao_liquida_kg) || 0),
           });
         }
       });
@@ -281,20 +281,20 @@ export function useInscricoesComSaldo(filters: {
       (recebidasRes.data || []).forEach((t: any) => {
         const key = `${t.inscricao_destino_id}_${t.local_entrada_id || 'sem_local'}`;
         const existing = inscricaoMap.get(key);
-        if (existing) existing.saldo_disponivel += Number(t.quantidade_kg) || 0;
+        if (existing) existing.saldo_disponivel += Math.round(Number(t.quantidade_kg) || 0);
       });
 
       (enviadasRes.data || []).forEach((t: any) => {
         const key = `${t.inscricao_origem_id}_${t.local_saida_id || 'sem_local'}`;
         const existing = inscricaoMap.get(key);
-        if (existing) existing.saldo_disponivel -= Number(t.quantidade_kg) || 0;
+        if (existing) existing.saldo_disponivel -= Math.round(Number(t.quantidade_kg) || 0);
       });
 
       (devolucoesRes.data || []).forEach((d: any) => {
         const key = `${d.inscricao_produtor_id}_${d.local_entrega_id || 'sem_local'}`;
         const existing = inscricaoMap.get(key);
         if (existing) {
-          existing.saldo_disponivel -= (Number(d.quantidade_kg) || 0) + (Number(d.kg_taxa_armazenagem) || 0);
+          existing.saldo_disponivel -= Math.round(Number(d.quantidade_kg) || 0) + Math.round(Number(d.kg_taxa_armazenagem) || 0);
         }
       });
 
@@ -315,7 +315,7 @@ export function useInscricoesComSaldo(filters: {
       notasFiltradas.forEach((n: any) => {
         for (const existing of inscricaoMap.values()) {
           if (existing.id === n.inscricao_produtor_id) {
-            existing.saldo_disponivel -= Number(n.quantidade_kg) || 0;
+            existing.saldo_disponivel -= Math.round(Number(n.quantidade_kg) || 0);
           }
         }
       });

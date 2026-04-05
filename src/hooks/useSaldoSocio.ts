@@ -48,6 +48,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       for (const c of colheitasResult.data || []) {
         totalColheitas += (c.producao_liquida_kg as number) || 0;
       }
+      totalColheitas = Math.round(totalColheitas);
 
       // Buscar transferências recebidas
       const recebidosResult = await supabase
@@ -63,6 +64,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       for (const t of recebidosResult.data || []) {
         totalRecebidas += (t.quantidade_kg as number) || 0;
       }
+      totalRecebidas = Math.round(totalRecebidas);
 
       // Buscar compras de cereais
       const comprasResult = await supabase
@@ -79,6 +81,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       for (const c of comprasResult.data || []) {
         totalCompras += (c.quantidade_kg as number) || 0;
       }
+      totalCompras = Math.round(totalCompras);
 
       // Buscar transferências enviadas
       const enviadosResult = await supabase
@@ -94,6 +97,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       for (const t of enviadosResult.data || []) {
         totalEnviadas += (t.quantidade_kg as number) || 0;
       }
+      totalEnviadas = Math.round(totalEnviadas);
 
       // Buscar kg de taxa de armazenagem recebidos (sócio emitente)
       const taxaResult = await supabase
@@ -110,6 +114,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       for (const d of taxaResult.data || []) {
         totalKgTaxa += (d.kg_taxa_armazenagem as number) || 0;
       }
+      totalKgTaxa = Math.round(totalKgTaxa);
 
       // Vendas da produção - simplificado para evitar problemas de tipo
       // TODO: Implementar RPC function para calcular vendas
