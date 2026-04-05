@@ -281,7 +281,7 @@ export function useInscricoesComSaldo(filters: {
       (recebidasRes.data || []).forEach((t: any) => {
         const key = `${t.inscricao_destino_id}_${t.local_entrada_id || 'sem_local'}`;
         const existing = inscricaoMap.get(key);
-        if (existing) existing.saldo_disponivel += Number(t.quantidade_kg) || 0;
+        if (existing) existing.saldo_disponivel += Math.round(Number(t.quantidade_kg) || 0);
       });
 
       (enviadasRes.data || []).forEach((t: any) => {
