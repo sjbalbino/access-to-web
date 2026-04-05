@@ -186,6 +186,17 @@ export function formatNumber(value: number | null | undefined, decimals: number 
 }
 
 /**
+ * Formata quilos arredondando para inteiro (sem casas decimais)
+ */
+export function formatKg(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "0";
+  return Math.round(value).toLocaleString("pt-BR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+}
+
+/**
  * Formata nome + nome fantasia para exibição em listas
  * Ex: "Empresa ABC (Fantasia XYZ)"
  */
