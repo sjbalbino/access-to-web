@@ -129,7 +129,7 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
           saldo_a_emitir_kg: 0,
         };
         
-        existing.transferencias_recebidas_kg += Number(t.quantidade_kg) || 0;
+        existing.transferencias_recebidas_kg += Math.round(Number(t.quantidade_kg) || 0);
         saldosPorProduto.set(produtoId, existing);
       });
 
