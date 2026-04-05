@@ -35,7 +35,7 @@ import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
 import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrincipal";
-import { formatNumber, formatCpfCnpj } from "@/lib/formatters";
+import { formatNumber, formatKg, formatCpfCnpj } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { NotaReferenciadaForm, NotaReferenciadaTemp } from "@/components/deposito/NotaReferenciadaForm";
