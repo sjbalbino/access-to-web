@@ -675,7 +675,14 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                       <div>
                         <Label className="text-muted-foreground text-xs">Cidade/UF</Label>
                         <p className="font-medium">
-                          {inscricaoSelecionada.cidade ? `${inscricaoSelecionada.cidade}/${inscricaoSelecionada.uf}` : "-"}
+                          {(() => {
+                            const cidadeVal = inscricaoSelecionada.cidade;
+                            if (!cidadeVal) return "-";
+                            // Se for código IBGE numérico, resolver o nome
+                            const mun = municipios.find(m => m.codigo_ibge === cidadeVal);
+                            const nomeCidade = mun ? mun.nome : cidadeVal;
+                            return `${nomeCidade}/${inscricaoSelecionada.uf || ""}`;
+                          })()}
                         </p>
                       </div>
                     </div>
