@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, Send, Search, ChevronsUpDown, Check } from 'lucide-react';
+import { Plus, Trash2, Edit, Send } from 'lucide-react';
 import { useDevolucoes, useDeleteDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
 import { useAllInscricoes } from '@/hooks/useAllInscricoes';
 import { useGranjas } from '@/hooks/useGranjas';
@@ -18,9 +18,7 @@ import { DevolucaoDialog } from '@/components/devolucao/DevolucaoDialog';
 import { EmitirNfeDevolucaoDialog } from '@/components/devolucao/EmitirNfeDevolucaoDialog';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { cn } from '@/lib/utils';
+import { ComboboxFilter } from '@/components/ui/combobox-filter';
 
 export default function DevolucaoDeposito() {
   const [granjaId, setGranjaId] = useState<string>('');
