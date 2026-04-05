@@ -320,9 +320,10 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
     }
   };
 
-  const formatNumber = (value: number | null, decimals = 2) => {
+  const formatNumber = (value: number | null, decimals = 0) => {
     if (value === null || value === undefined) return '-';
-    return value.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    const rounded = decimals === 0 ? Math.round(value) : value;
+    return rounded.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   };
 
   if (isLoading) {
