@@ -234,7 +234,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
     if (saldoProduto && qtdKg > saldoProduto.saldo_a_emitir_kg) {
       toast({
         title: "Quantidade inválida",
-        description: `A quantidade informada (${formatNumber(qtdKg)} kg) é maior que o saldo disponível (${formatNumber(saldoProduto.saldo_a_emitir_kg)} kg).`,
+        description: `A quantidade informada (${formatKg(qtdKg)} kg) é maior que o saldo disponível (${formatKg(saldoProduto.saldo_a_emitir_kg)} kg).`,
         variant: "destructive",
       });
       return;
