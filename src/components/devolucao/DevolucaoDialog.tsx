@@ -14,7 +14,7 @@ import { useSaldoDisponivelProdutor } from '@/hooks/useSaldoDisponivelProdutor';
 import { useCreateDevolucao, useUpdateDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
 import { toast } from 'sonner';
 import { CurrencyInput } from '@/components/ui/currency-input';
-import { formatNumber } from '@/lib/formatters';
+import { formatNumber, formatKg } from '@/lib/formatters';
 
 interface DevolucaoDialogProps {
   open: boolean;
