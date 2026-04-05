@@ -502,7 +502,7 @@ export function EmitirNfeDevolucaoDialog({
                 <div className="text-sm space-y-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Quantidade:</span>
-                    <span className="font-medium">{formatNumber(devolucao.quantidade_kg, 3)} kg</span>
+                    <span className="font-medium">{formatKg(devolucao.quantidade_kg)} kg</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Valor:</span>
