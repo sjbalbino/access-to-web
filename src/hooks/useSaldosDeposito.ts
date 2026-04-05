@@ -294,7 +294,7 @@ export function useInscricoesComSaldo(filters: {
         const key = `${d.inscricao_produtor_id}_${d.local_entrega_id || 'sem_local'}`;
         const existing = inscricaoMap.get(key);
         if (existing) {
-          existing.saldo_disponivel -= (Number(d.quantidade_kg) || 0) + (Number(d.kg_taxa_armazenagem) || 0);
+          existing.saldo_disponivel -= Math.round(Number(d.quantidade_kg) || 0) + Math.round(Number(d.kg_taxa_armazenagem) || 0);
         }
       });
 
