@@ -13,7 +13,7 @@ import { useAllInscricoes } from '@/hooks/useAllInscricoes';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
-import { formatNumber } from '@/lib/formatters';
+import { formatNumber, formatKg } from '@/lib/formatters';
 import { format } from 'date-fns';
 import { DevolucaoDialog } from '@/components/devolucao/DevolucaoDialog';
 import { EmitirNfeDevolucaoDialog } from '@/components/devolucao/EmitirNfeDevolucaoDialog';
