@@ -6,7 +6,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Trash2, ExternalLink } from "lucide-react";
@@ -28,6 +27,7 @@ import { formatNumber, formatKg } from "@/lib/formatters";
 import { NotaDepositoFormDialog } from "@/components/deposito/NotaDepositoFormDialog";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { ComboboxFilter } from "@/components/ui/combobox-filter";
 
 export default function NotasDeposito() {
   const navigate = useNavigate();
@@ -120,53 +120,35 @@ export default function NotasDeposito() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Granja</Label>
-                <Select value={granjaId} onValueChange={setGranjaId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas as granjas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as granjas</SelectItem>
-                    {granjas.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
-                        {g.nome_fantasia || g.razao_social}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={granjaId}
+                  onValueChange={setGranjaId}
+                  options={granjas.map(g => ({ value: g.id, label: g.nome_fantasia || g.razao_social }))}
+                  searchPlaceholder="Buscar granja..."
+                  emptyText="Nenhuma granja encontrada."
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Safra</Label>
-                <Select value={safraId} onValueChange={setSafraId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas as safras" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as safras</SelectItem>
-                    {safras.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={safraId}
+                  onValueChange={setSafraId}
+                  options={safras.map(s => ({ value: s.id, label: s.nome }))}
+                  searchPlaceholder="Buscar safra..."
+                  emptyText="Nenhuma safra encontrada."
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Produto</Label>
-                <Select value={produtoId} onValueChange={setProdutoId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os produtos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os produtos</SelectItem>
-                    {produtosCereais.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={produtoId}
+                  onValueChange={setProdutoId}
+                  options={produtosCereais.map(p => ({ value: p.id, label: p.nome }))}
+                  searchPlaceholder="Buscar produto..."
+                  emptyText="Nenhum produto encontrado."
+                />
               </div>
             </div>
           </CardContent>
