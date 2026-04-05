@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Trash2, ExternalLink } from "lucide-react";
+import { Plus, FileText, Trash2, ExternalLink, Pencil, Eye, RotateCw } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
