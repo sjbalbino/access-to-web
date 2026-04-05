@@ -12,7 +12,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useTransferenciasDeposito, useDeleteTransferenciaDeposito, TransferenciaDeposito } from "@/hooks/useTransferenciasDeposito";
-import { formatNumber } from "@/lib/formatters";
+import { formatNumber, formatKg } from "@/lib/formatters";
 import { TransferenciaDialog } from "@/components/transferencias/TransferenciaDialog";
 import {
   AlertDialog,
