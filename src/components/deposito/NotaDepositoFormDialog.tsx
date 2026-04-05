@@ -56,9 +56,10 @@ interface NotaDepositoFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  editNotaId?: string | null;
 }
 
-export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDepositoFormDialogProps) {
+export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNotaId }: NotaDepositoFormDialogProps) {
   // Filtros
   const [granjaId, setGranjaId] = useState<string>("");
   const [safraId, setSafraId] = useState<string>("");
