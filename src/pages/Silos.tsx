@@ -127,10 +127,6 @@ export default function Silos() {
     return Math.round(value).toLocaleString('pt-BR');
   };
 
-  if (isLoading) {
-    return <div className="p-8">Carregando...</div>;
-  }
-
   const {
     dadosPaginados,
     paginaAtual,
@@ -139,6 +135,10 @@ export default function Silos() {
     setPaginaAtual,
     gerarNumerosPaginas,
   } = usePaginacao(silos || []);
+
+  if (isLoading) {
+    return <div className="p-8">Carregando...</div>;
+  }
 
 
   return (
