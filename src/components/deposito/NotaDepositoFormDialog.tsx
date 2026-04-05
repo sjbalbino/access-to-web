@@ -158,7 +158,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
       loadEditData();
     }
   }, [editNotaId, open]);
-
+  const handleAddNotaReferenciada = (nota: NotaReferenciadaTemp) => {
     setNotasReferenciadas(prev => [...prev, nota]);
     setShowNotaForm(false);
   };
