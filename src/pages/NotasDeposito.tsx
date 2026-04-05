@@ -184,8 +184,12 @@ export default function NotasDeposito() {
                 </TableHeader>
                 <TableBody>
                   {dadosPaginados.map((nota) => {
-                    const nfStatus = nota.nota_fiscal?.status || (nota as any).status;
-                    const canDelete = !nfStatus || nfStatus === 'rascunho';
+                    const nfStatus = nota.nota_fiscal?.status || nota.status;
+                    const isAutorizado = nfStatus === 'autorizado';
+                    const isRascunho = !nfStatus || nfStatus === 'rascunho';
+                    const isRejeitado = nfStatus === 'rejeitado' || nfStatus === 'erro_autorizacao';
+                    const canEdit = isRascunho || isRejeitado;
+                    const canDelete = isRascunho;
                     
                     return (
                       <TableRow key={nota.id}>
@@ -216,27 +220,54 @@ export default function NotasDeposito() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {nota.nota_fiscal_id && (
+                            {/* Visualizar NF-e (autorizada) */}
+                            {isAutorizado && nota.nota_fiscal_id && (
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`)}
-                                title="Ver nota fiscal"
+                                title="Visualizar nota fiscal"
                               >
-                                <ExternalLink className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </Button>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => setDeleteNotaId(nota.id)}
-                              disabled={!canDelete}
-                              title={canDelete ? "Excluir" : "Não é possível excluir nota autorizada"}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {/* Editar NF-e (rascunho ou rejeitada) */}
+                            {canEdit && nota.nota_fiscal_id && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`)}
+                                title="Editar nota fiscal"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {/* Reemitir NF-e (rejeitada) */}
+                            {isRejeitado && nota.nota_fiscal_id && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-amber-600 hover:text-amber-700"
+                                onClick={() => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`)}
+                                title="Corrigir e reemitir NF-e"
+                              >
+                                <RotateCw className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {/* Excluir (apenas rascunho) */}
+                            {canDelete && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => setDeleteNotaId(nota.id)}
+                                title="Excluir"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
