@@ -123,35 +123,24 @@ export default function VendasProducao() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Safra</Label>
-                <Select value={filtroSafra || "__all__"} onValueChange={(v) => setFiltroSafra(v === "__all__" ? "" : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">Todas</SelectItem>
-                    {safras?.map((safra) => (
-                      <SelectItem key={safra.id} value={safra.id}>
-                        {safra.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={filtroSafra}
+                  onValueChange={setFiltroSafra}
+                  options={safras?.map(s => ({ value: s.id, label: s.nome })) || []}
+                  searchPlaceholder="Buscar safra..."
+                  emptyText="Nenhuma safra encontrada."
+                />
               </div>
               <div className="space-y-2">
                 <Label>Comprador</Label>
-                <Select value={filtroComprador || "__all__"} onValueChange={(v) => setFiltroComprador(v === "__all__" ? "" : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">Todos</SelectItem>
-                    {compradores?.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={filtroComprador}
+                  onValueChange={setFiltroComprador}
+                  options={compradores?.map(c => ({ value: c.id, label: c.nome + (c.nome_fantasia ? ` (${c.nome_fantasia})` : '') })) || []}
+                  searchPlaceholder="Buscar comprador..."
+                  emptyText="Nenhum comprador encontrado."
+                  popoverWidth="w-[350px]"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Nº Contrato</Label>

@@ -132,9 +132,39 @@ export default function LancamentosFinanceiros() {
         <Card>
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <Select value={filtroGranja} onValueChange={setFiltroGranja}><SelectTrigger><SelectValue placeholder="Granja" /></SelectTrigger><SelectContent><SelectItem value="all">Todas</SelectItem>{granjas?.map(g => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}</SelectContent></Select>
-              <Select value={filtroTipo} onValueChange={setFiltroTipo}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent><SelectItem value="all">Todos</SelectItem><SelectItem value="receita">Receita</SelectItem><SelectItem value="despesa">Despesa</SelectItem></SelectContent></Select>
-              <Select value={filtroSafra} onValueChange={setFiltroSafra}><SelectTrigger><SelectValue placeholder="Safra" /></SelectTrigger><SelectContent><SelectItem value="all">Todas</SelectItem>{safras?.map(s => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}</SelectContent></Select>
+              <div>
+                <Label className="text-xs mb-1 block">Granja</Label>
+                <ComboboxFilter
+                  value={filtroGranja}
+                  onValueChange={setFiltroGranja}
+                  options={granjas?.map(g => ({ value: g.id, label: g.razao_social })) || []}
+                  searchPlaceholder="Buscar granja..."
+                  emptyText="Nenhuma granja encontrada."
+                />
+              </div>
+              <div>
+                <Label className="text-xs mb-1 block">Tipo</Label>
+                <ComboboxFilter
+                  value={filtroTipo}
+                  onValueChange={setFiltroTipo}
+                  options={[
+                    { value: 'receita', label: 'Receita' },
+                    { value: 'despesa', label: 'Despesa' },
+                  ]}
+                  searchPlaceholder="Buscar tipo..."
+                  emptyText="Nenhum tipo encontrado."
+                />
+              </div>
+              <div>
+                <Label className="text-xs mb-1 block">Safra</Label>
+                <ComboboxFilter
+                  value={filtroSafra}
+                  onValueChange={setFiltroSafra}
+                  options={safras?.map(s => ({ value: s.id, label: s.nome })) || []}
+                  searchPlaceholder="Buscar safra..."
+                  emptyText="Nenhuma safra encontrada."
+                />
+              </div>
               <Input type="date" value={filtroDataIni} onChange={e => setFiltroDataIni(e.target.value)} placeholder="Data inicial" />
               <Input type="date" value={filtroDataFim} onChange={e => setFiltroDataFim(e.target.value)} placeholder="Data final" />
             </div>
