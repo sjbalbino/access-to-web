@@ -339,7 +339,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
               
               {safraId && produtoId && inscricaoOrigemId && saldoOrigem && (
                 <p className="text-sm text-muted-foreground">
-                  Saldo disponível: <span className="font-medium text-foreground">{formatNumber(saldoOrigem.saldo)} kg</span>
+                  Saldo disponível: <span className="font-medium text-foreground">{formatKg(saldoOrigem.saldo)} kg</span>
                 </p>
               )}
             </div>

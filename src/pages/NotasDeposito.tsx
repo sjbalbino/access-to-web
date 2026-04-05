@@ -227,7 +227,7 @@ export default function NotasDeposito() {
                         </TableCell>
                         <TableCell>{nota.produto?.nome || "-"}</TableCell>
                         <TableCell className="text-right">
-                          {formatNumber(nota.quantidade_kg, 3)} kg
+                          {formatKg(nota.quantidade_kg)} kg
                         </TableCell>
                         <TableCell>
                           {getStatusBadge(nfStatus)}

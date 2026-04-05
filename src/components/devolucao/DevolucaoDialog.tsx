@@ -441,7 +441,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                 className="bg-muted"
               />
               <p className="text-xs text-muted-foreground">
-                Calculado: {formatNumber(quantidadeKg, 3)} kg × {formatNumber(taxaArmazenagem, 2)}%
+                Calculado: {formatKg(quantidadeKg)} kg × {formatNumber(taxaArmazenagem, 2)}%
               </p>
             </div>
           </div>

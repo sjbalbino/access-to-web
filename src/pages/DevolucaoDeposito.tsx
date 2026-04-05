@@ -175,7 +175,7 @@ export default function DevolucaoDeposito() {
                       <TableCell>{format(new Date(d.data_devolucao), 'dd/MM/yyyy')}</TableCell>
                       <TableCell className="max-w-[150px] truncate">{d.inscricao_produtor?.produtores?.nome}</TableCell>
                       <TableCell className="hidden sm:table-cell">{d.produto?.nome}</TableCell>
-                      <TableCell className="text-right">{formatNumber(d.quantidade_kg, 3)}</TableCell>
+                      <TableCell className="text-right">{formatKg(d.quantidade_kg)}</TableCell>
                       <TableCell className="text-right hidden sm:table-cell">R$ {formatNumber(d.valor_total || 0, 2)}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         <Badge variant={d.status === 'nfe_emitida' ? 'default' : 'secondary'}>

@@ -517,7 +517,7 @@ export function EmitirNfeDevolucaoDialog({
                   {(devolucao.taxa_armazenagem || 0) > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Taxa Armazenagem:</span>
-                      <span className="font-medium">{formatNumber(devolucao.kg_taxa_armazenagem || 0, 3)} kg ({devolucao.taxa_armazenagem}%)</span>
+                      <span className="font-medium">{formatKg(devolucao.kg_taxa_armazenagem || 0)} kg ({devolucao.taxa_armazenagem}%)</span>
                     </div>
                   )}
                   <div className="flex justify-between">
