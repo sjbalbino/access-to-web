@@ -307,7 +307,11 @@ export default function NotasDeposito() {
       {/* Dialog do formulário */}
       <NotaDepositoFormDialog
         open={formDialogOpen}
-        onOpenChange={setFormDialogOpen}
+        onOpenChange={(open) => {
+          setFormDialogOpen(open);
+          if (!open) setEditNotaId(null);
+        }}
+        editNotaId={editNotaId}
         onSuccess={() => refetch()}
       />
 
