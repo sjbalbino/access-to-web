@@ -183,7 +183,7 @@ export function EmitirNfeDevolucaoDialog({
       const infoComplementarParts: string[] = [];
       infoComplementarParts.push(`Devolução de Depósito Cód. ${devolucao.codigo}`);
       if (devolucao.taxa_armazenagem && devolucao.taxa_armazenagem > 0) {
-        infoComplementarParts.push(`Taxa de Armazenagem: ${devolucao.taxa_armazenagem}% (${formatNumber(devolucao.kg_taxa_armazenagem || 0, 3)} kg)`);
+        infoComplementarParts.push(`Taxa de Armazenagem: ${devolucao.taxa_armazenagem}% (${formatKg(devolucao.kg_taxa_armazenagem || 0)} kg)`);
       }
       if (devolucao.observacao) {
         infoComplementarParts.push(`Obs: ${devolucao.observacao}`);
