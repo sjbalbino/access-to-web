@@ -298,10 +298,15 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {!isGestao && (
             <div>
               <Label>Safra *</Label>
-              <Select value={safraId} onValueChange={setSafraId}>
-                <SelectTrigger><SelectValue placeholder="Selecione a safra" /></SelectTrigger>
-                <SelectContent>{safras?.map(s => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}</SelectContent>
-              </Select>
+              <ComboboxFilter
+                value={safraId}
+                onValueChange={setSafraId}
+                options={safras?.map(s => ({ value: s.id, label: s.nome })) || []}
+                placeholder="Selecione a safra"
+                searchPlaceholder="Buscar safra..."
+                emptyText="Nenhuma safra encontrada."
+                allLabel="Todas"
+              />
             </div>
           )}
 
@@ -309,10 +314,15 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {tipo === "extrato" && (
             <div>
               <Label>Produtor/Inscrição *</Label>
-              <Select value={inscricaoId} onValueChange={setInscricaoId}>
-                <SelectTrigger><SelectValue placeholder="Selecione o produtor" /></SelectTrigger>
-                <SelectContent>{inscricoes?.map(i => <SelectItem key={i.id} value={i.id}>{i.produtores?.nome || i.inscricao_estadual || "Sem nome"} - IE: {i.inscricao_estadual || "-"}</SelectItem>)}</SelectContent>
-              </Select>
+              <ComboboxFilter
+                value={inscricaoId}
+                onValueChange={setInscricaoId}
+                options={inscricoes?.map(i => ({ value: i.id, label: `${i.produtores?.nome || i.inscricao_estadual || "Sem nome"} - IE: ${i.inscricao_estadual || "-"}` })) || []}
+                placeholder="Selecione o produtor"
+                searchPlaceholder="Buscar produtor..."
+                emptyText="Nenhum produtor encontrado."
+                popoverWidth="w-[400px]"
+              />
             </div>
           )}
 
@@ -320,10 +330,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {(tipo === "extrato" || tipo === "colheitas") && (
             <div>
               <Label>Produto</Label>
-              <Select value={produtoId} onValueChange={setProdutoId}>
-                <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
-                <SelectContent><SelectItem value="all">Todos</SelectItem>{produtos?.map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
-              </Select>
+              <ComboboxFilter
+                value={produtoId}
+                onValueChange={setProdutoId}
+                options={produtos?.map(p => ({ value: p.id, label: p.nome })) || []}
+                searchPlaceholder="Buscar produto..."
+                emptyText="Nenhum produto encontrado."
+              />
             </div>
           )}
 
@@ -331,10 +344,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {tipo === "colheitas" && (
             <div>
               <Label>Silo</Label>
-              <Select value={siloId} onValueChange={setSiloId}>
-                <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
-                <SelectContent><SelectItem value="all">Todos</SelectItem>{silos?.map(s => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}</SelectContent>
-              </Select>
+              <ComboboxFilter
+                value={siloId}
+                onValueChange={setSiloId}
+                options={silos?.map(s => ({ value: s.id, label: s.nome })) || []}
+                searchPlaceholder="Buscar silo..."
+                emptyText="Nenhum silo encontrado."
+              />
             </div>
           )}
 
@@ -342,10 +358,14 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {tipo === "vendas" && (
             <div>
               <Label>Comprador</Label>
-              <Select value={compradorId} onValueChange={setCompradorId}>
-                <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
-                <SelectContent><SelectItem value="all">Todos</SelectItem>{compradores.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}</SelectItem>)}</SelectContent>
-              </Select>
+              <ComboboxFilter
+                value={compradorId}
+                onValueChange={setCompradorId}
+                options={compradores.map(c => ({ value: c.id, label: c.nome + (c.nome_fantasia ? ` (${c.nome_fantasia})` : '') }))}
+                searchPlaceholder="Buscar comprador..."
+                emptyText="Nenhum comprador encontrado."
+                popoverWidth="w-[350px]"
+              />
             </div>
           )}
 
@@ -353,10 +373,14 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {isGestao && (
             <div>
               <Label>Granja</Label>
-              <Select value={granjaId} onValueChange={setGranjaId}>
-                <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
-                <SelectContent><SelectItem value="all">Todas</SelectItem>{granjas?.map(g => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}</SelectContent>
-              </Select>
+              <ComboboxFilter
+                value={granjaId}
+                onValueChange={setGranjaId}
+                options={granjas?.map(g => ({ value: g.id, label: g.razao_social })) || []}
+                searchPlaceholder="Buscar granja..."
+                emptyText="Nenhuma granja encontrada."
+                allLabel="Todas"
+              />
             </div>
           )}
 
@@ -364,10 +388,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {tipo === "demonstrativo_gerencial" && (
             <div>
               <Label>Tipo</Label>
-              <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="ambos">Receitas e Despesas</SelectItem><SelectItem value="receita">Apenas Receitas</SelectItem><SelectItem value="despesa">Apenas Despesas</SelectItem></SelectContent>
-              </Select>
+              <ComboboxFilter
+                value={tipoFiltro}
+                onValueChange={setTipoFiltro}
+                options={[
+                  { value: 'ambos', label: 'Receitas e Despesas' },
+                  { value: 'receita', label: 'Apenas Receitas' },
+                  { value: 'despesa', label: 'Apenas Despesas' },
+                ]}
+                searchPlaceholder="Buscar tipo..."
+              />
             </div>
           )}
 
@@ -375,10 +405,15 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {tipo === "bens_moveis" && (
             <div>
               <Label>Modo do Relatório</Label>
-              <Select value={modoBensMoveis} onValueChange={setModoBensMoveis}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="geral_discriminado">Geral Discriminado</SelectItem><SelectItem value="geral_totais">Geral Totais</SelectItem></SelectContent>
-              </Select>
+              <ComboboxFilter
+                value={modoBensMoveis}
+                onValueChange={setModoBensMoveis}
+                options={[
+                  { value: 'geral_discriminado', label: 'Geral Discriminado' },
+                  { value: 'geral_totais', label: 'Geral Totais' },
+                ]}
+                searchPlaceholder="Buscar modo..."
+              />
             </div>
           )}
 
