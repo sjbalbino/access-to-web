@@ -109,7 +109,7 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
           saldo_a_emitir_kg: 0,
         };
         
-        existing.depositado_kg += Number(c.producao_liquida_kg) || 0;
+        existing.depositado_kg += Math.round(Number(c.producao_liquida_kg) || 0);
         saldosPorProduto.set(produtoId, existing);
       });
 
