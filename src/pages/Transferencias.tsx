@@ -100,53 +100,35 @@ export default function Transferencias() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Safra</Label>
-                <Select value={filtroSafraId || "__all__"} onValueChange={(val) => setFiltroSafraId(val === "__all__" ? "" : val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas as safras" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">Todas</SelectItem>
-                    {safras.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={filtroSafraId}
+                  onValueChange={setFiltroSafraId}
+                  options={safras.map(s => ({ value: s.id, label: s.nome }))}
+                  searchPlaceholder="Buscar safra..."
+                  emptyText="Nenhuma safra encontrada."
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Produto/Variedade</Label>
-                <Select value={filtroProdutoId || "__all__"} onValueChange={(val) => setFiltroProdutoId(val === "__all__" ? "" : val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os produtos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">Todos</SelectItem>
-                    {produtos.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={filtroProdutoId}
+                  onValueChange={setFiltroProdutoId}
+                  options={produtos.map(p => ({ value: p.id, label: p.nome }))}
+                  searchPlaceholder="Buscar produto..."
+                  emptyText="Nenhum produto encontrado."
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Silo</Label>
-                <Select value={filtroSiloId || "__all__"} onValueChange={(val) => setFiltroSiloId(val === "__all__" ? "" : val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os silos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">Todos</SelectItem>
-                    {silos.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={filtroSiloId}
+                  onValueChange={setFiltroSiloId}
+                  options={silos.map(s => ({ value: s.id, label: s.nome }))}
+                  searchPlaceholder="Buscar silo..."
+                  emptyText="Nenhum silo encontrado."
+                />
               </div>
             </div>
           </CardContent>

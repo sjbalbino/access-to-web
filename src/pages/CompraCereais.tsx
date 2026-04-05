@@ -79,36 +79,33 @@ export default function CompraCereais() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Granja</Label>
-                <Select value={granjaId} onValueChange={setGranjaId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {granjas?.map(g => (
-                      <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={granjaId}
+                  onValueChange={setGranjaId}
+                  options={granjas?.map(g => ({ value: g.id, label: g.razao_social })) || []}
+                  searchPlaceholder="Buscar granja..."
+                  emptyText="Nenhuma granja encontrada."
+                />
               </div>
               <div>
                 <Label>Safra</Label>
-                <Select value={safraId} onValueChange={setSafraId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {safras?.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={safraId}
+                  onValueChange={setSafraId}
+                  options={safras?.map(s => ({ value: s.id, label: s.nome })) || []}
+                  searchPlaceholder="Buscar safra..."
+                  emptyText="Nenhuma safra encontrada."
+                />
               </div>
               <div>
                 <Label>Produto</Label>
-                <Select value={produtoId} onValueChange={setProdutoId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {produtos?.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxFilter
+                  value={produtoId}
+                  onValueChange={setProdutoId}
+                  options={produtos?.map(p => ({ value: p.id, label: p.nome })) || []}
+                  searchPlaceholder="Buscar produto..."
+                  emptyText="Nenhum produto encontrado."
+                />
               </div>
             </div>
           </CardContent>
