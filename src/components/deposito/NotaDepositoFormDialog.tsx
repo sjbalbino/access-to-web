@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, FileText, Trash2, Loader2, CheckCircle2, XCircle, Check } from "lucide-react";
@@ -32,6 +32,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useSaldosDeposito, useInscricoesComSaldo } from "@/hooks/useSaldosDeposito";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
+import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
 import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrincipal";
@@ -89,6 +90,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
   const { data: produtos = [] } = useProdutos();
   const { cfops } = useCfops();
   const { data: todasInscricoes = [] } = useInscricoesCompletas();
+  const { data: municipios = [] } = useIbgeMunicipios();
 
   // Buscar inscrições com saldo disponível
   const { data: inscricoesComSaldo = [] } = useInscricoesComSaldo({
@@ -673,7 +675,14 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                       <div>
                         <Label className="text-muted-foreground text-xs">Cidade/UF</Label>
                         <p className="font-medium">
-                          {inscricaoSelecionada.cidade ? `${inscricaoSelecionada.cidade}/${inscricaoSelecionada.uf}` : "-"}
+                          {(() => {
+                            const cidadeVal = inscricaoSelecionada.cidade;
+                            if (!cidadeVal) return "-";
+                            // Se for código IBGE numérico, resolver o nome
+                            const mun = municipios.find(m => m.codigo_ibge === cidadeVal);
+                            const nomeCidade = mun ? mun.nome : cidadeVal;
+                            return `${nomeCidade}/${inscricaoSelecionada.uf || ""}`;
+                          })()}
                         </p>
                       </div>
                     </div>
@@ -699,7 +708,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                             <TableHead>Variedade</TableHead>
                             <TableHead className="text-right">Depositado</TableHead>
                             <TableHead className="text-right">Transf. Receb.</TableHead>
-                            <TableHead className="text-right">Notas Emitidas</TableHead>
+                            <TableHead className="text-right text-amber-700 dark:text-amber-400 font-semibold">Notas Emitidas</TableHead>
                             <TableHead className="text-right">Saldo à Emitir</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -712,7 +721,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                               <TableCell className="font-medium">{s.produto_nome}</TableCell>
                               <TableCell className="text-right">{formatKg(s.depositado_kg)} kg</TableCell>
                               <TableCell className="text-right">{formatKg(s.transferencias_recebidas_kg)} kg</TableCell>
-                              <TableCell className="text-right">{formatKg(s.notas_emitidas_kg)} kg</TableCell>
+                              <TableCell className="text-right font-semibold text-amber-700 dark:text-amber-400">{formatKg(s.notas_emitidas_kg)} kg</TableCell>
                               <TableCell className="text-right font-medium">
                                 <Badge variant={s.saldo_a_emitir_kg > 0 ? "default" : "secondary"}>
                                   {formatKg(s.saldo_a_emitir_kg)} kg
@@ -721,6 +730,23 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                             </TableRow>
                           ))}
                         </TableBody>
+                        <TableFooter>
+                          <TableRow className="font-bold">
+                            <TableCell>Total</TableCell>
+                            <TableCell className="text-right">
+                              {formatKg(saldos.reduce((acc, s) => acc + (s.depositado_kg || 0), 0))} kg
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {formatKg(saldos.reduce((acc, s) => acc + (s.transferencias_recebidas_kg || 0), 0))} kg
+                            </TableCell>
+                            <TableCell className="text-right text-amber-700 dark:text-amber-400">
+                              {formatKg(saldos.reduce((acc, s) => acc + (s.notas_emitidas_kg || 0), 0))} kg
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {formatKg(saldos.reduce((acc, s) => acc + (s.saldo_a_emitir_kg || 0), 0))} kg
+                            </TableCell>
+                          </TableRow>
+                        </TableFooter>
                       </Table>
                     )}
                   </CardContent>
