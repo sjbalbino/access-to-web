@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,9 +56,10 @@ interface NotaDepositoFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  editNotaId?: string | null;
 }
 
-export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDepositoFormDialogProps) {
+export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNotaId }: NotaDepositoFormDialogProps) {
   // Filtros
   const [granjaId, setGranjaId] = useState<string>("");
   const [safraId, setSafraId] = useState<string>("");
@@ -136,6 +137,27 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
     return saldos.find(s => s.produto_id === produtoId);
   }, [saldos, produtoId]);
 
+  // Carregar dados para edição
+  useEffect(() => {
+    if (editNotaId && open) {
+      const loadEditData = async () => {
+        const { data } = await supabase
+          .from('notas_deposito_emitidas')
+          .select('*')
+          .eq('id', editNotaId)
+          .single();
+        
+        if (data) {
+          if (data.granja_id) setGranjaId(data.granja_id);
+          if (data.safra_id) setSafraId(data.safra_id);
+          if (data.inscricao_produtor_id) setInscricaoId(data.inscricao_produtor_id);
+          if (data.produto_id) setProdutoId(data.produto_id);
+          if (data.quantidade_kg) setQuantidadeKg(String(data.quantidade_kg));
+        }
+      };
+      loadEditData();
+    }
+  }, [editNotaId, open]);
   const handleAddNotaReferenciada = (nota: NotaReferenciadaTemp) => {
     setNotasReferenciadas(prev => [...prev, nota]);
     setShowNotaForm(false);
