@@ -223,8 +223,8 @@ export function useInscricoesComSaldo(filters: {
         const key = `${inscId}_${localId || 'sem_local'}`;
         const existing = inscricaoMap.get(key);
         if (existing) {
-          existing.total_depositado += Number(c.producao_liquida_kg) || 0;
-          existing.saldo_disponivel += Number(c.producao_liquida_kg) || 0;
+        existing.total_depositado += Math.round(Number(c.producao_liquida_kg) || 0);
+          existing.saldo_disponivel += Math.round(Number(c.producao_liquida_kg) || 0);
         } else {
           inscricaoMap.set(key, {
             id: inscId,
