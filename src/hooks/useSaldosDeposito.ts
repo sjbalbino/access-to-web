@@ -235,8 +235,8 @@ export function useInscricoesComSaldo(filters: {
             produtor_nome: c.inscricao_produtor.produtores?.nome || null,
             local_entrega_id: localId,
             local_entrega_nome: c.local_entrega?.nome || null,
-            total_depositado: Number(c.producao_liquida_kg) || 0,
-            saldo_disponivel: Number(c.producao_liquida_kg) || 0,
+            total_depositado: Math.round(Number(c.producao_liquida_kg) || 0),
+            saldo_disponivel: Math.round(Number(c.producao_liquida_kg) || 0),
           });
         }
       });
