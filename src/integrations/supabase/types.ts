@@ -1941,6 +1941,7 @@ export type Database = {
           produto_id: string | null
           quantidade_kg: number
           safra_id: string | null
+          status: string | null
         }
         Insert: {
           created_at?: string
@@ -1952,6 +1953,7 @@ export type Database = {
           produto_id?: string | null
           quantidade_kg?: number
           safra_id?: string | null
+          status?: string | null
         }
         Update: {
           created_at?: string
@@ -1963,6 +1965,7 @@ export type Database = {
           produto_id?: string | null
           quantidade_kg?: number
           safra_id?: string | null
+          status?: string | null
         }
         Relationships: [
           {
