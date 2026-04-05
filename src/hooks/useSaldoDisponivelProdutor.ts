@@ -88,10 +88,10 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
 
       const { data: enviadosData, error: enviadosError } = await enviadosQuery;
 
-      const totalEnviadas = (enviadosData || []).reduce(
+      const totalEnviadas = Math.round((enviadosData || []).reduce(
         (sum, t) => sum + (t.quantidade_kg || 0),
         0
-      );
+      ));
 
       let devolucoesQuery = supabase
         .from('devolucoes_deposito')
