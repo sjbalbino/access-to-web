@@ -52,10 +52,10 @@ export function useSaldoProdutor(filters: SaldoProdutorFilters) {
 
       if (recebidosError) throw recebidosError;
 
-      const totalRecebidas = (recebidosData || []).reduce(
+      const totalRecebidas = Math.round((recebidosData || []).reduce(
         (sum, t) => sum + (t.quantidade_kg || 0), 
         0
-      );
+      ));
 
       // Buscar transferências enviadas (inscricao_origem_id)
       const { data: enviadosData, error: enviadosError } = await supabase
