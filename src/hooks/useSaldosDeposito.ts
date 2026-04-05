@@ -315,7 +315,7 @@ export function useInscricoesComSaldo(filters: {
       notasFiltradas.forEach((n: any) => {
         for (const existing of inscricaoMap.values()) {
           if (existing.id === n.inscricao_produtor_id) {
-            existing.saldo_disponivel -= Number(n.quantidade_kg) || 0;
+            existing.saldo_disponivel -= Math.round(Number(n.quantidade_kg) || 0);
           }
         }
       });

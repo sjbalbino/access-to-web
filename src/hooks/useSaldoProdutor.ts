@@ -67,10 +67,10 @@ export function useSaldoProdutor(filters: SaldoProdutorFilters) {
 
       if (enviadosError) throw enviadosError;
 
-      const totalEnviadas = (enviadosData || []).reduce(
+      const totalEnviadas = Math.round((enviadosData || []).reduce(
         (sum, t) => sum + (t.quantidade_kg || 0), 
         0
-      );
+      ));
 
       // SALDO = Colheitas + Recebidas - Enviadas
       const saldo = totalColheitas + totalRecebidas - totalEnviadas;

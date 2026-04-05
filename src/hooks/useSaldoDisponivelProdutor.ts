@@ -146,10 +146,10 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         }
       }
 
-      const totalNotasDeposito = notasFiltradas.reduce(
+      const totalNotasDeposito = Math.round(notasFiltradas.reduce(
         (sum: number, n: any) => sum + (n.quantidade_kg || 0),
         0
-      );
+      ));
 
       const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalKgTaxaArmazenagem - totalNotasDeposito;
 
