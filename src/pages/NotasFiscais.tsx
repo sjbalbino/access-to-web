@@ -213,19 +213,20 @@ export default function NotasFiscais() {
                 className="pl-9"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="rascunho">Rascunho</SelectItem>
-                <SelectItem value="processando">Processando</SelectItem>
-                <SelectItem value="autorizada">Autorizada</SelectItem>
-                <SelectItem value="rejeitada">Rejeitada</SelectItem>
-                <SelectItem value="cancelada">Cancelada</SelectItem>
-              </SelectContent>
-            </Select>
+            <ComboboxFilter
+              value={statusFilter === "todos" ? "" : statusFilter}
+              onValueChange={(v) => setStatusFilter(v || "todos")}
+              options={[
+                { value: "rascunho", label: "Rascunho" },
+                { value: "processando", label: "Processando" },
+                { value: "autorizada", label: "Autorizada" },
+                { value: "rejeitada", label: "Rejeitada" },
+                { value: "cancelada", label: "Cancelada" },
+              ]}
+              searchPlaceholder="Buscar status..."
+              emptyText="Nenhum status encontrado."
+              className="w-full sm:w-40"
+            />
           </div>
           {canEdit && (
             <Button onClick={() => navigate("/notas-fiscais/nova")}>
