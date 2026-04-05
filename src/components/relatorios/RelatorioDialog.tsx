@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { useSafras } from "@/hooks/useSafras";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useSilos } from "@/hooks/useSilos";
