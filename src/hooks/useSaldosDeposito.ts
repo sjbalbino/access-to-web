@@ -140,7 +140,7 @@ export function useSaldosDeposito(filters: SaldoDepositoFilters) {
         
         const existing = saldosPorProduto.get(produtoId);
         if (existing) {
-          existing.notas_emitidas_kg += Number(n.quantidade_kg) || 0;
+          existing.notas_emitidas_kg += Math.round(Number(n.quantidade_kg) || 0);
         }
       });
 
