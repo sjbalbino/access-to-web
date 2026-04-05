@@ -90,6 +90,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
   const { data: produtos = [] } = useProdutos();
   const { cfops } = useCfops();
   const { data: todasInscricoes = [] } = useInscricoesCompletas();
+  const { data: municipios = [] } = useIbgeMunicipios();
 
   // Buscar inscrições com saldo disponível
   const { data: inscricoesComSaldo = [] } = useInscricoesComSaldo({
