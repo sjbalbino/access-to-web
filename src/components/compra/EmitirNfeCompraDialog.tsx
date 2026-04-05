@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { CompraCereal, useUpdateCompraCereal } from "@/hooks/useComprasCereais";
-import { formatNumber, formatCpf, formatCnpj } from "@/lib/formatters";
+import { formatNumber, formatKg, formatCpf, formatCnpj } from "@/lib/formatters";
 import { NotaReferenciadaForm, NotaReferenciadaTemp } from "@/components/deposito/NotaReferenciadaForm";
 
 interface EmitirNfeCompraDialogProps {
