@@ -137,7 +137,28 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     return saldos.find(s => s.produto_id === produtoId);
   }, [saldos, produtoId]);
 
-  const handleAddNotaReferenciada = (nota: NotaReferenciadaTemp) => {
+  // Carregar dados para edição
+  useEffect(() => {
+    if (editNotaId && open) {
+      const loadEditData = async () => {
+        const { data } = await supabase
+          .from('notas_deposito_emitidas')
+          .select('*')
+          .eq('id', editNotaId)
+          .single();
+        
+        if (data) {
+          if (data.granja_id) setGranjaId(data.granja_id);
+          if (data.safra_id) setSafraId(data.safra_id);
+          if (data.inscricao_produtor_id) setInscricaoId(data.inscricao_produtor_id);
+          if (data.produto_id) setProdutoId(data.produto_id);
+          if (data.quantidade_kg) setQuantidadeKg(String(data.quantidade_kg));
+        }
+      };
+      loadEditData();
+    }
+  }, [editNotaId, open]);
+
     setNotasReferenciadas(prev => [...prev, nota]);
     setShowNotaForm(false);
   };
