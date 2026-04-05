@@ -32,6 +32,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useSaldosDeposito, useInscricoesComSaldo } from "@/hooks/useSaldosDeposito";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
+import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
 import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrincipal";
