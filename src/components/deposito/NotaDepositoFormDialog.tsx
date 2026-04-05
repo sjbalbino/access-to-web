@@ -710,12 +710,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                               className={produtoId === s.produto_id ? "bg-accent" : ""}
                             >
                               <TableCell className="font-medium">{s.produto_nome}</TableCell>
-                              <TableCell className="text-right">{formatNumber(s.depositado_kg)} kg</TableCell>
-                              <TableCell className="text-right">{formatNumber(s.transferencias_recebidas_kg)} kg</TableCell>
-                              <TableCell className="text-right">{formatNumber(s.notas_emitidas_kg)} kg</TableCell>
+                              <TableCell className="text-right">{formatKg(s.depositado_kg)} kg</TableCell>
+                              <TableCell className="text-right">{formatKg(s.transferencias_recebidas_kg)} kg</TableCell>
+                              <TableCell className="text-right">{formatKg(s.notas_emitidas_kg)} kg</TableCell>
                               <TableCell className="text-right font-medium">
                                 <Badge variant={s.saldo_a_emitir_kg > 0 ? "default" : "secondary"}>
-                                  {formatNumber(s.saldo_a_emitir_kg)} kg
+                                  {formatKg(s.saldo_a_emitir_kg)} kg
                                 </Badge>
                               </TableCell>
                             </TableRow>
