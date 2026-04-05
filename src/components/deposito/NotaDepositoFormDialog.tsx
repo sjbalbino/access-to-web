@@ -807,7 +807,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess }: NotaDe
                           <SelectContent>
                             {saldos.filter(s => s.saldo_a_emitir_kg > 0).map((s) => (
                               <SelectItem key={s.produto_id} value={s.produto_id}>
-                                {s.produto_nome} (Saldo: {formatNumber(s.saldo_a_emitir_kg)} kg)
+                                {s.produto_nome} (Saldo: {formatKg(s.saldo_a_emitir_kg)} kg)
                               </SelectItem>
                             ))}
                           </SelectContent>
