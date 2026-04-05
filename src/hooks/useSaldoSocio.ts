@@ -81,6 +81,7 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       for (const c of comprasResult.data || []) {
         totalCompras += (c.quantidade_kg as number) || 0;
       }
+      totalCompras = Math.round(totalCompras);
 
       // Buscar transferências enviadas
       const enviadosResult = await supabase
