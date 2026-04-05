@@ -184,7 +184,7 @@ export default function NotasDeposito() {
                 </TableHeader>
                 <TableBody>
                   {dadosPaginados.map((nota) => {
-                    const nfStatus = nota.nota_fiscal?.status;
+                    const nfStatus = nota.nota_fiscal?.status || (nota as any).status;
                     const canDelete = !nfStatus || nfStatus === 'rascunho';
                     
                     return (

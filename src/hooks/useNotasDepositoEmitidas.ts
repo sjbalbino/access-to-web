@@ -11,6 +11,7 @@ export interface NotaDepositoEmitida {
   produto_id: string | null;
   quantidade_kg: number;
   data_emissao: string | null;
+  status: string | null;
   created_at: string;
   // Joins
   nota_fiscal?: { numero: number | null; serie: number | null; status: string | null } | null;
@@ -20,7 +21,7 @@ export interface NotaDepositoEmitida {
   produto?: { nome: string } | null;
 }
 
-export type NotaDepositoInput = Omit<NotaDepositoEmitida, 'id' | 'created_at' | 'nota_fiscal' | 'granja' | 'inscricao_produtor' | 'safra' | 'produto'>;
+export type NotaDepositoInput = Omit<NotaDepositoEmitida, 'id' | 'created_at' | 'status' | 'nota_fiscal' | 'granja' | 'inscricao_produtor' | 'safra' | 'produto'> & { status?: string | null };
 
 export function useNotasDepositoEmitidas(filters?: {
   inscricaoProdutorId?: string;

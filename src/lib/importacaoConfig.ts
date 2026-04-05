@@ -771,6 +771,7 @@ export const tableConfigs: TableConfig[] = [
     columns: [
       { accessName: 'data_emissao', dbName: 'data_emissao', transform: toDate },
       { accessName: 'quantidade_kg', dbName: 'quantidade_kg', transform: toNumber },
+      { accessName: 'status', dbName: 'status', transform: () => 'autorizado' },
     ],
     references: [
       { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'] },
