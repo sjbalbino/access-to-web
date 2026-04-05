@@ -70,10 +70,10 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
 
       if (recebidosError) throw recebidosError;
 
-      const totalRecebidas = (recebidosData || []).reduce(
+      const totalRecebidas = Math.round((recebidosData || []).reduce(
         (sum, t) => sum + (t.quantidade_kg || 0),
         0
-      );
+      ));
 
       let enviadosQuery = supabase
         .from('transferencias_deposito')
