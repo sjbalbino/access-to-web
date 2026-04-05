@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { ComboboxFilter } from "@/components/ui/combobox-filter";
 
 export default function LancamentosFinanceiros() {
   const { canEdit } = useAuth();

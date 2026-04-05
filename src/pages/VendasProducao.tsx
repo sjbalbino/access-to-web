@@ -39,6 +39,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function VendasProducao() {
