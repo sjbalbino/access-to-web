@@ -319,12 +319,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const produto = produtoId ? produtos?.find(p => p.id === produtoId) : null;
 
     // Get inscricoes with local entrega info
-    const { data: allInscricoes } = await supabase
+    const { data: allInscricoes, error: inscError } = await supabase
       .from("inscricoes_produtor")
       .select("id, granja, produtores:produtor_id(nome)")
       .eq("ativa", true);
 
-    if (!allInscricoes) { toast({ title: "Sem dados" }); return; }
+    if (inscError) throw inscError;
+    if (!allInscricoes || allInscricoes.length === 0) { toast({ title: "Sem dados" }); return; }
 
     const inscricaoIds = (allInscricoes as any[]).map(i => i.id);
 
