@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { useSafras } from "@/hooks/useSafras";
 import { useProdutos } from "@/hooks/useProdutos";
@@ -11,6 +10,7 @@ import { useSilos } from "@/hooks/useSilos";
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useGranjas } from "@/hooks/useGranjas";
+import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { FileDown, Loader2 } from "lucide-react";
@@ -29,8 +29,16 @@ import {
   type DemonstrativoGerencialData,
   type DreReportData,
 } from "@/lib/relatoriosGestao";
+import {
+  gerarSaldoDisponivelPdf,
+  gerarDepositosGeralPdf,
+  gerarResumoProdutoresLocalPdf,
+  type SaldoDisponivelRow,
+  type DepositoRow,
+  type ResumoLocalRow,
+} from "@/lib/relatoriosEstoque";
 
-type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis";
+export type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local";
 
 interface Props {
   tipo: TipoRelatorio;
@@ -45,9 +53,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [siloId, setSiloId] = useState("");
   const [compradorId, setCompradorId] = useState("");
   const [granjaId, setGranjaId] = useState("");
+  const [localEntregaId, setLocalEntregaId] = useState("");
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [tipoFiltro, setTipoFiltro] = useState("ambos");
+  const [tipoProdutorFiltro, setTipoProdutorFiltro] = useState("todos");
   const [modoBensMoveis, setModoBensMoveis] = useState("geral_discriminado");
   const [loading, setLoading] = useState(false);
 
@@ -57,6 +67,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const { data: inscricoes } = useAllInscricoes();
   const { data: clientes } = useClientesFornecedores();
   const { data: granjas } = useGranjas();
+  const { data: locaisEntrega } = useLocaisEntrega();
 
   const compradores = clientes?.filter(c => c.tipo === "cliente" || c.tipo === "ambos") || [];
 
@@ -67,6 +78,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     demonstrativo_gerencial: "Demonstrativo Gerencial",
     dre: "DRE - Demonstrativo de Resultado",
     bens_moveis: "Despesas com Bens Móveis",
+    saldo_disponivel: "Saldo Disponível - Estoque Geral",
+    depositos_geral: "Notas de Depósito",
+    resumo_local: "Resumo Produtores por Local",
   };
 
   const gerarRelatorio = async () => {
@@ -78,6 +92,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       else if (tipo === "demonstrativo_gerencial") await gerarDemonstrativo();
       else if (tipo === "dre") await gerarDre();
       else if (tipo === "bens_moveis") await gerarBensMoveis();
+      else if (tipo === "saldo_disponivel") await gerarSaldoDisponivel();
+      else if (tipo === "depositos_geral") await gerarDepositos();
+      else if (tipo === "resumo_local") await gerarResumoLocal();
     } catch (err: any) {
       toast({ title: "Erro ao gerar relatório", description: err.message, variant: "destructive" });
     } finally {
@@ -103,6 +120,294 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       lavouras(nome)
     )
   `;
+
+  // ========== SALDO DISPONÍVEL ==========
+  const gerarSaldoDisponivel = async () => {
+    if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
+    const safra = safras?.find(s => s.id === safraId);
+
+    // Get all inscricoes with produtor info
+    const { data: allInscricoes } = await supabase
+      .from("inscricoes_produtor")
+      .select("id, inscricao_estadual, granja, produtores:produtor_id(nome, tipo_produtor), local_entrega:locais_entrega!inscricoes_produtor_empresa_id_fkey(nome)")
+      .eq("ativa", true);
+
+    if (!allInscricoes) { toast({ title: "Sem dados" }); return; }
+
+    // Filter by tipo_produtor
+    let filteredInscricoes = allInscricoes as any[];
+    if (tipoProdutorFiltro !== "todos") {
+      const tipoMap: Record<string, string> = { "particular": "1", "arrendamento": "2", "terceiro": "3" };
+      const tipoVal = tipoMap[tipoProdutorFiltro];
+      if (tipoVal) {
+        filteredInscricoes = filteredInscricoes.filter(i => i.produtores?.tipo_produtor === tipoVal);
+      }
+    }
+
+    const inscricaoIds = filteredInscricoes.map(i => i.id);
+    if (inscricaoIds.length === 0) { toast({ title: "Sem dados", description: "Nenhum produtor encontrado com o filtro selecionado." }); return; }
+
+    // Fetch all data for the safra
+    const [colheitasRes, trDepRes, devRes, notasDepRes, comprasRes] = await Promise.all([
+      supabase.from("colheitas").select("inscricao_produtor_id, producao_liquida_kg, tipo_colheita, local_entrega_terceiro_id").eq("safra_id", safraId).in("inscricao_produtor_id", inscricaoIds),
+      supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id, quantidade_kg").eq("safra_id", safraId),
+      supabase.from("devolucoes_deposito").select("inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem").eq("safra_id", safraId).neq("status", "cancelada"),
+      supabase.from("notas_deposito_emitidas").select("inscricao_produtor_id, quantidade_kg").eq("safra_id", safraId),
+      supabase.from("compras_cereais").select("inscricao_vendedor_id, inscricao_comprador_id, quantidade_kg").eq("safra_id", safraId),
+    ]);
+
+    // Fetch vendas (remessas via contratos)
+    const { data: contratosVenda } = await supabase
+      .from("contratos_venda")
+      .select("id, inscricao_produtor_id")
+      .eq("safra_id", safraId);
+
+    let vendasMap: Record<string, number> = {};
+    if (contratosVenda && contratosVenda.length > 0) {
+      const contratoIds = contratosVenda.map(c => c.id);
+      const { data: remessas } = await supabase
+        .from("remessas_venda")
+        .select("contrato_venda_id, kg_remessa")
+        .in("contrato_venda_id", contratoIds)
+        .neq("status", "cancelada");
+
+      if (remessas) {
+        const contratoInscricaoMap: Record<string, string> = {};
+        contratosVenda.forEach(c => {
+          if (c.inscricao_produtor_id) contratoInscricaoMap[c.id] = c.inscricao_produtor_id;
+        });
+        remessas.forEach(r => {
+          const inscId = contratoInscricaoMap[r.contrato_venda_id];
+          if (inscId) vendasMap[inscId] = (vendasMap[inscId] || 0) + (r.kg_remessa || 0);
+        });
+      }
+    }
+
+    // Aggregate by inscricao
+    const rowMap: Record<string, SaldoDisponivelRow> = {};
+
+    const getRow = (inscId: string): SaldoDisponivelRow => {
+      if (!rowMap[inscId]) {
+        const insc = filteredInscricoes.find(i => i.id === inscId);
+        rowMap[inscId] = {
+          produtor_nome: insc?.produtores?.nome || insc?.inscricao_estadual || "-",
+          local_entrega: insc?.granja || "-",
+          tipo: "INDUST",
+          depositos_kg: 0, compras_kg: 0, vendas_kg: 0,
+          devolucoes_kg: 0, tr_saida_kg: 0, tr_entrada_kg: 0,
+          notas_deposito_kg: 0, saldo_kg: 0,
+        };
+      }
+      return rowMap[inscId];
+    };
+
+    // Colheitas
+    (colheitasRes.data || []).forEach((c: any) => {
+      if (!inscricaoIds.includes(c.inscricao_produtor_id)) return;
+      const row = getRow(c.inscricao_produtor_id);
+      row.depositos_kg += (c.producao_liquida_kg || 0);
+      if (c.tipo_colheita === "semente") row.tipo = "SEMENT";
+    });
+
+    // Transferências
+    (trDepRes.data || []).forEach((t: any) => {
+      if (inscricaoIds.includes(t.inscricao_origem_id)) {
+        getRow(t.inscricao_origem_id).tr_saida_kg += (t.quantidade_kg || 0);
+      }
+      if (inscricaoIds.includes(t.inscricao_destino_id)) {
+        getRow(t.inscricao_destino_id).tr_entrada_kg += (t.quantidade_kg || 0);
+      }
+    });
+
+    // Devoluções
+    (devRes.data || []).forEach((d: any) => {
+      if (!inscricaoIds.includes(d.inscricao_produtor_id)) return;
+      getRow(d.inscricao_produtor_id).devolucoes_kg += (d.quantidade_kg || 0);
+    });
+
+    // Notas de depósito
+    (notasDepRes.data || []).forEach((n: any) => {
+      if (!inscricaoIds.includes(n.inscricao_produtor_id)) return;
+      getRow(n.inscricao_produtor_id).notas_deposito_kg += (n.quantidade_kg || 0);
+    });
+
+    // Compras (as buyer = adds stock, as seller = removes stock)
+    (comprasRes.data || []).forEach((c: any) => {
+      if (inscricaoIds.includes(c.inscricao_comprador_id)) {
+        getRow(c.inscricao_comprador_id).compras_kg += (c.quantidade_kg || 0);
+      }
+    });
+
+    // Vendas
+    Object.entries(vendasMap).forEach(([inscId, kg]) => {
+      if (inscricaoIds.includes(inscId)) {
+        getRow(inscId).vendas_kg += kg;
+      }
+    });
+
+    // Calculate saldo
+    Object.values(rowMap).forEach(row => {
+      row.depositos_kg = Math.round(row.depositos_kg);
+      row.compras_kg = Math.round(row.compras_kg);
+      row.vendas_kg = Math.round(row.vendas_kg);
+      row.devolucoes_kg = Math.round(row.devolucoes_kg);
+      row.tr_saida_kg = Math.round(row.tr_saida_kg);
+      row.tr_entrada_kg = Math.round(row.tr_entrada_kg);
+      row.notas_deposito_kg = Math.round(row.notas_deposito_kg);
+      row.saldo_kg = row.depositos_kg + row.compras_kg - row.vendas_kg - row.devolucoes_kg - row.tr_saida_kg + row.tr_entrada_kg - row.notas_deposito_kg;
+    });
+
+    const rows = Object.values(rowMap).sort((a, b) => a.produtor_nome.localeCompare(b.produtor_nome));
+    if (rows.length === 0) { toast({ title: "Sem dados" }); return; }
+
+    const tipoEntregaLabel: Record<string, string> = {
+      "todos": "Todos",
+      "particular": "Particular",
+      "arrendamento": "Arrendamentos",
+      "terceiro": "Terceiros",
+    };
+
+    gerarSaldoDisponivelPdf({
+      safraNome: safra?.nome || "-",
+      tipoEntrega: tipoEntregaLabel[tipoProdutorFiltro] || "Todos",
+      pesoSaco: 60,
+      rows,
+    });
+  };
+
+  // ========== DEPÓSITOS GERAL ==========
+  const gerarDepositos = async () => {
+    if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
+    const safra = safras?.find(s => s.id === safraId);
+    const produto = produtoId ? produtos?.find(p => p.id === produtoId) : null;
+
+    let query = supabase
+      .from("notas_deposito_emitidas")
+      .select(`
+        data_emissao, quantidade_kg, status,
+        inscricao_produtor:inscricoes_produtor!notas_deposito_emitidas_inscricao_produtor_id_fkey(
+          inscricao_estadual,
+          produtores:produtor_id(nome)
+        ),
+        produto:produtos!notas_deposito_emitidas_produto_id_fkey(nome),
+        nota_fiscal:notas_fiscais!notas_deposito_emitidas_nota_fiscal_id_fkey(numero)
+      `)
+      .eq("safra_id", safraId);
+    if (produtoId) query = query.eq("produto_id", produtoId);
+    const { data, error } = await query.order("data_emissao");
+    if (error) throw error;
+    if (!data || data.length === 0) { toast({ title: "Sem dados" }); return; }
+
+    const rows: DepositoRow[] = (data as any[]).map(n => ({
+      produtor_nome: n.inscricao_produtor?.produtores?.nome || "-",
+      inscricao_estadual: n.inscricao_produtor?.inscricao_estadual || "-",
+      data_emissao: n.data_emissao,
+      quantidade_kg: n.quantidade_kg || 0,
+      nota_fiscal: n.nota_fiscal?.numero?.toString() || null,
+      status: n.status,
+      produto_nome: n.produto?.nome || null,
+    }));
+
+    gerarDepositosGeralPdf({ safraNome: safra?.nome || "-", produtoNome: produto?.nome || null, rows });
+  };
+
+  // ========== RESUMO POR LOCAL ==========
+  const gerarResumoLocal = async () => {
+    if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
+    const safra = safras?.find(s => s.id === safraId);
+    const produto = produtoId ? produtos?.find(p => p.id === produtoId) : null;
+
+    // Get inscricoes with local entrega info
+    const { data: allInscricoes } = await supabase
+      .from("inscricoes_produtor")
+      .select("id, granja, produtores:produtor_id(nome)")
+      .eq("ativa", true);
+
+    if (!allInscricoes) { toast({ title: "Sem dados" }); return; }
+
+    const inscricaoIds = (allInscricoes as any[]).map(i => i.id);
+
+    // Fetch colheitas with local_entrega
+    let colheitasQuery = supabase.from("colheitas")
+      .select("inscricao_produtor_id, producao_liquida_kg, local_entrega_terceiro_id, locais_entrega:local_entrega_terceiro_id(nome)")
+      .eq("safra_id", safraId);
+    if (produtoId) colheitasQuery = colheitasQuery.eq("variedade_id", produtoId);
+    const { data: colheitas } = await colheitasQuery;
+
+    const [trDepRes, devRes, notasDepRes] = await Promise.all([
+      supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id, quantidade_kg").eq("safra_id", safraId),
+      supabase.from("devolucoes_deposito").select("inscricao_produtor_id, quantidade_kg").eq("safra_id", safraId).neq("status", "cancelada"),
+      supabase.from("notas_deposito_emitidas").select("inscricao_produtor_id, quantidade_kg").eq("safra_id", safraId),
+    ]);
+
+    // Aggregate: key = local + inscricao
+    const rowMap: Record<string, ResumoLocalRow> = {};
+    const getKey = (local: string, inscId: string) => `${local}::${inscId}`;
+
+    const getRow = (local: string, inscId: string): ResumoLocalRow => {
+      const key = getKey(local, inscId);
+      if (!rowMap[key]) {
+        const insc = (allInscricoes as any[]).find(i => i.id === inscId);
+        rowMap[key] = {
+          local_entrega: local,
+          produtor_nome: insc?.produtores?.nome || "-",
+          depositos_kg: 0, devolucoes_kg: 0, tr_saida_kg: 0, tr_entrada_kg: 0, notas_deposito_kg: 0, saldo_kg: 0,
+        };
+      }
+      return rowMap[key];
+    };
+
+    // Colheitas grouped by local
+    (colheitas || []).forEach((c: any) => {
+      const local = c.locais_entrega?.nome || "Sede";
+      getRow(local, c.inscricao_produtor_id).depositos_kg += (c.producao_liquida_kg || 0);
+    });
+
+    // Transferências
+    (trDepRes.data || []).forEach((t: any) => {
+      // For simplicity, use "Sede" as local for transfers
+      if (inscricaoIds.includes(t.inscricao_origem_id)) {
+        getRow("Sede", t.inscricao_origem_id).tr_saida_kg += (t.quantidade_kg || 0);
+      }
+      if (inscricaoIds.includes(t.inscricao_destino_id)) {
+        getRow("Sede", t.inscricao_destino_id).tr_entrada_kg += (t.quantidade_kg || 0);
+      }
+    });
+
+    // Devoluções
+    (devRes.data || []).forEach((d: any) => {
+      if (inscricaoIds.includes(d.inscricao_produtor_id)) {
+        getRow("Sede", d.inscricao_produtor_id).devolucoes_kg += (d.quantidade_kg || 0);
+      }
+    });
+
+    // Notas depósito
+    (notasDepRes.data || []).forEach((n: any) => {
+      if (inscricaoIds.includes(n.inscricao_produtor_id)) {
+        getRow("Sede", n.inscricao_produtor_id).notas_deposito_kg += (n.quantidade_kg || 0);
+      }
+    });
+
+    // Calculate saldo
+    Object.values(rowMap).forEach(row => {
+      row.depositos_kg = Math.round(row.depositos_kg);
+      row.devolucoes_kg = Math.round(row.devolucoes_kg);
+      row.tr_saida_kg = Math.round(row.tr_saida_kg);
+      row.tr_entrada_kg = Math.round(row.tr_entrada_kg);
+      row.notas_deposito_kg = Math.round(row.notas_deposito_kg);
+      row.saldo_kg = row.depositos_kg - row.devolucoes_kg - row.tr_saida_kg + row.tr_entrada_kg - row.notas_deposito_kg;
+    });
+
+    const rows = Object.values(rowMap).sort((a, b) => a.local_entrega.localeCompare(b.local_entrega) || a.produtor_nome.localeCompare(b.produtor_nome));
+    if (rows.length === 0) { toast({ title: "Sem dados" }); return; }
+
+    gerarResumoProdutoresLocalPdf({
+      safraNome: safra?.nome || "-",
+      produtoNome: produto?.nome || null,
+      pesoSaco: 60,
+      rows,
+    });
+  };
 
   // ========== Existing reports ==========
   const gerarExtrato = async () => {
@@ -198,7 +503,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     gerarRelatorioVendasPdf(mapped, `Safra: ${safra?.nome || "-"}`);
   };
 
-  // ========== New management reports ==========
+  // ========== Management reports ==========
   const gerarDemonstrativo = async () => {
     if (!dataInicial || !dataFinal) { toast({ title: "Filtros obrigatórios", description: "Informe o período.", variant: "destructive" }); return; }
     let query = supabase.from("lancamentos_financeiros" as any)
@@ -222,17 +527,14 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const gerarDre = async () => {
     if (!dataInicial || !dataFinal) { toast({ title: "Filtros obrigatórios", description: "Informe o período.", variant: "destructive" }); return; }
-    // Get DRE structure
     const { data: dreContas } = await supabase.from("dre_contas" as any).select("*").order("ordem").order("codigo");
     if (!dreContas || dreContas.length === 0) { toast({ title: "Sem estrutura", description: "Cadastre a estrutura do DRE primeiro." }); return; }
 
-    // Get lancamentos with DRE link
     let query = supabase.from("lancamentos_financeiros" as any).select("valor, tipo, dre_conta_id")
       .gte("data_lancamento", dataInicial).lte("data_lancamento", dataFinal).not("dre_conta_id", "is", null);
     if (granjaId) query = query.eq("granja_id", granjaId);
     const { data: lancamentos } = await query;
 
-    // Get lancamentos before period for saldo anterior
     let queryAnterior = supabase.from("lancamentos_financeiros" as any).select("valor, tipo, dre_conta_id")
       .lt("data_lancamento", dataInicial).not("dre_conta_id", "is", null);
     if (granjaId) queryAnterior = queryAnterior.eq("granja_id", granjaId);
@@ -254,19 +556,15 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const gerarBensMoveis = async () => {
     if (!dataInicial || !dataFinal) { toast({ title: "Filtros obrigatórios", description: "Informe o período.", variant: "destructive" }); return; }
-    // Get groups with maquinas_implementos
     const { data: gruposMaq } = await supabase.from("grupos_produtos").select("id, nome").eq("maquinas_implementos", true);
     if (!gruposMaq || gruposMaq.length === 0) { toast({ title: "Sem dados", description: "Nenhum grupo classificado como máquinas/implementos." }); return; }
 
-    // Get lancamentos linked to sub-centros that have matching centro_custo linked to these groups
-    // For simplicity, get all lancamentos in period and filter by description/grupo
     let query = supabase.from("lancamentos_financeiros" as any)
       .select("data_lancamento, descricao, valor, documento, sub_centros_custo:sub_centro_custo_id(codigo, descricao, plano_contas_gerencial:centro_custo_id(codigo, descricao))")
       .gte("data_lancamento", dataInicial).lte("data_lancamento", dataFinal).eq("tipo", "despesa");
     if (granjaId) query = query.eq("granja_id", granjaId);
     const { data: lancamentos } = await query;
 
-    // Map lancamentos - using grupos as category
     const despesas = (lancamentos as any[] || []).map(l => ({
       grupo_nome: l.sub_centros_custo?.plano_contas_gerencial?.descricao || 'Sem classificação',
       produto_nome: null,
@@ -284,6 +582,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const fmtD = (d: string) => { try { const [y, m, day] = d.split('-'); return `${day}/${m}/${y}`; } catch { return d; } };
 
   const isGestao = tipo === "demonstrativo_gerencial" || tipo === "dre" || tipo === "bens_moveis";
+  const isEstoque = tipo === "saldo_disponivel" || tipo === "depositos_geral" || tipo === "resumo_local";
+  const needsSafra = !isGestao;
+  const needsProduto = tipo === "extrato" || tipo === "colheitas" || tipo === "depositos_geral" || tipo === "resumo_local";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -294,8 +595,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Safra - operational reports */}
-          {!isGestao && (
+          {/* Safra */}
+          {needsSafra && (
             <div>
               <Label>Safra *</Label>
               <ComboboxFilter
@@ -306,6 +607,24 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 searchPlaceholder="Buscar safra..."
                 emptyText="Nenhuma safra encontrada."
                 allLabel="Todas"
+              />
+            </div>
+          )}
+
+          {/* Tipo Produtor - saldo disponível */}
+          {tipo === "saldo_disponivel" && (
+            <div>
+              <Label>Tipo de Produtor</Label>
+              <ComboboxFilter
+                value={tipoProdutorFiltro}
+                onValueChange={setTipoProdutorFiltro}
+                options={[
+                  { value: "todos", label: "Todos" },
+                  { value: "particular", label: "Particular" },
+                  { value: "arrendamento", label: "Arrendamentos" },
+                  { value: "terceiro", label: "Terceiros" },
+                ]}
+                searchPlaceholder="Buscar tipo..."
               />
             </div>
           )}
@@ -326,8 +645,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Produto - extrato e colheitas */}
-          {(tipo === "extrato" || tipo === "colheitas") && (
+          {/* Produto */}
+          {needsProduto && (
             <div>
               <Label>Produto</Label>
               <ComboboxFilter
@@ -418,10 +737,12 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
           {/* Período */}
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Data Inicial {isGestao && '*'}</Label><Input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} /></div>
-            <div><Label>Data Final {isGestao && '*'}</Label><Input type="date" value={dataFinal} onChange={e => setDataFinal(e.target.value)} /></div>
-          </div>
+          {!isEstoque && (
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Data Inicial {isGestao && '*'}</Label><Input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} /></div>
+              <div><Label>Data Final {isGestao && '*'}</Label><Input type="date" value={dataFinal} onChange={e => setDataFinal(e.target.value)} /></div>
+            </div>
+          )}
 
           <Button onClick={gerarRelatorio} disabled={loading} className="w-full">
             {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
