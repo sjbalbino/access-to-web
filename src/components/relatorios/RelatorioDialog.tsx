@@ -180,6 +180,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       }
     }
 
+    // Use Set for fast lookup
+    const inscricaoSet = new Set(inscricaoIds);
+
     // Aggregate by inscricao
     const rowMap: Record<string, SaldoDisponivelRow> = {};
 
