@@ -11,6 +11,8 @@ export interface CompraCereal {
   inscricao_vendedor_id: string;
   produto_id: string;
   silo_id: string | null;
+  local_entrega_id: string | null;
+  tipo_produto: string;
   data_compra: string;
   quantidade_kg: number;
   valor_unitario_kg: number;
