@@ -37,6 +37,7 @@ export default function NotasDeposito() {
   const [granjaId, setGranjaId] = useState<string>("");
   const [safraId, setSafraId] = useState<string>("");
   const [produtoId, setProdutoId] = useState<string>("");
+  const [inscricaoProdutorId, setInscricaoProdutorId] = useState<string>("");
   
   // Dialog de formulário
   const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -48,12 +49,24 @@ export default function NotasDeposito() {
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
   const { data: produtos = [] } = useProdutos();
+  const { data: allInscricoes = [] } = useAllInscricoes();
+  
+  // Opções de produtores para o filtro
+  const produtorOptions = useMemo(() => {
+    return allInscricoes
+      .filter(i => i.ativa !== false)
+      .map(i => ({
+        value: i.id,
+        label: `${i.inscricao_estadual || ''} - ${i.produtores?.nome || i.nome || 'Sem nome'}`,
+      }));
+  }, [allInscricoes]);
   
   // Buscar notas emitidas com filtros
   const { data: notasEmitidas = [], isLoading, refetch } = useNotasDepositoEmitidas({
     safraId: safraId || undefined,
     produtoId: produtoId || undefined,
     granjaId: granjaId || undefined,
+    inscricaoProdutorId: inscricaoProdutorId || undefined,
   });
 
   const deleteNotaMutation = useDeleteNotaDepositoEmitida();
