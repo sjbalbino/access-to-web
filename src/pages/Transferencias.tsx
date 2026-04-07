@@ -112,7 +112,29 @@ export default function Transferencias() {
             <CardTitle className="text-base">Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <Label>Produtor Origem</Label>
+                <ComboboxFilter
+                  value={filtroOrigemId}
+                  onValueChange={setFiltroOrigemId}
+                  options={produtorOptions}
+                  searchPlaceholder="Buscar produtor..."
+                  emptyText="Nenhum produtor encontrado."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Produtor Destino</Label>
+                <ComboboxFilter
+                  value={filtroDestinoId}
+                  onValueChange={setFiltroDestinoId}
+                  options={produtorOptions}
+                  searchPlaceholder="Buscar produtor..."
+                  emptyText="Nenhum produtor encontrado."
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label>Safra</Label>
                 <ComboboxFilter
