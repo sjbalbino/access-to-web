@@ -604,7 +604,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   </Select>
                 </div>
                 <div className="space-y-2 md:col-span-3">
-                  <Label>Cidade</Label>
+                  <Label>Cidade <span className="text-destructive">*</span></Label>
                   <Popover open={cidadeOpen} onOpenChange={setCidadeOpen}>
                     <PopoverTrigger asChild>
                       <Button
