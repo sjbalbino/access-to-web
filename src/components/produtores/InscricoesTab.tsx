@@ -553,7 +553,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="logradouro">Logradouro</Label>
+                  <Label htmlFor="logradouro">Logradouro <span className="text-destructive">*</span></Label>
                   <Input
                     id="logradouro"
                     value={formData.logradouro || ""}
