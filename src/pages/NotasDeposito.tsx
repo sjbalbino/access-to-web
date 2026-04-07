@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -23,6 +23,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useNotasDepositoEmitidas, useDeleteNotaDepositoEmitida } from "@/hooks/useNotasDepositoEmitidas";
+import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { formatNumber, formatKg } from "@/lib/formatters";
 import { NotaDepositoFormDialog } from "@/components/deposito/NotaDepositoFormDialog";
 import { usePaginacao } from "@/hooks/usePaginacao";
@@ -36,6 +37,7 @@ export default function NotasDeposito() {
   const [granjaId, setGranjaId] = useState<string>("");
   const [safraId, setSafraId] = useState<string>("");
   const [produtoId, setProdutoId] = useState<string>("");
+  const [inscricaoProdutorId, setInscricaoProdutorId] = useState<string>("");
   
   // Dialog de formulário
   const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -47,12 +49,24 @@ export default function NotasDeposito() {
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
   const { data: produtos = [] } = useProdutos();
+  const { data: allInscricoes = [] } = useAllInscricoes();
+  
+  // Opções de produtores para o filtro
+  const produtorOptions = useMemo(() => {
+    return allInscricoes
+      .filter(i => i.ativa !== false)
+      .map(i => ({
+        value: i.id,
+        label: `${i.inscricao_estadual || ''} - ${i.produtores?.nome || i.nome || 'Sem nome'}`,
+      }));
+  }, [allInscricoes]);
   
   // Buscar notas emitidas com filtros
   const { data: notasEmitidas = [], isLoading, refetch } = useNotasDepositoEmitidas({
     safraId: safraId || undefined,
     produtoId: produtoId || undefined,
     granjaId: granjaId || undefined,
+    inscricaoProdutorId: inscricaoProdutorId || undefined,
   });
 
   const deleteNotaMutation = useDeleteNotaDepositoEmitida();
@@ -118,7 +132,17 @@ export default function NotasDeposito() {
             <CardTitle className="text-base">Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>Produtor</Label>
+                <ComboboxFilter
+                  value={inscricaoProdutorId}
+                  onValueChange={setInscricaoProdutorId}
+                  options={produtorOptions}
+                  searchPlaceholder="Buscar produtor..."
+                  emptyText="Nenhum produtor encontrado."
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Granja</Label>
                 <ComboboxFilter
