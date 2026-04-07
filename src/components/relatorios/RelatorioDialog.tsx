@@ -612,7 +612,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {/* Tipo Produtor - saldo disponível */}
           {tipo === "saldo_disponivel" && (
             <div>
-              <Label>Tipo de Produtor</Label>
+              <Label>Tipo de Contrato</Label>
               <ComboboxFilter
                 value={tipoProdutorFiltro}
                 onValueChange={setTipoProdutorFiltro}
