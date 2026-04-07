@@ -269,6 +269,29 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   };
 
   const handleSave = async () => {
+    // Validação de campos obrigatórios para NF-e
+    const camposFaltantes: string[] = [];
+    if (!formData.nome?.trim()) camposFaltantes.push("Nome / Razão Social");
+    if (!formData.inscricao_estadual?.trim()) camposFaltantes.push("Inscrição Estadual");
+    if (!formData.cpf_cnpj?.trim()) camposFaltantes.push("CPF/CNPJ");
+    if (!formData.tipo) camposFaltantes.push("Tipo de Contrato");
+    if (!formData.granja_id) camposFaltantes.push("Granja");
+    if (!formData.cep?.trim()) camposFaltantes.push("CEP");
+    if (!formData.logradouro?.trim()) camposFaltantes.push("Logradouro");
+    if (!formData.numero?.trim()) camposFaltantes.push("Número");
+    if (!formData.bairro?.trim()) camposFaltantes.push("Bairro");
+    if (!formData.uf) camposFaltantes.push("UF");
+    if (!formData.cidade?.trim()) camposFaltantes.push("Cidade");
+
+    if (camposFaltantes.length > 0) {
+      toast({
+        title: "Campos obrigatórios não preenchidos",
+        description: camposFaltantes.join(", "),
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (selectedInscricao) {
       await updateInscricao.mutateAsync({ id: selectedInscricao.id, ...formData });
     } else {
