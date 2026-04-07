@@ -622,9 +622,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 onValueChange={setTipoProdutorFiltro}
                 options={[
                   { value: "todos", label: "Todos" },
-                  { value: "particular", label: "Particular" },
-                  { value: "arrendamento", label: "Arrendamentos" },
-                  { value: "terceiro", label: "Terceiros" },
+                  { value: "1", label: "Parceria" },
+                  { value: "2", label: "Arrendamento" },
+                  { value: "3", label: "Terceiros" },
                 ]}
                 searchPlaceholder="Buscar tipo..."
               />
