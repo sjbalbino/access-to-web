@@ -564,6 +564,7 @@ export type Database = {
           id: string
           inscricao_comprador_id: string
           inscricao_vendedor_id: string
+          local_entrega_id: string | null
           nota_fiscal_id: string | null
           observacao: string | null
           produto_id: string
@@ -571,6 +572,7 @@ export type Database = {
           safra_id: string
           silo_id: string | null
           status: string | null
+          tipo_produto: string | null
           updated_at: string | null
           valor_total: number
           valor_unitario_kg: number
@@ -584,6 +586,7 @@ export type Database = {
           id?: string
           inscricao_comprador_id: string
           inscricao_vendedor_id: string
+          local_entrega_id?: string | null
           nota_fiscal_id?: string | null
           observacao?: string | null
           produto_id: string
@@ -591,6 +594,7 @@ export type Database = {
           safra_id: string
           silo_id?: string | null
           status?: string | null
+          tipo_produto?: string | null
           updated_at?: string | null
           valor_total?: number
           valor_unitario_kg?: number
@@ -604,6 +608,7 @@ export type Database = {
           id?: string
           inscricao_comprador_id?: string
           inscricao_vendedor_id?: string
+          local_entrega_id?: string | null
           nota_fiscal_id?: string | null
           observacao?: string | null
           produto_id?: string
@@ -611,6 +616,7 @@ export type Database = {
           safra_id?: string
           silo_id?: string | null
           status?: string | null
+          tipo_produto?: string | null
           updated_at?: string | null
           valor_total?: number
           valor_unitario_kg?: number
@@ -642,6 +648,13 @@ export type Database = {
             columns: ["inscricao_vendedor_id"]
             isOneToOne: false
             referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compras_cereais_local_entrega_id_fkey"
+            columns: ["local_entrega_id"]
+            isOneToOne: false
+            referencedRelation: "locais_entrega"
             referencedColumns: ["id"]
           },
           {
