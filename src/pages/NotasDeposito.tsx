@@ -132,8 +132,17 @@ export default function NotasDeposito() {
             <CardTitle className="text-base">Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
+                <Label>Produtor</Label>
+                <ComboboxFilter
+                  value={inscricaoProdutorId}
+                  onValueChange={setInscricaoProdutorId}
+                  options={produtorOptions}
+                  searchPlaceholder="Buscar produtor..."
+                  emptyText="Nenhum produtor encontrado."
+                />
+              </div>
                 <Label>Granja</Label>
                 <ComboboxFilter
                   value={granjaId}
