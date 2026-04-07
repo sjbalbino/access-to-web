@@ -129,20 +129,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     // Get all inscricoes with produtor info
     const { data: allInscricoes, error: inscError } = await supabase
       .from("inscricoes_produtor")
-      .select("id, inscricao_estadual, granja, produtores:produtor_id(nome, tipo_produtor)")
+      .select("id, inscricao_estadual, granja, tipo, produtores:produtor_id(nome)")
       .eq("ativa", true);
 
     if (inscError) throw inscError;
     if (!allInscricoes || allInscricoes.length === 0) { toast({ title: "Sem dados", description: "Nenhuma inscrição encontrada." }); return; }
 
-    // Filter by tipo_produtor
+    // Filter by tipo de contrato da inscrição
     let filteredInscricoes = allInscricoes as any[];
     if (tipoProdutorFiltro !== "todos") {
-      const tipoMap: Record<string, string> = { "particular": "produtor", "arrendamento": "socio", "terceiro": "3" };
-      const tipoVal = tipoMap[tipoProdutorFiltro];
-      if (tipoVal) {
-        filteredInscricoes = filteredInscricoes.filter(i => i.produtores?.tipo_produtor === tipoVal);
-      }
+      filteredInscricoes = filteredInscricoes.filter(i => i.tipo === tipoProdutorFiltro);
     }
 
     const inscricaoIds = filteredInscricoes.map(i => i.id);
@@ -263,9 +259,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     const tipoEntregaLabel: Record<string, string> = {
       "todos": "Todos",
-      "particular": "Particular",
-      "arrendamento": "Arrendamentos",
-      "terceiro": "Terceiros",
+      "1": "Parceria",
+      "2": "Arrendamento",
+      "3": "Terceiros",
     };
 
     gerarSaldoDisponivelPdf({
@@ -616,15 +612,15 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {/* Tipo Produtor - saldo disponível */}
           {tipo === "saldo_disponivel" && (
             <div>
-              <Label>Tipo de Produtor</Label>
+              <Label>Tipo de Contrato</Label>
               <ComboboxFilter
                 value={tipoProdutorFiltro}
                 onValueChange={setTipoProdutorFiltro}
                 options={[
                   { value: "todos", label: "Todos" },
-                  { value: "particular", label: "Particular" },
-                  { value: "arrendamento", label: "Arrendamentos" },
-                  { value: "terceiro", label: "Terceiros" },
+                  { value: "1", label: "Parceria" },
+                  { value: "2", label: "Arrendamento" },
+                  { value: "3", label: "Terceiros" },
                 ]}
                 searchPlaceholder="Buscar tipo..."
               />
