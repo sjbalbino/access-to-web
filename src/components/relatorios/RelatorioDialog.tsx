@@ -222,12 +222,10 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     (devRes.data || []).forEach((d: any) => {
       if (!inscricaoSet.has(d.inscricao_produtor_id)) return;
       getRow(d.inscricao_produtor_id).devolucoes_kg += (d.quantidade_kg || 0);
-    });
-
-    // Notas de depósito
-    (notasDepRes.data || []).forEach((n: any) => {
-      if (!inscricaoSet.has(n.inscricao_produtor_id)) return;
-      getRow(n.inscricao_produtor_id).notas_deposito_kg += (n.quantidade_kg || 0);
+      // Entr.Arm. = kg de taxa de armazenagem creditados ao SÓCIO que recebe
+      if (d.inscricao_recebe_taxa_id && inscricaoSet.has(d.inscricao_recebe_taxa_id)) {
+        getRow(d.inscricao_recebe_taxa_id).notas_deposito_kg += (d.kg_taxa_armazenagem || 0);
+      }
     });
 
     // Compras (as buyer = adds stock, as seller = removes stock)
