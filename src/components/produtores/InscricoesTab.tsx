@@ -516,15 +516,16 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                  <Label htmlFor="inscricao_estadual">Inscrição Estadual <span className="text-destructive">*</span></Label>
                   <Input
                     id="inscricao_estadual"
-                    value={formData.inscricao_estadual || ""}
-                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
+                    value={formatInscricaoEstadual(formData.inscricao_estadual || "")}
+                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value.replace(/\D/g, "") })}
+                    placeholder="000.000.000-0"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cpf_cnpj">CPF/CNPJ</Label>
+                  <Label htmlFor="cpf_cnpj">CPF/CNPJ <span className="text-destructive">*</span></Label>
                   <Input
                     id="cpf_cnpj"
                     value={formatCpfCnpj(formData.cpf_cnpj || "")}
