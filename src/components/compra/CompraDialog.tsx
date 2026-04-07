@@ -61,6 +61,8 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
   const [valorUnitarioKg, setValorUnitarioKg] = useState(0);
   const [valorTotal, setValorTotal] = useState(0);
   const [observacao, setObservacao] = useState('');
+  const [localEntregaId, setLocalEntregaId] = useState('');
+  const [tipoProduto, setTipoProduto] = useState('industria');
 
   // Notas referenciadas
   const [notasReferenciadas, setNotasReferenciadas] = useState<NotaReferenciadaTemp[]>([]);
