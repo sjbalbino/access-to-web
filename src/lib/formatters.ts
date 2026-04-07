@@ -96,6 +96,19 @@ export function formatIe(value: string | null | undefined): string {
 }
 
 /**
+ * Formata Inscrição Estadual no padrão XXX.XXX.XXX-X
+ * Remove não-dígitos e aplica máscara progressiva
+ */
+export function formatInscricaoEstadual(value: string | null | undefined): string {
+  if (!value) return "";
+  const digits = value.replace(/\D/g, "");
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
+/**
  * Valida CPF usando o algoritmo de módulo 11
  */
 export function validateCpf(value: string | null | undefined): boolean {
