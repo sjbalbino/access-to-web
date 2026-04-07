@@ -1,39 +1,44 @@
 
 
-## Plano: Atualizar modelo de importação das Notas de Depósito
+## Plano: Campos obrigatórios, formatação de IE e listagem expandida
 
-### Problema
-A configuração de importação de Notas de Depósito referencia colunas que não existem na tabela `notas_deposito_emitidas`:
-- `codigo` — não existe na tabela
-- `observacao` — não existe na tabela  
-- `inscricao_emitente_id` — não existe na tabela
+### Contexto
+O formulário de Inscrição Estadual não valida campos obrigatórios para emissão de NF-e, não formata a IE (padrão XXX.XXX.XXX-X), e a tabela de listagem não mostra todos os campos relevantes por estar estreita.
 
-A tabela possui apenas: `id`, `nota_fiscal_id`, `granja_id`, `inscricao_produtor_id`, `safra_id`, `produto_id`, `quantidade_kg`, `data_emissao`, `created_at`.
+### Alterações em `src/components/produtores/InscricoesTab.tsx`
 
-### Alterações
+**1. Campos obrigatórios para NF-e com validação no Salvar**
 
-**Arquivo: `src/lib/importacaoConfig.ts`** (bloco `notas_deposito`, linhas 771-783)
+Marcar como obrigatórios (com asterisco vermelho no Label) e validar antes de salvar:
+- Nome / Razão Social
+- Inscrição Estadual
+- CPF/CNPJ
+- Tipo de Contrato
+- Granja
+- CEP
+- Logradouro
+- Número
+- Bairro
+- UF
+- Cidade
 
-1. **Remover** a coluna `codigo` (linha 772)
-2. **Remover** a coluna `observacao` (linha 775)
-3. **Remover** a referência `inscricao_emitente_id` (linha 779) — coluna não existe na tabela
+Na função `handleSave`, adicionar validação que exibe toast de erro listando os campos faltantes antes de permitir o salvamento.
 
-Configuração corrigida:
-```typescript
-columns: [
-  { accessName: 'data_emissao', dbName: 'data_emissao', transform: toDate },
-  { accessName: 'quantidade_kg', dbName: 'quantidade_kg', transform: toNumber },
-],
-references: [
-  { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'] },
-  { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
-  { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
-  { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
-],
-```
+**2. Formatação da Inscrição Estadual**
 
-O modelo Excel gerado pelo botão "Baixar Modelo" será atualizado automaticamente, contendo apenas as colunas válidas: `data_emissao`, `quantidade_kg`, `inscricao_produtor_ie`, `inscricao_produtor_nome`, `safra_codigo`, `produto_codigo`, `granja_codigo`.
+Criar função `formatInscricaoEstadual` em `src/lib/formatters.ts` que formata o valor digitado no padrão `XXX.XXX.XXX-X` (remove não-dígitos, aplica máscara progressiva). Usar essa formatação:
+- No campo Input do formulário (exibição formatada, armazena só dígitos)
+- Na coluna da tabela de listagem
 
-### Arquivo alterado
-- `src/lib/importacaoConfig.ts`
+**3. Expandir listagem horizontalmente**
+
+- Aumentar o Dialog de Produtores para `max-w-6xl` (ou o container da aba de inscrições) para acomodar todas as colunas
+- Adicionar colunas extras na tabela: Telefone, E-mail, Conta Bancária
+- Usar `whitespace-nowrap` nas células para evitar quebra de linha
+- A tabela já tem `overflow-x-auto`, garantindo scroll horizontal se necessário
+
+### Arquivos modificados
+- `src/lib/formatters.ts` — adicionar `formatInscricaoEstadual`
+- `src/components/produtores/InscricoesTab.tsx` — validação obrigatória, formatação IE, colunas extras
+- `src/pages/Produtores.tsx` — verificar/ajustar largura do Dialog principal se necessário
 
