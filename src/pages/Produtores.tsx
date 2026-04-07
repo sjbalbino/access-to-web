@@ -382,7 +382,7 @@ export default function Produtores() {
 
       {/* Dialog unificado com abas */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingItem ? "Editar" : "Novo"} Produtor/Sócio</DialogTitle>
           </DialogHeader>

@@ -65,7 +65,7 @@ import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { formatCpfCnpj, formatTelefone } from "@/lib/formatters";
+import { formatCpfCnpj, formatTelefone, formatInscricaoEstadual } from "@/lib/formatters";
 import { useProdutor } from "@/hooks/useProdutores";
 import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
 import { cn } from "@/lib/utils";
@@ -269,6 +269,29 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   };
 
   const handleSave = async () => {
+    // Validação de campos obrigatórios para NF-e
+    const camposFaltantes: string[] = [];
+    if (!formData.nome?.trim()) camposFaltantes.push("Nome / Razão Social");
+    if (!formData.inscricao_estadual?.trim()) camposFaltantes.push("Inscrição Estadual");
+    if (!formData.cpf_cnpj?.trim()) camposFaltantes.push("CPF/CNPJ");
+    if (!formData.tipo) camposFaltantes.push("Tipo de Contrato");
+    if (!formData.granja_id) camposFaltantes.push("Granja");
+    if (!formData.cep?.trim()) camposFaltantes.push("CEP");
+    if (!formData.logradouro?.trim()) camposFaltantes.push("Logradouro");
+    if (!formData.numero?.trim()) camposFaltantes.push("Número");
+    if (!formData.bairro?.trim()) camposFaltantes.push("Bairro");
+    if (!formData.uf) camposFaltantes.push("UF");
+    if (!formData.cidade?.trim()) camposFaltantes.push("Cidade");
+
+    if (camposFaltantes.length > 0) {
+      toast({
+        title: "Campos obrigatórios não preenchidos",
+        description: camposFaltantes.join(", "),
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (selectedInscricao) {
       await updateInscricao.mutateAsync({ id: selectedInscricao.id, ...formData });
     } else {
@@ -311,106 +334,112 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
         </div>
       ) : inscricoes && inscricoes.length > 0 ? (
         <div className="overflow-x-auto border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Tipo Contrato</TableHead>
-                <TableHead>Inscrição Estadual</TableHead>
-                <TableHead>CPF/CNPJ</TableHead>
-                <TableHead>Cidade/UF</TableHead>
-                <TableHead>Granja</TableHead>
-                <TableHead>Emitente</TableHead>
-                <TableHead>Principal</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inscricoes.map((inscricao) => (
-                <TableRow key={inscricao.id}>
-                  <TableCell>{inscricao.nome || "-"}</TableCell>
-                  <TableCell>
-                    {TIPOS_CONTRATO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
-                  </TableCell>
-                  <TableCell className="font-medium">{inscricao.inscricao_estadual || "-"}</TableCell>
-                  <TableCell className="font-mono">{formatCpfCnpj(inscricao.cpf_cnpj) || "-"}</TableCell>
-                  <TableCell>
-                    {isLoadingMunicipios ? "..." : resolveCidade(inscricao.cidade)}
-                  </TableCell>
-                  <TableCell>
-                    {inscricao.granja_id
-                      ? granjas?.find(e => e.id === inscricao.granja_id)?.razao_social 
-                        || "-"
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    {inscricao.emitente ? (
-                      <Badge variant="outline" className="gap-1">
-                        <Building2 className="h-3 w-3" />
-                        {inscricao.emitente.granja?.nome_fantasia || inscricao.emitente.granja?.razao_social || "Configurado"}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {inscricao.granja_id && inscricao.emitente_id ? (
-                      <Button
-                        variant={inscricao.is_emitente_principal ? "default" : "ghost"}
-                        size="sm"
-                        className={inscricao.is_emitente_principal ? "gap-1 bg-amber-500 hover:bg-amber-600" : "gap-1"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleEmitentePrincipal(inscricao);
-                        }}
-                        disabled={updateInscricao.isPending}
-                      >
-                        <Crown className="h-3 w-3" />
-                        {inscricao.is_emitente_principal ? "Principal" : "Definir"}
-                      </Button>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        inscricao.ativa
-                          ? "bg-success/10 text-success"
-                          : "bg-destructive/10 text-destructive"
-                      }`}
-                    >
-                      {inscricao.ativa ? "Ativa" : "Inativa"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {canEdit && (
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(inscricao)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedInscricao(inscricao);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+           <Table>
+             <TableHeader>
+               <TableRow>
+                 <TableHead className="whitespace-nowrap">Nome</TableHead>
+                 <TableHead className="whitespace-nowrap">Tipo Contrato</TableHead>
+                 <TableHead className="whitespace-nowrap">Inscrição Estadual</TableHead>
+                 <TableHead className="whitespace-nowrap">CPF/CNPJ</TableHead>
+                 <TableHead className="whitespace-nowrap">Cidade/UF</TableHead>
+                 <TableHead className="whitespace-nowrap">Telefone</TableHead>
+                 <TableHead className="whitespace-nowrap">E-mail</TableHead>
+                 <TableHead className="whitespace-nowrap">Conta Bancária</TableHead>
+                 <TableHead className="whitespace-nowrap">Granja</TableHead>
+                 <TableHead className="whitespace-nowrap">Emitente</TableHead>
+                 <TableHead className="whitespace-nowrap">Principal</TableHead>
+                 <TableHead className="whitespace-nowrap">Status</TableHead>
+                 <TableHead className="text-right whitespace-nowrap">Ações</TableHead>
+               </TableRow>
+             </TableHeader>
+             <TableBody>
+               {inscricoes.map((inscricao) => (
+                 <TableRow key={inscricao.id}>
+                   <TableCell className="whitespace-nowrap">{inscricao.nome || "-"}</TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     {TIPOS_CONTRATO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
+                   </TableCell>
+                   <TableCell className="font-medium whitespace-nowrap">{formatInscricaoEstadual(inscricao.inscricao_estadual) || "-"}</TableCell>
+                   <TableCell className="font-mono whitespace-nowrap">{formatCpfCnpj(inscricao.cpf_cnpj) || "-"}</TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     {isLoadingMunicipios ? "..." : resolveCidade(inscricao.cidade)}
+                   </TableCell>
+                   <TableCell className="whitespace-nowrap">{formatTelefone(inscricao.telefone) || "-"}</TableCell>
+                   <TableCell className="whitespace-nowrap">{inscricao.email || "-"}</TableCell>
+                   <TableCell className="whitespace-nowrap max-w-[200px] truncate">{inscricao.conta_bancaria || "-"}</TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     {inscricao.granja_id
+                       ? granjas?.find(e => e.id === inscricao.granja_id)?.razao_social 
+                         || "-"
+                       : "-"}
+                   </TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     {inscricao.emitente ? (
+                       <Badge variant="outline" className="gap-1">
+                         <Building2 className="h-3 w-3" />
+                         {inscricao.emitente.granja?.nome_fantasia || inscricao.emitente.granja?.razao_social || "Configurado"}
+                       </Badge>
+                     ) : (
+                       <span className="text-muted-foreground text-xs">-</span>
+                     )}
+                   </TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     {inscricao.granja_id && inscricao.emitente_id ? (
+                       <Button
+                         variant={inscricao.is_emitente_principal ? "default" : "ghost"}
+                         size="sm"
+                         className={inscricao.is_emitente_principal ? "gap-1 bg-amber-500 hover:bg-amber-600" : "gap-1"}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           handleToggleEmitentePrincipal(inscricao);
+                         }}
+                         disabled={updateInscricao.isPending}
+                       >
+                         <Crown className="h-3 w-3" />
+                         {inscricao.is_emitente_principal ? "Principal" : "Definir"}
+                       </Button>
+                     ) : (
+                       <span className="text-muted-foreground text-xs">-</span>
+                     )}
+                   </TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     <span
+                       className={`px-2 py-1 rounded-full text-xs font-medium ${
+                         inscricao.ativa
+                           ? "bg-success/10 text-success"
+                           : "bg-destructive/10 text-destructive"
+                       }`}
+                     >
+                       {inscricao.ativa ? "Ativa" : "Inativa"}
+                     </span>
+                   </TableCell>
+                   <TableCell className="text-right whitespace-nowrap">
+                     {canEdit && (
+                       <div className="flex justify-end gap-2">
+                         <Button
+                           variant="ghost"
+                           size="icon"
+                           onClick={() => handleEdit(inscricao)}
+                         >
+                           <Pencil className="h-4 w-4" />
+                         </Button>
+                         <Button
+                           variant="ghost"
+                           size="icon"
+                           onClick={() => {
+                             setSelectedInscricao(inscricao);
+                             setDeleteDialogOpen(true);
+                           }}
+                         >
+                           <Trash2 className="h-4 w-4 text-destructive" />
+                         </Button>
+                       </div>
+                     )}
+                   </TableCell>
+                 </TableRow>
+               ))}
+             </TableBody>
+           </Table>
         </div>
       ) : (
         <div className="text-center py-6 border rounded-md">
@@ -429,7 +458,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
       {/* Form Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedInscricao ? "Editar Inscrição" : "Nova Inscrição"}
@@ -442,7 +471,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               <h5 className="text-sm font-medium text-muted-foreground border-b pb-2">Dados da Inscrição</h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="nome">Nome / Razão Social</Label>
+                  <Label htmlFor="nome">Nome / Razão Social <span className="text-destructive">*</span></Label>
                   <Input
                     id="nome"
                     value={formData.nome || ""}
@@ -451,13 +480,13 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tipo">Tipo de Contrato (opcional)</Label>
+                  <Label htmlFor="tipo">Tipo de Contrato <span className="text-destructive">*</span></Label>
                   <Select
                     value={formData.tipo || undefined}
                     onValueChange={(value) => setFormData({ ...formData, tipo: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione (opcional)" />
+                      <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
                       {TIPOS_CONTRATO.map((tipo) => (
@@ -469,7 +498,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="granja_id">Granja</Label>
+                  <Label htmlFor="granja_id">Granja <span className="text-destructive">*</span></Label>
                   <Select
                     value={formData.granja_id || undefined}
                     onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
@@ -487,15 +516,16 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                  <Label htmlFor="inscricao_estadual">Inscrição Estadual <span className="text-destructive">*</span></Label>
                   <Input
                     id="inscricao_estadual"
-                    value={formData.inscricao_estadual || ""}
-                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
+                    value={formatInscricaoEstadual(formData.inscricao_estadual || "")}
+                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value.replace(/\D/g, "") })}
+                    placeholder="000.000.000-0"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cpf_cnpj">CPF/CNPJ</Label>
+                  <Label htmlFor="cpf_cnpj">CPF/CNPJ <span className="text-destructive">*</span></Label>
                   <Input
                     id="cpf_cnpj"
                     value={formatCpfCnpj(formData.cpf_cnpj || "")}
@@ -511,7 +541,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               <h5 className="text-sm font-medium text-muted-foreground border-b pb-2">Endereço</h5>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cep">CEP</Label>
+                  <Label htmlFor="cep">CEP <span className="text-destructive">*</span></Label>
                   <Input
                     id="cep"
                     value={formData.cep ? formatCep(formData.cep) : ""}
@@ -523,7 +553,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="logradouro">Logradouro</Label>
+                  <Label htmlFor="logradouro">Logradouro <span className="text-destructive">*</span></Label>
                   <Input
                     id="logradouro"
                     value={formData.logradouro || ""}
@@ -531,7 +561,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="numero">Número</Label>
+                  <Label htmlFor="numero">Número <span className="text-destructive">*</span></Label>
                   <Input
                     id="numero"
                     value={formData.numero || ""}
@@ -547,7 +577,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="bairro">Bairro</Label>
+                  <Label htmlFor="bairro">Bairro <span className="text-destructive">*</span></Label>
                   <Input
                     id="bairro"
                     value={formData.bairro || ""}
@@ -555,7 +585,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="uf">UF</Label>
+                  <Label htmlFor="uf">UF <span className="text-destructive">*</span></Label>
                   <Select
                     value={formData.uf || undefined}
                     onValueChange={(value) => {
@@ -574,7 +604,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   </Select>
                 </div>
                 <div className="space-y-2 md:col-span-3">
-                  <Label>Cidade</Label>
+                  <Label>Cidade <span className="text-destructive">*</span></Label>
                   <Popover open={cidadeOpen} onOpenChange={setCidadeOpen}>
                     <PopoverTrigger asChild>
                       <Button
