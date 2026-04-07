@@ -65,7 +65,7 @@ import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { formatCpfCnpj, formatTelefone } from "@/lib/formatters";
+import { formatCpfCnpj, formatTelefone, formatInscricaoEstadual } from "@/lib/formatters";
 import { useProdutor } from "@/hooks/useProdutores";
 import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
 import { cn } from "@/lib/utils";
