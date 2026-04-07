@@ -126,7 +126,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
     const safra = safras?.find(s => s.id === safraId);
 
-    // Get all inscricoes with produtor info
+    // Get all inscricoes with tipo de contrato
     const { data: allInscricoes, error: inscError } = await supabase
       .from("inscricoes_produtor")
       .select("id, inscricao_estadual, granja, tipo, produtores:produtor_id(nome)")
@@ -144,9 +144,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const inscricaoIds = filteredInscricoes.map(i => i.id);
     if (inscricaoIds.length === 0) { toast({ title: "Sem dados", description: "Nenhum produtor encontrado com o filtro selecionado." }); return; }
 
-    // Fetch all data for the safra
+    // Fetch all data for the safra (without .in() filter to avoid URL length limits)
     const [colheitasRes, trDepRes, devRes, notasDepRes, comprasRes] = await Promise.all([
-      supabase.from("colheitas").select("inscricao_produtor_id, producao_liquida_kg, tipo_colheita, local_entrega_terceiro_id").eq("safra_id", safraId).in("inscricao_produtor_id", inscricaoIds),
+      supabase.from("colheitas").select("inscricao_produtor_id, producao_liquida_kg, tipo_colheita, local_entrega_terceiro_id").eq("safra_id", safraId),
       supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id, quantidade_kg").eq("safra_id", safraId),
       supabase.from("devolucoes_deposito").select("inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem").eq("safra_id", safraId).neq("status", "cancelada"),
       supabase.from("notas_deposito_emitidas").select("inscricao_produtor_id, quantidade_kg").eq("safra_id", safraId),
