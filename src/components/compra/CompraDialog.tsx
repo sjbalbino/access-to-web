@@ -160,6 +160,8 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
       setValorUnitarioKg(compra.valor_unitario_kg || 0);
       setValorTotal(compra.valor_total || 0);
       setObservacao(compra.observacao || '');
+      setLocalEntregaId((compra as any).local_entrega_id || '');
+      setTipoProduto((compra as any).tipo_produto || 'industria');
       // Notas referenciadas são carregadas pelo useEffect acima (notasExistentes)
       if (!compra.id) {
         setNotasReferenciadas([]);
