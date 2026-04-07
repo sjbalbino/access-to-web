@@ -794,6 +794,12 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'valor_unitario_kg', dbName: 'valor_unitario_kg', transform: toNumber },
       { accessName: 'valor_total', dbName: 'valor_total', transform: toNumber },
       { accessName: 'observacao', dbName: 'observacao', transform: toStr },
+      { accessName: 'tipo_produto', dbName: 'tipo_produto', transform: (v: any) => {
+        if (!v || v === '') return 'industria';
+        const s = String(v).trim().toLowerCase();
+        if (s === '2' || s === 'semente') return 'semente';
+        return 'industria';
+      }},
       { accessName: 'status', dbName: 'status', transform: (v: any) => {
         if (!v || v === '') return 'pendente';
         const s = String(v).trim().toLowerCase();
@@ -808,6 +814,7 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
       { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome' },
+      { dbColumn: 'local_entrega_id', sourceColumn: 'local_entrega_codigo', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome' },
     ],
   },
 ];

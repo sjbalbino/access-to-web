@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSilos } from '@/hooks/useSilos';
+import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
 import { useInscricoesComSaldo } from '@/hooks/useSaldosDeposito';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
@@ -60,6 +61,8 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
   const [valorUnitarioKg, setValorUnitarioKg] = useState(0);
   const [valorTotal, setValorTotal] = useState(0);
   const [observacao, setObservacao] = useState('');
+  const [localEntregaId, setLocalEntregaId] = useState('');
+  const [tipoProduto, setTipoProduto] = useState('industria');
 
   // Notas referenciadas
   const [notasReferenciadas, setNotasReferenciadas] = useState<NotaReferenciadaTemp[]>([]);
@@ -77,6 +80,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
   const { data: safras } = useSafras();
   const { data: produtos } = useProdutosSementes();
   const { data: silos } = useSilos();
+  const { data: locaisEntrega } = useLocaisEntrega();
   const { data: inscricoesSocio } = useInscricoesSocio();
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
     safraId, 
@@ -156,6 +160,8 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
       setValorUnitarioKg(compra.valor_unitario_kg || 0);
       setValorTotal(compra.valor_total || 0);
       setObservacao(compra.observacao || '');
+      setLocalEntregaId((compra as any).local_entrega_id || '');
+      setTipoProduto((compra as any).tipo_produto || 'industria');
       // Notas referenciadas são carregadas pelo useEffect acima (notasExistentes)
       if (!compra.id) {
         setNotasReferenciadas([]);
@@ -188,6 +194,8 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
     setValorUnitarioKg(0);
     setValorTotal(0);
     setObservacao('');
+    setLocalEntregaId('');
+    setTipoProduto('industria');
     setNotasReferenciadas([]);
     setEmissionStatus({ step: "idle", message: "", progress: 0 });
   };
@@ -220,6 +228,8 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
     inscricao_comprador_id: inscricaoCompradorId,
     inscricao_vendedor_id: inscricaoVendedorId,
     silo_id: siloId || null,
+    local_entrega_id: localEntregaId || null,
+    tipo_produto: tipoProduto,
     data_compra: dataCompra,
     quantidade_kg: quantidadeKg,
     valor_unitario_kg: valorUnitarioKg,
@@ -832,6 +842,37 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
                           {s.nome}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Local de Entrega</Label>
+                  <Select value={localEntregaId} onValueChange={setLocalEntregaId} disabled={isEmitting}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locaisEntrega?.map(l => (
+                        <SelectItem key={l.id} value={l.id}>
+                          {l.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Tipo de Produto</Label>
+                  <Select value={tipoProduto} onValueChange={setTipoProduto} disabled={isEmitting}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="industria">Indústria</SelectItem>
+                      <SelectItem value="semente">Semente</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
