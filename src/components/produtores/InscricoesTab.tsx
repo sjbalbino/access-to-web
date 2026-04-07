@@ -541,7 +541,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               <h5 className="text-sm font-medium text-muted-foreground border-b pb-2">Endereço</h5>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cep">CEP</Label>
+                  <Label htmlFor="cep">CEP <span className="text-destructive">*</span></Label>
                   <Input
                     id="cep"
                     value={formData.cep ? formatCep(formData.cep) : ""}
