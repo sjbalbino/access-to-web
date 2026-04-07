@@ -145,11 +145,10 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     if (inscricaoIds.length === 0) { toast({ title: "Sem dados", description: "Nenhum produtor encontrado com o filtro selecionado." }); return; }
 
     // Fetch all data for the safra (without .in() filter to avoid URL length limits)
-    const [colheitasRes, trDepRes, devRes, notasDepRes, comprasRes] = await Promise.all([
+    const [colheitasRes, trDepRes, devRes, comprasRes] = await Promise.all([
       supabase.from("colheitas").select("inscricao_produtor_id, producao_liquida_kg, tipo_colheita, local_entrega_terceiro_id").eq("safra_id", safraId),
       supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id, quantidade_kg").eq("safra_id", safraId),
-      supabase.from("devolucoes_deposito").select("inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem").eq("safra_id", safraId).neq("status", "cancelada"),
-      supabase.from("notas_deposito_emitidas").select("inscricao_produtor_id, quantidade_kg").eq("safra_id", safraId),
+      supabase.from("devolucoes_deposito").select("inscricao_produtor_id, inscricao_recebe_taxa_id, quantidade_kg, kg_taxa_armazenagem").eq("safra_id", safraId).neq("status", "cancelada"),
       supabase.from("compras_cereais").select("inscricao_vendedor_id, inscricao_comprador_id, quantidade_kg").eq("safra_id", safraId),
     ]);
 
@@ -223,12 +222,10 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     (devRes.data || []).forEach((d: any) => {
       if (!inscricaoSet.has(d.inscricao_produtor_id)) return;
       getRow(d.inscricao_produtor_id).devolucoes_kg += (d.quantidade_kg || 0);
-    });
-
-    // Notas de depósito
-    (notasDepRes.data || []).forEach((n: any) => {
-      if (!inscricaoSet.has(n.inscricao_produtor_id)) return;
-      getRow(n.inscricao_produtor_id).notas_deposito_kg += (n.quantidade_kg || 0);
+      // Entr.Arm. = kg de taxa de armazenagem creditados ao SÓCIO que recebe
+      if (d.inscricao_recebe_taxa_id && inscricaoSet.has(d.inscricao_recebe_taxa_id)) {
+        getRow(d.inscricao_recebe_taxa_id).notas_deposito_kg += (d.kg_taxa_armazenagem || 0);
+      }
     });
 
     // Compras (as buyer = adds stock, as seller = removes stock)
@@ -335,10 +332,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     if (produtoId) colheitasQuery = colheitasQuery.eq("variedade_id", produtoId);
     const { data: colheitas } = await colheitasQuery;
 
-    const [trDepRes, devRes, notasDepRes] = await Promise.all([
+    const [trDepRes, devRes] = await Promise.all([
       supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id, quantidade_kg").eq("safra_id", safraId),
-      supabase.from("devolucoes_deposito").select("inscricao_produtor_id, quantidade_kg").eq("safra_id", safraId).neq("status", "cancelada"),
-      supabase.from("notas_deposito_emitidas").select("inscricao_produtor_id, quantidade_kg").eq("safra_id", safraId),
+      supabase.from("devolucoes_deposito").select("inscricao_produtor_id, inscricao_recebe_taxa_id, quantidade_kg, kg_taxa_armazenagem").eq("safra_id", safraId).neq("status", "cancelada"),
     ]);
 
     // Aggregate: key = local + inscricao
@@ -366,7 +362,6 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     // Transferências
     (trDepRes.data || []).forEach((t: any) => {
-      // For simplicity, use "Sede" as local for transfers
       if (inscricaoIds.includes(t.inscricao_origem_id)) {
         getRow("Sede", t.inscricao_origem_id).tr_saida_kg += (t.quantidade_kg || 0);
       }
@@ -375,17 +370,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       }
     });
 
-    // Devoluções
+    // Devoluções + Entr.Arm (kg_taxa_armazenagem creditado ao sócio)
     (devRes.data || []).forEach((d: any) => {
       if (inscricaoIds.includes(d.inscricao_produtor_id)) {
         getRow("Sede", d.inscricao_produtor_id).devolucoes_kg += (d.quantidade_kg || 0);
       }
-    });
-
-    // Notas depósito
-    (notasDepRes.data || []).forEach((n: any) => {
-      if (inscricaoIds.includes(n.inscricao_produtor_id)) {
-        getRow("Sede", n.inscricao_produtor_id).notas_deposito_kg += (n.quantidade_kg || 0);
+      if (d.inscricao_recebe_taxa_id && inscricaoIds.includes(d.inscricao_recebe_taxa_id)) {
+        getRow("Sede", d.inscricao_recebe_taxa_id).notas_deposito_kg += (d.kg_taxa_armazenagem || 0);
       }
     });
 
