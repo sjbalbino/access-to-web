@@ -145,11 +145,10 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     if (inscricaoIds.length === 0) { toast({ title: "Sem dados", description: "Nenhum produtor encontrado com o filtro selecionado." }); return; }
 
     // Fetch all data for the safra (without .in() filter to avoid URL length limits)
-    const [colheitasRes, trDepRes, devRes, notasDepRes, comprasRes] = await Promise.all([
+    const [colheitasRes, trDepRes, devRes, comprasRes] = await Promise.all([
       supabase.from("colheitas").select("inscricao_produtor_id, producao_liquida_kg, tipo_colheita, local_entrega_terceiro_id").eq("safra_id", safraId),
       supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id, quantidade_kg").eq("safra_id", safraId),
-      supabase.from("devolucoes_deposito").select("inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem").eq("safra_id", safraId).neq("status", "cancelada"),
-      supabase.from("notas_deposito_emitidas").select("inscricao_produtor_id, quantidade_kg").eq("safra_id", safraId),
+      supabase.from("devolucoes_deposito").select("inscricao_produtor_id, inscricao_recebe_taxa_id, quantidade_kg, kg_taxa_armazenagem").eq("safra_id", safraId).neq("status", "cancelada"),
       supabase.from("compras_cereais").select("inscricao_vendedor_id, inscricao_comprador_id, quantidade_kg").eq("safra_id", safraId),
     ]);
 
