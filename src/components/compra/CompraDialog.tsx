@@ -847,6 +847,37 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Local de Entrega</Label>
+                  <Select value={localEntregaId} onValueChange={setLocalEntregaId} disabled={isEmitting}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locaisEntrega?.map(l => (
+                        <SelectItem key={l.id} value={l.id}>
+                          {l.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Tipo de Produto</Label>
+                  <Select value={tipoProduto} onValueChange={setTipoProduto} disabled={isEmitting}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="industria">Indústria</SelectItem>
+                      <SelectItem value="semente">Semente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label>Comprador (Sócio) *</Label>
                 <Select value={inscricaoCompradorId} onValueChange={setInscricaoCompradorId} disabled={isEmitting}>

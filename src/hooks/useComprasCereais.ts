@@ -42,6 +42,7 @@ export interface CompraCereal {
   };
   produto?: { id: string; nome: string };
   silo?: { id: string; nome: string };
+  local_entrega?: { id: string; nome: string } | null;
   nota_fiscal?: { id: string; numero: number; status: string };
 }
 

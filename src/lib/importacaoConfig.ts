@@ -814,6 +814,7 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
       { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome' },
+      { dbColumn: 'local_entrega_id', sourceColumn: 'local_entrega_codigo', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome' },
     ],
   },
 ];
