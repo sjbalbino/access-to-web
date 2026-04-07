@@ -228,6 +228,8 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
     inscricao_comprador_id: inscricaoCompradorId,
     inscricao_vendedor_id: inscricaoVendedorId,
     silo_id: siloId || null,
+    local_entrega_id: localEntregaId || null,
+    tipo_produto: tipoProduto,
     data_compra: dataCompra,
     quantidade_kg: quantidadeKg,
     valor_unitario_kg: valorUnitarioKg,
