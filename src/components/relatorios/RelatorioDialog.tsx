@@ -259,9 +259,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     const tipoEntregaLabel: Record<string, string> = {
       "todos": "Todos",
-      "particular": "Particular",
-      "arrendamento": "Arrendamentos",
-      "terceiro": "Terceiros",
+      "1": "Parceria",
+      "2": "Arrendamento",
+      "3": "Terceiros",
     };
 
     gerarSaldoDisponivelPdf({
