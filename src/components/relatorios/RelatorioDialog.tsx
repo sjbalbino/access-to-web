@@ -126,7 +126,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
     const safra = safras?.find(s => s.id === safraId);
 
-    // Get all inscricoes with produtor info
+    // Get all inscricoes with tipo de contrato
     const { data: allInscricoes, error: inscError } = await supabase
       .from("inscricoes_produtor")
       .select("id, inscricao_estadual, granja, tipo, produtores:produtor_id(nome)")
@@ -144,9 +144,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const inscricaoIds = filteredInscricoes.map(i => i.id);
     if (inscricaoIds.length === 0) { toast({ title: "Sem dados", description: "Nenhum produtor encontrado com o filtro selecionado." }); return; }
 
-    // Fetch all data for the safra
+    // Fetch all data for the safra (without .in() filter to avoid URL length limits)
     const [colheitasRes, trDepRes, devRes, notasDepRes, comprasRes] = await Promise.all([
-      supabase.from("colheitas").select("inscricao_produtor_id, producao_liquida_kg, tipo_colheita, local_entrega_terceiro_id").eq("safra_id", safraId).in("inscricao_produtor_id", inscricaoIds),
+      supabase.from("colheitas").select("inscricao_produtor_id, producao_liquida_kg, tipo_colheita, local_entrega_terceiro_id").eq("safra_id", safraId),
       supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id, quantidade_kg").eq("safra_id", safraId),
       supabase.from("devolucoes_deposito").select("inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem").eq("safra_id", safraId).neq("status", "cancelada"),
       supabase.from("notas_deposito_emitidas").select("inscricao_produtor_id, quantidade_kg").eq("safra_id", safraId),
@@ -180,6 +180,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       }
     }
 
+    // Use Set for fast lookup
+    const inscricaoSet = new Set(inscricaoIds);
+
     // Aggregate by inscricao
     const rowMap: Record<string, SaldoDisponivelRow> = {};
 
@@ -200,7 +203,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     // Colheitas
     (colheitasRes.data || []).forEach((c: any) => {
-      if (!inscricaoIds.includes(c.inscricao_produtor_id)) return;
+      if (!inscricaoSet.has(c.inscricao_produtor_id)) return;
       const row = getRow(c.inscricao_produtor_id);
       row.depositos_kg += (c.producao_liquida_kg || 0);
       if (c.tipo_colheita === "semente") row.tipo = "SEMENT";
@@ -208,36 +211,36 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     // Transferências
     (trDepRes.data || []).forEach((t: any) => {
-      if (inscricaoIds.includes(t.inscricao_origem_id)) {
+      if (inscricaoSet.has(t.inscricao_origem_id)) {
         getRow(t.inscricao_origem_id).tr_saida_kg += (t.quantidade_kg || 0);
       }
-      if (inscricaoIds.includes(t.inscricao_destino_id)) {
+      if (inscricaoSet.has(t.inscricao_destino_id)) {
         getRow(t.inscricao_destino_id).tr_entrada_kg += (t.quantidade_kg || 0);
       }
     });
 
     // Devoluções
     (devRes.data || []).forEach((d: any) => {
-      if (!inscricaoIds.includes(d.inscricao_produtor_id)) return;
+      if (!inscricaoSet.has(d.inscricao_produtor_id)) return;
       getRow(d.inscricao_produtor_id).devolucoes_kg += (d.quantidade_kg || 0);
     });
 
     // Notas de depósito
     (notasDepRes.data || []).forEach((n: any) => {
-      if (!inscricaoIds.includes(n.inscricao_produtor_id)) return;
+      if (!inscricaoSet.has(n.inscricao_produtor_id)) return;
       getRow(n.inscricao_produtor_id).notas_deposito_kg += (n.quantidade_kg || 0);
     });
 
     // Compras (as buyer = adds stock, as seller = removes stock)
     (comprasRes.data || []).forEach((c: any) => {
-      if (inscricaoIds.includes(c.inscricao_comprador_id)) {
+      if (inscricaoSet.has(c.inscricao_comprador_id)) {
         getRow(c.inscricao_comprador_id).compras_kg += (c.quantidade_kg || 0);
       }
     });
 
     // Vendas
     Object.entries(vendasMap).forEach(([inscId, kg]) => {
-      if (inscricaoIds.includes(inscId)) {
+      if (inscricaoSet.has(inscId)) {
         getRow(inscId).vendas_kg += kg;
       }
     });
