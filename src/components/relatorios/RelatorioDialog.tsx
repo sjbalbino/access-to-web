@@ -203,7 +203,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     // Colheitas
     (colheitasRes.data || []).forEach((c: any) => {
-      if (!inscricaoIds.includes(c.inscricao_produtor_id)) return;
+      if (!inscricaoSet.has(c.inscricao_produtor_id)) return;
       const row = getRow(c.inscricao_produtor_id);
       row.depositos_kg += (c.producao_liquida_kg || 0);
       if (c.tipo_colheita === "semente") row.tipo = "SEMENT";
@@ -211,36 +211,36 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     // Transferências
     (trDepRes.data || []).forEach((t: any) => {
-      if (inscricaoIds.includes(t.inscricao_origem_id)) {
+      if (inscricaoSet.has(t.inscricao_origem_id)) {
         getRow(t.inscricao_origem_id).tr_saida_kg += (t.quantidade_kg || 0);
       }
-      if (inscricaoIds.includes(t.inscricao_destino_id)) {
+      if (inscricaoSet.has(t.inscricao_destino_id)) {
         getRow(t.inscricao_destino_id).tr_entrada_kg += (t.quantidade_kg || 0);
       }
     });
 
     // Devoluções
     (devRes.data || []).forEach((d: any) => {
-      if (!inscricaoIds.includes(d.inscricao_produtor_id)) return;
+      if (!inscricaoSet.has(d.inscricao_produtor_id)) return;
       getRow(d.inscricao_produtor_id).devolucoes_kg += (d.quantidade_kg || 0);
     });
 
     // Notas de depósito
     (notasDepRes.data || []).forEach((n: any) => {
-      if (!inscricaoIds.includes(n.inscricao_produtor_id)) return;
+      if (!inscricaoSet.has(n.inscricao_produtor_id)) return;
       getRow(n.inscricao_produtor_id).notas_deposito_kg += (n.quantidade_kg || 0);
     });
 
     // Compras (as buyer = adds stock, as seller = removes stock)
     (comprasRes.data || []).forEach((c: any) => {
-      if (inscricaoIds.includes(c.inscricao_comprador_id)) {
+      if (inscricaoSet.has(c.inscricao_comprador_id)) {
         getRow(c.inscricao_comprador_id).compras_kg += (c.quantidade_kg || 0);
       }
     });
 
     // Vendas
     Object.entries(vendasMap).forEach(([inscId, kg]) => {
-      if (inscricaoIds.includes(inscId)) {
+      if (inscricaoSet.has(inscId)) {
         getRow(inscId).vendas_kg += kg;
       }
     });
