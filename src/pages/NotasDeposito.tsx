@@ -143,6 +143,7 @@ export default function NotasDeposito() {
                   emptyText="Nenhum produtor encontrado."
                 />
               </div>
+              <div className="space-y-2">
                 <Label>Granja</Label>
                 <ComboboxFilter
                   value={granjaId}
