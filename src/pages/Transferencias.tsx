@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useTransferenciasDeposito, useDeleteTransferenciaDeposito, TransferenciaDeposito } from "@/hooks/useTransferenciasDeposito";
+import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { formatNumber, formatKg } from "@/lib/formatters";
 import { TransferenciaDialog } from "@/components/transferencias/TransferenciaDialog";
 import {
@@ -32,6 +33,8 @@ export default function Transferencias() {
   const [filtroSafraId, setFiltroSafraId] = useState<string>("");
   const [filtroProdutoId, setFiltroProdutoId] = useState<string>("");
   const [filtroSiloId, setFiltroSiloId] = useState<string>("");
+  const [filtroOrigemId, setFiltroOrigemId] = useState<string>("");
+  const [filtroDestinoId, setFiltroDestinoId] = useState<string>("");
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -41,11 +44,23 @@ export default function Transferencias() {
   const { data: safras = [] } = useSafras();
   const { data: silos = [] } = useSilos();
   const { data: produtos = [] } = useProdutos();
+  const { data: allInscricoes = [] } = useAllInscricoes();
+
+  const produtorOptions = useMemo(() => {
+    return allInscricoes
+      .filter(i => i.ativa !== false)
+      .map(i => ({
+        value: i.id,
+        label: `${i.inscricao_estadual || ''} - ${i.produtores?.nome || i.nome || 'Sem nome'}`,
+      }));
+  }, [allInscricoes]);
 
   const { data: transferencias = [], isLoading } = useTransferenciasDeposito({
     safraId: filtroSafraId || undefined,
     produtoId: filtroProdutoId || undefined,
     siloId: filtroSiloId || undefined,
+    inscricaoOrigemId: filtroOrigemId || undefined,
+    inscricaoDestinoId: filtroDestinoId || undefined,
   });
 
   const deleteTransferencia = useDeleteTransferenciaDeposito();
@@ -97,7 +112,29 @@ export default function Transferencias() {
             <CardTitle className="text-base">Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <Label>Produtor Origem</Label>
+                <ComboboxFilter
+                  value={filtroOrigemId}
+                  onValueChange={setFiltroOrigemId}
+                  options={produtorOptions}
+                  searchPlaceholder="Buscar produtor..."
+                  emptyText="Nenhum produtor encontrado."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Produtor Destino</Label>
+                <ComboboxFilter
+                  value={filtroDestinoId}
+                  onValueChange={setFiltroDestinoId}
+                  options={produtorOptions}
+                  searchPlaceholder="Buscar produtor..."
+                  emptyText="Nenhum produtor encontrado."
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label>Safra</Label>
                 <ComboboxFilter

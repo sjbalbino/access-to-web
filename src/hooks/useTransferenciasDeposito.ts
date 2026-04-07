@@ -39,6 +39,8 @@ export function useTransferenciasDeposito(filters?: {
   produtoId?: string;
   siloId?: string;
   granjaId?: string;
+  inscricaoOrigemId?: string;
+  inscricaoDestinoId?: string;
 }) {
   return useQuery({
     queryKey: ['transferencias_deposito', filters],
@@ -70,6 +72,12 @@ export function useTransferenciasDeposito(filters?: {
       }
       if (filters?.granjaId) {
         query = query.or(`granja_origem_id.eq.${filters.granjaId},granja_destino_id.eq.${filters.granjaId}`);
+      }
+      if (filters?.inscricaoOrigemId) {
+        query = query.eq('inscricao_origem_id', filters.inscricaoOrigemId);
+      }
+      if (filters?.inscricaoDestinoId) {
+        query = query.eq('inscricao_destino_id', filters.inscricaoDestinoId);
       }
 
       const { data, error } = await query;
