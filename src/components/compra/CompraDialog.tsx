@@ -194,6 +194,8 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
     setValorUnitarioKg(0);
     setValorTotal(0);
     setObservacao('');
+    setLocalEntregaId('');
+    setTipoProduto('industria');
     setNotasReferenciadas([]);
     setEmissionStatus({ step: "idle", message: "", progress: 0 });
   };
