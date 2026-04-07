@@ -471,7 +471,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               <h5 className="text-sm font-medium text-muted-foreground border-b pb-2">Dados da Inscrição</h5>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="nome">Nome / Razão Social</Label>
+                  <Label htmlFor="nome">Nome / Razão Social <span className="text-destructive">*</span></Label>
                   <Input
                     id="nome"
                     value={formData.nome || ""}
@@ -480,13 +480,13 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tipo">Tipo de Contrato (opcional)</Label>
+                  <Label htmlFor="tipo">Tipo de Contrato <span className="text-destructive">*</span></Label>
                   <Select
                     value={formData.tipo || undefined}
                     onValueChange={(value) => setFormData({ ...formData, tipo: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione (opcional)" />
+                      <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
                       {TIPOS_CONTRATO.map((tipo) => (
@@ -498,7 +498,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="granja_id">Granja</Label>
+                  <Label htmlFor="granja_id">Granja <span className="text-destructive">*</span></Label>
                   <Select
                     value={formData.granja_id || undefined}
                     onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
