@@ -780,6 +780,36 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
     ],
   },
+  {
+    key: 'compras_cereais',
+    label: 'Compras de Cereais',
+    tableName: 'compras_cereais',
+    description: 'Compras de cereais (CFOP 1102)',
+    order: 18,
+    dependsOn: ['inscricoes', 'safras', 'produtos', 'granjas'],
+    columns: [
+      { accessName: 'codigo', dbName: 'codigo', transform: toInt },
+      { accessName: 'data_compra', dbName: 'data_compra', transform: toDate, required: true },
+      { accessName: 'quantidade_kg', dbName: 'quantidade_kg', transform: toNumber, required: true },
+      { accessName: 'valor_unitario_kg', dbName: 'valor_unitario_kg', transform: toNumber },
+      { accessName: 'valor_total', dbName: 'valor_total', transform: toNumber },
+      { accessName: 'observacao', dbName: 'observacao', transform: toStr },
+      { accessName: 'status', dbName: 'status', transform: (v: any) => {
+        if (!v || v === '') return 'pendente';
+        const s = String(v).trim().toLowerCase();
+        if (s === 'nfe_emitida' || s === 'emitida') return 'nfe_emitida';
+        return 'pendente';
+      }},
+    ],
+    references: [
+      { dbColumn: 'inscricao_comprador_id', sourceColumn: 'inscricao_comprador_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_comprador_nome', compositeColumns: ['nome'], required: true },
+      { dbColumn: 'inscricao_vendedor_id', sourceColumn: 'inscricao_vendedor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_vendedor_nome', compositeColumns: ['nome'], required: true },
+      { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
+      { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
+      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
+      { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome' },
+    ],
+  },
 ];
 
 // Resolve references: lookup legacy codes to UUIDs
