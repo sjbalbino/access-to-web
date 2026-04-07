@@ -585,7 +585,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="uf">UF</Label>
+                  <Label htmlFor="uf">UF <span className="text-destructive">*</span></Label>
                   <Select
                     value={formData.uf || undefined}
                     onValueChange={(value) => {
