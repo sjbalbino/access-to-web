@@ -334,106 +334,112 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
         </div>
       ) : inscricoes && inscricoes.length > 0 ? (
         <div className="overflow-x-auto border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Tipo Contrato</TableHead>
-                <TableHead>Inscrição Estadual</TableHead>
-                <TableHead>CPF/CNPJ</TableHead>
-                <TableHead>Cidade/UF</TableHead>
-                <TableHead>Granja</TableHead>
-                <TableHead>Emitente</TableHead>
-                <TableHead>Principal</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inscricoes.map((inscricao) => (
-                <TableRow key={inscricao.id}>
-                  <TableCell>{inscricao.nome || "-"}</TableCell>
-                  <TableCell>
-                    {TIPOS_CONTRATO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
-                  </TableCell>
-                  <TableCell className="font-medium">{inscricao.inscricao_estadual || "-"}</TableCell>
-                  <TableCell className="font-mono">{formatCpfCnpj(inscricao.cpf_cnpj) || "-"}</TableCell>
-                  <TableCell>
-                    {isLoadingMunicipios ? "..." : resolveCidade(inscricao.cidade)}
-                  </TableCell>
-                  <TableCell>
-                    {inscricao.granja_id
-                      ? granjas?.find(e => e.id === inscricao.granja_id)?.razao_social 
-                        || "-"
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    {inscricao.emitente ? (
-                      <Badge variant="outline" className="gap-1">
-                        <Building2 className="h-3 w-3" />
-                        {inscricao.emitente.granja?.nome_fantasia || inscricao.emitente.granja?.razao_social || "Configurado"}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {inscricao.granja_id && inscricao.emitente_id ? (
-                      <Button
-                        variant={inscricao.is_emitente_principal ? "default" : "ghost"}
-                        size="sm"
-                        className={inscricao.is_emitente_principal ? "gap-1 bg-amber-500 hover:bg-amber-600" : "gap-1"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleEmitentePrincipal(inscricao);
-                        }}
-                        disabled={updateInscricao.isPending}
-                      >
-                        <Crown className="h-3 w-3" />
-                        {inscricao.is_emitente_principal ? "Principal" : "Definir"}
-                      </Button>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        inscricao.ativa
-                          ? "bg-success/10 text-success"
-                          : "bg-destructive/10 text-destructive"
-                      }`}
-                    >
-                      {inscricao.ativa ? "Ativa" : "Inativa"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {canEdit && (
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(inscricao)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedInscricao(inscricao);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+           <Table>
+             <TableHeader>
+               <TableRow>
+                 <TableHead className="whitespace-nowrap">Nome</TableHead>
+                 <TableHead className="whitespace-nowrap">Tipo Contrato</TableHead>
+                 <TableHead className="whitespace-nowrap">Inscrição Estadual</TableHead>
+                 <TableHead className="whitespace-nowrap">CPF/CNPJ</TableHead>
+                 <TableHead className="whitespace-nowrap">Cidade/UF</TableHead>
+                 <TableHead className="whitespace-nowrap">Telefone</TableHead>
+                 <TableHead className="whitespace-nowrap">E-mail</TableHead>
+                 <TableHead className="whitespace-nowrap">Conta Bancária</TableHead>
+                 <TableHead className="whitespace-nowrap">Granja</TableHead>
+                 <TableHead className="whitespace-nowrap">Emitente</TableHead>
+                 <TableHead className="whitespace-nowrap">Principal</TableHead>
+                 <TableHead className="whitespace-nowrap">Status</TableHead>
+                 <TableHead className="text-right whitespace-nowrap">Ações</TableHead>
+               </TableRow>
+             </TableHeader>
+             <TableBody>
+               {inscricoes.map((inscricao) => (
+                 <TableRow key={inscricao.id}>
+                   <TableCell className="whitespace-nowrap">{inscricao.nome || "-"}</TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     {TIPOS_CONTRATO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
+                   </TableCell>
+                   <TableCell className="font-medium whitespace-nowrap">{formatInscricaoEstadual(inscricao.inscricao_estadual) || "-"}</TableCell>
+                   <TableCell className="font-mono whitespace-nowrap">{formatCpfCnpj(inscricao.cpf_cnpj) || "-"}</TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     {isLoadingMunicipios ? "..." : resolveCidade(inscricao.cidade)}
+                   </TableCell>
+                   <TableCell className="whitespace-nowrap">{formatTelefone(inscricao.telefone) || "-"}</TableCell>
+                   <TableCell className="whitespace-nowrap">{inscricao.email || "-"}</TableCell>
+                   <TableCell className="whitespace-nowrap max-w-[200px] truncate">{inscricao.conta_bancaria || "-"}</TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     {inscricao.granja_id
+                       ? granjas?.find(e => e.id === inscricao.granja_id)?.razao_social 
+                         || "-"
+                       : "-"}
+                   </TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     {inscricao.emitente ? (
+                       <Badge variant="outline" className="gap-1">
+                         <Building2 className="h-3 w-3" />
+                         {inscricao.emitente.granja?.nome_fantasia || inscricao.emitente.granja?.razao_social || "Configurado"}
+                       </Badge>
+                     ) : (
+                       <span className="text-muted-foreground text-xs">-</span>
+                     )}
+                   </TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     {inscricao.granja_id && inscricao.emitente_id ? (
+                       <Button
+                         variant={inscricao.is_emitente_principal ? "default" : "ghost"}
+                         size="sm"
+                         className={inscricao.is_emitente_principal ? "gap-1 bg-amber-500 hover:bg-amber-600" : "gap-1"}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           handleToggleEmitentePrincipal(inscricao);
+                         }}
+                         disabled={updateInscricao.isPending}
+                       >
+                         <Crown className="h-3 w-3" />
+                         {inscricao.is_emitente_principal ? "Principal" : "Definir"}
+                       </Button>
+                     ) : (
+                       <span className="text-muted-foreground text-xs">-</span>
+                     )}
+                   </TableCell>
+                   <TableCell className="whitespace-nowrap">
+                     <span
+                       className={`px-2 py-1 rounded-full text-xs font-medium ${
+                         inscricao.ativa
+                           ? "bg-success/10 text-success"
+                           : "bg-destructive/10 text-destructive"
+                       }`}
+                     >
+                       {inscricao.ativa ? "Ativa" : "Inativa"}
+                     </span>
+                   </TableCell>
+                   <TableCell className="text-right whitespace-nowrap">
+                     {canEdit && (
+                       <div className="flex justify-end gap-2">
+                         <Button
+                           variant="ghost"
+                           size="icon"
+                           onClick={() => handleEdit(inscricao)}
+                         >
+                           <Pencil className="h-4 w-4" />
+                         </Button>
+                         <Button
+                           variant="ghost"
+                           size="icon"
+                           onClick={() => {
+                             setSelectedInscricao(inscricao);
+                             setDeleteDialogOpen(true);
+                           }}
+                         >
+                           <Trash2 className="h-4 w-4 text-destructive" />
+                         </Button>
+                       </div>
+                     )}
+                   </TableCell>
+                 </TableRow>
+               ))}
+             </TableBody>
+           </Table>
         </div>
       ) : (
         <div className="text-center py-6 border rounded-md">
