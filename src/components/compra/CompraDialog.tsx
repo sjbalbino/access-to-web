@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSilos } from '@/hooks/useSilos';
+import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
 import { useInscricoesComSaldo } from '@/hooks/useSaldosDeposito';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
