@@ -927,6 +927,18 @@ export async function resolveReferences(
         uuid = cache?.[sourceValue] || cache?.[sourceValue.toLowerCase()] || cache?.[sourceValue.replace(/^0+/, '')] || cache?.[sourceValue.replace(/^0+/, '').toLowerCase()];
       }
 
+      // Try digits-only version (e.g. "472.101.688-2" -> "4721016882")
+      if (!uuid) {
+        const sourceDigits = sourceValue.replace(/\D/g, '');
+        if (sourceDigits && sourceDigits !== sourceValue) {
+          uuid = cache?.[sourceDigits];
+          // Also try composite with digits-only
+          if (!uuid && compositeValue && compositeExtraCols.length > 0) {
+            uuid = cache?.[`${sourceDigits}|${compositeValue}`];
+          }
+        }
+      }
+
       if (uuid) {
         newRow[ref.dbColumn] = uuid;
       } else {
