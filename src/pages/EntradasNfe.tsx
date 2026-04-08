@@ -136,7 +136,7 @@ export default function EntradasNfe() {
                         {e.status !== 'finalizado' && (
                           <>
                             <Button size="icon" variant="ghost" onClick={() => finalizarMutation.mutate(e.id)} title="Finalizar e dar entrada no estoque">
-                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <CheckCircle className="h-4 w-4 text-success" />
                             </Button>
                             <Button size="icon" variant="ghost" onClick={() => setDeleteId(e.id)}>
                               <Trash2 className="h-4 w-4 text-destructive" />
