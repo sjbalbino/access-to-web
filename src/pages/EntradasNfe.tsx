@@ -160,6 +160,7 @@ export default function EntradasNfe() {
 
       <EntradaNfeFormDialog open={formOpen} onOpenChange={setFormOpen} entradaId={editId} />
       <ImportarXmlDialog open={xmlOpen} onOpenChange={setXmlOpen} />
+      <MdeDialog open={mdeOpen} onOpenChange={setMdeOpen} />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
