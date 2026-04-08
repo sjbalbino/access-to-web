@@ -853,6 +853,11 @@ export async function resolveReferences(
               cache[noLeadingZeros] = item.id;
               cache[noLeadingZeros.toLowerCase()] = item.id;
             }
+            // Index by digits-only version (e.g. "472.101.688-2" -> "4721016882")
+            const digitsOnly = key.replace(/\D/g, '');
+            if (digitsOnly && digitsOnly !== key && digitsOnly !== noLeadingZeros) {
+              cache[digitsOnly] = item.id;
+            }
             // Build composite keys (e.g. "IE|nome") for disambiguation
             if (compositeExtraCols.length > 0) {
               const compositeValues = compositeExtraCols.map(c => String(item[c] || '').trim().toLowerCase());
@@ -860,6 +865,9 @@ export async function resolveReferences(
               cache[compositeKey] = item.id;
               if (noLeadingZeros && noLeadingZeros !== key) {
                 cache[`${noLeadingZeros.toLowerCase()}|${compositeValues.join('|')}`] = item.id;
+              }
+              if (digitsOnly && digitsOnly !== key) {
+                cache[`${digitsOnly}|${compositeValues.join('|')}`] = item.id;
               }
             }
           }
@@ -917,6 +925,18 @@ export async function resolveReferences(
       // Fallback to simple key
       if (!uuid) {
         uuid = cache?.[sourceValue] || cache?.[sourceValue.toLowerCase()] || cache?.[sourceValue.replace(/^0+/, '')] || cache?.[sourceValue.replace(/^0+/, '').toLowerCase()];
+      }
+
+      // Try digits-only version (e.g. "472.101.688-2" -> "4721016882")
+      if (!uuid) {
+        const sourceDigits = sourceValue.replace(/\D/g, '');
+        if (sourceDigits && sourceDigits !== sourceValue) {
+          uuid = cache?.[sourceDigits];
+          // Also try composite with digits-only
+          if (!uuid && compositeValue && compositeExtraCols.length > 0) {
+            uuid = cache?.[`${sourceDigits}|${compositeValue}`];
+          }
+        }
       }
 
       if (uuid) {
