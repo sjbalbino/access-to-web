@@ -9,7 +9,7 @@ import {
   LayoutDashboard,
   Wheat,
   Shield,
-  Package,
+  Warehouse,
   FolderOpen,
   Ruler,
   Package,
