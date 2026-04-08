@@ -9,7 +9,7 @@ import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Package } from "lucide-
 import { useEntradasNfe, useDeleteEntradaNfe, useFinalizarEntrada } from "@/hooks/useEntradasNfe";
 import { useGranjas } from "@/hooks/useGranjas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatCurrency } from "@/lib/formatters";
+import { formatNumber } from "@/lib/formatters";
 import { EntradaNfeFormDialog } from "@/components/entradas-nfe/EntradaNfeFormDialog";
 import { ImportarXmlDialog } from "@/components/entradas-nfe/ImportarXmlDialog";
 import {
