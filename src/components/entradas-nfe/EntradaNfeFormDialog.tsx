@@ -353,7 +353,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                             <TableCell className="text-right">
                               <Input type="number" value={item.valor_unitario} onChange={(e) => updateItem(idx, 'valor_unitario', parseFloat(e.target.value) || 0)} className="w-24 text-right" step="0.01" disabled={isFinalizado} />
                             </TableCell>
-                            <TableCell className="text-right font-medium">{formatCurrency(item.valor_total || 0)}</TableCell>
+                            <TableCell className="text-right font-medium">{formatNumber(item.valor_total || 0)}</TableCell>
                             <TableCell>
                               {item.vinculado ? (
                                 <Badge variant="default" className="text-xs">Vinculado</Badge>

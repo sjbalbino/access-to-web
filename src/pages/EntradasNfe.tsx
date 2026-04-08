@@ -121,7 +121,7 @@ export default function EntradasNfe() {
                     <TableCell>{e.fornecedor?.nome || '-'}</TableCell>
                     <TableCell>{e.data_emissao ? new Date(e.data_emissao + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</TableCell>
                     <TableCell>{e.data_entrada ? new Date(e.data_entrada + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(e.valor_total || 0)}</TableCell>
+                    <TableCell className="text-right">{formatNumber(e.valor_total || 0)}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{e.modo_entrada === 'xml' ? 'XML' : 'Manual'}</Badge>
                     </TableCell>
