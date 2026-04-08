@@ -66,6 +66,9 @@ export default function EntradasNfe() {
         <PageHeader title="Entradas NF-e" description="Entrada de produtos no estoque via Notas Fiscais de compra"
           actions={
             <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setMdeOpen(true)}>
+                <Globe className="h-4 w-4 mr-2" /> Buscar no SEFAZ
+              </Button>
               <Button variant="outline" onClick={() => setXmlOpen(true)}>
                 <Upload className="h-4 w-4 mr-2" /> Importar XML
               </Button>
