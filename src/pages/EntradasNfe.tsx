@@ -41,6 +41,7 @@ export default function EntradasNfe() {
   const [busca, setBusca] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [xmlOpen, setXmlOpen] = useState(false);
+  const [mdeOpen, setMdeOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
