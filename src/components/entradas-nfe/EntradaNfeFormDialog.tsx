@@ -15,7 +15,7 @@ import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
 import { useEntradaNfe, useCreateEntradaNfe, useUpdateEntradaNfe } from "@/hooks/useEntradasNfe";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/formatters";
+import { formatNumber } from "@/lib/formatters";
 import { Plus, Trash2, Link2 } from "lucide-react";
 import { VincularProdutoDialog } from "./VincularProdutoDialog";
 
