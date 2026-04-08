@@ -43,6 +43,7 @@ import Relatorios from "./pages/Relatorios";
 import LancamentosFinanceiros from "./pages/LancamentosFinanceiros";
 import DreEstrutura from "./pages/DreEstrutura";
 import ImportarDados from "./pages/ImportarDados";
+import EntradasNfe from "./pages/EntradasNfe";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
