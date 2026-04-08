@@ -1297,6 +1297,247 @@ export type Database = {
           },
         ]
       }
+      entradas_nfe: {
+        Row: {
+          cfop_id: string | null
+          chave_acesso: string | null
+          created_at: string
+          data_emissao: string | null
+          data_entrada: string
+          fornecedor_id: string | null
+          granja_id: string
+          id: string
+          modo_entrada: string
+          natureza_operacao: string | null
+          numero_nfe: string | null
+          observacoes: string | null
+          serie: string | null
+          status: string
+          updated_at: string
+          valor_cofins: number | null
+          valor_desconto: number | null
+          valor_frete: number | null
+          valor_icms: number | null
+          valor_icms_st: number | null
+          valor_ipi: number | null
+          valor_outras_despesas: number | null
+          valor_pis: number | null
+          valor_produtos: number | null
+          valor_seguro: number | null
+          valor_total: number | null
+          xml_content: string | null
+        }
+        Insert: {
+          cfop_id?: string | null
+          chave_acesso?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_entrada?: string
+          fornecedor_id?: string | null
+          granja_id: string
+          id?: string
+          modo_entrada?: string
+          natureza_operacao?: string | null
+          numero_nfe?: string | null
+          observacoes?: string | null
+          serie?: string | null
+          status?: string
+          updated_at?: string
+          valor_cofins?: number | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_icms?: number | null
+          valor_icms_st?: number | null
+          valor_ipi?: number | null
+          valor_outras_despesas?: number | null
+          valor_pis?: number | null
+          valor_produtos?: number | null
+          valor_seguro?: number | null
+          valor_total?: number | null
+          xml_content?: string | null
+        }
+        Update: {
+          cfop_id?: string | null
+          chave_acesso?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_entrada?: string
+          fornecedor_id?: string | null
+          granja_id?: string
+          id?: string
+          modo_entrada?: string
+          natureza_operacao?: string | null
+          numero_nfe?: string | null
+          observacoes?: string | null
+          serie?: string | null
+          status?: string
+          updated_at?: string
+          valor_cofins?: number | null
+          valor_desconto?: number | null
+          valor_frete?: number | null
+          valor_icms?: number | null
+          valor_icms_st?: number | null
+          valor_ipi?: number | null
+          valor_outras_despesas?: number | null
+          valor_pis?: number | null
+          valor_produtos?: number | null
+          valor_seguro?: number | null
+          valor_total?: number | null
+          xml_content?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entradas_nfe_cfop_id_fkey"
+            columns: ["cfop_id"]
+            isOneToOne: false
+            referencedRelation: "cfops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_nfe_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_nfe_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entradas_nfe_itens: {
+        Row: {
+          aliq_cofins: number | null
+          aliq_icms: number | null
+          aliq_ipi: number | null
+          aliq_pis: number | null
+          base_cofins: number | null
+          base_icms: number | null
+          base_ipi: number | null
+          base_pis: number | null
+          cfop: string | null
+          created_at: string
+          cst_cofins: string | null
+          cst_icms: string | null
+          cst_ipi: string | null
+          cst_pis: string | null
+          data_validade: string | null
+          entrada_nfe_id: string
+          id: string
+          lote: string | null
+          produto_id: string | null
+          produto_xml_codigo: string | null
+          produto_xml_descricao: string | null
+          produto_xml_ncm: string | null
+          quantidade: number | null
+          quantidade_conferida: number | null
+          unidade_medida: string | null
+          updated_at: string
+          valor_cofins: number | null
+          valor_desconto: number | null
+          valor_frete_rateio: number | null
+          valor_icms: number | null
+          valor_ipi: number | null
+          valor_pis: number | null
+          valor_total: number | null
+          valor_unitario: number | null
+          vinculado: boolean | null
+        }
+        Insert: {
+          aliq_cofins?: number | null
+          aliq_icms?: number | null
+          aliq_ipi?: number | null
+          aliq_pis?: number | null
+          base_cofins?: number | null
+          base_icms?: number | null
+          base_ipi?: number | null
+          base_pis?: number | null
+          cfop?: string | null
+          created_at?: string
+          cst_cofins?: string | null
+          cst_icms?: string | null
+          cst_ipi?: string | null
+          cst_pis?: string | null
+          data_validade?: string | null
+          entrada_nfe_id: string
+          id?: string
+          lote?: string | null
+          produto_id?: string | null
+          produto_xml_codigo?: string | null
+          produto_xml_descricao?: string | null
+          produto_xml_ncm?: string | null
+          quantidade?: number | null
+          quantidade_conferida?: number | null
+          unidade_medida?: string | null
+          updated_at?: string
+          valor_cofins?: number | null
+          valor_desconto?: number | null
+          valor_frete_rateio?: number | null
+          valor_icms?: number | null
+          valor_ipi?: number | null
+          valor_pis?: number | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+          vinculado?: boolean | null
+        }
+        Update: {
+          aliq_cofins?: number | null
+          aliq_icms?: number | null
+          aliq_ipi?: number | null
+          aliq_pis?: number | null
+          base_cofins?: number | null
+          base_icms?: number | null
+          base_ipi?: number | null
+          base_pis?: number | null
+          cfop?: string | null
+          created_at?: string
+          cst_cofins?: string | null
+          cst_icms?: string | null
+          cst_ipi?: string | null
+          cst_pis?: string | null
+          data_validade?: string | null
+          entrada_nfe_id?: string
+          id?: string
+          lote?: string | null
+          produto_id?: string | null
+          produto_xml_codigo?: string | null
+          produto_xml_descricao?: string | null
+          produto_xml_ncm?: string | null
+          quantidade?: number | null
+          quantidade_conferida?: number | null
+          unidade_medida?: string | null
+          updated_at?: string
+          valor_cofins?: number | null
+          valor_desconto?: number | null
+          valor_frete_rateio?: number | null
+          valor_icms?: number | null
+          valor_ipi?: number | null
+          valor_pis?: number | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+          vinculado?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entradas_nfe_itens_entrada_nfe_id_fkey"
+            columns: ["entrada_nfe_id"]
+            isOneToOne: false
+            referencedRelation: "entradas_nfe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_nfe_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estoque_produtos: {
         Row: {
           created_at: string | null
