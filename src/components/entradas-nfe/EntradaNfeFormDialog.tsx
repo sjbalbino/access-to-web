@@ -64,7 +64,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const { data: entradaData } = useEntradaNfe(entradaId);
   const { data: granjas } = useGranjas();
   const { data: clientes } = useClientesFornecedores();
-  const { data: cfops } = useCfops();
+  const { cfops } = useCfops();
   const { data: produtos } = useProdutos();
   const createMutation = useCreateEntradaNfe();
   const updateMutation = useUpdateEntradaNfe();
