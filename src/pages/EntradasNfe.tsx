@@ -73,9 +73,6 @@ export default function EntradasNfe() {
             </div>
           }
         />
-            </Button>
-          </div>
-        </PageHeader>
 
         <div className="flex flex-wrap gap-4 items-end">
           <div className="w-48">
