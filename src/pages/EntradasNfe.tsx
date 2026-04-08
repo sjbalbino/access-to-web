@@ -61,13 +61,18 @@ export default function EntradasNfe() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <PageHeader title="Entradas NF-e" description="Entrada de produtos no estoque via Notas Fiscais de compra">
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setXmlOpen(true)}>
-              <Upload className="h-4 w-4 mr-2" /> Importar XML
-            </Button>
-            <Button onClick={() => { setEditId(null); setFormOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" /> Entrada Manual
+        <PageHeader title="Entradas NF-e" description="Entrada de produtos no estoque via Notas Fiscais de compra"
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setXmlOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" /> Importar XML
+              </Button>
+              <Button onClick={() => { setEditId(null); setFormOpen(true); }}>
+                <Plus className="h-4 w-4 mr-2" /> Entrada Manual
+              </Button>
+            </div>
+          }
+        />
             </Button>
           </div>
         </PageHeader>
