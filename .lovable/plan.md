@@ -1,44 +1,35 @@
 
 
-## Plano: Campos obrigatórios, formatação de IE e listagem expandida
+## Plano: Corrigir lookup de Inscrição Estadual na importação
 
-### Contexto
-O formulário de Inscrição Estadual não valida campos obrigatórios para emissão de NF-e, não formata a IE (padrão XXX.XXX.XXX-X), e a tabela de listagem não mostra todos os campos relevantes por estar estreita.
+### Problema
+A IE está armazenada no banco como `4721016882` (somente dígitos), mas a planilha traz `472.101.688-2` (com pontos e traço). O motor de importação compara os valores literalmente, sem remover caracteres não-numéricos, resultando em "não encontrado".
 
-### Alterações em `src/components/produtores/InscricoesTab.tsx`
+### Solução
+Na função `resolveReferences` em `src/lib/importacaoConfig.ts`, adicionar normalização que remove caracteres não-dígitos (`/\D/g`) ao construir as chaves do cache E ao buscar valores da planilha. Isso garante que `472.101.688-2` e `4721016882` sejam equivalentes.
 
-**1. Campos obrigatórios para NF-e com validação no Salvar**
+### Alterações em `src/lib/importacaoConfig.ts`
 
-Marcar como obrigatórios (com asterisco vermelho no Label) e validar antes de salvar:
-- Nome / Razão Social
-- Inscrição Estadual
-- CPF/CNPJ
-- Tipo de Contrato
-- Granja
-- CEP
-- Logradouro
-- Número
-- Bairro
-- UF
-- Cidade
+**1. No cache (linhas ~844-866)**: Ao indexar cada item, adicionar uma versão somente dígitos da chave:
+```typescript
+const digitsOnly = key.replace(/\D/g, '');
+if (digitsOnly && digitsOnly !== key) {
+  cache[digitsOnly] = item.id;
+  cache[digitsOnly.toLowerCase()] = item.id;
+}
+```
+Fazer o mesmo para chaves compostas.
 
-Na função `handleSave`, adicionar validação que exibe toast de erro listando os campos faltantes antes de permitir o salvamento.
+**2. No lookup (linhas ~909-920)**: Ao buscar o `sourceValue`, tentar também a versão somente dígitos:
+```typescript
+const sourceDigits = sourceValue.replace(/\D/g, '');
+// Após tentativas existentes, adicionar:
+if (!uuid && sourceDigits !== sourceValue) {
+  uuid = cache?.[sourceDigits] || cache?.[sourceDigits.toLowerCase()];
+}
+```
+E para chaves compostas, tentar `sourceDigits|compositeValue`.
 
-**2. Formatação da Inscrição Estadual**
-
-Criar função `formatInscricaoEstadual` em `src/lib/formatters.ts` que formata o valor digitado no padrão `XXX.XXX.XXX-X` (remove não-dígitos, aplica máscara progressiva). Usar essa formatação:
-- No campo Input do formulário (exibição formatada, armazena só dígitos)
-- Na coluna da tabela de listagem
-
-**3. Expandir listagem horizontalmente**
-
-- Aumentar o Dialog de Produtores para `max-w-6xl` (ou o container da aba de inscrições) para acomodar todas as colunas
-- Adicionar colunas extras na tabela: Telefone, E-mail, Conta Bancária
-- Usar `whitespace-nowrap` nas células para evitar quebra de linha
-- A tabela já tem `overflow-x-auto`, garantindo scroll horizontal se necessário
-
-### Arquivos modificados
-- `src/lib/formatters.ts` — adicionar `formatInscricaoEstadual`
-- `src/components/produtores/InscricoesTab.tsx` — validação obrigatória, formatação IE, colunas extras
-- `src/pages/Produtores.tsx` — verificar/ajustar largura do Dialog principal se necessário
+### Arquivo modificado
+- `src/lib/importacaoConfig.ts` — função `resolveReferences`
 
