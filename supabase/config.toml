@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.consulta-cnpj]
 verify_jwt = true
+
+[functions.focus-nfe-mde]
+verify_jwt = true

@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Package } from "lucide-react";
+import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Package, Globe } from "lucide-react";
 import { useEntradasNfe, useDeleteEntradaNfe, useFinalizarEntrada } from "@/hooks/useEntradasNfe";
 import { useGranjas } from "@/hooks/useGranjas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatNumber } from "@/lib/formatters";
 import { EntradaNfeFormDialog } from "@/components/entradas-nfe/EntradaNfeFormDialog";
 import { ImportarXmlDialog } from "@/components/entradas-nfe/ImportarXmlDialog";
+import { MdeDialog } from "@/components/entradas-nfe/MdeDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,7 @@ export default function EntradasNfe() {
   const [busca, setBusca] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [xmlOpen, setXmlOpen] = useState(false);
+  const [mdeOpen, setMdeOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -64,6 +66,9 @@ export default function EntradasNfe() {
         <PageHeader title="Entradas NF-e" description="Entrada de produtos no estoque via Notas Fiscais de compra"
           actions={
             <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setMdeOpen(true)}>
+                <Globe className="h-4 w-4 mr-2" /> Buscar no SEFAZ
+              </Button>
               <Button variant="outline" onClick={() => setXmlOpen(true)}>
                 <Upload className="h-4 w-4 mr-2" /> Importar XML
               </Button>
@@ -155,6 +160,7 @@ export default function EntradasNfe() {
 
       <EntradaNfeFormDialog open={formOpen} onOpenChange={setFormOpen} entradaId={editId} />
       <ImportarXmlDialog open={xmlOpen} onOpenChange={setXmlOpen} />
+      <MdeDialog open={mdeOpen} onOpenChange={setMdeOpen} />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
