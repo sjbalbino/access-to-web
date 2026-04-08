@@ -12,7 +12,7 @@ import {
   Package,
   FolderOpen,
   Ruler,
-  Warehouse,
+  Package,
   Truck,
   Droplets,
   Crown,
