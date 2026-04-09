@@ -38,6 +38,7 @@ async function getEmitenteCredentials(granjaId: string) {
 async function getGranjaCnpj(granjaId: string) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  // Try granja first
   const { data, error } = await supabase
     .from("granjas")
     .select("cnpj, cpf")
@@ -46,8 +47,23 @@ async function getGranjaCnpj(granjaId: string) {
 
   if (error) throw new Error("Erro ao buscar granja: " + error.message);
 
-  const cnpj = (data.cnpj || data.cpf || "").replace(/\D/g, "");
-  if (!cnpj) throw new Error("Granja não possui CNPJ/CPF cadastrado.");
+  let cnpj = (data.cnpj || data.cpf || "").replace(/\D/g, "");
+
+  // Fallback: get from inscricao emitente principal
+  if (!cnpj) {
+    const { data: insc } = await supabase
+      .from("inscricoes_produtor")
+      .select("cpf_cnpj")
+      .eq("granja_id", granjaId)
+      .eq("is_emitente_principal", true)
+      .maybeSingle();
+
+    if (insc?.cpf_cnpj) {
+      cnpj = insc.cpf_cnpj.replace(/\D/g, "");
+    }
+  }
+
+  if (!cnpj) throw new Error("Granja não possui CNPJ/CPF cadastrado. Verifique o cadastro da granja ou da inscrição emitente principal.");
 
   return cnpj;
 }
