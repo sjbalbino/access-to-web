@@ -55,6 +55,7 @@ import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { CurrencyInput, formatBrazilianNumber } from "@/components/ui/currency-input";
 import { QuantityInput, formatBrazilianQuantity } from "@/components/ui/quantity-input";
 import { cn } from "@/lib/utils";
+import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { calculateTaxes, type TaxCalculatorInput } from "@/lib/taxCalculator";
 import { getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
 import { useNotasFiscaisDuplicatas } from "@/hooks/useNotasFiscaisDuplicatas";
