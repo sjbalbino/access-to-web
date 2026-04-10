@@ -377,7 +377,32 @@ export default function NotaFiscalForm() {
     }
   }, [existingNota]);
 
-  // Auto-fill natureza_operacao from CFOP
+  // Apply contra-nota data from navigation state
+  useEffect(() => {
+    if (contraNotaData && !isEditing) {
+      setFormData((prev) => ({
+        ...prev,
+        operacao: contraNotaData.operacao,
+        finalidade: contraNotaData.finalidade,
+        natureza_operacao: contraNotaData.natureza_operacao,
+        dest_tipo: contraNotaData.dest_tipo,
+        dest_cpf_cnpj: contraNotaData.dest_cpf_cnpj,
+        dest_nome: contraNotaData.dest_nome,
+        dest_ie: contraNotaData.dest_ie,
+        dest_email: contraNotaData.dest_email || "",
+        dest_logradouro: contraNotaData.dest_logradouro,
+        dest_numero: contraNotaData.dest_numero,
+        dest_complemento: contraNotaData.dest_complemento,
+        dest_bairro: contraNotaData.dest_bairro,
+        dest_cidade: contraNotaData.dest_cidade,
+        dest_uf: contraNotaData.dest_uf,
+        dest_cep: contraNotaData.dest_cep,
+      }));
+      // Clear the state so it doesn't re-apply
+      window.history.replaceState({}, document.title);
+    }
+  }, [contraNotaData, isEditing]);
+
   useEffect(() => {
     if (formData.cfop_id) {
       const cfop = cfops.find((c) => c.id === formData.cfop_id);
