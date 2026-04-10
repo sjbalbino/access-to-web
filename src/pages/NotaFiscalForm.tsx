@@ -200,6 +200,12 @@ export default function NotaFiscalForm() {
   });
   const [isNotaReferenciadaDialogOpen, setIsNotaReferenciadaDialogOpen] = useState(false);
   const [editingNotaReferenciada, setEditingNotaReferenciada] = useState<(NotaReferenciadaTemp & { id: string }) | null>(null);
+  const [pendingContraNotaItems, setPendingContraNotaItems] = useState<ContraNotaData["itens"] | null>(
+    contraNotaData?.itens?.length ? contraNotaData.itens : null
+  );
+  const [pendingContraNotaChave, setPendingContraNotaChave] = useState<string | null>(
+    contraNotaData?.chaveAcesso || null
+  );
 
   const existingNota = isEditing ? notasFiscais.find((n) => n.id === id) : null;
   
