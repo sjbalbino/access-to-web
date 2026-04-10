@@ -30,7 +30,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw } from "lucide-react";
+import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
@@ -123,9 +124,14 @@ export default function NotasFiscais() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isCartaCorrecaoDialogOpen, setIsCartaCorrecaoDialogOpen] = useState(false);
+  const [isContraNotaDialogOpen, setIsContraNotaDialogOpen] = useState(false);
   const [selectedNota, setSelectedNota] = useState<any>(null);
   const [justificativa, setJustificativa] = useState("");
   const [correcao, setCorrecao] = useState("");
+
+  const handleContraNotaSelect = (data: ContraNotaData) => {
+    navigate("/notas-fiscais/nova", { state: { contraNotaData: data } });
+  };
 
   const filteredNotas = notasFiscais.filter((nota) => {
     const matchesSearch =
@@ -229,10 +235,16 @@ export default function NotasFiscais() {
             />
           </div>
           {canEdit && (
-            <Button onClick={() => navigate("/notas-fiscais/nova")}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova NF-e
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsContraNotaDialogOpen(true)}>
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Contra-Nota
+              </Button>
+              <Button onClick={() => navigate("/notas-fiscais/nova")}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova NF-e
+              </Button>
+            </div>
           )}
         </div>
 
@@ -422,6 +434,12 @@ export default function NotasFiscais() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {/* Dialog de Contra-Nota */}
+        <ContraNotaDialog
+          open={isContraNotaDialogOpen}
+          onOpenChange={setIsContraNotaDialogOpen}
+          onSelect={handleContraNotaSelect}
+        />
       </div>
     </AppLayout>
   );
