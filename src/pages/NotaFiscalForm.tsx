@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -61,7 +61,7 @@ import { getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
 import { useNotasFiscaisDuplicatas } from "@/hooks/useNotasFiscaisDuplicatas";
 import { useNotasReferenciadas, useCreateNotaReferenciada, useDeleteNotaReferenciada, useUpdateNotaReferenciada } from "@/hooks/useNotasReferenciadas";
 import { NotaReferenciadaForm, NotaReferenciadaTemp, NotaReferenciadaEdit } from "@/components/deposito/NotaReferenciadaForm";
-
+import type { ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 const OPERACOES = [
   { value: 0, label: "Entrada" },
   { value: 1, label: "Saída" },
@@ -151,7 +151,9 @@ const formatCurrency = (value: number | null) => {
 export default function NotaFiscalForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const isEditing = !!id;
+  const contraNotaData = (location.state as any)?.contraNotaData as ContraNotaData | undefined;
 
   const { notasFiscais, createNotaFiscal, updateNotaFiscal, isLoading: isLoadingNotas } = useNotasFiscais();
   const { itens, createItem, updateItem, deleteItem, isLoading: isLoadingItens } = useNotaFiscalItens(id || null);
