@@ -55,6 +55,7 @@ import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { CurrencyInput, formatBrazilianNumber } from "@/components/ui/currency-input";
 import { QuantityInput, formatBrazilianQuantity } from "@/components/ui/quantity-input";
 import { cn } from "@/lib/utils";
+import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { calculateTaxes, type TaxCalculatorInput } from "@/lib/taxCalculator";
 import { getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
 import { useNotasFiscaisDuplicatas } from "@/hooks/useNotasFiscaisDuplicatas";
@@ -1292,26 +1293,24 @@ export default function NotaFiscalForm() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2 md:col-span-2">
+           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="cfop_id">CFOP</Label>
-            <Select
+            <ComboboxFilter
               value={formData.cfop_id || ""}
               onValueChange={(value) => setFormData({ ...formData, cfop_id: value })}
+              options={cfops
+                .filter((c) => c.ativo && (formData.operacao === 1 ? c.tipo === "saida" : c.tipo === "entrada"))
+                .map((cfop) => ({
+                  value: cfop.id,
+                  label: `${cfop.codigo} - ${cfop.descricao}`,
+                }))}
+              placeholder="Selecione o CFOP"
+              searchPlaceholder="Buscar CFOP..."
+              emptyText="Nenhum CFOP encontrado"
+              allLabel="Todos"
               disabled={isReadOnly}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o CFOP" />
-              </SelectTrigger>
-              <SelectContent>
-                {cfops
-                  .filter((c) => c.ativo && (formData.operacao === 1 ? c.tipo === "saida" : c.tipo === "entrada"))
-                  .map((cfop) => (
-                    <SelectItem key={cfop.id} value={cfop.id}>
-                      {cfop.codigo} - {cfop.descricao.substring(0, 60)}...
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+              popoverWidth="w-[500px]"
+            />
           </div>
         </div>
 
@@ -3024,11 +3023,20 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_cfop">CFOP</Label>
-                  <Input
-                    id="item_cfop"
+                  <ComboboxFilter
                     value={itemFormData.cfop || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, cfop: e.target.value })}
-                    maxLength={4}
+                    onValueChange={(value) => setItemFormData({ ...itemFormData, cfop: value })}
+                    options={cfops
+                      .filter((c) => c.ativo && (formData.operacao === 1 ? c.tipo === "saida" : c.tipo === "entrada"))
+                      .map((cfop) => ({
+                        value: cfop.codigo,
+                        label: `${cfop.codigo} - ${cfop.descricao}`,
+                      }))}
+                    placeholder="CFOP"
+                    searchPlaceholder="Buscar..."
+                    emptyText="Nenhum"
+                    allLabel="Todos"
+                    popoverWidth="w-[400px]"
                   />
                 </div>
                 <div className="space-y-2">
