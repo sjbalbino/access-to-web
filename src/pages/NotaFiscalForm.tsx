@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -61,7 +61,7 @@ import { getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
 import { useNotasFiscaisDuplicatas } from "@/hooks/useNotasFiscaisDuplicatas";
 import { useNotasReferenciadas, useCreateNotaReferenciada, useDeleteNotaReferenciada, useUpdateNotaReferenciada } from "@/hooks/useNotasReferenciadas";
 import { NotaReferenciadaForm, NotaReferenciadaTemp, NotaReferenciadaEdit } from "@/components/deposito/NotaReferenciadaForm";
-
+import type { ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 const OPERACOES = [
   { value: 0, label: "Entrada" },
   { value: 1, label: "Saída" },
@@ -151,7 +151,9 @@ const formatCurrency = (value: number | null) => {
 export default function NotaFiscalForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const isEditing = !!id;
+  const contraNotaData = (location.state as any)?.contraNotaData as ContraNotaData | undefined;
 
   const { notasFiscais, createNotaFiscal, updateNotaFiscal, isLoading: isLoadingNotas } = useNotasFiscais();
   const { itens, createItem, updateItem, deleteItem, isLoading: isLoadingItens } = useNotaFiscalItens(id || null);
@@ -198,6 +200,12 @@ export default function NotaFiscalForm() {
   });
   const [isNotaReferenciadaDialogOpen, setIsNotaReferenciadaDialogOpen] = useState(false);
   const [editingNotaReferenciada, setEditingNotaReferenciada] = useState<(NotaReferenciadaTemp & { id: string }) | null>(null);
+  const [pendingContraNotaItems, setPendingContraNotaItems] = useState<ContraNotaData["itens"] | null>(
+    contraNotaData?.itens?.length ? contraNotaData.itens : null
+  );
+  const [pendingContraNotaChave, setPendingContraNotaChave] = useState<string | null>(
+    contraNotaData?.chaveAcesso || null
+  );
 
   const existingNota = isEditing ? notasFiscais.find((n) => n.id === id) : null;
   
@@ -375,7 +383,123 @@ export default function NotaFiscalForm() {
     }
   }, [existingNota]);
 
-  // Auto-fill natureza_operacao from CFOP
+  // Apply contra-nota data from navigation state
+  useEffect(() => {
+    if (contraNotaData && !isEditing) {
+      setFormData((prev) => ({
+        ...prev,
+        operacao: contraNotaData.operacao,
+        finalidade: contraNotaData.finalidade,
+        natureza_operacao: contraNotaData.natureza_operacao,
+        dest_tipo: contraNotaData.dest_tipo,
+        dest_cpf_cnpj: contraNotaData.dest_cpf_cnpj,
+        dest_nome: contraNotaData.dest_nome,
+        dest_ie: contraNotaData.dest_ie,
+        dest_email: contraNotaData.dest_email || "",
+        dest_logradouro: contraNotaData.dest_logradouro,
+        dest_numero: contraNotaData.dest_numero,
+        dest_complemento: contraNotaData.dest_complemento,
+        dest_bairro: contraNotaData.dest_bairro,
+        dest_cidade: contraNotaData.dest_cidade,
+        dest_uf: contraNotaData.dest_uf,
+        dest_cep: contraNotaData.dest_cep,
+      }));
+      // Clear the state so it doesn't re-apply
+      window.history.replaceState({}, document.title);
+    }
+  }, [contraNotaData, isEditing]);
+
+  // After draft is saved and we have an ID, create pending contra-nota items and reference
+  useEffect(() => {
+    if (!id || !isEditing) return;
+    
+    const createPendingItems = async () => {
+      if (pendingContraNotaItems && pendingContraNotaItems.length > 0) {
+        const itemsToCreate = [...pendingContraNotaItems];
+        setPendingContraNotaItems(null);
+        
+        for (let i = 0; i < itemsToCreate.length; i++) {
+          const item = itemsToCreate[i];
+          try {
+            await createItem.mutateAsync({
+              nota_fiscal_id: id,
+              numero_item: i + 1,
+              produto_id: null,
+              codigo: item.codigo,
+              descricao: item.descricao,
+              ncm: item.ncm,
+              cfop: item.cfop,
+              unidade: item.unidade,
+              quantidade: item.quantidade,
+              valor_unitario: item.valor_unitario,
+              valor_total: item.valor_total,
+              valor_desconto: item.valor_desconto,
+              origem: 0,
+              cst_icms: item.cst_icms,
+              base_icms: item.base_icms,
+              aliq_icms: item.aliq_icms,
+              valor_icms: item.valor_icms,
+              cst_pis: item.cst_pis,
+              base_pis: item.base_pis,
+              aliq_pis: item.aliq_pis,
+              valor_pis: item.valor_pis,
+              cst_cofins: item.cst_cofins,
+              base_cofins: item.base_cofins,
+              aliq_cofins: item.aliq_cofins,
+              valor_cofins: item.valor_cofins,
+              cst_ipi: item.cst_ipi,
+              base_ipi: item.base_ipi,
+              aliq_ipi: item.aliq_ipi,
+              valor_ipi: item.valor_ipi,
+              cst_ibs: null,
+              base_ibs: null,
+              aliq_ibs: null,
+              valor_ibs: null,
+              cclass_trib_ibs: null,
+              cst_cbs: null,
+              base_cbs: null,
+              aliq_cbs: null,
+              valor_cbs: null,
+              cclass_trib_cbs: null,
+              cst_is: null,
+              base_is: null,
+              aliq_is: null,
+              valor_is: null,
+              info_adicional: null,
+            });
+          } catch (err) {
+            console.error("Erro ao criar item contra-nota:", err);
+          }
+        }
+        toast.success(`${itemsToCreate.length} item(ns) adicionados da nota referenciada`);
+      }
+
+      if (pendingContraNotaChave) {
+        const chave = pendingContraNotaChave;
+        setPendingContraNotaChave(null);
+        try {
+          await createNotaReferenciada.mutateAsync({
+            nota_fiscal_id: id,
+            tipo: "nfe",
+            chave_nfe: chave,
+            nfp_uf: null,
+            nfp_aamm: null,
+            nfp_cnpj: null,
+            nfp_cpf: null,
+            nfp_ie: null,
+            nfp_modelo: null,
+            nfp_serie: null,
+            nfp_numero: null,
+          });
+        } catch (err) {
+          console.error("Erro ao criar nota referenciada:", err);
+        }
+      }
+    };
+
+    createPendingItems();
+  }, [id, isEditing]);
+
   useEffect(() => {
     if (formData.cfop_id) {
       const cfop = cfops.find((c) => c.id === formData.cfop_id);
