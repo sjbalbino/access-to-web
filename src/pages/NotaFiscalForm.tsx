@@ -3023,11 +3023,20 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_cfop">CFOP</Label>
-                  <Input
-                    id="item_cfop"
+                  <ComboboxFilter
                     value={itemFormData.cfop || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, cfop: e.target.value })}
-                    maxLength={4}
+                    onValueChange={(value) => setItemFormData({ ...itemFormData, cfop: value })}
+                    options={cfops
+                      .filter((c) => c.ativo && (formData.operacao === 1 ? c.tipo === "saida" : c.tipo === "entrada"))
+                      .map((cfop) => ({
+                        value: cfop.codigo,
+                        label: `${cfop.codigo} - ${cfop.descricao}`,
+                      }))}
+                    placeholder="CFOP"
+                    searchPlaceholder="Buscar..."
+                    emptyText="Nenhum"
+                    allLabel="Todos"
+                    popoverWidth="w-[400px]"
                   />
                 </div>
                 <div className="space-y-2">
