@@ -409,6 +409,97 @@ export default function NotaFiscalForm() {
     }
   }, [contraNotaData, isEditing]);
 
+  // After draft is saved and we have an ID, create pending contra-nota items and reference
+  useEffect(() => {
+    if (!id || !isEditing) return;
+    
+    const createPendingItems = async () => {
+      if (pendingContraNotaItems && pendingContraNotaItems.length > 0) {
+        const itemsToCreate = [...pendingContraNotaItems];
+        setPendingContraNotaItems(null);
+        
+        for (let i = 0; i < itemsToCreate.length; i++) {
+          const item = itemsToCreate[i];
+          try {
+            await createItem.mutateAsync({
+              nota_fiscal_id: id,
+              numero_item: i + 1,
+              produto_id: null,
+              codigo: item.codigo,
+              descricao: item.descricao,
+              ncm: item.ncm,
+              cfop: item.cfop,
+              unidade: item.unidade,
+              quantidade: item.quantidade,
+              valor_unitario: item.valor_unitario,
+              valor_total: item.valor_total,
+              valor_desconto: item.valor_desconto,
+              origem: 0,
+              cst_icms: item.cst_icms,
+              base_icms: item.base_icms,
+              aliq_icms: item.aliq_icms,
+              valor_icms: item.valor_icms,
+              cst_pis: item.cst_pis,
+              base_pis: item.base_pis,
+              aliq_pis: item.aliq_pis,
+              valor_pis: item.valor_pis,
+              cst_cofins: item.cst_cofins,
+              base_cofins: item.base_cofins,
+              aliq_cofins: item.aliq_cofins,
+              valor_cofins: item.valor_cofins,
+              cst_ipi: item.cst_ipi,
+              base_ipi: item.base_ipi,
+              aliq_ipi: item.aliq_ipi,
+              valor_ipi: item.valor_ipi,
+              cst_ibs: null,
+              base_ibs: null,
+              aliq_ibs: null,
+              valor_ibs: null,
+              cclass_trib_ibs: null,
+              cst_cbs: null,
+              base_cbs: null,
+              aliq_cbs: null,
+              valor_cbs: null,
+              cclass_trib_cbs: null,
+              cst_is: null,
+              base_is: null,
+              aliq_is: null,
+              valor_is: null,
+              info_adicional: null,
+            });
+          } catch (err) {
+            console.error("Erro ao criar item contra-nota:", err);
+          }
+        }
+        toast.success(`${itemsToCreate.length} item(ns) adicionados da nota referenciada`);
+      }
+
+      if (pendingContraNotaChave) {
+        const chave = pendingContraNotaChave;
+        setPendingContraNotaChave(null);
+        try {
+          await createNotaReferenciada.mutateAsync({
+            nota_fiscal_id: id,
+            tipo: "nfe",
+            chave_nfe: chave,
+            nfp_uf: null,
+            nfp_aamm: null,
+            nfp_cnpj: null,
+            nfp_cpf: null,
+            nfp_ie: null,
+            nfp_modelo: null,
+            nfp_serie: null,
+            nfp_numero: null,
+          });
+        } catch (err) {
+          console.error("Erro ao criar nota referenciada:", err);
+        }
+      }
+    };
+
+    createPendingItems();
+  }, [id, isEditing]);
+
   useEffect(() => {
     if (formData.cfop_id) {
       const cfop = cfops.find((c) => c.id === formData.cfop_id);
