@@ -1293,26 +1293,24 @@ export default function NotaFiscalForm() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2 md:col-span-2">
+           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="cfop_id">CFOP</Label>
-            <Select
+            <ComboboxFilter
               value={formData.cfop_id || ""}
               onValueChange={(value) => setFormData({ ...formData, cfop_id: value })}
+              options={cfops
+                .filter((c) => c.ativo && (formData.operacao === 1 ? c.tipo === "saida" : c.tipo === "entrada"))
+                .map((cfop) => ({
+                  value: cfop.id,
+                  label: `${cfop.codigo} - ${cfop.descricao}`,
+                }))}
+              placeholder="Selecione o CFOP"
+              searchPlaceholder="Buscar CFOP..."
+              emptyText="Nenhum CFOP encontrado"
+              allLabel="Todos"
               disabled={isReadOnly}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o CFOP" />
-              </SelectTrigger>
-              <SelectContent>
-                {cfops
-                  .filter((c) => c.ativo && (formData.operacao === 1 ? c.tipo === "saida" : c.tipo === "entrada"))
-                  .map((cfop) => (
-                    <SelectItem key={cfop.id} value={cfop.id}>
-                      {cfop.codigo} - {cfop.descricao.substring(0, 60)}...
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+              popoverWidth="w-[500px]"
+            />
           </div>
         </div>
 
