@@ -1,38 +1,42 @@
-## Problema
+# Causa raiz
 
-Após o super admin trocar para "UMBU AGROPECUARIA" pela tela `/selecionar-empresa`, o sistema continua mostrando dados da "AGROPECUARIA GRINGS" (e de todas as outras empresas).
-
-## Causa raiz
-
-As políticas RLS e a função `granja_belongs_to_tenant` contêm um bypass incondicional para super admin:
+A tabela `granjas` tem **UNIQUE global** em `codigo` e em `cnpj`:
 
 ```
-... OR is_super_admin(auth.uid()) ...
+empresas_codigo_key  UNIQUE (codigo)
+empresas_cnpj_key    UNIQUE (cnpj)
 ```
 
-Como `is_super_admin()` agora retorna `true` sempre (baseado em `is_super_admin_original`), o super admin enxerga TODOS os tenants mesmo depois de selecionar uma empresa específica. O `profile.tenant_id` é atualizado, mas o RLS ignora.
+Estado atual no banco:
 
-## Solução
+| codigo | razao_social          | tenant                  |
+|--------|-----------------------|-------------------------|
+| 1      | AGROPECUARIA GRINGS   | AGROPECUARIA GRINGS     |
+| 2      | UMBU AGROPECUARIA-JUR | UMBU AGROPECUARIA S.A.  |
+| 3      | CASA DONA IRENE       | UMBU AGROPECUARIA S.A.  |
 
-Tornar o bypass de super admin **condicional**: só vê tudo quando `profile.tenant_id IS NULL` (Modo Super Admin). Quando escolhe uma empresa, comporta-se como um usuário daquele tenant.
+Você importou 3 granjas para o tenant **UMBU**, mas a 3ª (provavelmente com `codigo = 1`, mesmo código da AGROPECUARIA GRINGS já existente em outro tenant) foi bloqueada pela constraint global. Por isso só 2 entraram. Como a importação faz fallback linha-a-linha em silêncio, o erro foi acumulado em `importErrors`, mas o resumo mostrou apenas "X importados".
 
-### Migração
+Em sistema multi-tenant, código e CNPJ de granja devem ser únicos **por tenant**, não globalmente — duas empresas contratantes diferentes podem ter granjas com o mesmo código legado ou até mesmo o mesmo CNPJ (cenário raro mas possível em reorganizações societárias).
 
-1. **Atualizar `granja_belongs_to_tenant(_granja_id)`**:
-   - Trocar `OR is_super_admin(auth.uid())` por `OR (is_super_admin(auth.uid()) AND get_user_tenant_id() IS NULL)`.
-   - Assim, todas as tabelas filhas (clientes, colheitas, contratos, vendas, NFe, devoluções, compras, inscrições, emitentes, estoque, etc.) ficam automaticamente escopadas.
+# Mudança proposta
 
-2. **Atualizar as 4 políticas de `granjas`** (SELECT/INSERT/UPDATE/DELETE):
-   - Trocar `OR is_super_admin(auth.uid())` por `OR (is_super_admin(auth.uid()) AND get_user_tenant_id() IS NULL)`.
+## Banco (migration)
 
-3. **Não mexer** nas políticas de `tenants` — super admin precisa continuar vendo/gerenciando todos os tenants para poder trocar entre eles.
+1. Remover constraints globais:
+   - `ALTER TABLE granjas DROP CONSTRAINT empresas_codigo_key`
+   - `ALTER TABLE granjas DROP CONSTRAINT empresas_cnpj_key`
 
-### Comportamento resultante
+2. Criar índices únicos compostos parciais (ignoram NULL):
+   - `CREATE UNIQUE INDEX granjas_tenant_codigo_uniq ON granjas (tenant_id, codigo) WHERE codigo IS NOT NULL`
+   - `CREATE UNIQUE INDEX granjas_tenant_cnpj_uniq ON granjas (tenant_id, cnpj) WHERE cnpj IS NOT NULL`
 
-- **Super admin com `tenant_id = NULL`** (Modo Super Admin): vê tudo, como hoje.
-- **Super admin com `tenant_id = X`**: vê apenas dados do tenant X, exatamente como um usuário comum daquele tenant. Novos registros criados ficam vinculados ao tenant X.
-- **Usuários comuns**: nenhum impacto.
+Isso permite repetir `codigo`/`cnpj` entre tenants distintos, mas mantém unicidade dentro de cada tenant.
 
-### Sem mudanças de código frontend
+## Frontend (nenhuma alteração)
 
-A página `/selecionar-empresa`, o `AuthContext` e o seletor no header já estão corretos — basta corrigir o RLS no backend.
+A lógica de importação já injeta `tenant_id` corretamente. Após a migration, basta reimportar a planilha — a 3ª granja entrará normalmente.
+
+# Observação
+
+A importação atual silencia erros parciais no toast (`Importação parcial: X importados, Y erros`). Os erros ficam visíveis no painel do diálogo (`importErrors`), então da próxima vez confira o painel após a importação para ver linhas rejeitadas.
