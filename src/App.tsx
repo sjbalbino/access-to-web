@@ -16,6 +16,7 @@ import ControleLavoura from "./pages/ControleLavoura";
 import Auth from "./pages/Auth";
 import Usuarios from "./pages/Usuarios";
 import Tenants from "./pages/Tenants";
+import SelecionarEmpresa from "./pages/SelecionarEmpresa";
 import ClientesFornecedores from "./pages/ClientesFornecedores";
 import Produtos from "./pages/Produtos";
 import GruposProdutos from "./pages/GruposProdutos";
@@ -97,6 +98,7 @@ const App = () => (
               <Route path="/importar-dados" element={<ProtectedRoute requireAdmin><ImportarDados /></ProtectedRoute>} />
               <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />
               <Route path="/tenants" element={<ProtectedRoute requireSuperAdmin><Tenants /></ProtectedRoute>} />
+              <Route path="/selecionar-empresa" element={<ProtectedRoute><SelecionarEmpresa /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </TabsProvider>

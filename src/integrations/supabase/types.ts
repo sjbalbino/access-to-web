@@ -3455,6 +3455,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          is_super_admin_original: boolean
           nome: string | null
           tenant_id: string | null
           updated_at: string
@@ -3465,6 +3466,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id: string
+          is_super_admin_original?: boolean
           nome?: string | null
           tenant_id?: string | null
           updated_at?: string
@@ -3475,6 +3477,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_super_admin_original?: boolean
           nome?: string | null
           tenant_id?: string | null
           updated_at?: string
