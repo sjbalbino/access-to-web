@@ -16,6 +16,7 @@ import ControleLavoura from "./pages/ControleLavoura";
 import Auth from "./pages/Auth";
 import Usuarios from "./pages/Usuarios";
 import Tenants from "./pages/Tenants";
+import SelecionarEmpresa from "./pages/SelecionarEmpresa";
 import ClientesFornecedores from "./pages/ClientesFornecedores";
 import Produtos from "./pages/Produtos";
 import GruposProdutos from "./pages/GruposProdutos";
