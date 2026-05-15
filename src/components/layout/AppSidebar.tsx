@@ -137,8 +137,13 @@ const roleLabels: Record<string, string> = {
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
   const { openTab } = useTabs();
+  const { data: tenants = [] } = useTenants();
+  const empresaAtiva = profile?.tenant_id
+    ? tenants.find((t) => t.id === profile.tenant_id)
+    : null;
 
   // Função para verificar se um grupo contém a rota ativa
   const isGroupActive = (items: MenuItem[]) =>
