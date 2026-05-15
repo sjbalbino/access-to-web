@@ -60,8 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (roleData) {
           setRole(roleData.role as AppRole);
-          // Super admin is an admin without a tenant
-          setIsSuperAdmin(roleData.role === "admin" && profileData.tenant_id === null);
+          // Super admin é determinado pela coluna is_super_admin_original (preserva identidade ao trocar empresa)
+          setIsSuperAdmin(!!(profileData as any).is_super_admin_original);
         }
       }
     } catch (error) {
