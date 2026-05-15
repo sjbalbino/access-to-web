@@ -557,6 +557,25 @@ export function AppSidebar() {
               </Badge>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            {isSuperAdmin && (
+              <>
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                  Empresa ativa
+                </DropdownMenuLabel>
+                <DropdownMenuItem className="flex-col items-start gap-0">
+                  <span className="text-sm font-medium">
+                    {empresaAtiva
+                      ? empresaAtiva.nome_fantasia || empresaAtiva.razao_social
+                      : "Todas as empresas (Super Admin)"}
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/selecionar-empresa")}>
+                  <Repeat className="mr-2 h-4 w-4" />
+                  Trocar empresa contratante
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem onClick={signOut} className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Sair
