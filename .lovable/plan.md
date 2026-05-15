@@ -1,51 +1,38 @@
-## Objetivo
+## Problema
 
-Permitir que o super admin (admin sem tenant fixo) troque qual empresa contratante está atendendo. A troca atualiza o `tenant_id` do próprio profile do super admin no banco, fazendo com que todas as RLS passem a filtrar pelos dados daquela empresa. Também deve existir uma forma de "voltar" ao modo super admin (sem tenant).
+Após o super admin trocar para "UMBU AGROPECUARIA" pela tela `/selecionar-empresa`, o sistema continua mostrando dados da "AGROPECUARIA GRINGS" (e de todas as outras empresas).
 
-## Importante sobre o modelo atual
+## Causa raiz
 
-- Hoje, super admin = `role admin` + `profiles.tenant_id IS NULL`. A função `is_super_admin()` depende disso.
-- Se trocarmos `profiles.tenant_id` para um tenant real, o usuário **deixa de ser super admin** enquanto estiver "dentro" daquela empresa (passa a se comportar como admin daquele tenant). Isso é o comportamento desejado pela opção escolhida ("trocar permanentemente").
-- Para conseguir voltar ao modo super admin, precisamos lembrar em algum lugar que ele **é** super admin originalmente. Solução: nova coluna `profiles.is_super_admin_original BOOLEAN DEFAULT false`, marcada `true` para os super admins atuais. A função `is_super_admin()` passa a olhar essa coluna em vez de `tenant_id IS NULL`.
+As políticas RLS e a função `granja_belongs_to_tenant` contêm um bypass incondicional para super admin:
 
-## Mudanças no banco (migration)
+```
+... OR is_super_admin(auth.uid()) ...
+```
 
-1. Adicionar coluna `profiles.is_super_admin_original BOOLEAN NOT NULL DEFAULT false`.
-2. Backfill: marcar `true` para todos os profiles que hoje são `admin` + `tenant_id IS NULL`.
-3. Atualizar a função `is_super_admin(_user_id)` para retornar `true` quando `profiles.is_super_admin_original = true` (independente do tenant_id atual).
-4. Trigger `handle_new_user`: quando o role criado é `admin` e `tenant_id` vier null, marcar `is_super_admin_original = true`.
-5. Política RLS de UPDATE em `profiles`: permitir que o próprio super admin original atualize seu `tenant_id` (já existe update do próprio profile, mas conferir e ajustar se necessário).
+Como `is_super_admin()` agora retorna `true` sempre (baseado em `is_super_admin_original`), o super admin enxerga TODOS os tenants mesmo depois de selecionar uma empresa específica. O `profile.tenant_id` é atualizado, mas o RLS ignora.
 
-## Mudanças no frontend
+## Solução
 
-### Hook / contexto
-- `AuthContext`: usar a nova coluna `is_super_admin_original` para determinar `isSuperAdmin` (em vez de `tenant_id IS NULL`). Continuar expondo `profile.tenant_id` como "empresa ativa".
+Tornar o bypass de super admin **condicional**: só vê tudo quando `profile.tenant_id IS NULL` (Modo Super Admin). Quando escolhe uma empresa, comporta-se como um usuário daquele tenant.
 
-### Nova página `/selecionar-empresa`
-- Rota protegida só para `isSuperAdmin`.
-- Lista todas as empresas contratantes (`useTenants`) em cards/lista com busca.
-- Card destacado "Modo Super Admin (todas as empresas)" para voltar ao `tenant_id = null`.
-- Indica visualmente qual está ativa hoje.
-- Ao clicar: chama `supabase.from('profiles').update({ tenant_id }).eq('id', user.id)`, invalida o React Query, recarrega o `AuthContext` e redireciona para `/`.
+### Migração
 
-### Acesso à página
-- Adicionar rota em `App.tsx`.
-- Adicionar item no menu do usuário (header/sidebar) "Trocar empresa contratante" visível só para super admin.
-- No login, se super admin não tiver tenant ativo, redirecionar automaticamente para `/selecionar-empresa` (opcional, pode-se manter livre).
+1. **Atualizar `granja_belongs_to_tenant(_granja_id)`**:
+   - Trocar `OR is_super_admin(auth.uid())` por `OR (is_super_admin(auth.uid()) AND get_user_tenant_id() IS NULL)`.
+   - Assim, todas as tabelas filhas (clientes, colheitas, contratos, vendas, NFe, devoluções, compras, inscrições, emitentes, estoque, etc.) ficam automaticamente escopadas.
 
-### Indicador na UI
-- Mostrar no header o nome da empresa ativa quando o super admin estiver "dentro" de um tenant, com um botão rápido para trocar.
+2. **Atualizar as 4 políticas de `granjas`** (SELECT/INSERT/UPDATE/DELETE):
+   - Trocar `OR is_super_admin(auth.uid())` por `OR (is_super_admin(auth.uid()) AND get_user_tenant_id() IS NULL)`.
 
-## Arquivos previstos
+3. **Não mexer** nas políticas de `tenants` — super admin precisa continuar vendo/gerenciando todos os tenants para poder trocar entre eles.
 
-- `supabase/migrations/...sql` — coluna nova, backfill, ajuste de função, trigger.
-- `src/pages/SelecionarEmpresa.tsx` — nova página.
-- `src/App.tsx` — registrar rota.
-- `src/contexts/AuthContext.tsx` — usar `is_super_admin_original`.
-- `src/components/layout/AppSidebar.tsx` (ou header) — link "Trocar empresa contratante" + indicador da empresa ativa.
+### Comportamento resultante
 
-## Pontos de atenção
+- **Super admin com `tenant_id = NULL`** (Modo Super Admin): vê tudo, como hoje.
+- **Super admin com `tenant_id = X`**: vê apenas dados do tenant X, exatamente como um usuário comum daquele tenant. Novos registros criados ficam vinculados ao tenant X.
+- **Usuários comuns**: nenhum impacto.
 
-- Após trocar o tenant, **todas** as queries cacheadas devem ser invalidadas (`queryClient.clear()`), pois os dados visíveis mudam por completo.
-- Documentos fiscais e registros já criados pelo super admin enquanto estava em "modo todas as empresas" mantêm seu `tenant_id` original — a troca não migra dados, só muda o filtro.
-- Garantir que a política RLS de `granjas` (e tabelas correlatas) continua funcionando: hoje ela libera tudo para `is_super_admin`. Com a nova lógica, quando o super admin entrar em um tenant ele continuará vendo tudo (porque `is_super_admin` segue true). Se quiser que ele veja **apenas** o tenant ativo, a política precisa mudar para `tenant_id = get_user_tenant_id() OR (is_super_admin AND get_user_tenant_id() IS NULL)`. **Confirmar com o usuário** se é isso que ele quer (ver só dados da empresa ativa) ou se prefere que super admin sempre veja tudo independentemente do tenant escolhido.
+### Sem mudanças de código frontend
+
+A página `/selecionar-empresa`, o `AuthContext` e o seletor no header já estão corretos — basta corrigir o RLS no backend.
