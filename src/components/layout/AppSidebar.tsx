@@ -30,6 +30,7 @@ import {
   DatabaseBackup,
   DollarSign,
   GitBranch,
+  Repeat,
   LucideIcon,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
