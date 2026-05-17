@@ -379,7 +379,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
           'lavouras','silos','controle_lavouras',
           'plantios','aplicacoes','chuvas','floracoes','insetos','plantas_invasoras','analises_solo','pivos',
-          'dre_contas','tabela_umidades','plano_contas_gerencial'
+          'dre_contas','tabela_umidades','plano_contas_gerencial',
+          'culturas','unidades_medida','sub_centros_custo'
         ]);
         if (TENANT_SCOPED_TABLES.has(config.tableName) && tenantId) {
           clean['tenant_id'] = tenantId;
