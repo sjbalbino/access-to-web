@@ -393,12 +393,57 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         return clean;
       });
 
+      // ===== VALIDAÇÃO DE INTEGRIDADE POR TENANT =====
+      const TENANT_SCOPED_TABLES = new Set([
+        'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
+        'lavouras','silos','controle_lavouras',
+        'plantios','aplicacoes','chuvas','floracoes','insetos','plantas_invasoras','analises_solo','pivos',
+        'dre_contas','tabela_umidades','plano_contas_gerencial',
+        'culturas','unidades_medida','sub_centros_custo',
+        'contratos_venda','remessas_venda'
+      ]);
+      const REQUIRES_GRANJA = new Set(['contratos_venda','colheitas','controle_lavouras']);
+      const validationErrors: string[] = [];
+      const validRows: Record<string, any>[] = [];
+
+      sanitizedRows.forEach((row, idx) => {
+        const lineNum = idx + 1;
+        // 1. Tabela isolada por tenant → exige tenantId selecionado
+        if (TENANT_SCOPED_TABLES.has(config.tableName)) {
+          if (!tenantId) {
+            validationErrors.push(`Linha ${lineNum}: empresa contratante não selecionada.`);
+            return;
+          }
+          if (!row['tenant_id']) {
+            validationErrors.push(`Linha ${lineNum}: tenant_id ausente após mapeamento.`);
+            return;
+          }
+          if (row['tenant_id'] !== tenantId) {
+            validationErrors.push(`Linha ${lineNum}: tenant_id (${row['tenant_id']}) diferente do selecionado (${tenantId}).`);
+            return;
+          }
+        }
+        // 2. Tabelas que exigem granja_id (chave do isolamento operacional)
+        if (REQUIRES_GRANJA.has(config.tableName) && !row['granja_id']) {
+          validationErrors.push(`Linha ${lineNum}: granja_id ausente — registro rejeitado para evitar vazamento entre empresas.`);
+          return;
+        }
+        validRows.push(row);
+      });
+
+      if (validationErrors.length > 0) {
+        console.warn(`[Importação ${config.tableName}] ${validationErrors.length} linha(s) rejeitada(s):`, validationErrors);
+      }
+      if (validRows.length === 0) {
+        throw new Error(`Nenhuma linha válida para importar. ${validationErrors.length} rejeitada(s). Verifique o console para detalhes.`);
+      }
+
       // Batch insert
       const batchSize = 100;
-      const errors: string[] = [];
+      const errors: string[] = [...validationErrors];
 
-      for (let i = 0; i < sanitizedRows.length; i += batchSize) {
-        const batch = sanitizedRows.slice(i, i + batchSize);
+      for (let i = 0; i < validRows.length; i += batchSize) {
+        const batch = validRows.slice(i, i + batchSize);
         const { error } = await supabase.from(config.tableName as any).insert(batch as any);
 
         if (error) {
@@ -415,7 +460,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           imported += batch.length;
         }
 
-        setProgress(Math.round(((i + batchSize) / sanitizedRows.length) * 100));
+        setProgress(Math.round(((i + batchSize) / validRows.length) * 100));
         setImportedCount(imported);
       }
 
