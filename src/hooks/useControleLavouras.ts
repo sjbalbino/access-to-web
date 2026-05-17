@@ -78,7 +78,7 @@ export function useControleLavoura(id: string | null) {
         .select(`
           *,
           lavouras:lavoura_id(id, nome, codigo, total_hectares),
-          safras:safra_id(id, nome, codigo, cultura_id, culturas:cultura_id(id, nome, informar_ph))
+          safras:safra_id(id, nome, codigo, status, cultura_id, culturas:cultura_id(id, nome, informar_ph))
         `)
         .eq('id', id)
         .maybeSingle();
@@ -99,7 +99,7 @@ export function useControleLavouraBySafraLavoura(safraId: string | null, lavoura
         .select(`
           *,
           lavouras:lavoura_id(id, nome, codigo, total_hectares),
-          safras:safra_id(id, nome, codigo, cultura_id, culturas:cultura_id(id, nome, informar_ph))
+          safras:safra_id(id, nome, codigo, status, cultura_id, culturas:cultura_id(id, nome, informar_ph))
         `)
         .eq('safra_id', safraId)
         .eq('lavoura_id', lavouraId)

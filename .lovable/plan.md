@@ -1,42 +1,18 @@
-# Causa raiz
+# Multi-tenant — implementação final
 
-A tabela `granjas` tem **UNIQUE global** em `codigo` e em `cnpj`:
+Migração aplicada com sucesso. Todas as 20 tabelas listadas no plano agora têm `tenant_id` com DEFAULT `get_user_tenant_id()` e RLS por tenant + bypass do super admin no "Modo Super Admin".
 
-```
-empresas_codigo_key  UNIQUE (codigo)
-empresas_cnpj_key    UNIQUE (cnpj)
-```
+## Resultado por área
 
-Estado atual no banco:
+- **Frontend**: nenhum hook precisou ser alterado — o DEFAULT no banco preenche `tenant_id` automaticamente.
+- **ImportacaoDialog**: estendido para injetar `tenant_id = selectedTenantId` em todas as tabelas isoladas (super admin pode importar para qualquer tenant).
+- **Seed automático**: novo tenant recebe cópia de `dre_contas`, `tabela_umidades` e `plano_contas_gerencial` do template GRINGS via trigger `tenants_seed_defaults`.
+- **Dados existentes**: backfilled para o tenant AGROPECUARIA GRINGS.
 
-| codigo | razao_social          | tenant                  |
-|--------|-----------------------|-------------------------|
-| 1      | AGROPECUARIA GRINGS   | AGROPECUARIA GRINGS     |
-| 2      | UMBU AGROPECUARIA-JUR | UMBU AGROPECUARIA S.A.  |
-| 3      | CASA DONA IRENE       | UMBU AGROPECUARIA S.A.  |
+## Verificação pós-implementação
+1. Logado como super admin em UMBU AGROPECUARIA, a tela /importar-dados deve mostrar apenas tabelas com dados do tenant UMBU.
+2. As listas de produtos, grupos, plano de contas, etc. devem aparecer vazias para UMBU até serem importadas.
+3. Em "Modo Super Admin" (sem empresa selecionada), todos os dados são visíveis para auditoria.
 
-Você importou 3 granjas para o tenant **UMBU**, mas a 3ª (provavelmente com `codigo = 1`, mesmo código da AGROPECUARIA GRINGS já existente em outro tenant) foi bloqueada pela constraint global. Por isso só 2 entraram. Como a importação faz fallback linha-a-linha em silêncio, o erro foi acumulado em `importErrors`, mas o resumo mostrou apenas "X importados".
-
-Em sistema multi-tenant, código e CNPJ de granja devem ser únicos **por tenant**, não globalmente — duas empresas contratantes diferentes podem ter granjas com o mesmo código legado ou até mesmo o mesmo CNPJ (cenário raro mas possível em reorganizações societárias).
-
-# Mudança proposta
-
-## Banco (migration)
-
-1. Remover constraints globais:
-   - `ALTER TABLE granjas DROP CONSTRAINT empresas_codigo_key`
-   - `ALTER TABLE granjas DROP CONSTRAINT empresas_cnpj_key`
-
-2. Criar índices únicos compostos parciais (ignoram NULL):
-   - `CREATE UNIQUE INDEX granjas_tenant_codigo_uniq ON granjas (tenant_id, codigo) WHERE codigo IS NOT NULL`
-   - `CREATE UNIQUE INDEX granjas_tenant_cnpj_uniq ON granjas (tenant_id, cnpj) WHERE cnpj IS NOT NULL`
-
-Isso permite repetir `codigo`/`cnpj` entre tenants distintos, mas mantém unicidade dentro de cada tenant.
-
-## Frontend (nenhuma alteração)
-
-A lógica de importação já injeta `tenant_id` corretamente. Após a migration, basta reimportar a planilha — a 3ª granja entrará normalmente.
-
-# Observação
-
-A importação atual silencia erros parciais no toast (`Importação parcial: X importados, Y erros`). Os erros ficam visíveis no painel do diálogo (`importErrors`), então da próxima vez confira o painel após a importação para ver linhas rejeitadas.
+## Linter
+22 warnings WARN sobre "Public Can Execute SECURITY DEFINER Function" são pré-existentes — funções como `get_user_tenant_id`, `has_role`, `can_edit`, `is_super_admin`, `granja_belongs_to_tenant` são intencionalmente acessíveis aos roles autenticados via REST. Não foram introduzidas por esta migração.
