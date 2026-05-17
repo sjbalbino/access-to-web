@@ -1,68 +1,18 @@
-# Plano: Isolamento Multi-tenant Completo (revisado)
+# Multi-tenant — implementação final
 
-## Classificação Final das Tabelas
+Migração aplicada com sucesso. Todas as 20 tabelas listadas no plano agora têm `tenant_id` com DEFAULT `get_user_tenant_id()` e RLS por tenant + bypass do super admin no "Modo Super Admin".
 
-### GLOBAIS (compartilhadas entre todos os tenants)
-- `ncm`
-- `unidades_medida`
-- `ibge_municipios`
-- `cfops`
-- `culturas` *(sistema; não citada mas é cadastro de catálogo)*
+## Resultado por área
 
-### POR TENANT — com seed automático ao criar tenant
-Quando um novo tenant for criado, copiar registros "mais utilizados" de um template:
-- `dre_contas`
-- `tabela_umidades`
-- `plano_contas_gerencial`
+- **Frontend**: nenhum hook precisou ser alterado — o DEFAULT no banco preenche `tenant_id` automaticamente.
+- **ImportacaoDialog**: estendido para injetar `tenant_id = selectedTenantId` em todas as tabelas isoladas (super admin pode importar para qualquer tenant).
+- **Seed automático**: novo tenant recebe cópia de `dre_contas`, `tabela_umidades` e `plano_contas_gerencial` do template GRINGS via trigger `tenants_seed_defaults`.
+- **Dados existentes**: backfilled para o tenant AGROPECUARIA GRINGS.
 
-### POR TENANT — importação manual / cadastro
-- `safras`
-- `produtos`, `grupos_produtos`
-- `placas`, `transportadoras`, `locais_entrega`
-- `lavouras`, `silos`, `controle_lavouras`
-- `plantios`, `aplicacoes`, `chuvas`, `floracoes`, `insetos`, `plantas_invasoras`, `analises_solo`, `pivos`
+## Verificação pós-implementação
+1. Logado como super admin em UMBU AGROPECUARIA, a tela /importar-dados deve mostrar apenas tabelas com dados do tenant UMBU.
+2. As listas de produtos, grupos, plano de contas, etc. devem aparecer vazias para UMBU até serem importadas.
+3. Em "Modo Super Admin" (sem empresa selecionada), todos os dados são visíveis para auditoria.
 
-### Já isoladas (sem mudança)
-`granjas`, `clientes_fornecedores`, `inscricoes_produtor`, `emitentes_nfe`, `compras_cereais`, `contratos_venda`, `devolucoes_deposito`, `entradas_nfe`, `estoque_produtos`, `notas_fiscais*`, `remessas_venda`, `transferencias_deposito`, `notas_deposito_emitidas`, `colheitas` (via `granja_id`).
-
-## Estratégia para Dados Existentes
-Todos os registros atuais sem `tenant_id` → atribuídos ao tenant **AGROPECUARIA GRINGS** (primeiro tenant). UMBU começa zerada nesses cadastros e importa do legado.
-
-## Etapas
-
-### 1. Migração SQL — Adicionar `tenant_id` + RLS por tenant
-Para cada tabela das duas listas "POR TENANT":
-1. `ALTER TABLE ... ADD COLUMN tenant_id uuid REFERENCES tenants(id)`
-2. `UPDATE ... SET tenant_id = '<id-GRINGS>'` (backfill)
-3. Dropar policies atuais (`Permitir leitura pública ...`, etc.)
-4. Criar 4 policies padrão (SELECT/INSERT/UPDATE/DELETE) com:
-   ```sql
-   tenant_id = get_user_tenant_id()
-   OR (is_super_admin(auth.uid()) AND get_user_tenant_id() IS NULL)
-   ```
-5. Criar índice em `(tenant_id)`
-6. Para colunas `codigo`/CNPJ com UNIQUE global → recriar como UNIQUE parcial por tenant
-
-### 2. Seed automático ao criar tenant
-Criar função `seed_tenant_defaults(tenant_id uuid)` que copia registros padrão para `dre_contas`, `tabela_umidades`, `plano_contas_gerencial`. Trigger `AFTER INSERT ON tenants`. Os "registros padrão" serão os atualmente existentes no tenant GRINGS (template).
-
-### 3. Frontend — Injetar `tenant_id` nos inserts
-Hooks a ajustar (`profile.tenant_id` do AuthContext):
-- `useProdutos`, `useGruposProdutos`, `usePlanoContasGerencial`, `usePlacas`, `useTransportadoras`, `useLocaisEntrega`
-- `useSafras`, `useLavouras`, `useSilos`, `useControleLavouras`
-- `usePlantios`, `useAplicacoes`, `useChuvas`, `useFloracoes`, `useInsetos`, `usePlantasInvasoras`, `useAnalisesSolo`, `usePivos`
-- `useDreContas`, `useTabelaUmidades`
-- `ImportacaoDialog.tsx` — injetar `tenant_id` para essas tabelas no import
-
-### 4. Página "Importar Dados"
-Sem mudanças: `count` via RLS passará a refletir apenas o tenant selecionado.
-
-## Detalhes técnicos
-- `cfops` permanece GLOBAL → todas as empresas usam a mesma tabela fiscal de CFOPs (correto, é tabela de domínio).
-- Super admin sem tenant selecionado vê tudo (modo super admin já implementado).
-- `culturas` mantida global (catálogo agronômico padrão).
-- Linter de segurança será rodado após a migration.
-
-## Riscos
-- Migração mecânica em ~17 tabelas + ~17 hooks. Volume alto mas baixo risco.
-- UMBU terá `dre_contas`, `tabela_umidades`, `plano_contas_gerencial` zerados até o seed rodar — o seed automático cobrirá novos tenants; UMBU será populada manualmente ou via UPDATE pontual.
+## Linter
+22 warnings WARN sobre "Public Can Execute SECURITY DEFINER Function" são pré-existentes — funções como `get_user_tenant_id`, `has_role`, `can_edit`, `is_super_admin`, `granja_belongs_to_tenant` são intencionalmente acessíveis aos roles autenticados via REST. Não foram introduzidas por esta migração.
