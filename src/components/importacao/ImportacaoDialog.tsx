@@ -374,8 +374,14 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             clean[key] = value;
           }
         }
-        // Inject tenant_id for granjas table
-        if (config.tableName === 'granjas' && tenantId) {
+        // Inject tenant_id para tabelas isoladas por empresa contratante
+        const TENANT_SCOPED_TABLES = new Set([
+          'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
+          'lavouras','silos','controle_lavouras',
+          'plantios','aplicacoes','chuvas','floracoes','insetos','plantas_invasoras','analises_solo','pivos',
+          'dre_contas','tabela_umidades','plano_contas_gerencial'
+        ]);
+        if (TENANT_SCOPED_TABLES.has(config.tableName) && tenantId) {
           clean['tenant_id'] = tenantId;
         }
         // Inject interactive conta_gerencial_id
