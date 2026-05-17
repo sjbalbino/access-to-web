@@ -1012,6 +1012,7 @@ export type Database = {
           nome: string
           peso_saco_industria: number | null
           peso_saco_semente: number | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1023,6 +1024,7 @@ export type Database = {
           nome: string
           peso_saco_industria?: number | null
           peso_saco_semente?: number | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1034,9 +1036,18 @@ export type Database = {
           nome?: string
           peso_saco_industria?: number | null
           peso_saco_semente?: number | null
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "culturas_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       devolucoes_deposito: {
         Row: {
@@ -3976,6 +3987,7 @@ export type Database = {
           descricao: string
           id: string
           incide_irf: boolean | null
+          tenant_id: string | null
           tipo: string | null
           updated_at: string | null
         }
@@ -3988,6 +4000,7 @@ export type Database = {
           descricao: string
           id?: string
           incide_irf?: boolean | null
+          tenant_id?: string | null
           tipo?: string | null
           updated_at?: string | null
         }
@@ -4000,6 +4013,7 @@ export type Database = {
           descricao?: string
           id?: string
           incide_irf?: boolean | null
+          tenant_id?: string | null
           tipo?: string | null
           updated_at?: string | null
         }
@@ -4009,6 +4023,13 @@ export type Database = {
             columns: ["centro_custo_id"]
             isOneToOne: false
             referencedRelation: "plano_contas_gerencial"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sub_centros_custo_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -4355,6 +4376,7 @@ export type Database = {
           descricao: string
           id: string
           sigla: string | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -4364,6 +4386,7 @@ export type Database = {
           descricao: string
           id?: string
           sigla?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -4373,9 +4396,18 @@ export type Database = {
           descricao?: string
           id?: string
           sigla?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "unidades_medida_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
