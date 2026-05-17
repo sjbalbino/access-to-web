@@ -380,7 +380,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           'lavouras','silos','controle_lavouras',
           'plantios','aplicacoes','chuvas','floracoes','insetos','plantas_invasoras','analises_solo','pivos',
           'dre_contas','tabela_umidades','plano_contas_gerencial',
-          'culturas','unidades_medida','sub_centros_custo'
+          'culturas','unidades_medida','sub_centros_custo',
+          'contratos_venda','remessas_venda'
         ]);
         if (TENANT_SCOPED_TABLES.has(config.tableName) && tenantId) {
           clean['tenant_id'] = tenantId;
