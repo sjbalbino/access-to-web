@@ -811,6 +811,7 @@ export type Database = {
           remessa_deposito: boolean | null
           retorno_deposito: boolean | null
           safra_id: string | null
+          tenant_id: string | null
           tipo_venda: string | null
           updated_at: string
           valor_comissao: number | null
@@ -854,6 +855,7 @@ export type Database = {
           remessa_deposito?: boolean | null
           retorno_deposito?: boolean | null
           safra_id?: string | null
+          tenant_id?: string | null
           tipo_venda?: string | null
           updated_at?: string
           valor_comissao?: number | null
@@ -897,6 +899,7 @@ export type Database = {
           remessa_deposito?: boolean | null
           retorno_deposito?: boolean | null
           safra_id?: string | null
+          tenant_id?: string | null
           tipo_venda?: string | null
           updated_at?: string
           valor_comissao?: number | null
@@ -937,6 +940,13 @@ export type Database = {
             columns: ["safra_id"]
             isOneToOne: false
             referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_venda_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -3706,6 +3716,7 @@ export type Database = {
           sacos_remessa: number | null
           silo_id: string | null
           status: string | null
+          tenant_id: string | null
           transportadora_id: string | null
           uf_placa: string | null
           umidade: number | null
@@ -3755,6 +3766,7 @@ export type Database = {
           sacos_remessa?: number | null
           silo_id?: string | null
           status?: string | null
+          tenant_id?: string | null
           transportadora_id?: string | null
           uf_placa?: string | null
           umidade?: number | null
@@ -3804,6 +3816,7 @@ export type Database = {
           sacos_remessa?: number | null
           silo_id?: string | null
           status?: string | null
+          tenant_id?: string | null
           transportadora_id?: string | null
           uf_placa?: string | null
           umidade?: number | null
@@ -3839,6 +3852,13 @@ export type Database = {
             columns: ["silo_id"]
             isOneToOne: false
             referencedRelation: "silos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remessas_venda_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
           {
