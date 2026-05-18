@@ -481,9 +481,8 @@ export const tableConfigs: TableConfig[] = [
     key: 'clientes',
     label: 'Clientes/Fornecedores',
     tableName: 'clientes_fornecedores',
-    description: 'Clientes e fornecedores',
+    description: 'Clientes e fornecedores (vinculados à Empresa Contratante)',
     order: 4,
-    dependsOn: ['granjas'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
@@ -509,9 +508,6 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'telefone', dbName: 'telefone', transform: toStr },
       { accessName: 'email', dbName: 'email', transform: toStr },
       { accessName: 'ativo', dbName: 'ativo', transform: toBool },
-    ],
-    references: [
-      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
     ],
   },
   {
