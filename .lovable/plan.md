@@ -1,18 +1,28 @@
-# Multi-tenant — implementação final
+## Problema
 
-Migração aplicada com sucesso. Todas as 20 tabelas listadas no plano agora têm `tenant_id` com DEFAULT `get_user_tenant_id()` e RLS por tenant + bypass do super admin no "Modo Super Admin".
+A importação de **Safras** está falhando em 100% das linhas com:
+```
+new row for relation "safras" violates check constraint "safras_status_check"
+```
 
-## Resultado por área
+A coluna `safras.status` só aceita `'ativa' | 'encerrada' | 'planejada'`, mas o Excel de origem traz valores diferentes (provavelmente `'F'`/`'A'`, `'Fechada'`/`'Aberta'`, vazio, ou outro código legado do Access). O importador hoje envia o valor cru via `toStr`, sem normalizar.
 
-- **Frontend**: nenhum hook precisou ser alterado — o DEFAULT no banco preenche `tenant_id` automaticamente.
-- **ImportacaoDialog**: estendido para injetar `tenant_id = selectedTenantId` em todas as tabelas isoladas (super admin pode importar para qualquer tenant).
-- **Seed automático**: novo tenant recebe cópia de `dre_contas`, `tabela_umidades` e `plano_contas_gerencial` do template GRINGS via trigger `tenants_seed_defaults`.
-- **Dados existentes**: backfilled para o tenant AGROPECUARIA GRINGS.
+## Correção
 
-## Verificação pós-implementação
-1. Logado como super admin em UMBU AGROPECUARIA, a tela /importar-dados deve mostrar apenas tabelas com dados do tenant UMBU.
-2. As listas de produtos, grupos, plano de contas, etc. devem aparecer vazias para UMBU até serem importadas.
-3. Em "Modo Super Admin" (sem empresa selecionada), todos os dados são visíveis para auditoria.
+Em `src/lib/importacaoConfig.ts`, na definição de `safras` (linha 218):
 
-## Linter
-22 warnings WARN sobre "Public Can Execute SECURITY DEFINER Function" são pré-existentes — funções como `get_user_tenant_id`, `has_role`, `can_edit`, `is_super_admin`, `granja_belongs_to_tenant` são intencionalmente acessíveis aos roles autenticados via REST. Não foram introduzidas por esta migração.
+1. Substituir o `transform: toStr` da coluna `status` por um **mapper dedicado** que normaliza:
+   - `'A'`, `'ATIVA'`, `'ABERTA'`, `'1'`, `true`, vazio/null → `'ativa'`
+   - `'F'`, `'FECHADA'`, `'ENCERRADA'`, `'0'`, `false` → `'encerrada'`
+   - `'P'`, `'PLANEJADA'` → `'planejada'`
+   - qualquer outro → `'ativa'` (fallback seguro)
+2. Garantir que o valor final esteja sempre presente (default `'ativa'` quando a coluna não vier no arquivo).
+
+## Verificação
+
+Após o ajuste:
+- Rodar nova importação de Safras como GRINGS.
+- Confirmar que as 25 linhas entram com `status` válido.
+- Validar que o filtro do RLS continua isolando por `tenant_id` (já corrigido em migration anterior).
+
+Sem mudanças de schema, sem mudanças em outras tabelas.
