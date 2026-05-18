@@ -341,6 +341,7 @@ export type Database = {
           numero: string | null
           observacoes: string | null
           telefone: string | null
+          tenant_id: string
           tipo: string
           tipo_pessoa: string | null
           uf: string | null
@@ -367,6 +368,7 @@ export type Database = {
           numero?: string | null
           observacoes?: string | null
           telefone?: string | null
+          tenant_id: string
           tipo?: string
           tipo_pessoa?: string | null
           uf?: string | null
@@ -393,6 +395,7 @@ export type Database = {
           numero?: string | null
           observacoes?: string | null
           telefone?: string | null
+          tenant_id?: string
           tipo?: string
           tipo_pessoa?: string | null
           uf?: string | null
