@@ -51,7 +51,7 @@ export function useCreateClienteFornecedor() {
     mutationFn: async (clienteFornecedor: ClienteFornecedorInsert) => {
       const { data, error } = await supabase
         .from('clientes_fornecedores')
-        .insert(clienteFornecedor)
+        .insert(clienteFornecedor as any)
         .select()
         .single();
       if (error) throw error;
