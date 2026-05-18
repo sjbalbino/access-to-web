@@ -130,7 +130,8 @@ export default function ImportarDados() {
     
     const ws = XLSX.utils.aoa_to_sheet([allHeaders]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, config.label);
+    const safeSheetName = config.label.replace(/[:\\/?*[\]]/g, '-').slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
     XLSX.writeFile(wb, `modelo_${config.key}.xlsx`);
     toast.success(`Modelo "${config.label}" baixado!`);
   };
