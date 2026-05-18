@@ -227,7 +227,20 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'ano_colheita', dbName: 'ano_colheita', transform: toInt },
       { accessName: 'data_inicio', dbName: 'data_inicio', transform: toDate },
       { accessName: 'data_fim', dbName: 'data_fim', transform: toDate },
-      { accessName: 'status', dbName: 'status', transform: toStr },
+      {
+        accessName: 'status',
+        dbName: 'status',
+        transform: (v: any) => {
+          if (v === true) return 'ativa';
+          if (v === false) return 'encerrada';
+          const s = String(v ?? '').trim().toUpperCase();
+          if (!s) return 'ativa';
+          if (['A', 'ATIVA', 'ABERTA', '1', 'S', 'SIM', 'TRUE'].includes(s)) return 'ativa';
+          if (['F', 'FECHADA', 'ENCERRADA', 'E', '0', 'N', 'NAO', 'NÃO', 'FALSE'].includes(s)) return 'encerrada';
+          if (['P', 'PLANEJADA', 'PLAN'].includes(s)) return 'planejada';
+          return 'ativa';
+        },
+      },
     ],
     references: [
       {
