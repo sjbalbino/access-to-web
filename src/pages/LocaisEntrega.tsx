@@ -356,7 +356,7 @@ export default function LocaisEntrega() {
                   <Label>Tipo de Pessoa</Label>
                   <Select 
                     value={formData.tipo_pessoa || "juridica"} 
-                    onValueChange={(val) => setFormData({ ...formData, tipo_pessoa: val })}
+                    onValueChange={(val) => setFormData({ ...formData, tipo_pessoa: val, cpf_cnpj: "" })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -364,12 +364,13 @@ export default function LocaisEntrega() {
                     <SelectContent>
                       <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
                       <SelectItem value="fisica">Pessoa Física</SelectItem>
+                      <SelectItem value="estrangeiro">Estrangeiro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{formData.tipo_pessoa === "juridica" ? "CNPJ" : "CPF"}</Label>
+                  <Label>{formData.tipo_pessoa === "juridica" ? "CNPJ" : formData.tipo_pessoa === "estrangeiro" ? "ID Estrangeiro" : "CPF"}</Label>
                   <div className="relative">
                     <Input
                       value={formData.cpf_cnpj || ""}
@@ -380,7 +381,7 @@ export default function LocaisEntrega() {
                           : e.target.value 
                       })}
                       onBlur={handleCnpjBlur}
-                      placeholder={formData.tipo_pessoa === "juridica" ? "00.000.000/0000-00" : "000.000.000-00"}
+                      placeholder={formData.tipo_pessoa === "juridica" ? "00.000.000/0000-00" : formData.tipo_pessoa === "estrangeiro" ? "Identificação do estrangeiro" : "000.000.000-00"}
                     />
                     {isLoadingCnpj && (
                       <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
