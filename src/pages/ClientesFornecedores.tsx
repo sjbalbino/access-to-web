@@ -277,11 +277,12 @@ export default function ClientesFornecedores() {
                     </div>
                     <div className="space-y-2">
                       <Label>Tipo Pessoa</Label>
-                      <Select value={formData.tipo_pessoa || 'juridica'} onValueChange={(value) => setFormData({ ...formData, tipo_pessoa: value })}>
+                      <Select value={formData.tipo_pessoa || 'juridica'} onValueChange={(value) => setFormData({ ...formData, tipo_pessoa: value, cpf_cnpj: '' })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="fisica">Pessoa Física</SelectItem>
                           <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
+                          <SelectItem value="estrangeiro">Estrangeiro</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
