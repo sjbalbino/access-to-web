@@ -291,17 +291,23 @@ export default function ClientesFornecedores() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>{formData.tipo_pessoa === 'fisica' ? 'CPF' : 'CNPJ'}</Label>
+                      <Label>{formData.tipo_pessoa === 'fisica' ? 'CPF' : formData.tipo_pessoa === 'estrangeiro' ? 'ID Estrangeiro' : 'CNPJ'}</Label>
                       <div className="relative">
                         <Input 
-                          value={formData.tipo_pessoa === 'juridica' ? formatCnpj(formData.cpf_cnpj || '') : formatCpf(formData.cpf_cnpj || '')} 
+                          value={
+                            formData.tipo_pessoa === 'juridica'
+                              ? formatCnpj(formData.cpf_cnpj || '')
+                              : formData.tipo_pessoa === 'estrangeiro'
+                                ? (formData.cpf_cnpj || '')
+                                : formatCpf(formData.cpf_cnpj || '')
+                          } 
                           onChange={(e) => setFormData({ 
                             ...formData, 
-                            cpf_cnpj: e.target.value.replace(/\D/g, '')
+                            cpf_cnpj: formData.tipo_pessoa === 'estrangeiro' ? e.target.value : e.target.value.replace(/\D/g, '')
                           })}
                           onBlur={(e) => handleCnpjBlur(e.target.value)}
-                          placeholder={formData.tipo_pessoa === 'juridica' ? '00.000.000/0000-00' : '000.000.000-00'}
-                          maxLength={formData.tipo_pessoa === 'juridica' ? 18 : 14}
+                          placeholder={formData.tipo_pessoa === 'juridica' ? '00.000.000/0000-00' : formData.tipo_pessoa === 'estrangeiro' ? 'Identificação do estrangeiro' : '000.000.000-00'}
+                          maxLength={formData.tipo_pessoa === 'juridica' ? 18 : formData.tipo_pessoa === 'estrangeiro' ? 20 : 14}
                         />
                         {cnpjLoading && (
                           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
