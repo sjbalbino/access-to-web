@@ -42,11 +42,24 @@ export function TablePagination({
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setPaginaAtual(1)}
+              disabled={paginaAtual <= 1}
+              title="Primeira página"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Primeira</span>
+            </Button>
+          </PaginationItem>
+
+          <PaginationItem>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setPaginaAtual(paginaAtual - 1)}
               disabled={paginaAtual <= 1}
             >
               <ChevronLeft className="h-4 w-4" />
-              Anterior
+              <span className="hidden sm:inline">Anterior</span>
             </Button>
           </PaginationItem>
 
@@ -73,8 +86,21 @@ export function TablePagination({
               onClick={() => setPaginaAtual(paginaAtual + 1)}
               disabled={paginaAtual >= totalPaginas}
             >
-              Próximo
+              <span className="hidden sm:inline">Próximo</span>
               <ChevronRight className="h-4 w-4" />
+            </Button>
+          </PaginationItem>
+
+          <PaginationItem>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPaginaAtual(totalPaginas)}
+              disabled={paginaAtual >= totalPaginas}
+              title="Última página"
+            >
+              <span className="hidden sm:inline">Última</span>
+              <ChevronsRight className="h-4 w-4" />
             </Button>
           </PaginationItem>
         </PaginationContent>
