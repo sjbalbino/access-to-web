@@ -317,7 +317,7 @@ export default function Silos() {
                     <TableCell className="font-mono">{item.codigo || '-'}</TableCell>
                     <TableCell className="font-medium">{item.nome}</TableCell>
                     <TableCell className="hidden sm:table-cell">{getTipoBadge(item.tipo)}</TableCell>
-                    <TableCell className="hidden md:table-cell">{item.empresa?.razao_social || '-'}</TableCell>
+                    <TableCell className="hidden md:table-cell">{item.granja?.razao_social || '-'}</TableCell>
                     <TableCell className="text-right hidden sm:table-cell">{formatNumber(item.capacidade_kg)}</TableCell>
                     <TableCell className="text-right hidden md:table-cell">{formatNumber(item.capacidade_sacas)}</TableCell>
                     <TableCell className="hidden lg:table-cell">{item.localizacao || '-'}</TableCell>
