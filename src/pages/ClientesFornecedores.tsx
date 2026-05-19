@@ -162,8 +162,8 @@ export default function ClientesFornecedores() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar CPF/CNPJ se informado
-    if (formData.cpf_cnpj && formData.cpf_cnpj.length > 0) {
+    // Validar CPF/CNPJ se informado (pular para estrangeiro)
+    if (formData.cpf_cnpj && formData.cpf_cnpj.length > 0 && formData.tipo_pessoa !== 'estrangeiro') {
       const doc = formData.cpf_cnpj.replace(/\D/g, "");
       if (formData.tipo_pessoa === "fisica") {
         if (doc.length > 0 && !validateCpf(doc)) {
