@@ -1,24 +1,13 @@
-## Objetivo
+## Correções na tela de Silos e esclarecimento sobre importação
 
-Adicionar botões de navegação para a **primeira** e **última** página em todas as listagens paginadas do sistema.
+### 1. Importação de Silos (resposta)
+Na planilha de importação de silos, a coluna para vincular a granja é **`granja_codigo`** — deve conter o **código da granja** (não o nome). O sistema faz lookup em `granjas.codigo` para encontrar o `granja_id` correspondente.
 
-## Mudanças
+### 2. Correção da listagem de Silos (`src/pages/Silos.tsx`)
+Atualmente a coluna está rotulada como "Empresa" e lê `item.empresa?.razao_social`, campo que não existe no retorno do hook — por isso aparece sempre "-".
 
-### 1. `src/components/ui/table-pagination.tsx` (componente padrão)
-- Adicionar botão **«** (ChevronsLeft) antes do "Anterior" → vai para página 1
-- Adicionar botão **»** (ChevronsRight) depois do "Próximo" → vai para `totalPaginas`
-- Desabilitar quando já estiver na primeira/última página
-- Em telas pequenas, exibir apenas os ícones (sem texto) para economizar espaço
+Alterações:
+- Renomear o cabeçalho da coluna de **"Empresa"** para **"Granja"**.
+- Trocar a leitura da célula de `item.empresa?.razao_social` para `item.granja?.razao_social` (que é o que o `useSilos` realmente retorna via join).
 
-### 2. `src/pages/ClientesFornecedores.tsx` (paginação inline customizada)
-- A tela tem paginação própria (linhas 517-527), fora do componente `TablePagination`
-- Adicionar dois botões equivalentes: "Primeira" e "Última"
-- Manter o mesmo visual já usado (Button outline, size sm)
-
-### Resultado visual
-
-```text
-[«] [Anterior] [1] [2] ... [10] [Próximo] [»]
-```
-
-Todas as demais telas que já usam `TablePagination` (Placas, Produtos, etc.) recebem o novo comportamento automaticamente, sem alterações individuais.
+Nenhuma outra alteração necessária — o hook `useSilos` já busca corretamente `granja:granjas(id, razao_social)`.

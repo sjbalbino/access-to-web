@@ -303,7 +303,7 @@ export default function Silos() {
                   <TableHead>Código</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead className="hidden sm:table-cell">Tipo</TableHead>
-                  <TableHead className="hidden md:table-cell">Empresa</TableHead>
+                  <TableHead className="hidden md:table-cell">Granja</TableHead>
                   <TableHead className="text-right hidden sm:table-cell">Cap. (Kg)</TableHead>
                   <TableHead className="text-right hidden md:table-cell">Cap. (Sacas)</TableHead>
                   <TableHead className="hidden lg:table-cell">Localização</TableHead>
