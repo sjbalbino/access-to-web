@@ -520,8 +520,10 @@ export default function ClientesFornecedores() {
                 {dadosFiltrados.length} registro(s) — Página {paginaAtual} de {totalPaginas}
               </span>
               <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={paginaAtual <= 1} onClick={() => setPaginaAtual(1)}>Primeira</Button>
                 <Button variant="outline" size="sm" disabled={paginaAtual <= 1} onClick={() => setPaginaAtual(p => p - 1)}>Anterior</Button>
                 <Button variant="outline" size="sm" disabled={paginaAtual >= totalPaginas} onClick={() => setPaginaAtual(p => p + 1)}>Próxima</Button>
+                <Button variant="outline" size="sm" disabled={paginaAtual >= totalPaginas} onClick={() => setPaginaAtual(totalPaginas)}>Última</Button>
               </div>
             </div>
           )}
