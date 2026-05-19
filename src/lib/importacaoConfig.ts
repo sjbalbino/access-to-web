@@ -276,7 +276,7 @@ export const tableConfigs: TableConfig[] = [
     dependsOn: ['granjas', 'unidades_medida', 'grupos_produtos', 'clientes'],
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
-      { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
+      { accessName: 'nome_produto', dbName: 'nome', required: true, transform: toStr },
       { accessName: 'tipo', dbName: 'tipo', transform: toStr },
       { accessName: 'descricao', dbName: 'descricao', transform: toStr },
       { accessName: 'ncm', dbName: 'ncm', transform: toStr },
