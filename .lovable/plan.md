@@ -1,27 +1,24 @@
 ## Objetivo
 
-Adicionar o tipo de pessoa **"Estrangeiro"** (conforme NT SEFAZ 2025.002) nos cadastros de **Clientes/Fornecedores** e **Locais de Entrega**, alinhando-os ao que já existe em **Produtores**.
-
-Observação: o banco já aceita o valor (campo `tipo_pessoa` é `varchar` livre, sem CHECK constraint), então **não há migration necessária**.
+Adicionar botões de navegação para a **primeira** e **última** página em todas as listagens paginadas do sistema.
 
 ## Mudanças
 
-### 1. `src/pages/ClientesFornecedores.tsx`
-- Adicionar `<SelectItem value="estrangeiro">Estrangeiro</SelectItem>` no Select "Tipo Pessoa".
-- Tratar `estrangeiro` no rótulo e formatação do documento:
-  - Label dinâmico: `CPF` | `CNPJ` | `ID Estrangeiro`
-  - Quando `estrangeiro`: input livre (sem máscara, sem `formatCpf/formatCnpj`, sem validação de módulo 11, sem `maxLength` fixo).
-  - `handleCnpjBlur` só executa se `tipo_pessoa === 'juridica'` (já é o caso).
-  - Validação `validateCpf`/`validateCnpj` só roda para `fisica`/`juridica` (pular para `estrangeiro`).
+### 1. `src/components/ui/table-pagination.tsx` (componente padrão)
+- Adicionar botão **«** (ChevronsLeft) antes do "Anterior" → vai para página 1
+- Adicionar botão **»** (ChevronsRight) depois do "Próximo" → vai para `totalPaginas`
+- Desabilitar quando já estiver na primeira/última página
+- Em telas pequenas, exibir apenas os ícones (sem texto) para economizar espaço
 
-### 2. `src/pages/LocaisEntrega.tsx`
-- Mesmas alterações do item 1 no Select e na lógica do documento.
-- Ajustar a condição `if (formData.tipo_pessoa === "juridica" && formData.cpf_cnpj)` permanece — apenas adicionar opção e tratar label/máscara para `estrangeiro`.
+### 2. `src/pages/ClientesFornecedores.tsx` (paginação inline customizada)
+- A tela tem paginação própria (linhas 517-527), fora do componente `TablePagination`
+- Adicionar dois botões equivalentes: "Primeira" e "Última"
+- Manter o mesmo visual já usado (Button outline, size sm)
 
-### 3. `src/lib/importacaoConfig.ts`
-- Atualizar comentário/observação do modelo de importação de `clientes_fornecedores` e `locais_entrega` para listar os 3 valores aceitos: `fisica`, `juridica`, `estrangeiro`.
+### Resultado visual
 
-## Fora de escopo
-- Nenhuma alteração no schema do banco.
-- Nenhuma alteração em `Produtores` (já suporta).
-- Nenhuma alteração em emissão de NF-e (`EmitirNfeAutomaticoDialog` já mapeia conforme NT 2025).
+```text
+[«] [Anterior] [1] [2] ... [10] [Próximo] [»]
+```
+
+Todas as demais telas que já usam `TablePagination` (Placas, Produtos, etc.) recebem o novo comportamento automaticamente, sem alterações individuais.
