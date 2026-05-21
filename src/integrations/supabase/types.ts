@@ -3116,6 +3116,7 @@ export type Database = {
           id: string
           marca: string | null
           modelo: string | null
+          motorista: string | null
           observacoes: string | null
           peso_tara: number | null
           placa: string
@@ -3135,6 +3136,7 @@ export type Database = {
           id?: string
           marca?: string | null
           modelo?: string | null
+          motorista?: string | null
           observacoes?: string | null
           peso_tara?: number | null
           placa: string
@@ -3154,6 +3156,7 @@ export type Database = {
           id?: string
           marca?: string | null
           modelo?: string | null
+          motorista?: string | null
           observacoes?: string | null
           peso_tara?: number | null
           placa?: string

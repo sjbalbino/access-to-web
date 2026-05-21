@@ -39,6 +39,7 @@ export default function Placas() {
     cor: '',
     capacidade_kg: 0,
     proprietario: '',
+    motorista: '',
     observacoes: '',
     ativa: true,
     propriedade: 'propria',
@@ -56,6 +57,7 @@ export default function Placas() {
       cor: '',
       capacidade_kg: 0,
       proprietario: '',
+      motorista: '',
       observacoes: '',
       ativa: true,
       propriedade: 'propria',
@@ -87,6 +89,7 @@ export default function Placas() {
       cor: item.cor || '',
       capacidade_kg: item.capacidade_kg || 0,
       proprietario: item.proprietario || '',
+      motorista: item.motorista || '',
       observacoes: item.observacoes || '',
       ativa: item.ativa,
       propriedade: item.propriedade || 'propria',
@@ -240,6 +243,13 @@ export default function Placas() {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Motorista</Label>
+                      <Input value={formData.motorista || ''} onChange={(e) => setFormData({ ...formData, motorista: e.target.value })} />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>Observações</Label>
                     <Textarea value={formData.observacoes || ''} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} />
@@ -272,6 +282,7 @@ export default function Placas() {
                   <TableHead className="text-right hidden sm:table-cell">Cap. (Kg)</TableHead>
                   <TableHead className="text-right hidden lg:table-cell">Tara (Kg)</TableHead>
                   <TableHead className="hidden lg:table-cell">Proprietário</TableHead>
+                  <TableHead className="hidden lg:table-cell">Motorista</TableHead>
                   <TableHead className="hidden sm:table-cell">Status</TableHead>
                   {canEdit && <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>}
               </TableRow>
@@ -297,6 +308,11 @@ export default function Placas() {
                         <span className="flex items-center gap-1"><User className="h-3 w-3 text-muted-foreground" />{item.proprietario}</span>
                       )}
                     </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {item.motorista && (
+                        <span className="flex items-center gap-1"><User className="h-3 w-3 text-muted-foreground" />{item.motorista}</span>
+                      )}
+                    </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Badge variant={item.ativa ? 'default' : 'secondary'}>{item.ativa ? 'Ativa' : 'Inativa'}</Badge>
                     </TableCell>
@@ -312,7 +328,7 @@ export default function Placas() {
               ))}
               {(!placas || placas.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 10 : 9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={canEdit ? 11 : 10} className="text-center text-muted-foreground py-8">
                     Nenhuma placa cadastrada
                   </TableCell>
                 </TableRow>

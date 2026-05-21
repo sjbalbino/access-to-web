@@ -236,6 +236,7 @@ export default function EntradaColheita() {
         cor: null,
         capacidade_kg: null,
         proprietario: null,
+        motorista: null,
         observacoes: null,
         propriedade: 'propria',
         peso_tara: 0,

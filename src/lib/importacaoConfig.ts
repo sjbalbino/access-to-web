@@ -436,6 +436,7 @@ export const tableConfigs: TableConfig[] = [
         return s;
       } },
       { accessName: 'peso_tara', dbName: 'peso_tara', transform: toNumber },
+      { accessName: 'motorista', dbName: 'motorista', transform: toStr },
       { accessName: 'ativa', dbName: 'ativa', transform: toBool },
     ],
   },

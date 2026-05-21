@@ -13,6 +13,7 @@ export type Placa = {
   cor: string | null;
   capacidade_kg: number | null;
   proprietario: string | null;
+  motorista: string | null;
   observacoes: string | null;
   ativa: boolean | null;
   propriedade: string | null;
