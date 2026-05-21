@@ -1,0 +1,1 @@
+ALTER TABLE public.placas ADD COLUMN IF NOT EXISTS motorista TEXT;
