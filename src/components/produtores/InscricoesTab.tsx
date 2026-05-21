@@ -379,7 +379,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                     <TableCell className="font-medium whitespace-nowrap">{formatInscricaoEstadual(inscricao.inscricao_estadual) || "-"}</TableCell>
                     <TableCell className="font-mono whitespace-nowrap">{formatCpfCnpj(inscricao.cpf_cnpj) || "-"}</TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {isLoadingMunicipios ? "..." : resolveCidade(inscricao.cidade)}
+                      {resolveCidade(inscricao.cidade, inscricao.uf)}
                     </TableCell>
                    <TableCell className="text-right whitespace-nowrap">
                      {canEdit && (
