@@ -1,44 +1,32 @@
-## Causa do problema
+## Suporte a `codigo_ibge` na importação de Inscrições Estaduais
 
-A tabela `produtores` tem uma restrição **UNIQUE global** na coluna `codigo`:
+### Objetivo
+Permitir que a planilha de **Inscrições Estaduais de Produtores** aceite a coluna `codigo_ibge` (código IBGE do município, 7 dígitos). Ao informar esse código, o sistema preenche automaticamente `cidade` e `uf` consultando a tabela `ibge_municipios`, eliminando erros de digitação no nome da cidade.
 
-```
-produtores_codigo_key  UNIQUE (codigo)
-```
+### Comportamento
 
-No sistema multi-tenant, cada empresa contratante tem seus próprios produtores numerados a partir de 1. Como a empresa anterior já importou produtores com códigos 1, 2, 4, 5, a nova importação da segunda empresa falhou com:
+- A planilha passa a aceitar a coluna **`codigo_ibge`** (opcional, mas recomendada).
+- Se `codigo_ibge` estiver presente e válido:
+  - `cidade` ← `ibge_municipios.nome` (sobrescreve qualquer valor digitado na planilha)
+  - `uf` ← `ibge_municipios.uf`
+- Se `codigo_ibge` estiver presente mas **não for encontrado**: linha rejeitada com mensagem clara (`Linha N: código IBGE "XXXXX" não encontrado`).
+- Se `codigo_ibge` estiver vazio: mantém o comportamento atual (usa `cidade` e `uf` da planilha como texto).
 
-```
-duplicate key value violates unique constraint "produtores_codigo_key"
-```
+### Alterações de código
 
-Apenas o produtor de código 3 entrou (porque não existia ainda em nenhum tenant).
+1. **`src/lib/importacaoConfig.ts`** — adicionar `codigo_ibge` como coluna auxiliar na config de `inscricoes` (não persistida no DB, apenas para lookup).
 
-Além disso, o lookup de `produtor_codigo` nas inscrições (e referências futuras) também ficaria ambíguo se dois tenants tiverem o mesmo código — mas como o RLS filtra por tenant, na prática o lookup já só enxerga os do tenant atual; o problema é apenas a constraint global.
+2. **`src/components/importacao/ImportacaoDialog.tsx`** — adicionar bloco de pós-processamento específico para `config.key === 'inscricoes'` (no mesmo padrão do composite lookup de `colheitas`):
+   - Buscar todos os `ibge_municipios` que aparecem na planilha em uma única query (`.in('codigo_ibge', [...])`).
+   - Para cada linha: preencher `cidade` e `uf` a partir do match, ou registrar erro.
+   - Remover o campo auxiliar `_codigo_ibge` antes do insert.
 
-## Plano de correção
+3. **Modelo Excel (download de template)** — a coluna `codigo_ibge` é incluída automaticamente no template gerado, pois já é lida de `config.columns`.
 
-### 1. Migração no banco
+### Sem alterações no banco
 
-- Remover `UNIQUE (codigo)` global em `produtores`.
-- Criar índice único composto **por granja**: `UNIQUE (granja_id, codigo)` em `produtores` (cada granja tem sua própria numeração; isso já garante isolamento por tenant via granja → tenant).
-- Verificar e corrigir o mesmo padrão em outras tabelas com numeração legada por empresa. Vou auditar e ajustar onde houver UNIQUE global em `codigo`:
-  - `granjas.codigo` (já deve ser por tenant — confirmar)
-  - `clientes_fornecedores.codigo`
-  - `lavouras.codigo`
-  - `silos.codigo`
-  - `produtos.codigo`
-  - `placas.codigo`
-  - `transportadoras.codigo`
-  - `safras.codigo`, `culturas.codigo`, etc.
-  
-  Em cada uma: se houver UNIQUE global, substituir por UNIQUE composto com a coluna de escopo apropriada (tenant_id ou granja_id, conforme a tabela).
+Não é necessária migração — o campo é apenas usado como entrada para popular `cidade`/`uf` (que já existem na tabela `inscricoes_produtor`). A tabela `ibge_municipios` já está populada e indexada por `codigo_ibge`.
 
-### 2. Após a migração
+### Documentação
 
-- Reimportar produtores da segunda empresa — todos os registros deverão entrar.
-- Não é necessário alterar `importacaoConfig.ts` nem a UI: o lookup de `granja_codigo`/`produtor_codigo` já é resolvido dentro do tenant via RLS.
-
-### 3. Observação
-
-Não vou alterar configurações do supabase/auth nem dados de produção. A migração é apenas estrutural (drop/recreate de índices únicos), preservando todos os dados existentes.
+Atualizar o tooltip/descrição da etapa de importação de Inscrições para informar a nova coluna recomendada.

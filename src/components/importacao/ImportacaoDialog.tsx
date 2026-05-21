@@ -238,6 +238,39 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
           
           setReferenceErrors([...refErrors, ...compositeErrors]);
+        } else if (config.key === 'inscricoes') {
+          // Lookup automático de cidade/uf via codigo_ibge
+          const ibgeErrors: string[] = [];
+          const codigos = Array.from(new Set(
+            resolved
+              .map(r => String((r as any)._codigo_ibge ?? '').trim())
+              .filter(c => c.length > 0)
+          ));
+          let ibgeMap = new Map<string, { nome: string; uf: string }>();
+          if (codigos.length > 0) {
+            const { data: municipios } = await supabase
+              .from('ibge_municipios')
+              .select('codigo_ibge, nome, uf')
+              .in('codigo_ibge', codigos);
+            (municipios || []).forEach((m: any) => {
+              ibgeMap.set(String(m.codigo_ibge), { nome: m.nome, uf: m.uf });
+            });
+          }
+          for (let i = 0; i < resolved.length; i++) {
+            const row = resolved[i] as any;
+            const codIbge = String(row._codigo_ibge ?? '').trim();
+            delete row._codigo_ibge;
+            if (codIbge) {
+              const match = ibgeMap.get(codIbge);
+              if (match) {
+                row.cidade = match.nome;
+                row.uf = match.uf;
+              } else {
+                ibgeErrors.push(`Linha ${i + 1}: código IBGE "${codIbge}" não encontrado`);
+              }
+            }
+          }
+          setReferenceErrors([...refErrors, ...ibgeErrors]);
         } else {
           setReferenceErrors(refErrors);
         }
