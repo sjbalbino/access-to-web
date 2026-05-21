@@ -1,22 +1,11 @@
-## Remover colunas `cidade` e `uf` da planilha de importação de Inscrições Estaduais
+Ajustar a configuração de importação de placas para converter os valores do banco Access "PRÓPRIAS" e "TERCEIROS" para o formato esperado pelo banco: "propria" e "terceiros".
 
-### Objetivo
-Simplificar o template de importação de Inscrições Estaduais de Produtores removendo as colunas `cidade` e `uf`, já que o `codigo_ibge` (obrigatório) preenche automaticamente ambos os campos via lookup na tabela `ibge_municipios`.
+### Alterações
+1. **src/lib/importacaoConfig.ts**
+   - Criar função de transform `toPropriedade` que normaliza strings: trim, lower case, remove acentos, e converte "proprias"/"propria" → "propria", "terceiros" → "terceiros"
+   - Aplicar essa função na coluna `propriedade` da configuração `placas`
 
-### Alteração
-
-**`src/lib/importacaoConfig.ts`** — na config `inscricoes`:
-- Remover a coluna `{ accessName: 'cidade', ... }`
-- Remover a coluna `{ accessName: 'uf', ... }`
-- Manter `codigo_ibge` como entrada única para localidade
-
-### Comportamento resultante
-
-- Template Excel gerado não terá mais as colunas `cidade` nem `uf`.
-- No `ImportacaoDialog.tsx`, o bloco de pós-processamento já popula `cidade` e `uf` a partir do `codigo_ibge` antes do insert — nenhuma alteração necessária ali.
-- Se `codigo_ibge` estiver vazio ou inválido, a linha é rejeitada (comportamento atual mantido).
-- Os campos `cidade` e `uf` continuam existindo na tabela `inscricoes_produtor` (apenas deixam de ser entrada direta da planilha).
-
-### Sem mudanças no banco
-
-Nenhuma migração necessária.
+### Valores esperados após normalização
+- "PRÓPRIAS", "PRÓPRIA", "proprias", "propria" → `propria`
+- "TERCEIROS", "terceiros" → `terceiros`
+- Valor vazio → `null` (o banco tem default 'propria')

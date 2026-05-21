@@ -428,7 +428,13 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'tipo_veiculo', dbName: 'tipo_veiculo', transform: toStr },
       { accessName: 'capacidade_kg', dbName: 'capacidade_kg', transform: toNumber },
       { accessName: 'uf', dbName: 'uf', transform: toStr },
-      { accessName: 'propriedade', dbName: 'propriedade', transform: toStr },
+      { accessName: 'propriedade', dbName: 'propriedade', transform: (v: any) => {
+        if (v === null || v === undefined || v === '') return null;
+        const s = String(v).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (s.startsWith('propri')) return 'propria';
+        if (s.startsWith('terceir')) return 'terceiros';
+        return s;
+      } },
       { accessName: 'peso_tara', dbName: 'peso_tara', transform: toNumber },
       { accessName: 'ativa', dbName: 'ativa', transform: toBool },
     ],
