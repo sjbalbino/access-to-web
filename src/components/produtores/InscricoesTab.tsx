@@ -114,8 +114,6 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const deleteInscricao = useDeleteInscricao();
   const { canEdit } = useAuth();
   const { isLoading: isLoadingCep, fetchCep } = useCepLookup();
-  const { data: allMunicipios, isLoading: isLoadingMunicipios } = useIbgeMunicipios();
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedInscricao, setSelectedInscricao] = useState<InscricaoProdutor | null>(null);
@@ -124,23 +122,48 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const [ufCidade, setUfCidade] = useState<string>("");
   const { data: municipios } = useIbgeMunicipios(ufCidade || undefined);
 
-  // Mapa de lookup para resolver código IBGE -> nome do município
+  // Códigos IBGE presentes na lista (fetch focado para evitar limite de 1000 linhas)
+  const codigosIbge = useMemo(() => {
+    const codes = new Set<string>();
+    inscricoes?.forEach(i => {
+      if (i.cidade && /^\d{6,7}$/.test(i.cidade)) codes.add(i.cidade);
+    });
+    return Array.from(codes);
+  }, [inscricoes]);
+
+  const { data: municipiosLista } = useQuery({
+    queryKey: ["ibge_municipios_by_codes", codigosIbge.sort().join(",")],
+    queryFn: async () => {
+      if (codigosIbge.length === 0) return [];
+      const { data, error } = await supabase
+        .from("ibge_municipios")
+        .select("codigo_ibge, nome, uf")
+        .in("codigo_ibge", codigosIbge);
+      if (error) throw error;
+      return data;
+    },
+    enabled: codigosIbge.length > 0,
+    staleTime: 1000 * 60 * 30,
+  });
+
   const municipiosMap = useMemo(() => {
     const map = new Map<string, { nome: string; uf: string }>();
-    allMunicipios?.forEach(m => {
+    municipiosLista?.forEach(m => {
       map.set(m.codigo_ibge, { nome: m.nome, uf: m.uf });
     });
     return map;
-  }, [allMunicipios]);
+  }, [municipiosLista]);
 
   // Helper to resolve IBGE code to city name
-  const resolveCidade = (codigo: string | null) => {
+  const resolveCidade = (codigo: string | null, ufFallback?: string | null) => {
     if (!codigo) return "-";
     const mun = municipiosMap.get(codigo);
     if (mun) return `${mun.nome}/${mun.uf}`;
     // Fallback: pode ser que o campo já contenha o nome da cidade
-    if (codigo.length > 7 || isNaN(Number(codigo))) return codigo;
-    return codigo;
+    if (codigo.length > 7 || isNaN(Number(codigo))) {
+      return ufFallback ? `${codigo}/${ufFallback}` : codigo;
+    }
+    return ufFallback ? `${codigo}/${ufFallback}` : codigo;
   };
 
   const handleNew = () => {
