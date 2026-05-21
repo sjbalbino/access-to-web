@@ -424,10 +424,13 @@ export const tableConfigs: TableConfig[] = [
     order: 10,
     columns: [
       { accessName: 'placa', dbName: 'placa', required: true, transform: toStr },
-      { accessName: 'descricao', dbName: 'descricao', transform: toStr },
-      { accessName: 'tipo_veiculo', dbName: 'tipo_veiculo', transform: toStr },
+      { accessName: 'tipo_veiculo', dbName: 'tipo', transform: toStr },
+      { accessName: 'tipo', dbName: 'tipo', transform: toStr },
+      { accessName: 'marca', dbName: 'marca', transform: toStr },
+      { accessName: 'modelo', dbName: 'modelo', transform: toStr },
+      { accessName: 'ano', dbName: 'ano', transform: toInt },
+      { accessName: 'cor', dbName: 'cor', transform: toStr },
       { accessName: 'capacidade_kg', dbName: 'capacidade_kg', transform: toNumber },
-      { accessName: 'uf', dbName: 'uf', transform: toStr },
       { accessName: 'propriedade', dbName: 'propriedade', transform: (v: any) => {
         if (v === null || v === undefined || v === '') return null;
         const s = String(v).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -436,7 +439,9 @@ export const tableConfigs: TableConfig[] = [
         return s;
       } },
       { accessName: 'peso_tara', dbName: 'peso_tara', transform: toNumber },
+      { accessName: 'proprietario', dbName: 'proprietario', transform: toStr },
       { accessName: 'motorista', dbName: 'motorista', transform: toStr },
+      { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
       { accessName: 'ativa', dbName: 'ativa', transform: toBool },
     ],
   },
