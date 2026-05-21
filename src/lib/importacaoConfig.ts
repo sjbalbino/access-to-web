@@ -404,8 +404,6 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'numero', dbName: 'numero', transform: toStr },
       { accessName: 'complemento', dbName: 'complemento', transform: toStr },
       { accessName: 'bairro', dbName: 'bairro', transform: toStr },
-      { accessName: 'cidade', dbName: 'cidade', transform: toStr },
-      { accessName: 'uf', dbName: 'uf', transform: toStr },
       { accessName: 'codigo_ibge', dbName: '_codigo_ibge', transform: toStr },
       { accessName: 'cep', dbName: 'cep', transform: toStr },
       { accessName: 'telefone', dbName: 'telefone', transform: toStr },
