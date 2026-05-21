@@ -18,6 +18,7 @@ export interface ReferenceResolver {
   compositeSourceColumn?: string; // extra column in Excel for disambiguation (e.g. producer name)
   compositeColumns?: string[]; // columns in lookup table to build composite key
   required?: boolean; // if true, empty source value generates an error (for NOT NULL FK columns)
+  optional?: boolean; // if true, missing lookup is ignored silently (FK stays null, no warning)
 }
 
 export interface UpdateModeConfig {
