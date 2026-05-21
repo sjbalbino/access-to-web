@@ -963,7 +963,7 @@ export async function resolveReferences(
 
       if (uuid) {
         newRow[ref.dbColumn] = uuid;
-      } else {
+      } else if (!ref.optional) {
         errors.push(`Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" não encontrado`);
       }
       if (foundKey) delete newRow[foundKey];
