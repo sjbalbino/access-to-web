@@ -582,7 +582,7 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'variedade_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'placa_id', sourceColumn: 'placa', lookupTable: 'placas', lookupColumn: 'placa', lookupLabel: 'placa' },
-      { dbColumn: 'local_entrega_terceiro_id', sourceColumn: 'col_localentrega', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome' },
+      { dbColumn: 'local_entrega_terceiro_id', sourceColumn: 'col_localentrega', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
     ],
   },
   {
