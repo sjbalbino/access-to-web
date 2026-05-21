@@ -18,6 +18,7 @@ export interface ReferenceResolver {
   compositeSourceColumn?: string; // extra column in Excel for disambiguation (e.g. producer name)
   compositeColumns?: string[]; // columns in lookup table to build composite key
   required?: boolean; // if true, empty source value generates an error (for NOT NULL FK columns)
+  optional?: boolean; // if true, missing lookup is ignored silently (FK stays null, no warning)
 }
 
 export interface UpdateModeConfig {
@@ -581,7 +582,7 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'variedade_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'placa_id', sourceColumn: 'placa', lookupTable: 'placas', lookupColumn: 'placa', lookupLabel: 'placa' },
-      { dbColumn: 'local_entrega_terceiro_id', sourceColumn: 'col_localentrega', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome' },
+      { dbColumn: 'local_entrega_terceiro_id', sourceColumn: 'col_localentrega', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
     ],
   },
   {
@@ -962,7 +963,7 @@ export async function resolveReferences(
 
       if (uuid) {
         newRow[ref.dbColumn] = uuid;
-      } else {
+      } else if (!ref.optional) {
         errors.push(`Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" não encontrado`);
       }
       if (foundKey) delete newRow[foundKey];
