@@ -50,6 +50,7 @@ import {
 import { Plus, Pencil, Trash2, FileText, Building2, Banknote, Crown, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   useInscricoesByProdutor,
   useCreateInscricao,
