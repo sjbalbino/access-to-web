@@ -410,6 +410,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'cep', dbName: 'cep', transform: toStr },
       { accessName: 'telefone', dbName: 'telefone', transform: toStr },
       { accessName: 'email', dbName: 'email', transform: toStr },
+      { accessName: 'conta_bancaria', dbName: 'conta_bancaria', transform: toStr },
       { accessName: 'ativa', dbName: 'ativa', transform: toBool },
     ],
     references: [
