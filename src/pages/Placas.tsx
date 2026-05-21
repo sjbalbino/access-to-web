@@ -39,6 +39,7 @@ export default function Placas() {
     cor: '',
     capacidade_kg: 0,
     proprietario: '',
+    motorista: '',
     observacoes: '',
     ativa: true,
     propriedade: 'propria',
