@@ -842,10 +842,19 @@ export const tableConfigs: TableConfig[] = [
   },
 ];
 
+// Tabelas isoladas por empresa contratante (tenant_id)
+const TENANT_SCOPED_LOOKUP_TABLES = new Set([
+  'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
+  'lavouras','silos','controle_lavouras','clientes_fornecedores','inscricoes_produtor',
+  'dre_contas','tabela_umidades','plano_contas_gerencial','culturas','unidades_medida','sub_centros_custo',
+  'contratos_venda','remessas_venda',
+]);
+
 // Resolve references: lookup legacy codes to UUIDs
 export async function resolveReferences(
   references: ReferenceResolver[],
-  rows: Record<string, any>[]
+  rows: Record<string, any>[],
+  tenantId?: string
 ): Promise<{ resolved: Record<string, any>[]; errors: string[] }> {
   const errors: string[] = [];
   const lookupCache: Record<string, Record<string, string>> = {};
@@ -857,7 +866,8 @@ export async function resolveReferences(
     const allColumns = [ref.lookupColumn, ...(ref.fallbackColumns || [])];
     const compositeExtraCols = ref.compositeColumns || [];
     const selectCols = ['id', ...new Set([...allColumns, ...compositeExtraCols])].join(', ');
-    const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}`;
+    const scopeTenant = tenantId && TENANT_SCOPED_LOOKUP_TABLES.has(ref.lookupTable);
+    const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}${scopeTenant ? ':t=' + tenantId : ''}`;
     
     if (!lookupCache[cacheKey]) {
       // Paginar para superar o limite padrão de 1000 linhas do Supabase
@@ -865,10 +875,14 @@ export async function resolveReferences(
       let from = 0;
       const allData: any[] = [];
       while (true) {
-        const { data, error } = await supabase
+        let query = supabase
           .from(ref.lookupTable as any)
           .select(selectCols)
           .range(from, from + PAGE - 1);
+        if (scopeTenant) {
+          query = query.eq('tenant_id', tenantId);
+        }
+        const { data, error } = await query;
         if (error) break;
         if (!data || data.length === 0) break;
         allData.push(...data);
