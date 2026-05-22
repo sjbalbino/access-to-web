@@ -972,7 +972,8 @@ export async function resolveReferences(
       }
 
       const compositeExtraCols = ref.compositeColumns || [];
-      const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}`;
+      const scopeTenant = tenantId && TENANT_SCOPED_LOOKUP_TABLES.has(ref.lookupTable);
+      const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}${scopeTenant ? ':t=' + tenantId : ''}`;
       const cache = lookupCache[cacheKey];
 
       let uuid: string | undefined;
