@@ -859,11 +859,23 @@ export async function resolveReferences(
     const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}`;
     
     if (!lookupCache[cacheKey]) {
-      const { data } = await supabase
-        .from(ref.lookupTable as any)
-        .select(selectCols);
+      // Paginar para superar o limite padrão de 1000 linhas do Supabase
+      const PAGE = 1000;
+      let from = 0;
+      const allData: any[] = [];
+      while (true) {
+        const { data, error } = await supabase
+          .from(ref.lookupTable as any)
+          .select(selectCols)
+          .range(from, from + PAGE - 1);
+        if (error) break;
+        if (!data || data.length === 0) break;
+        allData.push(...data);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
       const cache: Record<string, string> = {};
-      data?.forEach((item: any) => {
+      allData.forEach((item: any) => {
         // Index by primary column
         for (const col of allColumns) {
           const key = String(item[col] || '').trim();
@@ -897,6 +909,7 @@ export async function resolveReferences(
       });
       lookupCache[cacheKey] = cache;
     }
+
   }
 
   const resolved = rows.map((row, idx) => {

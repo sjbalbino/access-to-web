@@ -1,31 +1,36 @@
-# Plano para corrigir a importação de colheitas
+# Corrigir lookups da importação que falham acima de 1000 registros
 
-## Objetivo
-Permitir a importação da planilha de colheitas sem rejeitar 100% das linhas quando a empresa contratante já foi selecionada na tela.
+## Causa
+Em `src/lib/importacaoConfig.ts`, a função `resolveReferences` carrega cada tabela de referência com um único `select` sem paginação. O Supabase devolve no máximo 1000 linhas por requisição, então tabelas maiores ficam parcialmente em cache e os registros excedentes aparecem como "não encontrado" na pré-visualização.
 
-## O que vou ajustar
-1. **Remover a exigência indevida de `granja_id` para `colheitas`**
-   - Hoje a tela trata `colheitas` como tabela que precisa obrigatoriamente de `granja_id`.
-   - A tabela `colheitas` não possui essa coluna, então todas as linhas são rejeitadas com a mensagem de `granja_id ausente`.
-   - Vou retirar `colheitas` da regra `REQUIRES_GRANJA` em `ImportacaoDialog.tsx`.
+Confirmado no banco:
+- `clientes_fornecedores`: 1.329 registros (códigos 74 e 204 existem, mas ficam fora das 1000 primeiras)
+- `produtos`: 705 (ok hoje, mas próximo do limite)
+- `inscricoes_produtor`: 572
 
-2. **Manter o isolamento por empresa sem bloquear a importação**
-   - O isolamento continuará sendo feito pelo `tenant_id` já aplicado nas tabelas multi-tenant.
-   - Não vou alterar a lógica de segurança existente além desse bloqueio incorreto.
+## Mudança
 
-3. **Validar que o vínculo com Controle de Lavoura continua funcionando**
-   - A importação de `colheitas` já resolve `controle_lavoura_id` a partir do código vindo na planilha.
-   - Vou preservar essa lógica e conferir que ela continua sendo o filtro correto para relacionamento com safra/lavoura.
+Arquivo: `src/lib/importacaoConfig.ts` — função `resolveReferences` (bloco de montagem do cache, linhas 861-899).
 
-## Resultado esperado
-- A importação deixa de falhar com `Nenhuma linha válida para importar. 934 rejeitada(s)`.
-- As linhas passam a ser inseridas normalmente, desde que os demais relacionamentos da planilha estejam válidos.
-- Se houver erros reais de referência, eles aparecerão individualmente em vez de bloquear tudo por `granja_id`.
+Substituir o `select` único por um loop de paginação usando `.range(from, to)` em páginas de 1000, até a página vir incompleta. Tudo o mais (montagem das chaves, composite, dígitos, etc.) permanece igual.
 
-## Detalhes técnicos
-- Arquivo principal: `src/components/importacao/ImportacaoDialog.tsx`
-- Ajuste pontual:
-  - de: `const REQUIRES_GRANJA = new Set(['contratos_venda','colheitas']);`
-  - para: `const REQUIRES_GRANJA = new Set(['contratos_venda']);`
-- Não será necessária mudança no banco nem em autenticação.
-- A configuração opcional de `col_localentrega` em `importacaoConfig.ts` permanece como está.
+Pseudocódigo:
+
+```text
+const PAGE = 1000
+let from = 0
+loop:
+  data = supabase.from(table).select(cols).range(from, from + PAGE - 1)
+  acumula em allData
+  se data.length < PAGE → para
+  from += PAGE
+```
+
+Depois itera `allData` montando o cache exatamente como hoje.
+
+## Fora de escopo
+- Nenhuma mudança em UI, em `ImportacaoDialog.tsx`, ou em configs de tabelas.
+- Nenhuma mudança no banco.
+
+## Validação
+Reabrir o diálogo "Importar Contratos de Venda" com a mesma planilha: os avisos de `clientes_fornecedores.codigo = "74"` e `produtos.codigo = "204"` devem desaparecer e os 129 registros devem ficar válidos (ou restar apenas avisos legítimos).
