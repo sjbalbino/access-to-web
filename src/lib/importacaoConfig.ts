@@ -939,7 +939,18 @@ export async function resolveReferences(
         continue;
       }
       
-      const { value: rawVal, key: foundKey } = findColumnValue(row, ref.sourceColumn);
+      let { value: rawVal, key: foundKey } = findColumnValue(row, ref.sourceColumn);
+      // Tentar aliases de cabeçalho se o nome principal não foi encontrado
+      if ((rawVal === undefined || rawVal === null || String(rawVal).trim() === '') && ref.sourceColumnAliases) {
+        for (const alias of ref.sourceColumnAliases) {
+          const tryAlias = findColumnValue(row, alias);
+          if (tryAlias.value !== undefined && tryAlias.value !== null && String(tryAlias.value).trim() !== '') {
+            rawVal = tryAlias.value;
+            foundKey = tryAlias.key;
+            break;
+          }
+        }
+      }
       const sourceValue = String(rawVal || '').trim();
 
       // Read and clean composite column if present
