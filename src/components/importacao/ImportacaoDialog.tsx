@@ -489,29 +489,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         throw new Error(`Nenhuma linha válida para importar. ${validationErrors.length} rejeitada(s). Verifique o console para detalhes.`);
       }
 
-      // Pré-validação de campos numéricos com precisão limitada (ex: contratos_venda.preco_kg numeric(15,10))
-      const NUMERIC_LIMITS: Record<string, Record<string, { maxIntDigits: number; label: string }>> = {
-        contratos_venda: {
-          preco_kg: { maxIntDigits: 5, label: 'preco_kg (máx. 5 dígitos antes da vírgula)' },
-        },
-      };
-      const limits = NUMERIC_LIMITS[config.tableName] || {};
-      const finalRows: Record<string, any>[] = [];
-      validRows.forEach((row, idx) => {
-        let invalid = false;
-        for (const [field, rule] of Object.entries(limits)) {
-          const v = row[field];
-          if (v === null || v === undefined || v === '') continue;
-          const num = Number(v);
-          if (!isFinite(num)) continue;
-          if (Math.abs(num) >= Math.pow(10, rule.maxIntDigits)) {
-            validationErrors.push(`Linha ${idx + 1}: ${rule.label} — valor recebido: ${v}`);
-            invalid = true;
-            break;
-          }
-        }
-        if (!invalid) finalRows.push(row);
-      });
+      // Campo preco_kg ampliado para numeric(18,6) — sem mais pré-validação de limite.
+      const finalRows: Record<string, any>[] = validRows;
 
       // Batch insert
       const batchSize = 100;
