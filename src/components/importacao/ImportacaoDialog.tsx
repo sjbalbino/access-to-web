@@ -197,7 +197,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
       // Resolve references if any
       if (config.references && config.references.length > 0) {
-        const { resolved, errors: refErrors } = await resolveReferences(config.references, transformed);
+        const { resolved, errors: refErrors } = await resolveReferences(config.references, transformed, tenantId);
         
         // Composite lookup: controle_lavoura_id for colheitas (via safra_codigo)
         if (config.key === 'colheitas') {
