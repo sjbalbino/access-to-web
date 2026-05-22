@@ -1,55 +1,35 @@
-## Diagnóstico
+# Plano
 
-A planilha agora traz `granja_codigo`, mas a importação ainda rejeita 100% com "granja_id ausente". Isso só acontece quando o resolvedor de referências **não atribui** `granja_id` à linha — ele engole o problema em silêncio porque a referência `granja_id` em `contratos_venda` não é marcada como `required: true` (`src/lib/importacaoConfig.ts` linha 638). Quando o valor de origem está vazio (linha 939-946 de `importacaoConfig.ts`), o resolvedor pula a linha sem registrar erro, e só depois a validação do diálogo (`REQUIRES_GRANJA`) rejeita com a mensagem genérica.
+## Objetivo
+Fazer a importação de Contratos de Venda voltar a encontrar os códigos da planilha e deixar os avisos mais precisos quando algum código realmente não existir.
 
-Hipóteses prováveis (uma ou mais):
+## O que vou ajustar
+1. Corrigir o resolvedor de referências para usar a mesma chave de cache tanto na gravação quanto na leitura quando a busca é filtrada pela empresa contratante.
+   - Hoje os lookups de tabelas por empresa são carregados com uma chave contendo `tenantId`, mas depois lidos sem esse mesmo sufixo.
+   - Isso faz `safra_codigo`, `granja_codigo`, `comprador_codigo` e `produto_codigo` aparecerem como “não encontrado” mesmo quando existem.
 
-1. **Cabeçalho ligeiramente diferente** — a coluna foi adicionada como "Granja", "codigo_granja", "cod_granja", "granja", "GRANJA_CODIGO " (com espaço/acento), e o matcher fuzzy (`normalizeColName`) não casa, então `granja_codigo` vem vazio.
-2. **Códigos não batem com o tenant selecionado** — o cache de `granjas` é carregado **sem filtrar por `tenant_id`**, então códigos `1`/`2`/`3` colidem entre tenants (no banco existem `codigo=1` para dois tenants diferentes). Hoje vence o último inserido, podendo levar a `granja_id` de outro tenant. Mas se mesmo assim resultasse vazio, voltamos ao cenário 1.
-3. **Coluna inexistente no preview da planilha** — o usuário acha que adicionou, mas o cabeçalho ficou em uma linha errada / outra aba.
+2. Manter a busca por empresa contratante nos lookups de tabelas isoladas.
+   - Continuarei filtrando `granjas`, `safras`, `produtos` e `clientes_fornecedores` pela empresa selecionada.
+   - Isso evita colisão de códigos entre empresas diferentes.
 
-## Mudanças (apenas frontend de importação)
+3. Melhorar as mensagens de erro da importação de contratos.
+   - Se faltar `granja_codigo`, a mensagem continuará indicando isso claramente.
+   - Se o código existir na coluna mas não for encontrado, o aviso ficará específico por tabela/campo, em vez de parecer um bloqueio genérico.
 
-Arquivo 1: `src/lib/importacaoConfig.ts`
+4. Validar o fluxo no preview da importação.
+   - Conferir que o preview deixa de rejeitar 100% da planilha quando os códigos existem.
+   - Conferir que os avisos restantes apontam somente registros realmente inconsistentes.
 
-a. Tornar `granja_id` **obrigatório** em `contratos_venda` (linha 638):
-```ts
-{ dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
-```
-Efeito: se a coluna estiver vazia/ausente, o usuário verá "Campo obrigatório `granja_codigo` está vazio" — apontando a verdadeira causa.
+## Arquivos envolvidos
+- `src/lib/importacaoConfig.ts`
+- `src/components/importacao/ImportacaoDialog.tsx`
 
-b. Adicionar suporte a aliases de coluna de origem na interface `ReferenceResolver`:
-```ts
-sourceColumnAliases?: string[]; // outros nomes aceitos no cabeçalho da planilha
-```
-E em `resolveReferences` (linha 927), se `findColumnValue(row, ref.sourceColumn)` não achar valor, tentar cada alias antes de desistir.
+## Resultado esperado
+- A planilha de Contratos de Venda volta a resolver corretamente os códigos por empresa.
+- O contador de registros válidos deixa de ficar zerado quando os dados existem no sistema.
+- Os avisos passam a mostrar problemas reais de cadastro ou preenchimento da planilha.
 
-c. Na referência de `granja_id` de `contratos_venda`, adicionar:
-```ts
-sourceColumnAliases: ['granja', 'codigo_granja', 'cod_granja', 'granjacodigo']
-```
-(equivalente já existe na prática via normalizeColName, mas isso garante variações como "Granja" sozinho.)
-
-d. Em `resolveReferences` (loop de cache, linha 866-876), filtrar por `tenant_id` quando a tabela for tenant-scoped (`granjas`, `produtos`, `clientes_fornecedores`, `safras`, `inscricoes_produtor`, etc.). Passar o `tenantId` selecionado como parâmetro novo da função (`resolveReferences(refs, rows, tenantId?)`). Sem `tenantId`, comportamento atual preservado.
-
-Arquivo 2: `src/components/importacao/ImportacaoDialog.tsx`
-
-a. Passar `tenantId` para `resolveReferences` na chamada existente do preview.
-
-b. Trocar a mensagem da rejeição em `REQUIRES_GRANJA` (linha 461) para algo mais acionável:
-```
-Linha N: granja_id não resolvido — verifique se a coluna `granja_codigo` existe na planilha e se o código corresponde a uma granja da empresa selecionada (códigos disponíveis: <lista dos códigos de granjas do tenant>).
-```
-
-## Fora de escopo
-
-- Sem mudança no banco, RLS, schema, ou em outros tipos de importação além de `contratos_venda`.
-- Sem novo seletor de granja na UI do diálogo.
-
-## Validação
-
-1. Reabrir "Importar Contratos de Venda" com a planilha atual:
-   - Se a coluna `granja_codigo` estiver realmente preenchida com códigos válidos do tenant → 129 registros válidos.
-   - Se o cabeçalho estiver diferente → erro claro apontando "Campo obrigatório `granja_codigo` está vazio".
-   - Se os códigos não baterem → erro "`granjas.codigo = X` não encontrado" para as linhas afetadas.
-2. Conferir no console que não há mais a mensagem genérica "granja_id ausente — registro rejeitado para evitar vazamento entre empresas" para linhas com `granja_codigo` válido.
+## Detalhes técnicos
+- Ajustar a composição de `cacheKey` dentro de `resolveReferences()` para que a leitura use exatamente a mesma chave usada na montagem do cache.
+- Preservar o escopo por `tenantId` nas tabelas listadas em `TENANT_SCOPED_LOOKUP_TABLES`.
+- Revisar a validação final de `contratos_venda` para não mascarar falhas de lookup já identificadas no preview.
