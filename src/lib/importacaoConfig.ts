@@ -842,10 +842,10 @@ export const tableConfigs: TableConfig[] = [
   },
 ];
 
-// Tabelas isoladas por empresa contratante (tenant_id)
+// Tabelas que possuem coluna tenant_id (isoladas por empresa contratante)
 const TENANT_SCOPED_LOOKUP_TABLES = new Set([
   'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
-  'lavouras','silos','controle_lavouras','clientes_fornecedores','inscricoes_produtor',
+  'lavouras','silos','controle_lavouras','clientes_fornecedores',
   'dre_contas','tabela_umidades','plano_contas_gerencial','culturas','unidades_medida','sub_centros_custo',
   'contratos_venda','remessas_venda',
 ]);
