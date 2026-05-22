@@ -10,6 +10,7 @@ export interface ColumnMapping {
 export interface ReferenceResolver {
   dbColumn: string; // FK column in target table
   sourceColumn: string; // column from Excel that has the legacy code
+  sourceColumnAliases?: string[]; // alternative header names accepted in the spreadsheet
   lookupTable: string; // table to look up
   lookupColumn: string; // column in lookup table to match
   lookupLabel?: string; // column to show as label
@@ -635,7 +636,7 @@ export const tableConfigs: TableConfig[] = [
     ],
     references: [
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
-      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
+      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', sourceColumnAliases: ['granja', 'codigo_granja', 'cod_granja', 'granjacodigo'], lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
       { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual' },
       { dbColumn: 'comprador_id', sourceColumn: 'comprador_codigo', lookupTable: 'clientes_fornecedores', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
@@ -841,10 +842,19 @@ export const tableConfigs: TableConfig[] = [
   },
 ];
 
+// Tabelas que possuem coluna tenant_id (isoladas por empresa contratante)
+const TENANT_SCOPED_LOOKUP_TABLES = new Set([
+  'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
+  'lavouras','silos','controle_lavouras','clientes_fornecedores',
+  'dre_contas','tabela_umidades','plano_contas_gerencial','culturas','unidades_medida','sub_centros_custo',
+  'contratos_venda','remessas_venda',
+]);
+
 // Resolve references: lookup legacy codes to UUIDs
 export async function resolveReferences(
   references: ReferenceResolver[],
-  rows: Record<string, any>[]
+  rows: Record<string, any>[],
+  tenantId?: string
 ): Promise<{ resolved: Record<string, any>[]; errors: string[] }> {
   const errors: string[] = [];
   const lookupCache: Record<string, Record<string, string>> = {};
@@ -856,7 +866,8 @@ export async function resolveReferences(
     const allColumns = [ref.lookupColumn, ...(ref.fallbackColumns || [])];
     const compositeExtraCols = ref.compositeColumns || [];
     const selectCols = ['id', ...new Set([...allColumns, ...compositeExtraCols])].join(', ');
-    const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}`;
+    const scopeTenant = tenantId && TENANT_SCOPED_LOOKUP_TABLES.has(ref.lookupTable);
+    const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}${scopeTenant ? ':t=' + tenantId : ''}`;
     
     if (!lookupCache[cacheKey]) {
       // Paginar para superar o limite padrão de 1000 linhas do Supabase
@@ -864,10 +875,14 @@ export async function resolveReferences(
       let from = 0;
       const allData: any[] = [];
       while (true) {
-        const { data, error } = await supabase
+        let query = supabase
           .from(ref.lookupTable as any)
           .select(selectCols)
           .range(from, from + PAGE - 1);
+        if (scopeTenant) {
+          query = query.eq('tenant_id', tenantId);
+        }
+        const { data, error } = await query;
         if (error) break;
         if (!data || data.length === 0) break;
         allData.push(...data);
@@ -924,7 +939,18 @@ export async function resolveReferences(
         continue;
       }
       
-      const { value: rawVal, key: foundKey } = findColumnValue(row, ref.sourceColumn);
+      let { value: rawVal, key: foundKey } = findColumnValue(row, ref.sourceColumn);
+      // Tentar aliases de cabeçalho se o nome principal não foi encontrado
+      if ((rawVal === undefined || rawVal === null || String(rawVal).trim() === '') && ref.sourceColumnAliases) {
+        for (const alias of ref.sourceColumnAliases) {
+          const tryAlias = findColumnValue(row, alias);
+          if (tryAlias.value !== undefined && tryAlias.value !== null && String(tryAlias.value).trim() !== '') {
+            rawVal = tryAlias.value;
+            foundKey = tryAlias.key;
+            break;
+          }
+        }
+      }
       const sourceValue = String(rawVal || '').trim();
 
       // Read and clean composite column if present

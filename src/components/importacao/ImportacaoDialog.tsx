@@ -197,7 +197,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
       // Resolve references if any
       if (config.references && config.references.length > 0) {
-        const { resolved, errors: refErrors } = await resolveReferences(config.references, transformed);
+        const { resolved, errors: refErrors } = await resolveReferences(config.references, transformed, tenantId);
         
         // Composite lookup: controle_lavoura_id for colheitas (via safra_codigo)
         if (config.key === 'colheitas') {
@@ -439,6 +439,19 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       const validationErrors: string[] = [];
       const validRows: Record<string, any>[] = [];
 
+      // Buscar códigos de granjas disponíveis (apenas se necessário)
+      let granjaCodigosDisponiveis: string[] = [];
+      if (REQUIRES_GRANJA.has(config.tableName) && tenantId) {
+        const { data: gs } = await supabase
+          .from('granjas')
+          .select('codigo')
+          .eq('tenant_id', tenantId);
+        granjaCodigosDisponiveis = (gs || [])
+          .map((g: any) => String(g.codigo ?? '').trim())
+          .filter(Boolean)
+          .sort();
+      }
+
       sanitizedRows.forEach((row, idx) => {
         const lineNum = idx + 1;
         // 1. Tabela isolada por tenant → exige tenantId selecionado
@@ -458,7 +471,12 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         }
         // 2. Tabelas que exigem granja_id (chave do isolamento operacional)
         if (REQUIRES_GRANJA.has(config.tableName) && !row['granja_id']) {
-          validationErrors.push(`Linha ${lineNum}: granja_id ausente — registro rejeitado para evitar vazamento entre empresas.`);
+          const lista = granjaCodigosDisponiveis.length > 0
+            ? ` Códigos de granja disponíveis para a empresa: ${granjaCodigosDisponiveis.join(', ')}.`
+            : ' Nenhuma granja cadastrada para a empresa selecionada.';
+          validationErrors.push(
+            `Linha ${lineNum}: granja_id não resolvido — verifique se a coluna "granja_codigo" existe na planilha e se o código corresponde a uma granja da empresa selecionada.${lista}`
+          );
           return;
         }
         validRows.push(row);
