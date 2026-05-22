@@ -1,36 +1,55 @@
-# Corrigir lookups da importação que falham acima de 1000 registros
+## Diagnóstico
 
-## Causa
-Em `src/lib/importacaoConfig.ts`, a função `resolveReferences` carrega cada tabela de referência com um único `select` sem paginação. O Supabase devolve no máximo 1000 linhas por requisição, então tabelas maiores ficam parcialmente em cache e os registros excedentes aparecem como "não encontrado" na pré-visualização.
+A planilha agora traz `granja_codigo`, mas a importação ainda rejeita 100% com "granja_id ausente". Isso só acontece quando o resolvedor de referências **não atribui** `granja_id` à linha — ele engole o problema em silêncio porque a referência `granja_id` em `contratos_venda` não é marcada como `required: true` (`src/lib/importacaoConfig.ts` linha 638). Quando o valor de origem está vazio (linha 939-946 de `importacaoConfig.ts`), o resolvedor pula a linha sem registrar erro, e só depois a validação do diálogo (`REQUIRES_GRANJA`) rejeita com a mensagem genérica.
 
-Confirmado no banco:
-- `clientes_fornecedores`: 1.329 registros (códigos 74 e 204 existem, mas ficam fora das 1000 primeiras)
-- `produtos`: 705 (ok hoje, mas próximo do limite)
-- `inscricoes_produtor`: 572
+Hipóteses prováveis (uma ou mais):
 
-## Mudança
+1. **Cabeçalho ligeiramente diferente** — a coluna foi adicionada como "Granja", "codigo_granja", "cod_granja", "granja", "GRANJA_CODIGO " (com espaço/acento), e o matcher fuzzy (`normalizeColName`) não casa, então `granja_codigo` vem vazio.
+2. **Códigos não batem com o tenant selecionado** — o cache de `granjas` é carregado **sem filtrar por `tenant_id`**, então códigos `1`/`2`/`3` colidem entre tenants (no banco existem `codigo=1` para dois tenants diferentes). Hoje vence o último inserido, podendo levar a `granja_id` de outro tenant. Mas se mesmo assim resultasse vazio, voltamos ao cenário 1.
+3. **Coluna inexistente no preview da planilha** — o usuário acha que adicionou, mas o cabeçalho ficou em uma linha errada / outra aba.
 
-Arquivo: `src/lib/importacaoConfig.ts` — função `resolveReferences` (bloco de montagem do cache, linhas 861-899).
+## Mudanças (apenas frontend de importação)
 
-Substituir o `select` único por um loop de paginação usando `.range(from, to)` em páginas de 1000, até a página vir incompleta. Tudo o mais (montagem das chaves, composite, dígitos, etc.) permanece igual.
+Arquivo 1: `src/lib/importacaoConfig.ts`
 
-Pseudocódigo:
+a. Tornar `granja_id` **obrigatório** em `contratos_venda` (linha 638):
+```ts
+{ dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
+```
+Efeito: se a coluna estiver vazia/ausente, o usuário verá "Campo obrigatório `granja_codigo` está vazio" — apontando a verdadeira causa.
 
-```text
-const PAGE = 1000
-let from = 0
-loop:
-  data = supabase.from(table).select(cols).range(from, from + PAGE - 1)
-  acumula em allData
-  se data.length < PAGE → para
-  from += PAGE
+b. Adicionar suporte a aliases de coluna de origem na interface `ReferenceResolver`:
+```ts
+sourceColumnAliases?: string[]; // outros nomes aceitos no cabeçalho da planilha
+```
+E em `resolveReferences` (linha 927), se `findColumnValue(row, ref.sourceColumn)` não achar valor, tentar cada alias antes de desistir.
+
+c. Na referência de `granja_id` de `contratos_venda`, adicionar:
+```ts
+sourceColumnAliases: ['granja', 'codigo_granja', 'cod_granja', 'granjacodigo']
+```
+(equivalente já existe na prática via normalizeColName, mas isso garante variações como "Granja" sozinho.)
+
+d. Em `resolveReferences` (loop de cache, linha 866-876), filtrar por `tenant_id` quando a tabela for tenant-scoped (`granjas`, `produtos`, `clientes_fornecedores`, `safras`, `inscricoes_produtor`, etc.). Passar o `tenantId` selecionado como parâmetro novo da função (`resolveReferences(refs, rows, tenantId?)`). Sem `tenantId`, comportamento atual preservado.
+
+Arquivo 2: `src/components/importacao/ImportacaoDialog.tsx`
+
+a. Passar `tenantId` para `resolveReferences` na chamada existente do preview.
+
+b. Trocar a mensagem da rejeição em `REQUIRES_GRANJA` (linha 461) para algo mais acionável:
+```
+Linha N: granja_id não resolvido — verifique se a coluna `granja_codigo` existe na planilha e se o código corresponde a uma granja da empresa selecionada (códigos disponíveis: <lista dos códigos de granjas do tenant>).
 ```
 
-Depois itera `allData` montando o cache exatamente como hoje.
-
 ## Fora de escopo
-- Nenhuma mudança em UI, em `ImportacaoDialog.tsx`, ou em configs de tabelas.
-- Nenhuma mudança no banco.
+
+- Sem mudança no banco, RLS, schema, ou em outros tipos de importação além de `contratos_venda`.
+- Sem novo seletor de granja na UI do diálogo.
 
 ## Validação
-Reabrir o diálogo "Importar Contratos de Venda" com a mesma planilha: os avisos de `clientes_fornecedores.codigo = "74"` e `produtos.codigo = "204"` devem desaparecer e os 129 registros devem ficar válidos (ou restar apenas avisos legítimos).
+
+1. Reabrir "Importar Contratos de Venda" com a planilha atual:
+   - Se a coluna `granja_codigo` estiver realmente preenchida com códigos válidos do tenant → 129 registros válidos.
+   - Se o cabeçalho estiver diferente → erro claro apontando "Campo obrigatório `granja_codigo` está vazio".
+   - Se os códigos não baterem → erro "`granjas.codigo = X` não encontrado" para as linhas afetadas.
+2. Conferir no console que não há mais a mensagem genérica "granja_id ausente — registro rejeitado para evitar vazamento entre empresas" para linhas com `granja_codigo` válido.
