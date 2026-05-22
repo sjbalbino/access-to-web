@@ -10,6 +10,7 @@ export interface ColumnMapping {
 export interface ReferenceResolver {
   dbColumn: string; // FK column in target table
   sourceColumn: string; // column from Excel that has the legacy code
+  sourceColumnAliases?: string[]; // alternative header names accepted in the spreadsheet
   lookupTable: string; // table to look up
   lookupColumn: string; // column in lookup table to match
   lookupLabel?: string; // column to show as label
