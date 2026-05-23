@@ -840,6 +840,72 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'local_entrega_id', sourceColumn: 'local_entrega_codigo', lookupTable: 'locais_entrega', lookupColumn: 'codigo', lookupLabel: 'nome' },
     ],
   },
+  {
+    key: 'contas_receber',
+    label: 'Contas a Receber',
+    tableName: 'contas_receber',
+    description: 'Títulos a receber (do Access)',
+    order: 19,
+    dependsOn: ['granjas', 'clientes', 'safras'],
+    columns: [
+      { accessName: 'codigo_legado', dbName: 'codigo_legado', transform: toStr },
+      { accessName: 'documento', dbName: 'documento', transform: toStr },
+      { accessName: 'parcela', dbName: 'parcela', transform: toStr },
+      { accessName: 'data_emissao', dbName: 'data_emissao', required: true, transform: toDate },
+      { accessName: 'data_vencimento', dbName: 'data_vencimento', required: true, transform: toDate },
+      { accessName: 'valor_original', dbName: 'valor_original', required: true, transform: toNumber },
+      { accessName: 'valor_pago', dbName: 'valor_pago', transform: toNumber },
+      { accessName: 'juros', dbName: 'juros', transform: toNumber },
+      { accessName: 'multa', dbName: 'multa', transform: toNumber },
+      { accessName: 'desconto', dbName: 'desconto', transform: toNumber },
+      { accessName: 'status', dbName: 'status', transform: (v: any) => {
+        const s = String(v ?? '').trim().toLowerCase();
+        if (['pago','quitado','liquidado','q','p'].includes(s)) return 'pago';
+        if (s === 'parcial') return 'parcial';
+        if (['cancelado','c'].includes(s)) return 'cancelado';
+        return 'aberto';
+      }},
+      { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
+    ],
+    references: [
+      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
+      { dbColumn: 'cliente_id', sourceColumn: 'cliente_nome', sourceColumnAliases: ['cliente','cliente_codigo'], lookupTable: 'clientes_fornecedores', lookupColumn: 'nome', fallbackColumns: ['codigo','cpf_cnpj'], lookupLabel: 'nome', optional: true },
+      { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
+    ],
+  },
+  {
+    key: 'contas_pagar',
+    label: 'Contas a Pagar',
+    tableName: 'contas_pagar',
+    description: 'Títulos a pagar (do Access)',
+    order: 20,
+    dependsOn: ['granjas', 'clientes', 'safras'],
+    columns: [
+      { accessName: 'codigo_legado', dbName: 'codigo_legado', transform: toStr },
+      { accessName: 'documento', dbName: 'documento', transform: toStr },
+      { accessName: 'parcela', dbName: 'parcela', transform: toStr },
+      { accessName: 'data_emissao', dbName: 'data_emissao', required: true, transform: toDate },
+      { accessName: 'data_vencimento', dbName: 'data_vencimento', required: true, transform: toDate },
+      { accessName: 'valor_original', dbName: 'valor_original', required: true, transform: toNumber },
+      { accessName: 'valor_pago', dbName: 'valor_pago', transform: toNumber },
+      { accessName: 'juros', dbName: 'juros', transform: toNumber },
+      { accessName: 'multa', dbName: 'multa', transform: toNumber },
+      { accessName: 'desconto', dbName: 'desconto', transform: toNumber },
+      { accessName: 'status', dbName: 'status', transform: (v: any) => {
+        const s = String(v ?? '').trim().toLowerCase();
+        if (['pago','quitado','liquidado','q','p'].includes(s)) return 'pago';
+        if (s === 'parcial') return 'parcial';
+        if (['cancelado','c'].includes(s)) return 'cancelado';
+        return 'aberto';
+      }},
+      { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
+    ],
+    references: [
+      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
+      { dbColumn: 'fornecedor_id', sourceColumn: 'fornecedor_nome', sourceColumnAliases: ['fornecedor','fornecedor_codigo'], lookupTable: 'clientes_fornecedores', lookupColumn: 'nome', fallbackColumns: ['codigo','cpf_cnpj'], lookupLabel: 'nome', optional: true },
+      { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
+    ],
+  },
 ];
 
 // Tabelas que possuem coluna tenant_id (isoladas por empresa contratante)

@@ -30,6 +30,8 @@ import { Input } from '@/components/ui/input';
 type TableStatus = 'pendente' | 'importada' | 'erro';
 
 const CLEANUP_STEPS = [
+  { label: 'Baixas Contas a Pagar/Receber', tables: ['contas_pagar_baixas', 'contas_receber_baixas'] },
+  { label: 'Contas a Pagar/Receber', tables: ['contas_pagar', 'contas_receber'] },
   { label: 'Notas Depósito Emitidas', tables: ['notas_deposito_emitidas'] },
   { label: 'Notas Ref. Compra + Compras Cereais', tables: ['compras_cereais_notas_referenciadas', 'compras_cereais'] },
   { label: 'Devoluções Depósito', tables: ['devolucoes_deposito'] },
