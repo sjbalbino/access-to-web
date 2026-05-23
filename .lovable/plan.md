@@ -1,98 +1,72 @@
-## Contexto
-
-No sistema legado em Access, quando o sócio vende sua produção, ele emite uma **NFe de venda** (saída). O comprador (cooperativa/cerealista/indústria), por sua vez, emite uma **contra-nota** (nota fiscal de entrada / nota de produtor rural) que representa o **valor efetivamente reconhecido como receita** — geralmente próximo, mas não idêntico ao valor da NFe do sócio (ajustes de classificação, umidade, impurezas, frete, etc.).
-
-Para fins de **Imposto de Renda do Produtor Rural / Livro Caixa**, a **receita correta é a da contra-nota do comprador**, não a da NFe que o sócio emitiu.
-
-Hoje no sistema:
-- O Contas a Receber é gerado a partir do `contrato_venda` usando `valor_total` do contrato (= valor da NFe do sócio).
-- Os relatórios IR somam `lancamento_rateio_socios.valor` derivado desse `valor_original`.
-- Não existe vínculo entre a **NFe de entrada emitida pelo comprador** (já cadastrável em `entradas_nfe`) e o **contrato de venda / contas a receber** do sócio.
-
 ## Objetivo
 
-Permitir registrar a contra-nota do comprador, vinculá-la ao contrato de venda do sócio, e fazer com que **a receita do sócio para fins de IR/Livro Caixa seja baseada no valor da contra-nota** (quando existir), mantendo o valor original do contrato/NFe para o controle comercial.
+Adicionar importação das **Contra-Notas** do sistema legado (Access), que no legado estão amarradas ao `código (id)` da tabela **Contas a Receber**. No novo sistema o vínculo é em `entradas_nfe.contrato_venda_id` + `eh_contra_nota = true`, então a importação precisa fazer a ponte:
 
-## Banco de dados
+```text
+planilha contra_notas.cr_codigo_legado
+        └─> contas_receber.codigo_legado
+                └─> contas_receber.contrato_venda_id
+                        └─> entradas_nfe.contrato_venda_id (+ eh_contra_nota=true)
+```
 
-### 1. Vínculo da contra-nota
-Em `entradas_nfe`, adicionar:
-- `contrato_venda_id UUID` (FK opcional para `contratos_venda`) — marca a entrada como contra-nota daquela venda.
-- `eh_contra_nota BOOLEAN DEFAULT false` — flag visual/lógica.
+O trigger `trg_sync_contra_nota` já existente cuidará automaticamente de preencher `contratos_venda.valor_contra_nota` e recalcular `valor_receita_ir` das parcelas.
 
-Alternativa equivalente em `contratos_venda`:
-- `contra_nota_entrada_id UUID` (FK para `entradas_nfe`) e `valor_contra_nota NUMERIC`.
+## Pré-requisito
 
-Usaremos **as duas pontas** (FK em `entradas_nfe` + cache `valor_contra_nota` em `contratos_venda`) para facilitar query e relatórios. Trigger atualiza `valor_contra_nota` quando a entrada é vinculada/atualizada/desvinculada.
+A importação de **Contas a Receber** precisa ter sido feita antes, **com o `codigo_legado` preenchido e com `contrato_venda_id` vinculado** (a CR já carrega o número do contrato via importação das vendas). Isso já está no fluxo atual.
 
-### 2. Coluna em `contas_receber`
-- `valor_receita_ir NUMERIC` — valor a ser considerado nos relatórios IR (preenchido automaticamente: contra-nota proporcional à parcela; fallback = `valor_original`).
+## O que será criado
 
-### 3. Trigger / função
-`atualizar_valor_receita_ir(contrato_id)`:
-- Se contrato tem contra-nota vinculada com valor X → distribui X proporcionalmente entre as parcelas de `contas_receber` daquele contrato.
-- Senão → `valor_receita_ir = valor_original`.
-- Dispara em insert/update de `entradas_nfe.contrato_venda_id` ou `valor_total`, e em insert/delete de parcelas.
+### 1. Nova entrada em `src/lib/importacaoConfig.ts`
 
-### 4. Ajuste no rateio
-`gerar_rateio_socios` para `cr` passa a usar `valor_receita_ir` (com fallback para `valor_original`) ao gravar `lancamento_rateio_socios.valor`.
+Nova configuração `contra_notas_recebidas` (order 21, depende de `contas_receber` e `clientes`).
 
-## UI
+**Colunas da planilha** (modelo Excel a baixar):
 
-### a) `ContasReceberContratoSection` (dentro do Contrato de Venda)
-Acima da tabela de parcelas, novo bloco "Contra-Nota do Comprador":
-- Se vazio: botão **"Vincular Contra-Nota"** → dialog com 2 abas:
-  - **Buscar entrada existente** (lista `entradas_nfe` do tenant, filtra por fornecedor = comprador do contrato).
-  - **Importar XML da contra-nota** (reusa `parseNfeXml`, cria nova `entrada_nfe` já vinculada ao contrato).
-- Se vinculada: card com número, série, data, valor, e botões **Ver entrada** / **Desvincular**.
+| Coluna           | Destino                              | Obrigatório |
+|------------------|--------------------------------------|-------------|
+| cr_codigo_legado | resolve → `contrato_venda_id`        | sim         |
+| numero_nfe       | `entradas_nfe.numero_nfe`            | sim         |
+| serie            | `entradas_nfe.serie`                 | não         |
+| chave_acesso     | `entradas_nfe.chave_acesso` (44 díg.)| não         |
+| data_emissao     | `entradas_nfe.data_emissao`          | sim         |
+| valor_total      | `entradas_nfe.valor_total`           | sim         |
+| cliente_nome     | resolve → `fornecedor_id` (em `clientes_fornecedores`) | sim |
+| observacoes      | `entradas_nfe.observacoes`           | não         |
 
-Na tabela de parcelas, nova coluna **"Receita IR"** ao lado de "Valor", mostrando `valor_receita_ir` (destacada em âmbar quando diferente do valor original).
+Valores fixos aplicados pelo importador:
+- `eh_contra_nota = true`
+- `granja_id` = herdado da CR resolvida
+- `tenant_id` = do tenant selecionado
+- `status = 'manual'` (ou equivalente — confirmar com schema de `entradas_nfe`)
 
-### b) `ContraNotaDialog` (existente)
-Não mexer — é outro fluxo (devolução). Renomear é opção futura; nesta entrega usamos um dialog próprio (`VincularContraNotaDialog`).
+### 2. Resolver legado → contrato (lógica custom no importador)
 
-### c) Página de Entradas NFe
-- Novo filtro/badge "Contra-nota de venda" quando `eh_contra_nota = true`.
-- Coluna "Contrato vinculado" exibindo número do contrato.
+O `ImportacaoDialog` hoje resolve `references` 1-para-1 contra tabelas. Para esta planilha precisaremos de uma **resolução em duas etapas**:
 
-### d) Importação NFe da entrada (XML do comprador)
-Quando o XML importado tiver como destinatário um sócio/inscrição cadastrada **e** referenciar a chave de uma NFe de venda já emitida pelo sistema, sugere automaticamente o vínculo (pop-up confirmatório).
+1. Buscar `contas_receber` por `codigo_legado` (no tenant) → obter `contrato_venda_id`.
+2. Se a CR não tiver `contrato_venda_id`, descartar a linha com erro claro ("CR sem contrato de venda vinculado").
 
-## Relatórios IR
+Para evitar criar várias contra-notas iguais quando o legado replica a referência em cada parcela, **deduplicar por `contrato_venda_id`** dentro do lote da planilha (a primeira ocorrência vence; demais ignoradas com aviso).
 
-`relatoriosIR.ts`:
-- **Demonstrativo Gerencial por Sócio**: a receita por sócio passa a usar `lancamento_rateio_socios.valor` (já alimentado pelo `valor_receita_ir`). Mostra nota de rodapé: "Receita de venda de produção baseada na contra-nota do comprador quando disponível".
-- **Livro Caixa do Produtor Rural**: igual — receita = valor da contra-nota; data do evento = data de emissão da contra-nota (não da NFe de saída do sócio). Histórico passa a referenciar nº da contra-nota.
+### 3. Pequena extensão em `importacaoConfig.ts` / `ImportacaoDialog.tsx`
 
-## Importação CR/CP
+Adicionar suporte a um campo opcional `customResolve` na config (ou um `key` especial `'contra_notas_recebidas'` tratado pelo dialog) que executa o passo extra de buscar a CR por `codigo_legado` e injetar `contrato_venda_id` antes do insert. Manter o caminho genérico intocado para as demais tabelas.
 
-Em `importacaoConfig.ts`, adicionar colunas opcionais para CR:
-- `contra_nota_numero` / `contra_nota_chave` → resolve para `entradas_nfe.id` (se existir) e grava o vínculo + `valor_receita_ir`.
+### 4. Atualizar passos de limpeza
 
-## Migração de dados
+Em `src/pages/ImportarDados.tsx`, o `CLEANUP_STEPS` precisa garantir que `entradas_nfe` (e itens/refs) sejam removidas **antes** de `contratos_venda` quando o usuário limpar a base — verificar e ajustar se necessário (hoje `entradas_nfe` não aparece na lista).
 
-Para contratos já existentes: `valor_receita_ir = valor_original` (sem mudança até o usuário vincular a contra-nota manualmente).
+## Pontos a confirmar antes de implementar
 
-## Arquivos a criar/editar
+1. **Cardinalidade**: a planilha do legado tem **1 linha por contra-nota** (preferível) ou **1 linha por parcela de CR** (precisaremos deduplicar)?
+2. **`fornecedor_id`**: o cliente comprador já é o mesmo cadastrado em `clientes_fornecedores`? Posso resolver por `nome` com fallback em `cpf_cnpj`?
+3. **Itens da NFe**: deve ser importado só o cabeçalho da contra-nota (suficiente para o `valor_total` que alimenta `valor_receita_ir`) ou também os itens linha-a-linha?
 
-**Criar:**
-- Migration SQL (colunas + função + triggers + ajuste em `gerar_rateio_socios`)
-- `src/components/contas/VincularContraNotaDialog.tsx`
-- `src/hooks/useContraNotaVenda.ts`
+## Arquivos a editar
 
-**Editar:**
-- `src/components/contas/ContasReceberContratoSection.tsx` (bloco contra-nota + coluna Receita IR)
-- `src/pages/ContasReceber.tsx` (coluna opcional Receita IR)
-- `src/pages/EntradasNfe.tsx` (badge + filtro + coluna contrato)
-- `src/components/entradas-nfe/EntradaNfeFormDialog.tsx` (campo "Contrato de venda vinculado")
-- `src/components/entradas-nfe/ImportarXmlDialog.tsx` (detecção automática via chave referenciada)
-- `src/lib/relatoriosIR.ts` (legenda + uso de valor_receita_ir)
-- `src/lib/importacaoConfig.ts` (colunas contra-nota em CR)
-- `src/hooks/useContasReceber.ts` (incluir valor_receita_ir)
-- `src/hooks/useEntradasNfe.ts` (incluir contrato_venda_id, eh_contra_nota)
+- `src/lib/importacaoConfig.ts` — nova entry `contra_notas_recebidas`.
+- `src/components/importacao/ImportacaoDialog.tsx` — gancho de resolução customizada (CR → contrato).
+- `src/pages/ImportarDados.tsx` — incluir `entradas_nfe` em `CLEANUP_STEPS` se faltar.
 
-## Observações
-
-- A contra-nota é uma `entrada_nfe` "especial": continua participando do estoque/Contas a Pagar normalmente **só se o usuário marcar** — geralmente não, porque o sócio não está pagando nada. Por padrão, ao marcar `eh_contra_nota = true`, **não** gera CP automático (já era manual de qualquer forma).
-- A regra "receita = contra-nota" só vale para CR de venda da produção (com `contrato_venda_id`). CR avulso continua usando `valor_original`.
-- Multi-tenant respeitado em todas as queries.
+Sem migração SQL: toda a infraestrutura (`eh_contra_nota`, `contrato_venda_id`, triggers de sync e receita IR) já existe.
