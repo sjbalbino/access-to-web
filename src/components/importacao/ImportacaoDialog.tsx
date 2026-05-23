@@ -271,6 +271,58 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             }
           }
           setReferenceErrors([...refErrors, ...ibgeErrors]);
+        } else if (config.key === 'contra_notas_recebidas') {
+          // Resolver CR.codigo_legado -> contrato_venda_id + granja_id e deduplicar por contrato
+          const crErrors: string[] = [];
+          const codigos = Array.from(new Set(
+            resolved.map(r => String((r as any)._cr_codigo_legado ?? '').trim()).filter(Boolean)
+          ));
+          const crMap = new Map<string, { contrato_venda_id: string | null; granja_id: string | null }>();
+          if (codigos.length > 0) {
+            const PAGE = 1000;
+            for (let p = 0; p < codigos.length; p += PAGE) {
+              const slice = codigos.slice(p, p + PAGE);
+              const { data: crs } = await supabase
+                .from('contas_receber')
+                .select('codigo_legado, contrato_venda_id, granja_id')
+                .in('codigo_legado', slice);
+              (crs || []).forEach((cr: any) => {
+                const k = String(cr.codigo_legado).trim();
+                if (!crMap.has(k)) {
+                  crMap.set(k, { contrato_venda_id: cr.contrato_venda_id, granja_id: cr.granja_id });
+                }
+              });
+            }
+          }
+          const seenContrato = new Set<string>();
+          for (let i = 0; i < resolved.length; i++) {
+            const row = resolved[i] as any;
+            const cod = String(row._cr_codigo_legado ?? '').trim();
+            delete row._cr_codigo_legado;
+            if (!cod) {
+              crErrors.push(`Linha ${i + 1}: cr_codigo_legado vazio`);
+              continue;
+            }
+            const cr = crMap.get(cod);
+            if (!cr) {
+              crErrors.push(`Linha ${i + 1}: Contas a Receber com codigo_legado="${cod}" não encontrado`);
+              continue;
+            }
+            if (!cr.contrato_venda_id) {
+              crErrors.push(`Linha ${i + 1}: CR "${cod}" sem contrato_venda vinculado — contra-nota só vale para vendas`);
+              continue;
+            }
+            if (seenContrato.has(cr.contrato_venda_id)) {
+              crErrors.push(`Linha ${i + 1}: contra-nota duplicada para o mesmo contrato (CR "${cod}") — ignorada`);
+              continue;
+            }
+            seenContrato.add(cr.contrato_venda_id);
+            row.contrato_venda_id = cr.contrato_venda_id;
+            row.granja_id = cr.granja_id;
+            row.eh_contra_nota = true;
+            if (!row.data_entrada) row.data_entrada = row.data_emissao;
+          }
+          setReferenceErrors([...refErrors, ...crErrors]);
         } else {
           setReferenceErrors(refErrors);
         }
