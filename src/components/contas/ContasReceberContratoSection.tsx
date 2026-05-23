@@ -33,7 +33,11 @@ export function ContasReceberContratoSection({ contrato }: Props) {
 
   const [openGerar, setOpenGerar] = useState(false);
   const [openBaixas, setOpenBaixas] = useState(false);
+  const [openVincular, setOpenVincular] = useState(false);
   const [contaSel, setContaSel] = useState<any>(null);
+
+  const { data: contraNota } = useContraNotaPorContrato(contrato.id);
+  const desvincular = useDesvincularContraNota();
 
   const valorTotal = Number(contrato.valor_total) || 0;
   const temBaixa = (contas || []).some((c: any) => Number(c.valor_pago) > 0);
