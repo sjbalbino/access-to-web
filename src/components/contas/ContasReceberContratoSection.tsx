@@ -3,12 +3,14 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, Plus, Trash2 } from 'lucide-react';
+import { DollarSign, Plus, Trash2, FileText, Link2, Unlink } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useContasReceber, useDeleteContaReceber, useGerarParcelasReceber } from '@/hooks/useContasReceber';
 import { GerarParcelasDialog } from './GerarParcelasDialog';
 import { BaixasDialog } from './BaixasDialog';
+import { VincularContraNotaDialog } from './VincularContraNotaDialog';
+import { useContraNotaPorContrato, useDesvincularContraNota } from '@/hooks/useContraNotaVenda';
 
 const formatBR = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
