@@ -55,6 +55,8 @@ export default function LancamentosFinanceiros() {
   const createMutation = useCreateLancamento();
   const updateMutation = useUpdateLancamento();
   const deleteMutation = useDeleteLancamento();
+  const salvarManualLanc = useSalvarRateioManual();
+
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
