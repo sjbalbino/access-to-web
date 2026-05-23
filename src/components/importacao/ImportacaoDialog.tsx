@@ -451,6 +451,12 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       if (config.key === 'colheitas') {
         validDbColumns.add('controle_lavoura_id');
       }
+      // Contra-notas: campos injetados a partir da CR
+      if (config.key === 'contra_notas_recebidas') {
+        validDbColumns.add('contrato_venda_id');
+        validDbColumns.add('granja_id');
+        validDbColumns.add('eh_contra_nota');
+      }
 
       const sanitizedRows = cleanRows.map((row, idx) => {
         const clean: Record<string, any> = {};
