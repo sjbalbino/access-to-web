@@ -35,6 +35,7 @@ const CLEANUP_STEPS = [
   { label: 'Notas Depósito Emitidas', tables: ['notas_deposito_emitidas'] },
   { label: 'Notas Ref. Compra + Compras Cereais', tables: ['compras_cereais_notas_referenciadas', 'compras_cereais'] },
   { label: 'Devoluções Depósito', tables: ['devolucoes_deposito'] },
+  { label: 'Entradas NFe (itens + cabeçalho)', tables: ['entradas_nfe_itens', 'entradas_nfe'] },
   { label: 'Remessas Venda', tables: ['remessas_venda'] },
   { label: 'Contratos Venda', tables: ['contratos_venda'] },
   { label: 'Transferências Depósito', tables: ['transferencias_deposito'] },
