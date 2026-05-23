@@ -776,6 +776,394 @@ export type Database = {
           },
         ]
       }
+      contas_pagar: {
+        Row: {
+          codigo_legado: string | null
+          compra_cereais_id: string | null
+          created_at: string
+          data_emissao: string
+          data_vencimento: string
+          desconto: number
+          documento: string | null
+          dre_conta_id: string | null
+          entrada_nfe_id: string | null
+          fornecedor_id: string | null
+          granja_id: string
+          id: string
+          juros: number
+          multa: number
+          observacoes: string | null
+          parcela: string | null
+          safra_id: string | null
+          status: string
+          sub_centro_custo_id: string | null
+          tenant_id: string | null
+          updated_at: string
+          valor_original: number
+          valor_pago: number
+        }
+        Insert: {
+          codigo_legado?: string | null
+          compra_cereais_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_vencimento: string
+          desconto?: number
+          documento?: string | null
+          dre_conta_id?: string | null
+          entrada_nfe_id?: string | null
+          fornecedor_id?: string | null
+          granja_id: string
+          id?: string
+          juros?: number
+          multa?: number
+          observacoes?: string | null
+          parcela?: string | null
+          safra_id?: string | null
+          status?: string
+          sub_centro_custo_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          valor_original: number
+          valor_pago?: number
+        }
+        Update: {
+          codigo_legado?: string | null
+          compra_cereais_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_vencimento?: string
+          desconto?: number
+          documento?: string | null
+          dre_conta_id?: string | null
+          entrada_nfe_id?: string | null
+          fornecedor_id?: string | null
+          granja_id?: string
+          id?: string
+          juros?: number
+          multa?: number
+          observacoes?: string | null
+          parcela?: string | null
+          safra_id?: string | null
+          status?: string
+          sub_centro_custo_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          valor_original?: number
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_compra_cereais_id_fkey"
+            columns: ["compra_cereais_id"]
+            isOneToOne: false
+            referencedRelation: "compras_cereais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_dre_conta_id_fkey"
+            columns: ["dre_conta_id"]
+            isOneToOne: false
+            referencedRelation: "dre_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_entrada_nfe_id_fkey"
+            columns: ["entrada_nfe_id"]
+            isOneToOne: false
+            referencedRelation: "entradas_nfe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_sub_centro_custo_id_fkey"
+            columns: ["sub_centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "sub_centros_custo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contas_pagar_baixas: {
+        Row: {
+          conta_bancaria: string | null
+          conta_id: string
+          created_at: string
+          data_pagamento: string
+          desconto: number
+          documento: string | null
+          forma_pagamento: string | null
+          id: string
+          juros: number
+          lancamento_financeiro_id: string | null
+          multa: number
+          observacoes: string | null
+          updated_at: string
+          valor_pago: number
+        }
+        Insert: {
+          conta_bancaria?: string | null
+          conta_id: string
+          created_at?: string
+          data_pagamento?: string
+          desconto?: number
+          documento?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          juros?: number
+          lancamento_financeiro_id?: string | null
+          multa?: number
+          observacoes?: string | null
+          updated_at?: string
+          valor_pago: number
+        }
+        Update: {
+          conta_bancaria?: string | null
+          conta_id?: string
+          created_at?: string
+          data_pagamento?: string
+          desconto?: number
+          documento?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          juros?: number
+          lancamento_financeiro_id?: string | null
+          multa?: number
+          observacoes?: string | null
+          updated_at?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_baixas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_pagar"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_baixas_lancamento_financeiro_id_fkey"
+            columns: ["lancamento_financeiro_id"]
+            isOneToOne: false
+            referencedRelation: "lancamentos_financeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contas_receber: {
+        Row: {
+          cliente_id: string | null
+          codigo_legado: string | null
+          contrato_venda_id: string | null
+          created_at: string
+          data_emissao: string
+          data_vencimento: string
+          desconto: number
+          documento: string | null
+          dre_conta_id: string | null
+          granja_id: string
+          id: string
+          juros: number
+          multa: number
+          nota_fiscal_id: string | null
+          observacoes: string | null
+          parcela: string | null
+          safra_id: string | null
+          status: string
+          sub_centro_custo_id: string | null
+          tenant_id: string | null
+          updated_at: string
+          valor_original: number
+          valor_pago: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          codigo_legado?: string | null
+          contrato_venda_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_vencimento: string
+          desconto?: number
+          documento?: string | null
+          dre_conta_id?: string | null
+          granja_id: string
+          id?: string
+          juros?: number
+          multa?: number
+          nota_fiscal_id?: string | null
+          observacoes?: string | null
+          parcela?: string | null
+          safra_id?: string | null
+          status?: string
+          sub_centro_custo_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          valor_original: number
+          valor_pago?: number
+        }
+        Update: {
+          cliente_id?: string | null
+          codigo_legado?: string | null
+          contrato_venda_id?: string | null
+          created_at?: string
+          data_emissao?: string
+          data_vencimento?: string
+          desconto?: number
+          documento?: string | null
+          dre_conta_id?: string | null
+          granja_id?: string
+          id?: string
+          juros?: number
+          multa?: number
+          nota_fiscal_id?: string | null
+          observacoes?: string | null
+          parcela?: string | null
+          safra_id?: string | null
+          status?: string
+          sub_centro_custo_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          valor_original?: number
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_receber_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes_fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_contrato_venda_id_fkey"
+            columns: ["contrato_venda_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_venda"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_dre_conta_id_fkey"
+            columns: ["dre_conta_id"]
+            isOneToOne: false
+            referencedRelation: "dre_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_nota_fiscal_id_fkey"
+            columns: ["nota_fiscal_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_sub_centro_custo_id_fkey"
+            columns: ["sub_centro_custo_id"]
+            isOneToOne: false
+            referencedRelation: "sub_centros_custo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contas_receber_baixas: {
+        Row: {
+          conta_bancaria: string | null
+          conta_id: string
+          created_at: string
+          data_pagamento: string
+          desconto: number
+          documento: string | null
+          forma_pagamento: string | null
+          id: string
+          juros: number
+          lancamento_financeiro_id: string | null
+          multa: number
+          observacoes: string | null
+          updated_at: string
+          valor_pago: number
+        }
+        Insert: {
+          conta_bancaria?: string | null
+          conta_id: string
+          created_at?: string
+          data_pagamento?: string
+          desconto?: number
+          documento?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          juros?: number
+          lancamento_financeiro_id?: string | null
+          multa?: number
+          observacoes?: string | null
+          updated_at?: string
+          valor_pago: number
+        }
+        Update: {
+          conta_bancaria?: string | null
+          conta_id?: string
+          created_at?: string
+          data_pagamento?: string
+          desconto?: number
+          documento?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          juros?: number
+          lancamento_financeiro_id?: string | null
+          multa?: number
+          observacoes?: string | null
+          updated_at?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_receber_baixas_conta_id_fkey"
+            columns: ["conta_id"]
+            isOneToOne: false
+            referencedRelation: "contas_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_baixas_lancamento_financeiro_id_fkey"
+            columns: ["lancamento_financeiro_id"]
+            isOneToOne: false
+            referencedRelation: "lancamentos_financeiros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos_venda: {
         Row: {
           a_fixar: boolean | null
@@ -4483,6 +4871,8 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      recalc_conta_pagar: { Args: { _conta_id: string }; Returns: undefined }
+      recalc_conta_receber: { Args: { _conta_id: string }; Returns: undefined }
       seed_tenant_defaults: { Args: { _tenant_id: string }; Returns: undefined }
     }
     Enums: {
