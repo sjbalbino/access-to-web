@@ -972,6 +972,11 @@ export default function VendaProducaoForm() {
             </Card>
           </div>
         )}
+
+        {/* Contas a Receber */}
+        {isEditing && contrato && (
+          <ContasReceberContratoSection contrato={contrato} />
+        )}
       </form>
     </AppLayout>
   );
