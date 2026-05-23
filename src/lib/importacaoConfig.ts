@@ -906,6 +906,28 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
     ],
   },
+  {
+    key: 'contra_notas_recebidas',
+    label: 'Contra-Notas (Vendas)',
+    tableName: 'entradas_nfe',
+    description: 'NFe emitidas pelos compradores vinculadas ao Contas a Receber pelo codigo_legado da CR',
+    order: 21,
+    dependsOn: ['contas_receber', 'clientes'],
+    columns: [
+      { accessName: 'cr_codigo_legado', dbName: '_cr_codigo_legado', required: true, transform: toStr },
+      { accessName: 'numero_nfe', dbName: 'numero_nfe', required: true, transform: toStr },
+      { accessName: 'serie', dbName: 'serie', transform: toStr },
+      { accessName: 'chave_acesso', dbName: 'chave_acesso', transform: toStr },
+      { accessName: 'data_emissao', dbName: 'data_emissao', required: true, transform: toDate },
+      { accessName: 'data_entrada', dbName: 'data_entrada', transform: toDate },
+      { accessName: 'valor_total', dbName: 'valor_total', required: true, transform: toNumber },
+      { accessName: 'valor_produtos', dbName: 'valor_produtos', transform: toNumber },
+      { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
+    ],
+    references: [
+      { dbColumn: 'fornecedor_id', sourceColumn: 'cliente_nome', sourceColumnAliases: ['cliente','cliente_codigo','cliente_cpf_cnpj','comprador','comprador_nome'], lookupTable: 'clientes_fornecedores', lookupColumn: 'nome', fallbackColumns: ['codigo','cpf_cnpj'], lookupLabel: 'nome', optional: true },
+    ],
+  },
 ];
 
 // Tabelas que possuem coluna tenant_id (isoladas por empresa contratante)
