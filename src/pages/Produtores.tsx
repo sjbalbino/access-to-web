@@ -60,7 +60,9 @@ const emptyProdutor: ProdutorInput = {
   celular: "",
   email: "",
   ativo: true,
-};
+  percentual_participacao: 0,
+} as ProdutorInput;
+
 
 export default function Produtores() {
   const { data: produtores, isLoading } = useProdutores();
