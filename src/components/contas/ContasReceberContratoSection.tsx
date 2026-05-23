@@ -66,7 +66,44 @@ export function ContasReceberContratoSection({ contrato }: Props) {
           </Button>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Bloco Contra-Nota do Comprador */}
+        <div className="border rounded-lg p-3 bg-muted/30">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <FileText className="h-4 w-4 text-amber-600" />
+              Contra-Nota do Comprador (Receita IR)
+            </div>
+            {canEdit && !contraNota && (
+              <Button size="sm" variant="outline" onClick={() => setOpenVincular(true)}>
+                <Link2 className="h-4 w-4 mr-1" /> Vincular contra-nota
+              </Button>
+            )}
+          </div>
+          {contraNota ? (
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <div className="space-y-0.5">
+                <div className="font-medium">
+                  NF-e {contraNota.numero_nfe || '-'}{contraNota.serie ? `/${contraNota.serie}` : ''} — {contraNota.fornecedor?.nome}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Emissão: {contraNota.data_emissao ? format(parseISO(contraNota.data_emissao), 'dd/MM/yyyy') : '-'} •
+                  Valor: <span className="font-semibold text-amber-700">{formatBR(Number(contraNota.valor_total))}</span>
+                </div>
+              </div>
+              {canEdit && (
+                <Button size="sm" variant="ghost" onClick={() => { if (confirm('Desvincular contra-nota?')) desvincular.mutate(contraNota.id); }}>
+                  <Unlink className="h-4 w-4 mr-1" /> Desvincular
+                </Button>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Nenhuma contra-nota vinculada. A receita IR usa o valor do contrato ({formatBR(valorTotal)}).
+            </p>
+          )}
+        </div>
+
         {(!contas || contas.length === 0) ? (
           <p className="text-sm text-muted-foreground">Nenhuma conta gerada para este contrato.</p>
         ) : (
@@ -76,6 +113,7 @@ export function ContasReceberContratoSection({ contrato }: Props) {
                 <TableHead>Parcela</TableHead>
                 <TableHead>Vencimento</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
+                <TableHead className="text-right">Receita IR</TableHead>
                 <TableHead className="text-right">Pago</TableHead>
                 <TableHead className="text-right">Saldo</TableHead>
                 <TableHead>Status</TableHead>
@@ -85,11 +123,16 @@ export function ContasReceberContratoSection({ contrato }: Props) {
             <TableBody>
               {contas.map((c: any) => {
                 const saldo = Number(c.valor_original) - Number(c.valor_pago);
+                const receitaIr = Number(c.valor_receita_ir ?? c.valor_original);
+                const diferente = Math.abs(receitaIr - Number(c.valor_original)) > 0.005;
                 return (
                   <TableRow key={c.id}>
                     <TableCell>{c.parcela || '-'}</TableCell>
                     <TableCell>{format(parseISO(c.data_vencimento), 'dd/MM/yyyy')}</TableCell>
                     <TableCell className="text-right">{formatBR(Number(c.valor_original))}</TableCell>
+                    <TableCell className={`text-right ${diferente ? 'text-amber-700 font-semibold' : 'text-muted-foreground'}`}>
+                      {formatBR(receitaIr)}
+                    </TableCell>
                     <TableCell className="text-right text-emerald-600">{formatBR(Number(c.valor_pago))}</TableCell>
                     <TableCell className="text-right font-semibold">{formatBR(Math.max(0, saldo))}</TableCell>
                     <TableCell><Badge className={STATUS_BADGE[c.status]}>{c.status}</Badge></TableCell>
@@ -125,6 +168,13 @@ export function ContasReceberContratoSection({ contrato }: Props) {
         onOpenChange={(v) => { setOpenBaixas(v); if (!v) setContaSel(null); }}
         tipo="receber"
         conta={contaSel}
+      />
+      <VincularContraNotaDialog
+        open={openVincular}
+        onOpenChange={setOpenVincular}
+        contratoId={contrato.id}
+        granjaId={contrato.granja_id}
+        fornecedorId={contrato.comprador_id}
       />
     </Card>
   );
