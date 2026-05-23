@@ -84,7 +84,8 @@ export default function ContasReceber() {
     return { aberto, vencido, aVencer, pagoMes };
   }, [contas]);
 
-  const { dadosPaginados, paginaAtual, totalPaginas, setPaginaAtual, gerarNumerosPaginas } = usePaginacao(contas || [], 20);
+  const paginacao = usePaginacao(contas || [], 20);
+  const { dadosPaginados, totalPaginas } = paginacao;
 
   const handleSave = async (data: any) => {
     if (editing?.id) await update.mutateAsync({ id: editing.id, ...data });
@@ -215,14 +216,13 @@ export default function ContasReceber() {
             </Table>
           )}
           {totalPaginas > 1 && (
-            <div className="mt-4">
-              <TablePagination
-                paginaAtual={paginaAtual}
-                totalPaginas={totalPaginas}
-                onPaginaChange={setPaginaAtual}
-                numerosPaginas={gerarNumerosPaginas()}
-              />
-            </div>
+            <TablePagination
+              paginaAtual={paginacao.paginaAtual}
+              totalPaginas={paginacao.totalPaginas}
+              totalRegistros={paginacao.totalRegistros}
+              setPaginaAtual={paginacao.setPaginaAtual}
+              gerarNumerosPaginas={paginacao.gerarNumerosPaginas}
+            />
           )}
         </CardContent>
       </Card>
