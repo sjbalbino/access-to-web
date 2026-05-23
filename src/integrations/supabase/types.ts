@@ -1023,6 +1023,7 @@ export type Database = {
           updated_at: string
           valor_original: number
           valor_pago: number
+          valor_receita_ir: number | null
         }
         Insert: {
           cliente_id?: string | null
@@ -1050,6 +1051,7 @@ export type Database = {
           updated_at?: string
           valor_original: number
           valor_pago?: number
+          valor_receita_ir?: number | null
         }
         Update: {
           cliente_id?: string | null
@@ -1077,6 +1079,7 @@ export type Database = {
           updated_at?: string
           valor_original?: number
           valor_pago?: number
+          valor_receita_ir?: number | null
         }
         Relationships: [
           {
@@ -1220,6 +1223,7 @@ export type Database = {
         Row: {
           a_fixar: boolean | null
           comprador_id: string | null
+          contra_nota_entrada_id: string | null
           corretor: string | null
           created_at: string
           data_contrato: string
@@ -1258,12 +1262,14 @@ export type Database = {
           tipo_venda: string | null
           updated_at: string
           valor_comissao: number | null
+          valor_contra_nota: number | null
           valor_total: number | null
           venda_entrega_futura: boolean | null
         }
         Insert: {
           a_fixar?: boolean | null
           comprador_id?: string | null
+          contra_nota_entrada_id?: string | null
           corretor?: string | null
           created_at?: string
           data_contrato: string
@@ -1302,12 +1308,14 @@ export type Database = {
           tipo_venda?: string | null
           updated_at?: string
           valor_comissao?: number | null
+          valor_contra_nota?: number | null
           valor_total?: number | null
           venda_entrega_futura?: boolean | null
         }
         Update: {
           a_fixar?: boolean | null
           comprador_id?: string | null
+          contra_nota_entrada_id?: string | null
           corretor?: string | null
           created_at?: string
           data_contrato?: string
@@ -1346,6 +1354,7 @@ export type Database = {
           tipo_venda?: string | null
           updated_at?: string
           valor_comissao?: number | null
+          valor_contra_nota?: number | null
           valor_total?: number | null
           venda_entrega_futura?: boolean | null
         }
@@ -1355,6 +1364,13 @@ export type Database = {
             columns: ["comprador_id"]
             isOneToOne: false
             referencedRelation: "clientes_fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contratos_venda_contra_nota_entrada_id_fkey"
+            columns: ["contra_nota_entrada_id"]
+            isOneToOne: false
+            referencedRelation: "entradas_nfe"
             referencedColumns: ["id"]
           },
           {
@@ -1815,9 +1831,11 @@ export type Database = {
         Row: {
           cfop_id: string | null
           chave_acesso: string | null
+          contrato_venda_id: string | null
           created_at: string
           data_emissao: string | null
           data_entrada: string
+          eh_contra_nota: boolean
           fornecedor_id: string | null
           granja_id: string
           id: string
@@ -1844,9 +1862,11 @@ export type Database = {
         Insert: {
           cfop_id?: string | null
           chave_acesso?: string | null
+          contrato_venda_id?: string | null
           created_at?: string
           data_emissao?: string | null
           data_entrada?: string
+          eh_contra_nota?: boolean
           fornecedor_id?: string | null
           granja_id: string
           id?: string
@@ -1873,9 +1893,11 @@ export type Database = {
         Update: {
           cfop_id?: string | null
           chave_acesso?: string | null
+          contrato_venda_id?: string | null
           created_at?: string
           data_emissao?: string | null
           data_entrada?: string
+          eh_contra_nota?: boolean
           fornecedor_id?: string | null
           granja_id?: string
           id?: string
@@ -1905,6 +1927,13 @@ export type Database = {
             columns: ["cfop_id"]
             isOneToOne: false
             referencedRelation: "cfops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_nfe_contrato_venda_id_fkey"
+            columns: ["contrato_venda_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_venda"
             referencedColumns: ["id"]
           },
           {
@@ -4958,6 +4987,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      atualizar_valor_receita_ir: {
+        Args: { _contrato_id: string }
+        Returns: undefined
+      }
       calcular_saldo_deposito: {
         Args: {
           p_inscricao_id: string
