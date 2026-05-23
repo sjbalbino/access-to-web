@@ -47,7 +47,9 @@ import ImportarDados from "./pages/ImportarDados";
 import EntradasNfe from "./pages/EntradasNfe";
 import ContasReceber from "./pages/ContasReceber";
 import ContasPagar from "./pages/ContasPagar";
+import RelatoriosIR from "./pages/RelatoriosIR";
 import NotFound from "./pages/NotFound";
+
 
 const queryClient = new QueryClient();
 
