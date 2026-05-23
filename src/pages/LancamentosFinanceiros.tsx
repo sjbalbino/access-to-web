@@ -343,6 +343,18 @@ export default function LancamentosFinanceiros() {
             </div>
             <div className="space-y-2"><Label>Documento</Label><Input value={formData.documento || ''} onChange={e => setFormData({ ...formData, documento: e.target.value || null })} /></div>
             <div className="space-y-2"><Label>Observações</Label><Textarea value={formData.observacoes || ''} onChange={e => setFormData({ ...formData, observacoes: e.target.value || null })} rows={2} /></div>
+            <AtribuicaoSocioSection
+              granjaId={formData.granja_id}
+              valorTotal={Number(formData.valor) || 0}
+              modo={formData.rateio_modo}
+              socioUnicoId={formData.socio_produtor_id}
+              rateioManual={rateioManualLanc}
+              onChange={(v) => {
+                setFormData({ ...formData, rateio_modo: v.modo, socio_produtor_id: v.socio_produtor_id });
+                setRateioManualLanc(v.manual);
+              }}
+            />
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>{editingItem ? 'Salvar' : 'Criar'}</Button>
