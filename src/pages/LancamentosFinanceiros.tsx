@@ -24,6 +24,9 @@ import { format } from 'date-fns';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
+import { AtribuicaoSocioSection } from "@/components/contas/AtribuicaoSocioSection";
+import { useSalvarRateioManual } from "@/hooks/useRateioSocios";
+
 
 export default function LancamentosFinanceiros() {
   const { canEdit } = useAuth();
@@ -52,6 +55,8 @@ export default function LancamentosFinanceiros() {
   const createMutation = useCreateLancamento();
   const updateMutation = useUpdateLancamento();
   const deleteMutation = useDeleteLancamento();
+  const salvarManualLanc = useSalvarRateioManual();
+
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -59,21 +64,37 @@ export default function LancamentosFinanceiros() {
     granja_id: '', data_lancamento: new Date().toISOString().split('T')[0], sub_centro_custo_id: null,
     dre_conta_id: null, descricao: '', valor: 0, tipo: 'despesa', fornecedor_id: null,
     documento: null, observacoes: null, safra_id: null,
+    rateio_modo: 'rateio_granja', socio_produtor_id: null,
   });
+  const [rateioManualLanc, setRateioManualLanc] = useState<{ socio_produtor_id: string; percentual: number }[]>([]);
 
   const resetForm = () => {
     setFormData({
       granja_id: granjas?.[0]?.id || '', data_lancamento: new Date().toISOString().split('T')[0],
       sub_centro_custo_id: null, dre_conta_id: null, descricao: '', valor: 0, tipo: 'despesa',
       fornecedor_id: null, documento: null, observacoes: null, safra_id: null,
+      rateio_modo: 'rateio_granja', socio_produtor_id: null,
     });
+    setRateioManualLanc([]);
     setEditingItem(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
-    else await createMutation.mutateAsync(formData);
+    let saved: any;
+    if (editingItem) saved = await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
+    else saved = await createMutation.mutateAsync(formData);
+    if (formData.rateio_modo === 'manual' && saved?.id) {
+      await salvarManualLanc.mutateAsync({
+        origem_tipo: 'lancamento',
+        origem_id: saved.id,
+        itens: rateioManualLanc.map((i) => ({
+          socio_produtor_id: i.socio_produtor_id,
+          percentual: i.percentual,
+          valor: +((Number(formData.valor) * i.percentual) / 100).toFixed(2),
+        })),
+      });
+    }
     setIsDialogOpen(false);
     resetForm();
   };
@@ -86,9 +107,12 @@ export default function LancamentosFinanceiros() {
       descricao: item.descricao, valor: item.valor, tipo: item.tipo,
       fornecedor_id: item.fornecedor_id, documento: item.documento,
       observacoes: item.observacoes, safra_id: item.safra_id,
+      rateio_modo: item.rateio_modo || 'rateio_granja',
+      socio_produtor_id: item.socio_produtor_id || null,
     });
     setIsDialogOpen(true);
   };
+
 
   const handleDelete = async (id: string) => {
     if (confirm('Excluir este lançamento?')) await deleteMutation.mutateAsync(id);
@@ -319,6 +343,18 @@ export default function LancamentosFinanceiros() {
             </div>
             <div className="space-y-2"><Label>Documento</Label><Input value={formData.documento || ''} onChange={e => setFormData({ ...formData, documento: e.target.value || null })} /></div>
             <div className="space-y-2"><Label>Observações</Label><Textarea value={formData.observacoes || ''} onChange={e => setFormData({ ...formData, observacoes: e.target.value || null })} rows={2} /></div>
+            <AtribuicaoSocioSection
+              granjaId={formData.granja_id}
+              valorTotal={Number(formData.valor) || 0}
+              modo={formData.rateio_modo}
+              socioUnicoId={formData.socio_produtor_id}
+              rateioManual={rateioManualLanc}
+              onChange={(v) => {
+                setFormData({ ...formData, rateio_modo: v.modo, socio_produtor_id: v.socio_produtor_id });
+                setRateioManualLanc(v.manual);
+              }}
+            />
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>{editingItem ? 'Salvar' : 'Criar'}</Button>

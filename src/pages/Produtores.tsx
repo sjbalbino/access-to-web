@@ -60,7 +60,9 @@ const emptyProdutor: ProdutorInput = {
   celular: "",
   email: "",
   ativo: true,
-};
+  percentual_participacao: 0,
+} as ProdutorInput;
+
 
 export default function Produtores() {
   const { data: produtores, isLoading } = useProdutores();
@@ -223,7 +225,9 @@ export default function Produtores() {
       celular: item.celular || "",
       email: item.email || "",
       ativo: item.ativo ?? true,
-    });
+      percentual_participacao: item.percentual_participacao ?? 0,
+    } as ProdutorInput);
+
     setActiveTab("dados");
     setIsDialogOpen(true);
   };
@@ -514,10 +518,25 @@ export default function Produtores() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Switch checked={formData.ativo ?? true} onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })} />
-                  <Label>Ativo</Label>
+                <div className="flex items-end gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={formData.ativo ?? true} onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })} />
+                    <Label>Ativo</Label>
+                  </div>
+                  <div className="space-y-2 max-w-[200px]">
+                    <Label>% Participação na Granja</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={(formData as any).percentual_participacao ?? 0}
+                      onChange={(e) => setFormData({ ...formData, percentual_participacao: parseFloat(e.target.value) || 0 } as any)}
+                      placeholder="0,00"
+                    />
+                  </div>
                 </div>
+
 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>

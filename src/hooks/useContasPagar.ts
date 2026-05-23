@@ -32,7 +32,10 @@ export type ContaPagarInput = Partial<Omit<ContaPagar, 'id' | 'valor_pago' | 'st
   granja_id: string;
   data_vencimento: string;
   valor_original: number;
+  rateio_modo?: 'socio_unico' | 'rateio_granja' | 'manual';
+  socio_produtor_id?: string | null;
 };
+
 
 interface Filtros {
   granjaId?: string;

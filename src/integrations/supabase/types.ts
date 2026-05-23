@@ -794,7 +794,9 @@ export type Database = {
           multa: number
           observacoes: string | null
           parcela: string | null
+          rateio_modo: string
           safra_id: string | null
+          socio_produtor_id: string | null
           status: string
           sub_centro_custo_id: string | null
           tenant_id: string | null
@@ -819,7 +821,9 @@ export type Database = {
           multa?: number
           observacoes?: string | null
           parcela?: string | null
+          rateio_modo?: string
           safra_id?: string | null
+          socio_produtor_id?: string | null
           status?: string
           sub_centro_custo_id?: string | null
           tenant_id?: string | null
@@ -844,7 +848,9 @@ export type Database = {
           multa?: number
           observacoes?: string | null
           parcela?: string | null
+          rateio_modo?: string
           safra_id?: string | null
+          socio_produtor_id?: string | null
           status?: string
           sub_centro_custo_id?: string | null
           tenant_id?: string | null
@@ -896,6 +902,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contas_pagar_socio_produtor_id_fkey"
+            columns: ["socio_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "produtores"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "contas_pagar_sub_centro_custo_id_fkey"
             columns: ["sub_centro_custo_id"]
             isOneToOne: false
@@ -918,6 +931,8 @@ export type Database = {
           lancamento_financeiro_id: string | null
           multa: number
           observacoes: string | null
+          rateio_modo: string | null
+          socio_produtor_id: string | null
           updated_at: string
           valor_pago: number
         }
@@ -934,6 +949,8 @@ export type Database = {
           lancamento_financeiro_id?: string | null
           multa?: number
           observacoes?: string | null
+          rateio_modo?: string | null
+          socio_produtor_id?: string | null
           updated_at?: string
           valor_pago: number
         }
@@ -950,6 +967,8 @@ export type Database = {
           lancamento_financeiro_id?: string | null
           multa?: number
           observacoes?: string | null
+          rateio_modo?: string | null
+          socio_produtor_id?: string | null
           updated_at?: string
           valor_pago?: number
         }
@@ -966,6 +985,13 @@ export type Database = {
             columns: ["lancamento_financeiro_id"]
             isOneToOne: false
             referencedRelation: "lancamentos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_baixas_socio_produtor_id_fkey"
+            columns: ["socio_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "produtores"
             referencedColumns: ["id"]
           },
         ]
@@ -988,7 +1014,9 @@ export type Database = {
           nota_fiscal_id: string | null
           observacoes: string | null
           parcela: string | null
+          rateio_modo: string
           safra_id: string | null
+          socio_produtor_id: string | null
           status: string
           sub_centro_custo_id: string | null
           tenant_id: string | null
@@ -1013,7 +1041,9 @@ export type Database = {
           nota_fiscal_id?: string | null
           observacoes?: string | null
           parcela?: string | null
+          rateio_modo?: string
           safra_id?: string | null
+          socio_produtor_id?: string | null
           status?: string
           sub_centro_custo_id?: string | null
           tenant_id?: string | null
@@ -1038,7 +1068,9 @@ export type Database = {
           nota_fiscal_id?: string | null
           observacoes?: string | null
           parcela?: string | null
+          rateio_modo?: string
           safra_id?: string | null
+          socio_produtor_id?: string | null
           status?: string
           sub_centro_custo_id?: string | null
           tenant_id?: string | null
@@ -1090,6 +1122,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contas_receber_socio_produtor_id_fkey"
+            columns: ["socio_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "produtores"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "contas_receber_sub_centro_custo_id_fkey"
             columns: ["sub_centro_custo_id"]
             isOneToOne: false
@@ -1112,6 +1151,8 @@ export type Database = {
           lancamento_financeiro_id: string | null
           multa: number
           observacoes: string | null
+          rateio_modo: string | null
+          socio_produtor_id: string | null
           updated_at: string
           valor_pago: number
         }
@@ -1128,6 +1169,8 @@ export type Database = {
           lancamento_financeiro_id?: string | null
           multa?: number
           observacoes?: string | null
+          rateio_modo?: string | null
+          socio_produtor_id?: string | null
           updated_at?: string
           valor_pago: number
         }
@@ -1144,6 +1187,8 @@ export type Database = {
           lancamento_financeiro_id?: string | null
           multa?: number
           observacoes?: string | null
+          rateio_modo?: string | null
+          socio_produtor_id?: string | null
           updated_at?: string
           valor_pago?: number
         }
@@ -1160,6 +1205,13 @@ export type Database = {
             columns: ["lancamento_financeiro_id"]
             isOneToOne: false
             referencedRelation: "lancamentos_financeiros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_baixas_socio_produtor_id_fkey"
+            columns: ["socio_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "produtores"
             referencedColumns: ["id"]
           },
         ]
@@ -2420,6 +2472,47 @@ export type Database = {
           },
         ]
       }
+      lancamento_rateio_socios: {
+        Row: {
+          created_at: string
+          id: string
+          origem_id: string
+          origem_tipo: string
+          percentual: number
+          socio_produtor_id: string
+          tenant_id: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          origem_id: string
+          origem_tipo: string
+          percentual: number
+          socio_produtor_id: string
+          tenant_id?: string | null
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          origem_id?: string
+          origem_tipo?: string
+          percentual?: number
+          socio_produtor_id?: string
+          tenant_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lancamento_rateio_socios_socio_produtor_id_fkey"
+            columns: ["socio_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "produtores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lancamentos_financeiros: {
         Row: {
           created_at: string | null
@@ -2431,7 +2524,9 @@ export type Database = {
           granja_id: string
           id: string
           observacoes: string | null
+          rateio_modo: string
           safra_id: string | null
+          socio_produtor_id: string | null
           sub_centro_custo_id: string | null
           tipo: string
           updated_at: string | null
@@ -2447,7 +2542,9 @@ export type Database = {
           granja_id: string
           id?: string
           observacoes?: string | null
+          rateio_modo?: string
           safra_id?: string | null
+          socio_produtor_id?: string | null
           sub_centro_custo_id?: string | null
           tipo?: string
           updated_at?: string | null
@@ -2463,7 +2560,9 @@ export type Database = {
           granja_id?: string
           id?: string
           observacoes?: string | null
+          rateio_modo?: string
           safra_id?: string | null
+          socio_produtor_id?: string | null
           sub_centro_custo_id?: string | null
           tipo?: string
           updated_at?: string | null
@@ -2496,6 +2595,13 @@ export type Database = {
             columns: ["safra_id"]
             isOneToOne: false
             referencedRelation: "safras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_socio_produtor_id_fkey"
+            columns: ["socio_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "produtores"
             referencedColumns: ["id"]
           },
           {
@@ -3793,6 +3899,7 @@ export type Database = {
           logradouro: string | null
           nome: string
           numero: string | null
+          percentual_participacao: number
           telefone: string | null
           tipo_pessoa: string | null
           tipo_produtor: string | null
@@ -3816,6 +3923,7 @@ export type Database = {
           logradouro?: string | null
           nome: string
           numero?: string | null
+          percentual_participacao?: number
           telefone?: string | null
           tipo_pessoa?: string | null
           tipo_produtor?: string | null
@@ -3839,6 +3947,7 @@ export type Database = {
           logradouro?: string | null
           nome?: string
           numero?: string | null
+          percentual_participacao?: number
           telefone?: string | null
           tipo_pessoa?: string | null
           tipo_produtor?: string | null
@@ -4858,6 +4967,10 @@ export type Database = {
         Returns: number
       }
       can_edit: { Args: { _user_id: string }; Returns: boolean }
+      gerar_rateio_socios: {
+        Args: { _origem_id: string; _origem_tipo: string }
+        Returns: undefined
+      }
       get_user_tenant_id: { Args: never; Returns: string }
       granja_belongs_to_tenant: {
         Args: { _granja_id: string }

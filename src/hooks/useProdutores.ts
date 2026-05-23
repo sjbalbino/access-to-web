@@ -22,11 +22,13 @@ export interface Produtor {
   celular: string | null;
   email: string | null;
   ativo: boolean | null;
+  percentual_participacao: number | null;
   created_at: string;
   updated_at: string;
 }
 
 export type ProdutorInput = Partial<Omit<Produtor, "id" | "created_at" | "updated_at">> & { nome: string };
+
 
 export function useProdutores() {
   return useQuery({

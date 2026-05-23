@@ -10,6 +10,8 @@ import { useClientesFornecedores } from '@/hooks/useClientesFornecedores';
 import { useDreContas } from '@/hooks/useDreContas';
 import { useAllSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
 import { useSafras } from '@/hooks/useSafras';
+import { AtribuicaoSocioSection, RateioModo, RateioManualItem } from './AtribuicaoSocioSection';
+import { useSalvarRateioManual } from '@/hooks/useRateioSocios';
 
 interface Props {
   open: boolean;
@@ -38,13 +40,19 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     sub_centro_custo_id: undefined,
     safra_id: undefined,
     observacoes: '',
+    rateio_modo: 'rateio_granja' as RateioModo,
+    socio_produtor_id: null as string | null,
   });
+  const [rateioManual, setRateioManual] = useState<RateioManualItem[]>([]);
+  const salvarManual = useSalvarRateioManual();
 
   useEffect(() => {
     if (initial) {
       setForm({
         ...initial,
         valor_original: String(initial.valor_original ?? ''),
+        rateio_modo: initial.rateio_modo || 'rateio_granja',
+        socio_produtor_id: initial.socio_produtor_id || null,
       });
     } else {
       setForm((f: any) => ({ ...f, granja_id: granjas?.[0]?.id || '' }));
@@ -61,9 +69,22 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
       valor_original: parseFloat(form.valor_original) || 0,
     };
     Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
-    await onSubmit(payload);
+    const saved: any = await onSubmit(payload);
+    // se modo manual, gravar rateio explícito (trigger respeitará)
+    if (payload.rateio_modo === 'manual' && saved?.id) {
+      await salvarManual.mutateAsync({
+        origem_tipo: tipo === 'receber' ? 'cr' : 'cp',
+        origem_id: saved.id,
+        itens: rateioManual.map((i) => ({
+          socio_produtor_id: i.socio_produtor_id,
+          percentual: i.percentual,
+          valor: +((payload.valor_original * i.percentual) / 100).toFixed(2),
+        })),
+      });
+    }
     onOpenChange(false);
   };
+
 
   const partyField = tipo === 'receber' ? 'cliente_id' : 'fornecedor_id';
   const partyLabel = tipo === 'receber' ? 'Cliente' : 'Fornecedor';
@@ -145,7 +166,22 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             <Label>Observações</Label>
             <Textarea value={form.observacoes || ''} onChange={(e) => update('observacoes', e.target.value)} rows={2} />
           </div>
+          <div className="col-span-2">
+            <AtribuicaoSocioSection
+              granjaId={form.granja_id}
+              valorTotal={parseFloat(form.valor_original) || 0}
+              modo={form.rateio_modo}
+              socioUnicoId={form.socio_produtor_id}
+              rateioManual={rateioManual}
+              onChange={(v) => {
+                update('rateio_modo', v.modo);
+                update('socio_produtor_id', v.socio_produtor_id);
+                setRateioManual(v.manual);
+              }}
+            />
+          </div>
         </div>
+
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>

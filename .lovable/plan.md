@@ -1,91 +1,97 @@
-# Plano: Contas a Pagar e Contas a Receber
+## Objetivo
 
-Criar dois módulos completos (CR + CP) com suporte a múltiplas baixas (pagamentos parciais) e geração automática a partir de Vendas da Produção (CR) e Entradas de NFe (CP).
+Permitir que cada movimentação financeira (Lançamentos, Contas a Pagar, Contas a Receber e suas baixas) seja atribuída a um sócio específico **ou** rateada automaticamente pelo percentual de participação dos sócios na granja. No final, gerar:
 
-## 1. Banco de Dados
+1. **Demonstrativo gerencial por sócio** (receitas e despesas do período, agrupadas).
+2. **Livro Caixa do Produtor Rural** por sócio (modelo Receita Federal).
 
-### Tabela `contas_receber`
-Campos principais: `granja_id`, `tenant_id`, `cliente_id` (→ clientes_fornecedores), `venda_producao_id` (origem, nullable), `nota_fiscal_id` (nullable), `documento`, `parcela` (ex: "1/3"), `data_emissao`, `data_vencimento`, `valor_original`, `valor_pago` (calculado por trigger), `valor_aberto` (calculado), `juros`, `multa`, `desconto`, `status` ('aberto' | 'parcial' | 'pago' | 'cancelado'), `dre_conta_id`, `sub_centro_custo_id`, `safra_id`, `observacoes`, `codigo_legado`.
+## Banco de dados
 
-### Tabela `contas_pagar`
-Mesma estrutura, trocando `cliente_id` por `fornecedor_id` e referências de origem por `entrada_nfe_id` e `compra_cereais_id` (ambos nullable).
+### 1. Garantir % de participação por sócio na granja
+Verificar/garantir coluna `percentual_participacao NUMERIC(5,2)` na tabela que liga sócio↔granja (`inscricoes_socio` ou equivalente). Soma por granja deve fechar em 100% (validação informativa, não bloqueia).
 
-### Tabela `contas_receber_baixas` e `contas_pagar_baixas`
-Para múltiplos pagamentos por título:
-- `conta_id` (FK), `data_pagamento`, `valor_pago`, `juros`, `multa`, `desconto`, `forma_pagamento` ('dinheiro' | 'pix' | 'boleto' | 'transferencia' | 'cheque' | 'cartao' | 'outro'), `conta_bancaria` (texto livre), `documento` (nº do comprovante), `observacoes`, `lancamento_financeiro_id` (link opcional para `lancamentos_financeiros`).
+### 2. Nova tabela de rateio (única, polimórfica)
+```
+lancamento_rateio_socios
+  id, origem_tipo ('lancamento'|'cp'|'cr'|'cp_baixa'|'cr_baixa'),
+  origem_id (uuid), socio_inscricao_id (uuid),
+  percentual NUMERIC(5,2), valor NUMERIC(14,2),
+  tenant_id, created_at
+```
+Índice em (origem_tipo, origem_id). RLS por tenant. Constraint: soma de % por origem = 100.
 
-### Triggers
-- `trg_atualiza_saldo_conta`: ao inserir/editar/excluir baixa, recalcula `valor_pago` (soma das baixas) e `status` da conta pai (`pago` se `valor_pago >= valor_original`, `parcial` se >0, senão `aberto`).
-- `trg_baixa_cria_lancamento` (opcional, configurável): cria registro em `lancamentos_financeiros` ao gravar baixa, vinculando via `lancamento_financeiro_id`.
+### 3. Campo de modo nas origens
+Em `lancamentos_financeiros`, `contas_pagar`, `contas_receber`, `contas_pagar_baixas`, `contas_receber_baixas`:
+- `rateio_modo TEXT` ('socio_unico' | 'rateio_granja' | 'manual'), default `'rateio_granja'`
+- `socio_inscricao_id UUID` (usado quando modo = 'socio_unico')
 
-### RLS
-Idênticas a `lancamentos_financeiros` (filtro por tenant via granja).
+### 4. Trigger de geração automática de rateio
+Após insert/update da origem, função `gerar_rateio_socios(origem_tipo, origem_id)` regrava `lancamento_rateio_socios`:
+- modo `socio_unico` → 1 linha com 100% / valor total
+- modo `rateio_granja` → 1 linha por sócio da granja com o % cadastrado
+- modo `manual` → não toca (UI grava)
 
-## 2. Integração com Vendas da Produção (CR)
+Baixas herdam o modo do título por padrão (sobrescrevível).
 
-- Em `VendaProducaoForm`, na aba/seção financeira já existente para duplicatas da NFe, adicionar a opção **"Gerar Contas a Receber"** com os campos: nº de parcelas, primeiro vencimento, intervalo em dias.
-- Ao salvar/autorizar a venda, criar automaticamente N registros em `contas_receber` vinculados via `venda_producao_id` (e `nota_fiscal_id` quando emitida).
-- Botão "Gerar/Regerar CR" disponível enquanto não há baixas registradas.
-- Se a NFe for cancelada → marcar contas vinculadas como `cancelado` (apenas se sem baixas).
+## UI
 
-## 3. Integração com Entradas de NFe (CP)
+### Em todos os formulários financeiros
+Novo bloco "Atribuição ao Sócio" com 3 opções (radio):
+- **Sócio único** → combobox de sócios da granja
+- **Rateio por participação da granja** (default) → mostra preview da divisão
+- **Rateio manual** → tabela editável (sócio + %), valida soma = 100
 
-- Em `EntradaNfeFormDialog`, nova seção **"Contas a Pagar"** com a mesma lógica: nº de parcelas, 1º vencimento, intervalo.
-- Quando o XML importado já trouxer duplicatas, pré-preencher os vencimentos/valores delas.
-- Ao **finalizar** a entrada (botão existente), gerar registros em `contas_pagar` vinculados via `entrada_nfe_id`.
-- Estender também `CompraCereais` (compra de cereais já é entrada de produto) com a mesma opção.
+### Default inteligente
+- **Venda da Produção / CR vinculado a contrato** → modo `socio_unico` pré-selecionado com o produtor emitente da NFe.
+- **Entrada NFe / CP vinculado** → default `rateio_granja`.
+- **Lançamento avulso** → default `rateio_granja`.
 
-## 4. Telas (List + Dialog)
+## Relatórios (novo menu "Relatórios IR")
 
-### `/contas-receber` e `/contas-pagar`
-Seguindo o padrão "List First":
-- **Filtros**: granja, status, cliente/fornecedor, data emissão, data vencimento, safra, busca por documento.
-- **Cards de totais**: Total aberto, Vencido, A vencer (7 dias), Pago no período.
-- **Tabela**: Data Venc. | Cliente/Fornec. | Documento/Parc. | Origem (link p/ venda/entrada) | Valor Orig. | Valor Pago | Saldo | Status (badge colorido) | Ações.
-- Linha vencida em vermelho; a vencer em 7 dias em âmbar.
-- Paginação 20/pág via `usePaginacao`.
-- Ordenação por vencimento ascendente padrão.
+### A. Demonstrativo Gerencial por Sócio (PDF)
+Filtros: período, granja, sócio (opcional), safra.
+Agrupado por sócio → subgrupo por DRE conta → linhas de receita/despesa. Totais por sócio e geral. Usa `lancamento_rateio_socios.valor`.
 
-### Dialog de cadastro/edição
-Campos do título + cliente/fornec. + DRE/sub-centro. Bloqueado se a conta tem origem (venda/entrada) — apenas vencimento, observações e baixas editáveis.
+### B. Livro Caixa do Produtor Rural (PDF)
+Layout RFB: data | histórico | nº doc | entradas | saídas | saldo. Um livro por sócio (ou múltiplos). Considera apenas **baixas efetivas** (regime de caixa), não títulos em aberto.
 
-### Dialog "Baixar conta"
-- Lista de baixas existentes (com excluir individual).
-- Formulário para nova baixa: data, valor, juros, multa, desconto, forma de pagamento, conta bancária, documento, obs.
-- Sugere valor restante por padrão.
-- Mostra resumo: Valor original | Total pago | Saldo restante.
-- Checkbox "Lançar no fluxo financeiro" (cria entrada em `lancamentos_financeiros`).
+## Integração com módulos existentes
 
-## 5. Importação Access (próximo passo, fora deste plano)
+- `VendaProducaoForm` / `ContasReceberContratoSection`: passar `socio_inscricao_id` do produtor emitente como default `socio_unico`.
+- `EntradaNfeFormDialog` / `ContasPagarEntradaSection`: default `rateio_granja`.
+- `LancamentosFinanceiros`: adicionar bloco de atribuição no dialog.
+- `BaixasDialog`: herdar do título; permitir override.
 
-Tabelas ficam prontas para receber importação CR/CP do Access. Isso será planejado depois.
+## Importação CR/CP
 
-## 6. Permissões
+Adicionar colunas opcionais em `importacaoConfig.ts`:
+- `socio_codigo` / `socio_cpf` → resolve para `socio_inscricao_id` + define modo `socio_unico`
+- Se vazio → `rateio_granja`
 
-- Visualizar: todos os roles com acesso à granja.
-- Criar/editar/baixar: `operador`, `gerente`, `admin` (via `canEdit`).
-- Excluir baixa: `gerente` ou `admin`.
+## Migração de dados existentes
 
-## 7. Navegação
+Script roda `gerar_rateio_socios` para todos os registros já existentes em modo `rateio_granja` (default seguro).
 
-Adicionar em `AppSidebar` dentro do grupo Financeiro:
-- Contas a Receber
-- Contas a Pagar
-- Lançamentos Financeiros (já existe)
-- DRE (já existe)
+## Arquivos a criar/editar
 
-## Detalhes técnicos
+**Criar:**
+- Migration SQL (tabela + colunas + função + triggers)
+- `src/hooks/useRateioSocios.ts`
+- `src/components/contas/AtribuicaoSocioSection.tsx` (componente reutilizável: radio + combobox + tabela manual)
+- `src/lib/relatoriosIR.ts` (PDF demonstrativo + livro caixa)
+- `src/pages/RelatoriosIR.tsx`
 
-- Hooks: `useContasReceber`, `useContasPagar`, `useBaixasContaReceber`, `useBaixasContaPagar` (CRUD + mutations).
-- `src/hooks/useGerarDuplicatasVenda.ts` e `useGerarDuplicatasEntrada.ts`: lógica de geração de parcelas.
-- Rotas em `App.tsx`: `/contas-receber`, `/contas-pagar`.
-- Formatação BR para datas e valores; status calculado pelo trigger, nunca no frontend.
-- Sem CHECK constraints temporais — usar trigger de validação.
-- Nada de mexer em `lancamentos_financeiros` existente além do FK opcional.
+**Editar:**
+- `src/pages/LancamentosFinanceiros.tsx` (dialog)
+- `src/components/contas/ContaFormDialog.tsx`
+- `src/components/contas/BaixasDialog.tsx`
+- `src/components/contas/ContasReceberContratoSection.tsx` (default sócio)
+- `src/components/contas/ContasPagarEntradaSection.tsx`
+- `src/lib/importacaoConfig.ts` (colunas sócio em CR/CP)
+- `src/App.tsx`, `src/components/layout/AppSidebar.tsx` (rota Relatórios IR)
 
-## Fora de escopo
+## Observações
 
-- Geração de boletos/PIX.
-- Conciliação bancária.
-- Importação Access de CR/CP (próxima etapa).
-- Relatórios PDF (podem ser adicionados após a base funcionar).
+- Rateio é armazenado materializado (`valor` calculado) para performance e auditoria — recalcula via trigger sempre que origem ou % muda.
+- Livro Caixa usa apenas movimentações efetivas (baixas + lançamentos diretos), não títulos em aberto.
+- Multi-tenant respeitado em todas as tabelas e relatórios.

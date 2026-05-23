@@ -15,9 +15,12 @@ export interface LancamentoFinanceiro {
   documento: string | null;
   observacoes: string | null;
   safra_id: string | null;
+  rateio_modo: 'socio_unico' | 'rateio_granja' | 'manual';
+  socio_produtor_id: string | null;
   created_at: string;
   updated_at: string;
 }
+
 
 export type LancamentoFinanceiroInput = Omit<LancamentoFinanceiro, 'id' | 'created_at' | 'updated_at'>;
 
