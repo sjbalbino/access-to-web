@@ -166,7 +166,22 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             <Label>Observações</Label>
             <Textarea value={form.observacoes || ''} onChange={(e) => update('observacoes', e.target.value)} rows={2} />
           </div>
+          <div className="col-span-2">
+            <AtribuicaoSocioSection
+              granjaId={form.granja_id}
+              valorTotal={parseFloat(form.valor_original) || 0}
+              modo={form.rateio_modo}
+              socioUnicoId={form.socio_produtor_id}
+              rateioManual={rateioManual}
+              onChange={(v) => {
+                update('rateio_modo', v.modo);
+                update('socio_produtor_id', v.socio_produtor_id);
+                setRateioManual(v.manual);
+              }}
+            />
+          </div>
         </div>
+
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
