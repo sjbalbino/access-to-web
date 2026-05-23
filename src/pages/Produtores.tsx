@@ -225,7 +225,9 @@ export default function Produtores() {
       celular: item.celular || "",
       email: item.email || "",
       ativo: item.ativo ?? true,
-    });
+      percentual_participacao: item.percentual_participacao ?? 0,
+    } as ProdutorInput);
+
     setActiveTab("dados");
     setIsDialogOpen(true);
   };
