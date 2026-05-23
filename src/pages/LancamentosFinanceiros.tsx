@@ -24,6 +24,9 @@ import { format } from 'date-fns';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
+import { AtribuicaoSocioSection } from "@/components/contas/AtribuicaoSocioSection";
+import { useSalvarRateioManual } from "@/hooks/useRateioSocios";
+
 
 export default function LancamentosFinanceiros() {
   const { canEdit } = useAuth();
