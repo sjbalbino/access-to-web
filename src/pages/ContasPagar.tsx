@@ -88,10 +88,13 @@ export default function ContasPagar() {
   const { dadosPaginados, totalPaginas } = paginacao;
 
   const handleSave = async (data: any) => {
-    if (editing?.id) await update.mutateAsync({ id: editing.id, ...data });
-    else await create.mutateAsync(data);
+    let saved: any;
+    if (editing?.id) saved = await update.mutateAsync({ id: editing.id, ...data });
+    else saved = await create.mutateAsync(data);
     setEditing(null);
+    return saved;
   };
+
 
   const hoje = new Date().toISOString().slice(0, 10);
 
