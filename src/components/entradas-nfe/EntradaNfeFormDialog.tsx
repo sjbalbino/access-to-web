@@ -14,6 +14,7 @@ import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
 import { useEntradaNfe, useCreateEntradaNfe, useUpdateEntradaNfe } from "@/hooks/useEntradasNfe";
+import { ContasPagarEntradaSection } from "@/components/contas/ContasPagarEntradaSection";
 import { toast } from "sonner";
 import { formatNumber } from "@/lib/formatters";
 import { Plus, Trash2, Link2 } from "lucide-react";
@@ -426,6 +427,10 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
               </TabsContent>
             </ScrollArea>
           </Tabs>
+
+          {isEdit && entradaData && (
+            <ContasPagarEntradaSection entrada={entradaData} />
+          )}
 
           {!isFinalizado && (
             <div className="flex justify-end gap-2 pt-4 border-t">
