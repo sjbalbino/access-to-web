@@ -654,14 +654,20 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         return dump ? `${msg} — valores: ${dump}` : msg;
       };
 
+      const useUpsert = config.tableName === 'contas_pagar' || config.tableName === 'contas_receber';
+
       for (let i = 0; i < finalRows.length; i += batchSize) {
         const batch = finalRows.slice(i, i + batchSize);
-        const { error } = await supabase.from(config.tableName as any).insert(batch as any);
+        const { error } = useUpsert
+          ? await supabase.from(config.tableName as any).upsert(batch as any, { onConflict: 'tenant_id,codigo_legado', ignoreDuplicates: true } as any)
+          : await supabase.from(config.tableName as any).insert(batch as any);
 
         if (error) {
           // Fallback: try inserting each row individually
           for (let j = 0; j < batch.length; j++) {
-            const { error: rowErr } = await supabase.from(config.tableName as any).insert(batch[j] as any);
+            const { error: rowErr } = useUpsert
+              ? await supabase.from(config.tableName as any).upsert(batch[j] as any, { onConflict: 'tenant_id,codigo_legado', ignoreDuplicates: true } as any)
+              : await supabase.from(config.tableName as any).insert(batch[j] as any);
             if (rowErr) {
               errors.push(`Linha ${i + j + 1}: ${enrichNumericError(batch[j], rowErr.message)}`);
             } else {
@@ -671,6 +677,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         } else {
           imported += batch.length;
         }
+
 
         setProgress(Math.round(((i + batchSize) / Math.max(finalRows.length, 1)) * 100));
         setImportedCount(imported);
