@@ -147,7 +147,7 @@ export default function ContasBancarias() {
       <PageHeader
         title="Contas Bancárias"
         description="Cadastro de contas dos sócios e da granja, usadas nas baixas financeiras."
-        icon={Landmark}
+        icon={<Landmark className="h-6 w-6" />}
         actions={
           canEdit && (
             <Button onClick={handleNew}>
