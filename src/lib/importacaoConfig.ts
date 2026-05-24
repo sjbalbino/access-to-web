@@ -928,6 +928,28 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'fornecedor_id', sourceColumn: 'cliente_nome', sourceColumnAliases: ['cliente','cliente_codigo','cliente_cpf_cnpj','comprador','comprador_nome'], lookupTable: 'clientes_fornecedores', lookupColumn: 'nome', fallbackColumns: ['codigo','cpf_cnpj'], lookupLabel: 'nome', optional: true },
     ],
   },
+  {
+    key: 'baixas_contas_receber',
+    label: 'Baixas Contas a Receber',
+    tableName: 'contas_receber_baixas',
+    description: 'Pagamentos/quitações de CR do Access — vinculados pelo codigo_legado da CR. O numero_recibo é preservado.',
+    order: 22,
+    dependsOn: ['contas_receber'],
+    columns: [
+      { accessName: 'cr_codigo_legado', dbName: '_cr_codigo_legado', required: true, transform: toStr },
+      { accessName: 'data_pagamento', dbName: 'data_pagamento', required: true, transform: toDate },
+      { accessName: 'valor_pago', dbName: 'valor_pago', required: true, transform: toNumber },
+      { accessName: 'juros', dbName: 'juros', transform: toNumber },
+      { accessName: 'multa', dbName: 'multa', transform: toNumber },
+      { accessName: 'desconto', dbName: 'desconto', transform: toNumber },
+      { accessName: 'forma_pagamento', dbName: 'forma_pagamento', transform: toStr },
+      { accessName: 'conta_bancaria', dbName: 'conta_bancaria', transform: toStr },
+      { accessName: 'documento', dbName: 'documento', transform: toStr },
+      { accessName: 'numero_recibo', dbName: 'numero_recibo', transform: toStr },
+      { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
+    ],
+    references: [],
+  },
 ];
 
 // Tabelas que possuem coluna tenant_id (isoladas por empresa contratante)
