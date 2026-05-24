@@ -193,7 +193,7 @@ export default function ContasBancarias() {
         <CardContent className="pt-4">
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Carregando...</div>
-          ) : pag.itemsPaginados.length === 0 ? (
+          ) : pag.dadosPaginados.length === 0 ? (
             <Empty>
               <EmptyHeader>
                 <EmptyMedia><Landmark className="h-10 w-10 text-muted-foreground" /></EmptyMedia>
@@ -218,7 +218,7 @@ export default function ContasBancarias() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pag.itemsPaginados.map((c: any) => (
+                  {pag.dadosPaginados.map((c: any) => (
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">{c.nome}</TableCell>
                       <TableCell>{c.banco ? `${c.banco.codigo} - ${c.banco.nome}` : "-"}</TableCell>
@@ -251,12 +251,11 @@ export default function ContasBancarias() {
                 </TableBody>
               </Table>
               <TablePagination
-                pagina={pag.pagina}
+                paginaAtual={pag.paginaAtual}
                 totalPaginas={pag.totalPaginas}
-                onPaginaChange={pag.setPagina}
-                totalItens={pag.totalItens}
-                inicio={pag.inicio}
-                fim={pag.fim}
+                setPaginaAtual={pag.setPaginaAtual}
+                totalRegistros={pag.totalRegistros}
+                gerarNumerosPaginas={pag.gerarNumerosPaginas}
               />
             </>
           )}
