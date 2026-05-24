@@ -64,6 +64,25 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
   const [documento, setDocumento] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
+  const [proximoRecibo, setProximoRecibo] = useState<string>('');
+
+  // Buscar próximo nº de recibo ao abrir
+  useEffect(() => {
+    if (!open || tipo !== 'receber' || !conta) return;
+    (async () => {
+      // Descobrir tenant pela própria conta
+      const { data: cr } = await supabase
+        .from('contas_receber' as any)
+        .select('tenant_id')
+        .eq('id', conta.id)
+        .single();
+      const tenantId = (cr as any)?.tenant_id;
+      if (!tenantId) return;
+      const { data } = await supabase.rpc('proximo_numero_recibo' as any, { _tenant: tenantId });
+      if (data) setProximoRecibo(String(data));
+    })();
+  }, [open, tipo, conta, baixasRec.data]);
+
   const resetForm = () => {
     setValorPago('');
     setJuros('0');
@@ -74,11 +93,58 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
     setObservacoes('');
   };
 
+  const buildReciboData = async (baixa: any, numero: string) => {
+    if (!conta) return null;
+    const c: any = conta;
+    // Buscar dados do emitente (granja) e pagador (cliente) e contrato
+    const [granjaRes, clienteRes, contratoRes] = await Promise.all([
+      c.granja_id
+        ? supabase.from('granjas' as any).select('razao_social, cnpj, endereco, cidade, uf').eq('id', c.granja_id).single()
+        : Promise.resolve({ data: null }),
+      c.cliente_id
+        ? supabase.from('clientes_fornecedores' as any).select('nome, nome_fantasia, cpf_cnpj').eq('id', c.cliente_id).single()
+        : Promise.resolve({ data: null }),
+      c.contrato_venda_id
+        ? supabase.from('contratos_venda' as any).select('numero').eq('id', c.contrato_venda_id).single()
+        : Promise.resolve({ data: null }),
+    ]);
+    const granja: any = granjaRes.data || {};
+    const cliente: any = clienteRes.data || {};
+    const contrato: any = contratoRes.data || {};
+    const total = Number(baixa.valor_pago) + Number(baixa.juros) + Number(baixa.multa) - Number(baixa.desconto);
+    return {
+      numero,
+      data_pagamento: baixa.data_pagamento,
+      valor_total: total,
+      valor_pago: Number(baixa.valor_pago),
+      juros: Number(baixa.juros),
+      multa: Number(baixa.multa),
+      desconto: Number(baixa.desconto),
+      forma_pagamento: baixa.forma_pagamento,
+      documento: baixa.documento || c.documento,
+      parcela: c.parcela,
+      observacoes: baixa.observacoes,
+      emitente: {
+        razao_social: granja.razao_social,
+        cnpj: granja.cnpj,
+        endereco: granja.endereco,
+        cidade: granja.cidade,
+        uf: granja.uf,
+      },
+      pagador: {
+        nome: cliente.nome_fantasia ? `${cliente.nome} (${cliente.nome_fantasia})` : cliente.nome,
+        cpf_cnpj: cliente.cpf_cnpj,
+      },
+      contrato_numero: contrato.numero,
+    };
+  };
+
   const handleSalvarBaixa = async () => {
     if (!conta) return;
     const v = parseFloat(valorPago);
     if (!v || v <= 0) return;
-    const payload = {
+    const numeroRecibo = tipo === 'receber' ? (proximoRecibo || null) : null;
+    const payload: any = {
       conta_id: conta.id,
       data_pagamento: dataPagamento,
       valor_pago: v,
@@ -91,9 +157,24 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
       observacoes: observacoes || null,
       lancamento_financeiro_id: null,
     };
-    if (tipo === 'receber') await createRec.mutateAsync(payload);
-    else await createPag.mutateAsync(payload);
+    if (tipo === 'receber') {
+      payload.numero_recibo = numeroRecibo;
+      await createRec.mutateAsync(payload);
+      // Abrir PDF do recibo
+      if (numeroRecibo) {
+        const reciboData = await buildReciboData(payload, numeroRecibo);
+        if (reciboData) gerarReciboPDF(reciboData);
+      }
+    } else {
+      await createPag.mutateAsync(payload);
+    }
     resetForm();
+  };
+
+  const handleReimprimir = async (b: any) => {
+    if (!b.numero_recibo) return;
+    const reciboData = await buildReciboData(b, b.numero_recibo);
+    if (reciboData) gerarReciboPDF(reciboData);
   };
 
   const handleDelete = async (id: string) => {
