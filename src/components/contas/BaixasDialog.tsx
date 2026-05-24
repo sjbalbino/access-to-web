@@ -258,7 +258,14 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
 
             {canEdit && saldo > 0.01 && (
               <div className="space-y-3 border-t pt-4">
-                <h4 className="font-semibold text-sm">Nova baixa</h4>
+                <h4 className="font-semibold text-sm flex items-center gap-3">
+                  Nova baixa
+                  {tipo === 'receber' && proximoRecibo && (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      Próximo Recibo Nº <span className="font-mono font-semibold text-primary">{proximoRecibo}</span> (gerado automaticamente)
+                    </span>
+                  )}
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
                     <Label>Data pagamento</Label>
