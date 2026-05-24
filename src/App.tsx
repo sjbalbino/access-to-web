@@ -47,6 +47,7 @@ import ImportarDados from "./pages/ImportarDados";
 import EntradasNfe from "./pages/EntradasNfe";
 import ContasReceber from "./pages/ContasReceber";
 import ContasPagar from "./pages/ContasPagar";
+import ContasBancarias from "./pages/ContasBancarias";
 import RelatoriosIR from "./pages/RelatoriosIR";
 import NotFound from "./pages/NotFound";
 
@@ -99,6 +100,7 @@ const App = () => (
               <Route path="/lancamentos-financeiros" element={<ProtectedRoute><LancamentosFinanceiros /></ProtectedRoute>} />
               <Route path="/contas-receber" element={<ProtectedRoute><ContasReceber /></ProtectedRoute>} />
               <Route path="/contas-pagar" element={<ProtectedRoute><ContasPagar /></ProtectedRoute>} />
+              <Route path="/contas-bancarias" element={<ProtectedRoute><ContasBancarias /></ProtectedRoute>} />
               <Route path="/relatorios-ir" element={<ProtectedRoute><RelatoriosIR /></ProtectedRoute>} />
               <Route path="/dre-estrutura" element={<ProtectedRoute><DreEstrutura /></ProtectedRoute>} />
 
