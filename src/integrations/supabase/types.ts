@@ -1153,9 +1153,11 @@ export type Database = {
           juros: number
           lancamento_financeiro_id: string | null
           multa: number
+          numero_recibo: string | null
           observacoes: string | null
           rateio_modo: string | null
           socio_produtor_id: string | null
+          tenant_id: string | null
           updated_at: string
           valor_pago: number
         }
@@ -1171,9 +1173,11 @@ export type Database = {
           juros?: number
           lancamento_financeiro_id?: string | null
           multa?: number
+          numero_recibo?: string | null
           observacoes?: string | null
           rateio_modo?: string | null
           socio_produtor_id?: string | null
+          tenant_id?: string | null
           updated_at?: string
           valor_pago: number
         }
@@ -1189,9 +1193,11 @@ export type Database = {
           juros?: number
           lancamento_financeiro_id?: string | null
           multa?: number
+          numero_recibo?: string | null
           observacoes?: string | null
           rateio_modo?: string | null
           socio_produtor_id?: string | null
+          tenant_id?: string | null
           updated_at?: string
           valor_pago?: number
         }
@@ -5017,6 +5023,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      proximo_numero_recibo: { Args: { _tenant: string }; Returns: string }
       recalc_conta_pagar: { Args: { _conta_id: string }; Returns: undefined }
       recalc_conta_receber: { Args: { _conta_id: string }; Returns: undefined }
       seed_tenant_defaults: { Args: { _tenant_id: string }; Returns: undefined }
