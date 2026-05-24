@@ -494,6 +494,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         validDbColumns.add('granja_id');
         validDbColumns.add('eh_contra_nota');
       }
+      // Baixas CR: conta_id injetado a partir do codigo_legado
+      if (config.key === 'baixas_contas_receber') {
+        validDbColumns.add('conta_id');
+      }
 
       const sanitizedRows = cleanRows.map((row, idx) => {
         const clean: Record<string, any> = {};
