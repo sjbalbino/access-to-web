@@ -1,51 +1,100 @@
-## Diagnóstico
+## Objetivo
 
-A importação de **Contas a Pagar** é lenta por 3 motivos somados:
+Transformar `forma_pagamento` e `conta_bancaria` (hoje texto livre nas baixas) em vínculos reais com cadastros, importáveis do sistema legado.
 
-### 1. Trigger `trg_rateio_cp` dispara por linha
-Cada `INSERT` em `contas_pagar` executa `gerar_rateio_socios('cp', NEW.id)`, que:
-- Consulta `produtores` da granja,
-- Calcula percentuais,
-- Faz `INSERT` em `lancamento_rateio_socios` (1 linha por sócio).
+## 1. Banco de dados (migration)
 
-Para milhares de títulos isso multiplica o trabalho do banco. O trigger só "curto-circuita" quando `rateio_modo = 'manual'` (retorna sem buscar produtores nem inserir rateio).
+### Tabela `bancos` (catálogo nacional)
+- `id uuid pk`, `codigo text` (ex.: "001", "341"), `nome text`, `ativo bool default true`, `created_at`, `updated_at`
+- Único: `(codigo)`
+- **Sem `tenant_id`** — é catálogo global (igual a `ncm`/`cfops`).
+- RLS: SELECT para todos autenticados; INSERT/UPDATE/DELETE só admin.
+- **Seed**: inserir os ~250 bancos da lista oficial Febraban (Itaú, Bradesco, BB, Caixa, Santander, Sicoob, Sicredi, NuBank, Inter, C6, BTG, etc.). Lista completa via seed SQL.
 
-### 2. Batch pequeno + fallback linha-a-linha
-- `batchSize = 100` (muitos round-trips).
-- Quando um batch falha por qualquer motivo, o código refaz **linha-a-linha** o batch inteiro (até 100 chamadas extras), mesmo quando o erro era de uma linha só. Isso explica picos de lentidão drástica em qualquer batch com erro.
+### Tabela `contas_bancarias` (por tenant, vinculada a sócio)
+Campos:
+- `id`, `tenant_id` (NOT NULL, default `get_user_tenant_id()`)
+- `codigo_legado text` (rastreio do Access)
+- `nome text NOT NULL` (apelido: "Itaú PJ Principal")
+- `banco_id uuid REFERENCES bancos(id)`
+- `agencia text`, `agencia_dv text`
+- `conta text`, `conta_dv text`
+- `tipo text` (corrente | poupanca | investimento | caixa | outro)
+- `socio_produtor_id uuid REFERENCES produtores(id)` (nullable — pode ser conta da granja)
+- `granja_id uuid REFERENCES granjas(id)` (nullable)
+- `titular text`, `cpf_cnpj_titular text`
+- `pix_chave text`, `pix_tipo text` (cpf|cnpj|email|telefone|aleatoria)
+- `saldo_inicial numeric(15,2) default 0`, `data_saldo_inicial date`
+- `ativo bool default true`, `observacoes text`, timestamps
+- Único: `(tenant_id, codigo_legado) WHERE codigo_legado IS NOT NULL` (índice **completo**, não parcial, para funcionar com upsert)
+- RLS multi-tenant padrão (SELECT pelo tenant, INSERT/UPDATE/DELETE com `can_edit`).
+- Trigger `before insert` para setar `tenant_id` automaticamente.
 
-### 3. `upsert` com `ignoreDuplicates` carrega payload de retorno
-Mesmo ignorando duplicatas, o PostgREST por padrão devolve as linhas afetadas. Em milhares de registros isso somando a latência de rede pesa.
+### Alterações em `contas_pagar_baixas` e `contas_receber_baixas`
+- Adicionar `conta_bancaria_id uuid REFERENCES contas_bancarias(id) ON DELETE SET NULL`
+- Manter `conta_bancaria text` (legado / fallback) — não dropar agora para não quebrar histórico.
+- `forma_pagamento text` continua, mas validada nas 7 opções fixas (constraint CHECK opcional ou só validação no front).
 
-## Plano (somente `ImportacaoDialog.tsx`, sem migration)
+## 2. Página de cadastro `Contas Bancárias`
 
-Mudanças localizadas no bloco de insert de `contas_pagar` / `contas_receber` (linhas ~657-684):
+Nova rota `/contas-bancarias` + item de menu (categoria Financeiro).
+- Lista paginada (20/página) com filtros: sócio, banco, ativo.
+- Dialog CRUD: combobox de banco (busca por código ou nome), combobox de sócio (produtores do tenant), combobox de granja.
+- Coluna `Banco` mostra `código - nome`.
 
-1. **Forçar `rateio_modo = 'manual'` nas linhas importadas**
-   - Antes do `upsert`, para `contas_pagar` e `contas_receber`, fazer `row.rateio_modo = row.rateio_modo ?? 'manual'`.
-   - Efeito: o trigger `trg_rateio_cp` entra no caminho rápido (não consulta `produtores`, não insere rateio).
-   - Não impacta lançamentos manuais nem rateio futuro: o usuário pode editar a conta depois e mudar o modo, o que dispara o rateio normalmente.
+Nova rota `/bancos` (somente admin) — opcional, simples lista read-only do catálogo, com botão "ativar/inativar".
 
-2. **Aumentar `batchSize` para 500** apenas nestas duas tabelas.
+## 3. Importação
 
-3. **Remover o fallback linha-a-linha cego**
-   - Se o batch falhar, registrar o erro do batch (com a primeira linha como referência) e seguir para o próximo. O fallback atual só faz sentido quando o erro é de uma linha — na prática estamos pagando 100x a latência por nada quando o erro é genérico (ex.: constraint, RLS, timeout).
-   - Manter o `enrichNumericError` no log do batch.
+Adicionar duas configs novas em `importacaoConfig.ts`:
 
-4. **Pedir retorno mínimo no upsert**
-   - Trocar `.upsert(batch, { onConflict, ignoreDuplicates: true })` por uma chamada equivalente com `.select('id', { head: false, count: 'exact' })` removida — usar a forma `.upsert(batch, { onConflict, ignoreDuplicates: true, count: 'exact' })` e não encadear `.select()`. Em supabase-js v2 isso já não retorna linhas, então o impacto é só garantir que nenhum `.select()` foi anexado (confirmar no código atual).
+### `bancos` (opcional — se o legado tiver lista própria, senão usa seed)
+Pular — usaremos o seed Febraban.
 
-5. **Atualizar `.lovable/plan.md`** documentando que importação de CP/CR cria registros com `rateio_modo = 'manual'` por padrão.
+### `contas_bancarias`
+- `order: 4` (depois de `produtores`/`granjas`)
+- Colunas: `codigo_legado`, `nome`, `banco_codigo` (resolve via `bancos.codigo`), `agencia`, `conta`, `tipo`, `titular`, `cpf_cnpj_titular`, `pix_chave`, `pix_tipo`, `socio_codigo_legado` (resolve via `produtores.codigo_legado`), `granja_codigo_legado` (opcional), `saldo_inicial`, `ativo`
+- Conflict key: `(tenant_id, codigo_legado)`
+
+### Ajustes em `baixas_contas_pagar` e `baixas_contas_receber`
+- Adicionar coluna `conta_bancaria_codigo_legado` que resolve via `contas_bancarias.codigo_legado` → `conta_bancaria_id`.
+- Manter `conta_bancaria` (texto) como fallback para quando não houver código legado.
+- Adicionar transform em `forma_pagamento` que **mapeia para as 7 fixas** (case-insensitive, sem acentos):
+  - "dinheiro", "espécie", "cash" → `dinheiro`
+  - "pix" → `pix`
+  - "boleto", "bol" → `boleto`
+  - "ted", "doc", "transf*", "transferencia" → `transferencia`
+  - "cheque", "chq" → `cheque`
+  - "cartão", "cartao", "débito", "credito*" → `cartao`
+  - resto → `outro` (e loga warning)
+- Adicionar essa config `baixas_contas_pagar` (que está faltando — só existe `baixas_contas_receber` hoje!) com o mesmo padrão.
+
+### Dependências do wizard
+- `contas_bancarias` depende de `produtores` (e opcionalmente `granjas`).
+- `baixas_contas_pagar`/`baixas_contas_receber` agora dependem de `contas_pagar`/`contas_receber` **e** `contas_bancarias`.
+
+## 4. UI das baixas (`BaixasDialog.tsx`)
+
+- Trocar o `<Input>` de `conta_bancaria` por `<ComboboxFilter>` carregando contas bancárias do tenant (filtradas opcionalmente pelo sócio da conta).
+- Salvar `conta_bancaria_id` (FK) **e** preencher `conta_bancaria` (texto) com o nome para display rápido.
+- `forma_pagamento` continua como Select com as 7 fixas.
+- Recibo PDF: mostrar nome do banco/agência/conta a partir da FK em vez do texto livre.
+
+## 5. Hooks novos
+
+- `useBancos()` — lista catálogo (cacheado, staleTime longo).
+- `useContasBancarias(filtros)` — CRUD da tabela tenant-scoped.
+
+## 6. Memórias
+
+Adicionar `mem://features/contas-bancarias-e-formas-pagamento` documentando:
+- Catálogo `bancos` global; `contas_bancarias` por tenant ligadas a sócio/granja.
+- 7 formas fixas; mapeamento na importação.
+- Baixas guardam `conta_bancaria_id` (FK) + texto fallback.
 
 ## Fora de escopo
 
-- Não mexer em triggers, funções ou schema do banco.
-- Não alterar import de outras tabelas.
-- Não tocar em criação manual de contas a pagar/receber (segue gerando rateio automaticamente conforme configuração da granja).
-
-## Resultado esperado
-
-Importação de alguns milhares de títulos cai de minutos para segundos, porque:
-- Trigger de rateio vira no-op durante o import.
-- Menos round-trips (500/batch vs 100).
-- Sem retries de 100 linhas a cada batch problemático.
+- Conciliação bancária / extrato.
+- Saldo corrente automático das contas (só guarda `saldo_inicial`).
+- Mudar `inscricoes_produtor.conta_bancaria` (campo de texto separado, não mexer agora).
+- Importar formas de pagamento como tabela própria (decidido: mapear nas 7 fixas).

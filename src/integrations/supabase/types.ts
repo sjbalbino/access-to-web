@@ -202,6 +202,33 @@ export type Database = {
           },
         ]
       }
+      bancos: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cfops: {
         Row: {
           aplicacao: string | null
@@ -776,6 +803,103 @@ export type Database = {
           },
         ]
       }
+      contas_bancarias: {
+        Row: {
+          agencia: string | null
+          agencia_dv: string | null
+          ativo: boolean
+          banco_id: string | null
+          codigo_legado: string | null
+          conta: string | null
+          conta_dv: string | null
+          cpf_cnpj_titular: string | null
+          created_at: string
+          data_saldo_inicial: string | null
+          granja_id: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          pix_chave: string | null
+          pix_tipo: string | null
+          saldo_inicial: number
+          socio_produtor_id: string | null
+          tenant_id: string
+          tipo: string
+          titular: string | null
+          updated_at: string
+        }
+        Insert: {
+          agencia?: string | null
+          agencia_dv?: string | null
+          ativo?: boolean
+          banco_id?: string | null
+          codigo_legado?: string | null
+          conta?: string | null
+          conta_dv?: string | null
+          cpf_cnpj_titular?: string | null
+          created_at?: string
+          data_saldo_inicial?: string | null
+          granja_id?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          pix_chave?: string | null
+          pix_tipo?: string | null
+          saldo_inicial?: number
+          socio_produtor_id?: string | null
+          tenant_id: string
+          tipo?: string
+          titular?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agencia?: string | null
+          agencia_dv?: string | null
+          ativo?: boolean
+          banco_id?: string | null
+          codigo_legado?: string | null
+          conta?: string | null
+          conta_dv?: string | null
+          cpf_cnpj_titular?: string | null
+          created_at?: string
+          data_saldo_inicial?: string | null
+          granja_id?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          pix_chave?: string | null
+          pix_tipo?: string | null
+          saldo_inicial?: number
+          socio_produtor_id?: string | null
+          tenant_id?: string
+          tipo?: string
+          titular?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_bancarias_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "bancos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_bancarias_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_bancarias_socio_produtor_id_fkey"
+            columns: ["socio_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "produtores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas_pagar: {
         Row: {
           codigo_legado: string | null
@@ -920,6 +1044,7 @@ export type Database = {
       contas_pagar_baixas: {
         Row: {
           conta_bancaria: string | null
+          conta_bancaria_id: string | null
           conta_id: string
           created_at: string
           data_pagamento: string
@@ -938,6 +1063,7 @@ export type Database = {
         }
         Insert: {
           conta_bancaria?: string | null
+          conta_bancaria_id?: string | null
           conta_id: string
           created_at?: string
           data_pagamento?: string
@@ -956,6 +1082,7 @@ export type Database = {
         }
         Update: {
           conta_bancaria?: string | null
+          conta_bancaria_id?: string | null
           conta_id?: string
           created_at?: string
           data_pagamento?: string
@@ -973,6 +1100,13 @@ export type Database = {
           valor_pago?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "contas_pagar_baixas_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contas_pagar_baixas_conta_id_fkey"
             columns: ["conta_id"]
@@ -1143,6 +1277,7 @@ export type Database = {
       contas_receber_baixas: {
         Row: {
           conta_bancaria: string | null
+          conta_bancaria_id: string | null
           conta_id: string
           created_at: string
           data_pagamento: string
@@ -1163,6 +1298,7 @@ export type Database = {
         }
         Insert: {
           conta_bancaria?: string | null
+          conta_bancaria_id?: string | null
           conta_id: string
           created_at?: string
           data_pagamento?: string
@@ -1183,6 +1319,7 @@ export type Database = {
         }
         Update: {
           conta_bancaria?: string | null
+          conta_bancaria_id?: string | null
           conta_id?: string
           created_at?: string
           data_pagamento?: string
@@ -1202,6 +1339,13 @@ export type Database = {
           valor_pago?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "contas_receber_baixas_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contas_receber_baixas_conta_id_fkey"
             columns: ["conta_id"]

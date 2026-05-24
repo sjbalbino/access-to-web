@@ -128,6 +128,20 @@ const toPlate = (v: any): string | null => {
   return plate.slice(0, 7);
 };
 
+// Mapeia formas de pagamento legadas para as 7 opções fixas do sistema.
+const toFormaPagamento = (v: any): string | null => {
+  const s = toStr(v);
+  if (!s) return null;
+  const norm = s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (/pix/.test(norm)) return 'pix';
+  if (/dinheiro|especie|cash/.test(norm)) return 'dinheiro';
+  if (/boleto|bol\b/.test(norm)) return 'boleto';
+  if (/ted|doc|transfer/.test(norm)) return 'transferencia';
+  if (/cheque|chq/.test(norm)) return 'cheque';
+  if (/cart|debito|credito/.test(norm)) return 'cartao';
+  return 'outro';
+};
+
 export const tableConfigs: TableConfig[] = [
   {
     key: 'granjas',
@@ -929,12 +943,71 @@ export const tableConfigs: TableConfig[] = [
     ],
   },
   {
+    key: 'contas_bancarias',
+    label: 'Contas Bancárias',
+    tableName: 'contas_bancarias',
+    description: 'Contas bancárias dos sócios/granja, vinculadas a banco do catálogo nacional.',
+    order: 4,
+    dependsOn: ['produtores'],
+    columns: [
+      { accessName: 'codigo_legado', dbName: 'codigo_legado', transform: toStr },
+      { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
+      { accessName: 'agencia', dbName: 'agencia', transform: toStr },
+      { accessName: 'agencia_dv', dbName: 'agencia_dv', transform: toStr },
+      { accessName: 'conta', dbName: 'conta', transform: toStr },
+      { accessName: 'conta_dv', dbName: 'conta_dv', transform: toStr },
+      { accessName: 'tipo', dbName: 'tipo', transform: (v: any) => {
+          const s = (toStr(v) || 'corrente').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          if (/poup/.test(s)) return 'poupanca';
+          if (/invest/.test(s)) return 'investimento';
+          if (/caix/.test(s)) return 'caixa';
+          if (/corr|cc/.test(s)) return 'corrente';
+          return 'outro';
+        } },
+      { accessName: 'titular', dbName: 'titular', transform: toStr },
+      { accessName: 'cpf_cnpj_titular', dbName: 'cpf_cnpj_titular', transform: toStr },
+      { accessName: 'pix_chave', dbName: 'pix_chave', transform: toStr },
+      { accessName: 'pix_tipo', dbName: 'pix_tipo', transform: toStr },
+      { accessName: 'saldo_inicial', dbName: 'saldo_inicial', transform: toNumber },
+      { accessName: 'ativo', dbName: 'ativo', transform: toBool },
+      { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
+    ],
+    references: [
+      { dbColumn: 'banco_id', sourceColumn: 'banco_codigo', sourceColumnAliases: ['banco','codigo_banco'], lookupTable: 'bancos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
+      { dbColumn: 'socio_produtor_id', sourceColumn: 'socio_codigo_legado', sourceColumnAliases: ['socio','produtor','produtor_codigo'], lookupTable: 'produtores', lookupColumn: 'codigo_legado', fallbackColumns: ['nome'], lookupLabel: 'nome', optional: true },
+      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', sourceColumnAliases: ['granja'], lookupTable: 'granjas', lookupColumn: 'codigo', fallbackColumns: ['razao_social'], lookupLabel: 'razao_social', optional: true },
+    ],
+  },
+  {
+    key: 'baixas_contas_pagar',
+    label: 'Baixas Contas a Pagar',
+    tableName: 'contas_pagar_baixas',
+    description: 'Pagamentos/quitações de CP do Access — vinculados pelo codigo_legado da CP.',
+    order: 22,
+    dependsOn: ['contas_pagar', 'contas_bancarias'],
+    columns: [
+      { accessName: 'cp_codigo_legado', dbName: '_cp_codigo_legado', required: true, transform: toStr },
+      { accessName: 'data_pagamento', dbName: 'data_pagamento', required: true, transform: toDate },
+      { accessName: 'valor_pago', dbName: 'valor_pago', required: true, transform: toNumber },
+      { accessName: 'juros', dbName: 'juros', transform: toNumber },
+      { accessName: 'multa', dbName: 'multa', transform: toNumber },
+      { accessName: 'desconto', dbName: 'desconto', transform: toNumber },
+      { accessName: 'forma_pagamento', dbName: 'forma_pagamento', transform: toFormaPagamento },
+      { accessName: 'conta_bancaria', dbName: 'conta_bancaria', transform: toStr },
+      { accessName: 'documento', dbName: 'documento', transform: toStr },
+      { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
+    ],
+    references: [
+      { dbColumn: 'conta_bancaria_id', sourceColumn: 'conta_bancaria_codigo_legado', sourceColumnAliases: ['conta_bancaria_codigo','conta_codigo'], lookupTable: 'contas_bancarias', lookupColumn: 'codigo_legado', optional: true },
+    ],
+  },
+  {
     key: 'baixas_contas_receber',
     label: 'Baixas Contas a Receber',
     tableName: 'contas_receber_baixas',
     description: 'Pagamentos/quitações de CR do Access — vinculados pelo codigo_legado da CR. O numero_recibo é preservado.',
     order: 22,
-    dependsOn: ['contas_receber'],
+    dependsOn: ['contas_receber', 'contas_bancarias'],
     columns: [
       { accessName: 'cr_codigo_legado', dbName: '_cr_codigo_legado', required: true, transform: toStr },
       { accessName: 'data_pagamento', dbName: 'data_pagamento', required: true, transform: toDate },
@@ -942,20 +1015,22 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'juros', dbName: 'juros', transform: toNumber },
       { accessName: 'multa', dbName: 'multa', transform: toNumber },
       { accessName: 'desconto', dbName: 'desconto', transform: toNumber },
-      { accessName: 'forma_pagamento', dbName: 'forma_pagamento', transform: toStr },
+      { accessName: 'forma_pagamento', dbName: 'forma_pagamento', transform: toFormaPagamento },
       { accessName: 'conta_bancaria', dbName: 'conta_bancaria', transform: toStr },
       { accessName: 'documento', dbName: 'documento', transform: toStr },
       { accessName: 'numero_recibo', dbName: 'numero_recibo', transform: toStr },
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
     ],
-    references: [],
+    references: [
+      { dbColumn: 'conta_bancaria_id', sourceColumn: 'conta_bancaria_codigo_legado', sourceColumnAliases: ['conta_bancaria_codigo','conta_codigo'], lookupTable: 'contas_bancarias', lookupColumn: 'codigo_legado', optional: true },
+    ],
   },
 ];
 
 // Tabelas que possuem coluna tenant_id (isoladas por empresa contratante)
 const TENANT_SCOPED_LOOKUP_TABLES = new Set([
   'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
-  'lavouras','silos','controle_lavouras','clientes_fornecedores',
+  'lavouras','silos','controle_lavouras','clientes_fornecedores','contas_bancarias',
   'dre_contas','tabela_umidades','plano_contas_gerencial','culturas','unidades_medida','sub_centros_custo',
   'contratos_venda','remessas_venda',
 ]);

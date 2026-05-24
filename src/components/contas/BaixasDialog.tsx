@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ComboboxFilter } from '@/components/ui/combobox-filter';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trash2, Plus, Printer } from 'lucide-react';
@@ -12,6 +13,7 @@ import { format, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { gerarReciboPDF } from '@/lib/reciboPdf';
 import { useAuth } from '@/contexts/AuthContext';
+import { useContasBancarias } from '@/hooks/useContasBancarias';
 import {
   useBaixasContaReceber,
   useCreateBaixaReceber,
@@ -60,7 +62,8 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
   const [multa, setMulta] = useState('0');
   const [desconto, setDesconto] = useState('0');
   const [formaPagamento, setFormaPagamento] = useState<string | undefined>('pix');
-  const [contaBancaria, setContaBancaria] = useState('');
+  const [contaBancariaId, setContaBancariaId] = useState<string>('');
+  const { data: contasBancarias = [] } = useContasBancarias({ ativo: true });
   const [documento, setDocumento] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
@@ -88,7 +91,7 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
     setJuros('0');
     setMulta('0');
     setDesconto('0');
-    setContaBancaria('');
+    setContaBancariaId('');
     setDocumento('');
     setObservacoes('');
   };
@@ -144,6 +147,7 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
     const v = parseFloat(valorPago);
     if (!v || v <= 0) return;
     const numeroRecibo = tipo === 'receber' ? (proximoRecibo || null) : null;
+    const cbSelecionada = contasBancarias.find((c: any) => c.id === contaBancariaId);
     const payload: any = {
       conta_id: conta.id,
       data_pagamento: dataPagamento,
@@ -152,7 +156,8 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
       multa: parseFloat(multa) || 0,
       desconto: parseFloat(desconto) || 0,
       forma_pagamento: formaPagamento || null,
-      conta_bancaria: contaBancaria || null,
+      conta_bancaria_id: contaBancariaId || null,
+      conta_bancaria: cbSelecionada ? cbSelecionada.nome : null,
       documento: documento || null,
       observacoes: observacoes || null,
       lancamento_financeiro_id: null,
@@ -298,7 +303,17 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                   </div>
                   <div>
                     <Label>Conta bancária</Label>
-                    <Input value={contaBancaria} onChange={(e) => setContaBancaria(e.target.value)} />
+                    <ComboboxFilter
+                      value={contaBancariaId}
+                      onValueChange={setContaBancariaId}
+                      options={contasBancarias.map((c: any) => ({
+                        value: c.id,
+                        label: c.nome,
+                        sublabel: c.banco ? `${c.banco.codigo} - ${c.banco.nome}` : undefined,
+                      }))}
+                      placeholder="(nenhuma)"
+                      allLabel="(nenhuma)"
+                    />
                   </div>
                   <div>
                     <Label>Documento/Comprovante</Label>
