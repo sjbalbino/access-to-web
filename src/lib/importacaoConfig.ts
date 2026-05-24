@@ -128,6 +128,20 @@ const toPlate = (v: any): string | null => {
   return plate.slice(0, 7);
 };
 
+// Mapeia formas de pagamento legadas para as 7 opções fixas do sistema.
+const toFormaPagamento = (v: any): string | null => {
+  const s = toStr(v);
+  if (!s) return null;
+  const norm = s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (/pix/.test(norm)) return 'pix';
+  if (/dinheiro|especie|cash/.test(norm)) return 'dinheiro';
+  if (/boleto|bol\b/.test(norm)) return 'boleto';
+  if (/ted|doc|transfer/.test(norm)) return 'transferencia';
+  if (/cheque|chq/.test(norm)) return 'cheque';
+  if (/cart|debito|credito/.test(norm)) return 'cartao';
+  return 'outro';
+};
+
 export const tableConfigs: TableConfig[] = [
   {
     key: 'granjas',
