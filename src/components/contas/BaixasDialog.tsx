@@ -303,7 +303,17 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                   </div>
                   <div>
                     <Label>Conta bancária</Label>
-                    <Input value={contaBancaria} onChange={(e) => setContaBancaria(e.target.value)} />
+                    <ComboboxFilter
+                      value={contaBancariaId}
+                      onValueChange={setContaBancariaId}
+                      options={contasBancarias.map((c: any) => ({
+                        value: c.id,
+                        label: c.nome,
+                        sublabel: c.banco ? `${c.banco.codigo} - ${c.banco.nome}` : undefined,
+                      }))}
+                      placeholder="(nenhuma)"
+                      allLabel="(nenhuma)"
+                    />
                   </div>
                   <div>
                     <Label>Documento/Comprovante</Label>
