@@ -640,7 +640,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       const finalRows: Record<string, any>[] = validRows;
 
       // Batch insert
-      const batchSize = 100;
+      const useUpsert = config.tableName === 'contas_pagar' || config.tableName === 'contas_receber';
+      const batchSize = useUpsert ? 500 : 100;
       const errors: string[] = [...validationErrors];
 
       // Helper: enriquecer mensagem de overflow numérico com os campos suspeitos da linha
@@ -654,7 +655,15 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         return dump ? `${msg} — valores: ${dump}` : msg;
       };
 
-      const useUpsert = config.tableName === 'contas_pagar' || config.tableName === 'contas_receber';
+      // Para contas_pagar/_receber: forçar rateio_modo='manual' para que o trigger
+      // trg_rateio_cp/cr entre no caminho rápido (sem consultar produtores nem
+      // inserir em lancamento_rateio_socios). Acelera a importação drasticamente.
+      // O usuário pode reconfigurar o rateio da conta depois pela tela normal.
+      if (useUpsert) {
+        for (const row of finalRows) {
+          if (!row.rateio_modo) row.rateio_modo = 'manual';
+        }
+      }
 
       for (let i = 0; i < finalRows.length; i += batchSize) {
         const batch = finalRows.slice(i, i + batchSize);
@@ -663,21 +672,24 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           : await supabase.from(config.tableName as any).insert(batch as any);
 
         if (error) {
-          // Fallback: try inserting each row individually
-          for (let j = 0; j < batch.length; j++) {
-            const { error: rowErr } = useUpsert
-              ? await supabase.from(config.tableName as any).upsert(batch[j] as any, { onConflict: 'tenant_id,codigo_legado', ignoreDuplicates: true } as any)
-              : await supabase.from(config.tableName as any).insert(batch[j] as any);
-            if (rowErr) {
-              errors.push(`Linha ${i + j + 1}: ${enrichNumericError(batch[j], rowErr.message)}`);
-            } else {
-              imported++;
+          if (useUpsert) {
+            // Em CP/CR não refazemos o batch linha-a-linha: o custo de 500
+            // round-trips extras não compensa quando o erro normalmente é genérico.
+            errors.push(`Batch linhas ${i + 1}-${i + batch.length}: ${enrichNumericError(batch[0], error.message)}`);
+          } else {
+            // Fallback linha-a-linha (demais tabelas, batches de 100)
+            for (let j = 0; j < batch.length; j++) {
+              const { error: rowErr } = await supabase.from(config.tableName as any).insert(batch[j] as any);
+              if (rowErr) {
+                errors.push(`Linha ${i + j + 1}: ${enrichNumericError(batch[j], rowErr.message)}`);
+              } else {
+                imported++;
+              }
             }
           }
         } else {
           imported += batch.length;
         }
-
 
         setProgress(Math.round(((i + batchSize) / Math.max(finalRows.length, 1)) * 100));
         setImportedCount(imported);
