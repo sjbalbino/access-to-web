@@ -209,22 +209,26 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Data</TableHead>
+                    {tipo === 'receber' && <TableHead>Recibo</TableHead>}
                     <TableHead>Forma</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
                     <TableHead className="text-right">Juros</TableHead>
                     <TableHead className="text-right">Multa</TableHead>
                     <TableHead className="text-right">Desc.</TableHead>
                     <TableHead>Doc.</TableHead>
-                    <TableHead className="w-12"></TableHead>
+                    <TableHead className="w-20"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {baixas.length === 0 && (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-4">Nenhuma baixa</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={tipo === 'receber' ? 9 : 8} className="text-center text-muted-foreground py-4">Nenhuma baixa</TableCell></TableRow>
                   )}
                   {baixas.map((b: any) => (
                     <TableRow key={b.id}>
                       <TableCell>{format(parseISO(b.data_pagamento), 'dd/MM/yyyy')}</TableCell>
+                      {tipo === 'receber' && (
+                        <TableCell className="font-mono text-xs">{b.numero_recibo || '-'}</TableCell>
+                      )}
                       <TableCell>{b.forma_pagamento || '-'}</TableCell>
                       <TableCell className="text-right">{formatBR(Number(b.valor_pago))}</TableCell>
                       <TableCell className="text-right">{formatBR(Number(b.juros))}</TableCell>
@@ -232,17 +236,25 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                       <TableCell className="text-right">{formatBR(Number(b.desconto))}</TableCell>
                       <TableCell>{b.documento || '-'}</TableCell>
                       <TableCell>
-                        {canEdit && (
-                          <Button size="icon" variant="ghost" onClick={() => handleDelete(b.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
+                        <div className="flex gap-1">
+                          {tipo === 'receber' && b.numero_recibo && (
+                            <Button size="icon" variant="ghost" title="Imprimir recibo" onClick={() => handleReimprimir(b)}>
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canEdit && (
+                            <Button size="icon" variant="ghost" onClick={() => handleDelete(b.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
+
 
             {canEdit && saldo > 0.01 && (
               <div className="space-y-3 border-t pt-4">
