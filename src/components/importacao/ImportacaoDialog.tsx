@@ -323,6 +323,43 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             if (!row.data_entrada) row.data_entrada = row.data_emissao;
           }
           setReferenceErrors([...refErrors, ...crErrors]);
+        } else if (config.key === 'baixas_contas_receber') {
+          // Resolver CR.codigo_legado -> conta_id
+          const brErrors: string[] = [];
+          const codigos = Array.from(new Set(
+            resolved.map(r => String((r as any)._cr_codigo_legado ?? '').trim()).filter(Boolean)
+          ));
+          const crMap = new Map<string, string>();
+          if (codigos.length > 0) {
+            const PAGE = 1000;
+            for (let p = 0; p < codigos.length; p += PAGE) {
+              const slice = codigos.slice(p, p + PAGE);
+              const { data: crs } = await supabase
+                .from('contas_receber')
+                .select('id, codigo_legado')
+                .in('codigo_legado', slice);
+              (crs || []).forEach((cr: any) => {
+                const k = String(cr.codigo_legado).trim();
+                if (!crMap.has(k)) crMap.set(k, cr.id);
+              });
+            }
+          }
+          for (let i = 0; i < resolved.length; i++) {
+            const row = resolved[i] as any;
+            const cod = String(row._cr_codigo_legado ?? '').trim();
+            delete row._cr_codigo_legado;
+            if (!cod) {
+              brErrors.push(`Linha ${i + 1}: cr_codigo_legado vazio`);
+              continue;
+            }
+            const contaId = crMap.get(cod);
+            if (!contaId) {
+              brErrors.push(`Linha ${i + 1}: Contas a Receber com codigo_legado="${cod}" não encontrado`);
+              continue;
+            }
+            row.conta_id = contaId;
+          }
+          setReferenceErrors([...refErrors, ...brErrors]);
         } else {
           setReferenceErrors(refErrors);
         }
@@ -456,6 +493,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         validDbColumns.add('contrato_venda_id');
         validDbColumns.add('granja_id');
         validDbColumns.add('eh_contra_nota');
+      }
+      // Baixas CR: conta_id injetado a partir do codigo_legado
+      if (config.key === 'baixas_contas_receber') {
+        validDbColumns.add('conta_id');
       }
 
       const sanitizedRows = cleanRows.map((row, idx) => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Printer } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { gerarReciboPDF } from '@/lib/reciboPdf';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useBaixasContaReceber,
@@ -62,6 +64,25 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
   const [documento, setDocumento] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
+  const [proximoRecibo, setProximoRecibo] = useState<string>('');
+
+  // Buscar próximo nº de recibo ao abrir
+  useEffect(() => {
+    if (!open || tipo !== 'receber' || !conta) return;
+    (async () => {
+      // Descobrir tenant pela própria conta
+      const { data: cr } = await supabase
+        .from('contas_receber' as any)
+        .select('tenant_id')
+        .eq('id', conta.id)
+        .single();
+      const tenantId = (cr as any)?.tenant_id;
+      if (!tenantId) return;
+      const { data } = await supabase.rpc('proximo_numero_recibo' as any, { _tenant: tenantId });
+      if (data) setProximoRecibo(String(data));
+    })();
+  }, [open, tipo, conta, baixasRec.data]);
+
   const resetForm = () => {
     setValorPago('');
     setJuros('0');
@@ -72,11 +93,58 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
     setObservacoes('');
   };
 
+  const buildReciboData = async (baixa: any, numero: string) => {
+    if (!conta) return null;
+    const c: any = conta;
+    // Buscar dados do emitente (granja) e pagador (cliente) e contrato
+    const [granjaRes, clienteRes, contratoRes] = await Promise.all([
+      c.granja_id
+        ? supabase.from('granjas' as any).select('razao_social, cnpj, endereco, cidade, uf').eq('id', c.granja_id).single()
+        : Promise.resolve({ data: null }),
+      c.cliente_id
+        ? supabase.from('clientes_fornecedores' as any).select('nome, nome_fantasia, cpf_cnpj').eq('id', c.cliente_id).single()
+        : Promise.resolve({ data: null }),
+      c.contrato_venda_id
+        ? supabase.from('contratos_venda' as any).select('numero').eq('id', c.contrato_venda_id).single()
+        : Promise.resolve({ data: null }),
+    ]);
+    const granja: any = granjaRes.data || {};
+    const cliente: any = clienteRes.data || {};
+    const contrato: any = contratoRes.data || {};
+    const total = Number(baixa.valor_pago) + Number(baixa.juros) + Number(baixa.multa) - Number(baixa.desconto);
+    return {
+      numero,
+      data_pagamento: baixa.data_pagamento,
+      valor_total: total,
+      valor_pago: Number(baixa.valor_pago),
+      juros: Number(baixa.juros),
+      multa: Number(baixa.multa),
+      desconto: Number(baixa.desconto),
+      forma_pagamento: baixa.forma_pagamento,
+      documento: baixa.documento || c.documento,
+      parcela: c.parcela,
+      observacoes: baixa.observacoes,
+      emitente: {
+        razao_social: granja.razao_social,
+        cnpj: granja.cnpj,
+        endereco: granja.endereco,
+        cidade: granja.cidade,
+        uf: granja.uf,
+      },
+      pagador: {
+        nome: cliente.nome_fantasia ? `${cliente.nome} (${cliente.nome_fantasia})` : cliente.nome,
+        cpf_cnpj: cliente.cpf_cnpj,
+      },
+      contrato_numero: contrato.numero,
+    };
+  };
+
   const handleSalvarBaixa = async () => {
     if (!conta) return;
     const v = parseFloat(valorPago);
     if (!v || v <= 0) return;
-    const payload = {
+    const numeroRecibo = tipo === 'receber' ? (proximoRecibo || null) : null;
+    const payload: any = {
       conta_id: conta.id,
       data_pagamento: dataPagamento,
       valor_pago: v,
@@ -89,9 +157,24 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
       observacoes: observacoes || null,
       lancamento_financeiro_id: null,
     };
-    if (tipo === 'receber') await createRec.mutateAsync(payload);
-    else await createPag.mutateAsync(payload);
+    if (tipo === 'receber') {
+      payload.numero_recibo = numeroRecibo;
+      await createRec.mutateAsync(payload);
+      // Abrir PDF do recibo
+      if (numeroRecibo) {
+        const reciboData = await buildReciboData(payload, numeroRecibo);
+        if (reciboData) gerarReciboPDF(reciboData);
+      }
+    } else {
+      await createPag.mutateAsync(payload);
+    }
     resetForm();
+  };
+
+  const handleReimprimir = async (b: any) => {
+    if (!b.numero_recibo) return;
+    const reciboData = await buildReciboData(b, b.numero_recibo);
+    if (reciboData) gerarReciboPDF(reciboData);
   };
 
   const handleDelete = async (id: string) => {
@@ -126,22 +209,26 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Data</TableHead>
+                    {tipo === 'receber' && <TableHead>Recibo</TableHead>}
                     <TableHead>Forma</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
                     <TableHead className="text-right">Juros</TableHead>
                     <TableHead className="text-right">Multa</TableHead>
                     <TableHead className="text-right">Desc.</TableHead>
                     <TableHead>Doc.</TableHead>
-                    <TableHead className="w-12"></TableHead>
+                    <TableHead className="w-20"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {baixas.length === 0 && (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-4">Nenhuma baixa</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={tipo === 'receber' ? 9 : 8} className="text-center text-muted-foreground py-4">Nenhuma baixa</TableCell></TableRow>
                   )}
                   {baixas.map((b: any) => (
                     <TableRow key={b.id}>
                       <TableCell>{format(parseISO(b.data_pagamento), 'dd/MM/yyyy')}</TableCell>
+                      {tipo === 'receber' && (
+                        <TableCell className="font-mono text-xs">{b.numero_recibo || '-'}</TableCell>
+                      )}
                       <TableCell>{b.forma_pagamento || '-'}</TableCell>
                       <TableCell className="text-right">{formatBR(Number(b.valor_pago))}</TableCell>
                       <TableCell className="text-right">{formatBR(Number(b.juros))}</TableCell>
@@ -149,11 +236,18 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                       <TableCell className="text-right">{formatBR(Number(b.desconto))}</TableCell>
                       <TableCell>{b.documento || '-'}</TableCell>
                       <TableCell>
-                        {canEdit && (
-                          <Button size="icon" variant="ghost" onClick={() => handleDelete(b.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
+                        <div className="flex gap-1">
+                          {tipo === 'receber' && b.numero_recibo && (
+                            <Button size="icon" variant="ghost" title="Imprimir recibo" onClick={() => handleReimprimir(b)}>
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canEdit && (
+                            <Button size="icon" variant="ghost" onClick={() => handleDelete(b.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -161,9 +255,17 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
               </Table>
             </div>
 
+
             {canEdit && saldo > 0.01 && (
               <div className="space-y-3 border-t pt-4">
-                <h4 className="font-semibold text-sm">Nova baixa</h4>
+                <h4 className="font-semibold text-sm flex items-center gap-3">
+                  Nova baixa
+                  {tipo === 'receber' && proximoRecibo && (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      Próximo Recibo Nº <span className="font-mono font-semibold text-primary">{proximoRecibo}</span> (gerado automaticamente)
+                    </span>
+                  )}
+                </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
                     <Label>Data pagamento</Label>

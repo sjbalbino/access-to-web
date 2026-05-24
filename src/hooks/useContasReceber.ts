@@ -138,6 +138,7 @@ export interface BaixaContaReceber {
   documento: string | null;
   observacoes: string | null;
   lancamento_financeiro_id: string | null;
+  numero_recibo: string | null;
 }
 
 export function useBaixasContaReceber(contaId: string | null) {
