@@ -462,13 +462,61 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       }
 
       // STANDARD INSERT MODE
-      // Clear existing if requested
+      // Clear existing if requested — escopado por tenant, filhos primeiro, em lotes
       if (clearExisting) {
-        const { error } = await supabase
-          .from(config.tableName as any)
-          .delete()
-          .neq('id', '00000000-0000-0000-0000-000000000000');
-        if (error) throw error;
+        const CHILD_TABLES: Record<string, string[]> = {
+          contas_pagar: ['contas_pagar_baixas'],
+          contas_receber: ['contas_receber_baixas'],
+        };
+        const TENANT_COL_TABLES = new Set([
+          'contas_pagar', 'contas_receber',
+          'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
+          'lavouras','silos','controle_lavouras','plantios','aplicacoes','chuvas','floracoes',
+          'insetos','plantas_invasoras','analises_solo','pivos','dre_contas','tabela_umidades',
+          'plano_contas_gerencial','culturas','unidades_medida','sub_centros_custo',
+          'contratos_venda','remessas_venda','clientes_fornecedores',
+        ]);
+
+        const resolveTargetIds = async (table: string): Promise<string[] | null> => {
+          if (TENANT_COL_TABLES.has(table) && tenantId) {
+            const { data, error } = await supabase.from(table as any).select('id').eq('tenant_id', tenantId);
+            if (error) throw error;
+            return (data || []).map((r: any) => r.id);
+          }
+          return null;
+        };
+
+        const deleteInChunks = async (table: string, col: string, ids: string[]) => {
+          const CHUNK = 300;
+          for (let i = 0; i < ids.length; i += CHUNK) {
+            const slice = ids.slice(i, i + CHUNK);
+            const { error } = await supabase.from(table as any).delete().in(col, slice);
+            if (error) throw error;
+          }
+        };
+
+        try {
+          const childs = CHILD_TABLES[config.tableName] || [];
+          const parentIds = await resolveTargetIds(config.tableName);
+
+          for (const child of childs) {
+            if (parentIds && parentIds.length > 0) {
+              await deleteInChunks(child, 'conta_id', parentIds);
+            } else if (parentIds === null) {
+              const { error } = await supabase.from(child as any).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+              if (error) throw error;
+            }
+          }
+
+          if (parentIds && parentIds.length > 0) {
+            await deleteInChunks(config.tableName, 'id', parentIds);
+          } else if (parentIds === null) {
+            const { error } = await supabase.from(config.tableName as any).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            if (error) throw error;
+          }
+        } catch (err: any) {
+          throw new Error(`Falha ao limpar "${config.tableName}": ${err.message}`);
+        }
       }
 
       // Filter out rows that had transform/reference errors (keep only clean rows)
