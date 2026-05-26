@@ -360,6 +360,43 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             row.conta_id = contaId;
           }
           setReferenceErrors([...refErrors, ...brErrors]);
+        } else if (config.key === 'baixas_contas_pagar') {
+          // Resolver CP.codigo_legado -> conta_id
+          const bpErrors: string[] = [];
+          const codigos = Array.from(new Set(
+            resolved.map(r => String((r as any)._cp_codigo_legado ?? '').trim()).filter(Boolean)
+          ));
+          const cpMap = new Map<string, string>();
+          if (codigos.length > 0) {
+            const PAGE = 1000;
+            for (let p = 0; p < codigos.length; p += PAGE) {
+              const slice = codigos.slice(p, p + PAGE);
+              const { data: cps } = await supabase
+                .from('contas_pagar')
+                .select('id, codigo_legado')
+                .in('codigo_legado', slice);
+              (cps || []).forEach((cp: any) => {
+                const k = String(cp.codigo_legado).trim();
+                if (!cpMap.has(k)) cpMap.set(k, cp.id);
+              });
+            }
+          }
+          for (let i = 0; i < resolved.length; i++) {
+            const row = resolved[i] as any;
+            const cod = String(row._cp_codigo_legado ?? '').trim();
+            delete row._cp_codigo_legado;
+            if (!cod) {
+              bpErrors.push(`Linha ${i + 1}: cp_codigo_legado vazio`);
+              continue;
+            }
+            const contaId = cpMap.get(cod);
+            if (!contaId) {
+              bpErrors.push(`Linha ${i + 1}: Contas a Pagar com codigo_legado="${cod}" não encontrado`);
+              continue;
+            }
+            row.conta_id = contaId;
+          }
+          setReferenceErrors([...refErrors, ...bpErrors]);
         } else {
           setReferenceErrors(refErrors);
         }
@@ -543,7 +580,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         validDbColumns.add('eh_contra_nota');
       }
       // Baixas CR: conta_id injetado a partir do codigo_legado
-      if (config.key === 'baixas_contas_receber') {
+      if (config.key === 'baixas_contas_receber' || config.key === 'baixas_contas_pagar') {
         validDbColumns.add('conta_id');
       }
 
