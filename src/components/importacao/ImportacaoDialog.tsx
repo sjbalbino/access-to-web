@@ -580,7 +580,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         validDbColumns.add('eh_contra_nota');
       }
       // Baixas CR: conta_id injetado a partir do codigo_legado
-      if (config.key === 'baixas_contas_receber') {
+      if (config.key === 'baixas_contas_receber' || config.key === 'baixas_contas_pagar') {
         validDbColumns.add('conta_id');
       }
 
