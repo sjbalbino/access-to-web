@@ -176,13 +176,25 @@ export default function Safras() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>Lista de Safras</CardTitle>
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar safra..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <div className="relative w-full sm:w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar safra..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <ComboboxFilter
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+                options={statusOptions}
+                placeholder="Todos os status"
+                searchPlaceholder="Buscar status..."
+                emptyText="Nenhum status encontrado."
+                allLabel="Todos os status"
+                className="w-full sm:w-48"
               />
             </div>
           </div>
