@@ -287,8 +287,6 @@ export default function EmitentesNfe() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Granja</TableHead>
-                  <TableHead className="hidden sm:table-cell">CNPJ</TableHead>
-                  <TableHead className="hidden md:table-cell">IE</TableHead>
                   <TableHead className="hidden sm:table-cell">Ambiente</TableHead>
                   <TableHead className="hidden md:table-cell">Série</TableHead>
                   <TableHead className="hidden md:table-cell">API</TableHead>
@@ -305,8 +303,6 @@ export default function EmitentesNfe() {
                         <span className="max-w-[150px] truncate">{emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "-"}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-sm hidden sm:table-cell">{emitente.granja?.cnpj || "-"}</TableCell>
-                    <TableCell className="font-mono text-sm hidden md:table-cell">{emitente.granja?.inscricao_estadual || "-"}</TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Badge variant={emitente.ambiente === 1 ? "default" : "secondary"}>
                         {AMBIENTES.find((a) => a.value === emitente.ambiente)?.label || "-"}
@@ -335,7 +331,7 @@ export default function EmitentesNfe() {
                 ))}
                 {emitentes.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canEdit ? 8 : 7} className="text-center py-8 text-muted-foreground">Nenhum emitente configurado</TableCell>
+                    <TableCell colSpan={canEdit ? 6 : 5} className="text-center py-8 text-muted-foreground">Nenhum emitente configurado</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -382,7 +378,6 @@ export default function EmitentesNfe() {
                         ).map((granja) => (
                           <SelectItem key={granja.id} value={granja.id}>
                             {granja.nome_fantasia || granja.razao_social}
-                            {granja.cnpj && ` - ${granja.cnpj}`}
                           </SelectItem>
                         ))}
                       </SelectContent>

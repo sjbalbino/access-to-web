@@ -37,8 +37,6 @@ export interface EmitenteNfe {
     id: string;
     razao_social: string;
     nome_fantasia: string | null;
-    cnpj: string | null;
-    inscricao_estadual: string | null;
   };
 }
 
@@ -55,7 +53,7 @@ export function useEmitentesNfe() {
         .from("emitentes_nfe")
         .select(`
           *,
-          granja:granjas(id, razao_social, nome_fantasia, cnpj, inscricao_estadual)
+          granja:granjas(id, razao_social, nome_fantasia)
         `)
         .order("created_at", { ascending: false });
 

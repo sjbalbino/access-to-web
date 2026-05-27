@@ -42,16 +42,12 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
-import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 
 const emptyGranja: GranjaInput = {
   razao_social: "",
   nome_fantasia: "",
-  cpf: "",
-  cnpj: "",
-  inscricao_estadual: "",
   logradouro: "",
   numero: "",
   complemento: "",
@@ -72,7 +68,6 @@ export default function Granjas() {
   const deleteGranja = useDeleteGranja();
   const { canEdit } = useAuth();
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
-  const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -80,28 +75,6 @@ export default function Granjas() {
   const [selectedGranja, setSelectedGranja] = useState<Granja | null>(null);
   const [formData, setFormData] = useState<GranjaInput>(emptyGranja);
 
-  const handleCnpjBlur = async (cnpj: string) => {
-    const cleanCnpj = cnpj.replace(/\D/g, "");
-    if (cleanCnpj.length !== 14) return;
-    
-    const data = await fetchCnpj(cnpj);
-    if (data) {
-      setFormData((prev) => ({
-        ...prev,
-        razao_social: data.razao_social || prev.razao_social,
-        nome_fantasia: data.nome_fantasia || prev.nome_fantasia,
-        logradouro: data.logradouro || prev.logradouro,
-        numero: data.numero || prev.numero,
-        complemento: data.complemento || prev.complemento,
-        bairro: data.bairro || prev.bairro,
-        cidade: data.cidade || prev.cidade,
-        uf: data.uf || prev.uf,
-        cep: data.cep?.replace(/\D/g, "") || prev.cep,
-        telefone: data.telefone || prev.telefone,
-        email: data.email || prev.email,
-      }));
-    }
-  };
 
   const handleCepBlur = async (cep: string) => {
     const data = await fetchCep(cep);
@@ -119,9 +92,7 @@ export default function Granjas() {
   const filteredGranjas = granjas?.filter(
     (g) =>
       g.razao_social.toLowerCase().includes(search.toLowerCase()) ||
-      g.nome_fantasia?.toLowerCase().includes(search.toLowerCase()) ||
-      g.cpf?.includes(search) ||
-      g.cnpj?.includes(search)
+      g.nome_fantasia?.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleEdit = (granja: Granja) => {
@@ -129,9 +100,6 @@ export default function Granjas() {
     setFormData({
       razao_social: granja.razao_social,
       nome_fantasia: granja.nome_fantasia || "",
-      cpf: granja.cpf || "",
-      cnpj: granja.cnpj || "",
-      inscricao_estadual: granja.inscricao_estadual || "",
       logradouro: granja.logradouro || "",
       numero: granja.numero || "",
       complemento: granja.complemento || "",
@@ -225,7 +193,6 @@ export default function Granjas() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Razão Social</TableHead>
-                    <TableHead className="hidden sm:table-cell">CPF/CNPJ</TableHead>
                     <TableHead className="hidden md:table-cell">Cidade/UF</TableHead>
                     <TableHead className="hidden md:table-cell">Hectares</TableHead>
                     <TableHead className="hidden sm:table-cell">Status</TableHead>
@@ -243,7 +210,6 @@ export default function Granjas() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">{granja.cpf || granja.cnpj || "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         {granja.cidade && granja.uf ? `${granja.cidade}/${granja.uf}` : "-"}
                       </TableCell>
@@ -317,41 +283,6 @@ export default function Granjas() {
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            {/* CPF/CNPJ primeiro */}
-            <div className="space-y-2">
-              <Label htmlFor="cpf">CPF (Pessoa Física)</Label>
-              <Input
-                id="cpf"
-                value={formData.cpf || ""}
-                onChange={(e) => setFormData({ ...formData, cpf: e.target.value.replace(/\D/g, "").slice(0, 11) })}
-                placeholder="Somente números"
-                maxLength={11}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ (Pessoa Jurídica)</Label>
-              <div className="relative">
-                <Input
-                  id="cnpj"
-                  value={formData.cnpj ? formatCnpj(formData.cnpj) : ""}
-                  onChange={(e) => setFormData({ ...formData, cnpj: e.target.value.replace(/\D/g, "").slice(0, 14) })}
-                  onBlur={(e) => handleCnpjBlur(e.target.value)}
-                  placeholder="00.000.000/0000-00"
-                  maxLength={18}
-                />
-                {cnpjLoading && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="inscricao_estadual">Inscrição Estadual *</Label>
-              <Input
-                id="inscricao_estadual"
-                value={formData.inscricao_estadual || ""}
-                onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="total_hectares">Total de Hectares</Label>
               <Input

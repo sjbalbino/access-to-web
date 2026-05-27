@@ -100,9 +100,9 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
     if (!conta) return null;
     const c: any = conta;
     // Buscar dados do emitente (granja) e pagador (cliente) e contrato
-    const [granjaRes, clienteRes, contratoRes] = await Promise.all([
+    const [granjaRes, clienteRes, contratoRes, inscPrincipalRes] = await Promise.all([
       c.granja_id
-        ? supabase.from('granjas' as any).select('razao_social, cnpj, endereco, cidade, uf').eq('id', c.granja_id).single()
+        ? supabase.from('granjas' as any).select('razao_social, logradouro, cidade, uf').eq('id', c.granja_id).single()
         : Promise.resolve({ data: null }),
       c.cliente_id
         ? supabase.from('clientes_fornecedores' as any).select('nome, nome_fantasia, cpf_cnpj').eq('id', c.cliente_id).single()
@@ -110,10 +110,19 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
       c.contrato_venda_id
         ? supabase.from('contratos_venda' as any).select('numero').eq('id', c.contrato_venda_id).single()
         : Promise.resolve({ data: null }),
+      c.granja_id
+        ? supabase
+            .from('inscricoes_produtor' as any)
+            .select('cpf_cnpj')
+            .eq('granja_id', c.granja_id)
+            .eq('is_emitente_principal', true)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
     const granja: any = granjaRes.data || {};
     const cliente: any = clienteRes.data || {};
     const contrato: any = contratoRes.data || {};
+    const inscPrincipal: any = inscPrincipalRes.data || {};
     const total = Number(baixa.valor_pago) + Number(baixa.juros) + Number(baixa.multa) - Number(baixa.desconto);
     return {
       numero,
@@ -129,8 +138,8 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
       observacoes: baixa.observacoes,
       emitente: {
         razao_social: granja.razao_social,
-        cnpj: granja.cnpj,
-        endereco: granja.endereco,
+        cnpj: inscPrincipal.cpf_cnpj,
+        endereco: granja.logradouro,
         cidade: granja.cidade,
         uf: granja.uf,
       },
