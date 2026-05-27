@@ -218,7 +218,6 @@ export default function Granjas() {
                   <TableRow>
                     <TableHead>Razão Social</TableHead>
                     <TableHead className="hidden md:table-cell">Cidade/UF</TableHead>
-                    <TableHead className="hidden md:table-cell">Cidade/UF</TableHead>
                     <TableHead className="hidden md:table-cell">Hectares</TableHead>
                     <TableHead className="hidden sm:table-cell">Status</TableHead>
                     <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>
