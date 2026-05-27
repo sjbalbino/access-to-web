@@ -116,9 +116,7 @@ export default function Granjas() {
   const filteredGranjas = granjas?.filter(
     (g) =>
       g.razao_social.toLowerCase().includes(search.toLowerCase()) ||
-      g.nome_fantasia?.toLowerCase().includes(search.toLowerCase()) ||
-      g.cpf?.includes(search) ||
-      g.cnpj?.includes(search)
+      g.nome_fantasia?.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleEdit = (granja: Granja) => {
@@ -126,9 +124,6 @@ export default function Granjas() {
     setFormData({
       razao_social: granja.razao_social,
       nome_fantasia: granja.nome_fantasia || "",
-      cpf: granja.cpf || "",
-      cnpj: granja.cnpj || "",
-      inscricao_estadual: granja.inscricao_estadual || "",
       logradouro: granja.logradouro || "",
       numero: granja.numero || "",
       complemento: granja.complemento || "",
