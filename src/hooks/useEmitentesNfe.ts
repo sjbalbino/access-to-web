@@ -25,10 +25,8 @@ export interface EmitenteNfe {
   cst_cbs_padrao: string | null;
   cst_is_padrao: string | null;
   api_provider: string | null;
-  api_consumer_key: string | null;
-  api_consumer_secret: string | null;
-  api_access_token: string | null;
-  api_access_token_secret: string | null;
+  // Credenciais (api_consumer_key, api_consumer_secret, api_access_token, api_access_token_secret)
+  // foram movidas para a tabela emitentes_nfe_credentials (acesso restrito a admin/gerente)
   api_configurada: boolean | null;
   certificado_nome: string | null;
   certificado_validade: string | null;
