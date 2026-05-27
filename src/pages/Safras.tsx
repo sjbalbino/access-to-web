@@ -271,9 +271,9 @@ export default function Safras() {
               <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">Nenhuma safra encontrada</h3>
               <p className="text-muted-foreground mb-4">
-                {search ? "Tente ajustar sua busca" : "Comece cadastrando uma safra"}
+                {search || statusFilter ? "Tente ajustar seus filtros" : "Comece cadastrando uma safra"}
               </p>
-              {!search && canEdit && (
+              {!search && !statusFilter && canEdit && (
                 <Button onClick={handleNew}>
                   <Plus className="h-4 w-4 mr-2" />
                   Cadastrar Safra
