@@ -70,15 +70,29 @@ export default function Safras() {
   const { canEdit } = useAuth();
 
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSafra, setSelectedSafra] = useState<any>(null);
   const [formData, setFormData] = useState<SafraInput>(emptySafra);
 
+  const statusOptions = useMemo(
+    () => [
+      { value: "planejada", label: "Planejada" },
+      { value: "ativa", label: "Ativa" },
+      { value: "encerrada", label: "Encerrada" },
+    ],
+    []
+  );
+
   const filteredSafras = safras?.filter(
-    (s: any) =>
-      s.nome.toLowerCase().includes(search.toLowerCase()) ||
-      s.codigo?.toLowerCase().includes(search.toLowerCase())
+    (s: any) => {
+      const matchSearch =
+        s.nome.toLowerCase().includes(search.toLowerCase()) ||
+        s.codigo?.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = !statusFilter || s.status === statusFilter;
+      return matchSearch && matchStatus;
+    }
   );
 
   const handleEdit = (safra: any) => {
