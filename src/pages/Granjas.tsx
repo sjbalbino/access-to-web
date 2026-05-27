@@ -49,9 +49,6 @@ import { TablePagination } from "@/components/ui/table-pagination";
 const emptyGranja: GranjaInput = {
   razao_social: "",
   nome_fantasia: "",
-  cpf: "",
-  cnpj: "",
-  inscricao_estadual: "",
   logradouro: "",
   numero: "",
   complemento: "",
