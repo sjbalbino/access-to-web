@@ -307,41 +307,6 @@ export default function Granjas() {
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            {/* CPF/CNPJ primeiro */}
-            <div className="space-y-2">
-              <Label htmlFor="cpf">CPF (Pessoa Física)</Label>
-              <Input
-                id="cpf"
-                value={formData.cpf || ""}
-                onChange={(e) => setFormData({ ...formData, cpf: e.target.value.replace(/\D/g, "").slice(0, 11) })}
-                placeholder="Somente números"
-                maxLength={11}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cnpj">CNPJ (Pessoa Jurídica)</Label>
-              <div className="relative">
-                <Input
-                  id="cnpj"
-                  value={formData.cnpj ? formatCnpj(formData.cnpj) : ""}
-                  onChange={(e) => setFormData({ ...formData, cnpj: e.target.value.replace(/\D/g, "").slice(0, 14) })}
-                  onBlur={(e) => handleCnpjBlur(e.target.value)}
-                  placeholder="00.000.000/0000-00"
-                  maxLength={18}
-                />
-                {cnpjLoading && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="inscricao_estadual">Inscrição Estadual *</Label>
-              <Input
-                id="inscricao_estadual"
-                value={formData.inscricao_estadual || ""}
-                onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="total_hectares">Total de Hectares</Label>
               <Input
