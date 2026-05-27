@@ -182,17 +182,44 @@ export default function EmitentesNfe() {
     setIsDialogOpen(true);
   };
 
+  // Carrega credenciais quando o usuário (admin/gerente) abre o emitente para edição
+  useEffect(() => {
+    if (credentialsQuery.data) {
+      setCredentials({
+        api_consumer_key: credentialsQuery.data.api_consumer_key ?? null,
+        api_consumer_secret: credentialsQuery.data.api_consumer_secret ?? null,
+        api_access_token: credentialsQuery.data.api_access_token ?? null,
+        api_access_token_secret: credentialsQuery.data.api_access_token_secret ?? null,
+      });
+    }
+  }, [credentialsQuery.data]);
+
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     resetForm();
+    setCredentials({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_secret: null });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    let emitenteId: string | undefined = selectedEmitente?.id;
     if (selectedEmitente) {
       await updateEmitente.mutateAsync({ id: selectedEmitente.id, ...formData });
     } else {
-      await createEmitente.mutateAsync(formData);
+      const created = await createEmitente.mutateAsync(formData);
+      emitenteId = (created as any)?.id;
+    }
+    // Persistir credenciais separadamente (apenas admin/gerente conseguem)
+    if (emitenteId && (credentials.api_access_token || credentials.api_consumer_key || credentials.api_consumer_secret || credentials.api_access_token_secret)) {
+      try {
+        await upsertCredentials.mutateAsync({
+          emitente_id: emitenteId,
+          granja_id: formData.granja_id,
+          ...credentials,
+        });
+      } catch {
+        // toast já exibido pelo hook
+      }
     }
     handleCloseDialog();
   };
