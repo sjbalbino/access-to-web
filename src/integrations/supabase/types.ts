@@ -2377,14 +2377,11 @@ export type Database = {
           bairro: string | null
           cep: string | null
           cidade: string | null
-          cnpj: string | null
           codigo: string | null
           complemento: string | null
-          cpf: string | null
           created_at: string
           email: string | null
           id: string
-          inscricao_estadual: string | null
           logradouro: string | null
           nome_fantasia: string | null
           numero: string | null
@@ -2400,14 +2397,11 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
-          cnpj?: string | null
           codigo?: string | null
           complemento?: string | null
-          cpf?: string | null
           created_at?: string
           email?: string | null
           id?: string
-          inscricao_estadual?: string | null
           logradouro?: string | null
           nome_fantasia?: string | null
           numero?: string | null
@@ -2423,14 +2417,11 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
-          cnpj?: string | null
           codigo?: string | null
           complemento?: string | null
-          cpf?: string | null
           created_at?: string
           email?: string | null
           id?: string
-          inscricao_estadual?: string | null
           logradouro?: string | null
           nome_fantasia?: string | null
           numero?: string | null
