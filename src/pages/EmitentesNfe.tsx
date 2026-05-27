@@ -378,7 +378,6 @@ export default function EmitentesNfe() {
                         ).map((granja) => (
                           <SelectItem key={granja.id} value={granja.id}>
                             {granja.nome_fantasia || granja.razao_social}
-                            {granja.cnpj && ` - ${granja.cnpj}`}
                           </SelectItem>
                         ))}
                       </SelectContent>
