@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Calendar, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import {
   useSafras,
   useCreateSafra,
@@ -69,15 +70,29 @@ export default function Safras() {
   const { canEdit } = useAuth();
 
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSafra, setSelectedSafra] = useState<any>(null);
   const [formData, setFormData] = useState<SafraInput>(emptySafra);
 
+  const statusOptions = useMemo(
+    () => [
+      { value: "planejada", label: "Planejada" },
+      { value: "ativa", label: "Ativa" },
+      { value: "encerrada", label: "Encerrada" },
+    ],
+    []
+  );
+
   const filteredSafras = safras?.filter(
-    (s: any) =>
-      s.nome.toLowerCase().includes(search.toLowerCase()) ||
-      s.codigo?.toLowerCase().includes(search.toLowerCase())
+    (s: any) => {
+      const matchSearch =
+        s.nome.toLowerCase().includes(search.toLowerCase()) ||
+        s.codigo?.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = !statusFilter || s.status === statusFilter;
+      return matchSearch && matchStatus;
+    }
   );
 
   const handleEdit = (safra: any) => {
@@ -161,13 +176,25 @@ export default function Safras() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>Lista de Safras</CardTitle>
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar safra..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <div className="relative w-full sm:w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar safra..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <ComboboxFilter
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+                options={statusOptions}
+                placeholder="Todos os status"
+                searchPlaceholder="Buscar status..."
+                emptyText="Nenhum status encontrado."
+                allLabel="Todos os status"
+                className="w-full sm:w-48"
               />
             </div>
           </div>
@@ -244,9 +271,9 @@ export default function Safras() {
               <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">Nenhuma safra encontrada</h3>
               <p className="text-muted-foreground mb-4">
-                {search ? "Tente ajustar sua busca" : "Comece cadastrando uma safra"}
+                {search || statusFilter ? "Tente ajustar seus filtros" : "Comece cadastrando uma safra"}
               </p>
-              {!search && canEdit && (
+              {!search && !statusFilter && canEdit && (
                 <Button onClick={handleNew}>
                   <Plus className="h-4 w-4 mr-2" />
                   Cadastrar Safra
