@@ -42,7 +42,7 @@ serve(async (req) => {
         status, 
         motivo_status,
         emitente_id,
-        emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, api_access_token)
+        emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, emitentes_nfe_credentials(api_access_token))
       `)
       .eq("id", notaFiscalId)
       .maybeSingle();
@@ -62,9 +62,9 @@ serve(async (req) => {
     }
 
     // Obter ambiente e token do emitente
-    const emitenteData = (existingNota as unknown as { emitentes_nfe?: { ambiente: number | null; api_access_token: string | null } })?.emitentes_nfe;
+    const emitenteData = (existingNota as unknown as { emitentes_nfe?: { ambiente: number | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null }> | { api_access_token: string | null } | null } })?.emitentes_nfe;
     const ambiente = emitenteData?.ambiente;
-    const emitenteToken = emitenteData?.api_access_token;
+    const emitenteToken = (Array.isArray(emitenteData?.emitentes_nfe_credentials) ? emitenteData?.emitentes_nfe_credentials?.[0]?.api_access_token : emitenteData?.emitentes_nfe_credentials?.api_access_token);
 
     // Verificar se o token do emitente está configurado
     if (!emitenteToken) {
