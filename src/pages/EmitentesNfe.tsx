@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Plus, Pencil, Trash2, Building2, AlertCircle } from "lucide-react";
 import { useEmitentesNfe, EmitenteNfe, EmitenteNfeInsert } from "@/hooks/useEmitentesNfe";
+import { useEmitenteCredentials, useUpsertEmitenteCredentials } from "@/hooks/useEmitenteCredentials";
+import { supabase } from "@/integrations/supabase/client";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
@@ -72,6 +74,14 @@ export default function EmitentesNfe() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedEmitente, setSelectedEmitente] = useState<EmitenteNfe | null>(null);
+  const [credentials, setCredentials] = useState<{
+    api_consumer_key: string | null;
+    api_consumer_secret: string | null;
+    api_access_token: string | null;
+    api_access_token_secret: string | null;
+  }>({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_secret: null });
+  const upsertCredentials = useUpsertEmitenteCredentials();
+  const credentialsQuery = useEmitenteCredentials(selectedEmitente?.id ?? null);
   const [formData, setFormData] = useState<EmitenteNfeInsert>({
     granja_id: null,
     ambiente: 2,
@@ -94,10 +104,6 @@ export default function EmitentesNfe() {
     cst_cbs_padrao: "00",
     cst_is_padrao: "00",
     api_provider: null,
-    api_consumer_key: null,
-    api_consumer_secret: null,
-    api_access_token: null,
-    api_access_token_secret: null,
     api_configurada: false,
     certificado_nome: null,
     certificado_validade: null,
@@ -132,10 +138,6 @@ export default function EmitentesNfe() {
       cst_cbs_padrao: "00",
       cst_is_padrao: "00",
       api_provider: null,
-      api_consumer_key: null,
-      api_consumer_secret: null,
-      api_access_token: null,
-      api_access_token_secret: null,
       api_configurada: false,
       certificado_nome: null,
       certificado_validade: null,
@@ -169,10 +171,6 @@ export default function EmitentesNfe() {
         cst_cbs_padrao: emitente.cst_cbs_padrao ?? "00",
         cst_is_padrao: emitente.cst_is_padrao ?? "00",
         api_provider: emitente.api_provider,
-        api_consumer_key: emitente.api_consumer_key,
-        api_consumer_secret: emitente.api_consumer_secret,
-        api_access_token: emitente.api_access_token,
-        api_access_token_secret: emitente.api_access_token_secret,
         api_configurada: emitente.api_configurada || false,
         certificado_nome: emitente.certificado_nome,
         certificado_validade: emitente.certificado_validade,
@@ -184,17 +182,44 @@ export default function EmitentesNfe() {
     setIsDialogOpen(true);
   };
 
+  // Carrega credenciais quando o usuário (admin/gerente) abre o emitente para edição
+  useEffect(() => {
+    if (credentialsQuery.data) {
+      setCredentials({
+        api_consumer_key: credentialsQuery.data.api_consumer_key ?? null,
+        api_consumer_secret: credentialsQuery.data.api_consumer_secret ?? null,
+        api_access_token: credentialsQuery.data.api_access_token ?? null,
+        api_access_token_secret: credentialsQuery.data.api_access_token_secret ?? null,
+      });
+    }
+  }, [credentialsQuery.data]);
+
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     resetForm();
+    setCredentials({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_secret: null });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    let emitenteId: string | undefined = selectedEmitente?.id;
     if (selectedEmitente) {
       await updateEmitente.mutateAsync({ id: selectedEmitente.id, ...formData });
     } else {
-      await createEmitente.mutateAsync(formData);
+      const created = await createEmitente.mutateAsync(formData);
+      emitenteId = (created as any)?.id;
+    }
+    // Persistir credenciais separadamente (apenas admin/gerente conseguem)
+    if (emitenteId && (credentials.api_access_token || credentials.api_consumer_key || credentials.api_consumer_secret || credentials.api_access_token_secret)) {
+      try {
+        await upsertCredentials.mutateAsync({
+          emitente_id: emitenteId,
+          granja_id: formData.granja_id,
+          ...credentials,
+        });
+      } catch {
+        // toast já exibido pelo hook
+      }
     }
     handleCloseDialog();
   };
@@ -676,9 +701,9 @@ export default function EmitentesNfe() {
                       <Input
                         id="api_access_token"
                         type="password"
-                        value={formData.api_access_token || ""}
+                        value={credentials.api_access_token || ""}
                         onChange={(e) =>
-                          setFormData({ ...formData, api_access_token: e.target.value })
+                          setCredentials({ ...credentials, api_access_token: e.target.value })
                         }
                         placeholder="Token da API Focus NFe"
                       />
