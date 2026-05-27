@@ -91,7 +91,7 @@ export function useInscricaoEmitentePrincipal(granjaId: string | undefined) {
           emitente_id,
           is_emitente_principal,
           produtores:produtor_id(id, nome, tipo_produtor),
-          emitente:emitente_id(id, granja_id, ambiente, crt, serie_nfe, numero_atual_nfe, api_configurada, api_access_token, cst_icms_padrao, cst_pis_padrao, cst_cofins_padrao, cst_ipi_padrao, cst_ibs_padrao, cst_cbs_padrao, cst_is_padrao)
+          emitente:emitente_id(id, granja_id, ambiente, crt, serie_nfe, numero_atual_nfe, api_configurada, cst_icms_padrao, cst_pis_padrao, cst_cofins_padrao, cst_ipi_padrao, cst_ibs_padrao, cst_cbs_padrao, cst_is_padrao)
         `)
         .eq('granja_id', granjaId)
         .eq('is_emitente_principal', true)
