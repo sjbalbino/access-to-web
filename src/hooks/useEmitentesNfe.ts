@@ -53,7 +53,7 @@ export function useEmitentesNfe() {
         .from("emitentes_nfe")
         .select(`
           *,
-          granja:granjas(id, razao_social, nome_fantasia, cnpj, inscricao_estadual)
+          granja:granjas(id, razao_social, nome_fantasia)
         `)
         .order("created_at", { ascending: false });
 
