@@ -36,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar, Plus, Pencil, Trash2, Search, Filter } from "lucide-react";
+import { Calendar, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import {
   useSafras,
