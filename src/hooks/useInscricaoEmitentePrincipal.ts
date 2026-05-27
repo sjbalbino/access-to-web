@@ -34,7 +34,7 @@ export interface InscricaoEmitentePrincipal {
     serie_nfe: number | null;
     numero_atual_nfe: number | null;
     api_configurada: boolean | null;
-    api_access_token: string | null;
+    // api_access_token removido — credenciais agora vivem em emitentes_nfe_credentials (admin/gerente)
     cst_icms_padrao: string | null;
     cst_pis_padrao: string | null;
     cst_cofins_padrao: string | null;
