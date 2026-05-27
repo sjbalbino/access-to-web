@@ -701,9 +701,9 @@ export default function EmitentesNfe() {
                       <Input
                         id="api_access_token"
                         type="password"
-                        value={formData.api_access_token || ""}
+                        value={credentials.api_access_token || ""}
                         onChange={(e) =>
-                          setFormData({ ...formData, api_access_token: e.target.value })
+                          setCredentials({ ...credentials, api_access_token: e.target.value })
                         }
                         placeholder="Token da API Focus NFe"
                       />
