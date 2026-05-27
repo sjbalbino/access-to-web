@@ -74,6 +74,14 @@ export default function EmitentesNfe() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedEmitente, setSelectedEmitente] = useState<EmitenteNfe | null>(null);
+  const [credentials, setCredentials] = useState<{
+    api_consumer_key: string | null;
+    api_consumer_secret: string | null;
+    api_access_token: string | null;
+    api_access_token_secret: string | null;
+  }>({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_secret: null });
+  const upsertCredentials = useUpsertEmitenteCredentials();
+  const credentialsQuery = useEmitenteCredentials(selectedEmitente?.id ?? null);
   const [formData, setFormData] = useState<EmitenteNfeInsert>({
     granja_id: null,
     ambiente: 2,
