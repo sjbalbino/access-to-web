@@ -42,7 +42,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
-import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 
@@ -69,7 +68,6 @@ export default function Granjas() {
   const deleteGranja = useDeleteGranja();
   const { canEdit } = useAuth();
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
-  const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
 
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -77,28 +75,6 @@ export default function Granjas() {
   const [selectedGranja, setSelectedGranja] = useState<Granja | null>(null);
   const [formData, setFormData] = useState<GranjaInput>(emptyGranja);
 
-  const handleCnpjBlur = async (cnpj: string) => {
-    const cleanCnpj = cnpj.replace(/\D/g, "");
-    if (cleanCnpj.length !== 14) return;
-    
-    const data = await fetchCnpj(cnpj);
-    if (data) {
-      setFormData((prev) => ({
-        ...prev,
-        razao_social: data.razao_social || prev.razao_social,
-        nome_fantasia: data.nome_fantasia || prev.nome_fantasia,
-        logradouro: data.logradouro || prev.logradouro,
-        numero: data.numero || prev.numero,
-        complemento: data.complemento || prev.complemento,
-        bairro: data.bairro || prev.bairro,
-        cidade: data.cidade || prev.cidade,
-        uf: data.uf || prev.uf,
-        cep: data.cep?.replace(/\D/g, "") || prev.cep,
-        telefone: data.telefone || prev.telefone,
-        email: data.email || prev.email,
-      }));
-    }
-  };
 
   const handleCepBlur = async (cep: string) => {
     const data = await fetchCep(cep);
