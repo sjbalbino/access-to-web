@@ -331,7 +331,7 @@ export default function EmitentesNfe() {
                 ))}
                 {emitentes.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canEdit ? 8 : 7} className="text-center py-8 text-muted-foreground">Nenhum emitente configurado</TableCell>
+                    <TableCell colSpan={canEdit ? 6 : 5} className="text-center py-8 text-muted-foreground">Nenhum emitente configurado</TableCell>
                   </TableRow>
                 )}
               </TableBody>
