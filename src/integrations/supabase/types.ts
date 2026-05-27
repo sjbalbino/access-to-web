@@ -1873,11 +1873,7 @@ export type Database = {
           aliq_is_padrao: number | null
           aliq_pis_padrao: number | null
           ambiente: number | null
-          api_access_token: string | null
-          api_access_token_secret: string | null
           api_configurada: boolean | null
-          api_consumer_key: string | null
-          api_consumer_secret: string | null
           api_provider: string | null
           ativo: boolean | null
           certificado_nome: string | null
@@ -1907,11 +1903,7 @@ export type Database = {
           aliq_is_padrao?: number | null
           aliq_pis_padrao?: number | null
           ambiente?: number | null
-          api_access_token?: string | null
-          api_access_token_secret?: string | null
           api_configurada?: boolean | null
-          api_consumer_key?: string | null
-          api_consumer_secret?: string | null
           api_provider?: string | null
           ativo?: boolean | null
           certificado_nome?: string | null
@@ -1941,11 +1933,7 @@ export type Database = {
           aliq_is_padrao?: number | null
           aliq_pis_padrao?: number | null
           ambiente?: number | null
-          api_access_token?: string | null
-          api_access_token_secret?: string | null
           api_configurada?: boolean | null
-          api_consumer_key?: string | null
-          api_consumer_secret?: string | null
           api_provider?: string | null
           ativo?: boolean | null
           certificado_nome?: string | null
@@ -1973,6 +1961,53 @@ export type Database = {
             columns: ["granja_id"]
             isOneToOne: true
             referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emitentes_nfe_credentials: {
+        Row: {
+          api_access_token: string | null
+          api_access_token_secret: string | null
+          api_consumer_key: string | null
+          api_consumer_secret: string | null
+          created_at: string
+          emitente_id: string
+          granja_id: string | null
+          id: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_access_token?: string | null
+          api_access_token_secret?: string | null
+          api_consumer_key?: string | null
+          api_consumer_secret?: string | null
+          created_at?: string
+          emitente_id: string
+          granja_id?: string | null
+          id?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_access_token?: string | null
+          api_access_token_secret?: string | null
+          api_consumer_key?: string | null
+          api_consumer_secret?: string | null
+          created_at?: string
+          emitente_id?: string
+          granja_id?: string | null
+          id?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emitentes_nfe_credentials_emitente_id_fkey"
+            columns: ["emitente_id"]
+            isOneToOne: true
+            referencedRelation: "emitentes_nfe"
             referencedColumns: ["id"]
           },
         ]
