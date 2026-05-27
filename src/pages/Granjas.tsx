@@ -234,7 +234,6 @@ export default function Granjas() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">{granja.cpf || granja.cnpj || "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         {granja.cidade && granja.uf ? `${granja.cidade}/${granja.uf}` : "-"}
                       </TableCell>
