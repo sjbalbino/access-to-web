@@ -20,17 +20,28 @@ async function getEmitenteCredentials(granjaId: string) {
 
   const { data: emitente, error } = await supabase
     .from("emitentes_nfe")
-    .select("api_access_token, ambiente")
+    .select("id, ambiente")
     .eq("granja_id", granjaId)
     .maybeSingle();
 
   if (error) throw new Error("Erro ao buscar emitente: " + error.message);
-  if (!emitente?.api_access_token) {
+  if (!emitente?.id) {
+    throw new Error("Emitente não encontrado para esta granja.");
+  }
+
+  const { data: cred, error: credErr } = await supabase
+    .from("emitentes_nfe_credentials")
+    .select("api_access_token")
+    .eq("emitente_id", emitente.id)
+    .maybeSingle();
+
+  if (credErr) throw new Error("Erro ao buscar credenciais: " + credErr.message);
+  if (!cred?.api_access_token) {
     throw new Error("Token da Focus NFe não configurado para este emitente.");
   }
 
   return {
-    token: emitente.api_access_token,
+    token: cred.api_access_token,
     ambiente: emitente.ambiente,
   };
 }
