@@ -37,8 +37,6 @@ export interface EmitenteNfe {
     id: string;
     razao_social: string;
     nome_fantasia: string | null;
-    cnpj: string | null;
-    inscricao_estadual: string | null;
   };
 }
 
