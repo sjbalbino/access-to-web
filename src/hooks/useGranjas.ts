@@ -7,9 +7,6 @@ export interface Granja {
   codigo: string | null;
   razao_social: string;
   nome_fantasia: string | null;
-  cpf: string | null;
-  cnpj: string | null;
-  inscricao_estadual: string | null;
   logradouro: string | null;
   numero: string | null;
   complemento: string | null;
