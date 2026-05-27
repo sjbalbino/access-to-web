@@ -217,7 +217,7 @@ export default function Granjas() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Razão Social</TableHead>
-                    <TableHead className="hidden sm:table-cell">CPF/CNPJ</TableHead>
+                    <TableHead className="hidden md:table-cell">Cidade/UF</TableHead>
                     <TableHead className="hidden md:table-cell">Cidade/UF</TableHead>
                     <TableHead className="hidden md:table-cell">Hectares</TableHead>
                     <TableHead className="hidden sm:table-cell">Status</TableHead>
