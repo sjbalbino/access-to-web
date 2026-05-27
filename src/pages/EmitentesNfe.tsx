@@ -32,6 +32,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Plus, Pencil, Trash2, Building2, AlertCircle } from "lucide-react";
 import { useEmitentesNfe, EmitenteNfe, EmitenteNfeInsert } from "@/hooks/useEmitentesNfe";
+import { useEmitenteCredentials, useUpsertEmitenteCredentials } from "@/hooks/useEmitenteCredentials";
+import { supabase } from "@/integrations/supabase/client";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
