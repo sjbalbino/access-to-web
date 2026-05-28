@@ -1363,9 +1363,17 @@ export default function NotaFiscalForm() {
         {(formData.inscricao_produtor_id || formData.emitente_id) && (
           <div className="p-3 rounded-md bg-muted/50 border">
             {autoEmitente ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span>Configuração API encontrada: <strong>{autoEmitente.granja?.nome_fantasia || autoEmitente.granja?.razao_social}</strong></span>
+                <span>
+                  Emitente NF-e vinculado:{" "}
+                  <strong>
+                    {selectedInscricao?.produtores?.nome || autoEmitente.granja?.razao_social}
+                  </strong>
+                  {selectedInscricao?.cpf_cnpj && (
+                    <> — {(selectedInscricao.cpf_cnpj.replace(/\D/g, "").length > 11 ? "CNPJ" : "CPF")}: <strong>{selectedInscricao.cpf_cnpj}</strong></>
+                  )}
+                </span>
                 <Badge variant={autoEmitente.ambiente === 1 ? "default" : "secondary"} className="ml-2">
                   {autoEmitente.ambiente === 1 ? "Produção" : "Homologação"}
                 </Badge>
@@ -1373,7 +1381,7 @@ export default function NotaFiscalForm() {
             ) : (
               <div className="flex items-center gap-2 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4" />
-                <span>Nenhuma configuração de API encontrada para a granja desta inscrição. Cadastre um emitente NF-e.</span>
+                <span>Esta inscrição não tem Emitente NF-e vinculado. Abra o cadastro da inscrição e vincule um emitente (CPF do sócio para PF ou CNPJ para PJ).</span>
               </div>
             )}
           </div>
