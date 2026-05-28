@@ -2981,21 +2981,58 @@ export default function NotaFiscalForm() {
               </div>
             )}
 
-            {existingNota.motivo_status && (
-              <Alert variant={
-                existingNota.status === "autorizada" ? "default" : 
-                existingNota.status === "rejeitada" || existingNota.status === "erro_autorizacao" ? "destructive" : 
-                "default"
-              }>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Retorno SEFAZ</AlertTitle>
-                <AlertDescription className="mt-2">
-                  <div className="font-mono text-sm whitespace-pre-wrap break-words">
-                    {existingNota.motivo_status}
-                  </div>
-                </AlertDescription>
-              </Alert>
-            )}
+            {existingNota.motivo_status && (() => {
+              const motivo = existingNota.motivo_status.toLowerCase();
+              const isEmitenteNaoAutorizado =
+                motivo.includes("cnpj do emitente não autorizado") ||
+                motivo.includes("cnpj do emitente nao autorizado") ||
+                motivo.includes("cpf emitente nao cadastrado") ||
+                motivo.includes("cpf emitente não cadastrado") ||
+                motivo.includes("permissao_negada") ||
+                motivo.includes("rejeicao: 621") ||
+                motivo.includes("rejeição: 621") ||
+                motivo.includes("ie do emitente não cadastrada") ||
+                motivo.includes("ie do emitente nao cadastrada");
+
+              const isDestructive =
+                existingNota.status === "rejeitada" ||
+                existingNota.status === "erro_autorizacao";
+
+              return (
+                <Alert variant={
+                  existingNota.status === "autorizada" ? "default" :
+                  isDestructive ? "destructive" :
+                  "default"
+                }>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>
+                    {isEmitenteNaoAutorizado
+                      ? "Emitente não habilitado na Focus NFe"
+                      : "Retorno SEFAZ"}
+                  </AlertTitle>
+                  <AlertDescription className="mt-2 space-y-2">
+                    <div className="font-mono text-sm whitespace-pre-wrap break-words">
+                      {existingNota.motivo_status}
+                    </div>
+                    {isEmitenteNaoAutorizado && (
+                      <div className="text-sm space-y-1 border-t pt-2 mt-2">
+                        <p className="font-semibold">Como resolver:</p>
+                        <ol className="list-decimal pl-5 space-y-1">
+                          <li>Acesse o painel da Focus NFe (mesmo ambiente do emitente — homologação ou produção).</li>
+                          <li>Cadastre uma <strong>nova empresa</strong> com o CPF/CNPJ do emitente desta NF-e.</li>
+                          <li>Anexe o <strong>certificado digital A1</strong> (.pfx) e informe a senha.</li>
+                          <li>Marque a empresa como <strong>habilitada para emissão</strong> de NF-e no ambiente correto.</li>
+                          <li>Volte aqui e tente emitir novamente.</li>
+                        </ol>
+                        <p className="text-xs text-muted-foreground pt-1">
+                          Você também pode usar o botão "Verificar habilitação" no cadastro do Emitente NF-e para checar o status na Focus.
+                        </p>
+                      </div>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              );
+            })()}
           </div>
         )}
 
