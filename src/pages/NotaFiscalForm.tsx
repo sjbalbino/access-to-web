@@ -175,6 +175,7 @@ export default function NotaFiscalForm() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const focusNfe = useFocusNfe();
+  const verificarEmpresa = useFocusNfeVerificarEmpresa();
   const { duplicatas, createDuplicata, updateDuplicata, deleteDuplicata } = useNotasFiscaisDuplicatas(id || null);
   const { data: notasReferenciadas = [], isLoading: isLoadingReferencias } = useNotasReferenciadas(id);
   const createNotaReferenciada = useCreateNotaReferenciada();
