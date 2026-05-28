@@ -30,9 +30,11 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, Building2, AlertCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2, AlertCircle, ShieldCheck, Loader2 } from "lucide-react";
 import { useEmitentesNfe, EmitenteNfe, EmitenteNfeInsert } from "@/hooks/useEmitentesNfe";
 import { useEmitenteCredentials, useUpsertEmitenteCredentials } from "@/hooks/useEmitenteCredentials";
+import { useFocusNfeVerificarEmpresa } from "@/hooks/useFocusNfeVerificarEmpresa";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,6 +84,54 @@ export default function EmitentesNfe() {
   }>({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_secret: null });
   const upsertCredentials = useUpsertEmitenteCredentials();
   const credentialsQuery = useEmitenteCredentials(selectedEmitente?.id ?? null);
+  const verificarEmpresa = useFocusNfeVerificarEmpresa();
+  const [verificandoId, setVerificandoId] = useState<string | null>(null);
+
+  const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
+    setVerificandoId(emitente.id);
+    try {
+      // Buscar uma inscrição vinculada para extrair o CPF/CNPJ
+      const { data: inscricoes } = await supabase
+        .from("inscricoes_produtor")
+        .select("cpf_cnpj, nome")
+        .eq("emitente_id", emitente.id)
+        .not("cpf_cnpj", "is", null)
+        .limit(1);
+
+      const cpfCnpj = inscricoes?.[0]?.cpf_cnpj;
+
+      if (!cpfCnpj) {
+        toast.error("Nenhuma inscrição vinculada a este emitente", {
+          description: "Vincule este emitente a uma inscrição de produtor (com CPF/CNPJ) para poder verificar a habilitação.",
+        });
+        return;
+      }
+
+      const res = await verificarEmpresa.verificar({
+        emitente_id: emitente.id,
+        cpf_cnpj: cpfCnpj,
+      });
+
+      if (!res.success) {
+        toast.error("Não foi possível verificar", { description: res.error || "Erro desconhecido" });
+        return;
+      }
+
+      if (res.habilitada) {
+        toast.success(`Habilitada na Focus NFe (${res.ambiente_label})`, {
+          description: `${res.nome ?? cpfCnpj} está pronta para emitir em ${res.ambiente_label}.`,
+        });
+      } else {
+        toast.warning("Emitente NÃO habilitado", {
+          description: res.mensagem || "Cadastre/habilite a empresa no painel da Focus NFe.",
+          duration: 10000,
+        });
+      }
+    } finally {
+      setVerificandoId(null);
+    }
+  };
+
   const [formData, setFormData] = useState<EmitenteNfeInsert>({
     granja_id: null,
     ambiente: 2,
@@ -291,7 +341,7 @@ export default function EmitentesNfe() {
                   <TableHead className="hidden md:table-cell">Série</TableHead>
                   <TableHead className="hidden md:table-cell">API</TableHead>
                   <TableHead className="hidden sm:table-cell">Status</TableHead>
-                  {canEdit && <TableHead className="w-24 sticky right-0 bg-background">Ações</TableHead>}
+                  {canEdit && <TableHead className="w-32 sticky right-0 bg-background">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -322,8 +372,19 @@ export default function EmitentesNfe() {
                     {canEdit && (
                       <TableCell className="sticky right-0 bg-background">
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(emitente)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => { setSelectedEmitente(emitente); setIsDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Verificar habilitação na Focus NFe"
+                            disabled={verificandoId === emitente.id || !emitente.api_configurada}
+                            onClick={() => handleVerificarHabilitacao(emitente)}
+                          >
+                            {verificandoId === emitente.id
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <ShieldCheck className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" title="Editar" onClick={() => handleOpenDialog(emitente)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" title="Excluir" onClick={() => { setSelectedEmitente(emitente); setIsDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
                         </div>
                       </TableCell>
                     )}
