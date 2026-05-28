@@ -200,14 +200,21 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
   const handleSave = async () => {
     if (!granjaId) { toast.error('Selecione uma granja.'); return; }
+    if (!inscricaoId) { toast.error('Selecione a IE do produtor.'); return; }
+    if (!safraId) { toast.error('Selecione a safra.'); return; }
+    if (!isEdit && !formaPagamento) { toast.error('Selecione a forma de pagamento.'); return; }
 
     const itensSave = itens.map(({ ...item }) => {
       const { id, entrada_nfe_id, produto, created_at, updated_at, ...rest } = item as any;
       return rest;
     });
 
-    const payload = {
+    const payload: any = {
       granja_id: granjaId,
+      inscricao_produtor_id: inscricaoId,
+      safra_id: safraId,
+      forma_pagamento: formaPagamento || null,
+      conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
       fornecedor_id: fornecedorId || null,
       numero_nfe: numeroNfe,
       serie,
@@ -231,6 +238,14 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       itens: itensSave,
     };
 
+    if (!isEdit) {
+      payload._pagamento = {
+        forma_pagamento: formaPagamento,
+        conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
+        ja_pago: jaPago && isAvista,
+      };
+    }
+
     try {
       if (isEdit) {
         await updateMutation.mutateAsync({ id: entradaId, ...payload });
@@ -240,6 +255,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       onOpenChange(false);
     } catch {}
   };
+
 
   const handleVincular = (idx: number, produtoId: string) => {
     setItens((prev) => {
