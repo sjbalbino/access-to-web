@@ -12,12 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2, Sparkles } from 'lucide-react';
 import { useClientesFornecedores, useCreateClienteFornecedor, useUpdateClienteFornecedor, useDeleteClienteFornecedor, ClienteFornecedorInsert } from '@/hooks/useClientesFornecedores';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useCepLookup, formatCep } from '@/hooks/useCepLookup';
 import { useCnpjLookup, formatCnpj } from '@/hooks/useCnpjLookup';
 import { formatCpf, validateCpf, validateCnpj } from '@/lib/formatters';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 export default function ClientesFornecedores() {
@@ -40,6 +42,38 @@ export default function ClientesFornecedores() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [enriquecendo, setEnriquecendo] = useState(false);
+  const [resultadoEnriquecimento, setResultadoEnriquecimento] = useState<any>(null);
+  const queryClient = useQueryClient();
+
+  const handleEnriquecer = async (dryRun: boolean) => {
+    const semCidade = (clientesFornecedores || []).filter(c => !c.cidade || c.cidade === '').length;
+    const msg = dryRun
+      ? `Simular enriquecimento de ${semCidade} registro(s) sem cidade? Nada será gravado.`
+      : `Enriquecer ${semCidade} registro(s) sem cidade via CEP/CNPJ? Isso pode levar alguns minutos.`;
+    if (!confirm(msg)) return;
+    setEnriquecendo(true);
+    setResultadoEnriquecimento(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('enriquecer-clientes-fornecedores', {
+        body: { dry_run: dryRun },
+      });
+      if (error) throw error;
+      setResultadoEnriquecimento(data);
+      const s = data?.stats || {};
+      toast.success(
+        `${dryRun ? 'Simulação' : 'Enriquecimento'} concluído: ${s.atualizados || 0} atualizado(s) (CEP: ${s.via_cep || 0}, CNPJ: ${s.via_cnpj || 0})`
+      );
+      if (!dryRun) {
+        queryClient.invalidateQueries({ queryKey: ['clientes_fornecedores'] });
+      }
+    } catch (e: any) {
+      toast.error('Erro: ' + (e.message || e));
+    } finally {
+      setEnriquecendo(false);
+    }
+  };
+
 
   const dadosFiltrados = useMemo(() => {
     let dados = clientesFornecedores || [];
@@ -250,6 +284,18 @@ export default function ClientesFornecedores() {
             <Building className="h-5 w-5 text-primary" />
             Lista de Clientes/Fornecedores
           </CardTitle>
+          {canEdit && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-2" disabled={enriquecendo} onClick={() => handleEnriquecer(true)}>
+              {enriquecendo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              <span className="hidden sm:inline">Simular CEP/CNPJ</span>
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" disabled={enriquecendo} onClick={() => handleEnriquecer(false)}>
+              {enriquecendo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              <span className="hidden sm:inline">Enriquecer endereços</span>
+            </Button>
+          </div>
+          )}
           {canEdit && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
               <DialogTrigger asChild>
