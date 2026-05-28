@@ -782,7 +782,7 @@ export default function NotaFiscalForm() {
       const totals = calculateTotals();
       const notaData: NotaFiscalInsert = {
         ...formData,
-        emitente_id: emitenteAuto.id,
+        emitente_id: emitenteAuto?.id ?? null,
         granja_id: granjaId,
         inscricao_produtor_id: formData.inscricao_produtor_id,
         data_emissao: formData.data_emissao || null,
