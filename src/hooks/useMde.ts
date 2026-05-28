@@ -26,10 +26,10 @@ export function useMde() {
     return data;
   };
 
-  const consultarDestinatarias = async (granjaId: string) => {
+  const consultarDestinatarias = async (inscricaoId: string) => {
     setIsLoading(true);
     try {
-      const result = await invokeAction({ action: "consultar", granjaId });
+      const result = await invokeAction({ action: "consultar", inscricaoId });
       const items: NfeRecebida[] = Array.isArray(result.data) ? result.data : [];
       setNfesRecebidas(items);
       if (items.length === 0) {
@@ -47,10 +47,10 @@ export function useMde() {
     }
   };
 
-  const manifestar = async (granjaId: string, chave: string, tipo: string) => {
+  const manifestar = async (inscricaoId: string, chave: string, tipo: string) => {
     setIsLoading(true);
     try {
-      await invokeAction({ action: "manifestar", granjaId, chave, tipo });
+      await invokeAction({ action: "manifestar", inscricaoId, chave, tipo });
       const labels: Record<string, string> = {
         ciencia: "Ciência da Operação",
         confirmacao: "Confirmação da Operação",
@@ -68,18 +68,16 @@ export function useMde() {
     }
   };
 
-  const downloadXml = async (granjaId: string, chave: string): Promise<string | null> => {
+  const downloadXml = async (inscricaoId: string, chave: string): Promise<string | null> => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
-        body: { action: "download_xml", granjaId, chave },
+        body: { action: "download_xml", inscricaoId, chave },
       });
       if (error) throw new Error(error.message);
 
-      // The response is XML text
       const xmlText = typeof data === "string" ? data : new TextDecoder().decode(data);
 
-      // Trigger download
       const blob = new Blob([xmlText], { type: "application/xml" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -101,11 +99,11 @@ export function useMde() {
     }
   };
 
-  const downloadDanfe = async (granjaId: string, chave: string) => {
+  const downloadDanfe = async (inscricaoId: string, chave: string) => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
-        body: { action: "download_danfe", granjaId, chave },
+        body: { action: "download_danfe", inscricaoId, chave },
       });
       if (error) throw new Error(error.message);
 
