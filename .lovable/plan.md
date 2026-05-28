@@ -1,18 +1,15 @@
-## Objetivo
-No formulário de Nota Fiscal, seção **Destinatário**, o campo "Importar de Cliente/Fornecedor" hoje é um Select simples. Com 1.000+ clientes fica inviável rolar. Vamos torná-lo pesquisável (digitar nome / CPF / CNPJ).
+## Problema
+No campo **"Inscrição do Sócio (Emitente)"** (formulário de NF-e), hoje aparecem TODAS as inscrições de sócios ativas, mesmo aquelas que não têm emitente NFe configurado — quando o usuário escolhe uma sem emitente, a emissão falha.
+
+## Correção
+Filtrar a lista para mostrar **apenas inscrições de sócios que tenham `emitente_id` preenchido** (ou seja, vinculadas a uma configuração de emitente NFe).
 
 ## Alteração
-- **Arquivo:** `src/pages/NotaFiscalForm.tsx` (linhas 1479–1491)
-- Substituir o `<Select>` por `<ComboboxFilter>` (`src/components/ui/combobox-filter.tsx`), padrão já adotado no projeto (memória "Searchable Combobox").
-- Opções:
-  - `value`: `cliente.id`
-  - `label`: `nome` (+ `nome_fantasia` quando houver)
-  - `sublabel`: `cpf_cnpj`
-- Placeholder: "Selecione para importar dados"
-- Search placeholder: "Buscar por nome, CPF ou CNPJ..."
-- `allLabel`: ocultar/usar "Limpar seleção" (passar string vazia dispara reset; ajustar `handleClienteSelect` para ignorar valor vazio).
-- Manter `disabled={isReadOnly}`.
+- **Arquivo:** `src/pages/NotaFiscalForm.tsx` — linha 1343
+- Trocar `inscricoesSocio.map(...)` por `inscricoesSocio.filter(i => i.emitente_id).map(...)`.
+- Manter no select a inscrição já salva mesmo que perca o emitente_id depois (padrão "Robust Select"): se `formData.inscricao_produtor_id` aponta para uma inscrição sem `emitente_id`, injetá-la na lista exibida.
+- Adicionar mensagem amigável quando a lista filtrada estiver vazia: orientar o usuário a configurar um emitente em **Emitentes NF-e** e vinculá-lo à inscrição do sócio.
 
 ## Escopo
-- Apenas esse campo. Os demais selects da tela permanecem inalterados (a menos que solicitado depois).
-- Sem mudanças de backend, hooks ou regras de negócio.
+- Somente esse filtro de UI. Demais comportamentos (auto-emitente, granja, dados padrão) permanecem.
+- Sem mudanças de schema/backend.
