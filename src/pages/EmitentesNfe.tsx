@@ -158,6 +158,7 @@ export default function EmitentesNfe() {
   };
 
   const [formData, setFormData] = useState<EmitenteNfeInsert>({
+    inscricao_produtor_id: null,
     granja_id: null,
     ambiente: 2,
     serie_nfe: 1,
@@ -185,13 +186,14 @@ export default function EmitentesNfe() {
     ativo: true,
   });
 
-  // Granjas que não têm emitente (ou é a granja do emitente sendo editado)
-  const granjasDisponiveis = granjas.filter(
-    (g) => g.ativa && !emitentes.some((e) => e.granja_id === g.id && e.id !== selectedEmitente?.id)
+  // Inscrições que ainda não têm emitente (ou é a inscrição do emitente sendo editado)
+  const inscricoesDisponiveis = inscricoes.filter(
+    (i) => !emitentes.some((e) => e.inscricao_produtor_id === i.id && e.id !== selectedEmitente?.id)
   );
 
   const resetForm = () => {
     setFormData({
+      inscricao_produtor_id: null,
       granja_id: null,
       ambiente: 2,
       serie_nfe: 1,
@@ -225,6 +227,7 @@ export default function EmitentesNfe() {
     if (emitente) {
       setSelectedEmitente(emitente);
       setFormData({
+        inscricao_produtor_id: emitente.inscricao_produtor_id,
         granja_id: emitente.granja_id,
         ambiente: emitente.ambiente || 2,
         serie_nfe: emitente.serie_nfe || 1,
@@ -256,6 +259,7 @@ export default function EmitentesNfe() {
     }
     setIsDialogOpen(true);
   };
+
 
   // Carrega credenciais quando o usuário (admin/gerente) abre o emitente para edição
   useEffect(() => {
