@@ -86,6 +86,7 @@ export default function EmitentesNfe() {
   const credentialsQuery = useEmitenteCredentials(selectedEmitente?.id ?? null);
   const verificarEmpresa = useFocusNfeVerificarEmpresa();
   const [verificandoId, setVerificandoId] = useState<string | null>(null);
+  const [showToken, setShowToken] = useState(false);
 
   const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
     setVerificandoId(emitente.id);
