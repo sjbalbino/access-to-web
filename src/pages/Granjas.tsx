@@ -381,6 +381,7 @@ export default function Granjas() {
                 value={formData.email || ""}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="total_hectares">Total de Hectares</Label>
               <Input
@@ -390,14 +391,13 @@ export default function Granjas() {
                 onChange={(e) => setFormData({ ...formData, total_hectares: parseFloat(e.target.value) || 0 })}
               />
             </div>
-            <div className="flex items-center gap-2 md:col-span-2">
+            <div className="flex items-center gap-2 pt-6">
               <Switch
                 checked={formData.ativa ?? true}
                 onCheckedChange={(checked) => setFormData({ ...formData, ativa: checked })}
               />
               <Label>Granja Ativa</Label>
             </div>
-          </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
