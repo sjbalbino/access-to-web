@@ -365,7 +365,9 @@ export default function EmitentesNfe() {
             <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Granja</TableHead>
+                  <TableHead>Sócio / Inscrição</TableHead>
+                  <TableHead className="hidden md:table-cell">CPF/CNPJ</TableHead>
+                  <TableHead className="hidden lg:table-cell">Granja</TableHead>
                   <TableHead className="hidden sm:table-cell">Ambiente</TableHead>
                   <TableHead className="hidden md:table-cell">Série</TableHead>
                   <TableHead className="hidden md:table-cell">API</TableHead>
@@ -380,13 +382,17 @@ export default function EmitentesNfe() {
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block flex-shrink-0" />
                         <span>
-                          {emitente.granja
-                            ? emitente.granja.nome_fantasia
-                              ? `${emitente.granja.razao_social} (${emitente.granja.nome_fantasia})`
-                              : emitente.granja.razao_social
-                            : "-"}
+                          {emitente.inscricao
+                            ? `${emitente.inscricao.produtores?.nome || emitente.inscricao.nome || "—"}${emitente.inscricao.inscricao_estadual ? ` • IE ${emitente.inscricao.inscricao_estadual}` : ""}`
+                            : <span className="text-destructive">Sem inscrição vinculada</span>}
                         </span>
                       </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{emitente.inscricao?.cpf_cnpj || "-"}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {emitente.granja
+                        ? emitente.granja.nome_fantasia || emitente.granja.razao_social
+                        : "-"}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Badge variant={emitente.ambiente === 1 ? "default" : "secondary"}>
