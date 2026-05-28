@@ -767,16 +767,13 @@ export default function NotaFiscalForm() {
     }
 
     const inscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
-    const emitenteAuto = inscricao ? emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo) : null;
+    const emitenteAuto = inscricao?.emitente_id
+      ? emitentes.find((e) => e.id === inscricao.emitente_id)
+      : null;
     const granjaId = formData.granja_id || inscricao?.granja_id || "";
 
     if (!formData.inscricao_produtor_id) {
       toast.error("Selecione uma Inscrição do Produtor");
-      return;
-    }
-
-    if (!emitenteAuto) {
-      toast.error("Não há configuração de API (Emitente) para a granja desta inscrição. Cadastre um emitente para esta granja.");
       return;
     }
 
