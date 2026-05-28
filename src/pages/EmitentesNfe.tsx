@@ -349,8 +349,14 @@ export default function EmitentesNfe() {
                   <TableRow key={emitente.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block" />
-                        <span className="max-w-[150px] truncate">{emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "-"}</span>
+                        <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block flex-shrink-0" />
+                        <span>
+                          {emitente.granja
+                            ? emitente.granja.nome_fantasia
+                              ? `${emitente.granja.razao_social} (${emitente.granja.nome_fantasia})`
+                              : emitente.granja.razao_social
+                            : "-"}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
