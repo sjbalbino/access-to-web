@@ -838,6 +838,29 @@ export default function NotaFiscalForm() {
 
     // Open emission dialog
     setIsEmissionDialogOpen(true);
+    setEmissionStatus({ step: "validating", message: "Verificando habilitação do emitente na Focus NFe...", progress: 5 });
+
+    // Validação prévia: o CPF/CNPJ do emitente está habilitado na Focus NFe?
+    if (inscricao.cpf_cnpj) {
+      const verif = await verificarEmpresa.verificar({
+        emitente_id: emitente.id,
+        cpf_cnpj: inscricao.cpf_cnpj,
+      });
+
+      if (verif.success && verif.habilitada === false) {
+        setEmissionStatus({
+          step: "error",
+          message: "Emitente não habilitado na Focus NFe",
+          progress: 100,
+          details: verif.mensagem ||
+            `O CPF/CNPJ ${inscricao.cpf_cnpj} não está habilitado para emissão no ambiente atual da Focus NFe. Cadastre/habilite a empresa no painel da Focus antes de tentar emitir.`,
+        });
+        return;
+      }
+      // Se a verificação falhou tecnicamente (success=false), seguimos mesmo assim
+      // — pode ser indisponibilidade temporária da API — a emissão dará o erro real.
+    }
+
     setEmissionStatus({ step: "validating", message: "Validando dados da nota fiscal...", progress: 10 });
 
     if (!inscricao.cpf_cnpj || !inscricao.inscricao_estadual) {
