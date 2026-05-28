@@ -767,16 +767,13 @@ export default function NotaFiscalForm() {
     }
 
     const inscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
-    const emitenteAuto = inscricao ? emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo) : null;
+    const emitenteAuto = inscricao?.emitente_id
+      ? emitentes.find((e) => e.id === inscricao.emitente_id)
+      : null;
     const granjaId = formData.granja_id || inscricao?.granja_id || "";
 
     if (!formData.inscricao_produtor_id) {
       toast.error("Selecione uma Inscrição do Produtor");
-      return;
-    }
-
-    if (!emitenteAuto) {
-      toast.error("Não há configuração de API (Emitente) para a granja desta inscrição. Cadastre um emitente para esta granja.");
       return;
     }
 
@@ -785,7 +782,7 @@ export default function NotaFiscalForm() {
       const totals = calculateTotals();
       const notaData: NotaFiscalInsert = {
         ...formData,
-        emitente_id: emitenteAuto.id,
+        emitente_id: emitenteAuto?.id ?? null,
         granja_id: granjaId,
         inscricao_produtor_id: formData.inscricao_produtor_id,
         data_emissao: formData.data_emissao || null,
@@ -832,10 +829,12 @@ export default function NotaFiscalForm() {
       return;
     }
 
-    const emitente = emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo);
+    const emitente = inscricao.emitente_id
+      ? emitentes.find((e) => e.id === inscricao.emitente_id)
+      : null;
 
     if (!emitente) {
-      toast.error("Não há configuração de API (Emitente) para a granja desta inscrição. Cadastre um emitente.");
+      toast.error("Esta inscrição não tem Emitente NF-e vinculado. Vincule um emitente no cadastro da inscrição.");
       return;
     }
 

@@ -1,40 +1,47 @@
-## Diagnóstico
-A linha mostrada no select **"UMBU AGROPECUARIA S.A. - IE: 034.109.337-8 (UMBU AGROPECUARIA-JUR)"** está correta:
+## Problema
 
-| Campo | Valor exibido |
-|---|---|
-| Nome do **produtor sócio (PJ)** | UMBU AGROPECUARIA S.A. |
-| IE da inscrição | 034.109.337-8 |
-| Granja (parênteses) | UMBU AGROPECUARIA-JUR |
+Ao clicar em **Salvar Rascunho**, aparece o toast "Não há configuração de API (Emitente) para a granja desta inscrição" e o rascunho não é salvo.
 
-A confusão é só de **leitura do rótulo** — o usuário lê "UMBU AGROPECUARIA S.A." como sendo a granja, mas é o nome do produtor sócio (pessoa jurídica) cadastrado em `produtores` com `tipo_produtor='socio'`.
+## Causa raiz
 
-Regra atual já está correta:
-- `produtor.tipo_produtor = 'socio'` ✅
-- `inscricao.ativa = true` ✅
-- `inscricao.emitente_id IS NOT NULL` ✅ (filtro adicionado no commit anterior)
+Em `src/pages/NotaFiscalForm.tsx`, `handleSaveDraft` (linha 770) busca o emitente **pela granja**:
 
-## Correção visual
-
-**Arquivo:** `src/pages/NotaFiscalForm.tsx` — bloco do `<SelectContent>` (linhas ~1342-1363) e `<CardDescription>` (linha 1321).
-
-Trocar o rótulo de cada item de:
-```
-{produtor.nome} - IE: {inscricao_estadual} ({granja.razao_social})
-```
-para um formato **etiquetado e em duas linhas** que deixa claro o que é cada parte:
-```
-Sócio: UMBU AGROPECUARIA S.A.
-IE 034.109.337-8 • Granja: UMBU AGROPECUARIA-JUR
+```ts
+const emitenteAuto = emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo);
 ```
 
-- Linha 1: prefixo `Sócio:` + nome do produtor sócio, em negrito.
-- Linha 2 (menor, muted): `IE <inscricao_estadual> • Granja: <granja>`.
-- Manter o ★ para inscrição principal e o ⚠ para inscrição salva sem emitente.
+Isso está desatualizado. Na arquitetura atual, o emitente é vinculado **diretamente à inscrição** via `inscricoes_produtor.emitente_id` (1 emitente → N inscrições). A inscrição "SEMENTES COSTA BEBER" tem `emitente_id` setado, mas o emitente cadastrado pode não ter `granja_id` igual ao da inscrição — por isso o `find` retorna `undefined` e o save é bloqueado.
 
-Também atualizar a `CardDescription` para deixar explícito:
-> "Selecione a inscrição do **sócio (pessoa física ou jurídica)** que vai emitir esta NF-e"
+Além disso, **rascunho não deveria exigir emitente configurado** — só a emissão real precisa disso.
+
+## Correção
+
+Em `src/pages/NotaFiscalForm.tsx`:
+
+### 1. `handleSaveDraft` (linhas 769-781)
+
+- Trocar a busca por granja por busca direto pelo `inscricao.emitente_id`:
+  ```ts
+  const emitenteAuto = inscricao?.emitente_id 
+    ? emitentes.find((e) => e.id === inscricao.emitente_id) 
+    : null;
+  ```
+- **Remover o bloqueio** quando `emitenteAuto` for null. Salvar rascunho com `emitente_id: emitenteAuto?.id ?? null` — permite ao usuário salvar mesmo sem emitente configurado e completar depois.
+- Manter apenas a validação obrigatória de `inscricao_produtor_id` e `natureza_operacao`.
+
+### 2. `handleEmitirNfe` (linhas 828-845)
+
+- Trocar também a busca por granja por `inscricao.emitente_id`:
+  ```ts
+  const emitente = inscricao.emitente_id 
+    ? emitentes.find((e) => e.id === inscricao.emitente_id) 
+    : null;
+  ```
+- **Manter** o bloqueio aqui (emissão real precisa de emitente + API configurada).
+- Atualizar a mensagem de erro para: "Esta inscrição não tem Emitente NF-e vinculado. Vincule um emitente no cadastro da inscrição."
 
 ## Escopo
-- Apenas o rótulo do `<SelectItem>` e a descrição do card.
-- Sem mudanças no hook, no filtro ou no schema. Sem mudança de regra de negócio.
+
+- Apenas `src/pages/NotaFiscalForm.tsx`.
+- Sem mudanças de schema, hook, ou RLS.
+- Sem mudanças em lógica de cálculo, mapper ou edge functions.
