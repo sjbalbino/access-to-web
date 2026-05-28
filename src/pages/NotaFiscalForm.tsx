@@ -1353,9 +1353,16 @@ export default function NotaFiscalForm() {
                 }
                 return lista.map((inscricao) => (
                   <SelectItem key={inscricao.id} value={inscricao.id}>
-                    {inscricao.is_emitente_principal && "★ "}
-                    {!inscricao.emitente_id && "⚠ "}
-                    {inscricao.produtores?.nome} - IE: {inscricao.inscricao_estadual} ({inscricao.granjas?.razao_social || inscricao.granja})
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {inscricao.is_emitente_principal && "★ "}
+                        {!inscricao.emitente_id && "⚠ "}
+                        Sócio: {inscricao.produtores?.nome}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        IE {inscricao.inscricao_estadual} • Granja: {inscricao.granjas?.razao_social || inscricao.granja}
+                      </span>
+                    </div>
                   </SelectItem>
                 ));
               })()}
