@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +13,12 @@ import { useGranjas } from "@/hooks/useGranjas";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
+import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
+import { useSafras } from "@/hooks/useSafras";
+import { useContasBancarias } from "@/hooks/useContasBancarias";
 import { useEntradaNfe, useCreateEntradaNfe, useUpdateEntradaNfe } from "@/hooks/useEntradasNfe";
 import { ContasPagarEntradaSection } from "@/components/contas/ContasPagarEntradaSection";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatNumber } from "@/lib/formatters";
 import { Plus, Trash2, Link2 } from "lucide-react";
@@ -60,6 +64,14 @@ const emptyItem = () => ({
   quantidade_conferida: null as number | null,
 });
 
+const FORMAS = [
+  { value: 'pix', label: 'PIX' }, { value: 'dinheiro', label: 'Dinheiro' },
+  { value: 'cheque', label: 'Cheque' }, { value: 'boleto', label: 'Boleto' },
+  { value: 'cartao', label: 'Cartão' }, { value: 'prazo', label: 'A prazo' },
+  { value: 'outro', label: 'Outro' },
+];
+const FORMAS_AVISTA = ['pix', 'dinheiro', 'cheque', 'cartao'];
+
 export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const isEdit = !!entradaId;
   const { data: entradaData } = useEntradaNfe(entradaId);
@@ -67,10 +79,18 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const { data: clientes } = useClientesFornecedores();
   const { cfops } = useCfops();
   const { data: produtos } = useProdutos();
+  const { data: inscricoes } = useInscricoesCompletas();
+  const { data: safras } = useSafras();
+  const { data: contasBancarias } = useContasBancarias({ ativo: true });
   const createMutation = useCreateEntradaNfe();
   const updateMutation = useUpdateEntradaNfe();
 
   const [granjaId, setGranjaId] = useState('');
+  const [inscricaoId, setInscricaoId] = useState<string | undefined>(undefined);
+  const [safraId, setSafraId] = useState<string | undefined>(undefined);
+  const [formaPagamento, setFormaPagamento] = useState<string | undefined>(undefined);
+  const [contaBancariaId, setContaBancariaId] = useState<string | undefined>(undefined);
+  const [jaPago, setJaPago] = useState(false);
   const [fornecedorId, setFornecedorId] = useState('');
   const [numeroNfe, setNumeroNfe] = useState('');
   const [serie, setSerie] = useState('1');
@@ -90,10 +110,27 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const [valorDesconto, setValorDesconto] = useState(0);
   const [valorOutras, setValorOutras] = useState(0);
 
+  const inscricoesFiltradas = useMemo(() => {
+    if (!granjaId) return [];
+    const list = (inscricoes || []).filter((i) => i.granja_id === granjaId && i.ativa);
+    // Garante que IE selecionada apareça mesmo se inativa/de outra granja (edição)
+    if (inscricaoId && !list.some((i) => i.id === inscricaoId)) {
+      const sel = (inscricoes || []).find((i) => i.id === inscricaoId);
+      if (sel) list.push(sel);
+    }
+    return list;
+  }, [inscricoes, granjaId, inscricaoId]);
+
+  const isAvista = !!formaPagamento && FORMAS_AVISTA.includes(formaPagamento);
+
   useEffect(() => {
     if (!open) return;
     if (isEdit && entradaData) {
       setGranjaId(entradaData.granja_id || '');
+      setInscricaoId((entradaData as any).inscricao_produtor_id || undefined);
+      setSafraId((entradaData as any).safra_id || undefined);
+      setFormaPagamento((entradaData as any).forma_pagamento || undefined);
+      setContaBancariaId((entradaData as any).conta_bancaria_id || undefined);
       setFornecedorId(entradaData.fornecedor_id || '');
       setNumeroNfe(entradaData.numero_nfe || '');
       setSerie(entradaData.serie || '1');
@@ -111,9 +148,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       setItens(
         (entradaData as any).itens?.length
           ? (entradaData as any).itens.map((i: any) => ({
-              ...i,
-              data_validade: i.data_validade || '',
-              lote: i.lote || '',
+              ...i, data_validade: i.data_validade || '', lote: i.lote || '',
               quantidade_conferida: i.quantidade_conferida,
             }))
           : [emptyItem()]
@@ -123,24 +158,26 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
     }
   }, [open, isEdit, entradaData]);
 
+  // Pré-seleciona IE principal ao trocar granja (somente criação)
+  useEffect(() => {
+    if (isEdit || !granjaId) return;
+    const principal = (inscricoes || []).find(
+      (i: any) => i.granja_id === granjaId && i.ativa && i.is_emitente_principal
+    );
+    setInscricaoId(principal?.id);
+  }, [granjaId, inscricoes, isEdit]);
+
   const resetForm = () => {
-    setGranjaId('');
-    setFornecedorId('');
-    setNumeroNfe('');
-    setSerie('1');
-    setChaveAcesso('');
-    setDataEmissao('');
-    setDataEntrada(new Date().toISOString().split('T')[0]);
-    setCfopId('');
-    setNaturezaOperacao('');
-    setObservacoes('');
+    setGranjaId(''); setInscricaoId(undefined); setSafraId(undefined);
+    setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false);
+    setFornecedorId(''); setNumeroNfe(''); setSerie('1'); setChaveAcesso('');
+    setDataEmissao(''); setDataEntrada(new Date().toISOString().split('T')[0]);
+    setCfopId(''); setNaturezaOperacao(''); setObservacoes('');
     setItens([emptyItem()]);
-    setValorProdutos(0);
-    setValorFrete(0);
-    setValorSeguro(0);
-    setValorDesconto(0);
-    setValorOutras(0);
+    setValorProdutos(0); setValorFrete(0); setValorSeguro(0);
+    setValorDesconto(0); setValorOutras(0);
   };
+
 
   const updateItem = (idx: number, field: string, value: any) => {
     setItens((prev) => {
@@ -163,14 +200,21 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
   const handleSave = async () => {
     if (!granjaId) { toast.error('Selecione uma granja.'); return; }
+    if (!inscricaoId) { toast.error('Selecione a IE do produtor.'); return; }
+    if (!safraId) { toast.error('Selecione a safra.'); return; }
+    if (!isEdit && !formaPagamento) { toast.error('Selecione a forma de pagamento.'); return; }
 
     const itensSave = itens.map(({ ...item }) => {
       const { id, entrada_nfe_id, produto, created_at, updated_at, ...rest } = item as any;
       return rest;
     });
 
-    const payload = {
+    const payload: any = {
       granja_id: granjaId,
+      inscricao_produtor_id: inscricaoId,
+      safra_id: safraId,
+      forma_pagamento: formaPagamento || null,
+      conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
       fornecedor_id: fornecedorId || null,
       numero_nfe: numeroNfe,
       serie,
@@ -194,6 +238,14 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       itens: itensSave,
     };
 
+    if (!isEdit) {
+      payload._pagamento = {
+        forma_pagamento: formaPagamento,
+        conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
+        ja_pago: jaPago && isAvista,
+      };
+    }
+
     try {
       if (isEdit) {
         await updateMutation.mutateAsync({ id: entradaId, ...payload });
@@ -203,6 +255,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       onOpenChange(false);
     } catch {}
   };
+
 
   const handleVincular = (idx: number, produtoId: string) => {
     setItens((prev) => {
@@ -291,12 +344,65 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     <Label>Natureza da Operação</Label>
                     <Input value={naturezaOperacao} onChange={(e) => setNaturezaOperacao(e.target.value)} disabled={isFinalizado} />
                   </div>
+                  <div>
+                    <Label>IE do Produtor *</Label>
+                    <Select value={inscricaoId} onValueChange={setInscricaoId} disabled={isFinalizado || !granjaId}>
+                      <SelectTrigger><SelectValue placeholder={granjaId ? 'Selecione...' : 'Escolha granja'} /></SelectTrigger>
+                      <SelectContent>
+                        {inscricoesFiltradas.map((i) => (
+                          <SelectItem key={i.id} value={i.id}>
+                            {(i.inscricao_estadual || i.cpf_cnpj || '—').toUpperCase()} {i.nome ? `— ${i.nome.toUpperCase()}` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Safra *</Label>
+                    <Select value={safraId} onValueChange={setSafraId} disabled={isFinalizado}>
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {safras?.map((s: any) => (<SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Forma de Pagamento {!isEdit && '*'}</Label>
+                    <Select value={formaPagamento} onValueChange={(v) => { setFormaPagamento(v); setJaPago(false); }} disabled={isFinalizado}>
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {FORMAS.map((f) => (<SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {isAvista && (
+                    <div>
+                      <Label>Conta Bancária</Label>
+                      <Select value={contaBancariaId} onValueChange={setContaBancariaId} disabled={isFinalizado}>
+                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>
+                          {(contasBancarias || []).map((c) => (
+                            <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {isAvista && !isEdit && (
+                    <div className="flex items-end">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={jaPago} onCheckedChange={(v) => setJaPago(!!v)} />
+                        Já está pago (gerar baixa automática)
+                      </label>
+                    </div>
+                  )}
                   <div className="md:col-span-3">
                     <Label>Observações</Label>
                     <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={2} disabled={isFinalizado} />
                   </div>
                 </div>
               </TabsContent>
+
 
               <TabsContent value="itens" className="p-1">
                 {!isFinalizado && (
