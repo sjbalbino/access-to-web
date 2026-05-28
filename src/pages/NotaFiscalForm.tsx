@@ -841,6 +841,10 @@ export default function NotaFiscalForm() {
     setEmissionStatus({ step: "validating", message: "Verificando habilitação do emitente na Focus NFe...", progress: 5 });
 
     // Validação prévia: o CPF/CNPJ do emitente está habilitado na Focus NFe?
+    // OBS: a Focus NFe pode retornar 404 em homologação mesmo para empresas
+    // cadastradas no painel. Por isso só bloqueamos quando o erro é claramente
+    // de token inválido; nos demais casos avisamos e seguimos, deixando o SEFAZ
+    // retornar o erro definitivo.
     if (inscricao.cpf_cnpj) {
       const verif = await verificarEmpresa.verificar({
         emitente_id: emitente.id,
@@ -848,14 +852,21 @@ export default function NotaFiscalForm() {
       });
 
       if (verif.success && verif.habilitada === false) {
-        setEmissionStatus({
-          step: "error",
-          message: "Emitente não habilitado na Focus NFe",
-          progress: 100,
-          details: verif.mensagem ||
-            `O CPF/CNPJ ${inscricao.cpf_cnpj} não está habilitado para emissão no ambiente atual da Focus NFe. Cadastre/habilite a empresa no painel da Focus antes de tentar emitir.`,
+        const docFmt = inscricao.cpf_cnpj;
+        if (verif.codigo === "token_invalido_ou_sem_permissao") {
+          setEmissionStatus({
+            step: "error",
+            message: "Token da Focus NFe inválido ou sem permissão",
+            progress: 100,
+            details: verif.mensagem ||
+              `O token cadastrado neste emitente não tem permissão para a conta da Focus NFe que contém o CPF/CNPJ ${docFmt}. Verifique o token no cadastro do Emitente NF-e.`,
+          });
+          return;
+        }
+        toast.warning("Aviso da Focus NFe (verificação prévia)", {
+          description: `${verif.mensagem || `Não foi possível confirmar a habilitação do CPF/CNPJ ${docFmt} na Focus NFe.`} Vamos tentar a emissão mesmo assim — o SEFAZ retornará o erro definitivo caso haja problema.`,
+          duration: 8000,
         });
-        return;
       }
       // Se a verificação falhou tecnicamente (success=false), seguimos mesmo assim
       // — pode ser indisponibilidade temporária da API — a emissão dará o erro real.

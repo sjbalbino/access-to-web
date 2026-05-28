@@ -102,6 +102,7 @@ serve(async (req) => {
     try { body = JSON.parse(text); } catch { /* não-json */ }
 
     const ambienteLabel = ambiente === 2 ? "homologação" : "produção";
+    const tokenPrefix = `${token.slice(0, 6)}…(${token.length} chars)`;
 
     // 404 → empresa não cadastrada na Focus
     if (resp.status === 404) {
@@ -113,7 +114,8 @@ serve(async (req) => {
           ambiente_label: ambienteLabel,
           cpf_cnpj: cpfCnpjAlvo,
           codigo: "empresa_nao_cadastrada",
-          mensagem: `O CPF/CNPJ ${cpfCnpjAlvo} não está cadastrado na sua conta da Focus NFe (${ambienteLabel}). Cadastre a empresa no painel da Focus, anexe o certificado digital A1 e habilite-a para emissão.`,
+          mensagem: `O CPF/CNPJ ${cpfCnpjAlvo} não está cadastrado na sua conta da Focus NFe (${ambienteLabel}) — token usado: ${tokenPrefix}. Cadastre a empresa no painel da Focus, anexe o certificado digital A1 e habilite-a para emissão.`,
+          detalhes: { token_prefix: tokenPrefix, url },
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
@@ -129,8 +131,8 @@ serve(async (req) => {
           ambiente_label: ambienteLabel,
           cpf_cnpj: cpfCnpjAlvo,
           codigo: "token_invalido_ou_sem_permissao",
-          mensagem: `O token cadastrado neste emitente não tem permissão para consultar o CPF/CNPJ ${cpfCnpjAlvo} em ${ambienteLabel}. Verifique se o token pertence à conta correta da Focus NFe.`,
-          detalhes: body,
+          mensagem: `O token cadastrado neste emitente (${tokenPrefix}) não tem permissão para consultar o CPF/CNPJ ${cpfCnpjAlvo} em ${ambienteLabel}. Verifique se o token pertence à conta correta da Focus NFe.`,
+          detalhes: { token_prefix: tokenPrefix, resposta: body },
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
