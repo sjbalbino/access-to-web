@@ -95,16 +95,16 @@ export function EmitirNfeDevolucaoDialog({
         throw new Error("Inscrição do produtor (destinatário) não encontrada");
       }
 
-      // Buscar emitente pela granja
+      // Buscar emitente pela inscrição do produtor emitente (cada sócio tem o seu)
       const { data: emitente, error: emitenteError } = await supabase
         .from("emitentes_nfe")
         .select("*")
-        .eq("granja_id", devolucao.granja_id)
+        .eq("inscricao_produtor_id", devolucao.inscricao_emitente_id)
         .eq("ativo", true)
-        .single();
+        .maybeSingle();
 
       if (emitenteError || !emitente) {
-        throw new Error("Configuração de API (Emitente) não encontrada para esta granja. Cadastre um emitente.");
+        throw new Error("Emitente NF-e não configurado para a inscrição emitente desta devolução. Cadastre o emitente em FISCAL → Emitentes NF-e vinculado a esta inscrição.");
       }
 
       if (!emitente.api_configurada) {
