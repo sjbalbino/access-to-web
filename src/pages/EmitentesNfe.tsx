@@ -453,37 +453,52 @@ export default function EmitentesNfe() {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Granja */}
+              {/* Inscrição do Produtor (Sócio Emitente) */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Granja</CardTitle>
+                  <CardTitle className="text-base">Inscrição do Produtor</CardTitle>
                   <CardDescription>
-                    Selecione a granja que será o emitente da NF-e
+                    Selecione a inscrição do sócio (CPF/CNPJ + IE) que será o emitente desta NF-e. Cada sócio deve ter seu próprio emitente, espelhando o cadastro na Focus NFe.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="granja_id">Granja *</Label>
+                    <Label htmlFor="inscricao_produtor_id">Inscrição *</Label>
                     <Select
-                      value={formData.granja_id || ""}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, granja_id: value })
-                      }
+                      value={formData.inscricao_produtor_id || ""}
+                      onValueChange={(value) => {
+                        const insc = inscricoes.find((i) => i.id === value);
+                        setFormData({
+                          ...formData,
+                          inscricao_produtor_id: value,
+                          granja_id: insc?.granja_id ?? null,
+                        });
+                      }}
+                      disabled={!!selectedEmitente}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a granja" />
+                        <SelectValue placeholder="Selecione a inscrição do sócio" />
                       </SelectTrigger>
                       <SelectContent>
                         {(selectedEmitente
-                          ? granjas.filter((g) => g.ativa || g.id === selectedEmitente.granja_id)
-                          : granjasDisponiveis
-                        ).map((granja) => (
-                          <SelectItem key={granja.id} value={granja.id}>
-                            {granja.nome_fantasia || granja.razao_social}
-                          </SelectItem>
-                        ))}
+                          ? inscricoes.filter((i) => i.id === selectedEmitente.inscricao_produtor_id || !emitentes.some((e) => e.inscricao_produtor_id === i.id))
+                          : inscricoesDisponiveis
+                        ).map((insc) => {
+                          const nome = insc.produtores?.nome || insc.nome || "—";
+                          const granjaNome = insc.granjas?.nome_fantasia || insc.granjas?.razao_social || "";
+                          return (
+                            <SelectItem key={insc.id} value={insc.id}>
+                              {nome} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
+                    {selectedEmitente && (
+                      <p className="text-xs text-muted-foreground">
+                        A inscrição vinculada não pode ser alterada após a criação. Para mudar, exclua e crie um novo emitente.
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
