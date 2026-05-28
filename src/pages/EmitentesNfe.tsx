@@ -341,7 +341,7 @@ export default function EmitentesNfe() {
                   <TableHead className="hidden md:table-cell">Série</TableHead>
                   <TableHead className="hidden md:table-cell">API</TableHead>
                   <TableHead className="hidden sm:table-cell">Status</TableHead>
-                  {canEdit && <TableHead className="w-24 sticky right-0 bg-background">Ações</TableHead>}
+                  {canEdit && <TableHead className="w-32 sticky right-0 bg-background">Ações</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
