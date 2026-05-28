@@ -106,6 +106,21 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
   const needsContaGerencial = config.interactiveColumns?.includes('conta_gerencial_id');
 
+  // Tabelas que suportam upsert (atualizar existentes + inserir novos)
+  // baseado em índices únicos existentes no banco
+  const UPSERT_KEYS: Record<string, string> = {
+    granjas: 'tenant_id,codigo',
+    safras: 'tenant_id,codigo',
+    culturas: 'tenant_id,codigo',
+    unidades_medida: 'tenant_id,codigo',
+    contas_bancarias: 'tenant_id,codigo_legado',
+    contas_pagar: 'tenant_id,codigo_legado',
+    contas_receber: 'tenant_id,codigo_legado',
+    produtores: 'granja_id,codigo',
+  };
+  const upsertConflict = UPSERT_KEYS[config.tableName];
+  const upsertSupported = !!upsertConflict && !config.updateMode;
+
   const normalize = (s: string) =>
     s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
