@@ -2016,18 +2016,22 @@ export type Database = {
         Row: {
           cfop_id: string | null
           chave_acesso: string | null
+          conta_bancaria_id: string | null
           contrato_venda_id: string | null
           created_at: string
           data_emissao: string | null
           data_entrada: string
           eh_contra_nota: boolean
+          forma_pagamento: string | null
           fornecedor_id: string | null
           granja_id: string
           id: string
+          inscricao_produtor_id: string | null
           modo_entrada: string
           natureza_operacao: string | null
           numero_nfe: string | null
           observacoes: string | null
+          safra_id: string | null
           serie: string | null
           status: string
           updated_at: string
@@ -2047,18 +2051,22 @@ export type Database = {
         Insert: {
           cfop_id?: string | null
           chave_acesso?: string | null
+          conta_bancaria_id?: string | null
           contrato_venda_id?: string | null
           created_at?: string
           data_emissao?: string | null
           data_entrada?: string
           eh_contra_nota?: boolean
+          forma_pagamento?: string | null
           fornecedor_id?: string | null
           granja_id: string
           id?: string
+          inscricao_produtor_id?: string | null
           modo_entrada?: string
           natureza_operacao?: string | null
           numero_nfe?: string | null
           observacoes?: string | null
+          safra_id?: string | null
           serie?: string | null
           status?: string
           updated_at?: string
@@ -2078,18 +2086,22 @@ export type Database = {
         Update: {
           cfop_id?: string | null
           chave_acesso?: string | null
+          conta_bancaria_id?: string | null
           contrato_venda_id?: string | null
           created_at?: string
           data_emissao?: string | null
           data_entrada?: string
           eh_contra_nota?: boolean
+          forma_pagamento?: string | null
           fornecedor_id?: string | null
           granja_id?: string
           id?: string
+          inscricao_produtor_id?: string | null
           modo_entrada?: string
           natureza_operacao?: string | null
           numero_nfe?: string | null
           observacoes?: string | null
+          safra_id?: string | null
           serie?: string | null
           status?: string
           updated_at?: string
@@ -2115,6 +2127,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "entradas_nfe_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "entradas_nfe_contrato_venda_id_fkey"
             columns: ["contrato_venda_id"]
             isOneToOne: false
@@ -2133,6 +2152,20 @@ export type Database = {
             columns: ["granja_id"]
             isOneToOne: false
             referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_nfe_inscricao_produtor_id_fkey"
+            columns: ["inscricao_produtor_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_nfe_safra_id_fkey"
+            columns: ["safra_id"]
+            isOneToOne: false
+            referencedRelation: "safras"
             referencedColumns: ["id"]
           },
         ]
