@@ -35,12 +35,22 @@ export function useClientesFornecedores() {
   return useQuery({
     queryKey: ['clientes_fornecedores'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('clientes_fornecedores')
-        .select('*')
-        .order('nome');
-      if (error) throw error;
-      return data as ClienteFornecedor[];
+      const PAGE = 1000;
+      const all: ClienteFornecedor[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from('clientes_fornecedores')
+          .select('*')
+          .order('nome')
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        if (!data?.length) break;
+        all.push(...(data as ClienteFornecedor[]));
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+      return all;
     },
   });
 }
