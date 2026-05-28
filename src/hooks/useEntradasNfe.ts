@@ -47,11 +47,102 @@ export function useEntradaNfe(id: string | null) {
   });
 }
 
+export interface AutoCpDuplicata {
+  numero: string;
+  vencimento: string;
+  valor: number;
+}
+
+export interface AutoCpPagamento {
+  forma_pagamento?: string | null;
+  conta_bancaria_id?: string | null;
+  ja_pago?: boolean;
+}
+
+async function gerarContasPagarAutomatico(
+  entrada: any,
+  duplicatas: AutoCpDuplicata[] | undefined,
+  pagamento: AutoCpPagamento | undefined
+) {
+  const valorTotal = Number(entrada.valor_total) || 0;
+  if (valorTotal <= 0) return;
+
+  const dataEmissao = entrada.data_emissao || entrada.data_entrada || new Date().toISOString().slice(0, 10);
+
+  // Monta lista de parcelas
+  let parcelas: Array<{ numero: string; vencimento: string; valor: number }>;
+  if (duplicatas && duplicatas.length > 0) {
+    parcelas = duplicatas.map((d, i) => ({
+      numero: `${i + 1}/${duplicatas.length}`,
+      vencimento: d.vencimento || dataEmissao,
+      valor: d.valor,
+    }));
+  } else {
+    // Sem duplicatas → cria 1 CP única (à vista ou prazo único)
+    parcelas = [{
+      numero: '1/1',
+      vencimento: dataEmissao,
+      valor: valorTotal,
+    }];
+  }
+
+  const rows = parcelas.map((p) => ({
+    granja_id: entrada.granja_id,
+    fornecedor_id: entrada.fornecedor_id || null,
+    entrada_nfe_id: entrada.id,
+    safra_id: entrada.safra_id || null,
+    socio_produtor_id: entrada.socio_produtor_id || null,
+    rateio_modo: entrada.socio_produtor_id ? 'socio_unico' : 'rateio_granja',
+    documento: entrada.numero_nfe || null,
+    parcela: p.numero,
+    data_emissao: dataEmissao,
+    data_vencimento: p.vencimento,
+    valor_original: p.valor,
+    observacoes: pagamento?.forma_pagamento ? `Forma: ${pagamento.forma_pagamento}` : null,
+  }));
+
+  const { data: criadas, error } = await supabase
+    .from('contas_pagar')
+    .insert(rows)
+    .select('id, valor_original');
+  if (error) throw error;
+
+  // Se "já pago" e forma de pagamento à vista → gera baixas
+  if (pagamento?.ja_pago && pagamento.forma_pagamento && criadas?.length) {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const baixas = criadas.map((c: any) => ({
+      conta_id: c.id,
+      data_pagamento: hoje,
+      valor_pago: Number(c.valor_original),
+      juros: 0,
+      multa: 0,
+      desconto: 0,
+      forma_pagamento: pagamento.forma_pagamento,
+      conta_bancaria: pagamento.conta_bancaria_id || null,
+      documento: entrada.numero_nfe || null,
+    }));
+    const { error: errBaixa } = await supabase.from('contas_pagar_baixas').insert(baixas);
+    if (errBaixa) throw errBaixa;
+  }
+}
+
 export function useCreateEntradaNfe() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: any) => {
-      const { itens, ...header } = input;
+      const { itens, _duplicatas, _pagamento, ...header } = input;
+      // Deriva socio_produtor_id a partir da inscricao
+      if (header.inscricao_produtor_id && !header.socio_produtor_id) {
+        const { data: insc } = await supabase
+          .from('inscricoes_produtor')
+          .select('produtor_id')
+          .eq('id', header.inscricao_produtor_id)
+          .maybeSingle();
+        if (insc?.produtor_id) header.socio_produtor_id = insc.produtor_id;
+      }
+      const socioProdutorId = header.socio_produtor_id;
+      delete header.socio_produtor_id; // não é coluna de entradas_nfe
+
       const { data, error } = await supabase
         .from('entradas_nfe')
         .insert(header)
@@ -69,10 +160,24 @@ export function useCreateEntradaNfe() {
           .insert(itensWithId);
         if (itensError) throw itensError;
       }
+
+      // Gera Contas a Pagar automaticamente
+      try {
+        await gerarContasPagarAutomatico(
+          { ...data, socio_produtor_id: socioProdutorId },
+          _duplicatas,
+          _pagamento,
+        );
+      } catch (err: any) {
+        console.error('Erro ao gerar contas a pagar automáticas:', err);
+        toast.error('Entrada criada, mas falha ao gerar Contas a Pagar: ' + err.message);
+      }
+
       return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['entradas_nfe'] });
+      qc.invalidateQueries({ queryKey: ['contas_pagar'] });
       toast.success('Entrada de NF-e criada com sucesso!');
     },
     onError: (error: any) => {
