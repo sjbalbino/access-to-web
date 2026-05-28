@@ -246,6 +246,22 @@ export function parseNfeXml(xmlString: string): NfeParsed {
     valorTotal: getNumber(icmsTot, 'vNF'),
   };
 
+  // Duplicatas (cobrança)
+  const duplicatas: NfeDuplicata[] = [];
+  const cobr = infNfe.getElementsByTagName('cobr')[0];
+  if (cobr) {
+    const dups = cobr.getElementsByTagName('dup');
+    for (let i = 0; i < dups.length; i++) {
+      const d = dups[i];
+      const numero = getTextContent(d, 'nDup') || String(i + 1).padStart(3, '0');
+      const vencimento = getTextContent(d, 'dVenc');
+      const valor = getNumber(d, 'vDup');
+      if (valor > 0) {
+        duplicatas.push({ numero, vencimento, valor });
+      }
+    }
+  }
+
   return {
     chaveAcesso,
     numero,
@@ -256,6 +272,7 @@ export function parseNfeXml(xmlString: string): NfeParsed {
     destinatario,
     itens,
     totais,
+    duplicatas,
     xmlContent: xmlString,
   };
 }
