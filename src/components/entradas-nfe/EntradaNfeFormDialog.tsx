@@ -344,12 +344,65 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     <Label>Natureza da Operação</Label>
                     <Input value={naturezaOperacao} onChange={(e) => setNaturezaOperacao(e.target.value)} disabled={isFinalizado} />
                   </div>
+                  <div>
+                    <Label>IE do Produtor *</Label>
+                    <Select value={inscricaoId} onValueChange={setInscricaoId} disabled={isFinalizado || !granjaId}>
+                      <SelectTrigger><SelectValue placeholder={granjaId ? 'Selecione...' : 'Escolha granja'} /></SelectTrigger>
+                      <SelectContent>
+                        {inscricoesFiltradas.map((i) => (
+                          <SelectItem key={i.id} value={i.id}>
+                            {(i.inscricao_estadual || i.cpf_cnpj || '—').toUpperCase()} {i.nome ? `— ${i.nome.toUpperCase()}` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Safra *</Label>
+                    <Select value={safraId} onValueChange={setSafraId} disabled={isFinalizado}>
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {safras?.map((s: any) => (<SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Forma de Pagamento {!isEdit && '*'}</Label>
+                    <Select value={formaPagamento} onValueChange={(v) => { setFormaPagamento(v); setJaPago(false); }} disabled={isFinalizado}>
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {FORMAS.map((f) => (<SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {isAvista && (
+                    <div>
+                      <Label>Conta Bancária</Label>
+                      <Select value={contaBancariaId} onValueChange={setContaBancariaId} disabled={isFinalizado}>
+                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>
+                          {(contasBancarias || []).map((c) => (
+                            <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {isAvista && !isEdit && (
+                    <div className="flex items-end">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={jaPago} onCheckedChange={(v) => setJaPago(!!v)} />
+                        Já está pago (gerar baixa automática)
+                      </label>
+                    </div>
+                  )}
                   <div className="md:col-span-3">
                     <Label>Observações</Label>
                     <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={2} disabled={isFinalizado} />
                   </div>
                 </div>
               </TabsContent>
+
 
               <TabsContent value="itens" className="p-1">
                 {!isFinalizado && (
