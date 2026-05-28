@@ -96,6 +96,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [referenceErrors, setReferenceErrors] = useState<string[]>([]);
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [clearExisting, setClearExisting] = useState(false);
+  const [upsertMode, setUpsertMode] = useState(false);
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [progress, setProgress] = useState(0);
   const [importedCount, setImportedCount] = useState(0);
@@ -104,6 +105,21 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [subCentros, setSubCentros] = useState<{ id: string; descricao: string; centro_nome: string }[]>([]);
 
   const needsContaGerencial = config.interactiveColumns?.includes('conta_gerencial_id');
+
+  // Tabelas que suportam upsert (atualizar existentes + inserir novos)
+  // baseado em índices únicos existentes no banco
+  const UPSERT_KEYS: Record<string, string> = {
+    granjas: 'tenant_id,codigo',
+    safras: 'tenant_id,codigo',
+    culturas: 'tenant_id,codigo',
+    unidades_medida: 'tenant_id,codigo',
+    contas_bancarias: 'tenant_id,codigo_legado',
+    contas_pagar: 'tenant_id,codigo_legado',
+    contas_receber: 'tenant_id,codigo_legado',
+    produtores: 'granja_id,codigo',
+  };
+  const upsertConflict = UPSERT_KEYS[config.tableName];
+  const upsertSupported = !!upsertConflict && !config.updateMode;
 
   const normalize = (s: string) =>
     s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -155,6 +171,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     setReferenceErrors([]);
     setImportErrors([]);
     setClearExisting(false);
+    setUpsertMode(false);
     setStatus('idle');
     setProgress(0);
     setImportedCount(0);
@@ -676,8 +693,16 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       // Campo preco_kg ampliado para numeric(18,6) — sem mais pré-validação de limite.
       const finalRows: Record<string, any>[] = validRows;
 
-      // Batch insert
-      const useUpsert = config.tableName === 'contas_pagar' || config.tableName === 'contas_receber';
+      // Batch insert / upsert
+      // - upsertMode (usuário marcou): atualiza existentes + insere novos
+      // - CP/CR já usam upsert nativo p/ ignorar duplicados por codigo_legado
+      const isCpCr = config.tableName === 'contas_pagar' || config.tableName === 'contas_receber';
+      const useUpsert = isCpCr || (upsertMode && !!upsertConflict);
+      const conflictTarget = upsertMode && upsertConflict
+        ? upsertConflict
+        : (isCpCr ? 'tenant_id,codigo_legado' : undefined);
+      // Em upsertMode queremos MERGE (ignoreDuplicates: false); em CP/CR padrão queremos ignorar.
+      const ignoreDuplicates = upsertMode ? false : isCpCr;
       const batchSize = useUpsert ? 500 : 100;
       const errors: string[] = [...validationErrors];
 
@@ -696,7 +721,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       // trg_rateio_cp/cr entre no caminho rápido (sem consultar produtores nem
       // inserir em lancamento_rateio_socios). Acelera a importação drasticamente.
       // O usuário pode reconfigurar o rateio da conta depois pela tela normal.
-      if (useUpsert) {
+      if (isCpCr) {
         for (const row of finalRows) {
           if (!row.rateio_modo) row.rateio_modo = 'manual';
         }
@@ -705,7 +730,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       for (let i = 0; i < finalRows.length; i += batchSize) {
         const batch = finalRows.slice(i, i + batchSize);
         const { error } = useUpsert
-          ? await supabase.from(config.tableName as any).upsert(batch as any, { onConflict: 'tenant_id,codigo_legado', ignoreDuplicates: true } as any)
+          ? await supabase.from(config.tableName as any).upsert(batch as any, { onConflict: conflictTarget, ignoreDuplicates } as any)
           : await supabase.from(config.tableName as any).insert(batch as any);
 
         if (error) {
@@ -967,11 +992,35 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           )}
 
           {status === 'previewing' && (
-            <div className="flex items-center gap-2">
-              <Switch checked={clearExisting} onCheckedChange={setClearExisting} id="clear-existing" />
-              <Label htmlFor="clear-existing" className="text-sm">
-                Limpar dados existentes de "{config.label}" antes de importar
-              </Label>
+            <div className="space-y-2">
+              {upsertSupported && (
+                <div className="flex items-start gap-2">
+                  <Switch
+                    checked={upsertMode}
+                    onCheckedChange={(v) => { setUpsertMode(v); if (v) setClearExisting(false); }}
+                    id="upsert-mode"
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="upsert-mode" className="text-sm">
+                      Atualizar existentes + inserir novos (não zerar a base)
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Registros já existentes serão atualizados pela chave <code className="font-mono">{upsertConflict}</code>; novos serão inseridos.
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={clearExisting}
+                  onCheckedChange={(v) => { setClearExisting(v); if (v) setUpsertMode(false); }}
+                  id="clear-existing"
+                  disabled={upsertMode}
+                />
+                <Label htmlFor="clear-existing" className="text-sm">
+                  Limpar dados existentes de "{config.label}" antes de importar
+                </Label>
+              </div>
             </div>
           )}
 
@@ -1032,7 +1081,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           </Button>
           {status === 'previewing' && (
             <Button onClick={handleImport} disabled={importTargetCount === 0}>
-              {config.updateMode ? 'Atualizar' : 'Importar'} {importTargetCount} registros
+              {config.updateMode ? 'Atualizar' : (upsertMode ? 'Sincronizar' : 'Importar')} {importTargetCount} registros
             </Button>
           )}
           {(status === 'done' || status === 'error') && (
