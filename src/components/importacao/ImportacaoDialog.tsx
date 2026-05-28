@@ -1081,7 +1081,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           </Button>
           {status === 'previewing' && (
             <Button onClick={handleImport} disabled={importTargetCount === 0}>
-              {config.updateMode ? 'Atualizar' : 'Importar'} {importTargetCount} registros
+              {config.updateMode ? 'Atualizar' : (upsertMode ? 'Sincronizar' : 'Importar')} {importTargetCount} registros
             </Button>
           )}
           {(status === 'done' || status === 'error') && (
