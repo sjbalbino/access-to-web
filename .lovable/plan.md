@@ -1,15 +1,40 @@
-## Problema
-No campo **"Inscrição do Sócio (Emitente)"** (formulário de NF-e), hoje aparecem TODAS as inscrições de sócios ativas, mesmo aquelas que não têm emitente NFe configurado — quando o usuário escolhe uma sem emitente, a emissão falha.
+## Diagnóstico
+A linha mostrada no select **"UMBU AGROPECUARIA S.A. - IE: 034.109.337-8 (UMBU AGROPECUARIA-JUR)"** está correta:
 
-## Correção
-Filtrar a lista para mostrar **apenas inscrições de sócios que tenham `emitente_id` preenchido** (ou seja, vinculadas a uma configuração de emitente NFe).
+| Campo | Valor exibido |
+|---|---|
+| Nome do **produtor sócio (PJ)** | UMBU AGROPECUARIA S.A. |
+| IE da inscrição | 034.109.337-8 |
+| Granja (parênteses) | UMBU AGROPECUARIA-JUR |
 
-## Alteração
-- **Arquivo:** `src/pages/NotaFiscalForm.tsx` — linha 1343
-- Trocar `inscricoesSocio.map(...)` por `inscricoesSocio.filter(i => i.emitente_id).map(...)`.
-- Manter no select a inscrição já salva mesmo que perca o emitente_id depois (padrão "Robust Select"): se `formData.inscricao_produtor_id` aponta para uma inscrição sem `emitente_id`, injetá-la na lista exibida.
-- Adicionar mensagem amigável quando a lista filtrada estiver vazia: orientar o usuário a configurar um emitente em **Emitentes NF-e** e vinculá-lo à inscrição do sócio.
+A confusão é só de **leitura do rótulo** — o usuário lê "UMBU AGROPECUARIA S.A." como sendo a granja, mas é o nome do produtor sócio (pessoa jurídica) cadastrado em `produtores` com `tipo_produtor='socio'`.
+
+Regra atual já está correta:
+- `produtor.tipo_produtor = 'socio'` ✅
+- `inscricao.ativa = true` ✅
+- `inscricao.emitente_id IS NOT NULL` ✅ (filtro adicionado no commit anterior)
+
+## Correção visual
+
+**Arquivo:** `src/pages/NotaFiscalForm.tsx` — bloco do `<SelectContent>` (linhas ~1342-1363) e `<CardDescription>` (linha 1321).
+
+Trocar o rótulo de cada item de:
+```
+{produtor.nome} - IE: {inscricao_estadual} ({granja.razao_social})
+```
+para um formato **etiquetado e em duas linhas** que deixa claro o que é cada parte:
+```
+Sócio: UMBU AGROPECUARIA S.A.
+IE 034.109.337-8 • Granja: UMBU AGROPECUARIA-JUR
+```
+
+- Linha 1: prefixo `Sócio:` + nome do produtor sócio, em negrito.
+- Linha 2 (menor, muted): `IE <inscricao_estadual> • Granja: <granja>`.
+- Manter o ★ para inscrição principal e o ⚠ para inscrição salva sem emitente.
+
+Também atualizar a `CardDescription` para deixar explícito:
+> "Selecione a inscrição do **sócio (pessoa física ou jurídica)** que vai emitir esta NF-e"
 
 ## Escopo
-- Somente esse filtro de UI. Demais comportamentos (auto-emitente, granja, dados padrão) permanecem.
-- Sem mudanças de schema/backend.
+- Apenas o rótulo do `<SelectItem>` e a descrição do card.
+- Sem mudanças no hook, no filtro ou no schema. Sem mudança de regra de negócio.
