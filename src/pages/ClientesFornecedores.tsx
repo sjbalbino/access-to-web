@@ -285,6 +285,18 @@ export default function ClientesFornecedores() {
             Lista de Clientes/Fornecedores
           </CardTitle>
           {canEdit && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-2" disabled={enriquecendo} onClick={() => handleEnriquecer(true)}>
+              {enriquecendo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              <span className="hidden sm:inline">Simular CEP/CNPJ</span>
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" disabled={enriquecendo} onClick={() => handleEnriquecer(false)}>
+              {enriquecendo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              <span className="hidden sm:inline">Enriquecer endereços</span>
+            </Button>
+          </div>
+          )}
+          {canEdit && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
               <DialogTrigger asChild>
                 <Button className="gap-2" size="sm">
