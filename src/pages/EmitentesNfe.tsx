@@ -908,7 +908,7 @@ export default function EmitentesNfe() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createEmitente.isPending || updateEmitente.isPending || !formData.granja_id}
+                  disabled={createEmitente.isPending || updateEmitente.isPending || !formData.inscricao_produtor_id}
                 >
                   {createEmitente.isPending || updateEmitente.isPending
                     ? "Salvando..."
