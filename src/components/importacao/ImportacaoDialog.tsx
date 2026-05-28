@@ -96,6 +96,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [referenceErrors, setReferenceErrors] = useState<string[]>([]);
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [clearExisting, setClearExisting] = useState(false);
+  const [upsertMode, setUpsertMode] = useState(false);
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [progress, setProgress] = useState(0);
   const [importedCount, setImportedCount] = useState(0);
