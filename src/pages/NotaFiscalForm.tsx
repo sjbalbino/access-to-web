@@ -290,13 +290,13 @@ export default function NotaFiscalForm() {
     cclass_trib_cbs: "",
   });
 
-  // Buscar emitente automaticamente pela granja_id da inscrição selecionada ou pelo ID já salvo
+  // Resolver emitente pela inscrição do produtor/sócio (vinculado por CPF/CNPJ).
+  // Fallback: emitente_id já salvo na nota (ex.: notas de entrada criadas automaticamente).
   const selectedInscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
-  const emitenteFromInscricao = selectedInscricao 
-    ? emitentes.find((e) => e.granja_id === selectedInscricao.granja_id && e.ativo)
+  const emitenteFromInscricao = selectedInscricao?.emitente_id
+    ? emitentes.find((e) => e.id === selectedInscricao.emitente_id)
     : null;
-  // Se a nota já tem emitente_id salvo (ex: notas de entrada criadas automaticamente), usar esse
-  const emitenteFromId = formData.emitente_id 
+  const emitenteFromId = formData.emitente_id
     ? emitentes.find((e) => e.id === formData.emitente_id)
     : null;
   const autoEmitente = emitenteFromInscricao || emitenteFromId;
@@ -512,28 +512,19 @@ export default function NotaFiscalForm() {
     }
   }, [formData.cfop_id, cfops]);
 
-  // Auto-fill emitente_id and granja_id from inscrição selecionada
+  // Auto-fill emitente_id e granja_id a partir da inscrição selecionada (vínculo por inscricao.emitente_id)
   useEffect(() => {
     if (formData.inscricao_produtor_id) {
       const inscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
-      if (inscricao?.granja_id) {
-        const emitenteEncontrado = emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo);
-        if (emitenteEncontrado) {
-          setFormData((prev) => ({
-            ...prev,
-            granja_id: inscricao.granja_id || "",
-            emitente_id: emitenteEncontrado.id,
-          }));
-        } else {
-          setFormData((prev) => ({
-            ...prev,
-            granja_id: inscricao.granja_id || "",
-            emitente_id: "",
-          }));
-        }
+      if (inscricao) {
+        setFormData((prev) => ({
+          ...prev,
+          granja_id: inscricao.granja_id || prev.granja_id || "",
+          emitente_id: inscricao.emitente_id || "",
+        }));
       }
     }
-  }, [formData.inscricao_produtor_id, inscricoesSocio, emitentes]);
+  }, [formData.inscricao_produtor_id, inscricoesSocio]);
 
   // Calculate item total
   useEffect(() => {
@@ -643,7 +634,7 @@ export default function NotaFiscalForm() {
     if (isAutoSaving) return;
     
     const inscricao = inscricoesSocio.find((i) => i.id === data.inscricao_produtor_id);
-    const emitenteAuto = inscricao ? emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo) : null;
+    const emitenteAuto = inscricao?.emitente_id ? emitentes.find((e) => e.id === inscricao.emitente_id) : null;
     const granjaId = data.granja_id || inscricao?.granja_id || "";
 
     if (!data.inscricao_produtor_id || !emitenteAuto) return;
@@ -1372,9 +1363,17 @@ export default function NotaFiscalForm() {
         {(formData.inscricao_produtor_id || formData.emitente_id) && (
           <div className="p-3 rounded-md bg-muted/50 border">
             {autoEmitente ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span>Configuração API encontrada: <strong>{autoEmitente.granja?.nome_fantasia || autoEmitente.granja?.razao_social}</strong></span>
+                <span>
+                  Emitente NF-e vinculado:{" "}
+                  <strong>
+                    {selectedInscricao?.produtores?.nome || autoEmitente.granja?.razao_social}
+                  </strong>
+                  {selectedInscricao?.cpf_cnpj && (
+                    <> — {(selectedInscricao.cpf_cnpj.replace(/\D/g, "").length > 11 ? "CNPJ" : "CPF")}: <strong>{selectedInscricao.cpf_cnpj}</strong></>
+                  )}
+                </span>
                 <Badge variant={autoEmitente.ambiente === 1 ? "default" : "secondary"} className="ml-2">
                   {autoEmitente.ambiente === 1 ? "Produção" : "Homologação"}
                 </Badge>
@@ -1382,7 +1381,7 @@ export default function NotaFiscalForm() {
             ) : (
               <div className="flex items-center gap-2 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4" />
-                <span>Nenhuma configuração de API encontrada para a granja desta inscrição. Cadastre um emitente NF-e.</span>
+                <span>Esta inscrição não tem Emitente NF-e vinculado. Abra o cadastro da inscrição e vincule um emitente (CPF do sócio para PF ou CNPJ para PJ).</span>
               </div>
             )}
           </div>

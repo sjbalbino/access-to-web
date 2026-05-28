@@ -34,28 +34,14 @@ export interface InscricaoSocio {
 }
 
 /**
- * Hook para buscar inscrições de produtores do tipo "sócio".
- * Usado para selecionar o emitente de NF-e no formulário de notas fiscais.
+ * Hook para buscar inscrições de produtores que podem ser emitentes de NF-e.
+ * Retorna todas as inscrições ativas; a UI filtra por `emitente_id` para mostrar
+ * apenas as que têm emitente NF-e vinculado (pelo CPF/CNPJ do produtor/sócio).
  */
 export function useInscricoesSocio() {
   return useQuery({
-    queryKey: ['inscricoes_socio'],
+    queryKey: ['inscricoes_socio_emitentes'],
     queryFn: async () => {
-      // Primeiro buscar os produtores que são sócios
-      const { data: produtoresSocios, error: errorProdutores } = await supabase
-        .from('produtores')
-        .select('id')
-        .eq('tipo_produtor', 'socio');
-      
-      if (errorProdutores) throw errorProdutores;
-      
-      const produtorIds = produtoresSocios?.map(p => p.id) || [];
-      
-      if (produtorIds.length === 0) {
-        return [] as InscricaoSocio[];
-      }
-      
-      // Buscar inscrições desses produtores
       const { data, error } = await supabase
         .from('inscricoes_produtor')
         .select(`
@@ -81,10 +67,9 @@ export function useInscricoesSocio() {
           produtores:produtor_id(id, nome, tipo_produtor),
           granjas:granja_id(id, razao_social, nome_fantasia)
         `)
-        .in('produtor_id', produtorIds)
         .eq('ativa', true)
         .order('inscricao_estadual');
-      
+
       if (error) throw error;
       return (data || []) as InscricaoSocio[];
     },
