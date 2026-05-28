@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Package, Globe } from "lucide-react";
+import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Globe } from "lucide-react";
 import { useEntradasNfe, useDeleteEntradaNfe, useFinalizarEntrada } from "@/hooks/useEntradasNfe";
 import { useGranjas } from "@/hooks/useGranjas";
+import { useSafras } from "@/hooks/useSafras";
+import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { formatNumber } from "@/lib/formatters";
 import { EntradaNfeFormDialog } from "@/components/entradas-nfe/EntradaNfeFormDialog";
 import { ImportarXmlDialog } from "@/components/entradas-nfe/ImportarXmlDialog";
@@ -38,6 +41,8 @@ const statusVariants: Record<string, "default" | "secondary" | "destructive" | "
 
 export default function EntradasNfe() {
   const [granjaId, setGranjaId] = useState<string>('all');
+  const [safraId, setSafraId] = useState<string>('all');
+  const [inscricaoId, setInscricaoId] = useState<string>('all');
   const [busca, setBusca] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [xmlOpen, setXmlOpen] = useState(false);
@@ -46,9 +51,26 @@ export default function EntradasNfe() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: granjas } = useGranjas();
-  const { data: entradas, isLoading } = useEntradasNfe(granjaId === 'all' ? null : granjaId);
+  const { data: safras } = useSafras();
+  const { data: inscricoes } = useInscricoesCompletas();
+  const { data: entradas, isLoading } = useEntradasNfe(
+    granjaId === 'all' ? null : granjaId,
+    safraId === 'all' ? null : safraId,
+    inscricaoId === 'all' ? null : inscricaoId
+  );
   const deleteMutation = useDeleteEntradaNfe();
   const finalizarMutation = useFinalizarEntrada();
+
+  const safraOptions = (safras || []).map((s: any) => ({
+    value: s.id,
+    label: s.nome,
+  }));
+
+  const inscricaoOptions = (inscricoes || []).map((i: any) => ({
+    value: i.id,
+    label: `${i.nome || ''} (IE: ${i.inscricao_estadual || '-'})`.trim(),
+    sublabel: i.granjas?.razao_social || '',
+  }));
 
   const filtered = (entradas || []).filter((e: any) => {
     if (!busca) return true;
@@ -92,6 +114,28 @@ export default function EntradasNfe() {
               </SelectContent>
             </Select>
           </div>
+          <div className="w-56">
+            <label className="text-sm font-medium mb-1 block">Safra</label>
+            <ComboboxFilter
+              value={safraId === 'all' ? '' : safraId}
+              onValueChange={(v) => setSafraId(v || 'all')}
+              options={safraOptions}
+              placeholder="Todas"
+              searchPlaceholder="Buscar safra..."
+              allLabel="Todas"
+            />
+          </div>
+          <div className="w-72">
+            <label className="text-sm font-medium mb-1 block">IE do Produtor</label>
+            <ComboboxFilter
+              value={inscricaoId === 'all' ? '' : inscricaoId}
+              onValueChange={(v) => setInscricaoId(v || 'all')}
+              options={inscricaoOptions}
+              placeholder="Todas"
+              searchPlaceholder="Buscar inscrição..."
+              allLabel="Todas"
+            />
+          </div>
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Buscar por número, fornecedor ou chave..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-10" />
@@ -105,6 +149,8 @@ export default function EntradasNfe() {
                 <TableHead className="whitespace-nowrap">Nº NF-e</TableHead>
                 <TableHead className="whitespace-nowrap">Série</TableHead>
                 <TableHead className="whitespace-nowrap">Fornecedor</TableHead>
+                <TableHead className="whitespace-nowrap">Safra</TableHead>
+                <TableHead className="whitespace-nowrap">IE Produtor</TableHead>
                 <TableHead className="whitespace-nowrap">Data Emissão</TableHead>
                 <TableHead className="whitespace-nowrap">Data Entrada</TableHead>
                 <TableHead className="whitespace-nowrap text-right">Valor Total</TableHead>
@@ -115,15 +161,17 @@ export default function EntradasNfe() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-8">Carregando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center py-8">Carregando...</TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhuma entrada encontrada</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Nenhuma entrada encontrada</TableCell></TableRow>
               ) : (
                 filtered.map((e: any) => (
                   <TableRow key={e.id}>
                     <TableCell className="font-medium">{e.numero_nfe || '-'}</TableCell>
                     <TableCell>{e.serie || '-'}</TableCell>
                     <TableCell>{e.fornecedor?.nome || '-'}</TableCell>
+                    <TableCell>{e.safra?.nome || '-'}</TableCell>
+                    <TableCell>{e.inscricao?.inscricao_estadual ? `IE ${e.inscricao.inscricao_estadual}` : (e.inscricao?.nome || '-')}</TableCell>
                     <TableCell>{e.data_emissao ? new Date(e.data_emissao + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</TableCell>
                     <TableCell>{e.data_entrada ? new Date(e.data_entrada + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</TableCell>
                     <TableCell className="text-right">{formatNumber(e.valor_total || 0)}</TableCell>

@@ -2,19 +2,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export function useEntradasNfe(granjaId?: string | null) {
+export function useEntradasNfe(granjaId?: string | null, safraId?: string | null, inscricaoId?: string | null) {
   return useQuery({
-    queryKey: ['entradas_nfe', granjaId],
+    queryKey: ['entradas_nfe', granjaId, safraId, inscricaoId],
     queryFn: async () => {
       let query = supabase
         .from('entradas_nfe')
         .select(`
           *,
           fornecedor:fornecedor_id(id, nome, cpf_cnpj),
-          granja:granja_id(id, razao_social)
+          granja:granja_id(id, razao_social),
+          safra:safra_id(id, nome),
+          inscricao:inscricao_produtor_id(id, nome, inscricao_estadual)
         `)
         .order('data_entrada', { ascending: false });
       if (granjaId) query = query.eq('granja_id', granjaId);
+      if (safraId) query = query.eq('safra_id', safraId);
+      if (inscricaoId) query = query.eq('inscricao_produtor_id', inscricaoId);
       const { data, error } = await query;
       if (error) throw error;
       return data;
