@@ -381,6 +381,15 @@ export default function Granjas() {
                 value={formData.email || ""}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
+            <div className="space-y-2">
+              <Label htmlFor="total_hectares">Total de Hectares</Label>
+              <Input
+                id="total_hectares"
+                type="number"
+                value={formData.total_hectares || 0}
+                onChange={(e) => setFormData({ ...formData, total_hectares: parseFloat(e.target.value) || 0 })}
+              />
+            </div>
             <div className="flex items-center gap-2 md:col-span-2">
               <Switch
                 checked={formData.ativa ?? true}
