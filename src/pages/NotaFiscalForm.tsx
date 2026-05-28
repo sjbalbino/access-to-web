@@ -290,13 +290,13 @@ export default function NotaFiscalForm() {
     cclass_trib_cbs: "",
   });
 
-  // Buscar emitente automaticamente pela granja_id da inscrição selecionada ou pelo ID já salvo
+  // Resolver emitente pela inscrição do produtor/sócio (vinculado por CPF/CNPJ).
+  // Fallback: emitente_id já salvo na nota (ex.: notas de entrada criadas automaticamente).
   const selectedInscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
-  const emitenteFromInscricao = selectedInscricao 
-    ? emitentes.find((e) => e.granja_id === selectedInscricao.granja_id && e.ativo)
+  const emitenteFromInscricao = selectedInscricao?.emitente_id
+    ? emitentes.find((e) => e.id === selectedInscricao.emitente_id)
     : null;
-  // Se a nota já tem emitente_id salvo (ex: notas de entrada criadas automaticamente), usar esse
-  const emitenteFromId = formData.emitente_id 
+  const emitenteFromId = formData.emitente_id
     ? emitentes.find((e) => e.id === formData.emitente_id)
     : null;
   const autoEmitente = emitenteFromInscricao || emitenteFromId;
