@@ -79,7 +79,7 @@ export function useRemessasVenda(contratoId: string | undefined) {
           nota_fiscal:notas_fiscais(id, numero, status, chave_acesso)
         `)
         .eq("contrato_venda_id", contratoId)
-        .order("codigo", { ascending: true });
+        .order("data_remessa", { ascending: false });
 
       if (error) throw error;
       return data as RemessaVenda[];
