@@ -30,7 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, Building2, AlertCircle, ShieldCheck, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2, AlertCircle, ShieldCheck, Loader2, Eye, EyeOff } from "lucide-react";
 import { useEmitentesNfe, EmitenteNfe, EmitenteNfeInsert } from "@/hooks/useEmitentesNfe";
 import { useEmitenteCredentials, useUpsertEmitenteCredentials } from "@/hooks/useEmitenteCredentials";
 import { useFocusNfeVerificarEmpresa } from "@/hooks/useFocusNfeVerificarEmpresa";
@@ -86,6 +86,7 @@ export default function EmitentesNfe() {
   const credentialsQuery = useEmitenteCredentials(selectedEmitente?.id ?? null);
   const verificarEmpresa = useFocusNfeVerificarEmpresa();
   const [verificandoId, setVerificandoId] = useState<string | null>(null);
+  const [showToken, setShowToken] = useState(false);
 
   const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
     setVerificandoId(emitente.id);
@@ -349,8 +350,14 @@ export default function EmitentesNfe() {
                   <TableRow key={emitente.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block" />
-                        <span className="max-w-[150px] truncate">{emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "-"}</span>
+                        <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block flex-shrink-0" />
+                        <span>
+                          {emitente.granja
+                            ? emitente.granja.nome_fantasia
+                              ? `${emitente.granja.razao_social} (${emitente.granja.nome_fantasia})`
+                              : emitente.granja.razao_social
+                            : "-"}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
@@ -754,15 +761,28 @@ export default function EmitentesNfe() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="api_access_token">Token de Acesso</Label>
-                      <Input
-                        id="api_access_token"
-                        type="password"
-                        value={credentials.api_access_token || ""}
-                        onChange={(e) =>
-                          setCredentials({ ...credentials, api_access_token: e.target.value })
-                        }
-                        placeholder="Token da API Focus NFe"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="api_access_token"
+                          type={showToken ? "text" : "password"}
+                          value={credentials.api_access_token || ""}
+                          onChange={(e) =>
+                            setCredentials({ ...credentials, api_access_token: e.target.value })
+                          }
+                          placeholder="Token da API Focus NFe"
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full w-10"
+                          onClick={() => setShowToken((v) => !v)}
+                          title={showToken ? "Ocultar token" : "Mostrar token"}
+                        >
+                          {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
