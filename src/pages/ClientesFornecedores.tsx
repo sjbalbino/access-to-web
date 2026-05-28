@@ -38,8 +38,39 @@ export default function ClientesFornecedores() {
   const [filtroCidade, setFiltroCidade] = useState('');
   const [filtroAtivo, setFiltroAtivo] = useState('ativo');
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const itensPorPagina = 20;
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [enriquecendo, setEnriquecendo] = useState(false);
+  const [resultadoEnriquecimento, setResultadoEnriquecimento] = useState<any>(null);
+  const queryClient = useQueryClient();
 
+  const handleEnriquecer = async (dryRun: boolean) => {
+    const semCidade = (clientesFornecedores || []).filter(c => !c.cidade || c.cidade === '').length;
+    const msg = dryRun
+      ? `Simular enriquecimento de ${semCidade} registro(s) sem cidade? Nada será gravado.`
+      : `Enriquecer ${semCidade} registro(s) sem cidade via CEP/CNPJ? Isso pode levar alguns minutos.`;
+    if (!confirm(msg)) return;
+    setEnriquecendo(true);
+    setResultadoEnriquecimento(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('enriquecer-clientes-fornecedores', {
+        body: { dry_run: dryRun },
+      });
+      if (error) throw error;
+      setResultadoEnriquecimento(data);
+      const s = data?.stats || {};
+      toast.success(
+        `${dryRun ? 'Simulação' : 'Enriquecimento'} concluído: ${s.atualizados || 0} atualizado(s) (CEP: ${s.via_cep || 0}, CNPJ: ${s.via_cnpj || 0})`
+      );
+      if (!dryRun) {
+        queryClient.invalidateQueries({ queryKey: ['clientes_fornecedores'] });
+      }
+    } catch (e: any) {
+      toast.error('Erro: ' + (e.message || e));
+    } finally {
+      setEnriquecendo(false);
+    }
+  };
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
 
