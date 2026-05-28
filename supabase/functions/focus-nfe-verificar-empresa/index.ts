@@ -102,6 +102,7 @@ serve(async (req) => {
     try { body = JSON.parse(text); } catch { /* não-json */ }
 
     const ambienteLabel = ambiente === 2 ? "homologação" : "produção";
+    const tokenPrefix = `${token.slice(0, 6)}…(${token.length} chars)`;
 
     // 404 → empresa não cadastrada na Focus
     if (resp.status === 404) {
