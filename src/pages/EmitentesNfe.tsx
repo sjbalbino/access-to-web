@@ -352,7 +352,7 @@ export default function EmitentesNfe() {
           <div className="text-sm text-muted-foreground">
             {emitentes.length} emitente(s) configurado(s)
           </div>
-          {canEdit && granjasDisponiveis.length > 0 && (
+          {canEdit && inscricoesDisponiveis.length > 0 && (
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Emitente
