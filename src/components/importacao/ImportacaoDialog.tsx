@@ -992,11 +992,35 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           )}
 
           {status === 'previewing' && (
-            <div className="flex items-center gap-2">
-              <Switch checked={clearExisting} onCheckedChange={setClearExisting} id="clear-existing" />
-              <Label htmlFor="clear-existing" className="text-sm">
-                Limpar dados existentes de "{config.label}" antes de importar
-              </Label>
+            <div className="space-y-2">
+              {upsertSupported && (
+                <div className="flex items-start gap-2">
+                  <Switch
+                    checked={upsertMode}
+                    onCheckedChange={(v) => { setUpsertMode(v); if (v) setClearExisting(false); }}
+                    id="upsert-mode"
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="upsert-mode" className="text-sm">
+                      Atualizar existentes + inserir novos (não zerar a base)
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Registros já existentes serão atualizados pela chave <code className="font-mono">{upsertConflict}</code>; novos serão inseridos.
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={clearExisting}
+                  onCheckedChange={(v) => { setClearExisting(v); if (v) setUpsertMode(false); }}
+                  id="clear-existing"
+                  disabled={upsertMode}
+                />
+                <Label htmlFor="clear-existing" className="text-sm">
+                  Limpar dados existentes de "{config.label}" antes de importar
+                </Label>
+              </div>
             </div>
           )}
 
