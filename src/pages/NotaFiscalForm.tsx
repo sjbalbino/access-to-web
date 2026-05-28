@@ -1318,7 +1318,7 @@ export default function NotaFiscalForm() {
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Emitente</CardTitle>
         <CardDescription>
-          Selecione a inscrição do sócio como emitente fiscal
+          Selecione a inscrição do <strong>sócio (pessoa física ou jurídica)</strong> que vai emitir esta NF-e
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
