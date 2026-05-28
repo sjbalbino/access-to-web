@@ -51,6 +51,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
+import { useFocusNfeVerificarEmpresa } from "@/hooks/useFocusNfeVerificarEmpresa";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { CurrencyInput, formatBrazilianNumber } from "@/components/ui/currency-input";
 import { QuantityInput, formatBrazilianQuantity } from "@/components/ui/quantity-input";
