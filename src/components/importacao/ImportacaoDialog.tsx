@@ -156,6 +156,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     setReferenceErrors([]);
     setImportErrors([]);
     setClearExisting(false);
+    setUpsertMode(false);
     setStatus('idle');
     setProgress(0);
     setImportedCount(0);
