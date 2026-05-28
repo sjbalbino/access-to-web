@@ -1,27 +1,32 @@
 ## Objetivo
 
-Hoje a consulta MD-e (Manifesto do Destinatário) é feita por **Granja**, mas a granja não tem mais CNPJ próprio. Quem possui CNPJ e emite NF-e são as **Inscrições dos Produtores** (sócios). Por isso a consulta de NF-es destinadas deve ser feita por **Inscrição**, usando o CNPJ daquela inscrição e o emitente vinculado a ela.
+Permitir que a consulta MD-e funcione tanto para inscrições com **CNPJ** (pessoa jurídica) quanto com **CPF** (pessoa física), usando o documento correto para cada caso.
+
+## Contexto
+
+Hoje a edge function `focus-nfe-mde` envia sempre o parâmetro `cnpj=` para a Focus NFe, mesmo quando a inscrição selecionada é de pessoa física. A Focus NFe expõe parâmetros distintos no endpoint `/v2/nfes_recebidas`:
+- `cnpj=<14 dígitos>` para pessoa jurídica
+- `cpf=<11 dígitos>` para pessoa física
 
 ## Mudanças
 
-### 1. UI — `src/components/entradas-nfe/MdeDialog.tsx`
-- Substituir o seletor **Granja** por um seletor **Inscrição do Produtor**.
-- Listar apenas inscrições `ativa = true` que tenham `emitente_id` preenchido (ou seja, inscrições aptas a emitir NF-e).
-- Rótulo do item: `NOME DA INSCRIÇÃO — CPF/CNPJ` (padrão do sistema).
-- Enviar `inscricaoId` para a edge function nas ações `consultar`, `manifestar`, `download_xml`, `download_danfe` e na importação.
+### 1. Edge function — `supabase/functions/focus-nfe-mde/index.ts`
+- Em `getInscricaoContext`, retornar também o **tipo do documento** detectado pelo tamanho dos dígitos:
+  - 11 dígitos → `cpf`
+  - 14 dígitos → `cnpj`
+  - Outro tamanho → erro "CPF/CNPJ inválido na inscrição".
+- Na ação `consultar`, montar a URL com o parâmetro correto:
+  - PJ: `/v2/nfes_recebidas?cnpj=<doc>&versao=<v>`
+  - PF: `/v2/nfes_recebidas?cpf=<doc>&versao=<v>`
+- Demais ações (`manifestar`, `download_xml`, `download_danfe`) usam a chave da NF-e e não mudam.
 
-### 2. Hook — `src/hooks/useMde.ts`
-- Trocar parâmetro `granjaId` por `inscricaoId` em todas as funções (`consultarDestinatarias`, `manifestar`, `downloadXml`, `downloadDanfe`).
+### 2. UI — `src/components/entradas-nfe/MdeDialog.tsx`
+- Manter o seletor de Inscrição (com CPF ou CNPJ formatado no rótulo, já implementado).
+- Ajustar o filtro `inscricoesEmissoras` para aceitar documentos com 11 (CPF) **ou** 14 dígitos (CNPJ) — atualmente já aceita ≥ 11, mas vamos travar exatamente em 11 ou 14 para evitar lixo.
 
-### 3. Edge function — `supabase/functions/focus-nfe-mde/index.ts`
-- Aceitar `inscricaoId` no body (em vez de `granjaId`).
-- `getCredentials(inscricaoId)`: buscar `emitente_id` em `inscricoes_produtor`, e a partir dele obter `ambiente` (em `emitentes_nfe`) e `api_access_token` (em `emitentes_nfe_credentials`).
-- `getInscricaoCnpj(inscricaoId)`: buscar `cpf_cnpj` diretamente em `inscricoes_produtor` (sem fallback para granja).
-- Mensagens de erro claras: "Inscrição sem emitente NF-e configurado" / "Inscrição sem CPF/CNPJ".
-
-### 4. Importação de XML (MdeDialog → Entradas NF-e)
-- Hoje o header da entrada salva `granja_id`. Vamos continuar salvando `granja_id` derivado da inscrição (`inscricoes_produtor.granja_id`), para manter compatibilidade com o restante do módulo Entradas NF-e. Nenhuma mudança de schema necessária.
+## Observação importante (limitação real da Focus NFe/SEFAZ)
+O serviço de Manifesto do Destinatário da SEFAZ é projetado primariamente para destinatários **pessoa jurídica**. Para CPF, o retorno depende da disponibilização pelo emitente/SEFAZ e pode vir vazio mesmo com a consulta correta. A mudança garante que a chamada é feita com o parâmetro certo; resultados em PF podem ser limitados pela própria SEFAZ.
 
 ## Fora de escopo
-- Nenhuma alteração no banco de dados.
-- Demais módulos que usam emitente por granja (emissão de NF-e de venda etc.) continuam como estão.
+- Sem alterações no banco de dados.
+- Sem alterações em outros módulos (emissão de NF-e de venda, etc.).
