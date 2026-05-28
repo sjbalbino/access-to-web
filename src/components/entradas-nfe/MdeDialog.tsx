@@ -1,16 +1,17 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Download, FileText, Check, X, HelpCircle, FileDown, Loader2, Import } from "lucide-react";
-import { useGranjas } from "@/hooks/useGranjas";
+import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import } from "lucide-react";
+import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useMde, type NfeRecebida } from "@/hooks/useMde";
 import { formatNumber } from "@/lib/formatters";
 import { parseNfeXml } from "@/lib/nfeXmlParser";
 import { useCreateEntradaNfe } from "@/hooks/useEntradasNfe";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MdeDialogProps {
   open: boolean;
@@ -31,32 +32,63 @@ const manifestacaoVariants: Record<string, "default" | "secondary" | "destructiv
   nao_realizada: "secondary",
 };
 
+function formatCpfCnpj(value?: string | null) {
+  if (!value) return "";
+  const v = value.replace(/\D/g, "");
+  if (v.length === 14) return v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+  if (v.length === 11) return v.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+  return v;
+}
+
 export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
-  const [granjaId, setGranjaId] = useState<string>("");
-  const { data: granjas } = useGranjas();
+  const [inscricaoId, setInscricaoId] = useState<string>("");
+  const { data: inscricoes } = useInscricoesCompletas();
   const { isLoading, nfesRecebidas, consultarDestinatarias, manifestar, downloadXml, downloadDanfe } = useMde();
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
 
+  const inscricoesEmissoras = useMemo(() => {
+    return (inscricoes || []).filter(
+      (i: any) => i.ativa && i.emitente_id && (i.cpf_cnpj || "").replace(/\D/g, "").length >= 11
+    );
+  }, [inscricoes]);
+
+  const inscricaoSelecionada = useMemo(
+    () => inscricoesEmissoras.find((i: any) => i.id === inscricaoId),
+    [inscricoesEmissoras, inscricaoId]
+  );
+
   const handleConsultar = () => {
-    if (!granjaId) return;
-    consultarDestinatarias(granjaId);
+    if (!inscricaoId) return;
+    consultarDestinatarias(inscricaoId);
   };
 
   const handleManifestar = async (chave: string, tipo: string) => {
-    if (!granjaId) return;
-    const ok = await manifestar(granjaId, chave, tipo);
-    if (ok) consultarDestinatarias(granjaId);
+    if (!inscricaoId) return;
+    const ok = await manifestar(inscricaoId, chave, tipo);
+    if (ok) consultarDestinatarias(inscricaoId);
   };
 
   const handleImportar = async (nfe: NfeRecebida) => {
-    if (!granjaId) return;
+    if (!inscricaoId) return;
     setImportingChave(nfe.chave);
     try {
-      const xmlText = await downloadXml(granjaId, nfe.chave);
+      const xmlText = await downloadXml(inscricaoId, nfe.chave);
       if (!xmlText) return;
 
       const parsed = parseNfeXml(xmlText);
+
+      // Buscar granja_id a partir da inscrição
+      const { data: insc } = await supabase
+        .from("inscricoes_produtor")
+        .select("granja_id")
+        .eq("id", inscricaoId)
+        .maybeSingle();
+
+      const granjaId = insc?.granja_id;
+      if (!granjaId) {
+        throw new Error("Inscrição sem granja vinculada.");
+      }
 
       const header: Record<string, unknown> = {
         granja_id: granjaId,
@@ -125,23 +157,38 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         <DialogHeader>
           <DialogTitle>Manifesto do Destinatário (MD-e)</DialogTitle>
           <DialogDescription>
-            Consulte NF-es emitidas contra o CNPJ da granja, manifeste e importe o XML.
+            Consulte NF-es emitidas contra o CNPJ da inscrição do produtor (sócio emissor), manifeste e importe o XML.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-wrap gap-4 items-end mb-4">
-          <div className="w-64">
-            <label className="text-sm font-medium mb-1 block">Granja</label>
-            <Select value={granjaId} onValueChange={setGranjaId}>
-              <SelectTrigger><SelectValue placeholder="Selecione a granja" /></SelectTrigger>
+          <div className="w-96">
+            <label className="text-sm font-medium mb-1 block">Inscrição do Produtor</label>
+            <Select value={inscricaoId || undefined} onValueChange={setInscricaoId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a inscrição emissora" />
+              </SelectTrigger>
               <SelectContent>
-                {granjas?.map((g: any) => (
-                  <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
-                ))}
+                {inscricoesEmissoras.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    Nenhuma inscrição com emitente NF-e configurado.
+                  </div>
+                ) : (
+                  inscricoesEmissoras.map((i: any) => (
+                    <SelectItem key={i.id} value={i.id}>
+                      {(i.nome || "").toUpperCase()} — {formatCpfCnpj(i.cpf_cnpj)}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
+            {inscricaoSelecionada?.granjas?.razao_social && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Granja: {inscricaoSelecionada.granjas.razao_social}
+              </p>
+            )}
           </div>
-          <Button onClick={handleConsultar} disabled={!granjaId || isLoading}>
+          <Button onClick={handleConsultar} disabled={!inscricaoId || isLoading}>
             {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
             Consultar SEFAZ
           </Button>
@@ -165,7 +212,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
               {nfesRecebidas.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    {isLoading ? "Consultando SEFAZ..." : "Selecione uma granja e clique em Consultar"}
+                    {isLoading ? "Consultando SEFAZ..." : "Selecione uma inscrição e clique em Consultar"}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -221,7 +268,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                           variant="ghost"
                           title="Baixar XML"
                           disabled={isLoading}
-                          onClick={() => downloadXml(granjaId, nfe.chave)}
+                          onClick={() => downloadXml(inscricaoId, nfe.chave)}
                         >
                           <Download className="h-4 w-4" />
                         </Button>
@@ -231,7 +278,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                           variant="ghost"
                           title="Baixar DANFe"
                           disabled={isLoading}
-                          onClick={() => downloadDanfe(granjaId, nfe.chave)}
+                          onClick={() => downloadDanfe(inscricaoId, nfe.chave)}
                         >
                           <FileText className="h-4 w-4" />
                         </Button>
