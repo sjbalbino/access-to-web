@@ -15,24 +15,35 @@ const getBaseUrl = (ambiente: number | null | undefined) => {
     : "https://api.focusnfe.com.br";
 };
 
-async function getEmitenteCredentials(granjaId: string) {
+async function getInscricaoContext(inscricaoId: string) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  const { data: emitente, error } = await supabase
-    .from("emitentes_nfe")
-    .select("id, ambiente")
-    .eq("granja_id", granjaId)
+  const { data: insc, error } = await supabase
+    .from("inscricoes_produtor")
+    .select("cpf_cnpj, emitente_id, granja_id")
+    .eq("id", inscricaoId)
     .maybeSingle();
 
-  if (error) throw new Error("Erro ao buscar emitente: " + error.message);
-  if (!emitente?.id) {
-    throw new Error("Emitente não encontrado para esta granja.");
-  }
+  if (error) throw new Error("Erro ao buscar inscrição: " + error.message);
+  if (!insc) throw new Error("Inscrição não encontrada.");
+  if (!insc.emitente_id) throw new Error("Inscrição sem emitente NF-e configurado.");
+
+  const cnpj = (insc.cpf_cnpj || "").replace(/\D/g, "");
+  if (!cnpj) throw new Error("Inscrição sem CPF/CNPJ cadastrado.");
+
+  const { data: emitente, error: emErr } = await supabase
+    .from("emitentes_nfe")
+    .select("ambiente")
+    .eq("id", insc.emitente_id)
+    .maybeSingle();
+
+  if (emErr) throw new Error("Erro ao buscar emitente: " + emErr.message);
+  if (!emitente) throw new Error("Emitente vinculado à inscrição não encontrado.");
 
   const { data: cred, error: credErr } = await supabase
     .from("emitentes_nfe_credentials")
     .select("api_access_token")
-    .eq("emitente_id", emitente.id)
+    .eq("emitente_id", insc.emitente_id)
     .maybeSingle();
 
   if (credErr) throw new Error("Erro ao buscar credenciais: " + credErr.message);
@@ -43,25 +54,8 @@ async function getEmitenteCredentials(granjaId: string) {
   return {
     token: cred.api_access_token,
     ambiente: emitente.ambiente,
+    cnpj,
   };
-}
-
-async function getGranjaCnpj(granjaId: string) {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-  const { data: insc, error } = await supabase
-    .from("inscricoes_produtor")
-    .select("cpf_cnpj")
-    .eq("granja_id", granjaId)
-    .eq("is_emitente_principal", true)
-    .maybeSingle();
-
-  if (error) throw new Error("Erro ao buscar inscrição emitente principal: " + error.message);
-
-  const cnpj = (insc?.cpf_cnpj || "").replace(/\D/g, "");
-  if (!cnpj) throw new Error("Inscrição emitente principal sem CPF/CNPJ. Verifique o cadastro da inscrição da granja.");
-
-  return cnpj;
 }
 
 serve(async (req) => {
@@ -70,12 +64,12 @@ serve(async (req) => {
   }
 
   try {
-    const { action, granjaId, chave, tipo, versao } = await req.json();
+    const { action, inscricaoId, chave, tipo, versao } = await req.json();
 
-    if (!granjaId) throw new Error("granjaId é obrigatório");
+    if (!inscricaoId) throw new Error("inscricaoId é obrigatório");
     if (!action) throw new Error("action é obrigatório");
 
-    const { token, ambiente } = await getEmitenteCredentials(granjaId);
+    const { token, ambiente, cnpj } = await getInscricaoContext(inscricaoId);
     const baseUrl = getBaseUrl(ambiente);
     const authHeader = `Basic ${btoa(`${token}:`)}`;
 
@@ -83,8 +77,6 @@ serve(async (req) => {
 
     switch (action) {
       case "consultar": {
-        const cnpj = await getGranjaCnpj(granjaId);
-        // versao=1 retorna resumos, versao=2 retorna completas (se disponível)
         const v = versao || 1;
         const url = `${baseUrl}/v2/nfes_recebidas?cnpj=${cnpj}&versao=${v}`;
         console.log("MD-e Consultar:", url);
