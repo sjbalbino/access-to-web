@@ -48,9 +48,11 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [importingChave, setImportingChave] = useState<string | null>(null);
 
   const inscricoesEmissoras = useMemo(() => {
-    return (inscricoes || []).filter(
-      (i: any) => i.ativa && i.emitente_id && (i.cpf_cnpj || "").replace(/\D/g, "").length >= 11
-    );
+    return (inscricoes || []).filter((i: any) => {
+      if (!i.ativa || !i.emitente_id) return false;
+      const len = (i.cpf_cnpj || "").replace(/\D/g, "").length;
+      return len === 11 || len === 14;
+    });
   }, [inscricoes]);
 
   const inscricaoSelecionada = useMemo(

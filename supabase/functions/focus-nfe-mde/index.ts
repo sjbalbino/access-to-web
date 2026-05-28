@@ -28,8 +28,11 @@ async function getInscricaoContext(inscricaoId: string) {
   if (!insc) throw new Error("Inscrição não encontrada.");
   if (!insc.emitente_id) throw new Error("Inscrição sem emitente NF-e configurado.");
 
-  const cnpj = (insc.cpf_cnpj || "").replace(/\D/g, "");
-  if (!cnpj) throw new Error("Inscrição sem CPF/CNPJ cadastrado.");
+  const doc = (insc.cpf_cnpj || "").replace(/\D/g, "");
+  let docType: "cpf" | "cnpj";
+  if (doc.length === 14) docType = "cnpj";
+  else if (doc.length === 11) docType = "cpf";
+  else throw new Error("CPF/CNPJ inválido na inscrição.");
 
   const { data: emitente, error: emErr } = await supabase
     .from("emitentes_nfe")
@@ -54,7 +57,8 @@ async function getInscricaoContext(inscricaoId: string) {
   return {
     token: cred.api_access_token,
     ambiente: emitente.ambiente,
-    cnpj,
+    doc,
+    docType,
   };
 }
 
@@ -69,7 +73,7 @@ serve(async (req) => {
     if (!inscricaoId) throw new Error("inscricaoId é obrigatório");
     if (!action) throw new Error("action é obrigatório");
 
-    const { token, ambiente, cnpj } = await getInscricaoContext(inscricaoId);
+    const { token, ambiente, doc, docType } = await getInscricaoContext(inscricaoId);
     const baseUrl = getBaseUrl(ambiente);
     const authHeader = `Basic ${btoa(`${token}:`)}`;
 
@@ -78,7 +82,7 @@ serve(async (req) => {
     switch (action) {
       case "consultar": {
         const v = versao || 1;
-        const url = `${baseUrl}/v2/nfes_recebidas?cnpj=${cnpj}&versao=${v}`;
+        const url = `${baseUrl}/v2/nfes_recebidas?${docType}=${doc}&versao=${v}`;
         console.log("MD-e Consultar:", url);
 
         const response = await fetch(url, {
