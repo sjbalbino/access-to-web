@@ -91,15 +91,18 @@ export default function EmitentesNfe() {
   const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
     setVerificandoId(emitente.id);
     try {
-      // Buscar uma inscrição vinculada para extrair o CPF/CNPJ
+      // Buscar inscrições vinculadas e priorizar a marcada como emitente principal
       const { data: inscricoes } = await supabase
         .from("inscricoes_produtor")
-        .select("cpf_cnpj, nome")
+        .select("cpf_cnpj, nome, is_emitente_principal, ativo")
         .eq("emitente_id", emitente.id)
-        .not("cpf_cnpj", "is", null)
-        .limit(1);
+        .not("cpf_cnpj", "is", null);
 
-      const cpfCnpj = inscricoes?.[0]?.cpf_cnpj;
+      const principal = inscricoes?.find((i: any) => i.is_emitente_principal && i.ativo !== false);
+      const ativa = inscricoes?.find((i: any) => i.ativo !== false);
+      const escolhida = principal ?? ativa ?? inscricoes?.[0];
+      const cpfCnpj = escolhida?.cpf_cnpj;
+      const nomeInscricao = escolhida?.nome;
 
       if (!cpfCnpj) {
         toast.error("Nenhuma inscrição vinculada a este emitente", {
@@ -113,18 +116,20 @@ export default function EmitentesNfe() {
         cpf_cnpj: cpfCnpj,
       });
 
+      const consultado = `Consultado: ${nomeInscricao ?? "—"} • CPF/CNPJ ${cpfCnpj}${principal ? " (emitente principal)" : ""}`;
+
       if (!res.success) {
-        toast.error("Não foi possível verificar", { description: res.error || "Erro desconhecido" });
+        toast.error("Não foi possível verificar", { description: `${res.error || "Erro desconhecido"}\n${consultado}` });
         return;
       }
 
       if (res.habilitada) {
         toast.success(`Habilitada na Focus NFe (${res.ambiente_label})`, {
-          description: `${res.nome ?? cpfCnpj} está pronta para emitir em ${res.ambiente_label}.`,
+          description: `${res.nome ?? cpfCnpj} está pronta para emitir em ${res.ambiente_label}.\n${consultado}`,
         });
       } else {
         toast.warning("Emitente NÃO habilitado", {
-          description: res.mensagem || "Cadastre/habilite a empresa no painel da Focus NFe.",
+          description: `${res.mensagem || "Cadastre/habilite a empresa no painel da Focus NFe."}\n${consultado}`,
           duration: 10000,
         });
       }
