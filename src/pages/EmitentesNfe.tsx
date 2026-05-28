@@ -94,13 +94,12 @@ export default function EmitentesNfe() {
       // Buscar inscrições vinculadas e priorizar a marcada como emitente principal
       const { data: inscricoes } = await supabase
         .from("inscricoes_produtor")
-        .select("cpf_cnpj, nome, is_emitente_principal, ativo")
+        .select("cpf_cnpj, nome, is_emitente_principal")
         .eq("emitente_id", emitente.id)
         .not("cpf_cnpj", "is", null);
 
-      const principal = inscricoes?.find((i: any) => i.is_emitente_principal && i.ativo !== false);
-      const ativa = inscricoes?.find((i: any) => i.ativo !== false);
-      const escolhida = principal ?? ativa ?? inscricoes?.[0];
+      const principal = inscricoes?.find((i: any) => i.is_emitente_principal);
+      const escolhida = principal ?? inscricoes?.[0];
       const cpfCnpj = escolhida?.cpf_cnpj;
       const nomeInscricao = escolhida?.nome;
 
