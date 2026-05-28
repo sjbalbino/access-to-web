@@ -760,15 +760,28 @@ export default function EmitentesNfe() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="api_access_token">Token de Acesso</Label>
-                      <Input
-                        id="api_access_token"
-                        type="password"
-                        value={credentials.api_access_token || ""}
-                        onChange={(e) =>
-                          setCredentials({ ...credentials, api_access_token: e.target.value })
-                        }
-                        placeholder="Token da API Focus NFe"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="api_access_token"
+                          type={showToken ? "text" : "password"}
+                          value={credentials.api_access_token || ""}
+                          onChange={(e) =>
+                            setCredentials({ ...credentials, api_access_token: e.target.value })
+                          }
+                          placeholder="Token da API Focus NFe"
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full w-10"
+                          onClick={() => setShowToken((v) => !v)}
+                          title={showToken ? "Ocultar token" : "Mostrar token"}
+                        >
+                          {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
