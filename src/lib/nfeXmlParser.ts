@@ -65,6 +65,12 @@ export interface NfeTotais {
   valorTotal: number;
 }
 
+export interface NfeDuplicata {
+  numero: string;
+  vencimento: string; // YYYY-MM-DD
+  valor: number;
+}
+
 export interface NfeParsed {
   chaveAcesso: string;
   numero: string;
@@ -75,6 +81,7 @@ export interface NfeParsed {
   destinatario: NfeDestinatario;
   itens: NfeItem[];
   totais: NfeTotais;
+  duplicatas: NfeDuplicata[];
   xmlContent: string;
 }
 
