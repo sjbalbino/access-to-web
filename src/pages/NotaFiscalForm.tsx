@@ -1340,12 +1340,25 @@ export default function NotaFiscalForm() {
               <SelectValue placeholder="Selecione a inscrição do sócio" />
             </SelectTrigger>
             <SelectContent>
-              {inscricoesSocio.map((inscricao) => (
-                <SelectItem key={inscricao.id} value={inscricao.id}>
-                  {inscricao.is_emitente_principal && "★ "}
-                  {inscricao.produtores?.nome} - IE: {inscricao.inscricao_estadual} ({inscricao.granjas?.razao_social || inscricao.granja})
-                </SelectItem>
-              ))}
+              {(() => {
+                const comEmitente = inscricoesSocio.filter((i) => i.emitente_id);
+                const atual = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
+                const lista = atual && !atual.emitente_id ? [atual, ...comEmitente] : comEmitente;
+                if (lista.length === 0) {
+                  return (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      Nenhuma inscrição de sócio com emitente NF-e configurado. Cadastre um emitente em <strong>Emitentes NF-e</strong> e vincule-o à inscrição do sócio.
+                    </div>
+                  );
+                }
+                return lista.map((inscricao) => (
+                  <SelectItem key={inscricao.id} value={inscricao.id}>
+                    {inscricao.is_emitente_principal && "★ "}
+                    {!inscricao.emitente_id && "⚠ "}
+                    {inscricao.produtores?.nome} - IE: {inscricao.inscricao_estadual} ({inscricao.granjas?.razao_social || inscricao.granja})
+                  </SelectItem>
+                ));
+              })()}
             </SelectContent>
           </Select>
         </div>
