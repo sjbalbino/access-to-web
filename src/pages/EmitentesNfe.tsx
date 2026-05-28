@@ -372,8 +372,19 @@ export default function EmitentesNfe() {
                     {canEdit && (
                       <TableCell className="sticky right-0 bg-background">
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(emitente)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => { setSelectedEmitente(emitente); setIsDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Verificar habilitação na Focus NFe"
+                            disabled={verificandoId === emitente.id || !emitente.api_configurada}
+                            onClick={() => handleVerificarHabilitacao(emitente)}
+                          >
+                            {verificandoId === emitente.id
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <ShieldCheck className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" title="Editar" onClick={() => handleOpenDialog(emitente)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" title="Excluir" onClick={() => { setSelectedEmitente(emitente); setIsDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
                         </div>
                       </TableCell>
                     )}
