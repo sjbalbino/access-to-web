@@ -512,28 +512,19 @@ export default function NotaFiscalForm() {
     }
   }, [formData.cfop_id, cfops]);
 
-  // Auto-fill emitente_id and granja_id from inscrição selecionada
+  // Auto-fill emitente_id e granja_id a partir da inscrição selecionada (vínculo por inscricao.emitente_id)
   useEffect(() => {
     if (formData.inscricao_produtor_id) {
       const inscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
-      if (inscricao?.granja_id) {
-        const emitenteEncontrado = emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo);
-        if (emitenteEncontrado) {
-          setFormData((prev) => ({
-            ...prev,
-            granja_id: inscricao.granja_id || "",
-            emitente_id: emitenteEncontrado.id,
-          }));
-        } else {
-          setFormData((prev) => ({
-            ...prev,
-            granja_id: inscricao.granja_id || "",
-            emitente_id: "",
-          }));
-        }
+      if (inscricao) {
+        setFormData((prev) => ({
+          ...prev,
+          granja_id: inscricao.granja_id || prev.granja_id || "",
+          emitente_id: inscricao.emitente_id || "",
+        }));
       }
     }
-  }, [formData.inscricao_produtor_id, inscricoesSocio, emitentes]);
+  }, [formData.inscricao_produtor_id, inscricoesSocio]);
 
   // Calculate item total
   useEffect(() => {
