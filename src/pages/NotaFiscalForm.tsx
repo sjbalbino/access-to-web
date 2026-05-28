@@ -1477,18 +1477,22 @@ export default function NotaFiscalForm() {
         {!isReadOnly && (
           <div className="space-y-2">
             <Label>Importar de Cliente/Fornecedor</Label>
-            <Select onValueChange={handleClienteSelect} disabled={isReadOnly}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione para importar dados" />
-              </SelectTrigger>
-              <SelectContent>
-                {clientesFornecedores.filter((c) => c.ativo).map((cliente) => (
-                  <SelectItem key={cliente.id} value={cliente.id}>
-                    {cliente.nome} {cliente.cpf_cnpj && `- ${cliente.cpf_cnpj}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ComboboxFilter
+              value=""
+              onValueChange={(v) => { if (v) handleClienteSelect(v); }}
+              options={clientesFornecedores
+                .filter((c) => c.ativo)
+                .map((cliente) => ({
+                  value: cliente.id,
+                  label: `${cliente.nome}${cliente.nome_fantasia ? ` (${cliente.nome_fantasia})` : ''}`,
+                  sublabel: cliente.cpf_cnpj || undefined,
+                }))}
+              placeholder="Selecione para importar dados"
+              searchPlaceholder="Buscar por nome, CPF ou CNPJ..."
+              allLabel="Limpar seleção"
+              popoverWidth="w-[480px]"
+              disabled={isReadOnly}
+            />
           </div>
         )}
 
