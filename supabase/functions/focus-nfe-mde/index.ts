@@ -73,7 +73,7 @@ serve(async (req) => {
     if (!inscricaoId) throw new Error("inscricaoId é obrigatório");
     if (!action) throw new Error("action é obrigatório");
 
-    const { token, ambiente, cnpj } = await getInscricaoContext(inscricaoId);
+    const { token, ambiente, doc, docType } = await getInscricaoContext(inscricaoId);
     const baseUrl = getBaseUrl(ambiente);
     const authHeader = `Basic ${btoa(`${token}:`)}`;
 
@@ -82,7 +82,7 @@ serve(async (req) => {
     switch (action) {
       case "consultar": {
         const v = versao || 1;
-        const url = `${baseUrl}/v2/nfes_recebidas?cnpj=${cnpj}&versao=${v}`;
+        const url = `${baseUrl}/v2/nfes_recebidas?${docType}=${doc}&versao=${v}`;
         console.log("MD-e Consultar:", url);
 
         const response = await fetch(url, {
