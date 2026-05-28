@@ -36,7 +36,7 @@ import { useEmitenteCredentials, useUpsertEmitenteCredentials } from "@/hooks/us
 import { useFocusNfeVerificarEmpresa } from "@/hooks/useFocusNfeVerificarEmpresa";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useGranjas } from "@/hooks/useGranjas";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -70,8 +70,28 @@ const API_PROVIDERS = [
 
 export default function EmitentesNfe() {
   const { emitentes, isLoading, createEmitente, updateEmitente, deleteEmitente } = useEmitentesNfe();
-  const granjasQuery = useGranjas();
-  const granjas = granjasQuery.data || [];
+
+  // Carregar todas as inscrições ativas com CPF/CNPJ para escolher como emitente
+  const { data: inscricoes = [] } = useQuery({
+    queryKey: ["inscricoes_produtor", "para-emitente"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inscricoes_produtor")
+        .select("id, nome, cpf_cnpj, inscricao_estadual, tipo, granja_id, cidade, uf, ativa, produtor_id, produtores:produtor_id(id, nome), granjas:granja_id(id, razao_social, nome_fantasia)")
+        .eq("ativa", true)
+        .not("cpf_cnpj", "is", null)
+        .order("nome");
+      if (error) throw error;
+      return data as Array<{
+        id: string; nome: string | null; cpf_cnpj: string | null; inscricao_estadual: string | null;
+        tipo: string | null; granja_id: string | null; cidade: string | null; uf: string | null;
+        ativa: boolean | null; produtor_id: string | null;
+        produtores?: { id: string; nome: string } | null;
+        granjas?: { id: string; razao_social: string; nome_fantasia: string | null } | null;
+      }>;
+    },
+  });
+
   const { canEdit } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -138,6 +158,7 @@ export default function EmitentesNfe() {
   };
 
   const [formData, setFormData] = useState<EmitenteNfeInsert>({
+    inscricao_produtor_id: null,
     granja_id: null,
     ambiente: 2,
     serie_nfe: 1,
@@ -165,13 +186,14 @@ export default function EmitentesNfe() {
     ativo: true,
   });
 
-  // Granjas que não têm emitente (ou é a granja do emitente sendo editado)
-  const granjasDisponiveis = granjas.filter(
-    (g) => g.ativa && !emitentes.some((e) => e.granja_id === g.id && e.id !== selectedEmitente?.id)
+  // Inscrições que ainda não têm emitente (ou é a inscrição do emitente sendo editado)
+  const inscricoesDisponiveis = inscricoes.filter(
+    (i) => !emitentes.some((e) => e.inscricao_produtor_id === i.id && e.id !== selectedEmitente?.id)
   );
 
   const resetForm = () => {
     setFormData({
+      inscricao_produtor_id: null,
       granja_id: null,
       ambiente: 2,
       serie_nfe: 1,
@@ -205,6 +227,7 @@ export default function EmitentesNfe() {
     if (emitente) {
       setSelectedEmitente(emitente);
       setFormData({
+        inscricao_produtor_id: emitente.inscricao_produtor_id,
         granja_id: emitente.granja_id,
         ambiente: emitente.ambiente || 2,
         serie_nfe: emitente.serie_nfe || 1,
@@ -236,6 +259,7 @@ export default function EmitentesNfe() {
     }
     setIsDialogOpen(true);
   };
+
 
   // Carrega credenciais quando o usuário (admin/gerente) abre o emitente para edição
   useEffect(() => {
@@ -328,7 +352,7 @@ export default function EmitentesNfe() {
           <div className="text-sm text-muted-foreground">
             {emitentes.length} emitente(s) configurado(s)
           </div>
-          {canEdit && granjasDisponiveis.length > 0 && (
+          {canEdit && inscricoesDisponiveis.length > 0 && (
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Emitente
@@ -341,7 +365,9 @@ export default function EmitentesNfe() {
             <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Granja</TableHead>
+                  <TableHead>Sócio / Inscrição</TableHead>
+                  <TableHead className="hidden md:table-cell">CPF/CNPJ</TableHead>
+                  <TableHead className="hidden lg:table-cell">Granja</TableHead>
                   <TableHead className="hidden sm:table-cell">Ambiente</TableHead>
                   <TableHead className="hidden md:table-cell">Série</TableHead>
                   <TableHead className="hidden md:table-cell">API</TableHead>
@@ -356,13 +382,17 @@ export default function EmitentesNfe() {
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block flex-shrink-0" />
                         <span>
-                          {emitente.granja
-                            ? emitente.granja.nome_fantasia
-                              ? `${emitente.granja.razao_social} (${emitente.granja.nome_fantasia})`
-                              : emitente.granja.razao_social
-                            : "-"}
+                          {emitente.inscricao
+                            ? `${emitente.inscricao.produtores?.nome || emitente.inscricao.nome || "—"}${emitente.inscricao.inscricao_estadual ? ` • IE ${emitente.inscricao.inscricao_estadual}` : ""}`
+                            : <span className="text-destructive">Sem inscrição vinculada</span>}
                         </span>
                       </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{emitente.inscricao?.cpf_cnpj || "-"}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {emitente.granja
+                        ? emitente.granja.nome_fantasia || emitente.granja.razao_social
+                        : "-"}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Badge variant={emitente.ambiente === 1 ? "default" : "secondary"}>
@@ -403,7 +433,7 @@ export default function EmitentesNfe() {
                 ))}
                 {emitentes.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canEdit ? 6 : 5} className="text-center py-8 text-muted-foreground">Nenhum emitente configurado</TableCell>
+                    <TableCell colSpan={canEdit ? 8 : 7} className="text-center py-8 text-muted-foreground">Nenhum emitente configurado</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -423,37 +453,52 @@ export default function EmitentesNfe() {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Granja */}
+              {/* Inscrição do Produtor (Sócio Emitente) */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Granja</CardTitle>
+                  <CardTitle className="text-base">Inscrição do Produtor</CardTitle>
                   <CardDescription>
-                    Selecione a granja que será o emitente da NF-e
+                    Selecione a inscrição do sócio (CPF/CNPJ + IE) que será o emitente desta NF-e. Cada sócio deve ter seu próprio emitente, espelhando o cadastro na Focus NFe.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="granja_id">Granja *</Label>
+                    <Label htmlFor="inscricao_produtor_id">Inscrição *</Label>
                     <Select
-                      value={formData.granja_id || ""}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, granja_id: value })
-                      }
+                      value={formData.inscricao_produtor_id || ""}
+                      onValueChange={(value) => {
+                        const insc = inscricoes.find((i) => i.id === value);
+                        setFormData({
+                          ...formData,
+                          inscricao_produtor_id: value,
+                          granja_id: insc?.granja_id ?? null,
+                        });
+                      }}
+                      disabled={!!selectedEmitente}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a granja" />
+                        <SelectValue placeholder="Selecione a inscrição do sócio" />
                       </SelectTrigger>
                       <SelectContent>
                         {(selectedEmitente
-                          ? granjas.filter((g) => g.ativa || g.id === selectedEmitente.granja_id)
-                          : granjasDisponiveis
-                        ).map((granja) => (
-                          <SelectItem key={granja.id} value={granja.id}>
-                            {granja.nome_fantasia || granja.razao_social}
-                          </SelectItem>
-                        ))}
+                          ? inscricoes.filter((i) => i.id === selectedEmitente.inscricao_produtor_id || !emitentes.some((e) => e.inscricao_produtor_id === i.id))
+                          : inscricoesDisponiveis
+                        ).map((insc) => {
+                          const nome = insc.produtores?.nome || insc.nome || "—";
+                          const granjaNome = insc.granjas?.nome_fantasia || insc.granjas?.razao_social || "";
+                          return (
+                            <SelectItem key={insc.id} value={insc.id}>
+                              {nome} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
+                    {selectedEmitente && (
+                      <p className="text-xs text-muted-foreground">
+                        A inscrição vinculada não pode ser alterada após a criação. Para mudar, exclua e crie um novo emitente.
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -863,7 +908,7 @@ export default function EmitentesNfe() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createEmitente.isPending || updateEmitente.isPending || !formData.granja_id}
+                  disabled={createEmitente.isPending || updateEmitente.isPending || !formData.inscricao_produtor_id}
                 >
                   {createEmitente.isPending || updateEmitente.isPending
                     ? "Salvando..."

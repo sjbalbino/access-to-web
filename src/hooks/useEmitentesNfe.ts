@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export interface EmitenteNfe {
   id: string;
+  inscricao_produtor_id: string | null;
   granja_id: string | null;
   ambiente: number | null;
   serie_nfe: number | null;
@@ -25,8 +26,7 @@ export interface EmitenteNfe {
   cst_cbs_padrao: string | null;
   cst_is_padrao: string | null;
   api_provider: string | null;
-  // Credenciais (api_consumer_key, api_consumer_secret, api_access_token, api_access_token_secret)
-  // foram movidas para a tabela emitentes_nfe_credentials (acesso restrito a admin/gerente)
+  // Credenciais (token) ficam em emitentes_nfe_credentials
   api_configurada: boolean | null;
   certificado_nome: string | null;
   certificado_validade: string | null;
@@ -37,10 +37,23 @@ export interface EmitenteNfe {
     id: string;
     razao_social: string;
     nome_fantasia: string | null;
-  };
+  } | null;
+  inscricao?: {
+    id: string;
+    cpf_cnpj: string | null;
+    inscricao_estadual: string | null;
+    nome: string | null;
+    tipo: string | null;
+    uf: string | null;
+    cidade: string | null;
+    produtores?: {
+      id: string;
+      nome: string;
+    } | null;
+  } | null;
 }
 
-export type EmitenteNfeInsert = Omit<EmitenteNfe, "id" | "created_at" | "updated_at" | "granja">;
+export type EmitenteNfeInsert = Omit<EmitenteNfe, "id" | "created_at" | "updated_at" | "granja" | "inscricao">;
 export type EmitenteNfeUpdate = Partial<EmitenteNfeInsert>;
 
 export function useEmitentesNfe() {
@@ -53,12 +66,16 @@ export function useEmitentesNfe() {
         .from("emitentes_nfe")
         .select(`
           *,
-          granja:granjas(id, razao_social, nome_fantasia)
+          granja:granjas(id, razao_social, nome_fantasia),
+          inscricao:inscricoes_produtor!emitentes_nfe_inscricao_produtor_id_fkey(
+            id, cpf_cnpj, inscricao_estadual, nome, tipo, uf, cidade,
+            produtores:produtor_id(id, nome)
+          )
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as EmitenteNfe[];
+      return data as unknown as EmitenteNfe[];
     },
   });
 
@@ -71,10 +88,21 @@ export function useEmitentesNfe() {
         .single();
 
       if (error) throw error;
+
+      // Vincular a inscrição ao emitente recém-criado (1:1)
+      if (data && emitente.inscricao_produtor_id) {
+        await supabase
+          .from("inscricoes_produtor")
+          .update({ emitente_id: data.id })
+          .eq("id", emitente.inscricao_produtor_id);
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["emitentes-nfe"] });
+      queryClient.invalidateQueries({ queryKey: ["inscricoes_produtor"] });
+      queryClient.invalidateQueries({ queryKey: ["inscricao_emitente_principal"] });
       toast.success("Emitente NF-e criado com sucesso!");
     },
     onError: (error: Error) => {
@@ -92,10 +120,21 @@ export function useEmitentesNfe() {
         .single();
 
       if (error) throw error;
+
+      // Garantir vínculo inscricao → emitente
+      if (emitente.inscricao_produtor_id) {
+        await supabase
+          .from("inscricoes_produtor")
+          .update({ emitente_id: id })
+          .eq("id", emitente.inscricao_produtor_id);
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["emitentes-nfe"] });
+      queryClient.invalidateQueries({ queryKey: ["inscricoes_produtor"] });
+      queryClient.invalidateQueries({ queryKey: ["inscricao_emitente_principal"] });
       toast.success("Emitente NF-e atualizado com sucesso!");
     },
     onError: (error: Error) => {
@@ -111,6 +150,7 @@ export function useEmitentesNfe() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["emitentes-nfe"] });
+      queryClient.invalidateQueries({ queryKey: ["inscricoes_produtor"] });
       toast.success("Emitente NF-e excluído com sucesso!");
     },
     onError: (error: Error) => {

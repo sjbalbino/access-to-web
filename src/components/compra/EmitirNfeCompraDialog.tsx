@@ -138,16 +138,16 @@ export function EmitirNfeCompraDialog({
         throw new Error("Inscrição do vendedor (remetente) não encontrada");
       }
 
-      // Buscar emitente pela granja do comprador
+      // Buscar emitente pela inscrição do comprador (emitente da NF de compra)
       const { data: emitente, error: emitenteError } = await supabase
         .from("emitentes_nfe")
         .select("*")
-        .eq("granja_id", compra.granja_id)
+        .eq("inscricao_produtor_id", compra.inscricao_comprador_id)
         .eq("ativo", true)
-        .single();
+        .maybeSingle();
 
       if (emitenteError || !emitente) {
-        throw new Error("Configuração de API (Emitente) não encontrada para esta granja. Cadastre um emitente.");
+        throw new Error("Emitente NF-e não configurado para a inscrição do comprador. Cadastre o emitente em FISCAL → Emitentes NF-e vinculado a esta inscrição.");
       }
 
       if (!emitente.api_configurada) {
