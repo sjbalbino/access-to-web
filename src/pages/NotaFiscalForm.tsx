@@ -634,7 +634,7 @@ export default function NotaFiscalForm() {
     if (isAutoSaving) return;
     
     const inscricao = inscricoesSocio.find((i) => i.id === data.inscricao_produtor_id);
-    const emitenteAuto = inscricao ? emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo) : null;
+    const emitenteAuto = inscricao?.emitente_id ? emitentes.find((e) => e.id === inscricao.emitente_id) : null;
     const granjaId = data.granja_id || inscricao?.granja_id || "";
 
     if (!data.inscricao_produtor_id || !emitenteAuto) return;
