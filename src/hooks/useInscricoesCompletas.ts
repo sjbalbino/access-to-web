@@ -47,6 +47,7 @@ export function useInscricoesCompletas() {
           cpf_cnpj,
           tipo,
           ativa,
+          emitente_id,
           granja_id,
           granja,
           logradouro,
