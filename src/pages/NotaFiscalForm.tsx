@@ -829,10 +829,12 @@ export default function NotaFiscalForm() {
       return;
     }
 
-    const emitente = emitentes.find((e) => e.granja_id === inscricao.granja_id && e.ativo);
+    const emitente = inscricao.emitente_id
+      ? emitentes.find((e) => e.id === inscricao.emitente_id)
+      : null;
 
     if (!emitente) {
-      toast.error("Não há configuração de API (Emitente) para a granja desta inscrição. Cadastre um emitente.");
+      toast.error("Esta inscrição não tem Emitente NF-e vinculado. Vincule um emitente no cadastro da inscrição.");
       return;
     }
 
