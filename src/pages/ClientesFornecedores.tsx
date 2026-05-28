@@ -38,6 +38,8 @@ export default function ClientesFornecedores() {
   const [filtroCidade, setFiltroCidade] = useState('');
   const [filtroAtivo, setFiltroAtivo] = useState('ativo');
   const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 20;
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [enriquecendo, setEnriquecendo] = useState(false);
@@ -71,8 +73,7 @@ export default function ClientesFornecedores() {
       setEnriquecendo(false);
     }
   };
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+
 
   const dadosFiltrados = useMemo(() => {
     let dados = clientesFornecedores || [];
