@@ -70,8 +70,28 @@ const API_PROVIDERS = [
 
 export default function EmitentesNfe() {
   const { emitentes, isLoading, createEmitente, updateEmitente, deleteEmitente } = useEmitentesNfe();
-  const granjasQuery = useGranjas();
-  const granjas = granjasQuery.data || [];
+
+  // Carregar todas as inscrições ativas com CPF/CNPJ para escolher como emitente
+  const { data: inscricoes = [] } = useQuery({
+    queryKey: ["inscricoes_produtor", "para-emitente"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inscricoes_produtor")
+        .select("id, nome, cpf_cnpj, inscricao_estadual, tipo, granja_id, cidade, uf, ativa, produtor_id, produtores:produtor_id(id, nome), granjas:granja_id(id, razao_social, nome_fantasia)")
+        .eq("ativa", true)
+        .not("cpf_cnpj", "is", null)
+        .order("nome");
+      if (error) throw error;
+      return data as Array<{
+        id: string; nome: string | null; cpf_cnpj: string | null; inscricao_estadual: string | null;
+        tipo: string | null; granja_id: string | null; cidade: string | null; uf: string | null;
+        ativa: boolean | null; produtor_id: string | null;
+        produtores?: { id: string; nome: string } | null;
+        granjas?: { id: string; razao_social: string; nome_fantasia: string | null } | null;
+      }>;
+    },
+  });
+
   const { canEdit } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
