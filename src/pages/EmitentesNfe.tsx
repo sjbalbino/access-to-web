@@ -289,12 +289,16 @@ export default function EmitentesNfe() {
       emitenteId = (created as any)?.id;
     }
     // Persistir credenciais separadamente (apenas admin/gerente conseguem)
-    if (emitenteId && (credentials.api_access_token || credentials.api_consumer_key || credentials.api_consumer_secret || credentials.api_access_token_secret)) {
+    if (emitenteId) {
+      const norm = (v: string | null | undefined) => (v && v.trim() ? v.trim() : null);
       try {
         await upsertCredentials.mutateAsync({
           emitente_id: emitenteId,
           granja_id: formData.granja_id,
-          ...credentials,
+          api_consumer_key: norm(credentials.api_consumer_key),
+          api_consumer_secret: norm(credentials.api_consumer_secret),
+          api_access_token: norm(credentials.api_access_token),
+          api_access_token_secret: norm(credentials.api_access_token_secret),
         });
       } catch {
         // toast já exibido pelo hook
