@@ -114,7 +114,8 @@ serve(async (req) => {
           ambiente_label: ambienteLabel,
           cpf_cnpj: cpfCnpjAlvo,
           codigo: "empresa_nao_cadastrada",
-          mensagem: `O CPF/CNPJ ${cpfCnpjAlvo} não está cadastrado na sua conta da Focus NFe (${ambienteLabel}). Cadastre a empresa no painel da Focus, anexe o certificado digital A1 e habilite-a para emissão.`,
+          mensagem: `O CPF/CNPJ ${cpfCnpjAlvo} não está cadastrado na sua conta da Focus NFe (${ambienteLabel}) — token usado: ${tokenPrefix}. Cadastre a empresa no painel da Focus, anexe o certificado digital A1 e habilite-a para emissão.`,
+          detalhes: { token_prefix: tokenPrefix, url },
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
