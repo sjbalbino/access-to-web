@@ -131,8 +131,8 @@ serve(async (req) => {
           ambiente_label: ambienteLabel,
           cpf_cnpj: cpfCnpjAlvo,
           codigo: "token_invalido_ou_sem_permissao",
-          mensagem: `O token cadastrado neste emitente não tem permissão para consultar o CPF/CNPJ ${cpfCnpjAlvo} em ${ambienteLabel}. Verifique se o token pertence à conta correta da Focus NFe.`,
-          detalhes: body,
+          mensagem: `O token cadastrado neste emitente (${tokenPrefix}) não tem permissão para consultar o CPF/CNPJ ${cpfCnpjAlvo} em ${ambienteLabel}. Verifique se o token pertence à conta correta da Focus NFe.`,
+          detalhes: { token_prefix: tokenPrefix, resposta: body },
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
