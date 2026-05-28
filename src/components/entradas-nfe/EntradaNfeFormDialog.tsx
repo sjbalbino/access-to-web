@@ -64,6 +64,14 @@ const emptyItem = () => ({
   quantidade_conferida: null as number | null,
 });
 
+const FORMAS = [
+  { value: 'pix', label: 'PIX' }, { value: 'dinheiro', label: 'Dinheiro' },
+  { value: 'cheque', label: 'Cheque' }, { value: 'boleto', label: 'Boleto' },
+  { value: 'cartao', label: 'Cartão' }, { value: 'prazo', label: 'A prazo' },
+  { value: 'outro', label: 'Outro' },
+];
+const FORMAS_AVISTA = ['pix', 'dinheiro', 'cheque', 'cartao'];
+
 export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const isEdit = !!entradaId;
   const { data: entradaData } = useEntradaNfe(entradaId);
@@ -71,10 +79,18 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const { data: clientes } = useClientesFornecedores();
   const { cfops } = useCfops();
   const { data: produtos } = useProdutos();
+  const { data: inscricoes } = useInscricoesCompletas();
+  const { data: safras } = useSafras();
+  const { data: contasBancarias } = useContasBancarias({ ativo: true });
   const createMutation = useCreateEntradaNfe();
   const updateMutation = useUpdateEntradaNfe();
 
   const [granjaId, setGranjaId] = useState('');
+  const [inscricaoId, setInscricaoId] = useState<string | undefined>(undefined);
+  const [safraId, setSafraId] = useState<string | undefined>(undefined);
+  const [formaPagamento, setFormaPagamento] = useState<string | undefined>(undefined);
+  const [contaBancariaId, setContaBancariaId] = useState<string | undefined>(undefined);
+  const [jaPago, setJaPago] = useState(false);
   const [fornecedorId, setFornecedorId] = useState('');
   const [numeroNfe, setNumeroNfe] = useState('');
   const [serie, setSerie] = useState('1');
@@ -94,10 +110,27 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const [valorDesconto, setValorDesconto] = useState(0);
   const [valorOutras, setValorOutras] = useState(0);
 
+  const inscricoesFiltradas = useMemo(() => {
+    if (!granjaId) return [];
+    const list = (inscricoes || []).filter((i) => i.granja_id === granjaId && i.ativa);
+    // Garante que IE selecionada apareça mesmo se inativa/de outra granja (edição)
+    if (inscricaoId && !list.some((i) => i.id === inscricaoId)) {
+      const sel = (inscricoes || []).find((i) => i.id === inscricaoId);
+      if (sel) list.push(sel);
+    }
+    return list;
+  }, [inscricoes, granjaId, inscricaoId]);
+
+  const isAvista = !!formaPagamento && FORMAS_AVISTA.includes(formaPagamento);
+
   useEffect(() => {
     if (!open) return;
     if (isEdit && entradaData) {
       setGranjaId(entradaData.granja_id || '');
+      setInscricaoId((entradaData as any).inscricao_produtor_id || undefined);
+      setSafraId((entradaData as any).safra_id || undefined);
+      setFormaPagamento((entradaData as any).forma_pagamento || undefined);
+      setContaBancariaId((entradaData as any).conta_bancaria_id || undefined);
       setFornecedorId(entradaData.fornecedor_id || '');
       setNumeroNfe(entradaData.numero_nfe || '');
       setSerie(entradaData.serie || '1');
@@ -115,9 +148,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       setItens(
         (entradaData as any).itens?.length
           ? (entradaData as any).itens.map((i: any) => ({
-              ...i,
-              data_validade: i.data_validade || '',
-              lote: i.lote || '',
+              ...i, data_validade: i.data_validade || '', lote: i.lote || '',
               quantidade_conferida: i.quantidade_conferida,
             }))
           : [emptyItem()]
@@ -127,24 +158,26 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
     }
   }, [open, isEdit, entradaData]);
 
+  // Pré-seleciona IE principal ao trocar granja (somente criação)
+  useEffect(() => {
+    if (isEdit || !granjaId) return;
+    const principal = (inscricoes || []).find(
+      (i: any) => i.granja_id === granjaId && i.ativa && i.is_emitente_principal
+    );
+    setInscricaoId(principal?.id);
+  }, [granjaId, inscricoes, isEdit]);
+
   const resetForm = () => {
-    setGranjaId('');
-    setFornecedorId('');
-    setNumeroNfe('');
-    setSerie('1');
-    setChaveAcesso('');
-    setDataEmissao('');
-    setDataEntrada(new Date().toISOString().split('T')[0]);
-    setCfopId('');
-    setNaturezaOperacao('');
-    setObservacoes('');
+    setGranjaId(''); setInscricaoId(undefined); setSafraId(undefined);
+    setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false);
+    setFornecedorId(''); setNumeroNfe(''); setSerie('1'); setChaveAcesso('');
+    setDataEmissao(''); setDataEntrada(new Date().toISOString().split('T')[0]);
+    setCfopId(''); setNaturezaOperacao(''); setObservacoes('');
     setItens([emptyItem()]);
-    setValorProdutos(0);
-    setValorFrete(0);
-    setValorSeguro(0);
-    setValorDesconto(0);
-    setValorOutras(0);
+    setValorProdutos(0); setValorFrete(0); setValorSeguro(0);
+    setValorDesconto(0); setValorOutras(0);
   };
+
 
   const updateItem = (idx: number, field: string, value: any) => {
     setItens((prev) => {
