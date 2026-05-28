@@ -693,8 +693,16 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       // Campo preco_kg ampliado para numeric(18,6) — sem mais pré-validação de limite.
       const finalRows: Record<string, any>[] = validRows;
 
-      // Batch insert
-      const useUpsert = config.tableName === 'contas_pagar' || config.tableName === 'contas_receber';
+      // Batch insert / upsert
+      // - upsertMode (usuário marcou): atualiza existentes + insere novos
+      // - CP/CR já usam upsert nativo p/ ignorar duplicados por codigo_legado
+      const isCpCr = config.tableName === 'contas_pagar' || config.tableName === 'contas_receber';
+      const useUpsert = isCpCr || (upsertMode && !!upsertConflict);
+      const conflictTarget = upsertMode && upsertConflict
+        ? upsertConflict
+        : (isCpCr ? 'tenant_id,codigo_legado' : undefined);
+      // Em upsertMode queremos MERGE (ignoreDuplicates: false); em CP/CR padrão queremos ignorar.
+      const ignoreDuplicates = upsertMode ? false : isCpCr;
       const batchSize = useUpsert ? 500 : 100;
       const errors: string[] = [...validationErrors];
 
@@ -713,7 +721,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       // trg_rateio_cp/cr entre no caminho rápido (sem consultar produtores nem
       // inserir em lancamento_rateio_socios). Acelera a importação drasticamente.
       // O usuário pode reconfigurar o rateio da conta depois pela tela normal.
-      if (useUpsert) {
+      if (isCpCr) {
         for (const row of finalRows) {
           if (!row.rateio_modo) row.rateio_modo = 'manual';
         }
@@ -722,7 +730,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       for (let i = 0; i < finalRows.length; i += batchSize) {
         const batch = finalRows.slice(i, i + batchSize);
         const { error } = useUpsert
-          ? await supabase.from(config.tableName as any).upsert(batch as any, { onConflict: 'tenant_id,codigo_legado', ignoreDuplicates: true } as any)
+          ? await supabase.from(config.tableName as any).upsert(batch as any, { onConflict: conflictTarget, ignoreDuplicates } as any)
           : await supabase.from(config.tableName as any).insert(batch as any);
 
         if (error) {
