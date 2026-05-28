@@ -84,6 +84,54 @@ export default function EmitentesNfe() {
   }>({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_secret: null });
   const upsertCredentials = useUpsertEmitenteCredentials();
   const credentialsQuery = useEmitenteCredentials(selectedEmitente?.id ?? null);
+  const verificarEmpresa = useFocusNfeVerificarEmpresa();
+  const [verificandoId, setVerificandoId] = useState<string | null>(null);
+
+  const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
+    setVerificandoId(emitente.id);
+    try {
+      // Buscar uma inscrição vinculada para extrair o CPF/CNPJ
+      const { data: inscricoes } = await supabase
+        .from("inscricoes_produtor")
+        .select("cpf_cnpj, nome")
+        .eq("emitente_id", emitente.id)
+        .not("cpf_cnpj", "is", null)
+        .limit(1);
+
+      const cpfCnpj = inscricoes?.[0]?.cpf_cnpj;
+
+      if (!cpfCnpj) {
+        toast.error("Nenhuma inscrição vinculada a este emitente", {
+          description: "Vincule este emitente a uma inscrição de produtor (com CPF/CNPJ) para poder verificar a habilitação.",
+        });
+        return;
+      }
+
+      const res = await verificarEmpresa.verificar({
+        emitente_id: emitente.id,
+        cpf_cnpj: cpfCnpj,
+      });
+
+      if (!res.success) {
+        toast.error("Não foi possível verificar", { description: res.error || "Erro desconhecido" });
+        return;
+      }
+
+      if (res.habilitada) {
+        toast.success(`Habilitada na Focus NFe (${res.ambiente_label})`, {
+          description: `${res.nome ?? cpfCnpj} está pronta para emitir em ${res.ambiente_label}.`,
+        });
+      } else {
+        toast.warning("Emitente NÃO habilitado", {
+          description: res.mensagem || "Cadastre/habilite a empresa no painel da Focus NFe.",
+          duration: 10000,
+        });
+      }
+    } finally {
+      setVerificandoId(null);
+    }
+  };
+
   const [formData, setFormData] = useState<EmitenteNfeInsert>({
     granja_id: null,
     ambiente: 2,
