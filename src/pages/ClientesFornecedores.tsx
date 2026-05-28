@@ -12,12 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2, Sparkles } from 'lucide-react';
 import { useClientesFornecedores, useCreateClienteFornecedor, useUpdateClienteFornecedor, useDeleteClienteFornecedor, ClienteFornecedorInsert } from '@/hooks/useClientesFornecedores';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useCepLookup, formatCep } from '@/hooks/useCepLookup';
 import { useCnpjLookup, formatCnpj } from '@/hooks/useCnpjLookup';
 import { formatCpf, validateCpf, validateCnpj } from '@/lib/formatters';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 export default function ClientesFornecedores() {
