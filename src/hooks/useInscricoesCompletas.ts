@@ -9,6 +9,7 @@ export interface InscricaoCompleta {
   cpf_cnpj: string | null;
   tipo: string | null;
   ativa: boolean | null;
+  emitente_id: string | null;
   granja_id: string | null;
   granja: string | null;
   logradouro: string | null;
