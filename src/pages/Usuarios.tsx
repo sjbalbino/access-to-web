@@ -30,12 +30,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Shield, ShieldCheck, Eye, UserPlus, Search, Building2, Briefcase } from "lucide-react";
+import { Users, Shield, ShieldCheck, Eye, UserPlus, Search, Building2, Briefcase, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenants } from "@/hooks/useTenants";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { useUsuariosPendentes, type UsuarioPendente } from "@/hooks/useUsuariosPendentes";
+import { LiberarUsuarioDialog } from "@/components/usuarios/LiberarUsuarioDialog";
+
 
 type AppRole = "admin" | "operador" | "visualizador" | "gerente";
 
@@ -46,9 +50,11 @@ interface UserWithRole {
   ativo: boolean | null;
   created_at: string;
   role: AppRole;
+  hasRole?: boolean;
   tenant_id: string | null;
   tenant_nome?: string | null;
 }
+
 
 const roleLabels: Record<AppRole, string> = {
   admin: "Administrador",
@@ -90,7 +96,12 @@ export default function Usuarios() {
   const [newUserRole, setNewUserRole] = useState<AppRole>("operador");
   const [newUserTenantId, setNewUserTenantId] = useState<string | null>(null);
 
+  // Pendentes
+  const { data: pendentes } = useUsuariosPendentes();
+  const [liberandoUser, setLiberandoUser] = useState<UsuarioPendente | null>(null);
+
   // Fetch users with roles
+
   const { data: users, isLoading } = useQuery({
     queryKey: ["users-with-roles"],
     queryFn: async () => {
@@ -117,6 +128,7 @@ export default function Usuarios() {
         return {
           ...userProfile,
           role: (userRole?.role as AppRole) || "visualizador",
+          hasRole: !!userRole,
           tenant_nome: tenant?.nome_fantasia || tenant?.razao_social || null,
         };
       });
@@ -124,6 +136,7 @@ export default function Usuarios() {
       return usersWithRoles;
     },
   });
+
 
   // Create user mutation
   const createUserMutation = useMutation({
@@ -298,17 +311,18 @@ export default function Usuarios() {
   };
 
   // Filter users based on tenant (non-super admins only see their tenant's users)
+  // Excluir pendentes (sem role) — eles vão para a aba Pendentes
   const filteredUsers = users?.filter((user) => {
+    if (!user.hasRole) return false;
+
     const matchesSearch =
       user.nome?.toLowerCase().includes(search.toLowerCase()) ||
       user.email?.toLowerCase().includes(search.toLowerCase());
 
-    // Super admins see all users
     if (isSuperAdmin) return matchesSearch;
-
-    // Regular admins only see users from their tenant
     return matchesSearch && user.tenant_id === profile?.tenant_id;
   });
+
 
   const {
     dadosPaginados,
@@ -381,7 +395,44 @@ export default function Usuarios() {
         </div>
       </div>
 
+      {/* Pendentes de liberação */}
+      {pendentes && pendentes.length > 0 && (
+        <div className="rounded-lg border bg-amber-50/50 border-amber-200 mb-6 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="h-5 w-5 text-amber-700" />
+            <h2 className="font-semibold text-amber-900">
+              Cadastros pendentes de liberação ({pendentes.length})
+            </h2>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Cadastrado em</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pendentes.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">{p.nome || "-"}</TableCell>
+                  <TableCell>{p.email}</TableCell>
+                  <TableCell>{new Date(p.created_at).toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" onClick={() => setLiberandoUser(p)}>
+                      Liberar acesso
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
       <div className="rounded-lg border bg-card">
+
         <Table>
           <TableHeader>
             <TableRow>
@@ -671,6 +722,11 @@ export default function Usuarios() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <LiberarUsuarioDialog
+        usuario={liberandoUser}
+        open={!!liberandoUser}
+        onOpenChange={(o) => !o && setLiberandoUser(null)}
+      />
     </AppLayout>
   );
 }

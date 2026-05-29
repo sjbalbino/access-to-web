@@ -56,18 +56,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("user_roles")
           .select("role")
           .eq("user_id", userId)
-          .single();
+          .maybeSingle();
 
-        if (roleData) {
-          setRole(roleData.role as AppRole);
-          // Super admin é determinado pela coluna is_super_admin_original (preserva identidade ao trocar empresa)
-          setIsSuperAdmin(!!(profileData as any).is_super_admin_original);
+        // Bloqueio: cadastro pendente (sem role) ou inativo
+        if (!roleData || profileData.ativo === false) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+          setProfile(null);
+          setRole(null);
+          setIsSuperAdmin(false);
+          if (typeof window !== "undefined") {
+            const { toast } = await import("@/hooks/use-toast");
+            toast({
+              title: "Cadastro pendente de liberação",
+              description: "Aguarde a aprovação por um administrador. Você receberá um e-mail assim que liberado.",
+              variant: "destructive",
+            });
+          }
+          return;
+
         }
+
+        setRole(roleData.role as AppRole);
+        setIsSuperAdmin(!!(profileData as any).is_super_admin_original);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
   };
+
 
   useEffect(() => {
     let isMounted = true;

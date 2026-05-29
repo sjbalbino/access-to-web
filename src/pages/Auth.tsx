@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Leaf, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
@@ -111,25 +112,46 @@ export default function Auth() {
 
     setIsLoading(true);
     const { error } = await signUp(signupEmail, signupPassword, signupNome);
-    setIsLoading(false);
 
     if (error) {
+      setIsLoading(false);
       let message = "Erro ao criar conta";
       if (error.message.includes("User already registered")) {
         message = "Este email já está cadastrado";
       }
-      toast({
-        title: "Erro",
-        description: message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Conta criada!",
-        description: "Você foi logado automaticamente.",
-      });
+      toast({ title: "Erro", description: message, variant: "destructive" });
+      return;
     }
+
+    // Disparar e-mails de notificação (usuário + admins) — não bloqueia
+    try {
+      const { data: sessionData } = await supabase.auth.getUser();
+      const newUserId = sessionData?.user?.id;
+      if (newUserId) {
+        await supabase.functions.invoke("notify-new-signup", {
+          body: { user_id: newUserId, email: signupEmail, nome: signupNome },
+        });
+      }
+    } catch (err) {
+      console.error("notify-new-signup falhou:", err);
+    }
+
+    // Deslogar imediatamente — usuário precisa aguardar aprovação
+    await supabase.auth.signOut();
+    setIsLoading(false);
+
+    toast({
+      title: "Cadastro recebido!",
+      description: "Você receberá um e-mail assim que um administrador liberar seu acesso.",
+    });
+
+    // Limpar formulário
+    setSignupNome("");
+    setSignupEmail("");
+    setSignupPassword("");
+    setSignupConfirmPassword("");
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">

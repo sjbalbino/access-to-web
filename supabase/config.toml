@@ -29,3 +29,13 @@ verify_jwt = true
 
 [functions.focus-nfe-mde]
 verify_jwt = true
+
+[functions.approve-user]
+verify_jwt = false
+
+[functions.reject-user]
+verify_jwt = false
+
+[functions.notify-new-signup]
+verify_jwt = false
+
