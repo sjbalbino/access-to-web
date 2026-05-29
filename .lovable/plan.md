@@ -1,25 +1,34 @@
 ## Objetivo
-Substituir os 7 campos `Input` de CST padrão no cadastro do Emitente NF-e (`src/pages/EmitentesNfe.tsx`) por `Select` populados com as tabelas oficiais — espelhando o que já foi feito no diálogo de item da NF-e.
+Preencher automaticamente as alíquotas padrão (ICMS, PIS, COFINS, IBS, CBS, IS) e os CST padrão conforme o Regime Tributário (CRT) selecionado em `EmitentesNfe.tsx`.
 
-## Mudanças
+## Tabela de defaults por regime
 
-**`src/pages/EmitentesNfe.tsx`**
-1. Importar:
-   - `Select`, `SelectTrigger`, `SelectContent`, `SelectItem`, `SelectValue` (já provavelmente existem).
-   - `getCstIcmsOptions`, `CST_PIS_COFINS`, `CST_IPI` de `@/lib/cstTabelas`.
-   - `CST_IBS_CBS`, `CST_IS` (ou equivalente) de `@/lib/cstReformaTributaria` — se ainda não houver constante exportada, expor as listas existentes nesse arquivo.
-2. Trocar os 7 `<Input>` por `<Select>`:
-   - **CST ICMS** → `getCstIcmsOptions(formData.crt)` (alterna CSOSN ↔ CST conforme o CRT do emitente).
-   - **CST PIS** → `CST_PIS_COFINS`.
-   - **CST COFINS** → `CST_PIS_COFINS`.
-   - **CST IPI** → `CST_IPI`.
-   - **CST IBS** → tabela IBS/CBS da Reforma (3 dígitos).
-   - **CST CBS** → mesma tabela IBS/CBS.
-   - **CST IS** → tabela IS da Reforma (3 dígitos).
-3. Normalizar defaults para 3 dígitos nos CSTs da Reforma:
-   - `cst_ibs_padrao`, `cst_cbs_padrao`, `cst_is_padrao` passam de `"00"` para `"000"` no estado inicial, no reset do form e no carregamento (`?? "000"`).
+| Campo | Simples Nacional (CRT 1 e 2) | Regime Normal (CRT 3) |
+|---|---|---|
+| ICMS | 0 | 0 (UF-dependente; usuário ajusta) |
+| PIS | 0 (recolhido no DAS) | 1,65 |
+| COFINS | 0 (recolhido no DAS) | 7,60 |
+| IBS | 0,1 (transição 2026) | 0,1 |
+| CBS | 0,9 (transição 2026) | 0,9 |
+| IS | 0 | 0 |
+| CST ICMS | 102 (CSOSN) | 00 |
+| CST PIS | 49 | 01 |
+| CST COFINS | 49 | 01 |
+| CST IPI | 99 | 99 |
+| CST IBS | 000 | 000 |
+| CST CBS | 000 | 000 |
+| CST IS | 000 | 000 |
+
+Observação 2026: alíquotas de transição IBS=0,1% e CBS=0,9% conforme cronograma da Reforma Tributária. Usuário pode editar livremente.
+
+## Mudanças em `src/pages/EmitentesNfe.tsx`
+
+1. Criar helper local `getDefaultsByCrt(crt: number)` retornando o objeto com os 6 valores de alíquota + 7 CSTs conforme tabela acima.
+2. No `onValueChange` do `<Select>` de CRT (Regime Tributário): além de setar `crt`, aplicar os defaults via `setFormData(prev => ({ ...prev, crt, ...getDefaultsByCrt(crt) }))` — somente quando o usuário troca o regime no formulário (não sobrescreve no carregamento de emitente existente).
+3. Atualizar o estado inicial do form e o reset para usar `getDefaultsByCrt(3)` (Regime Normal por padrão), em vez dos valores hardcoded espalhados.
+4. Não alterar carregamento do emitente existente — continua respeitando os valores salvos.
 
 ## Fora de escopo
-- Não alterar tabelas/edge functions.
-- Não mexer no cálculo de impostos nem em `NotaFiscalForm.tsx`.
-- Sem migração (colunas já são `varchar(3)` após a migração anterior).
+- Sem migração de banco.
+- Sem alteração no cálculo de impostos da NFe.
+- Sem mudanças em `NotaFiscalForm.tsx` ou edge functions.
