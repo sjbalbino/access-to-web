@@ -328,6 +328,26 @@ export default function RemessasVendaForm() {
     setRemessaExcluir(null);
   };
 
+  const handleCancelar = async () => {
+    if (!remessaCancelar) return;
+    if (remessaCancelar.status === "carregado_nfe" || remessaCancelar.nota_fiscal_id) {
+      toast.error("Remessas com NFe emitida não podem ser canceladas!");
+      setRemessaCancelar(null);
+      return;
+    }
+    const motivo = motivoCancelamento.trim();
+    const obsAtual = remessaCancelar.observacoes?.trim() || "";
+    const novaObs = motivo
+      ? (obsAtual ? `${obsAtual}\n[CANCELADA] ${motivo}` : `[CANCELADA] ${motivo}`)
+      : remessaCancelar.observacoes;
+    await updateRemessa.mutateAsync({
+      id: remessaCancelar.id,
+      status: "cancelada",
+      observacoes: novaObs,
+    });
+    setRemessaCancelar(null);
+    setMotivoCancelamento("");
+
   const handleEmitirNfe = (remessa: RemessaVenda) => {
     setRemessaEmitirNfe(remessa);
   };
