@@ -361,6 +361,38 @@ export function useFocusNfe() {
     return poll();
   };
 
+  const enviarEmail = async (
+    notaFiscalId: string,
+    emails: string[]
+  ): Promise<FocusNfeResult> => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("focus-nfe-enviar-email", {
+        body: { notaFiscalId, emails },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.success) {
+        toast.success("Email enviado", {
+          description: `DANFE e XML enviados para ${(data.emails ?? emails).length} destinatário(s)`,
+        });
+      } else {
+        toast.error("Erro ao enviar email", { description: data?.error });
+      }
+
+      return data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro desconhecido";
+      toast.error("Erro ao enviar email", { description: message });
+      return { success: false, error: message };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     isLoading,
     status,
@@ -370,5 +402,6 @@ export function useFocusNfe() {
     emitirCartaCorrecao,
     downloadArquivo,
     pollStatus,
+    enviarEmail,
   };
 }
