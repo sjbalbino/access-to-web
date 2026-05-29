@@ -105,13 +105,33 @@ serve(async (req) => {
     });
 
     const text = await resp.text();
-    let body: Record<string, unknown> | null = null;
+    let body: unknown = null;
     try { body = JSON.parse(text); } catch { /* não-json */ }
 
     const tokenPrefix = `${token.slice(0, 6)}…(${token.length} chars)`;
+    console.log("Focus NFe resposta:", resp.status, text.slice(0, 800));
 
-    // 404 → empresa não cadastrada na Focus
-    if (resp.status === 404) {
+    // Helpers: Focus pode retornar objeto {codigo, mensagem} ou um array ["codigo","X","mensagem","Y"]
+    const extractField = (b: unknown, key: string): string | null => {
+      if (!b) return null;
+      if (Array.isArray(b)) {
+        const i = b.indexOf(key);
+        if (i >= 0 && typeof b[i + 1] === "string") return b[i + 1] as string;
+        return null;
+      }
+      if (typeof b === "object") {
+        const o = b as Record<string, unknown>;
+        const v = o[key];
+        return typeof v === "string" ? v : null;
+      }
+      return null;
+    };
+    const focusCodigo = extractField(body, "codigo") ?? extractField(body, "code");
+    const focusMensagem = extractField(body, "mensagem") ?? extractField(body, "message");
+    const bodyAsObj = Array.isArray(body) ? (body as unknown) : (body as Record<string, unknown> | null);
+
+    // 404 → empresa não cadastrada
+    if (resp.status === 404 || focusCodigo === "nao_encontrado" || focusCodigo === "empresa_nao_encontrada") {
       return new Response(
         JSON.stringify({
           success: true,
@@ -121,13 +141,13 @@ serve(async (req) => {
           cpf_cnpj: cpfCnpjAlvo,
           codigo: "empresa_nao_cadastrada",
           mensagem: `O CPF/CNPJ ${cpfCnpjAlvo} não está cadastrado na sua conta da Focus NFe (${ambienteLabel}) — token usado: ${tokenPrefix}. Cadastre a empresa no painel da Focus, anexe o certificado digital A1 e habilite-a para emissão.`,
-          detalhes: { token_prefix: tokenPrefix, url },
+          detalhes: { token_prefix: tokenPrefix, url, focus_resposta: bodyAsObj ?? text.slice(0, 500) },
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // 401/403 → token inválido / sem permissão
+    // 401/403 → token inválido
     if (resp.status === 401 || resp.status === 403) {
       return new Response(
         JSON.stringify({
@@ -137,21 +157,33 @@ serve(async (req) => {
           ambiente_label: ambienteLabel,
           cpf_cnpj: cpfCnpjAlvo,
           codigo: "token_invalido_ou_sem_permissao",
-          mensagem: `A Focus NFe recusou o Token Principal de Produção ${tokenPrefix} ao consultar o CPF/CNPJ ${cpfCnpjAlvo}. Isso normalmente indica que o token principal pertence a outra conta, está inválido, ou a empresa não existe nessa conta da Focus.`,
-          detalhes: {
-            token_prefix: tokenPrefix,
-            token_tipo: tokenTipo,
-            ambiente,
-            ambiente_label: ambienteLabel,
-            url,
-            status_http: resp.status,
-            focus_resposta: body ?? text.slice(0, 500),
-            orientacao: [
-              "Confirme no painel da Focus NFe se o Token Principal de Produção foi copiado corretamente.",
-              `Confirme no painel da Focus NFe se a empresa ${cpfCnpjAlvo} existe nessa mesma conta.`,
-              "Os tokens de produção/homologação da empresa são usados para emissão; esta consulta de empresa usa o token principal.",
-            ],
-          },
+          mensagem: `A Focus NFe recusou o Token Principal de Produção ${tokenPrefix} ao consultar o CPF/CNPJ ${cpfCnpjAlvo}. Confirme se o token principal pertence a essa conta e se a empresa existe nela.`,
+          detalhes: { token_prefix: tokenPrefix, token_tipo: tokenTipo, url, status_http: resp.status, focus_resposta: bodyAsObj ?? text.slice(0, 500) },
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // 422 → requisição inválida / empresa não habilitada
+    if (resp.status === 422) {
+      const isReqInvalida = focusCodigo === "requisicao_invalida";
+      const isNaoHabilitada = (focusCodigo ?? "").includes("nao_habilitad") || focusCodigo === "permissao_negada";
+      return new Response(
+        JSON.stringify({
+          success: true,
+          habilitada: false,
+          ambiente,
+          ambiente_label: ambienteLabel,
+          cpf_cnpj: cpfCnpjAlvo,
+          codigo: focusCodigo ?? "requisicao_invalida",
+          mensagem: focusMensagem
+            ? `Focus NFe: ${focusMensagem}`
+            : isNaoHabilitada
+              ? `A empresa ${cpfCnpjAlvo} não está habilitada para emissão em ${ambienteLabel} na Focus NFe. Habilite no painel da Focus.`
+              : isReqInvalida
+                ? `A Focus NFe rejeitou a consulta do CPF/CNPJ ${cpfCnpjAlvo} (requisição inválida). Verifique se o CPF/CNPJ está correto e se a empresa está cadastrada nessa conta da Focus com o certificado A1 instalado.`
+                : `A Focus NFe retornou HTTP 422 ao consultar ${cpfCnpjAlvo}.`,
+          detalhes: { token_prefix: tokenPrefix, token_tipo: tokenTipo, url, status_http: 422, focus_codigo: focusCodigo, focus_resposta: bodyAsObj ?? text.slice(0, 500) },
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
@@ -161,8 +193,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Focus NFe retornou HTTP ${resp.status}`,
-          detalhes: body ?? text.slice(0, 500),
+          error: `Focus NFe retornou HTTP ${resp.status}${focusMensagem ? `: ${focusMensagem}` : ""}`,
+          detalhes: bodyAsObj ?? text.slice(0, 500),
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
