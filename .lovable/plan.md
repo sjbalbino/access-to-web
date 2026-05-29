@@ -1,28 +1,16 @@
-# Mostrar motivo real do erro no cadastro
+## Problema
 
-## Causa raiz
+Após cancelar uma NF-e, a lista em `/notas-fiscais` continua exibindo o status anterior ("autorizada"). A função `cancelarNfe` em `src/hooks/useFocusNfe.ts` atualiza o status no banco via edge function, mas não invalida o cache do React Query, então a UI só reflete após reload manual.
 
-Os logs mostram `POST /signup → 422` sem `error_code`, ou seja, são erros que não batem com nenhum dos padrões (`pwned`, `at least`, `invalid email`, etc.) tratados em `handleSignup`. Nesses casos o código cai no fallback fixo **"Não foi possível concluir o cadastro. Tente novamente em alguns instantes."**, que esconde a mensagem real vinda do Supabase (ex.: falha em trigger `handle_new_user`, conflito de e-mail com normalização diferente, validação de domínio, etc.).
+## Correção
 
-Resultado: o usuário vê sempre a mesma mensagem e nunca o motivo.
+Em `src/hooks/useFocusNfe.ts`, dentro de `cancelarNfe` (após `data.success`):
 
-## Mudanças (apenas frontend — `src/pages/Auth.tsx`)
+- Usar `useQueryClient` e chamar `queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] })`.
+- Invalidar também queries relacionadas que dependem da NFe cancelada: `notas-deposito-emitidas`, `devolucoes-deposito`, `compras-cereais`, `saldos-deposito`, `saldo-disponivel-produtor` (a edge function já propaga essas mudanças no banco).
 
-1. No `catch`/branch de erro do `handleSignup`:
-   - Sempre logar no console: `console.error("Signup error:", error)` (status, message, name) para diagnóstico futuro.
-   - Manter as mensagens PT-BR específicas (pwned, senha curta, email inválido, signup desabilitado, rate limit, já cadastrado, network).
-   - **Quando nenhum padrão bater**, mostrar a `error.message` original (traduzindo se possível) em vez do fallback genérico. Formato: `"Erro ao criar conta: <mensagem original>"`. Assim o usuário e o suporte enxergam o motivo real.
-   - Se `error.message` vier vazio, aí sim usar o texto fallback atual.
-
-2. Mesmo tratamento equivalente em `handleLogin` (logar `error` no console) para futuras investigações.
-
-## Fora de escopo
-
-- Mexer em `AuthContext.signUp` ou no trigger `handle_new_user`.
-- Alterar configuração de auth, e-mails ou backend.
-- Investigar a fundo o 422 de 11s (depende do motivo que aparecer após a mudança).
+Aplicar o mesmo padrão em `emitirCartaCorrecao` e em `emitirNfe` se ainda não invalidarem (verificar e ajustar somente se necessário, mantendo escopo da correção).
 
 ## Validação
 
-- Tentar cadastrar com senha vazada → mensagem clara sobre senha vazada (já funcionava).
-- Tentar cadastrar com e-mail que está gerando 422 hoje → agora a toast mostra a mensagem real do Supabase, e o console mostra o objeto de erro completo.
+Cancelar uma NF-e e confirmar que a linha na tabela passa imediatamente para "cancelada" sem reload.
