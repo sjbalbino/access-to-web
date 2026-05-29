@@ -302,17 +302,18 @@ export default function Usuarios() {
   };
 
   // Filter users based on tenant (non-super admins only see their tenant's users)
+  // Excluir pendentes (sem role) — eles vão para a aba Pendentes
   const filteredUsers = users?.filter((user) => {
+    if (!user.hasRole) return false;
+
     const matchesSearch =
       user.nome?.toLowerCase().includes(search.toLowerCase()) ||
       user.email?.toLowerCase().includes(search.toLowerCase());
 
-    // Super admins see all users
     if (isSuperAdmin) return matchesSearch;
-
-    // Regular admins only see users from their tenant
     return matchesSearch && user.tenant_id === profile?.tenant_id;
   });
+
 
   const {
     dadosPaginados,
