@@ -70,6 +70,31 @@ const API_PROVIDERS = [
   { value: "focusnfe", label: "Focus NFe" },
 ];
 
+/**
+ * Defaults de alíquotas e CSTs conforme o Regime Tributário (CRT).
+ * - Simples Nacional (1, 2): PIS/COFINS recolhidos no DAS; CST ICMS usa CSOSN.
+ * - Regime Normal (3): PIS 1,65% / COFINS 7,60%; CST ICMS tradicional.
+ * - IBS/CBS: alíquotas de transição 2026 (Reforma Tributária).
+ */
+function getDefaultsByCrt(crt: number) {
+  const simples = crt === 1 || crt === 2;
+  return {
+    aliq_icms_padrao: 0,
+    aliq_pis_padrao: simples ? 0 : 1.65,
+    aliq_cofins_padrao: simples ? 0 : 7.6,
+    aliq_ibs_padrao: 0.1,
+    aliq_cbs_padrao: 0.9,
+    aliq_is_padrao: 0,
+    cst_icms_padrao: simples ? "102" : "00",
+    cst_pis_padrao: simples ? "49" : "01",
+    cst_cofins_padrao: simples ? "49" : "01",
+    cst_ipi_padrao: "99",
+    cst_ibs_padrao: "000",
+    cst_cbs_padrao: "000",
+    cst_is_padrao: "000",
+  };
+}
+
 export default function EmitentesNfe() {
   const { emitentes, isLoading, createEmitente, updateEmitente, deleteEmitente } = useEmitentesNfe();
 
