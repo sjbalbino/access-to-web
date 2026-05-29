@@ -1,47 +1,34 @@
-# E-mails transacionais — Fluxo de aprovação de usuários
+# Corrigir mensagem de erro no cadastro
 
-Implementar os 3 e-mails em PT-BR, com identidade visual do AgroGestão (verde agrícola), disparados a partir de `notify@notify.sisagro.app`.
+## Causa raiz
 
-## E-mails
+Os logs do Auth mostram `POST /signup → 422` e que a proteção **Pwned Passwords (HIBP)** está ativa. A senha usada (`123456`) é uma das mais vazadas do mundo, então o Supabase rejeita com `weak_password / pwned`. O `Auth.tsx` só trata `Invalid login credentials` e `User already registered`, caindo no genérico **"Erro ao criar conta"** e escondendo a causa real.
 
-1. **Confirmação de cadastro → novo usuário**
-   - Assunto: "Cadastro recebido — aguardando liberação"
-   - Conteúdo: agradecimento, explicação de que um administrador irá analisar e liberar o acesso, e que receberá novo e-mail quando aprovado.
+## Mudanças (apenas frontend — `src/pages/Auth.tsx`)
 
-2. **Alerta de novo cadastro → administradores**
-   - Assunto: "Novo cadastro aguardando liberação no AgroGestão"
-   - Conteúdo: nome e e-mail do solicitante, botão "Liberar acesso" levando a `https://sisagro.app/usuarios`.
-   - Destinatários: todos os usuários com role `admin` (do tenant) + Super Admins.
+No `handleSignup`, ampliar o mapeamento de erros para cobrir:
 
-3. **Liberação concedida → usuário**
-   - Assunto: "Seu acesso ao AgroGestão foi liberado"
-   - Conteúdo: boas-vindas, empresa (tenant) atribuída, perfil (Visualizador / Operador / Gerente / Administrador) e botão "Acessar o sistema" levando a `https://sisagro.app/auth`.
+- **Senha vazada / fraca** (`weak_password`, mensagem contém `pwned` ou `compromised`)
+  → "Esta senha foi encontrada em vazamentos públicos. Escolha uma senha mais forte (evite '123456', 'senha', datas, etc.)."
+- **Senha curta** (contém `at least`)
+  → "A senha deve ter pelo menos 6 caracteres."
+- **Email inválido** (`invalid email`)
+  → "Email inválido."
+- **Signups desabilitados** (`signup is disabled`)
+  → "O cadastro está temporariamente desabilitado. Contate o administrador."
+- **Rate limit** (`rate limit`)
+  → "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+- Manter os casos atuais (já cadastrado).
+- Como fallback, mostrar `error.message` em vez de só "Erro ao criar conta", para que erros futuros fiquem visíveis.
 
-## Infra
-
-- Provisionar infraestrutura de e-mails transacionais (Edge Functions `send-transactional-email`, `handle-email-unsubscribe`, `handle-email-suppression` + tabelas de supressão e tokens de descadastro).
-- Criar página `/unsubscribe` no app para gerenciar descadastros (tema AgroGestão).
-- Templates React Email em `supabase/functions/_shared/transactional-email-templates/`:
-  - `cadastro-recebido.tsx`
-  - `novo-cadastro-admin.tsx`
-  - `acesso-liberado.tsx`
-- Registrar os 3 templates em `registry.ts`.
-
-## Disparos
-
-- **`Auth.tsx`** (após signup público): substituir a chamada atual a `notify-new-signup` por:
-  - `send-transactional-email` com template `cadastro-recebido` → e-mail do usuário.
-  - `send-transactional-email` com template `novo-cadastro-admin` → 1 envio por admin (busca via edge function `notify-new-signup`, que faz a query de admins e dispara cada e-mail individualmente — mantém a função para centralizar a lógica de descoberta de destinatários).
-- **`approve-user` edge function**: após aprovar, disparar `send-transactional-email` com template `acesso-liberado` → e-mail do usuário aprovado, passando `templateData` com `nome`, `empresa`, `perfil` e URL de login.
-
-## Considerações
-
-- Idempotência: usar `idempotencyKey` baseado em `user_id + template_name + (admin_id quando aplicável)`.
-- O `notify-new-signup` permanece como orquestrador (descobre admins do tenant e dispara um e-mail por admin); a função `send-transactional-email` é o único ponto de saída.
-- DNS de `notify.sisagro.app` ainda em verificação — os envios ficam enfileirados e começam automaticamente quando ativar.
-- Cores e estilo seguem tema verde agrícola do sistema; corpo do e-mail em fundo branco (#ffffff).
+Também reforçar o schema Zod do cadastro para sugerir senha mínima de 8 caracteres (recomendação, mantendo 6 como mínimo técnico do Supabase) — opcional, posso deixar em 6 se preferir.
 
 ## Fora de escopo
 
-- Editar templates de autenticação nativa do Supabase (signup confirmation, password reset) — pode ser feito depois se desejado.
-- Auto-aprovação por domínio de e-mail.
+- Desativar HIBP (recomendo manter ativo — é segurança).
+- Mudar fluxo de aprovação, e-mails ou backend.
+
+## Validação
+
+- Tentar cadastro com `123456` → deve mostrar mensagem clara sobre senha vazada.
+- Tentar cadastro com senha forte nova → deve concluir normalmente.
