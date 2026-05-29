@@ -830,7 +830,34 @@ export default function EmitentesNfe() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="api_access_token">Token de Acesso</Label>
+                      <Label htmlFor="api_access_token_homologacao">Token de Homologação</Label>
+                      <div className="relative">
+                        <Input
+                          id="api_access_token_homologacao"
+                          type={showTokenHom ? "text" : "password"}
+                          value={credentials.api_access_token_homologacao || ""}
+                          onChange={(e) =>
+                            setCredentials({ ...credentials, api_access_token_homologacao: e.target.value })
+                          }
+                          placeholder="Token de Homologação da Focus NFe"
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full w-10"
+                          onClick={() => setShowTokenHom((v) => !v)}
+                          title={showTokenHom ? "Ocultar token" : "Mostrar token"}
+                        >
+                          {showTokenHom ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 col-span-2 md:col-span-1 md:col-start-2">
+                      <Label htmlFor="api_access_token">Token de Produção</Label>
                       <div className="relative">
                         <Input
                           id="api_access_token"
@@ -839,7 +866,7 @@ export default function EmitentesNfe() {
                           onChange={(e) =>
                             setCredentials({ ...credentials, api_access_token: e.target.value })
                           }
-                          placeholder="Token da API Focus NFe"
+                          placeholder="Token de Produção da Focus NFe"
                           className="pr-10"
                         />
                         <Button
@@ -855,6 +882,9 @@ export default function EmitentesNfe() {
                       </div>
                     </div>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    O sistema escolhe automaticamente o token conforme o Ambiente configurado no emitente (1 = Produção, 2 = Homologação).
+                  </p>
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="api_configurada"
