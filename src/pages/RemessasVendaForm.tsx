@@ -34,12 +34,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban } from "lucide-react";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
 import {
   useRemessasVenda,
   useCreateRemessaVenda,
-  useDeleteRemessaVenda,
   useUpdateRemessaVenda,
   useProximoCodigoRemessa,
   useProximoRomaneio,
@@ -92,7 +91,6 @@ export default function RemessasVendaForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const [remessaExcluir, setRemessaExcluir] = useState<string | null>(null);
   const [remessaCancelar, setRemessaCancelar] = useState<RemessaVenda | null>(null);
   const [motivoCancelamento, setMotivoCancelamento] = useState("");
   const [remessaPesar, setRemessaPesar] = useState<RemessaVenda | null>(null);
@@ -115,7 +113,6 @@ export default function RemessasVendaForm() {
   const { transportadoras } = useTransportadoras();
 
   const createRemessa = useCreateRemessaVenda();
-  const deleteRemessa = useDeleteRemessaVenda();
   const updateRemessa = useUpdateRemessaVenda();
 
   // Determinar se o produto exige PH
@@ -313,20 +310,6 @@ export default function RemessasVendaForm() {
     });
   };
 
-  const handleExcluir = async () => {
-    if (!remessaExcluir || !id) return;
-    
-    // Verificar se a remessa pode ser excluída
-    const remessa = remessas?.find(r => r.id === remessaExcluir);
-    if (remessa?.status === "carregado_nfe" || remessa?.nota_fiscal_id) {
-      toast.error("Remessas com NFe emitida não podem ser excluídas!");
-      setRemessaExcluir(null);
-      return;
-    }
-    
-    await deleteRemessa.mutateAsync({ id: remessaExcluir, contratoId: id });
-    setRemessaExcluir(null);
-  };
 
   const handleCancelar = async () => {
     if (!remessaCancelar) return;
@@ -948,17 +931,6 @@ export default function RemessasVendaForm() {
                                   <Eye className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                               )}
-                              {/* Botão Excluir - apenas se não tiver NFe */}
-                              {!r.nota_fiscal_id && r.status !== "carregado_nfe" && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setRemessaExcluir(r.id)}
-                                  title="Excluir"
-                                >
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -989,23 +961,6 @@ export default function RemessasVendaForm() {
         </Card>
       </div>
 
-      {/* Dialog de Confirmação de Exclusão */}
-      <AlertDialog open={!!remessaExcluir} onOpenChange={() => setRemessaExcluir(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir esta remessa? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleExcluir} className="bg-destructive text-destructive-foreground">
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Dialog de Confirmação de Cancelamento */}
       <AlertDialog open={!!remessaCancelar} onOpenChange={(open) => { if (!open) { setRemessaCancelar(null); setMotivoCancelamento(""); } }}>
