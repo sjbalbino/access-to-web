@@ -34,12 +34,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban } from "lucide-react";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
 import {
   useRemessasVenda,
   useCreateRemessaVenda,
   useDeleteRemessaVenda,
+  useUpdateRemessaVenda,
   useProximoCodigoRemessa,
   useProximoRomaneio,
   useTotaisContrato,
@@ -92,6 +93,8 @@ export default function RemessasVendaForm() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [remessaExcluir, setRemessaExcluir] = useState<string | null>(null);
+  const [remessaCancelar, setRemessaCancelar] = useState<RemessaVenda | null>(null);
+  const [motivoCancelamento, setMotivoCancelamento] = useState("");
   const [remessaPesar, setRemessaPesar] = useState<RemessaVenda | null>(null);
   const [remessaEditar, setRemessaEditar] = useState<RemessaVenda | null>(null);
   const [remessaEmitirNfe, setRemessaEmitirNfe] = useState<RemessaVenda | null>(null);
@@ -113,6 +116,7 @@ export default function RemessasVendaForm() {
 
   const createRemessa = useCreateRemessaVenda();
   const deleteRemessa = useDeleteRemessaVenda();
+  const updateRemessa = useUpdateRemessaVenda();
 
   // Determinar se o produto exige PH
   const exigePh = (contrato as any)?.informar_ph || false;
@@ -323,6 +327,29 @@ export default function RemessasVendaForm() {
     await deleteRemessa.mutateAsync({ id: remessaExcluir, contratoId: id });
     setRemessaExcluir(null);
   };
+
+  const handleCancelar = async () => {
+    if (!remessaCancelar) return;
+    if (remessaCancelar.status === "carregado_nfe" || remessaCancelar.nota_fiscal_id) {
+      toast.error("Remessas com NFe emitida não podem ser canceladas!");
+      setRemessaCancelar(null);
+      return;
+    }
+    const motivo = motivoCancelamento.trim();
+    const obsAtual = remessaCancelar.observacoes?.trim() || "";
+    const novaObs = motivo
+      ? (obsAtual ? `${obsAtual}\n[CANCELADA] ${motivo}` : `[CANCELADA] ${motivo}`)
+      : remessaCancelar.observacoes;
+    await updateRemessa.mutateAsync({
+      id: remessaCancelar.id,
+      status: "cancelada",
+      observacoes: novaObs,
+    });
+    setRemessaCancelar(null);
+    setMotivoCancelamento("");
+  };
+
+
 
   const handleEmitirNfe = (remessa: RemessaVenda) => {
     setRemessaEmitirNfe(remessa);
@@ -899,6 +926,28 @@ export default function RemessasVendaForm() {
                                   )}
                                 </>
                               )}
+                              {/* Botão Cancelar - apenas se não tiver NFe e não estiver cancelada */}
+                              {!r.nota_fiscal_id && r.status !== "carregado_nfe" && r.status !== "cancelada" && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => { setMotivoCancelamento(""); setRemessaCancelar(r); }}
+                                  title="Cancelar Remessa"
+                                >
+                                  <Ban className="h-4 w-4 text-destructive" />
+                                </Button>
+                              )}
+                              {/* Visualizar Remessa cancelada (somente leitura) */}
+                              {r.status === "cancelada" && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setRemessaEditar(r)}
+                                  title="Visualizar Remessa"
+                                >
+                                  <Eye className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              )}
                               {/* Botão Excluir - apenas se não tiver NFe */}
                               {!r.nota_fiscal_id && r.status !== "carregado_nfe" && (
                                 <Button
@@ -957,6 +1006,35 @@ export default function RemessasVendaForm() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog de Confirmação de Cancelamento */}
+      <AlertDialog open={!!remessaCancelar} onOpenChange={(open) => { if (!open) { setRemessaCancelar(null); setMotivoCancelamento(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar remessa</AlertDialogTitle>
+            <AlertDialogDescription>
+              A remessa será marcada como <strong>Cancelada</strong> e não entrará nos totais do contrato. O registro permanece para histórico. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="motivo-cancelamento">Motivo (opcional)</Label>
+            <Textarea
+              id="motivo-cancelamento"
+              value={motivoCancelamento}
+              onChange={(e) => setMotivoCancelamento(e.target.value)}
+              placeholder="Informe o motivo do cancelamento..."
+              rows={3}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelar} className="bg-destructive text-destructive-foreground">
+              Cancelar Remessa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* Dialog de Pesar Bruto */}
       <PesarBrutoDialog
