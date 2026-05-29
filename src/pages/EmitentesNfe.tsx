@@ -738,83 +738,104 @@ export default function EmitentesNfe() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-3 md:grid-cols-7 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="cst_icms_padrao">ICMS</Label>
-                      <Input
-                        id="cst_icms_padrao"
-                        value={formData.cst_icms_padrao || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cst_icms_padrao: e.target.value })
-                        }
-                        maxLength={3}
-                      />
+                      <Label htmlFor="cst_icms_padrao">CST ICMS {formData.crt === 1 || formData.crt === 2 ? "(CSOSN)" : ""}</Label>
+                      <Select
+                        value={formData.cst_icms_padrao || undefined}
+                        onValueChange={(v) => setFormData({ ...formData, cst_icms_padrao: v })}
+                      >
+                        <SelectTrigger id="cst_icms_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {getCstIcmsOptions(formData.crt).map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cst_pis_padrao">PIS</Label>
-                      <Input
-                        id="cst_pis_padrao"
-                        value={formData.cst_pis_padrao || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cst_pis_padrao: e.target.value })
-                        }
-                        maxLength={2}
-                      />
+                      <Label htmlFor="cst_pis_padrao">CST PIS</Label>
+                      <Select
+                        value={formData.cst_pis_padrao || undefined}
+                        onValueChange={(v) => setFormData({ ...formData, cst_pis_padrao: v })}
+                      >
+                        <SelectTrigger id="cst_pis_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {CST_PIS_COFINS.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cst_cofins_padrao">COFINS</Label>
-                      <Input
-                        id="cst_cofins_padrao"
-                        value={formData.cst_cofins_padrao || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cst_cofins_padrao: e.target.value })
-                        }
-                        maxLength={2}
-                      />
+                      <Label htmlFor="cst_cofins_padrao">CST COFINS</Label>
+                      <Select
+                        value={formData.cst_cofins_padrao || undefined}
+                        onValueChange={(v) => setFormData({ ...formData, cst_cofins_padrao: v })}
+                      >
+                        <SelectTrigger id="cst_cofins_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {CST_PIS_COFINS.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cst_ipi_padrao">IPI</Label>
-                      <Input
-                        id="cst_ipi_padrao"
-                        value={formData.cst_ipi_padrao || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cst_ipi_padrao: e.target.value })
-                        }
-                        maxLength={2}
-                      />
+                      <Label htmlFor="cst_ipi_padrao">CST IPI</Label>
+                      <Select
+                        value={formData.cst_ipi_padrao || undefined}
+                        onValueChange={(v) => setFormData({ ...formData, cst_ipi_padrao: v })}
+                      >
+                        <SelectTrigger id="cst_ipi_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {CST_IPI.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cst_ibs_padrao">IBS</Label>
-                      <Input
-                        id="cst_ibs_padrao"
-                        value={formData.cst_ibs_padrao || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cst_ibs_padrao: e.target.value })
-                        }
-                        maxLength={2}
-                      />
+                      <Label htmlFor="cst_ibs_padrao">CST IBS</Label>
+                      <Select
+                        value={formData.cst_ibs_padrao || undefined}
+                        onValueChange={(v) => setFormData({ ...formData, cst_ibs_padrao: v })}
+                      >
+                        <SelectTrigger id="cst_ibs_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {CST_IBS_CBS.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cst_cbs_padrao">CBS</Label>
-                      <Input
-                        id="cst_cbs_padrao"
-                        value={formData.cst_cbs_padrao || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cst_cbs_padrao: e.target.value })
-                        }
-                        maxLength={2}
-                      />
+                      <Label htmlFor="cst_cbs_padrao">CST CBS</Label>
+                      <Select
+                        value={formData.cst_cbs_padrao || undefined}
+                        onValueChange={(v) => setFormData({ ...formData, cst_cbs_padrao: v })}
+                      >
+                        <SelectTrigger id="cst_cbs_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {CST_IBS_CBS.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cst_is_padrao">IS</Label>
-                      <Input
-                        id="cst_is_padrao"
-                        value={formData.cst_is_padrao || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cst_is_padrao: e.target.value })
-                        }
-                        maxLength={2}
-                      />
+                    <div className="space-y-2 lg:col-span-1">
+                      <Label htmlFor="cst_is_padrao">CST IS</Label>
+                      <Select
+                        value={formData.cst_is_padrao || undefined}
+                        onValueChange={(v) => setFormData({ ...formData, cst_is_padrao: v })}
+                      >
+                        <SelectTrigger id="cst_is_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          {CST_IS.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </CardContent>
