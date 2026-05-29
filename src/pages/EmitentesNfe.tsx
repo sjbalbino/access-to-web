@@ -314,6 +314,7 @@ export default function EmitentesNfe() {
           api_consumer_key: norm(credentials.api_consumer_key),
           api_consumer_secret: norm(credentials.api_consumer_secret),
           api_access_token: norm(credentials.api_access_token),
+          api_access_token_homologacao: norm(credentials.api_access_token_homologacao),
           api_access_token_secret: norm(credentials.api_access_token_secret),
         });
       } catch {
