@@ -302,6 +302,9 @@ export default function NotasFiscais() {
                               <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => handleDownload(nota, "xml")} title="Download XML">
                                 <FileText className="h-4 w-4" />
                               </Button>
+                              <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => { setSelectedNota(nota); setIsEnviarEmailDialogOpen(true); }} title="Enviar por Email">
+                                <Mail className="h-4 w-4" />
+                              </Button>
                               <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => { setSelectedNota(nota); setIsCartaCorrecaoDialogOpen(true); }} title="Carta de Correção">
                                 <FileEdit className="h-4 w-4" />
                               </Button>
