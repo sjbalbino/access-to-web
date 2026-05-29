@@ -157,6 +157,15 @@ export default function EmitentesNfe() {
           status_http?: number;
           orientacao?: string[];
         } : null;
+        const titulo = res.codigo === "empresa_nao_cadastrada"
+          ? "Empresa não cadastrada na Focus"
+          : res.codigo === "token_invalido_ou_sem_permissao"
+            ? "Token sem acesso na Focus"
+            : res.codigo === "requisicao_invalida"
+              ? "Consulta rejeitada pela Focus"
+              : res.codigo === "nao_habilitada_no_ambiente"
+                ? "Emitente NÃO habilitado"
+                : "Verificação não concluída";
         const detalhesExtras = [
           diag?.token_prefix ? `Token usado: ${diag.token_prefix}` : null,
           `Ambiente: ${res.ambiente_label ?? diag?.ambiente_label ?? "não informado"}`,
@@ -164,7 +173,7 @@ export default function EmitentesNfe() {
           ...(diag?.orientacao ?? []),
         ].filter(Boolean).join("\n");
 
-        toast.warning("Emitente NÃO habilitado", {
+        toast.warning(titulo, {
           description: `${res.mensagem || "Cadastre/habilite a empresa no painel da Focus NFe."}\n${consultado}${detalhesExtras ? `\n${detalhesExtras}` : ""}`,
           duration: 10000,
         });
