@@ -182,6 +182,7 @@ export default function VendasProducao() {
                     <TableRow>
                       <TableHead className="w-16">Nº</TableHead>
                       <TableHead className="min-w-[120px]">Comprador</TableHead>
+                      <TableHead className="min-w-[120px] hidden md:table-cell">Vendedor</TableHead>
                       <TableHead className="hidden sm:table-cell">Safra</TableHead>
                       <TableHead className="min-w-[80px]">Data</TableHead>
                       <TableHead className="hidden md:table-cell">Contrato</TableHead>
@@ -195,7 +196,7 @@ export default function VendasProducao() {
                   <TableBody>
                     {contratos?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                           Nenhum contrato encontrado
                         </TableCell>
                       </TableRow>
@@ -204,6 +205,7 @@ export default function VendasProducao() {
                         <TableRow key={contrato.id}>
                           <TableCell className="font-medium">{contrato.numero}</TableCell>
                           <TableCell className="max-w-[200px] truncate">{contrato.comprador?.nome_fantasia ? `${contrato.comprador.nome} (${contrato.comprador.nome_fantasia})` : contrato.comprador?.nome || "-"}</TableCell>
+                          <TableCell className="max-w-[180px] truncate hidden md:table-cell uppercase">{contrato.inscricao_produtor?.produtor?.nome || "-"}</TableCell>
                           <TableCell className="hidden sm:table-cell">{contrato.safra?.nome || "-"}</TableCell>
                           <TableCell>
                             {contrato.data_contrato
