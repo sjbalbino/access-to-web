@@ -55,7 +55,10 @@ serve(async (req) => {
     const credObj = Array.isArray(credsRaw)
       ? (credsRaw[0] as { api_access_token_principal_producao?: string | null; api_access_token?: string | null; api_access_token_homologacao?: string | null } | undefined)
       : (credsRaw as { api_access_token_principal_producao?: string | null; api_access_token?: string | null; api_access_token_homologacao?: string | null } | null);
-    const token = credObj?.api_access_token_principal_producao ?? null;
+    const tokenPrincipal = credObj?.api_access_token_principal_producao ?? null;
+    const tokenFallback = credObj?.api_access_token ?? null;
+    const token = tokenPrincipal || tokenFallback;
+    const tokenTipo = tokenPrincipal ? "token_principal_producao" : tokenFallback ? "token_producao_emitente" : null;
 
     if (!token) {
       return new Response(
@@ -137,6 +140,7 @@ serve(async (req) => {
           mensagem: `A Focus NFe recusou o Token Principal de Produção ${tokenPrefix} ao consultar o CPF/CNPJ ${cpfCnpjAlvo}. Isso normalmente indica que o token principal pertence a outra conta, está inválido, ou a empresa não existe nessa conta da Focus.`,
           detalhes: {
             token_prefix: tokenPrefix,
+            token_tipo: tokenTipo,
             ambiente,
             ambiente_label: ambienteLabel,
             url,
