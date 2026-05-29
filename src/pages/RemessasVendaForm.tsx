@@ -34,7 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban } from "lucide-react";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
 import {
   useRemessasVenda,
