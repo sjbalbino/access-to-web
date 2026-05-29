@@ -978,6 +978,38 @@ export default function EmitentesNfe() {
                 </CardContent>
               </Card>
 
+              {/* Emails para envio de DANFE/XML */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Emails para Envio de NFe</CardTitle>
+                  <CardDescription>
+                    Usados como destinatários padrão ao enviar DANFE e XML pelo botão "Enviar Email" na lista de NFe.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email_emitente">Email do Emitente</Label>
+                    <Input
+                      id="email_emitente"
+                      type="email"
+                      value={formData.email_emitente ?? ""}
+                      onChange={(e) => setFormData({ ...formData, email_emitente: e.target.value || null })}
+                      placeholder="empresa@dominio.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email_contador">Email do Contador</Label>
+                    <Input
+                      id="email_contador"
+                      type="email"
+                      value={formData.email_contador ?? ""}
+                      onChange={(e) => setFormData({ ...formData, email_contador: e.target.value || null })}
+                      placeholder="contador@dominio.com"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Status */}
               <Card>
                 <CardHeader className="pb-3">
