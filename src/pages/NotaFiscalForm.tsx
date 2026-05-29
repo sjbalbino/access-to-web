@@ -3579,19 +3579,30 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_is">CST IS</Label>
-                  <Input
-                    id="item_cst_is"
-                    value={itemFormData.cst_is || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, cst_is: e.target.value })}
-                    maxLength={3}
-                  />
+                  <Select
+                    value={itemFormData.cst_is || undefined}
+                    onValueChange={(value) => {
+                      setItemFormData({ ...itemFormData, cst_is: value });
+                      setImpostosEditadosManualmente(true);
+                    }}
+                  >
+                    <SelectTrigger id="item_cst_is"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {CST_IS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_aliq_is">Alíq. IS (%)</Label>
                   <CurrencyInput
                     id="item_aliq_is"
                     value={itemFormData.aliq_is}
-                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_is: value ?? 0 })}
+                    onChange={(value) => {
+                      setItemFormData({ ...itemFormData, aliq_is: value ?? 0 });
+                      setImpostosEditadosManualmente(true);
+                    }}
                     decimals={2}
                     prefix=""
                   />
