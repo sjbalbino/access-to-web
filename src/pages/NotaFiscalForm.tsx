@@ -1137,15 +1137,17 @@ export default function NotaFiscalForm() {
         cst_cofins: item.cst_cofins || "01",
         aliq_cofins: item.aliq_cofins || 7.6,
         // Reforma Tributária
-        cst_ibs: item.cst_ibs || "00",
+        cst_ibs: item.cst_ibs || "000",
         aliq_ibs: item.aliq_ibs || defaultIbs,
-        cst_cbs: item.cst_cbs || "00",
+        cst_cbs: item.cst_cbs || "000",
         aliq_cbs: item.aliq_cbs || defaultCbs,
-        cst_is: item.cst_is || "00",
+        cst_is: item.cst_is || "000",
         aliq_is: item.aliq_is || defaultIs,
         cclass_trib_ibs: item.cclass_trib_ibs || "",
         cclass_trib_cbs: item.cclass_trib_cbs || "",
       });
+      // Item existente: considera os impostos como já definidos pelo usuário
+      setImpostosEditadosManualmente(true);
     } else {
       setSelectedItem(null);
       setItemFormData({
@@ -1167,15 +1169,17 @@ export default function NotaFiscalForm() {
         cst_cofins: "01",
         aliq_cofins: 7.6,
         // Reforma Tributária - usar alíquotas padrão do emitente
-        cst_ibs: "00",
+        cst_ibs: "000",
         aliq_ibs: defaultIbs,
-        cst_cbs: "00",
+        cst_cbs: "000",
         aliq_cbs: defaultCbs,
-        cst_is: "00",
+        cst_is: "000",
         aliq_is: defaultIs,
         cclass_trib_ibs: "",
         cclass_trib_cbs: "",
       });
+      // Novo item: auto-cálculo habilitado
+      setImpostosEditadosManualmente(false);
     }
     setIsItemDialogOpen(true);
   };
