@@ -16,6 +16,8 @@ const getBaseUrl = (ambiente: number | null | undefined) => {
 };
 
 const onlyDigits = (s: string) => s.replace(/\D/g, "");
+const getAmbienteLabel = (ambiente: number | null | undefined) =>
+  ambiente === 2 ? "homologação" : "produção";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -88,6 +90,7 @@ serve(async (req) => {
       );
     }
 
+    const ambienteLabel = getAmbienteLabel(ambiente);
     const baseUrl = getBaseUrl(ambiente);
     const url = `${baseUrl}/v2/empresas/${cpfCnpjAlvo}`;
     console.log("Verificando empresa Focus NFe:", url);
@@ -101,7 +104,6 @@ serve(async (req) => {
     let body: Record<string, unknown> | null = null;
     try { body = JSON.parse(text); } catch { /* não-json */ }
 
-    const ambienteLabel = ambiente === 2 ? "homologação" : "produção";
     const tokenPrefix = `${token.slice(0, 6)}…(${token.length} chars)`;
 
     // 404 → empresa não cadastrada na Focus
@@ -131,8 +133,20 @@ serve(async (req) => {
           ambiente_label: ambienteLabel,
           cpf_cnpj: cpfCnpjAlvo,
           codigo: "token_invalido_ou_sem_permissao",
-          mensagem: `O token cadastrado neste emitente (${tokenPrefix}) não tem permissão para consultar o CPF/CNPJ ${cpfCnpjAlvo} em ${ambienteLabel}. Verifique se o token pertence à conta correta da Focus NFe.`,
-          detalhes: { token_prefix: tokenPrefix, resposta: body },
+          mensagem: `A Focus NFe recusou o token ${tokenPrefix} para o CPF/CNPJ ${cpfCnpjAlvo} em ${ambienteLabel}. Isso normalmente indica que o token pertence a outra conta, a empresa não está cadastrada/habilitada nesse ambiente, ou a conta está bloqueada para esse emitente.`,
+          detalhes: {
+            token_prefix: tokenPrefix,
+            ambiente,
+            ambiente_label: ambienteLabel,
+            url,
+            status_http: resp.status,
+            focus_resposta: body ?? text.slice(0, 500),
+            orientacao: [
+              `Confirme no painel da Focus NFe se a empresa ${cpfCnpjAlvo} existe em ${ambienteLabel}.`,
+              "Confirme se o token foi gerado na mesma conta onde essa empresa foi cadastrada.",
+              "Se o cadastro existir só em homologação, altere o emitente para homologação ou habilite a empresa em produção.",
+            ],
+          },
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );

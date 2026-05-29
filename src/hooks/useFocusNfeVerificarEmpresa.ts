@@ -14,7 +14,17 @@ export interface VerificacaoEmpresaResult {
   codigo?: string;
   mensagem?: string;
   error?: string;
-  detalhes?: unknown;
+  detalhes?: {
+    token_prefix?: string;
+    ambiente?: number | null;
+    ambiente_label?: string;
+    url?: string;
+    status_http?: number;
+    focus_resposta?: unknown;
+    orientacao?: string[];
+    resposta?: unknown;
+    [key: string]: unknown;
+  } | unknown;
 }
 
 export function useFocusNfeVerificarEmpresa() {

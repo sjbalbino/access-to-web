@@ -147,8 +147,21 @@ export default function EmitentesNfe() {
           description: `${res.nome ?? cpfCnpj} está pronta para emitir em ${res.ambiente_label}.\n${consultado}`,
         });
       } else {
+        const diag = typeof res.detalhes === "object" && res.detalhes !== null ? res.detalhes as {
+          token_prefix?: string;
+          ambiente_label?: string;
+          status_http?: number;
+          orientacao?: string[];
+        } : null;
+        const detalhesExtras = [
+          diag?.token_prefix ? `Token usado: ${diag.token_prefix}` : null,
+          `Ambiente: ${res.ambiente_label ?? diag?.ambiente_label ?? "não informado"}`,
+          diag?.status_http ? `HTTP Focus: ${diag.status_http}` : null,
+          ...(diag?.orientacao ?? []),
+        ].filter(Boolean).join("\n");
+
         toast.warning("Emitente NÃO habilitado", {
-          description: `${res.mensagem || "Cadastre/habilite a empresa no painel da Focus NFe."}\n${consultado}`,
+          description: `${res.mensagem || "Cadastre/habilite a empresa no painel da Focus NFe."}\n${consultado}${detalhesExtras ? `\n${detalhesExtras}` : ""}`,
           duration: 10000,
         });
       }

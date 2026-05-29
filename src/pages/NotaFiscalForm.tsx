@@ -854,12 +854,23 @@ export default function NotaFiscalForm() {
       if (verif.success && verif.habilitada === false) {
         const docFmt = inscricao.cpf_cnpj;
         if (verif.codigo === "token_invalido_ou_sem_permissao") {
+          const diag = typeof verif.detalhes === "object" && verif.detalhes !== null ? verif.detalhes as {
+            token_prefix?: string;
+            ambiente_label?: string;
+            status_http?: number;
+            orientacao?: string[];
+          } : null;
           setEmissionStatus({
             step: "error",
             message: "Token da Focus NFe inválido ou sem permissão",
             progress: 100,
-            details: verif.mensagem ||
-              `O token cadastrado neste emitente não tem permissão para a conta da Focus NFe que contém o CPF/CNPJ ${docFmt}. Verifique o token no cadastro do Emitente NF-e.`,
+            details: [
+              verif.mensagem || `O token cadastrado neste emitente não tem permissão para a conta da Focus NFe que contém o CPF/CNPJ ${docFmt}.`,
+              diag?.token_prefix ? `Token usado: ${diag.token_prefix}` : null,
+              `Ambiente: ${verif.ambiente_label ?? diag?.ambiente_label ?? "não informado"}`,
+              diag?.status_http ? `HTTP Focus: ${diag.status_http}` : null,
+              ...(diag?.orientacao ?? []),
+            ].filter(Boolean).join("\n"),
           });
           return;
         }
