@@ -1887,6 +1887,8 @@ export type Database = {
           cst_ipi_padrao: string | null
           cst_is_padrao: string | null
           cst_pis_padrao: string | null
+          email_contador: string | null
+          email_emitente: string | null
           granja_id: string | null
           id: string
           inscricao_produtor_id: string | null
@@ -1918,6 +1920,8 @@ export type Database = {
           cst_ipi_padrao?: string | null
           cst_is_padrao?: string | null
           cst_pis_padrao?: string | null
+          email_contador?: string | null
+          email_emitente?: string | null
           granja_id?: string | null
           id?: string
           inscricao_produtor_id?: string | null
@@ -1949,6 +1953,8 @@ export type Database = {
           cst_ipi_padrao?: string | null
           cst_is_padrao?: string | null
           cst_pis_padrao?: string | null
+          email_contador?: string | null
+          email_emitente?: string | null
           granja_id?: string | null
           id?: string
           inscricao_produtor_id?: string | null
