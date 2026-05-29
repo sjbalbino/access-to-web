@@ -128,15 +128,16 @@ export default function Auth() {
 
     if (error) {
       setIsLoading(false);
+      console.error("Signup error:", { name: error.name, message: error.message, status: (error as any).status, code: (error as any).code, error });
       const raw = (error.message || "").toLowerCase();
-      let message = "Não foi possível concluir o cadastro. Tente novamente em alguns instantes.";
+      let message: string | null = null;
       if (raw.includes("user already registered") || raw.includes("already been registered") || raw.includes("already registered")) {
         message = "Este email já está cadastrado.";
       } else if (raw.includes("pwned") || raw.includes("compromised") || raw.includes("weak_password") || raw.includes("weak password")) {
         message = "Esta senha foi encontrada em vazamentos públicos de dados. Escolha uma senha mais forte (evite sequências como '123456', 'senha', datas de nascimento, etc.).";
       } else if (raw.includes("at least") || raw.includes("password should be") || raw.includes("password is too short")) {
         message = "A senha deve ter pelo menos 6 caracteres.";
-      } else if (raw.includes("invalid email") || raw.includes("invalid format") || raw.includes("email address") && raw.includes("invalid")) {
+      } else if (raw.includes("invalid email") || raw.includes("invalid format") || (raw.includes("email address") && raw.includes("invalid"))) {
         message = "Email inválido.";
       } else if (raw.includes("signup is disabled") || raw.includes("signups not allowed") || raw.includes("signup disabled")) {
         message = "O cadastro está temporariamente desabilitado. Contate o administrador.";
@@ -144,6 +145,13 @@ export default function Auth() {
         message = "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.";
       } else if (raw.includes("network") || raw.includes("failed to fetch")) {
         message = "Falha de conexão. Verifique sua internet e tente novamente.";
+      } else if (raw.includes("database error") || raw.includes("unexpected_failure")) {
+        message = `Erro no servidor ao criar o cadastro: ${error.message}. Tente novamente ou contate o administrador.`;
+      }
+      if (!message) {
+        message = error.message
+          ? `Erro ao criar conta: ${error.message}`
+          : "Não foi possível concluir o cadastro. Tente novamente em alguns instantes.";
       }
       toast({ title: "Erro ao criar conta", description: message, variant: "destructive" });
       return;
