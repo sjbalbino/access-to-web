@@ -1978,6 +1978,7 @@ export type Database = {
       emitentes_nfe_credentials: {
         Row: {
           api_access_token: string | null
+          api_access_token_homologacao: string | null
           api_access_token_secret: string | null
           api_consumer_key: string | null
           api_consumer_secret: string | null
@@ -1990,6 +1991,7 @@ export type Database = {
         }
         Insert: {
           api_access_token?: string | null
+          api_access_token_homologacao?: string | null
           api_access_token_secret?: string | null
           api_consumer_key?: string | null
           api_consumer_secret?: string | null
@@ -2002,6 +2004,7 @@ export type Database = {
         }
         Update: {
           api_access_token?: string | null
+          api_access_token_homologacao?: string | null
           api_access_token_secret?: string | null
           api_consumer_key?: string | null
           api_consumer_secret?: string | null

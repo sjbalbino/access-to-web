@@ -100,13 +100,15 @@ export default function EmitentesNfe() {
     api_consumer_key: string | null;
     api_consumer_secret: string | null;
     api_access_token: string | null;
+    api_access_token_homologacao: string | null;
     api_access_token_secret: string | null;
-  }>({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_secret: null });
+  }>({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_homologacao: null, api_access_token_secret: null });
   const upsertCredentials = useUpsertEmitenteCredentials();
   const credentialsQuery = useEmitenteCredentials(selectedEmitente?.id ?? null);
   const verificarEmpresa = useFocusNfeVerificarEmpresa();
   const [verificandoId, setVerificandoId] = useState<string | null>(null);
   const [showToken, setShowToken] = useState(false);
+  const [showTokenHom, setShowTokenHom] = useState(false);
 
   const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
     setVerificandoId(emitente.id);
@@ -281,6 +283,7 @@ export default function EmitentesNfe() {
         api_consumer_key: credentialsQuery.data.api_consumer_key ?? null,
         api_consumer_secret: credentialsQuery.data.api_consumer_secret ?? null,
         api_access_token: credentialsQuery.data.api_access_token ?? null,
+        api_access_token_homologacao: credentialsQuery.data.api_access_token_homologacao ?? null,
         api_access_token_secret: credentialsQuery.data.api_access_token_secret ?? null,
       });
     }
@@ -289,7 +292,7 @@ export default function EmitentesNfe() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     resetForm();
-    setCredentials({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_secret: null });
+    setCredentials({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_homologacao: null, api_access_token_secret: null });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -311,6 +314,7 @@ export default function EmitentesNfe() {
           api_consumer_key: norm(credentials.api_consumer_key),
           api_consumer_secret: norm(credentials.api_consumer_secret),
           api_access_token: norm(credentials.api_access_token),
+          api_access_token_homologacao: norm(credentials.api_access_token_homologacao),
           api_access_token_secret: norm(credentials.api_access_token_secret),
         });
       } catch {
@@ -826,7 +830,34 @@ export default function EmitentesNfe() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="api_access_token">Token de Acesso</Label>
+                      <Label htmlFor="api_access_token_homologacao">Token de Homologação</Label>
+                      <div className="relative">
+                        <Input
+                          id="api_access_token_homologacao"
+                          type={showTokenHom ? "text" : "password"}
+                          value={credentials.api_access_token_homologacao || ""}
+                          onChange={(e) =>
+                            setCredentials({ ...credentials, api_access_token_homologacao: e.target.value })
+                          }
+                          placeholder="Token de Homologação da Focus NFe"
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full w-10"
+                          onClick={() => setShowTokenHom((v) => !v)}
+                          title={showTokenHom ? "Ocultar token" : "Mostrar token"}
+                        >
+                          {showTokenHom ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 col-span-2 md:col-span-1 md:col-start-2">
+                      <Label htmlFor="api_access_token">Token de Produção</Label>
                       <div className="relative">
                         <Input
                           id="api_access_token"
@@ -835,7 +866,7 @@ export default function EmitentesNfe() {
                           onChange={(e) =>
                             setCredentials({ ...credentials, api_access_token: e.target.value })
                           }
-                          placeholder="Token da API Focus NFe"
+                          placeholder="Token de Produção da Focus NFe"
                           className="pr-10"
                         />
                         <Button
@@ -851,6 +882,9 @@ export default function EmitentesNfe() {
                       </div>
                     </div>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    O sistema escolhe automaticamente o token conforme o Ambiente configurado no emitente (1 = Produção, 2 = Homologação).
+                  </p>
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="api_configurada"

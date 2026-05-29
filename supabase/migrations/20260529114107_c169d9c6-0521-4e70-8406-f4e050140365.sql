@@ -1,0 +1,1 @@
+ALTER TABLE public.emitentes_nfe_credentials ADD COLUMN IF NOT EXISTS api_access_token_homologacao TEXT;

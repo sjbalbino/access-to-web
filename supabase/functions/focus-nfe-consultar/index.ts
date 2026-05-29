@@ -46,7 +46,7 @@ serve(async (req) => {
         .from("notas_fiscais")
         .select(`
           emitente_id,
-          emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, emitentes_nfe_credentials(api_access_token))
+          emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao))
         `)
         .eq("id", notaFiscalId)
         .maybeSingle();
@@ -65,17 +65,19 @@ serve(async (req) => {
         );
       }
 
-      const emitenteData = (notaData as unknown as { emitentes_nfe?: { ambiente: number | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null }> | { api_access_token: string | null } | null } })?.emitentes_nfe;
+      const emitenteData = (notaData as unknown as { emitentes_nfe?: { ambiente: number | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null; api_access_token_homologacao: string | null }> | { api_access_token: string | null; api_access_token_homologacao: string | null } | null } })?.emitentes_nfe;
       ambiente = emitenteData?.ambiente;
-      emitenteToken = (Array.isArray(emitenteData?.emitentes_nfe_credentials) ? emitenteData?.emitentes_nfe_credentials?.[0]?.api_access_token : emitenteData?.emitentes_nfe_credentials?.api_access_token);
+      const credObj = Array.isArray(emitenteData?.emitentes_nfe_credentials) ? emitenteData?.emitentes_nfe_credentials?.[0] : emitenteData?.emitentes_nfe_credentials;
+      emitenteToken = ambiente === 2 ? credObj?.api_access_token_homologacao : credObj?.api_access_token;
     }
 
+    const ambienteLabel = ambiente === 2 ? "homologação" : "produção";
     // Verificar se o token do emitente está configurado
     if (!emitenteToken) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Token da Focus NFe não configurado para este emitente. Configure o token no cadastro do emitente.",
+          error: `Token de ${ambienteLabel} da Focus NFe não configurado para este emitente. Configure o token no cadastro do emitente.`,
         }),
         {
           status: 400,

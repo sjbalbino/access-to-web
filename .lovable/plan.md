@@ -1,45 +1,85 @@
-# Plano
+# Separar tokens de Homologação e Produção no cadastro do Emitente NFe
 
-## O que foi confirmado
-- O cadastro usado na verificação é o **emitente do Júlio Cesar Machado Costa**.
-- O CPF consultado é **606.846.740-68**.
-- O token salvo para esse emitente é o mesmo que está sendo enviado na chamada.
-- O ambiente atual do emitente está como **Produção**.
-- A resposta da Focus NFe indica **permissão negada para esse token nesse CPF/CNPJ em produção**.
+## Contexto
 
-## O que isso significa
-O problema **não está mais no salvamento do token nem na escolha do emitente**. Neste momento, a integração está chamando a Focus NFe com:
-- emitente correto
-- CPF correto
-- token correto salvo no cadastro
-- ambiente de produção
+Hoje cada emitente NFe guarda **um único token** (`api_access_token`) em `emitentes_nfe_credentials`. Na Focus NFe, porém, cada empresa tem **dois tokens distintos**:
 
-Mesmo assim, a Focus responde que esse token **não tem permissão** para consultar/operar esse CPF/CNPJ nesse ambiente.
+- **Token de Homologação** (ex.: `0q8nVnCQfcIIMUWo8I5g4ulHJsFll1IP`)
+- **Token de Produção** (ex.: `3Y8r8s32uBrZ6S0keL0imIzPw9QZDqCC`)
 
-## Próximos passos recomendados
-1. Verificar no painel da Focus NFe se o **token pertence exatamente à mesma conta** onde a empresa/emitente do CPF `60684674068` está cadastrada.
-2. Confirmar se essa empresa está cadastrada e habilitada em **produção**, e não apenas em homologação.
-3. Confirmar se o token informado é realmente o token de **NFe/empresas** da conta certa, sem espaço extra nem token antigo/regenerado.
-4. Melhorar a mensagem do sistema para mostrar com mais clareza:
-   - emitente consultado
-   - ambiente usado
-   - prefixo do token usado
-   - orientação objetiva quando a Focus devolver 403/permissão negada
-5. Opcionalmente, adicionar uma verificação extra no backend para diferenciar com mais precisão:
-   - token inválido
-   - token de outra conta
-   - empresa não cadastrada naquele ambiente
-   - empresa cadastrada mas não habilitada
+Não existe um "ambiente ativo" no painel da Focus — o que define o ambiente é **qual token é enviado** em cada chamada. Hoje o AgroGestão usa o mesmo token para tudo e só troca a URL (api vs homologacao). Isso causa falhas de permissão (HTTP 403) quando o token salvo é o de homologação e o emitente está em produção (ou vice-versa).
 
-## Detalhe técnico
-A função `focus-nfe-verificar-empresa` está chamando:
-- `https://api.focusnfe.com.br/v2/empresas/60684674068`
+No caso do **Julio Cesar Machado Costa (CPF 60684674068)** o token salvo é o de produção e o emitente está em produção, mas qualquer alternância de ambiente (ou cópia de token errado) quebra o fluxo. Manter os dois tokens separados elimina essa fonte de erro.
 
-com autenticação Basic usando o token salvo no emitente do Júlio. A resposta retornada pela Focus é compatível com erro de permissão do próprio provedor, não com seleção errada de registro no app.
+## O que muda para o usuário
 
-## Resultado esperado após implementar a melhoria
-Mesmo quando a Focus recusar, a tela vai deixar explícito se o problema é:
-- ambiente incorreto
-- empresa não cadastrada
-- empresa não habilitada
-- token sem acesso à conta/empresa consultada
+Na tela **Emitentes NFe → aba Credenciais da API**:
+
+- Em vez de um único campo "Token de Acesso", aparecerão **dois campos**:
+  - **Token de Homologação**
+  - **Token de Produção**
+- O sistema escolhe automaticamente o token correto com base no **Ambiente** configurado no emitente (1 = Produção, 2 = Homologação).
+- Botão **"Verificar empresa na Focus"** passa a usar o token do ambiente selecionado.
+- Se o token do ambiente atual estiver vazio, mostra erro claro: *"Token de Produção não configurado para este emitente"*.
+
+Nada mais muda no fluxo de emissão/cancelamento/consulta — apenas a seleção do token fica correta automaticamente.
+
+## Migração de dados
+
+- Criar coluna nova `api_access_token_homologacao` (TEXT, nullable) em `emitentes_nfe_credentials`.
+- Renomear conceitualmente `api_access_token` para "token de produção" (mantém o nome físico no banco para não quebrar nada).
+- **Não migrar dados automaticamente**: o token existente fica como "Produção" por padrão. Os emitentes que estavam em homologação precisarão ter o token de homologação preenchido manualmente (são poucos casos e o usuário já vai conferir mesmo).
+
+## Detalhes técnicos
+
+1. **Migration SQL**
+   - `ALTER TABLE emitentes_nfe_credentials ADD COLUMN api_access_token_homologacao TEXT;`
+   - GRANTs já existentes na tabela cobrem a nova coluna.
+
+2. **`useEmitenteCredentials.ts`**
+   - Adicionar `api_access_token_homologacao` na interface `EmitenteCredentials`, em `EMPTY` e no payload do `upsertEmitenteCredentials`.
+   - Continuar normalizando strings vazias para `null`.
+
+3. **`EmitentesNfe.tsx`** (form de credenciais)
+   - Trocar o input único "Token de Acesso" por dois inputs lado a lado: **Token de Homologação** e **Token de Produção**, com legenda explicando que o sistema escolhe pelo Ambiente.
+   - Salvar ambos no upsert.
+
+4. **Edge functions** que hoje leem `api_access_token`:
+   - `focus-nfe-verificar-empresa`
+   - `focus-nfe-emitir`
+   - `focus-nfe-cancelar`
+   - `focus-nfe-consultar`
+   - `focus-nfe-carta-correcao`
+   - `focus-nfe-download`
+   - `focus-nfe-mde`
+   
+   Em todas: ao carregar credenciais, escolher o token conforme o `ambiente` do emitente:
+   ```
+   token = ambiente === 2 ? api_access_token_homologacao : api_access_token
+   ```
+   Se o token do ambiente atual estiver ausente, retornar erro `token_ausente` com mensagem clara indicando **qual ambiente** está faltando.
+
+5. **Mensagens de diagnóstico** em `focus-nfe-verificar-empresa` (já melhoradas no último passo) passam a também informar qual dos dois tokens foi usado.
+
+## Diagrama
+
+```
+Emitente NFe (ambiente=1 Produção)
+        │
+        ▼
+emitentes_nfe_credentials
+  ├─ api_access_token_homologacao   ← usado se ambiente=2
+  └─ api_access_token (produção)    ← usado se ambiente=1
+        │
+        ▼
+Edge function escolhe token correto
+        │
+        ▼
+api.focusnfe.com.br   (produção)
+homologacao.focusnfe.com.br  (homologação)
+```
+
+## Riscos
+
+- Emitentes que estavam de fato em **homologação** ficarão sem token até o usuário preencher o novo campo — esperado e desejável (evita usar token errado silenciosamente).
+- Nenhuma quebra nos fluxos existentes: a coluna antiga continua sendo usada como "token de produção".
