@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapNotaToFocusNfe, validateNotaForEmission, type NotaFiscalData, type NotaFiscalItemData, type NotaReferenciadaData } from "@/lib/focusNfeMapper";
@@ -14,6 +15,19 @@ export interface FocusNfeResult {
 export function useFocusNfe() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const invalidateNfeRelatedQueries = () => {
+    [
+      "notas-fiscais",
+      "notas-deposito-emitidas",
+      "devolucoes-deposito",
+      "compras-cereais",
+      "saldos-deposito",
+      "saldo-disponivel-produtor",
+    ].forEach((key) => queryClient.invalidateQueries({ queryKey: [key] }));
+  };
+
 
   const emitirNfe = async (
     notaFiscalId: string,
@@ -198,6 +212,7 @@ export function useFocusNfe() {
       if (data.success) {
         toast.success("NF-e cancelada com sucesso");
         setStatus("cancelada");
+        invalidateNfeRelatedQueries();
       } else {
         toast.error("Erro ao cancelar NF-e", {
           description: data.error,
