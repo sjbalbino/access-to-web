@@ -310,20 +310,6 @@ export default function RemessasVendaForm() {
     });
   };
 
-  const handleExcluir = async () => {
-    if (!remessaExcluir || !id) return;
-    
-    // Verificar se a remessa pode ser excluída
-    const remessa = remessas?.find(r => r.id === remessaExcluir);
-    if (remessa?.status === "carregado_nfe" || remessa?.nota_fiscal_id) {
-      toast.error("Remessas com NFe emitida não podem ser excluídas!");
-      setRemessaExcluir(null);
-      return;
-    }
-    
-    await deleteRemessa.mutateAsync({ id: remessaExcluir, contratoId: id });
-    setRemessaExcluir(null);
-  };
 
   const handleCancelar = async () => {
     if (!remessaCancelar) return;
