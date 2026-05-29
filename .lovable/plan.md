@@ -1,16 +1,16 @@
-## Problema
+## Objetivo
+Substituir o `Select` simples de Produto no diálogo "Adicionar/Editar Item" da NF-e (`src/pages/NotaFiscalForm.tsx`, linhas 3205-3220) por um combobox com campo de pesquisa digitável, permitindo localizar produtos por **código** ou **nome** sem rolar a lista inteira.
 
-Após cancelar uma NF-e, a lista em `/notas-fiscais` continua exibindo o status anterior ("autorizada"). A função `cancelarNfe` em `src/hooks/useFocusNfe.ts` atualiza o status no banco via edge function, mas não invalida o cache do React Query, então a UI só reflete após reload manual.
+## Implementação
+1. Em `src/pages/NotaFiscalForm.tsx`, importar `Command`, `CommandInput`, `CommandList`, `CommandEmpty`, `CommandGroup`, `CommandItem` (já existem em `@/components/ui/command`) e `Popover`/`PopoverTrigger`/`PopoverContent`.
+2. Substituir o bloco do `Select` de Produto por um `Popover` com:
+   - Botão (trigger) mostrando "código - nome" do produto selecionado ou placeholder "Selecione um produto".
+   - `CommandInput` com placeholder "Buscar por código ou nome..." (foco automático ao abrir).
+   - `CommandList` renderizando `produtos.filter(p => p.ativo)`, com `value` combinando `codigo + nome` para a busca embutida do `cmdk` funcionar por ambos os campos.
+   - `onSelect` chama `handleProductSelect(produto.id)` e fecha o popover.
+   - Marca de seleção (`Check`) no item ativo.
+3. Manter mesma largura do trigger (`w-full`) e popover com `PopoverContent` em `w-[--radix-popover-trigger-width] p-0` para alinhar.
+4. Garantir que, ao editar um item existente, o produto atual apareça selecionado mesmo se filtrado por `ativo=false` (injetar manualmente, seguindo padrão da memória `padrao-select-edit-form-robustez`).
 
-## Correção
-
-Em `src/hooks/useFocusNfe.ts`, dentro de `cancelarNfe` (após `data.success`):
-
-- Usar `useQueryClient` e chamar `queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] })`.
-- Invalidar também queries relacionadas que dependem da NFe cancelada: `notas-deposito-emitidas`, `devolucoes-deposito`, `compras-cereais`, `saldos-deposito`, `saldo-disponivel-produtor` (a edge function já propaga essas mudanças no banco).
-
-Aplicar o mesmo padrão em `emitirCartaCorrecao` e em `emitirNfe` se ainda não invalidarem (verificar e ajustar somente se necessário, mantendo escopo da correção).
-
-## Validação
-
-Cancelar uma NF-e e confirmar que a linha na tabela passa imediatamente para "cancelada" sem reload.
+## Escopo
+Apenas o seletor de Produto do item da NF-e. Sem mudanças em lógica de cálculo, tributos ou outros campos.
