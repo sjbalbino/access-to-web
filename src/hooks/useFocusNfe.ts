@@ -212,6 +212,7 @@ export function useFocusNfe() {
       if (data.success) {
         toast.success("NF-e cancelada com sucesso");
         setStatus("cancelada");
+        invalidateNfeRelatedQueries();
       } else {
         toast.error("Erro ao cancelar NF-e", {
           description: data.error,
