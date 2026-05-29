@@ -578,7 +578,7 @@ export default function EmitentesNfe() {
                       <Select
                         value={String(formData.crt)}
                         onValueChange={(value) =>
-                          setFormData({ ...formData, crt: Number(value) })
+                          setFormData({ ...formData, crt: Number(value), ...getDefaultsByCrt(Number(value)) })
                         }
                       >
                         <SelectTrigger>
