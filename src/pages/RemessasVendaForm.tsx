@@ -1007,6 +1007,35 @@ export default function RemessasVendaForm() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Dialog de Confirmação de Cancelamento */}
+      <AlertDialog open={!!remessaCancelar} onOpenChange={(open) => { if (!open) { setRemessaCancelar(null); setMotivoCancelamento(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar remessa</AlertDialogTitle>
+            <AlertDialogDescription>
+              A remessa será marcada como <strong>Cancelada</strong> e não entrará nos totais do contrato. O registro permanece para histórico. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="motivo-cancelamento">Motivo (opcional)</Label>
+            <Textarea
+              id="motivo-cancelamento"
+              value={motivoCancelamento}
+              onChange={(e) => setMotivoCancelamento(e.target.value)}
+              placeholder="Informe o motivo do cancelamento..."
+              rows={3}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelar} className="bg-destructive text-destructive-foreground">
+              Cancelar Remessa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       {/* Dialog de Pesar Bruto */}
       <PesarBrutoDialog
         remessa={remessaPesar}
