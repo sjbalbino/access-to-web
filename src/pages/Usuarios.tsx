@@ -722,6 +722,11 @@ export default function Usuarios() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <LiberarUsuarioDialog
+        usuario={liberandoUser}
+        open={!!liberandoUser}
+        onOpenChange={(o) => !o && setLiberandoUser(null)}
+      />
     </AppLayout>
   );
 }
