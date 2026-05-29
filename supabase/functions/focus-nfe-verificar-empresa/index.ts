@@ -39,7 +39,7 @@ serve(async (req) => {
     // Buscar token + ambiente do emitente
     const { data: emitenteRow, error: eErr } = await supabase
       .from("emitentes_nfe")
-      .select("id, ambiente, emitentes_nfe_credentials(api_access_token)")
+      .select("id, ambiente, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao)")
       .eq("id", emitente_id)
       .maybeSingle();
 
@@ -52,15 +52,19 @@ serve(async (req) => {
 
     const ambiente: number | null = (emitenteRow as Record<string, unknown>).ambiente as number | null;
     const credsRaw = (emitenteRow as Record<string, unknown>).emitentes_nfe_credentials;
-    const token: string | null = Array.isArray(credsRaw)
-      ? (credsRaw[0] as { api_access_token?: string | null } | undefined)?.api_access_token ?? null
-      : (credsRaw as { api_access_token?: string | null } | null)?.api_access_token ?? null;
+    const credObj = Array.isArray(credsRaw)
+      ? (credsRaw[0] as { api_access_token?: string | null; api_access_token_homologacao?: string | null } | undefined)
+      : (credsRaw as { api_access_token?: string | null; api_access_token_homologacao?: string | null } | null);
+    const tokenProd = credObj?.api_access_token ?? null;
+    const tokenHom = credObj?.api_access_token_homologacao ?? null;
+    const token = ambiente === 2 ? tokenHom : tokenProd;
+    const ambienteLabelTmp = ambiente === 2 ? "homologação" : "produção";
 
     if (!token) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Token da Focus NFe não configurado para este emitente",
+          error: `Token de ${ambienteLabelTmp} da Focus NFe não configurado para este emitente`,
           codigo: "token_ausente",
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
