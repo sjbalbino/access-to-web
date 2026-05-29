@@ -93,6 +93,8 @@ export default function RemessasVendaForm() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [remessaExcluir, setRemessaExcluir] = useState<string | null>(null);
+  const [remessaCancelar, setRemessaCancelar] = useState<RemessaVenda | null>(null);
+  const [motivoCancelamento, setMotivoCancelamento] = useState("");
   const [remessaPesar, setRemessaPesar] = useState<RemessaVenda | null>(null);
   const [remessaEditar, setRemessaEditar] = useState<RemessaVenda | null>(null);
   const [remessaEmitirNfe, setRemessaEmitirNfe] = useState<RemessaVenda | null>(null);
