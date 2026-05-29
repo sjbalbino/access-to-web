@@ -190,6 +190,7 @@ export default function NotaFiscalForm() {
   const [currentTab, setCurrentTab] = useState("emitente");
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [impostosEditadosManualmente, setImpostosEditadosManualmente] = useState(false);
   const [produtoPopoverOpen, setProdutoPopoverOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEmitting, setIsEmitting] = useState(false);
