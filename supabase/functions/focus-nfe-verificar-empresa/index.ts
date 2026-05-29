@@ -201,8 +201,9 @@ serve(async (req) => {
     }
 
     // 200 → empresa existe; checar se está habilitada para o ambiente
-    const habProd = Boolean(body?.habilita_nfe);
-    const habHom = Boolean(body?.habilita_nfe_homologacao);
+    const bodyObj = (bodyAsObj && !Array.isArray(bodyAsObj)) ? bodyAsObj as Record<string, unknown> : {};
+    const habProd = Boolean(bodyObj.habilita_nfe);
+    const habHom = Boolean(bodyObj.habilita_nfe_homologacao);
     const habAtual = ambiente === 2 ? habHom : habProd;
 
     return new Response(
@@ -214,12 +215,12 @@ serve(async (req) => {
         ambiente,
         ambiente_label: ambienteLabel,
         cpf_cnpj: cpfCnpjAlvo,
-        nome: body?.nome ?? null,
+        nome: (bodyObj.nome as string) ?? null,
         codigo: habAtual ? "habilitada" : "nao_habilitada_no_ambiente",
         mensagem: habAtual
           ? `Empresa cadastrada e habilitada para emissão em ${ambienteLabel}.`
           : `Empresa cadastrada na Focus NFe, mas NÃO está habilitada para emissão em ${ambienteLabel}. Habilite no painel da Focus.`,
-        detalhes: body,
+        detalhes: bodyAsObj,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
