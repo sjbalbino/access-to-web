@@ -395,7 +395,44 @@ export default function Usuarios() {
         </div>
       </div>
 
+      {/* Pendentes de liberação */}
+      {pendentes && pendentes.length > 0 && (
+        <div className="rounded-lg border bg-amber-50/50 border-amber-200 mb-6 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="h-5 w-5 text-amber-700" />
+            <h2 className="font-semibold text-amber-900">
+              Cadastros pendentes de liberação ({pendentes.length})
+            </h2>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Cadastrado em</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pendentes.map((p) => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-medium">{p.nome || "-"}</TableCell>
+                  <TableCell>{p.email}</TableCell>
+                  <TableCell>{new Date(p.created_at).toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-right">
+                    <Button size="sm" onClick={() => setLiberandoUser(p)}>
+                      Liberar acesso
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
       <div className="rounded-lg border bg-card">
+
         <Table>
           <TableHeader>
             <TableRow>
