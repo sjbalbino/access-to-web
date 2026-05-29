@@ -247,6 +247,8 @@ export default function EmitentesNfe() {
       certificado_nome: null,
       certificado_validade: null,
       ativo: true,
+      email_emitente: null,
+      email_contador: null,
     });
     setSelectedEmitente(null);
   };
