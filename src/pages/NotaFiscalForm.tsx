@@ -3415,19 +3415,30 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_icms">CST ICMS</Label>
-                  <Input
-                    id="item_cst_icms"
-                    value={itemFormData.cst_icms || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, cst_icms: e.target.value })}
-                    maxLength={3}
-                  />
+                  <Select
+                    value={itemFormData.cst_icms || undefined}
+                    onValueChange={(value) => {
+                      setItemFormData({ ...itemFormData, cst_icms: value });
+                      setImpostosEditadosManualmente(true);
+                    }}
+                  >
+                    <SelectTrigger id="item_cst_icms"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {getCstIcmsOptions(emitentes.find((e) => e.id === formData.emitente_id)?.crt).map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_aliq_icms">Alíq. ICMS (%)</Label>
                   <CurrencyInput
                     id="item_aliq_icms"
                     value={itemFormData.aliq_icms}
-                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_icms: value ?? 0 })}
+                    onChange={(value) => {
+                      setItemFormData({ ...itemFormData, aliq_icms: value ?? 0 });
+                      setImpostosEditadosManualmente(true);
+                    }}
                     decimals={2}
                     prefix=""
                   />
@@ -3437,38 +3448,60 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_pis">CST PIS</Label>
-                  <Input
-                    id="item_cst_pis"
-                    value={itemFormData.cst_pis || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, cst_pis: e.target.value })}
-                    maxLength={2}
-                  />
+                  <Select
+                    value={itemFormData.cst_pis || undefined}
+                    onValueChange={(value) => {
+                      setItemFormData({ ...itemFormData, cst_pis: value });
+                      setImpostosEditadosManualmente(true);
+                    }}
+                  >
+                    <SelectTrigger id="item_cst_pis"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {CST_PIS_COFINS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_aliq_pis">Alíq. PIS (%)</Label>
                   <CurrencyInput
                     id="item_aliq_pis"
                     value={itemFormData.aliq_pis}
-                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_pis: value ?? 0 })}
+                    onChange={(value) => {
+                      setItemFormData({ ...itemFormData, aliq_pis: value ?? 0 });
+                      setImpostosEditadosManualmente(true);
+                    }}
                     decimals={2}
                     prefix=""
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_cofins">CST COFINS</Label>
-                  <Input
-                    id="item_cst_cofins"
-                    value={itemFormData.cst_cofins || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, cst_cofins: e.target.value })}
-                    maxLength={2}
-                  />
+                  <Select
+                    value={itemFormData.cst_cofins || undefined}
+                    onValueChange={(value) => {
+                      setItemFormData({ ...itemFormData, cst_cofins: value });
+                      setImpostosEditadosManualmente(true);
+                    }}
+                  >
+                    <SelectTrigger id="item_cst_cofins"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {CST_PIS_COFINS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_aliq_cofins">Alíq. COFINS (%)</Label>
                   <CurrencyInput
                     id="item_aliq_cofins"
                     value={itemFormData.aliq_cofins}
-                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_cofins: value ?? 0 })}
+                    onChange={(value) => {
+                      setItemFormData({ ...itemFormData, aliq_cofins: value ?? 0 });
+                      setImpostosEditadosManualmente(true);
+                    }}
                     decimals={2}
                     prefix=""
                   />
@@ -3482,43 +3515,66 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_ibs">CST IBS</Label>
-                  <Input
-                    id="item_cst_ibs"
-                    value={itemFormData.cst_ibs || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, cst_ibs: e.target.value })}
-                    maxLength={3}
-                  />
+                  <Select
+                    value={itemFormData.cst_ibs || undefined}
+                    onValueChange={(value) => {
+                      setItemFormData({ ...itemFormData, cst_ibs: value });
+                      setImpostosEditadosManualmente(true);
+                    }}
+                  >
+                    <SelectTrigger id="item_cst_ibs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {CST_IBS_CBS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_aliq_ibs">Alíq. IBS (%)</Label>
                   <CurrencyInput
                     id="item_aliq_ibs"
                     value={itemFormData.aliq_ibs}
-                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_ibs: value ?? 0 })}
+                    onChange={(value) => {
+                      setItemFormData({ ...itemFormData, aliq_ibs: value ?? 0 });
+                      setImpostosEditadosManualmente(true);
+                    }}
                     decimals={2}
                     prefix=""
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_cbs">CST CBS</Label>
-                  <Input
-                    id="item_cst_cbs"
-                    value={itemFormData.cst_cbs || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, cst_cbs: e.target.value })}
-                    maxLength={3}
-                  />
+                  <Select
+                    value={itemFormData.cst_cbs || undefined}
+                    onValueChange={(value) => {
+                      setItemFormData({ ...itemFormData, cst_cbs: value });
+                      setImpostosEditadosManualmente(true);
+                    }}
+                  >
+                    <SelectTrigger id="item_cst_cbs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {CST_IBS_CBS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_aliq_cbs">Alíq. CBS (%)</Label>
                   <CurrencyInput
                     id="item_aliq_cbs"
                     value={itemFormData.aliq_cbs}
-                    onChange={(value) => setItemFormData({ ...itemFormData, aliq_cbs: value ?? 0 })}
+                    onChange={(value) => {
+                      setItemFormData({ ...itemFormData, aliq_cbs: value ?? 0 });
+                      setImpostosEditadosManualmente(true);
+                    }}
                     decimals={2}
                     prefix=""
                   />
                 </div>
               </div>
+
 
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
