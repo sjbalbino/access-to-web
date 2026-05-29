@@ -210,6 +210,8 @@ export default function EmitentesNfe() {
     certificado_nome: null,
     certificado_validade: null,
     ativo: true,
+    email_emitente: null,
+    email_contador: null,
   });
 
   // Inscrições que ainda não têm emitente (ou é a inscrição do emitente sendo editado)
