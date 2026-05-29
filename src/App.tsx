@@ -65,6 +65,7 @@ const App = () => (
           <TabsProvider>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/granjas" element={<ProtectedRoute><Granjas /></ProtectedRoute>} />
               <Route path="/culturas" element={<ProtectedRoute><Culturas /></ProtectedRoute>} />
