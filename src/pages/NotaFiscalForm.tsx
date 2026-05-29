@@ -1317,8 +1317,27 @@ export default function NotaFiscalForm() {
       origem: result.origem,
     }));
 
-    toast.success("Impostos calculados automaticamente");
+    setImpostosEditadosManualmente(false);
+    if (!silent) toast.success("Impostos calculados automaticamente");
   };
+
+  // Auto-cálculo dos impostos quando os campos necessários estão prontos
+  useEffect(() => {
+    if (!isItemDialogOpen) return;
+    if (impostosEditadosManualmente) return;
+    if (!(itemFormData.valor_total && itemFormData.valor_total > 0)) return;
+    if (!formData.emitente_id || !formData.cfop_id) return;
+    if (!itemFormData.produto_id) return;
+    handleCalculateTaxes(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isItemDialogOpen,
+    itemFormData.produto_id,
+    itemFormData.valor_total,
+    formData.cfop_id,
+    formData.emitente_id,
+    impostosEditadosManualmente,
+  ]);
 
   const goToNextTab = () => {
     const currentIndex = TABS.findIndex((t) => t.id === currentTab);
