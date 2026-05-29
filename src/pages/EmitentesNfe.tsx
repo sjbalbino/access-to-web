@@ -832,6 +832,18 @@ export default function EmitentesNfe() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="api_access_token_principal_producao">Token Principal de Produção</Label>
+                      <Input
+                        id="api_access_token_principal_producao"
+                        type="password"
+                        value={credentials.api_access_token_principal_producao || ""}
+                        onChange={(e) =>
+                          setCredentials({ ...credentials, api_access_token_principal_producao: e.target.value })
+                        }
+                        placeholder="Token principal de produção da Focus NFe"
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="api_access_token_homologacao">Token de Homologação</Label>
                       <div className="relative">
@@ -886,7 +898,7 @@ export default function EmitentesNfe() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    O sistema escolhe automaticamente o token conforme o Ambiente configurado no emitente (1 = Produção, 2 = Homologação).
+                    Verificação/cadastro de empresa e APIs acessórias usam o Token Principal de Produção. Emissão usa o token do ambiente configurado no emitente (1 = Produção, 2 = Homologação).
                   </p>
                   <div className="flex items-center space-x-2">
                     <Switch
