@@ -46,9 +46,11 @@ interface UserWithRole {
   ativo: boolean | null;
   created_at: string;
   role: AppRole;
+  hasRole?: boolean;
   tenant_id: string | null;
   tenant_nome?: string | null;
 }
+
 
 const roleLabels: Record<AppRole, string> = {
   admin: "Administrador",
