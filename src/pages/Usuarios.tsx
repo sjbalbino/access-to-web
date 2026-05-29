@@ -30,12 +30,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Shield, ShieldCheck, Eye, UserPlus, Search, Building2, Briefcase } from "lucide-react";
+import { Users, Shield, ShieldCheck, Eye, UserPlus, Search, Building2, Briefcase, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenants } from "@/hooks/useTenants";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { useUsuariosPendentes, type UsuarioPendente } from "@/hooks/useUsuariosPendentes";
+import { LiberarUsuarioDialog } from "@/components/usuarios/LiberarUsuarioDialog";
+
 
 type AppRole = "admin" | "operador" | "visualizador" | "gerente";
 
