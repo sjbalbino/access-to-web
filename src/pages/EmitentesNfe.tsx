@@ -100,13 +100,15 @@ export default function EmitentesNfe() {
     api_consumer_key: string | null;
     api_consumer_secret: string | null;
     api_access_token: string | null;
+    api_access_token_homologacao: string | null;
     api_access_token_secret: string | null;
-  }>({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_secret: null });
+  }>({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_homologacao: null, api_access_token_secret: null });
   const upsertCredentials = useUpsertEmitenteCredentials();
   const credentialsQuery = useEmitenteCredentials(selectedEmitente?.id ?? null);
   const verificarEmpresa = useFocusNfeVerificarEmpresa();
   const [verificandoId, setVerificandoId] = useState<string | null>(null);
   const [showToken, setShowToken] = useState(false);
+  const [showTokenHom, setShowTokenHom] = useState(false);
 
   const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
     setVerificandoId(emitente.id);
