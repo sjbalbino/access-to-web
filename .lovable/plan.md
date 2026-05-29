@@ -1,38 +1,84 @@
-## Adicionar validação JWT nas Edge Functions fiscais
 
-### Funções a alterar (8 fiscais + 1 enriquecer)
+## Objetivo
 
-Em cada uma das 8 funções `focus-nfe-*`, inserir bloco de validação JWT logo no início do `try {` (após o handler de OPTIONS):
+Quando alguém se cadastra pela tela de login (`/auth`), a conta nasce **pendente** (sem empresa e sem perfil). O Administrador (ou Super Admin) libera o acesso escolhendo a empresa (tenant) e o nível de acesso. Tudo acompanhado de **e-mails automáticos** de notificação.
 
-```ts
-const authHeader = req.headers.get("Authorization");
-if (!authHeader?.startsWith("Bearer ")) {
-  return new Response(JSON.stringify({ error: "Não autorizado" }),
-    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-}
-const _authClient = createClient(SUPABASE_URL!, Deno.env.get("SUPABASE_ANON_KEY")!,
-  { global: { headers: { Authorization: authHeader } } });
-const { data: _userData, error: _userErr } = await _authClient.auth.getUser();
-if (_userErr || !_userData?.user) {
-  return new Response(JSON.stringify({ error: "Não autenticado" }),
-    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-}
-```
+## Fluxo de liberação
 
-### Verificação de role nas funções destrutivas
-Em `focus-nfe-emitir`, `focus-nfe-cancelar` e `focus-nfe-carta-correcao`, adicionar checagem de role (`admin`, `gerente` ou `operador` — manter operador para não quebrar o fluxo atual de emissão) consultando `user_roles` via service-role client.
+### 1. Cadastro público (tela de Login → aba "Cadastrar")
+- Usuário informa nome, e-mail e senha
+- Conta criada com `tenant_id = NULL`, `ativo = false` e **sem** linha em `user_roles`
+- Mensagem: *"Cadastro recebido. Você receberá um e-mail assim que um administrador liberar seu acesso."*
 
-### Funções somente-leitura
-`focus-nfe-consultar`, `focus-nfe-download`, `focus-nfe-enviar-email`, `focus-nfe-mde`, `focus-nfe-verificar-empresa`: apenas JWT, sem role check.
+### 2. Bloqueio de login enquanto pendente
+- No `AuthContext`, após login: se `!profile.ativo` ou não houver role → `signOut()` imediato + toast *"Seu cadastro está aguardando liberação."*
 
-### Corrigir `enriquecer-clientes-fornecedores` (cross-tenant)
-- Exigir role `admin` ou `gerente`.
-- Buscar `tenant_id` do usuário em `profiles`.
-- Se o body trouxer `tenant_id` diferente do do usuário e ele não for super admin → 403.
-- Forçar o `tenant_id` efetivo nas queries para o do usuário (exceto super admin).
+### 3. Tela de Usuários (`/usuarios`) — nova aba "Pendentes de Liberação"
+- Badge com a contagem de pendentes
+- Super Admin: vê pendentes de todas as empresas + pendentes sem empresa
+- Admin comum: vê pendentes sem empresa (para puxar para seu tenant) + pendentes do seu próprio tenant
 
-### Sem mudanças no front-end
-O `supabase.functions.invoke` já envia o `Authorization` automaticamente. Nenhum hook ou componente precisa ser tocado.
+### 4. Diálogo "Liberar acesso"
+- **Empresa (Tenant)**:
+  - Super Admin: combobox com todas as empresas + opção "Sem empresa (Super Admin)"
+  - Admin comum: travado no próprio tenant
+- **Nível de acesso**: Visualizador / Operador / Gerente / Administrador
+- **Ativo**: marcado por padrão
+- Botões: **Liberar** / **Rejeitar** (apaga a conta via Admin API)
 
-### Após implementar
-Marcar findings `focus_nfe_no_auth` e `enriquecer_cross_tenant` como `mark_as_fixed`.
+## E-mails automáticos (Lovable Cloud)
+
+São 3 e-mails transacionais (PT-BR), com a identidade visual do AgroGestão (verde agrícola, fonte limpa, fundo branco):
+
+| # | Quando | Para | Conteúdo |
+|---|--------|------|----------|
+| 1 | Novo cadastro recebido | **Usuário** que se cadastrou | Confirmação de recebimento + aviso de que aguarda liberação |
+| 2 | Novo cadastro recebido | **Todos os administradores** do tenant + Super Admins | Aviso de novo pedido pendente, com nome/e-mail do solicitante e link para `/usuarios?tab=pendentes` |
+| 3 | Acesso liberado | **Usuário** liberado | Boas-vindas, empresa atribuída, nível de acesso e botão para acessar `/auth` |
+
+Quando o admin **rejeita**, não é enviado e-mail (a conta é simplesmente excluída).
+
+## Detalhes técnicos
+
+### Banco de dados (migração)
+- Ajustar trigger `handle_new_user`:
+  - No cadastro público (sem `metadata.role`): criar `profiles` com `tenant_id = NULL`, `ativo = false` e **não** inserir em `user_roles`
+  - Primeiro usuário do sistema e fluxo via `create-user` continuam como hoje
+- RLS de `profiles`: garantir que admins de um tenant e super admins consigam ler/atualizar pendentes
+
+### Edge functions (todas com JWT + verificação de role)
+- **`approve-user`** — valida admin, atualiza `profiles.tenant_id`/`ativo`, cria `user_roles`, enfileira e-mail #3
+- **`reject-user`** — valida admin, apaga via `auth.admin.deleteUser`
+- **`notify-new-signup`** — chamada logo após `signUp`; envia e-mails #1 (usuário) e #2 (admins). Faz lookup dos admins consultando `user_roles` + `profiles` (mesmo tenant ou super admins)
+
+### Infraestrutura de e-mail
+- Configurar domínio de envio do Lovable Cloud (assistente exibido se ainda não houver)
+- Provisionar a infraestrutura de e-mails transacionais
+- Criar 3 templates React Email em `supabase/functions/_shared/transactional-email-templates/`:
+  - `cadastro-recebido-usuario.tsx`
+  - `cadastro-recebido-admin.tsx`
+  - `acesso-liberado.tsx`
+- Todos com fundo branco, verde de destaque do AgroGestão, textos em PT-BR
+
+### Frontend
+- `src/contexts/AuthContext.tsx`: bloqueio pós-login (pendente → signOut + toast)
+- `src/pages/Auth.tsx`: novo texto de sucesso + chamada à `notify-new-signup`
+- `src/pages/Usuarios.tsx`: Tabs "Ativos" / "Pendentes" + diálogo de liberação
+- Novo componente `LiberarUsuarioDialog.tsx`
+- Novo hook `useUsuariosPendentes`
+
+### Sem mudança
+- Edge function `create-user` (admin cria usuário já liberado) continua igual e **não** dispara o e-mail de "acesso liberado" (porque o admin já comunicou manualmente). Posso mudar isso depois se quiser.
+
+## Ordem de execução
+1. Configurar domínio de e-mail (assistente, se necessário)
+2. Provisionar infraestrutura de e-mail transacional
+3. Migração do banco (trigger + RLS)
+4. Criar 3 templates de e-mail
+5. Criar edges `approve-user`, `reject-user`, `notify-new-signup`
+6. Ajustar `AuthContext`, `Auth.tsx`, `Usuarios.tsx` + novo diálogo e hook
+7. Deploy de todas as edges
+
+## Fora do escopo
+- Auto-aprovação por domínio de e-mail
+- Histórico/auditoria de aprovações (pode virar relatório depois)
