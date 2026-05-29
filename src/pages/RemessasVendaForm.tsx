@@ -116,6 +116,7 @@ export default function RemessasVendaForm() {
 
   const createRemessa = useCreateRemessaVenda();
   const deleteRemessa = useDeleteRemessaVenda();
+  const updateRemessa = useUpdateRemessaVenda();
 
   // Determinar se o produto exige PH
   const exigePh = (contrato as any)?.informar_ph || false;
