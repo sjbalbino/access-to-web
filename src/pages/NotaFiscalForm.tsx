@@ -3404,7 +3404,7 @@ export default function NotaFiscalForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={handleCalculateTaxes}
+                  onClick={() => handleCalculateTaxes(false)}
                   className="gap-2"
                 >
                   <Calculator className="h-4 w-4" />
