@@ -30,8 +30,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail } from "lucide-react";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
+import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeDialog";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
@@ -125,6 +126,7 @@ export default function NotasFiscais() {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isCartaCorrecaoDialogOpen, setIsCartaCorrecaoDialogOpen] = useState(false);
   const [isContraNotaDialogOpen, setIsContraNotaDialogOpen] = useState(false);
+  const [isEnviarEmailDialogOpen, setIsEnviarEmailDialogOpen] = useState(false);
   const [selectedNota, setSelectedNota] = useState<any>(null);
   const [justificativa, setJustificativa] = useState("");
   const [correcao, setCorrecao] = useState("");
@@ -300,6 +302,9 @@ export default function NotasFiscais() {
                               <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => handleDownload(nota, "xml")} title="Download XML">
                                 <FileText className="h-4 w-4" />
                               </Button>
+                              <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => { setSelectedNota(nota); setIsEnviarEmailDialogOpen(true); }} title="Enviar por Email">
+                                <Mail className="h-4 w-4" />
+                              </Button>
                               <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => { setSelectedNota(nota); setIsCartaCorrecaoDialogOpen(true); }} title="Carta de Correção">
                                 <FileEdit className="h-4 w-4" />
                               </Button>
@@ -439,6 +444,12 @@ export default function NotasFiscais() {
           open={isContraNotaDialogOpen}
           onOpenChange={setIsContraNotaDialogOpen}
           onSelect={handleContraNotaSelect}
+        />
+        {/* Dialog de Envio por Email */}
+        <EnviarEmailNfeDialog
+          open={isEnviarEmailDialogOpen}
+          onOpenChange={setIsEnviarEmailDialogOpen}
+          nota={selectedNota}
         />
       </div>
     </AppLayout>

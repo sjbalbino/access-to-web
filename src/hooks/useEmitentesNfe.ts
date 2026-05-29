@@ -31,6 +31,8 @@ export interface EmitenteNfe {
   certificado_nome: string | null;
   certificado_validade: string | null;
   ativo: boolean | null;
+  email_emitente: string | null;
+  email_contador: string | null;
   created_at: string;
   updated_at: string;
   granja?: {

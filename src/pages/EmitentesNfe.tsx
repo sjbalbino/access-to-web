@@ -210,6 +210,8 @@ export default function EmitentesNfe() {
     certificado_nome: null,
     certificado_validade: null,
     ativo: true,
+    email_emitente: null,
+    email_contador: null,
   });
 
   // Inscrições que ainda não têm emitente (ou é a inscrição do emitente sendo editado)
@@ -245,6 +247,8 @@ export default function EmitentesNfe() {
       certificado_nome: null,
       certificado_validade: null,
       ativo: true,
+      email_emitente: null,
+      email_contador: null,
     });
     setSelectedEmitente(null);
   };
@@ -279,6 +283,8 @@ export default function EmitentesNfe() {
         certificado_nome: emitente.certificado_nome,
         certificado_validade: emitente.certificado_validade,
         ativo: emitente.ativo ?? true,
+        email_emitente: (emitente as any).email_emitente ?? null,
+        email_contador: (emitente as any).email_contador ?? null,
       });
     } else {
       resetForm();
@@ -968,6 +974,38 @@ export default function EmitentesNfe() {
                         }
                       />
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Emails para envio de DANFE/XML */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Emails para Envio de NFe</CardTitle>
+                  <CardDescription>
+                    Usados como destinatários padrão ao enviar DANFE e XML pelo botão "Enviar Email" na lista de NFe.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email_emitente">Email do Emitente</Label>
+                    <Input
+                      id="email_emitente"
+                      type="email"
+                      value={formData.email_emitente ?? ""}
+                      onChange={(e) => setFormData({ ...formData, email_emitente: e.target.value || null })}
+                      placeholder="empresa@dominio.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email_contador">Email do Contador</Label>
+                    <Input
+                      id="email_contador"
+                      type="email"
+                      value={formData.email_contador ?? ""}
+                      onChange={(e) => setFormData({ ...formData, email_contador: e.target.value || null })}
+                      placeholder="contador@dominio.com"
+                    />
                   </div>
                 </CardContent>
               </Card>
