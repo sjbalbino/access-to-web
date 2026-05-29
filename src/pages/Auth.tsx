@@ -77,14 +77,21 @@ export default function Auth() {
     setIsLoading(false);
 
     if (error) {
-      let message = "Erro ao fazer login";
-      if (error.message.includes("Invalid login credentials")) {
-        message = "Email ou senha incorretos";
-      } else if (error.message.includes("Email not confirmed")) {
-        message = "Email não confirmado. Verifique sua caixa de entrada.";
+      const raw = (error.message || "").toLowerCase();
+      let message = "Não foi possível entrar. Tente novamente.";
+      if (raw.includes("invalid login credentials") || raw.includes("invalid credentials")) {
+        message = "Email ou senha incorretos.";
+      } else if (raw.includes("email not confirmed")) {
+        message = "Email ainda não confirmado. Verifique sua caixa de entrada.";
+      } else if (raw.includes("rate limit") || raw.includes("too many")) {
+        message = "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+      } else if (raw.includes("network") || raw.includes("failed to fetch")) {
+        message = "Falha de conexão. Verifique sua internet e tente novamente.";
+      } else if (raw.includes("user not found")) {
+        message = "Usuário não encontrado.";
       }
       toast({
-        title: "Erro",
+        title: "Erro ao entrar",
         description: message,
         variant: "destructive",
       });
