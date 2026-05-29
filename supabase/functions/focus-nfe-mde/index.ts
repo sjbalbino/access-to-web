@@ -70,6 +70,23 @@ serve(async (req) => {
   }
 
   try {
+    // --- Auth (usuário logado) ---
+    const _jwtHeader = req.headers.get("Authorization");
+    if (!_jwtHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const _authClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: _jwtHeader } },
+    });
+    const { data: _userData, error: _userErr } = await _authClient.auth.getUser();
+    if (_userErr || !_userData?.user) {
+      return new Response(JSON.stringify({ error: "Não autenticado" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { action, inscricaoId, chave, tipo, versao } = await req.json();
 
     if (!inscricaoId) throw new Error("inscricaoId é obrigatório");

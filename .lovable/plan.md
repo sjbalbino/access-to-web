@@ -1,82 +1,38 @@
-# Envio de DANFE + XML por Email via Focus NFe
+## Adicionar validação JWT nas Edge Functions fiscais
 
-## Contexto
+### Funções a alterar (8 fiscais + 1 enriquecer)
 
-A Focus NFe **já envia automaticamente** a DANFE + XML por email para o destinatário, desde que o campo `email` esteja preenchido no cadastro do cliente/fornecedor (já mapeado em `src/lib/focusNfeMapper.ts`).
+Em cada uma das 8 funções `focus-nfe-*`, inserir bloco de validação JWT logo no início do `try {` (após o handler de OPTIONS):
 
-Além disso, a Focus disponibiliza o endpoint:
-```
-POST /v2/nfe/{ref}/email
-Body: { "emails": ["a@x.com", "b@y.com"] }
-```
-que permite reenviar a NFe autorizada para uma lista de emails a qualquer momento. Esta é a solução mais simples — usa o token Focus já configurado, sem necessidade de provedor de email externo, domínio, DNS ou Lovable Emails.
-
-## O que será implementado
-
-### 1. Nova Edge Function `focus-nfe-enviar-email`
-- Recebe: `notaFiscalId` e `emails: string[]`
-- Busca a NFe (`uuid_api`, `status`, `emitente_id` para obter token + ambiente)
-- Valida que a NFe está **autorizada** (não permite envio de notas rejeitadas/canceladas/processando)
-- Chama `POST {baseUrl}/v2/nfe/{ref}/email` com o token do emitente
-- Retorna sucesso/erro
-- Configurada em `supabase/config.toml` com `verify_jwt = true` (padrão das outras focus-nfe-*)
-
-### 2. Novo campo no cadastro do Emitente NFe
-- Adicionar campo opcional `email_contador` em `emitentes_nfe` (migration)
-- Editar `src/pages/EmitentesNfe.tsx` para incluir o campo no formulário
-
-### 3. Novo Dialog `EnviarEmailNfeDialog`
-Componente em `src/components/notas-fiscais/EnviarEmailNfeDialog.tsx` com:
-- **Checkboxes pré-marcados** para destinatários padrão:
-  - Destinatário da NFe (email do cliente/fornecedor)
-  - Emitente (email do emitentes_nfe)
-  - Contador (email_contador do emitente, se preenchido)
-- **Campo de texto** para adicionar emails extras (separados por vírgula)
-- Validação básica de formato de email
-- Botão "Enviar" que chama a edge function via `useFocusNfe` hook (novo método `enviarEmail`)
-- Toast de sucesso/erro
-- Mensagem informativa: "A Focus NFe enviará a DANFE (PDF) e o XML para os destinatários selecionados"
-
-### 4. Hook `useFocusNfe` — novo método
-Adicionar `enviarEmail(notaFiscalId, emails)` em `src/hooks/useFocusNfe.ts` seguindo o padrão dos métodos existentes.
-
-### 5. Botão na lista de Notas Fiscais
-Em `src/pages/NotasFiscais.tsx`:
-- Adicionar botão **"Enviar Email"** (ícone Mail) nas ações da linha
-- Visível **somente** quando `status === 'autorizada'`
-- Abre o `EnviarEmailNfeDialog`
-
-## Sem histórico
-Conforme escolhido, não será criada tabela de histórico de envios. A Focus NFe mantém o log de envios internamente e pode ser consultado no painel deles se necessário.
-
-## Detalhes técnicos
-
-**Endpoint Focus NFe:**
-```
-POST https://api.focusnfe.com.br/v2/nfe/{ref}/email
-Auth: Basic base64(token:)
-Body: { "emails": ["x@y.com", ...] }
+```ts
+const authHeader = req.headers.get("Authorization");
+if (!authHeader?.startsWith("Bearer ")) {
+  return new Response(JSON.stringify({ error: "Não autorizado" }),
+    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
+const _authClient = createClient(SUPABASE_URL!, Deno.env.get("SUPABASE_ANON_KEY")!,
+  { global: { headers: { Authorization: authHeader } } });
+const { data: _userData, error: _userErr } = await _authClient.auth.getUser();
+if (_userErr || !_userData?.user) {
+  return new Response(JSON.stringify({ error: "Não autenticado" }),
+    { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
 ```
 
-**Arquivos a criar:**
-- `supabase/functions/focus-nfe-enviar-email/index.ts`
-- `src/components/notas-fiscais/EnviarEmailNfeDialog.tsx`
+### Verificação de role nas funções destrutivas
+Em `focus-nfe-emitir`, `focus-nfe-cancelar` e `focus-nfe-carta-correcao`, adicionar checagem de role (`admin`, `gerente` ou `operador` — manter operador para não quebrar o fluxo atual de emissão) consultando `user_roles` via service-role client.
 
-**Arquivos a editar:**
-- `supabase/config.toml` (registrar a nova função com verify_jwt=true)
-- `src/hooks/useFocusNfe.ts` (adicionar método enviarEmail)
-- `src/pages/NotasFiscais.tsx` (botão Enviar Email)
-- `src/pages/EmitentesNfe.tsx` (campo email_contador)
+### Funções somente-leitura
+`focus-nfe-consultar`, `focus-nfe-download`, `focus-nfe-enviar-email`, `focus-nfe-mde`, `focus-nfe-verificar-empresa`: apenas JWT, sem role check.
 
-**Migration:**
-- `ALTER TABLE emitentes_nfe ADD COLUMN email_contador TEXT;`
+### Corrigir `enriquecer-clientes-fornecedores` (cross-tenant)
+- Exigir role `admin` ou `gerente`.
+- Buscar `tenant_id` do usuário em `profiles`.
+- Se o body trouxer `tenant_id` diferente do do usuário e ele não for super admin → 403.
+- Forçar o `tenant_id` efetivo nas queries para o do usuário (exceto super admin).
 
-## Vantagens vs Lovable Emails
+### Sem mudanças no front-end
+O `supabase.functions.invoke` já envia o `Authorization` automaticamente. Nenhum hook ou componente precisa ser tocado.
 
-| Aspecto | Focus NFe (esta proposta) | Lovable Emails |
-|---|---|---|
-| Setup | Zero — usa token já configurado | Requer configurar domínio e DNS |
-| Custo | Incluso no plano Focus | Incluso, mas exige domínio |
-| Anexos | DANFE + XML enviados nativamente | Não suporta anexos (precisaria gerar link) |
-| Confiabilidade | Infraestrutura dedicada para NFe | Genérica |
-| Manutenção | Nenhuma | DNS + reputação de domínio |
+### Após implementar
+Marcar findings `focus_nfe_no_auth` e `enriquecer_cross_tenant` como `mark_as_fixed`.

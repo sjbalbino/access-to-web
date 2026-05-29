@@ -82,13 +82,46 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Verificar role (admin ou gerente)
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userData.user.id);
+    const allowedRoles = (rolesData || []).some((r: { role: string }) =>
+      ["admin", "gerente"].includes(r.role),
+    );
+    if (!allowedRoles) {
+      return new Response(JSON.stringify({ error: "Permissão insuficiente" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Verificar tenant ownership
+    const { data: callerProfile } = await supabase
+      .from("profiles")
+      .select("tenant_id, is_super_admin_original")
+      .eq("id", userData.user.id)
+      .maybeSingle();
+    const callerTenantId = callerProfile?.tenant_id ?? null;
+    const isSuper = !!callerProfile?.is_super_admin_original;
+
+    // Se não for super admin, força o tenant do usuário
+    const effectiveTenantId = isSuper ? tenantId : callerTenantId;
+    if (!isSuper && tenantId && tenantId !== callerTenantId) {
+      return new Response(JSON.stringify({ error: "Acesso negado a outro tenant" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     let q = supabase
       .from("clientes_fornecedores")
       .select("id, cep, cpf_cnpj, cidade, uf, logradouro, bairro, complemento, tenant_id")
       .or("cidade.is.null,cidade.eq.")
       .order("nome", { ascending: true });
 
-    if (tenantId) q = q.eq("tenant_id", tenantId);
+    if (effectiveTenantId) q = q.eq("tenant_id", effectiveTenantId);
     if (limit) q = q.limit(limit);
     else q = q.limit(5000);
 
