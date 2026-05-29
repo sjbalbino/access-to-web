@@ -445,6 +445,12 @@ export default function NotasFiscais() {
           onOpenChange={setIsContraNotaDialogOpen}
           onSelect={handleContraNotaSelect}
         />
+        {/* Dialog de Envio por Email */}
+        <EnviarEmailNfeDialog
+          open={isEnviarEmailDialogOpen}
+          onOpenChange={setIsEnviarEmailDialogOpen}
+          nota={selectedNota}
+        />
       </div>
     </AppLayout>
   );
