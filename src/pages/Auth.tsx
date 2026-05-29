@@ -115,11 +115,22 @@ export default function Auth() {
 
     if (error) {
       setIsLoading(false);
-      let message = "Erro ao criar conta";
-      if (error.message.includes("User already registered")) {
-        message = "Este email já está cadastrado";
+      const raw = (error.message || "").toLowerCase();
+      let message = error.message || "Erro ao criar conta";
+      if (raw.includes("user already registered") || raw.includes("already been registered")) {
+        message = "Este email já está cadastrado.";
+      } else if (raw.includes("pwned") || raw.includes("compromised") || raw.includes("weak_password") || raw.includes("weak password")) {
+        message = "Esta senha foi encontrada em vazamentos públicos de dados. Escolha uma senha mais forte (evite sequências como '123456', 'senha', datas de nascimento, etc.).";
+      } else if (raw.includes("at least") || raw.includes("password should be")) {
+        message = "A senha deve ter pelo menos 6 caracteres.";
+      } else if (raw.includes("invalid email") || raw.includes("invalid format")) {
+        message = "Email inválido.";
+      } else if (raw.includes("signup is disabled") || raw.includes("signups not allowed")) {
+        message = "O cadastro está temporariamente desabilitado. Contate o administrador.";
+      } else if (raw.includes("rate limit") || raw.includes("too many")) {
+        message = "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.";
       }
-      toast({ title: "Erro", description: message, variant: "destructive" });
+      toast({ title: "Erro ao criar conta", description: message, variant: "destructive" });
       return;
     }
 
