@@ -133,8 +133,8 @@ export default function Auth() {
       let message: string | null = null;
       if (raw.includes("user already registered") || raw.includes("already been registered") || raw.includes("already registered")) {
         message = "Este email já está cadastrado.";
-      } else if (raw.includes("pwned") || raw.includes("compromised") || raw.includes("weak_password") || raw.includes("weak password")) {
-        message = "Esta senha foi encontrada em vazamentos públicos de dados. Escolha uma senha mais forte (evite sequências como '123456', 'senha', datas de nascimento, etc.).";
+      } else if (raw.includes("pwned") || raw.includes("compromised") || raw.includes("weak_password") || raw.includes("weak password") || raw.includes("known to be weak") || raw.includes("easy to guess")) {
+        message = "Esta senha é considerada fraca ou foi encontrada em vazamentos públicos. Use uma senha mais forte: misture letras maiúsculas e minúsculas, números e símbolos (ex.: Umbu@2026!Agro).";
       } else if (raw.includes("at least") || raw.includes("password should be") || raw.includes("password is too short")) {
         message = "A senha deve ter pelo menos 6 caracteres.";
       } else if (raw.includes("invalid email") || raw.includes("invalid format") || (raw.includes("email address") && raw.includes("invalid"))) {
