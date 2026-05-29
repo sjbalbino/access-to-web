@@ -38,6 +38,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { getCstIcmsOptions, CST_PIS_COFINS, CST_IPI } from "@/lib/cstTabelas";
+import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
 import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
