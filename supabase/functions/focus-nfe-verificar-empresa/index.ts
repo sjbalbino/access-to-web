@@ -39,7 +39,7 @@ serve(async (req) => {
     // Buscar token + ambiente do emitente
     const { data: emitenteRow, error: eErr } = await supabase
       .from("emitentes_nfe")
-      .select("id, ambiente, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao)")
+      .select("id, ambiente, emitentes_nfe_credentials(api_access_token_principal_producao, api_access_token, api_access_token_homologacao)")
       .eq("id", emitente_id)
       .maybeSingle();
 
@@ -53,18 +53,15 @@ serve(async (req) => {
     const ambiente: number | null = (emitenteRow as Record<string, unknown>).ambiente as number | null;
     const credsRaw = (emitenteRow as Record<string, unknown>).emitentes_nfe_credentials;
     const credObj = Array.isArray(credsRaw)
-      ? (credsRaw[0] as { api_access_token?: string | null; api_access_token_homologacao?: string | null } | undefined)
-      : (credsRaw as { api_access_token?: string | null; api_access_token_homologacao?: string | null } | null);
-    const tokenProd = credObj?.api_access_token ?? null;
-    const tokenHom = credObj?.api_access_token_homologacao ?? null;
-    const token = ambiente === 2 ? tokenHom : tokenProd;
-    const ambienteLabelTmp = ambiente === 2 ? "homologação" : "produção";
+      ? (credsRaw[0] as { api_access_token_principal_producao?: string | null; api_access_token?: string | null; api_access_token_homologacao?: string | null } | undefined)
+      : (credsRaw as { api_access_token_principal_producao?: string | null; api_access_token?: string | null; api_access_token_homologacao?: string | null } | null);
+    const token = credObj?.api_access_token_principal_producao ?? null;
 
     if (!token) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Token de ${ambienteLabelTmp} da Focus NFe não configurado para este emitente`,
+          error: "Token Principal de Produção da Focus NFe não configurado para este emitente",
           codigo: "token_ausente",
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -137,7 +134,7 @@ serve(async (req) => {
           ambiente_label: ambienteLabel,
           cpf_cnpj: cpfCnpjAlvo,
           codigo: "token_invalido_ou_sem_permissao",
-          mensagem: `A Focus NFe recusou o token ${tokenPrefix} para o CPF/CNPJ ${cpfCnpjAlvo} em ${ambienteLabel}. Isso normalmente indica que o token pertence a outra conta, a empresa não está cadastrada/habilitada nesse ambiente, ou a conta está bloqueada para esse emitente.`,
+          mensagem: `A Focus NFe recusou o Token Principal de Produção ${tokenPrefix} ao consultar o CPF/CNPJ ${cpfCnpjAlvo}. Isso normalmente indica que o token principal pertence a outra conta, está inválido, ou a empresa não existe nessa conta da Focus.`,
           detalhes: {
             token_prefix: tokenPrefix,
             ambiente,
@@ -146,9 +143,9 @@ serve(async (req) => {
             status_http: resp.status,
             focus_resposta: body ?? text.slice(0, 500),
             orientacao: [
-              `Confirme no painel da Focus NFe se a empresa ${cpfCnpjAlvo} existe em ${ambienteLabel}.`,
-              "Confirme se o token foi gerado na mesma conta onde essa empresa foi cadastrada.",
-              "Se o cadastro existir só em homologação, altere o emitente para homologação ou habilite a empresa em produção.",
+              "Confirme no painel da Focus NFe se o Token Principal de Produção foi copiado corretamente.",
+              `Confirme no painel da Focus NFe se a empresa ${cpfCnpjAlvo} existe nessa mesma conta.`,
+              "Os tokens de produção/homologação da empresa são usados para emissão; esta consulta de empresa usa o token principal.",
             ],
           },
         }),
