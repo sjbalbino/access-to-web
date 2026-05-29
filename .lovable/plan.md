@@ -1,84 +1,47 @@
+# E-mails transacionais — Fluxo de aprovação de usuários
 
-## Objetivo
+Implementar os 3 e-mails em PT-BR, com identidade visual do AgroGestão (verde agrícola), disparados a partir de `notify@notify.sisagro.app`.
 
-Quando alguém se cadastra pela tela de login (`/auth`), a conta nasce **pendente** (sem empresa e sem perfil). O Administrador (ou Super Admin) libera o acesso escolhendo a empresa (tenant) e o nível de acesso. Tudo acompanhado de **e-mails automáticos** de notificação.
+## E-mails
 
-## Fluxo de liberação
+1. **Confirmação de cadastro → novo usuário**
+   - Assunto: "Cadastro recebido — aguardando liberação"
+   - Conteúdo: agradecimento, explicação de que um administrador irá analisar e liberar o acesso, e que receberá novo e-mail quando aprovado.
 
-### 1. Cadastro público (tela de Login → aba "Cadastrar")
-- Usuário informa nome, e-mail e senha
-- Conta criada com `tenant_id = NULL`, `ativo = false` e **sem** linha em `user_roles`
-- Mensagem: *"Cadastro recebido. Você receberá um e-mail assim que um administrador liberar seu acesso."*
+2. **Alerta de novo cadastro → administradores**
+   - Assunto: "Novo cadastro aguardando liberação no AgroGestão"
+   - Conteúdo: nome e e-mail do solicitante, botão "Liberar acesso" levando a `https://sisagro.app/usuarios`.
+   - Destinatários: todos os usuários com role `admin` (do tenant) + Super Admins.
 
-### 2. Bloqueio de login enquanto pendente
-- No `AuthContext`, após login: se `!profile.ativo` ou não houver role → `signOut()` imediato + toast *"Seu cadastro está aguardando liberação."*
+3. **Liberação concedida → usuário**
+   - Assunto: "Seu acesso ao AgroGestão foi liberado"
+   - Conteúdo: boas-vindas, empresa (tenant) atribuída, perfil (Visualizador / Operador / Gerente / Administrador) e botão "Acessar o sistema" levando a `https://sisagro.app/auth`.
 
-### 3. Tela de Usuários (`/usuarios`) — nova aba "Pendentes de Liberação"
-- Badge com a contagem de pendentes
-- Super Admin: vê pendentes de todas as empresas + pendentes sem empresa
-- Admin comum: vê pendentes sem empresa (para puxar para seu tenant) + pendentes do seu próprio tenant
+## Infra
 
-### 4. Diálogo "Liberar acesso"
-- **Empresa (Tenant)**:
-  - Super Admin: combobox com todas as empresas + opção "Sem empresa (Super Admin)"
-  - Admin comum: travado no próprio tenant
-- **Nível de acesso**: Visualizador / Operador / Gerente / Administrador
-- **Ativo**: marcado por padrão
-- Botões: **Liberar** / **Rejeitar** (apaga a conta via Admin API)
-
-## E-mails automáticos (Lovable Cloud)
-
-São 3 e-mails transacionais (PT-BR), com a identidade visual do AgroGestão (verde agrícola, fonte limpa, fundo branco):
-
-| # | Quando | Para | Conteúdo |
-|---|--------|------|----------|
-| 1 | Novo cadastro recebido | **Usuário** que se cadastrou | Confirmação de recebimento + aviso de que aguarda liberação |
-| 2 | Novo cadastro recebido | **Todos os administradores** do tenant + Super Admins | Aviso de novo pedido pendente, com nome/e-mail do solicitante e link para `/usuarios?tab=pendentes` |
-| 3 | Acesso liberado | **Usuário** liberado | Boas-vindas, empresa atribuída, nível de acesso e botão para acessar `/auth` |
-
-Quando o admin **rejeita**, não é enviado e-mail (a conta é simplesmente excluída).
-
-## Detalhes técnicos
-
-### Banco de dados (migração)
-- Ajustar trigger `handle_new_user`:
-  - No cadastro público (sem `metadata.role`): criar `profiles` com `tenant_id = NULL`, `ativo = false` e **não** inserir em `user_roles`
-  - Primeiro usuário do sistema e fluxo via `create-user` continuam como hoje
-- RLS de `profiles`: garantir que admins de um tenant e super admins consigam ler/atualizar pendentes
-
-### Edge functions (todas com JWT + verificação de role)
-- **`approve-user`** — valida admin, atualiza `profiles.tenant_id`/`ativo`, cria `user_roles`, enfileira e-mail #3
-- **`reject-user`** — valida admin, apaga via `auth.admin.deleteUser`
-- **`notify-new-signup`** — chamada logo após `signUp`; envia e-mails #1 (usuário) e #2 (admins). Faz lookup dos admins consultando `user_roles` + `profiles` (mesmo tenant ou super admins)
-
-### Infraestrutura de e-mail
-- Configurar domínio de envio do Lovable Cloud (assistente exibido se ainda não houver)
-- Provisionar a infraestrutura de e-mails transacionais
-- Criar 3 templates React Email em `supabase/functions/_shared/transactional-email-templates/`:
-  - `cadastro-recebido-usuario.tsx`
-  - `cadastro-recebido-admin.tsx`
+- Provisionar infraestrutura de e-mails transacionais (Edge Functions `send-transactional-email`, `handle-email-unsubscribe`, `handle-email-suppression` + tabelas de supressão e tokens de descadastro).
+- Criar página `/unsubscribe` no app para gerenciar descadastros (tema AgroGestão).
+- Templates React Email em `supabase/functions/_shared/transactional-email-templates/`:
+  - `cadastro-recebido.tsx`
+  - `novo-cadastro-admin.tsx`
   - `acesso-liberado.tsx`
-- Todos com fundo branco, verde de destaque do AgroGestão, textos em PT-BR
+- Registrar os 3 templates em `registry.ts`.
 
-### Frontend
-- `src/contexts/AuthContext.tsx`: bloqueio pós-login (pendente → signOut + toast)
-- `src/pages/Auth.tsx`: novo texto de sucesso + chamada à `notify-new-signup`
-- `src/pages/Usuarios.tsx`: Tabs "Ativos" / "Pendentes" + diálogo de liberação
-- Novo componente `LiberarUsuarioDialog.tsx`
-- Novo hook `useUsuariosPendentes`
+## Disparos
 
-### Sem mudança
-- Edge function `create-user` (admin cria usuário já liberado) continua igual e **não** dispara o e-mail de "acesso liberado" (porque o admin já comunicou manualmente). Posso mudar isso depois se quiser.
+- **`Auth.tsx`** (após signup público): substituir a chamada atual a `notify-new-signup` por:
+  - `send-transactional-email` com template `cadastro-recebido` → e-mail do usuário.
+  - `send-transactional-email` com template `novo-cadastro-admin` → 1 envio por admin (busca via edge function `notify-new-signup`, que faz a query de admins e dispara cada e-mail individualmente — mantém a função para centralizar a lógica de descoberta de destinatários).
+- **`approve-user` edge function**: após aprovar, disparar `send-transactional-email` com template `acesso-liberado` → e-mail do usuário aprovado, passando `templateData` com `nome`, `empresa`, `perfil` e URL de login.
 
-## Ordem de execução
-1. Configurar domínio de e-mail (assistente, se necessário)
-2. Provisionar infraestrutura de e-mail transacional
-3. Migração do banco (trigger + RLS)
-4. Criar 3 templates de e-mail
-5. Criar edges `approve-user`, `reject-user`, `notify-new-signup`
-6. Ajustar `AuthContext`, `Auth.tsx`, `Usuarios.tsx` + novo diálogo e hook
-7. Deploy de todas as edges
+## Considerações
 
-## Fora do escopo
-- Auto-aprovação por domínio de e-mail
-- Histórico/auditoria de aprovações (pode virar relatório depois)
+- Idempotência: usar `idempotencyKey` baseado em `user_id + template_name + (admin_id quando aplicável)`.
+- O `notify-new-signup` permanece como orquestrador (descobre admins do tenant e dispara um e-mail por admin); a função `send-transactional-email` é o único ponto de saída.
+- DNS de `notify.sisagro.app` ainda em verificação — os envios ficam enfileirados e começam automaticamente quando ativar.
+- Cores e estilo seguem tema verde agrícola do sistema; corpo do e-mail em fundo branco (#ffffff).
+
+## Fora de escopo
+
+- Editar templates de autenticação nativa do Supabase (signup confirmation, password reset) — pode ser feito depois se desejado.
+- Auto-aprovação por domínio de e-mail.
