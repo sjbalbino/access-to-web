@@ -110,6 +110,7 @@ export default function EmitentesNfe() {
   const [verificandoId, setVerificandoId] = useState<string | null>(null);
   const [showToken, setShowToken] = useState(false);
   const [showTokenHom, setShowTokenHom] = useState(false);
+  const [showTokenPrincipal, setShowTokenPrincipal] = useState(false);
 
   const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
     setVerificandoId(emitente.id);
@@ -834,15 +835,28 @@ export default function EmitentesNfe() {
                     </div>
                     <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="api_access_token_principal_producao">Token Principal de Produção</Label>
-                      <Input
-                        id="api_access_token_principal_producao"
-                        type="password"
-                        value={credentials.api_access_token_principal_producao || ""}
-                        onChange={(e) =>
-                          setCredentials({ ...credentials, api_access_token_principal_producao: e.target.value })
-                        }
-                        placeholder="Token principal de produção da Focus NFe"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="api_access_token_principal_producao"
+                          type={showTokenPrincipal ? "text" : "password"}
+                          value={credentials.api_access_token_principal_producao || ""}
+                          onChange={(e) =>
+                            setCredentials({ ...credentials, api_access_token_principal_producao: e.target.value })
+                          }
+                          placeholder="Token principal de produção da Focus NFe"
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full w-10"
+                          onClick={() => setShowTokenPrincipal((v) => !v)}
+                          title={showTokenPrincipal ? "Ocultar token" : "Mostrar token"}
+                        >
+                          {showTokenPrincipal ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="api_access_token_homologacao">Token de Homologação</Label>
