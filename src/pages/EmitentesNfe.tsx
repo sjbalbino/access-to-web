@@ -99,10 +99,11 @@ export default function EmitentesNfe() {
   const [credentials, setCredentials] = useState<{
     api_consumer_key: string | null;
     api_consumer_secret: string | null;
+    api_access_token_principal_producao: string | null;
     api_access_token: string | null;
     api_access_token_homologacao: string | null;
     api_access_token_secret: string | null;
-  }>({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_homologacao: null, api_access_token_secret: null });
+  }>({ api_consumer_key: null, api_consumer_secret: null, api_access_token_principal_producao: null, api_access_token: null, api_access_token_homologacao: null, api_access_token_secret: null });
   const upsertCredentials = useUpsertEmitenteCredentials();
   const credentialsQuery = useEmitenteCredentials(selectedEmitente?.id ?? null);
   const verificarEmpresa = useFocusNfeVerificarEmpresa();
@@ -282,6 +283,7 @@ export default function EmitentesNfe() {
       setCredentials({
         api_consumer_key: credentialsQuery.data.api_consumer_key ?? null,
         api_consumer_secret: credentialsQuery.data.api_consumer_secret ?? null,
+        api_access_token_principal_producao: credentialsQuery.data.api_access_token_principal_producao ?? null,
         api_access_token: credentialsQuery.data.api_access_token ?? null,
         api_access_token_homologacao: credentialsQuery.data.api_access_token_homologacao ?? null,
         api_access_token_secret: credentialsQuery.data.api_access_token_secret ?? null,
@@ -292,7 +294,7 @@ export default function EmitentesNfe() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     resetForm();
-    setCredentials({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_homologacao: null, api_access_token_secret: null });
+    setCredentials({ api_consumer_key: null, api_consumer_secret: null, api_access_token_principal_producao: null, api_access_token: null, api_access_token_homologacao: null, api_access_token_secret: null });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -313,6 +315,7 @@ export default function EmitentesNfe() {
           granja_id: formData.granja_id,
           api_consumer_key: norm(credentials.api_consumer_key),
           api_consumer_secret: norm(credentials.api_consumer_secret),
+          api_access_token_principal_producao: norm(credentials.api_access_token_principal_producao),
           api_access_token: norm(credentials.api_access_token),
           api_access_token_homologacao: norm(credentials.api_access_token_homologacao),
           api_access_token_secret: norm(credentials.api_access_token_secret),
