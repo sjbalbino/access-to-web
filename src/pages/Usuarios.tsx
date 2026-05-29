@@ -117,6 +117,7 @@ export default function Usuarios() {
         return {
           ...userProfile,
           role: (userRole?.role as AppRole) || "visualizador",
+          hasRole: !!userRole,
           tenant_nome: tenant?.nome_fantasia || tenant?.razao_social || null,
         };
       });
@@ -124,6 +125,7 @@ export default function Usuarios() {
       return usersWithRoles;
     },
   });
+
 
   // Create user mutation
   const createUserMutation = useMutation({
