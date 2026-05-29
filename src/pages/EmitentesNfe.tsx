@@ -283,6 +283,8 @@ export default function EmitentesNfe() {
         certificado_nome: emitente.certificado_nome,
         certificado_validade: emitente.certificado_validade,
         ativo: emitente.ativo ?? true,
+        email_emitente: (emitente as any).email_emitente ?? null,
+        email_contador: (emitente as any).email_contador ?? null,
       });
     } else {
       resetForm();
