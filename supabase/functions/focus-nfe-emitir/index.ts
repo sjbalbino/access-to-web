@@ -42,7 +42,7 @@ serve(async (req) => {
         status, 
         motivo_status,
         emitente_id,
-        emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, emitentes_nfe_credentials(api_access_token))
+        emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao))
       `)
       .eq("id", notaFiscalId)
       .maybeSingle();
