@@ -347,6 +347,9 @@ export default function RemessasVendaForm() {
     });
     setRemessaCancelar(null);
     setMotivoCancelamento("");
+  };
+
+
 
   const handleEmitirNfe = (remessa: RemessaVenda) => {
     setRemessaEmitirNfe(remessa);
