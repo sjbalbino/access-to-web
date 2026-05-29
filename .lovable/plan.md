@@ -1,11 +1,13 @@
 ## Objetivo
-Impedir que operadores excluam remessas após o carregamento sem emissão de NFe. Remover o botão **Excluir** da lista de remessas, mantendo apenas o botão **Cancelar** (que preserva o registro no histórico).
+Exibir o nome do vendedor (produtor) na tabela de listagem de contratos de venda em **Vendas da Produção**.
 
-## Alterações no arquivo `src/pages/RemessasVendaForm.tsx`
+## Alterações
 
-1. **Remover import do ícone `Trash2`** e do hook `useDeleteRemessaVenda`
-2. **Remover estado `remessaExcluir`** e a função `handleExcluir`
-3. **Remover o botão Excluir** da coluna de Ações da tabela de remessas
-4. **Remover o `<AlertDialog>` de confirmação de exclusão** do final do componente
+### 1. `src/pages/VendasProducao.tsx`
+- Adicionar coluna **"Vendedor"** no cabeçalho da tabela, posicionada logo após "Comprador".
+- Exibir o nome do produtor via `contrato.inscricao_produtor?.produtor?.nome` (padrão: `-`).
+- Aumentar `colSpan` da mensagem "Nenhum contrato encontrado" de `10` para `11`.
 
-O botão **Cancelar** (ícone `Ban`) e seu respectivo dialog permanecem inalterados, assim como toda a lógica de cancelamento.
+### Notas
+- O hook `useContratosVenda` já busca o relacionamento `inscricao_produtor → produtor` (nome do produtor). Nenhuma alteração no backend ou hook é necessária.
+- O ajuste é puramente de exibição na interface.
