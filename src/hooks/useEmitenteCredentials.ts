@@ -7,6 +7,7 @@ export interface EmitenteCredentials {
   granja_id: string | null;
   api_consumer_key: string | null;
   api_consumer_secret: string | null;
+  api_access_token_principal_producao: string | null;
   api_access_token: string | null;
   api_access_token_homologacao: string | null;
   api_access_token_secret: string | null;
@@ -15,6 +16,7 @@ export interface EmitenteCredentials {
 const EMPTY: Omit<EmitenteCredentials, "emitente_id" | "granja_id"> = {
   api_consumer_key: null,
   api_consumer_secret: null,
+  api_access_token_principal_producao: null,
   api_access_token: null,
   api_access_token_homologacao: null,
   api_access_token_secret: null,
@@ -48,6 +50,7 @@ export function useUpsertEmitenteCredentials() {
       granja_id: string | null;
       api_consumer_key?: string | null;
       api_consumer_secret?: string | null;
+      api_access_token_principal_producao?: string | null;
       api_access_token?: string | null;
       api_access_token_homologacao?: string | null;
       api_access_token_secret?: string | null;
@@ -69,6 +72,7 @@ export function useUpsertEmitenteCredentials() {
         tenant_id,
         api_consumer_key: payload.api_consumer_key ?? null,
         api_consumer_secret: payload.api_consumer_secret ?? null,
+        api_access_token_principal_producao: payload.api_access_token_principal_producao ?? null,
         api_access_token: payload.api_access_token ?? null,
         api_access_token_homologacao: payload.api_access_token_homologacao ?? null,
         api_access_token_secret: payload.api_access_token_secret ?? null,
