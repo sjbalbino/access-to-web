@@ -40,6 +40,7 @@ import {
   useRemessasVenda,
   useCreateRemessaVenda,
   useDeleteRemessaVenda,
+  useUpdateRemessaVenda,
   useProximoCodigoRemessa,
   useProximoRomaneio,
   useTotaisContrato,
