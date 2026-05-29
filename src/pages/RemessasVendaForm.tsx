@@ -926,6 +926,28 @@ export default function RemessasVendaForm() {
                                   )}
                                 </>
                               )}
+                              {/* Botão Cancelar - apenas se não tiver NFe e não estiver cancelada */}
+                              {!r.nota_fiscal_id && r.status !== "carregado_nfe" && r.status !== "cancelada" && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => { setMotivoCancelamento(""); setRemessaCancelar(r); }}
+                                  title="Cancelar Remessa"
+                                >
+                                  <Ban className="h-4 w-4 text-destructive" />
+                                </Button>
+                              )}
+                              {/* Visualizar Remessa cancelada (somente leitura) */}
+                              {r.status === "cancelada" && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setRemessaEditar(r)}
+                                  title="Visualizar Remessa"
+                                >
+                                  <Eye className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              )}
                               {/* Botão Excluir - apenas se não tiver NFe */}
                               {!r.nota_fiscal_id && r.status !== "carregado_nfe" && (
                                 <Button
