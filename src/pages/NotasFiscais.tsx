@@ -126,6 +126,7 @@ export default function NotasFiscais() {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isCartaCorrecaoDialogOpen, setIsCartaCorrecaoDialogOpen] = useState(false);
   const [isContraNotaDialogOpen, setIsContraNotaDialogOpen] = useState(false);
+  const [isEnviarEmailDialogOpen, setIsEnviarEmailDialogOpen] = useState(false);
   const [selectedNota, setSelectedNota] = useState<any>(null);
   const [justificativa, setJustificativa] = useState("");
   const [correcao, setCorrecao] = useState("");
