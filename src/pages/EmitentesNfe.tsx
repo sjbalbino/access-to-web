@@ -283,6 +283,7 @@ export default function EmitentesNfe() {
         api_consumer_key: credentialsQuery.data.api_consumer_key ?? null,
         api_consumer_secret: credentialsQuery.data.api_consumer_secret ?? null,
         api_access_token: credentialsQuery.data.api_access_token ?? null,
+        api_access_token_homologacao: credentialsQuery.data.api_access_token_homologacao ?? null,
         api_access_token_secret: credentialsQuery.data.api_access_token_secret ?? null,
       });
     }
@@ -291,7 +292,7 @@ export default function EmitentesNfe() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     resetForm();
-    setCredentials({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_secret: null });
+    setCredentials({ api_consumer_key: null, api_consumer_secret: null, api_access_token: null, api_access_token_homologacao: null, api_access_token_secret: null });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
