@@ -77,14 +77,21 @@ export default function Auth() {
     setIsLoading(false);
 
     if (error) {
-      let message = "Erro ao fazer login";
-      if (error.message.includes("Invalid login credentials")) {
-        message = "Email ou senha incorretos";
-      } else if (error.message.includes("Email not confirmed")) {
-        message = "Email não confirmado. Verifique sua caixa de entrada.";
+      const raw = (error.message || "").toLowerCase();
+      let message = "Não foi possível entrar. Tente novamente.";
+      if (raw.includes("invalid login credentials") || raw.includes("invalid credentials")) {
+        message = "Email ou senha incorretos.";
+      } else if (raw.includes("email not confirmed")) {
+        message = "Email ainda não confirmado. Verifique sua caixa de entrada.";
+      } else if (raw.includes("rate limit") || raw.includes("too many")) {
+        message = "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+      } else if (raw.includes("network") || raw.includes("failed to fetch")) {
+        message = "Falha de conexão. Verifique sua internet e tente novamente.";
+      } else if (raw.includes("user not found")) {
+        message = "Usuário não encontrado.";
       }
       toast({
-        title: "Erro",
+        title: "Erro ao entrar",
         description: message,
         variant: "destructive",
       });
@@ -116,19 +123,21 @@ export default function Auth() {
     if (error) {
       setIsLoading(false);
       const raw = (error.message || "").toLowerCase();
-      let message = error.message || "Erro ao criar conta";
-      if (raw.includes("user already registered") || raw.includes("already been registered")) {
+      let message = "Não foi possível concluir o cadastro. Tente novamente em alguns instantes.";
+      if (raw.includes("user already registered") || raw.includes("already been registered") || raw.includes("already registered")) {
         message = "Este email já está cadastrado.";
       } else if (raw.includes("pwned") || raw.includes("compromised") || raw.includes("weak_password") || raw.includes("weak password")) {
         message = "Esta senha foi encontrada em vazamentos públicos de dados. Escolha uma senha mais forte (evite sequências como '123456', 'senha', datas de nascimento, etc.).";
-      } else if (raw.includes("at least") || raw.includes("password should be")) {
+      } else if (raw.includes("at least") || raw.includes("password should be") || raw.includes("password is too short")) {
         message = "A senha deve ter pelo menos 6 caracteres.";
-      } else if (raw.includes("invalid email") || raw.includes("invalid format")) {
+      } else if (raw.includes("invalid email") || raw.includes("invalid format") || raw.includes("email address") && raw.includes("invalid")) {
         message = "Email inválido.";
-      } else if (raw.includes("signup is disabled") || raw.includes("signups not allowed")) {
+      } else if (raw.includes("signup is disabled") || raw.includes("signups not allowed") || raw.includes("signup disabled")) {
         message = "O cadastro está temporariamente desabilitado. Contate o administrador.";
       } else if (raw.includes("rate limit") || raw.includes("too many")) {
         message = "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.";
+      } else if (raw.includes("network") || raw.includes("failed to fetch")) {
+        message = "Falha de conexão. Verifique sua internet e tente novamente.";
       }
       toast({ title: "Erro ao criar conta", description: message, variant: "destructive" });
       return;
