@@ -96,7 +96,12 @@ export default function Usuarios() {
   const [newUserRole, setNewUserRole] = useState<AppRole>("operador");
   const [newUserTenantId, setNewUserTenantId] = useState<string | null>(null);
 
+  // Pendentes
+  const { data: pendentes } = useUsuariosPendentes();
+  const [liberandoUser, setLiberandoUser] = useState<UsuarioPendente | null>(null);
+
   // Fetch users with roles
+
   const { data: users, isLoading } = useQuery({
     queryKey: ["users-with-roles"],
     queryFn: async () => {
