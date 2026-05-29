@@ -62,6 +62,8 @@ import { cn } from "@/lib/utils";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { calculateTaxes, type TaxCalculatorInput } from "@/lib/taxCalculator";
 import { getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
+import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
+import { CST_PIS_COFINS, CST_IPI, getCstIcmsOptions } from "@/lib/cstTabelas";
 import { useNotasFiscaisDuplicatas } from "@/hooks/useNotasFiscaisDuplicatas";
 import { useNotasReferenciadas, useCreateNotaReferenciada, useDeleteNotaReferenciada, useUpdateNotaReferenciada } from "@/hooks/useNotasReferenciadas";
 import { NotaReferenciadaForm, NotaReferenciadaTemp, NotaReferenciadaEdit } from "@/components/deposito/NotaReferenciadaForm";
