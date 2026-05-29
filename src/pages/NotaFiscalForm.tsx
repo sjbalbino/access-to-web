@@ -3207,21 +3207,67 @@ export default function NotaFiscalForm() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Produto</Label>
-                <Select
-                  value={itemFormData.produto_id || ""}
-                  onValueChange={handleProductSelect}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um produto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {produtos.filter((p) => p.ativo).map((produto) => (
-                      <SelectItem key={produto.id} value={produto.id}>
-                        {produto.codigo && `${produto.codigo} - `}{produto.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {(() => {
+                  const produtosAtivos = produtos.filter((p) => p.ativo);
+                  const produtoAtual = produtos.find((p) => p.id === itemFormData.produto_id);
+                  const listaProdutos = produtoAtual && !produtoAtual.ativo
+                    ? [produtoAtual, ...produtosAtivos]
+                    : produtosAtivos;
+                  const labelProduto = produtoAtual
+                    ? `${produtoAtual.codigo ? `${produtoAtual.codigo} - ` : ""}${produtoAtual.nome}`
+                    : "Selecione um produto";
+                  return (
+                    <Popover open={produtoPopoverOpen} onOpenChange={setProdutoPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={produtoPopoverOpen}
+                          className="w-full justify-between font-normal"
+                        >
+                          <span className="truncate">{labelProduto}</span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command
+                          filter={(value, search) => {
+                            if (!search) return 1;
+                            return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                          }}
+                        >
+                          <CommandInput placeholder="Buscar por código ou nome..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+                            <CommandGroup>
+                              {listaProdutos.map((produto) => {
+                                const label = `${produto.codigo ? `${produto.codigo} - ` : ""}${produto.nome}`;
+                                return (
+                                  <CommandItem
+                                    key={produto.id}
+                                    value={label}
+                                    onSelect={() => {
+                                      handleProductSelect(produto.id);
+                                      setProdutoPopoverOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        itemFormData.produto_id === produto.id ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {label}
+                                  </CommandItem>
+                                );
+                              })}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  );
+                })()}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
