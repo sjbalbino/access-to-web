@@ -1247,7 +1247,7 @@ export default function NotaFiscalForm() {
   };
 
   // Função para calcular impostos automaticamente
-  const handleCalculateTaxes = () => {
+  const handleCalculateTaxes = (silent = false) => {
     // Buscar dados necessários
     const emitente = emitentes.find((e) => e.id === formData.emitente_id);
     const cfop = cfops.find((c) => c.id === formData.cfop_id);
@@ -1255,7 +1255,7 @@ export default function NotaFiscalForm() {
     const inscricao = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
     
     if (!emitente || !cfop) {
-      toast.error("Selecione um emitente e CFOP para calcular os impostos");
+      if (!silent) toast.error("Selecione um emitente e CFOP para calcular os impostos");
       return;
     }
 
