@@ -68,13 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsSuperAdmin(false);
           if (typeof window !== "undefined") {
             const { toast } = await import("@/hooks/use-toast");
-            toast.toast({
+            toast({
               title: "Cadastro pendente de liberação",
               description: "Aguarde a aprovação por um administrador. Você receberá um e-mail assim que liberado.",
               variant: "destructive",
             });
           }
           return;
+
         }
 
         setRole(roleData.role as AppRole);
