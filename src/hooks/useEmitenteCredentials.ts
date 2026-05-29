@@ -8,6 +8,7 @@ export interface EmitenteCredentials {
   api_consumer_key: string | null;
   api_consumer_secret: string | null;
   api_access_token: string | null;
+  api_access_token_homologacao: string | null;
   api_access_token_secret: string | null;
 }
 
@@ -15,6 +16,7 @@ const EMPTY: Omit<EmitenteCredentials, "emitente_id" | "granja_id"> = {
   api_consumer_key: null,
   api_consumer_secret: null,
   api_access_token: null,
+  api_access_token_homologacao: null,
   api_access_token_secret: null,
 };
 
