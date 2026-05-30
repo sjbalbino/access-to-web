@@ -1,34 +1,22 @@
 ## Objetivo
-Preencher automaticamente as alíquotas padrão (ICMS, PIS, COFINS, IBS, CBS, IS) e os CST padrão conforme o Regime Tributário (CRT) selecionado em `EmitentesNfe.tsx`.
+Colocar os campos **Token de Produção** e **Token de Homologação** lado a lado, na mesma linha, no formulário de Emitentes NFe.
 
-## Tabela de defaults por regime
+## Situação atual (`src/pages/EmitentesNfe.tsx`, linhas ~875-952)
+- Linha 1 do grid: Token Principal de Produção (md:col-span-2) + Token de Homologação (1 coluna) — ficam na mesma linha.
+- Linha 2 (grid separado de 2 colunas): Token de Produção sozinho, posicionado na coluna 2.
 
-| Campo | Simples Nacional (CRT 1 e 2) | Regime Normal (CRT 3) |
-|---|---|---|
-| ICMS | 0 | 0 (UF-dependente; usuário ajusta) |
-| PIS | 0 (recolhido no DAS) | 1,65 |
-| COFINS | 0 (recolhido no DAS) | 7,60 |
-| IBS | 0,1 (transição 2026) | 0,1 |
-| CBS | 0,9 (transição 2026) | 0,9 |
-| IS | 0 | 0 |
-| CST ICMS | 102 (CSOSN) | 00 |
-| CST PIS | 49 | 01 |
-| CST COFINS | 49 | 01 |
-| CST IPI | 99 | 99 |
-| CST IBS | 000 | 000 |
-| CST CBS | 000 | 000 |
-| CST IS | 000 | 000 |
+Resultado: Homologação fica em uma linha, Produção em outra.
 
-Observação 2026: alíquotas de transição IBS=0,1% e CBS=0,9% conforme cronograma da Reforma Tributária. Usuário pode editar livremente.
+## Mudança
+Reordenar para que **Token de Homologação** e **Token de Produção** fiquem na mesma linha do grid (cada um ocupando 1 coluna em `md:`), e **Token Principal de Produção** fique sozinho em linha própria ocupando largura total (`md:col-span-2`).
 
-## Mudanças em `src/pages/EmitentesNfe.tsx`
+Nova estrutura do grid (mantém `grid-cols-1 md:grid-cols-2 gap-4` já existente):
+1. Token Principal de Produção — `md:col-span-2` (linha inteira)
+2. Token de Homologação — 1 coluna
+3. Token de Produção — 1 coluna (ao lado de Homologação)
 
-1. Criar helper local `getDefaultsByCrt(crt: number)` retornando o objeto com os 6 valores de alíquota + 7 CSTs conforme tabela acima.
-2. No `onValueChange` do `<Select>` de CRT (Regime Tributário): além de setar `crt`, aplicar os defaults via `setFormData(prev => ({ ...prev, crt, ...getDefaultsByCrt(crt) }))` — somente quando o usuário troca o regime no formulário (não sobrescreve no carregamento de emitente existente).
-3. Atualizar o estado inicial do form e o reset para usar `getDefaultsByCrt(3)` (Regime Normal por padrão), em vez dos valores hardcoded espalhados.
-4. Não alterar carregamento do emitente existente — continua respeitando os valores salvos.
+Remover o segundo `<div className="grid grid-cols-2 gap-4">` extra que envolvia apenas o Token de Produção, movendo esse campo para dentro do grid principal de credenciais.
 
 ## Fora de escopo
-- Sem migração de banco.
-- Sem alteração no cálculo de impostos da NFe.
-- Sem mudanças em `NotaFiscalForm.tsx` ou edge functions.
+- Sem alteração de lógica, validação, estado ou salvamento.
+- Sem mudanças visuais além do reposicionamento (ícone show/hide, labels e placeholders permanecem).

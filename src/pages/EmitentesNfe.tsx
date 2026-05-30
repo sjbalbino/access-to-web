@@ -922,9 +922,7 @@ export default function EmitentesNfe() {
                         </Button>
                       </div>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2 col-span-2 md:col-span-1 md:col-start-2">
+                    <div className="space-y-2">
                       <Label htmlFor="api_access_token">Token de Produção</Label>
                       <div className="relative">
                         <Input
@@ -950,6 +948,7 @@ export default function EmitentesNfe() {
                       </div>
                     </div>
                   </div>
+
                   <p className="text-xs text-muted-foreground">
                     Verificação/cadastro de empresa e APIs acessórias usam o Token Principal de Produção. Emissão usa o token do ambiente configurado no emitente (1 = Produção, 2 = Homologação).
                   </p>
