@@ -546,7 +546,9 @@ export default function VendaProducaoForm() {
                   <SelectContent>
                     {inscricoesParceria?.map((i) => (
                       <SelectItem key={i.id} value={i.id}>
-                        {i.produtores?.nome || i.granjas?.razao_social} - {i.inscricao_estadual}
+                        {(i.produtores?.nome || i.granjas?.razao_social)}
+                        {i.nome && i.nome !== i.produtores?.nome ? ` (${i.nome})` : ""}
+                        {" - "}{i.inscricao_estadual}
                       </SelectItem>
                     ))}
                   </SelectContent>
