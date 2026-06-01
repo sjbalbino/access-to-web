@@ -176,8 +176,11 @@ export default function VendaProducaoForm() {
   });
 
   const compradores = clientes?.filter(c => c.tipo === "cliente" || c.tipo === "ambos") || [];
-  // Filtra inscrições de produtores do tipo "produtor" (depositantes/parceiros)
-  const inscricoesParceria = inscricoes?.filter(i => i.produtores?.tipo_produtor === "produtor") || [];
+  // Filtra inscrições de produtores e sócios (depositantes/parceiros)
+  const inscricoesParceria = inscricoes?.filter(
+    i => i.produtores?.tipo_produtor === "produtor"
+      || i.produtores?.tipo_produtor === "socio"
+  ) || [];
 
   // Check if all required data is loaded for the form
   const isDataReady = !!(safras && produtos && clientes);
@@ -543,7 +546,9 @@ export default function VendaProducaoForm() {
                   <SelectContent>
                     {inscricoesParceria?.map((i) => (
                       <SelectItem key={i.id} value={i.id}>
-                        {i.produtores?.nome || i.granjas?.razao_social} - {i.inscricao_estadual}
+                        {(i.produtores?.nome || i.granjas?.razao_social)}
+                        {i.nome && i.nome !== i.produtores?.nome ? ` (${i.nome})` : ""}
+                        {" - "}{i.inscricao_estadual}
                       </SelectItem>
                     ))}
                   </SelectContent>
