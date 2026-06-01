@@ -52,7 +52,7 @@ export function useInscricoesByProdutor(produtorId: string | undefined) {
         .from('inscricoes_produtor')
         .select(`
           *,
-          emitente:emitentes_nfe(
+          emitente:emitentes_nfe!inscricoes_produtor_emitente_id_fkey(
             id,
             ambiente,
             serie_nfe,
