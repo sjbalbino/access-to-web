@@ -112,10 +112,18 @@ export function EmitirNfeAutomaticoDialog({
         throw new Error("Comprador do contrato não encontrado.");
       }
 
-      // Buscar CFOP de venda de produção (5.101 ou 6.101)
+      // Buscar CFOP de venda de produção (5.101 ou 6.101) ou Remessa (5.905 / 6.905)
       const ufDestino = remessa.local_entrega_uf || contrato.local_entrega_uf || comprador.uf;
       const ufEmitente = inscricao.uf;
-      const cfopCodigo = ufDestino === ufEmitente ? "5101" : "6101";
+      
+      let cfopCodigo = ufDestino === ufEmitente ? "5101" : "6101";
+      let naturezaOperacao = "VENDA DE PRODUÇÃO DO ESTABELECIMENTO";
+
+      // Se for Remessa para Depósito
+      if (contrato.remessa_deposito) {
+        cfopCodigo = ufDestino === ufEmitente ? "5905" : "6905";
+        naturezaOperacao = "REMESSA PARA DEPOSITO";
+      }
 
       const { data: cfop, error: cfopError } = await supabase
         .from("cfops")
@@ -127,6 +135,7 @@ export function EmitirNfeAutomaticoDialog({
       if (cfopError || !cfop) {
         throw new Error(`CFOP ${cfopCodigo} não encontrado ou inativo.`);
       }
+
 
       // Buscar produto completo
       const { data: produto, error: produtoError } = await supabase
@@ -216,7 +225,7 @@ export function EmitirNfeAutomaticoDialog({
         granja_id: inscricao.granja_id,
         inscricao_produtor_id: contrato.inscricao_produtor_id,
         cliente_fornecedor_id: contrato.comprador_id,
-        natureza_operacao: cfop.natureza_operacao || "VENDA DE PRODUÇÃO DO ESTABELECIMENTO",
+        natureza_operacao: naturezaOperacao || cfop.natureza_operacao || "VENDA DE PRODUÇÃO DO ESTABELECIMENTO",
         data_emissao: new Date().toISOString().split("T")[0],
         operacao: 1, // Saída
         finalidade: 1, // Normal
@@ -339,6 +348,15 @@ export function EmitirNfeAutomaticoDialog({
         dest_tipo: notaFiscalData.dest_tipo,
         dest_email: notaFiscalData.dest_email,
         dest_telefone: notaFiscalData.dest_telefone,
+        // Transporte
+        transp_nome: notaFiscalData.transp_nome,
+        transp_cpf_cnpj: notaFiscalData.transp_cpf_cnpj,
+        transp_ie: notaFiscalData.transp_ie,
+        transp_endereco: notaFiscalData.transp_endereco,
+        transp_cidade: notaFiscalData.transp_cidade,
+        transp_uf: notaFiscalData.transp_uf,
+        veiculo_placa: notaFiscalData.veiculo_placa,
+        veiculo_uf: notaFiscalData.veiculo_uf,
         inscricaoProdutor: {
           cpf_cnpj: inscricao.cpf_cnpj,
           inscricao_estadual: inscricao.inscricao_estadual,
@@ -354,6 +372,7 @@ export function EmitirNfeAutomaticoDialog({
         },
         emitente: { crt: emitente.crt },
       };
+
 
       const itensDataForEmission: NotaFiscalItemData[] = [{
         numero_item: itemData.numero_item,

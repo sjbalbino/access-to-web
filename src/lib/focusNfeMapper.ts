@@ -77,7 +77,17 @@ export interface FocusNfeNota {
   // Informações adicionais
   informacoes_adicionais_contribuinte?: string;
   informacoes_adicionais_fisco?: string;
+  // Transporte
+  transp_nome?: string;
+  transp_cpf_cnpj?: string;
+  transp_ie?: string;
+  transp_logradouro?: string;
+  transp_municipio?: string;
+  transp_uf?: string;
+  veiculo_placa?: string;
+  veiculo_uf?: string;
 }
+
 
 export interface FocusNfeItem {
   numero_item: number;
@@ -240,7 +250,18 @@ export interface NotaFiscalData {
   emitente?: {
     crt: number | null;
   };
+  
+  // Dados de Transporte
+  transp_nome?: string | null;
+  transp_cpf_cnpj?: string | null;
+  transp_ie?: string | null;
+  transp_endereco?: string | null;
+  transp_cidade?: string | null;
+  transp_uf?: string | null;
+  veiculo_placa?: string | null;
+  veiculo_uf?: string | null;
 }
+
 
 export interface NotaFiscalItemData {
   numero_item: number;
@@ -442,6 +463,20 @@ export function mapNotaToFocusNfe(
     // Transporte
     modalidade_frete: nota.modalidade_frete ?? 9, // Default: Sem Frete
     
+    // Transporte Detalhado
+    transp_nome: nota.transp_nome || undefined,
+    ...(nota.transp_cpf_cnpj?.replace(/\D/g, "").length === 11 
+      ? { transp_cpf: nota.transp_cpf_cnpj.replace(/\D/g, "") }
+      : nota.transp_cpf_cnpj?.replace(/\D/g, "").length === 14
+        ? { transp_cnpj: nota.transp_cpf_cnpj.replace(/\D/g, "") }
+        : {}),
+    transp_ie: nota.transp_ie?.replace(/\D/g, "") || undefined,
+    transp_logradouro: nota.transp_endereco || undefined,
+    transp_municipio: nota.transp_cidade || undefined,
+    transp_uf: nota.transp_uf || undefined,
+    veiculo_placa: nota.veiculo_placa || undefined,
+    veiculo_uf: nota.veiculo_uf || undefined,
+    
     // Pagamento
     forma_pagamento: nota.forma_pagamento ?? 0,
     
@@ -451,6 +486,7 @@ export function mapNotaToFocusNfe(
     // Informações adicionais
     informacoes_adicionais_contribuinte: nota.info_complementar || undefined,
     informacoes_adicionais_fisco: nota.info_fisco || undefined,
+
   };
   
   return focusNota;
