@@ -56,6 +56,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [compradorId, setCompradorId] = useState("");
   const [granjaId, setGranjaId] = useState("");
   const [localEntregaId, setLocalEntregaId] = useState("");
+  const [clienteFornecedorId, setClienteFornecedorId] = useState("");
+  const [tipoExtratoCf, setTipoExtratoCf] = useState<"ambos" | "receber" | "pagar">("ambos");
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [tipoFiltro, setTipoFiltro] = useState("ambos");
