@@ -3,10 +3,10 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, FileText, Wheat, ShoppingCart, PieChart, TrendingUp, Truck, Package, MapPin, Warehouse } from "lucide-react";
+import { BarChart3, FileText, Wheat, ShoppingCart, PieChart, TrendingUp, Truck, Package, MapPin, Warehouse, Users } from "lucide-react";
 import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
 
-type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local";
+type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 export default function Relatorios() {
   const [dialogOpen, setDialogOpen] = useState(false);
