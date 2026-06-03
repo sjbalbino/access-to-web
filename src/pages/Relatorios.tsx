@@ -152,6 +152,18 @@ export default function Relatorios() {
             <Button onClick={() => abrirRelatorio("bens_moveis")} variant="outline" className="w-full">Gerar Relatório</Button>
           </CardContent>
         </Card>
+        <Card className="hover:shadow-md transition-shadow border-primary/20">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10"><Users className="h-5 w-5 text-emerald-600" /></div>
+              <div><CardTitle className="text-lg">Extrato Cliente/Fornecedor</CardTitle><CardDescription>Contas a Pagar e Receber por parceiro</CardDescription></div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">Lançamentos do cliente/fornecedor no período com valores, pagos, saldo e status.</p>
+            <Button onClick={() => abrirRelatorio("extrato_cf")} variant="outline" className="w-full">Gerar Extrato</Button>
+          </CardContent>
+        </Card>
       </div>
 
       <RelatorioDialog tipo={tipoRelatorio} open={dialogOpen} onOpenChange={setDialogOpen} />
