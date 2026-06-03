@@ -577,6 +577,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     gerarBensMoveisPdf(despesas, `${fmtD(dataInicial)} a ${fmtD(dataFinal)}`, modoBensMoveis);
   };
 
+  const fmtD = (d: string) => { try { const [y, m, day] = d.split('-'); return `${day}/${m}/${y}`; } catch { return d; } };
+
+
   // ========== EXTRATO CONTAS PAGAR/RECEBER POR CLIENTE/FORNECEDOR ==========
   const gerarExtratoCf = async () => {
     if (!clienteFornecedorId) {
