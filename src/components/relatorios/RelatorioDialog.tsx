@@ -740,6 +740,40 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
+          {/* Cliente/Fornecedor - extrato_cf */}
+          {tipo === "extrato_cf" && (
+            <>
+              <div>
+                <Label>Cliente / Fornecedor *</Label>
+                <ComboboxFilter
+                  value={clienteFornecedorId}
+                  onValueChange={setClienteFornecedorId}
+                  options={(clientes || []).map(c => ({
+                    value: c.id,
+                    label: `${c.nome}${c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}`,
+                  }))}
+                  placeholder="Selecione o cliente/fornecedor"
+                  searchPlaceholder="Buscar..."
+                  emptyText="Nenhum encontrado."
+                  popoverWidth="w-[400px]"
+                />
+              </div>
+              <div>
+                <Label>Tipo de Conta</Label>
+                <ComboboxFilter
+                  value={tipoExtratoCf}
+                  onValueChange={(v) => setTipoExtratoCf(v as any)}
+                  options={[
+                    { value: "ambos", label: "A Receber e A Pagar" },
+                    { value: "receber", label: "Apenas A Receber" },
+                    { value: "pagar", label: "Apenas A Pagar" },
+                  ]}
+                  searchPlaceholder="Buscar tipo..."
+                />
+              </div>
+            </>
+          )}
+
           {/* Produto */}
           {needsProduto && (
             <div>
