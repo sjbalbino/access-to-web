@@ -83,6 +83,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     saldo_disponivel: "Saldo Disponível - Estoque Geral",
     depositos_geral: "Notas de Depósito",
     resumo_local: "Resumo Produtores por Local",
+    extrato_cf: "Extrato de Contas (Cliente/Fornecedor)",
   };
 
   const gerarRelatorio = async () => {
