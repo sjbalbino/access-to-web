@@ -577,11 +577,105 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     gerarBensMoveisPdf(despesas, `${fmtD(dataInicial)} a ${fmtD(dataFinal)}`, modoBensMoveis);
   };
 
-  const fmtD = (d: string) => { try { const [y, m, day] = d.split('-'); return `${day}/${m}/${y}`; } catch { return d; } };
+  // ========== EXTRATO CONTAS PAGAR/RECEBER POR CLIENTE/FORNECEDOR ==========
+  const gerarExtratoCf = async () => {
+    if (!clienteFornecedorId) {
+      toast({ title: "Filtro obrigatório", description: "Selecione o cliente/fornecedor.", variant: "destructive" });
+      return;
+    }
+    if (!dataInicial || !dataFinal) {
+      toast({ title: "Filtro obrigatório", description: "Informe o período (data inicial e final).", variant: "destructive" });
+      return;
+    }
+
+    const cli = clientes?.find(c => c.id === clienteFornecedorId);
+    const itens: ExtratoCfItem[] = [];
+
+    const buscarUltPagto = async (contaIds: string[], tabela: "contas_receber_baixas" | "contas_pagar_baixas") => {
+      const map: Record<string, string> = {};
+      if (contaIds.length === 0) return map;
+      const { data } = await supabase
+        .from(tabela)
+        .select("conta_id, data_pagamento")
+        .in("conta_id", contaIds)
+        .order("data_pagamento", { ascending: false });
+      (data || []).forEach((b: any) => {
+        if (!map[b.conta_id]) map[b.conta_id] = b.data_pagamento;
+      });
+      return map;
+    };
+
+    if (tipoExtratoCf !== "pagar") {
+      const { data: cr, error: crErr } = await supabase
+        .from("contas_receber")
+        .select("id, data_emissao, data_vencimento, documento, parcela, valor_original, valor_pago, juros, multa, desconto, status")
+        .eq("cliente_id", clienteFornecedorId)
+        .gte("data_emissao", dataInicial)
+        .lte("data_emissao", dataFinal)
+        .neq("status", "cancelado")
+        .order("data_vencimento");
+      if (crErr) throw crErr;
+      const ultMap = await buscarUltPagto((cr || []).map(c => c.id), "contas_receber_baixas");
+      (cr || []).forEach(c => itens.push({
+        tipo: "receber",
+        data_emissao: c.data_emissao,
+        data_vencimento: c.data_vencimento,
+        documento: c.documento,
+        parcela: c.parcela,
+        valor_original: Number(c.valor_original),
+        valor_pago: Number(c.valor_pago),
+        juros: Number(c.juros),
+        multa: Number(c.multa),
+        desconto: Number(c.desconto),
+        status: c.status,
+        data_ult_pagamento: ultMap[c.id] || null,
+      }));
+    }
+
+    if (tipoExtratoCf !== "receber") {
+      const { data: cp, error: cpErr } = await supabase
+        .from("contas_pagar")
+        .select("id, data_emissao, data_vencimento, documento, parcela, valor_original, valor_pago, juros, multa, desconto, status")
+        .eq("fornecedor_id", clienteFornecedorId)
+        .gte("data_emissao", dataInicial)
+        .lte("data_emissao", dataFinal)
+        .neq("status", "cancelado")
+        .order("data_vencimento");
+      if (cpErr) throw cpErr;
+      const ultMap = await buscarUltPagto((cp || []).map(c => c.id), "contas_pagar_baixas");
+      (cp || []).forEach(c => itens.push({
+        tipo: "pagar",
+        data_emissao: c.data_emissao,
+        data_vencimento: c.data_vencimento,
+        documento: c.documento,
+        parcela: c.parcela,
+        valor_original: Number(c.valor_original),
+        valor_pago: Number(c.valor_pago),
+        juros: Number(c.juros),
+        multa: Number(c.multa),
+        desconto: Number(c.desconto),
+        status: c.status,
+        data_ult_pagamento: ultMap[c.id] || null,
+      }));
+    }
+
+    if (itens.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhum lançamento encontrado para o filtro." });
+      return;
+    }
+
+    gerarExtratoCfPdf({
+      cliente_nome: cli?.nome || "-",
+      cliente_doc: cli?.cpf_cnpj || null,
+      periodo: `${fmtD(dataInicial)} a ${fmtD(dataFinal)}`,
+      tipoFiltro: tipoExtratoCf,
+      itens,
+    });
+  };
 
   const isGestao = tipo === "demonstrativo_gerencial" || tipo === "dre" || tipo === "bens_moveis";
   const isEstoque = tipo === "saldo_disponivel" || tipo === "depositos_geral" || tipo === "resumo_local";
-  const needsSafra = !isGestao;
+  const needsSafra = !isGestao && tipo !== "extrato_cf";
   const needsProduto = tipo === "extrato" || tipo === "colheitas" || tipo === "depositos_geral" || tipo === "resumo_local";
 
   return (
