@@ -26,8 +26,10 @@ import {
   gerarDemonstrativoGerencialPdf,
   gerarDrePdf,
   gerarBensMoveisPdf,
+  gerarExtratoCfPdf,
   type DemonstrativoGerencialData,
   type DreReportData,
+  type ExtratoCfItem,
 } from "@/lib/relatoriosGestao";
 import {
   gerarSaldoDisponivelPdf,
@@ -38,7 +40,7 @@ import {
   type ResumoLocalRow,
 } from "@/lib/relatoriosEstoque";
 
-export type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local";
+export type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 interface Props {
   tipo: TipoRelatorio;
@@ -54,6 +56,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [compradorId, setCompradorId] = useState("");
   const [granjaId, setGranjaId] = useState("");
   const [localEntregaId, setLocalEntregaId] = useState("");
+  const [clienteFornecedorId, setClienteFornecedorId] = useState("");
+  const [tipoExtratoCf, setTipoExtratoCf] = useState<"ambos" | "receber" | "pagar">("ambos");
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [tipoFiltro, setTipoFiltro] = useState("ambos");
@@ -81,6 +85,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     saldo_disponivel: "Saldo Disponível - Estoque Geral",
     depositos_geral: "Notas de Depósito",
     resumo_local: "Resumo Produtores por Local",
+    extrato_cf: "Extrato de Contas (Cliente/Fornecedor)",
   };
 
   const gerarRelatorio = async () => {
@@ -95,6 +100,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       else if (tipo === "saldo_disponivel") await gerarSaldoDisponivel();
       else if (tipo === "depositos_geral") await gerarDepositos();
       else if (tipo === "resumo_local") await gerarResumoLocal();
+      else if (tipo === "extrato_cf") await gerarExtratoCf();
     } catch (err: any) {
       toast({ title: "Erro ao gerar relatório", description: err.message, variant: "destructive" });
     } finally {
@@ -573,9 +579,106 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const fmtD = (d: string) => { try { const [y, m, day] = d.split('-'); return `${day}/${m}/${y}`; } catch { return d; } };
 
+
+  // ========== EXTRATO CONTAS PAGAR/RECEBER POR CLIENTE/FORNECEDOR ==========
+  const gerarExtratoCf = async () => {
+    if (!clienteFornecedorId) {
+      toast({ title: "Filtro obrigatório", description: "Selecione o cliente/fornecedor.", variant: "destructive" });
+      return;
+    }
+    if (!dataInicial || !dataFinal) {
+      toast({ title: "Filtro obrigatório", description: "Informe o período (data inicial e final).", variant: "destructive" });
+      return;
+    }
+
+    const cli = clientes?.find(c => c.id === clienteFornecedorId);
+    const itens: ExtratoCfItem[] = [];
+
+    const buscarUltPagto = async (contaIds: string[], tabela: "contas_receber_baixas" | "contas_pagar_baixas") => {
+      const map: Record<string, string> = {};
+      if (contaIds.length === 0) return map;
+      const { data } = await supabase
+        .from(tabela)
+        .select("conta_id, data_pagamento")
+        .in("conta_id", contaIds)
+        .order("data_pagamento", { ascending: false });
+      (data || []).forEach((b: any) => {
+        if (!map[b.conta_id]) map[b.conta_id] = b.data_pagamento;
+      });
+      return map;
+    };
+
+    if (tipoExtratoCf !== "pagar") {
+      const { data: cr, error: crErr } = await supabase
+        .from("contas_receber")
+        .select("id, data_emissao, data_vencimento, documento, parcela, valor_original, valor_pago, juros, multa, desconto, status")
+        .eq("cliente_id", clienteFornecedorId)
+        .gte("data_emissao", dataInicial)
+        .lte("data_emissao", dataFinal)
+        .neq("status", "cancelado")
+        .order("data_vencimento");
+      if (crErr) throw crErr;
+      const ultMap = await buscarUltPagto((cr || []).map(c => c.id), "contas_receber_baixas");
+      (cr || []).forEach(c => itens.push({
+        tipo: "receber",
+        data_emissao: c.data_emissao,
+        data_vencimento: c.data_vencimento,
+        documento: c.documento,
+        parcela: c.parcela,
+        valor_original: Number(c.valor_original),
+        valor_pago: Number(c.valor_pago),
+        juros: Number(c.juros),
+        multa: Number(c.multa),
+        desconto: Number(c.desconto),
+        status: c.status,
+        data_ult_pagamento: ultMap[c.id] || null,
+      }));
+    }
+
+    if (tipoExtratoCf !== "receber") {
+      const { data: cp, error: cpErr } = await supabase
+        .from("contas_pagar")
+        .select("id, data_emissao, data_vencimento, documento, parcela, valor_original, valor_pago, juros, multa, desconto, status")
+        .eq("fornecedor_id", clienteFornecedorId)
+        .gte("data_emissao", dataInicial)
+        .lte("data_emissao", dataFinal)
+        .neq("status", "cancelado")
+        .order("data_vencimento");
+      if (cpErr) throw cpErr;
+      const ultMap = await buscarUltPagto((cp || []).map(c => c.id), "contas_pagar_baixas");
+      (cp || []).forEach(c => itens.push({
+        tipo: "pagar",
+        data_emissao: c.data_emissao,
+        data_vencimento: c.data_vencimento,
+        documento: c.documento,
+        parcela: c.parcela,
+        valor_original: Number(c.valor_original),
+        valor_pago: Number(c.valor_pago),
+        juros: Number(c.juros),
+        multa: Number(c.multa),
+        desconto: Number(c.desconto),
+        status: c.status,
+        data_ult_pagamento: ultMap[c.id] || null,
+      }));
+    }
+
+    if (itens.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhum lançamento encontrado para o filtro." });
+      return;
+    }
+
+    gerarExtratoCfPdf({
+      cliente_nome: cli?.nome || "-",
+      cliente_doc: cli?.cpf_cnpj || null,
+      periodo: `${fmtD(dataInicial)} a ${fmtD(dataFinal)}`,
+      tipoFiltro: tipoExtratoCf,
+      itens,
+    });
+  };
+
   const isGestao = tipo === "demonstrativo_gerencial" || tipo === "dre" || tipo === "bens_moveis";
   const isEstoque = tipo === "saldo_disponivel" || tipo === "depositos_geral" || tipo === "resumo_local";
-  const needsSafra = !isGestao;
+  const needsSafra = !isGestao && tipo !== "extrato_cf";
   const needsProduto = tipo === "extrato" || tipo === "colheitas" || tipo === "depositos_geral" || tipo === "resumo_local";
 
   return (
@@ -635,6 +738,40 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 popoverWidth="w-[400px]"
               />
             </div>
+          )}
+
+          {/* Cliente/Fornecedor - extrato_cf */}
+          {tipo === "extrato_cf" && (
+            <>
+              <div>
+                <Label>Cliente / Fornecedor *</Label>
+                <ComboboxFilter
+                  value={clienteFornecedorId}
+                  onValueChange={setClienteFornecedorId}
+                  options={(clientes || []).map(c => ({
+                    value: c.id,
+                    label: `${c.nome}${c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}`,
+                  }))}
+                  placeholder="Selecione o cliente/fornecedor"
+                  searchPlaceholder="Buscar..."
+                  emptyText="Nenhum encontrado."
+                  popoverWidth="w-[400px]"
+                />
+              </div>
+              <div>
+                <Label>Tipo de Conta</Label>
+                <ComboboxFilter
+                  value={tipoExtratoCf}
+                  onValueChange={(v) => setTipoExtratoCf(v as any)}
+                  options={[
+                    { value: "ambos", label: "A Receber e A Pagar" },
+                    { value: "receber", label: "Apenas A Receber" },
+                    { value: "pagar", label: "Apenas A Pagar" },
+                  ]}
+                  searchPlaceholder="Buscar tipo..."
+                />
+              </div>
+            </>
           )}
 
           {/* Produto */}
@@ -731,8 +868,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           {/* Período */}
           {!isEstoque && (
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Data Inicial {isGestao && '*'}</Label><Input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} /></div>
-              <div><Label>Data Final {isGestao && '*'}</Label><Input type="date" value={dataFinal} onChange={e => setDataFinal(e.target.value)} /></div>
+              <div><Label>Data Inicial {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} /></div>
+              <div><Label>Data Final {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataFinal} onChange={e => setDataFinal(e.target.value)} /></div>
             </div>
           )}
 

@@ -192,6 +192,124 @@ export function gerarBensMoveisPdf(despesas: BensMoveisDespesa[], periodo: strin
   doc.save('despesas-bens-moveis.pdf');
 }
 
+// =============================================
+// Extrato Contas a Pagar / Receber por Cliente/Fornecedor
+// =============================================
+export interface ExtratoCfItem {
+  tipo: 'receber' | 'pagar';
+  data_emissao: string;
+  data_vencimento: string;
+  documento: string | null;
+  parcela: string | null;
+  valor_original: number;
+  valor_pago: number;
+  juros: number;
+  multa: number;
+  desconto: number;
+  status: string;
+  data_ult_pagamento: string | null;
+}
+
+export interface ExtratoCfData {
+  cliente_nome: string;
+  cliente_doc: string | null;
+  periodo: string;
+  tipoFiltro: 'receber' | 'pagar' | 'ambos';
+  itens: ExtratoCfItem[];
+}
+
+export function gerarExtratoCfPdf(data: ExtratoCfData) {
+  const doc = new jsPDF('landscape');
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  doc.setFontSize(16);
+  doc.text('Extrato de Contas por Cliente/Fornecedor', pageWidth / 2, 15, { align: 'center' });
+  doc.setFontSize(10);
+  doc.text(`${data.cliente_nome}${data.cliente_doc ? ' — ' + data.cliente_doc : ''}`, 14, 22);
+  const tipoLabel = data.tipoFiltro === 'ambos' ? 'A Receber e A Pagar' : data.tipoFiltro === 'receber' ? 'A Receber' : 'A Pagar';
+  doc.text(`Período: ${data.periodo} | Tipo: ${tipoLabel}`, 14, 28);
+
+  let cursorY = 34;
+
+  const buildSection = (titulo: string, itens: ExtratoCfItem[]) => {
+    if (itens.length === 0) return;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(titulo, 14, cursorY);
+    doc.setFont('helvetica', 'normal');
+    cursorY += 2;
+
+    const totOrig = itens.reduce((s, i) => s + (i.valor_original || 0), 0);
+    const totPago = itens.reduce((s, i) => s + (i.valor_pago || 0), 0);
+    const totSaldo = itens.reduce((s, i) => s + Math.max(0, (i.valor_original || 0) - (i.valor_pago || 0)), 0);
+
+    const rows = itens.map(i => {
+      const saldo = Math.max(0, (i.valor_original || 0) - (i.valor_pago || 0));
+      return [
+        { content: formatDateBr(i.data_emissao), styles: { halign: 'center' as const } },
+        { content: formatDateBr(i.data_vencimento), styles: { halign: 'center' as const } },
+        i.documento || '-',
+        { content: i.parcela || '-', styles: { halign: 'center' as const } },
+        { content: fmtCurr(i.valor_original), styles: { halign: 'right' as const } },
+        { content: fmtCurr(i.valor_pago), styles: { halign: 'right' as const } },
+        { content: fmtCurr(saldo), styles: { halign: 'right' as const } },
+        { content: i.data_ult_pagamento ? formatDateBr(i.data_ult_pagamento) : '-', styles: { halign: 'center' as const } },
+        { content: statusLabel(i.status), styles: { halign: 'center' as const } },
+      ];
+    });
+
+    rows.push([
+      { content: 'TOTAL', colSpan: 4, styles: { fontStyle: 'bold' as const, fillColor: [230, 230, 230] as any } } as any,
+      { content: fmtCurr(totOrig), styles: { fontStyle: 'bold' as const, halign: 'right' as const, fillColor: [230, 230, 230] as any } },
+      { content: fmtCurr(totPago), styles: { fontStyle: 'bold' as const, halign: 'right' as const, fillColor: [230, 230, 230] as any } },
+      { content: fmtCurr(totSaldo), styles: { fontStyle: 'bold' as const, halign: 'right' as const, fillColor: [230, 230, 230] as any } },
+      { content: '', styles: { fillColor: [230, 230, 230] as any } } as any,
+      { content: '', styles: { fillColor: [230, 230, 230] as any } } as any,
+    ]);
+
+    autoTable(doc, {
+      startY: cursorY,
+      head: [[
+        { content: 'Emissão', styles: { halign: 'center' } },
+        { content: 'Vencim.', styles: { halign: 'center' } },
+        'Documento',
+        { content: 'Parc.', styles: { halign: 'center' } },
+        { content: 'Valor (R$)', styles: { halign: 'right' } },
+        { content: 'Pago (R$)', styles: { halign: 'right' } },
+        { content: 'Saldo (R$)', styles: { halign: 'right' } },
+        { content: 'Últ. Pgto', styles: { halign: 'center' } },
+        { content: 'Status', styles: { halign: 'center' } },
+      ]],
+      body: rows,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [60, 60, 60] },
+    });
+
+    cursorY = (doc as any).lastAutoTable.finalY + 8;
+  };
+
+  const receber = data.itens.filter(i => i.tipo === 'receber');
+  const pagar = data.itens.filter(i => i.tipo === 'pagar');
+
+  if (data.tipoFiltro !== 'pagar') buildSection('Contas a Receber', receber);
+  if (data.tipoFiltro !== 'receber') buildSection('Contas a Pagar', pagar);
+
+  if (data.tipoFiltro === 'ambos' && receber.length > 0 && pagar.length > 0) {
+    const totRec = receber.reduce((s, i) => s + Math.max(0, (i.valor_original || 0) - (i.valor_pago || 0)), 0);
+    const totPag = pagar.reduce((s, i) => s + Math.max(0, (i.valor_original || 0) - (i.valor_pago || 0)), 0);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Saldo Líquido (Receber - Pagar): R$ ${fmtCurr(totRec - totPag)}`, 14, cursorY);
+  }
+
+  doc.save(`extrato-${data.cliente_nome.replace(/\s+/g, '_')}.pdf`);
+}
+
+function statusLabel(s: string): string {
+  const map: Record<string, string> = { aberto: 'Aberto', parcial: 'Parcial', pago: 'Pago', cancelado: 'Cancelado' };
+  return map[s] || s;
+}
+
 // Helpers
 function fmtCurr(v: number) {
   return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

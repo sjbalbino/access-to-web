@@ -3,10 +3,10 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, FileText, Wheat, ShoppingCart, PieChart, TrendingUp, Truck, Package, MapPin, Warehouse } from "lucide-react";
+import { BarChart3, FileText, Wheat, ShoppingCart, PieChart, TrendingUp, Truck, Package, MapPin, Warehouse, Users } from "lucide-react";
 import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
 
-type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local";
+type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 export default function Relatorios() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -150,6 +150,18 @@ export default function Relatorios() {
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">Despesas filtradas por grupos classificados como máquinas/implementos.</p>
             <Button onClick={() => abrirRelatorio("bens_moveis")} variant="outline" className="w-full">Gerar Relatório</Button>
+          </CardContent>
+        </Card>
+        <Card className="hover:shadow-md transition-shadow border-primary/20">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10"><Users className="h-5 w-5 text-emerald-600" /></div>
+              <div><CardTitle className="text-lg">Extrato Cliente/Fornecedor</CardTitle><CardDescription>Contas a Pagar e Receber por parceiro</CardDescription></div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">Lançamentos do cliente/fornecedor no período com valores, pagos, saldo e status.</p>
+            <Button onClick={() => abrirRelatorio("extrato_cf")} variant="outline" className="w-full">Gerar Extrato</Button>
           </CardContent>
         </Card>
       </div>
