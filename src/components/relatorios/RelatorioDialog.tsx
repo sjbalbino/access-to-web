@@ -100,6 +100,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       else if (tipo === "saldo_disponivel") await gerarSaldoDisponivel();
       else if (tipo === "depositos_geral") await gerarDepositos();
       else if (tipo === "resumo_local") await gerarResumoLocal();
+      else if (tipo === "extrato_cf") await gerarExtratoCf();
     } catch (err: any) {
       toast({ title: "Erro ao gerar relatório", description: err.message, variant: "destructive" });
     } finally {
