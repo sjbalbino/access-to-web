@@ -26,8 +26,10 @@ import {
   gerarDemonstrativoGerencialPdf,
   gerarDrePdf,
   gerarBensMoveisPdf,
+  gerarExtratoCfPdf,
   type DemonstrativoGerencialData,
   type DreReportData,
+  type ExtratoCfItem,
 } from "@/lib/relatoriosGestao";
 import {
   gerarSaldoDisponivelPdf,
@@ -38,7 +40,7 @@ import {
   type ResumoLocalRow,
 } from "@/lib/relatoriosEstoque";
 
-export type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local";
+export type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 interface Props {
   tipo: TipoRelatorio;
