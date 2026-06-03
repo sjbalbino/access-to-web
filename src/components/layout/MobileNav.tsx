@@ -20,9 +20,16 @@ import {
   FileText,
   Receipt,
   ShoppingCart,
+  ArrowRightLeft,
+  DollarSign,
+  Landmark,
+  GitBranch,
+  BarChart3,
+  Package as PackageIcon,
   Menu,
   ChevronDown,
   LucideIcon,
+
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
