@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, DollarSign } from 'lucide-react';
+import { Plus, Pencil, Trash2, DollarSign, ListOrdered } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGranjas } from '@/hooks/useGranjas';
@@ -18,11 +18,13 @@ import {
   useCreateContaPagar,
   useUpdateContaPagar,
   useDeleteContaPagar,
+  useGerarParcelasPagar,
 } from '@/hooks/useContasPagar';
 import { usePaginacao } from '@/hooks/usePaginacao';
 import { TablePagination } from '@/components/ui/table-pagination';
 import { ContaFormDialog } from '@/components/contas/ContaFormDialog';
 import { BaixasDialog } from '@/components/contas/BaixasDialog';
+import { GerarParcelasDialog } from '@/components/contas/GerarParcelasDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -59,11 +61,14 @@ export default function ContasPagar() {
   const create = useCreateContaPagar();
   const update = useUpdateContaPagar();
   const del = useDeleteContaPagar();
+  const gerarParcelas = useGerarParcelasPagar();
 
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [openBaixas, setOpenBaixas] = useState(false);
   const [baixaConta, setBaixaConta] = useState<any>(null);
+  const [openGerar, setOpenGerar] = useState(false);
+  const [valorGerar, setValorGerar] = useState(0);
 
   const totais = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
@@ -144,11 +149,22 @@ export default function ContasPagar() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end mb-3">
+      <div className="flex justify-end gap-2 mb-3">
         {canEdit && (
-          <Button onClick={() => { setEditing(null); setOpenForm(true); }}>
-            <Plus className="h-4 w-4 mr-2" /> Nova conta
-          </Button>
+          <>
+            <Button variant="outline" onClick={() => { 
+              const val = prompt('Digite o valor total para gerar parcelas:');
+              if (val && !isNaN(Number(val))) {
+                setValorGerar(Number(val));
+                setOpenGerar(true);
+              }
+            }}>
+              <ListOrdered className="h-4 w-4 mr-2" /> Gerar parcelas
+            </Button>
+            <Button onClick={() => { setEditing(null); setOpenForm(true); }}>
+              <Plus className="h-4 w-4 mr-2" /> Nova conta
+            </Button>
+          </>
         )}
       </div>
 
@@ -235,6 +251,22 @@ export default function ContasPagar() {
         onOpenChange={(v) => { setOpenBaixas(v); if (!v) setBaixaConta(null); }}
         tipo="pagar"
         conta={baixaConta}
+      />
+      <GerarParcelasDialog
+        open={openGerar}
+        onOpenChange={setOpenGerar}
+        tipo="pagar"
+        valorTotal={valorGerar}
+        onGerar={async (config) => {
+          await gerarParcelas.mutateAsync({
+            granja_id: filtroGranja || granjas?.[0]?.id || '',
+            valor_total: valorGerar,
+            num_parcelas: config.num_parcelas,
+            primeiro_vencimento: config.primeiro_vencimento,
+            intervalo_dias: config.intervalo_dias,
+            ja_pago: config.ja_pago,
+          });
+        }}
       />
     </AppLayout>
   );

@@ -193,7 +193,7 @@ export function useDeleteBaixaReceber() {
 
 // Geração automática de parcelas a partir de contrato de venda
 export interface GerarParcelasInput {
-  contrato_venda_id: string;
+  contrato_venda_id?: string | null;
   granja_id: string;
   cliente_id?: string | null;
   nota_fiscal_id?: string | null;
@@ -213,14 +213,16 @@ export function useGerarParcelasReceber() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: GerarParcelasInput) => {
-      // Apaga parcelas existentes do contrato que estejam abertas (sem baixa)
-      const { data: existentes } = await supabase
-        .from('contas_receber' as any)
-        .select('id, valor_pago')
-        .eq('contrato_venda_id', input.contrato_venda_id);
-      const removiveis = (existentes || []).filter((c: any) => Number(c.valor_pago) === 0).map((c: any) => c.id);
-      if (removiveis.length) {
-        await supabase.from('contas_receber' as any).delete().in('id', removiveis);
+      if (input.contrato_venda_id) {
+        // Apaga parcelas existentes do contrato que estejam abertas (sem baixa)
+        const { data: existentes } = await supabase
+          .from('contas_receber' as any)
+          .select('id, valor_pago')
+          .eq('contrato_venda_id', input.contrato_venda_id);
+        const removiveis = (existentes || []).filter((c: any) => Number(c.valor_pago) === 0).map((c: any) => c.id);
+        if (removiveis.length) {
+          await supabase.from('contas_receber' as any).delete().in('id', removiveis);
+        }
       }
 
       const valorParcela = Math.round((input.valor_total / input.num_parcelas) * 100) / 100;
@@ -234,7 +236,7 @@ export function useGerarParcelasReceber() {
         return {
           granja_id: input.granja_id,
           cliente_id: input.cliente_id || null,
-          contrato_venda_id: input.contrato_venda_id,
+          contrato_venda_id: input.contrato_venda_id || null,
           nota_fiscal_id: input.nota_fiscal_id || null,
           safra_id: input.safra_id || null,
           documento: input.documento || null,
