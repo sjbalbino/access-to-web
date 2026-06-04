@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -73,6 +73,17 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const { data: granjas } = useGranjas();
   const { data: locaisEntrega } = useLocaisEntrega();
 
+  // Efeito para definir a granja padrão
+  useEffect(() => {
+    if (granjas && granjas.length > 0 && !granjaId) {
+      // Ordenar por data de criação para pegar a "principal" (geralmente a primeira criada)
+      const sortedGranjas = [...granjas].sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      setGranjaId(sortedGranjas[0].id);
+    }
+  }, [granjas, granjaId]);
+
   const compradores = clientes?.filter(c => c.tipo === "cliente" || c.tipo === "ambos") || [];
 
   const titulos: Record<TipoRelatorio, string> = {
@@ -89,6 +100,15 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   };
 
   const gerarRelatorio = async () => {
+    if (dataInicial && dataFinal && new Date(dataInicial) > new Date(dataFinal)) {
+      toast({ 
+        title: "Período inválido", 
+        description: "A data inicial não pode ser maior que a data final.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       if (tipo === "extrato") await gerarExtrato();
@@ -546,7 +566,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       if (memo[contaId] !== undefined) return memo[contaId];
       
       let total = (list || []).filter(l => l.dre_conta_id === contaId)
-        .reduce((s, l) => s + (l.tipo === 'receita' ? Number(l.valor) : -Number(l.valor)), 0);
+        .reduce((s, l) => {
+          const valor = Number(l.valor);
+          // O tipo do lançamento (receita/despesa) define o sinal
+          return s + (l.tipo === 'receita' ? valor : -valor);
+        }, 0);
       
       const children = allContas.filter(c => c.parent_id === contaId);
       children.forEach(child => {
@@ -560,6 +584,10 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const contas: DreReportData["contas"] = (dreContas as any[]).map(c => {
       const saldo_anterior = getSomaRecursiva(lancamentosAnt || [], c.id, dreContas, memoAnt);
       const valor_periodo = getSomaRecursiva(lancamentos || [], c.id, dreContas, memoPeriodo);
+      
+      // Ajuste de sinal baseado no tipo_saldo da conta se necessário
+      // Por enquanto mantendo a lógica de receita (+) e despesa (-)
+      
       return { 
         codigo: c.codigo, 
         descricao: c.descricao, 
@@ -569,6 +597,14 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         saldo_atual: saldo_anterior + valor_periodo 
       };
     });
+
+    if (contas.every(c => c.saldo_anterior === 0 && c.valor_periodo === 0)) {
+      toast({ 
+        title: "Sem dados para o DRE", 
+        description: "Nenhum lançamento vinculado a contas DRE foi encontrado no período selecionado.",
+        variant: "default"
+      });
+    }
 
     gerarDrePdf({ periodo: `${fmtD(dataInicial)} a ${fmtD(dataFinal)}`, contas });
   };

@@ -119,7 +119,9 @@ export function gerarDrePdf(data: DreReportData) {
     columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 55 } },
   });
 
-  doc.save('dre.pdf');
+  // Preview instead of immediate save
+  const pdfOutput = doc.output('bloburl');
+  window.open(pdfOutput, '_blank');
 }
 
 // =============================================
