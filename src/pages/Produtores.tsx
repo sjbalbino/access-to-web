@@ -310,7 +310,7 @@ export default function Produtores() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Status</Label>
-                <Select value={filtroAtivo} onValueChange={(v) => { setFiltroAtivo(v); setPaginaAtual(1); }}>
+                <Select isSearchable value={filtroAtivo} onValueChange={(v) => { setFiltroAtivo(v); setPaginaAtual(1); }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ativo">Ativos</SelectItem>
