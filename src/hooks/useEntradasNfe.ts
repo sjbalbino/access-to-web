@@ -78,7 +78,6 @@ async function gerarContasPagarAutomatico(
   let rateioItens: Record<string, { sub_centro_id: string | null; dre_id: string | null; valor: number }> = {};
 
   if (itens && itens.length > 0) {
-    // Buscar metadados dos produtos, grupos e sub-centros
     const produtoIds = itens.map(i => i.produto_id).filter(Boolean);
     
     const { data: produtosMeta } = await supabase
@@ -134,9 +133,9 @@ async function gerarContasPagarAutomatico(
     }];
   }
 
-  // Se não tem itens ou valor total zerado no rateio, usa padrão
+  let rows: any[] = [];
   if (splits.length === 0) {
-    const rows = parcelas.map((p) => ({
+    rows = parcelas.map((p) => ({
       granja_id: entrada.granja_id,
       fornecedor_id: entrada.fornecedor_id || null,
       entrada_nfe_id: entrada.id,
@@ -150,65 +149,51 @@ async function gerarContasPagarAutomatico(
       valor_original: p.valor,
       observacoes: pagamento?.forma_pagamento ? `Forma: ${pagamento.forma_pagamento}` : null,
     }));
+  } else {
+    parcelas.forEach(p => {
+      splits.forEach((s, idx) => {
+        const prop = s.valor / totalValorItens;
+        let valorSplit = Number((p.valor * prop).toFixed(2));
+        
+        if (idx === splits.length - 1) {
+          const jaCalculado = rows
+            .filter(r => r.parcela === p.numero)
+            .reduce((sum, r) => sum + r.valor_original, 0);
+          valorSplit = Number((p.valor - jaCalculado).toFixed(2));
+        }
 
-    const { data: criadas, error } = await supabase
-      .from('contas_pagar')
-      .insert(rows)
-      .select('id, valor_original');
-    if (error) throw error;
-    return criadas;
-  }
-
-  // Gera registros rateados para cada parcela
-  const rows: any[] = [];
-  parcelas.forEach(p => {
-    splits.forEach((s, idx) => {
-      // Proporção do valor deste split em relação ao total dos itens
-      const prop = s.valor / totalValorItens;
-      let valorSplit = Number((p.valor * prop).toFixed(2));
-      
-      // Ajuste de arredondamento no último split da parcela
-      if (idx === splits.length - 1) {
-        const jaCalculado = rows
-          .filter(r => r.parcela === p.numero)
-          .reduce((sum, r) => sum + r.valor_original, 0);
-        valorSplit = Number((p.valor - jaCalculado).toFixed(2));
-      }
-
-      if (valorSplit > 0) {
-        rows.push({
-          granja_id: entrada.granja_id,
-          fornecedor_id: entrada.fornecedor_id || null,
-          entrada_nfe_id: entrada.id,
-          safra_id: entrada.safra_id || null,
-          sub_centro_custo_id: s.sub_centro_id,
-          dre_conta_id: s.dre_id,
-          socio_produtor_id: entrada.socio_produtor_id || null,
-          rateio_modo: entrada.socio_produtor_id ? 'socio_unico' : 'rateio_granja',
-          documento: entrada.numero_nfe || null,
-          parcela: p.numero,
-          data_emissao: dataEmissao,
-          data_vencimento: p.vencimento,
-          valor_original: valorSplit,
-          observacoes: pagamento?.forma_pagamento ? `Forma: ${pagamento.forma_pagamento} (Rateio DRE)` : 'Rateio DRE',
-        });
-      }
+        if (valorSplit > 0) {
+          rows.push({
+            granja_id: entrada.granja_id,
+            fornecedor_id: entrada.fornecedor_id || null,
+            entrada_nfe_id: entrada.id,
+            safra_id: entrada.safra_id || null,
+            sub_centro_custo_id: s.sub_centro_id,
+            dre_conta_id: s.dre_id,
+            socio_produtor_id: entrada.socio_produtor_id || null,
+            rateio_modo: entrada.socio_produtor_id ? 'socio_unico' : 'rateio_granja',
+            documento: entrada.numero_nfe || null,
+            parcela: p.numero,
+            data_emissao: dataEmissao,
+            data_vencimento: p.vencimento,
+            valor_original: valorSplit,
+            observacoes: pagamento?.forma_pagamento ? `Forma: ${pagamento.forma_pagamento} (Rateio DRE)` : 'Rateio DRE',
+          });
+        }
+      });
     });
-  });
+  }
 
   const { data: criadas, error } = await supabase
     .from('contas_pagar')
     .insert(rows)
     .select('id, valor_original');
-  if (error) throw error;
-  return criadas;
-}
+
   if (error) throw error;
 
   // Se "já pago" e forma de pagamento à vista → gera baixas
   if (pagamento?.ja_pago && pagamento.forma_pagamento && criadas?.length) {
     const hoje = new Date().toISOString().slice(0, 10);
-
     const baixas = criadas.map((c: any) => ({
       conta_id: c.id,
       data_pagamento: hoje,
@@ -223,6 +208,8 @@ async function gerarContasPagarAutomatico(
     const { error: errBaixa } = await supabase.from('contas_pagar_baixas').insert(baixas);
     if (errBaixa) throw errBaixa;
   }
+
+  return criadas;
 }
 
 export function useCreateEntradaNfe() {
