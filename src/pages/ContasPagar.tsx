@@ -185,9 +185,11 @@ export default function ContasPagar() {
                       <TableCell><Badge className={STATUS_BADGE[c.status]}>{c.status}</Badge></TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" title="Baixar" onClick={() => { setBaixaConta(c); setOpenBaixas(true); }}>
-                            <DollarSign className="h-4 w-4 text-emerald-600" />
-                          </Button>
+                          {c.status !== 'pago' && (
+                            <Button size="icon" variant="ghost" title="Baixar" onClick={() => { setBaixaConta(c); setOpenBaixas(true); }}>
+                              <DollarSign className="h-4 w-4 text-emerald-600" />
+                            </Button>
+                          )}
                           {canEdit && (
                             <>
                               <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setOpenForm(true); }}>

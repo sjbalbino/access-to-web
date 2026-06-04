@@ -42,6 +42,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     observacoes: '',
     rateio_modo: 'rateio_granja' as RateioModo,
     socio_produtor_id: null as string | null,
+    ja_pago: false,
   });
   const [rateioManual, setRateioManual] = useState<RateioManualItem[]>([]);
   const salvarManual = useSalvarRateioManual();
@@ -53,6 +54,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         valor_original: String(initial.valor_original ?? ''),
         rateio_modo: initial.rateio_modo || 'rateio_granja',
         socio_produtor_id: initial.socio_produtor_id || null,
+        ja_pago: initial.status === 'pago',
       });
     } else {
       setForm((f: any) => ({ ...f, granja_id: granjas?.[0]?.id || '' }));
@@ -67,9 +69,12 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     const payload = {
       ...form,
       valor_original: parseFloat(form.valor_original) || 0,
+      valor_pago: form.ja_pago ? (parseFloat(form.valor_original) || 0) : 0,
+      status: form.ja_pago ? 'pago' : 'aberto',
     };
-    Object.keys(payload).forEach(k => { if (payload[k] === '') payload[k] = null; });
-    const saved: any = await onSubmit(payload);
+    const { ja_pago, ...restPayload } = payload;
+    Object.keys(restPayload).forEach(k => { if (restPayload[k] === '') restPayload[k] = null; });
+    const saved: any = await onSubmit(restPayload);
     // se modo manual, gravar rateio explícito (trigger respeitará)
     if (payload.rateio_modo === 'manual' && saved?.id) {
       await salvarManual.mutateAsync({
@@ -161,6 +166,24 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
                 {subCentros?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.codigo} - {s.descricao}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div className="col-span-2 flex items-center space-x-2 border rounded-md p-3 bg-muted/30">
+            <input
+              type="checkbox"
+              id="ja_pago"
+              checked={form.ja_pago}
+              onChange={(e) => update('ja_pago', e.target.checked)}
+              className="h-4 w-4 rounded border-input"
+              disabled={lockedByOrigem}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label htmlFor="ja_pago" className="text-sm font-medium leading-none">
+                Já {tipo === 'receber' ? 'recebido' : 'pago'}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Define o status como "pago" e preenche o valor baixado com o valor total.
+              </p>
+            </div>
           </div>
           <div className="col-span-2">
             <Label>Observações</Label>
