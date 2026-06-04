@@ -347,11 +347,11 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'cclass_trib_cbs', dbName: 'cclass_trib_cbs', transform: toStr },
     ],
     references: [
-      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
-      { dbColumn: 'unidade_medida_id', sourceColumn: 'unidade_medida', lookupTable: 'unidades_medida', lookupColumn: 'sigla', lookupLabel: 'descricao', fallbackColumns: ['codigo', 'descricao'] },
-      { dbColumn: 'fornecedor_id', sourceColumn: 'fornecedor', lookupTable: 'clientes_fornecedores', lookupColumn: 'nome', lookupLabel: 'nome' },
-      { dbColumn: 'grupo_id', sourceColumn: 'grupo_produto', lookupTable: 'grupos_produtos', lookupColumn: 'nome', lookupLabel: 'nome', sourceColumnAliases: ['grupo', 'Grupo', 'GRUPO'] },
-      { dbColumn: 'produto_residuo_id', sourceColumn: 'produto_residuo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', selfReference: true },
+      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', optional: true },
+      { dbColumn: 'unidade_medida_id', sourceColumn: 'unidade_medida', lookupTable: 'unidades_medida', lookupColumn: 'sigla', lookupLabel: 'descricao', fallbackColumns: ['codigo', 'descricao'], optional: true },
+      { dbColumn: 'fornecedor_id', sourceColumn: 'fornecedor', lookupTable: 'clientes_fornecedores', lookupColumn: 'nome', lookupLabel: 'nome', optional: true },
+      { dbColumn: 'grupo_id', sourceColumn: 'grupo_produto', lookupTable: 'grupos_produtos', lookupColumn: 'nome', lookupLabel: 'nome', sourceColumnAliases: ['grupo', 'Grupo', 'GRUPO'], optional: true },
+      { dbColumn: 'produto_residuo_id', sourceColumn: 'produto_residuo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', selfReference: true, optional: true },
     ],
   },
   {
@@ -1214,8 +1214,12 @@ export async function resolveReferences(
       } else if (!ref.optional) {
         errors.push(`Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" não encontrado`);
       }
-      if (foundKey) delete newRow[foundKey];
-      if (compositeFoundKey) delete newRow[compositeFoundKey];
+      // We only delete the foundKey if it was a temporary/auxiliary column (starting with _)
+      // or if it's NOT a column already mapped in the DB.
+      // However, to keep it simple and safe for all tables, we'll only delete it if it starts with '_'
+      // as those are clearly auxiliary. For others, we keep them so they can be saved to their own columns.
+      if (foundKey && foundKey.startsWith('_')) delete newRow[foundKey];
+      if (compositeFoundKey && compositeFoundKey.startsWith('_')) delete newRow[compositeFoundKey];
     }
     return newRow;
   });
