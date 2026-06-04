@@ -226,23 +226,38 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
                       </div>
                       <div className="mt-0.5">{log.observacoes || log.status}</div>
                     </div>
-                    {log.backup_data && log.status !== 'desfeito' && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                        onClick={() => undoMutation.mutate(log.id)}
-                        disabled={undoMutation.isPending}
-                      >
-                        {undoMutation.isPending && undoMutation.variables === log.id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <div className="flex items-center gap-1">
-                            <Undo2 className="h-3 w-3" />
-                            <span>Desfazer</span>
-                          </div>
+                    {log.backup_data && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-primary hover:text-primary hover:bg-primary/10"
+                          onClick={() => handleExportarAuditoria(log)}
+                          title="Gerar relatório de auditoria"
+                        >
+                          <FileText className="h-3 w-3" />
+                          <span className="hidden sm:inline ml-1 text-[10px]">Auditoria</span>
+                        </Button>
+                        
+                        {log.status !== 'desfeito' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                            onClick={() => undoMutation.mutate(log.id)}
+                            disabled={undoMutation.isPending}
+                          >
+                            {undoMutation.isPending && undoMutation.variables === log.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <Undo2 className="h-3 w-3" />
+                                <span className="hidden sm:inline ml-1 text-[10px]">Desfazer</span>
+                              </div>
+                            )}
+                          </Button>
                         )}
-                      </Button>
+                      </div>
                     )}
                   </div>
                 ))}
