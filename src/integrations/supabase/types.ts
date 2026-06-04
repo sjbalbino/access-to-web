@@ -4323,6 +4323,7 @@ export type Database = {
           cod_fornecedor: string | null
           codigo: string | null
           codigo_barras: string | null
+          conta_gerencial_id: string | null
           created_at: string
           cst_cbs: string | null
           cst_cofins: string | null
@@ -4364,6 +4365,7 @@ export type Database = {
           cod_fornecedor?: string | null
           codigo?: string | null
           codigo_barras?: string | null
+          conta_gerencial_id?: string | null
           created_at?: string
           cst_cbs?: string | null
           cst_cofins?: string | null
@@ -4405,6 +4407,7 @@ export type Database = {
           cod_fornecedor?: string | null
           codigo?: string | null
           codigo_barras?: string | null
+          conta_gerencial_id?: string | null
           created_at?: string
           cst_cbs?: string | null
           cst_cofins?: string | null
@@ -4439,6 +4442,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "produtos_conta_gerencial_id_fkey"
+            columns: ["conta_gerencial_id"]
+            isOneToOne: false
+            referencedRelation: "sub_centros_custo"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "produtos_empresa_id_fkey"
             columns: ["granja_id"]
