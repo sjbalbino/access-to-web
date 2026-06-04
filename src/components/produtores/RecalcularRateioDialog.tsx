@@ -165,6 +165,14 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
     setConfirmacao(false);
   };
 
+  const resetAuditFilters = () => {
+    setAuditGranjaId('all');
+    setAuditUserId('all');
+    setAuditDataInicio('');
+    setAuditDataFim('');
+    setAuditSearch('');
+  };
+
   const handleExportarAuditoria = (log: any) => {
     const granja = granjas?.find((g: any) => g.id === log.granja_id);
     gerarRelatorioAuditoriaRateioPdf({
