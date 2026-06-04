@@ -38,6 +38,22 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
   const [dataFim, setDataFim] = useState('');
   const [confirmacao, setConfirmacao] = useState(false);
 
+  const { data: logs, isLoading: loadingLogs } = useQuery({
+    queryKey: ['rateio_recalculo_logs', granjaId],
+    queryFn: async () => {
+      if (!granjaId) return [];
+      const { data, error } = await supabase
+        .from('rateio_recalculo_logs' as any)
+        .select('*, profiles:user_id(nome)')
+        .eq('granja_id', granjaId)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!granjaId,
+  });
+
   const mutation = useMutation({
     mutationFn: async () => {
       if (!granjaId || !dataInicio || !dataFim || !user?.id) {
