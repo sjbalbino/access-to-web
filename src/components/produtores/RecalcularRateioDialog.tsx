@@ -178,7 +178,7 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
               Atenção
             </div>
             <p className="text-xs text-amber-700">
-              Isso apagará rateios manuais feitos anteriormente no período para esta granja. Esta ação é irreversível e será registrada em log de auditoria.
+              Isso atualizará rateios manuais feitos anteriormente no período para esta granja. A ação será registrada e pode ser desfeita usando o log abaixo.
             </p>
             <div className="flex items-center gap-2 pt-1">
               <input
