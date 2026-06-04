@@ -5,6 +5,7 @@ export interface ColumnMapping {
   dbName: string; // column name in Supabase
   required?: boolean;
   transform?: (value: any, row?: Record<string, any>) => any;
+  sourceColumnAliases?: string[]; // alternative header names
 }
 
 export interface ReferenceResolver {
@@ -243,7 +244,7 @@ export const tableConfigs: TableConfig[] = [
     order: 2,
     dependsOn: ['plano_contas_gerencial'],
     columns: [
-      { accessName: 'nome', dbName: 'nome', required: true, transform: toStr },
+      { accessName: 'nome', dbName: 'nome', required: true, transform: toStr, sourceColumnAliases: ['grupo_produto', 'grupo', 'descricao_grupo'] },
       { accessName: 'descricao', dbName: 'descricao', transform: toStr },
       { accessName: 'ativo', dbName: 'ativo', transform: toBool },
       { accessName: 'maquinas_implementos', dbName: 'maquinas_implementos', transform: toBool },
@@ -1257,7 +1258,19 @@ export function transformRow(
   const errors: string[] = [];
 
   for (const col of columns) {
-    const { value } = findColumnValue(row, col.accessName);
+    let { value } = findColumnValue(row, col.accessName);
+    
+    // If not found by primary accessName, try aliases
+    if (value === undefined && col.sourceColumnAliases) {
+      for (const alias of col.sourceColumnAliases) {
+        const { value: aliasValue } = findColumnValue(row, alias);
+        if (aliasValue !== undefined) {
+          value = aliasValue;
+          break;
+        }
+      }
+    }
+
     const transformed = col.transform ? col.transform(value, row) : value;
 
     if (col.required && (transformed === null || transformed === undefined || transformed === '')) {
