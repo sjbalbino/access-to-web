@@ -4524,6 +4524,47 @@ export type Database = {
           },
         ]
       }
+      rateio_recalculo_logs: {
+        Row: {
+          created_at: string
+          data_final: string
+          data_inicial: string
+          granja_id: string
+          id: string
+          observacoes: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_final: string
+          data_inicial: string
+          granja_id: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_final?: string
+          data_inicial?: string
+          granja_id?: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rateio_recalculo_logs_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       remessas_venda: {
         Row: {
           balanceiro: string | null
