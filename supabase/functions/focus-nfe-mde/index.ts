@@ -162,7 +162,7 @@ serve(async (req) => {
       case "download_danfe": {
         if (!chave) throw new Error("chave é obrigatória para download");
 
-        const url = `${baseUrl}/v2/nfes_recebidas/${chave}.pdf`;
+        const url = `${baseUrl}/v2/nfes_recebidas/${chave}.pdf?wait=1`;
         console.log("MD-e Download DANFe:", url);
 
         const response = await fetch(url, {
