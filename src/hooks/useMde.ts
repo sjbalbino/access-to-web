@@ -30,7 +30,19 @@ export function useMde() {
     setIsLoading(true);
     try {
       const result = await invokeAction({ action: "consultar", inscricaoId });
-      const items: NfeRecebida[] = Array.isArray(result.data) ? result.data : [];
+      const raw: any[] = Array.isArray(result.data) ? result.data : [];
+      const items: NfeRecebida[] = raw.map((r) => ({
+        chave: r.chave ?? r.chave_nfe ?? r.chaveNFe ?? "",
+        nome: r.nome ?? r.emitente_nome ?? r.razao_social_emitente ?? "",
+        cnpj: r.cnpj ?? r.cnpj_emitente ?? r.emitente_cnpj ?? "",
+        valor: Number(r.valor ?? r.valor_total ?? r.valor_nfe ?? 0),
+        data_emissao: r.data_emissao ?? r.dataEmissao ?? r.data_emissao_nfe ?? "",
+        situacao: r.situacao ?? r.status ?? "",
+        tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
+        numero: String(r.numero ?? r.numero_nfe ?? ""),
+        serie: String(r.serie ?? ""),
+        manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
+      }));
       setNfesRecebidas(items);
       if (items.length === 0) {
         toast.info("Nenhuma NF-e destinada encontrada.");
