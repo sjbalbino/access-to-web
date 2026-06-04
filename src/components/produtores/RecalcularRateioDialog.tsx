@@ -116,6 +116,22 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
     setConfirmacao(false);
   };
 
+  const handleExportarAuditoria = (log: any) => {
+    const granja = granjas?.find((g: any) => g.id === log.granja_id);
+    gerarRelatorioAuditoriaRateioPdf({
+      id: log.id,
+      created_at: log.created_at,
+      data_inicial: log.data_inicial,
+      data_final: log.data_final,
+      granja_nome: granja?.razao_social || 'Desconhecida',
+      usuario_nome: log.profiles?.nome || 'Sistema',
+      status: log.status,
+      observacoes: log.observacoes,
+      backup_data: log.backup_data
+    });
+    toast.success('Relatório de auditoria gerado!');
+  };
+
   const handleRecalcular = () => {
     if (!confirmacao) {
       toast.error('Você precisa confirmar que entendeu os riscos.');
