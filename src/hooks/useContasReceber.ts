@@ -24,6 +24,7 @@ export interface ContaReceber {
   safra_id: string | null;
   observacoes: string | null;
   codigo_legado: string | null;
+  produto_id: string | null;
   created_at: string;
   updated_at: string;
 }

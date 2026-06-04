@@ -17,6 +17,7 @@ export interface LancamentoFinanceiro {
   safra_id: string | null;
   rateio_modo: 'socio_unico' | 'rateio_granja' | 'manual';
   socio_produtor_id: string | null;
+  produto_id?: string | null;
   created_at: string;
   updated_at: string;
 }
