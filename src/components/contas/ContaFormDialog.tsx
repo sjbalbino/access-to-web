@@ -9,6 +9,7 @@ import { useGranjas } from '@/hooks/useGranjas';
 import { useClientesFornecedores } from '@/hooks/useClientesFornecedores';
 import { useDreContas } from '@/hooks/useDreContas';
 import { useAllSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
+import { useProdutos } from '@/hooks/useProdutos';
 import { useSafras } from '@/hooks/useSafras';
 import { AtribuicaoSocioSection, RateioModo, RateioManualItem } from './AtribuicaoSocioSection';
 import { useSalvarRateioManual } from '@/hooks/useRateioSocios';
@@ -31,6 +32,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const { data: subCentros } = useAllSubCentrosCusto();
   const { data: safras } = useSafras();
   const { data: contasBancarias } = useContasBancarias({ ativo: true });
+  const { data: produtos } = useProdutos();
 
   const [form, setForm] = useState<any>({
     granja_id: '',
@@ -43,6 +45,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     dre_conta_id: undefined,
     sub_centro_custo_id: undefined,
     safra_id: undefined,
+    produto_id: undefined,
     observacoes: '',
     rateio_modo: 'rateio_granja' as RateioModo,
     socio_produtor_id: null as string | null,
@@ -74,7 +77,34 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     }
   }, [initial, open, granjas]);
 
-  const update = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+  const update = (k: string, v: any) => {
+    setForm((f: any) => {
+      const newForm = { ...f, [k]: v };
+      
+      // Lógica de vínculo automático
+      if (k === 'produto_id' && v) {
+        const produto = produtos?.find((p: any) => p.id === v);
+        if (produto) {
+          if (produto.conta_gerencial_id) {
+            newForm.sub_centro_custo_id = produto.conta_gerencial_id;
+            const sub = subCentros?.find((s: any) => s.id === produto.conta_gerencial_id);
+            if (sub?.codigo_dre) {
+              const dre = dreContas?.find((d: any) => d.codigo === sub.codigo_dre);
+              if (dre) newForm.dre_conta_id = dre.id;
+            }
+          }
+        }
+      } else if (k === 'sub_centro_custo_id' && v) {
+        const sub = subCentros?.find((s: any) => s.id === v);
+        if (sub?.codigo_dre) {
+          const dre = dreContas?.find((d: any) => d.codigo === sub.codigo_dre);
+          if (dre) newForm.dre_conta_id = dre.id;
+        }
+      }
+      
+      return newForm;
+    });
+  };
 
   const lockedByOrigem = !!(initial && (initial.contrato_venda_id || initial.entrada_nfe_id || initial.compra_cereais_id));
 
@@ -223,6 +253,15 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {dreContas?.map(d => <SelectItem key={d.id} value={d.id}>{d.codigo} - {d.descricao}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Produto</Label>
+            <Select isSearchable value={form.produto_id || undefined} onValueChange={(v) => update('produto_id', v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {produtos?.filter(p => p.ativo).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
