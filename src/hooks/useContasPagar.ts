@@ -199,6 +199,7 @@ export interface GerarParcelasInput {
   num_parcelas: number;
   primeiro_vencimento: string;
   intervalo_dias: number;
+  ja_pago?: boolean;
   data_emissao?: string;
   dre_conta_id?: string | null;
   sub_centro_custo_id?: string | null;
@@ -229,6 +230,7 @@ export function useGerarParcelasPagar() {
       const parcelas = Array.from({ length: input.num_parcelas }).map((_, i) => {
         const d = new Date(base);
         d.setDate(d.getDate() + i * input.intervalo_dias);
+        const valor = i === input.num_parcelas - 1 ? ultima : valorParcela;
         return {
           granja_id: input.granja_id,
           fornecedor_id: input.fornecedor_id || null,
@@ -239,7 +241,9 @@ export function useGerarParcelasPagar() {
           parcela: `${i + 1}/${input.num_parcelas}`,
           data_emissao: input.data_emissao || new Date().toISOString().slice(0, 10),
           data_vencimento: d.toISOString().slice(0, 10),
-          valor_original: i === input.num_parcelas - 1 ? ultima : valorParcela,
+          valor_original: valor,
+          valor_pago: input.ja_pago ? valor : 0,
+          status: input.ja_pago ? 'pago' : 'aberto',
           dre_conta_id: input.dre_conta_id || null,
           sub_centro_custo_id: input.sub_centro_custo_id || null,
         };
