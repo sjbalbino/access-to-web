@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS idx_produtos_tenant_codigo ON public.produtos (tenant_id, codigo);
