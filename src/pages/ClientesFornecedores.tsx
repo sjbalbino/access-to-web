@@ -312,23 +312,23 @@ export default function ClientesFornecedores() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Tipo</Label>
-                      <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cliente">Cliente</SelectItem>
-                          <SelectItem value="fornecedor">Fornecedor</SelectItem>
-                          <SelectItem value="ambos">Ambos</SelectItem>
+                      <Select isSearchable value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                        <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                        <Select isSearchableContent>
+                          <Select isSearchableItem value="cliente">Cliente</SelectItem>
+                          <Select isSearchableItem value="fornecedor">Fornecedor</SelectItem>
+                          <Select isSearchableItem value="ambos">Ambos</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label>Tipo Pessoa</Label>
-                      <Select value={formData.tipo_pessoa || 'juridica'} onValueChange={(value) => setFormData({ ...formData, tipo_pessoa: value, cpf_cnpj: '' })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="fisica">Pessoa Física</SelectItem>
-                          <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
-                          <SelectItem value="estrangeiro">Estrangeiro</SelectItem>
+                      <Select isSearchable value={formData.tipo_pessoa || 'juridica'} onValueChange={(value) => setFormData({ ...formData, tipo_pessoa: value, cpf_cnpj: '' })}>
+                        <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                        <Select isSearchableContent>
+                          <Select isSearchableItem value="fisica">Pessoa Física</SelectItem>
+                          <Select isSearchableItem value="juridica">Pessoa Jurídica</SelectItem>
+                          <Select isSearchableItem value="estrangeiro">Estrangeiro</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -472,13 +472,13 @@ export default function ClientesFornecedores() {
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Tipo</Label>
-              <Select value={filtroTipo} onValueChange={v => { setFiltroTipo(v); setPaginaAtual(1); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="cliente">Cliente</SelectItem>
-                  <SelectItem value="fornecedor">Fornecedor</SelectItem>
-                  <SelectItem value="ambos">Ambos</SelectItem>
+              <Select isSearchable value={filtroTipo} onValueChange={v => { setFiltroTipo(v); setPaginaAtual(1); }}>
+                <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                <Select isSearchableContent>
+                  <Select isSearchableItem value="todos">Todos</SelectItem>
+                  <Select isSearchableItem value="cliente">Cliente</SelectItem>
+                  <Select isSearchableItem value="fornecedor">Fornecedor</SelectItem>
+                  <Select isSearchableItem value="ambos">Ambos</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -488,12 +488,12 @@ export default function ClientesFornecedores() {
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Status</Label>
-              <Select value={filtroAtivo} onValueChange={v => { setFiltroAtivo(v); setPaginaAtual(1); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ativo">Ativos</SelectItem>
-                  <SelectItem value="inativo">Inativos</SelectItem>
-                  <SelectItem value="todos">Todos</SelectItem>
+              <Select isSearchable value={filtroAtivo} onValueChange={v => { setFiltroAtivo(v); setPaginaAtual(1); }}>
+                <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                <Select isSearchableContent>
+                  <Select isSearchableItem value="ativo">Ativos</SelectItem>
+                  <Select isSearchableItem value="inativo">Inativos</SelectItem>
+                  <Select isSearchableItem value="todos">Todos</SelectItem>
                 </SelectContent>
               </Select>
             </div>

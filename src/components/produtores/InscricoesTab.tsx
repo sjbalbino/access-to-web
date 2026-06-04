@@ -449,16 +449,16 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tipo">Tipo de Contrato <span className="text-destructive">*</span></Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.tipo || undefined}
                     onValueChange={(value) => setFormData({ ...formData, tipo: value })}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {TIPOS_CONTRATO.map((tipo) => (
-                        <SelectItem key={tipo.value} value={tipo.value}>
+                        <Select isSearchableItem key={tipo.value} value={tipo.value}>
                           {tipo.label}
                         </SelectItem>
                       ))}
@@ -467,16 +467,16 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="granja_id">Granja <span className="text-destructive">*</span></Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.granja_id || undefined}
                     onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a granja" />
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione a granja" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {granjas?.map((granja) => (
-                        <SelectItem key={granja.id} value={granja.id}>
+                        <Select isSearchableItem key={granja.id} value={granja.id}>
                           {granja.nome_fantasia || granja.razao_social}
                         </SelectItem>
                       ))}
@@ -554,19 +554,19 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="uf">UF <span className="text-destructive">*</span></Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.uf || undefined}
                     onValueChange={(value) => {
                       setFormData({ ...formData, uf: value, cidade: "" });
                       setUfCidade(value);
                     }}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="UF" />
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="UF" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"].map(uf => (
-                        <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                        <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -652,17 +652,17 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               </h5>
               <div className="space-y-2">
                 <Label htmlFor="emitente_id">Emitente para emissão de NFP-e</Label>
-                <Select
+                <Select isSearchable
                   value={formData.emitente_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, emitente_id: value === "none" ? null : value })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o emitente" />
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Selecione o emitente" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
+                  <Select isSearchableContent>
+                    <Select isSearchableItem value="none">Nenhum</SelectItem>
                     {emitentesAtivos.map((emitente) => (
-                      <SelectItem key={emitente.id} value={emitente.id}>
+                      <Select isSearchableItem key={emitente.id} value={emitente.id}>
                         {emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "Emitente"}
                         {emitente.ambiente === 1 ? " (Produção)" : " (Homologação)"}
                       </SelectItem>

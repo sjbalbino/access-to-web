@@ -177,22 +177,22 @@ export default function Placas() {
                     </div>
                     <div className="space-y-2">
                       <Label>Tipo</Label>
-                      <Select value={formData.tipo || 'veiculo'} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="veiculo">Veículo</SelectItem>
-                          <SelectItem value="carreta">Carreta</SelectItem>
-                          <SelectItem value="implemento">Implemento</SelectItem>
+                      <Select isSearchable value={formData.tipo || 'veiculo'} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                        <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                        <Select isSearchableContent>
+                          <Select isSearchableItem value="veiculo">Veículo</SelectItem>
+                          <Select isSearchableItem value="carreta">Carreta</SelectItem>
+                          <Select isSearchableItem value="implemento">Implemento</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label>Granja</Label>
-                      <Select value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
-                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                        <SelectContent>
+                      <Select isSearchable value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
+                        <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                        <Select isSearchableContent>
                           {granjas?.map((granja) => (
-                            <SelectItem key={granja.id} value={granja.id}>{granja.razao_social}</SelectItem>
+                            <Select isSearchableItem key={granja.id} value={granja.id}>{granja.razao_social}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -221,11 +221,11 @@ export default function Placas() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <Label>Propriedade</Label>
-                      <Select value={formData.propriedade || 'propria'} onValueChange={(value) => setFormData({ ...formData, propriedade: value })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="propria">Própria</SelectItem>
-                          <SelectItem value="terceiros">Terceiros</SelectItem>
+                      <Select isSearchable value={formData.propriedade || 'propria'} onValueChange={(value) => setFormData({ ...formData, propriedade: value })}>
+                        <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                        <Select isSearchableContent>
+                          <Select isSearchableItem value="propria">Própria</SelectItem>
+                          <Select isSearchableItem value="terceiros">Terceiros</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

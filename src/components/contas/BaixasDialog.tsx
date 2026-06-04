@@ -303,10 +303,10 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                   </div>
                   <div>
                     <Label>Forma de pagamento</Label>
-                    <Select value={formaPagamento} onValueChange={setFormaPagamento}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                    <Select isSearchable value={formaPagamento} onValueChange={setFormaPagamento}>
+                      <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                      <Select isSearchableContent>
+                        {FORMAS.map(f => <Select isSearchableItem key={f} value={f}>{f}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>

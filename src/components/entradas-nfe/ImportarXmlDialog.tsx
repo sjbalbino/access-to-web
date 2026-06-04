@@ -205,20 +205,20 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <Label>Granja *</Label>
-              <Select value={granjaId} onValueChange={setGranjaId}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {granjas?.map((g: any) => (<SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>))}
+              <Select isSearchable value={granjaId} onValueChange={setGranjaId}>
+                <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                <Select isSearchableContent>
+                  {granjas?.map((g: any) => (<Select isSearchableItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>IE do Produtor *</Label>
-              <Select value={inscricaoId} onValueChange={setInscricaoId} disabled={!granjaId}>
-                <SelectTrigger><SelectValue placeholder={granjaId ? 'Selecione...' : 'Escolha granja'} /></SelectTrigger>
-                <SelectContent>
+              <Select isSearchable value={inscricaoId} onValueChange={setInscricaoId} disabled={!granjaId}>
+                <Select isSearchableTrigger><Select isSearchableValue placeholder={granjaId ? 'Selecione...' : 'Escolha granja'} /></SelectTrigger>
+                <Select isSearchableContent>
                   {inscricoesFiltradas.map((i) => (
-                    <SelectItem key={i.id} value={i.id}>
+                    <Select isSearchableItem key={i.id} value={i.id}>
                       {(i.inscricao_estadual || i.cpf_cnpj || '—').toUpperCase()} {i.nome ? `— ${i.nome.toUpperCase()}` : ''}
                     </SelectItem>
                   ))}
@@ -227,30 +227,30 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
             </div>
             <div>
               <Label>Safra *</Label>
-              <Select value={safraId} onValueChange={setSafraId}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {safras?.map((s: any) => (<SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>))}
+              <Select isSearchable value={safraId} onValueChange={setSafraId}>
+                <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                <Select isSearchableContent>
+                  {safras?.map((s: any) => (<Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>Forma de Pagamento *</Label>
-              <Select value={formaPagamento} onValueChange={(v) => { setFormaPagamento(v); setJaPago(false); }}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {FORMAS.map((f) => (<SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
+              <Select isSearchable value={formaPagamento} onValueChange={(v) => { setFormaPagamento(v); setJaPago(false); }}>
+                <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                <Select isSearchableContent>
+                  {FORMAS.map((f) => (<Select isSearchableItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
             {isAvista && (
               <div>
                 <Label>Conta Bancária</Label>
-                <Select value={contaBancariaId} onValueChange={setContaBancariaId}>
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
+                <Select isSearchable value={contaBancariaId} onValueChange={setContaBancariaId}>
+                  <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                  <Select isSearchableContent>
                     {(contasBancarias || []).map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                      <Select isSearchableItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

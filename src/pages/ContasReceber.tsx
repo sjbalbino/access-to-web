@@ -113,29 +113,29 @@ export default function ContasReceber() {
         <CardContent className="pt-4 grid grid-cols-2 md:grid-cols-6 gap-3">
           <div>
             <Label>Granja</Label>
-            <Select value={filtroGranja} onValueChange={(v) => setFiltroGranja(v === 'all' ? undefined : v)}>
-              <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Todas</SelectItem>{granjas?.map(g => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}</SelectContent>
+            <Select isSearchable value={filtroGranja} onValueChange={(v) => setFiltroGranja(v === 'all' ? undefined : v)}>
+              <Select isSearchableTrigger><Select isSearchableValue placeholder="Todas" /></SelectTrigger>
+              <Select isSearchableContent><Select isSearchableItem value="all">Todas</SelectItem>{granjas?.map(g => <Select isSearchableItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>
             <Label>Status</Label>
-            <Select value={filtroStatus} onValueChange={(v) => setFiltroStatus(v === 'all' ? undefined : v)}>
-              <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="aberto">Aberto</SelectItem>
-                <SelectItem value="parcial">Parcial</SelectItem>
-                <SelectItem value="pago">Pago</SelectItem>
-                <SelectItem value="cancelado">Cancelado</SelectItem>
+            <Select isSearchable value={filtroStatus} onValueChange={(v) => setFiltroStatus(v === 'all' ? undefined : v)}>
+              <Select isSearchableTrigger><Select isSearchableValue placeholder="Todos" /></SelectTrigger>
+              <Select isSearchableContent>
+                <Select isSearchableItem value="all">Todos</SelectItem>
+                <Select isSearchableItem value="aberto">Aberto</SelectItem>
+                <Select isSearchableItem value="parcial">Parcial</SelectItem>
+                <Select isSearchableItem value="pago">Pago</SelectItem>
+                <Select isSearchableItem value="cancelado">Cancelado</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label>Cliente</Label>
-            <Select value={filtroCliente} onValueChange={(v) => setFiltroCliente(v === 'all' ? undefined : v)}>
-              <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Todos</SelectItem>{clientes?.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+            <Select isSearchable value={filtroCliente} onValueChange={(v) => setFiltroCliente(v === 'all' ? undefined : v)}>
+              <Select isSearchableTrigger><Select isSearchableValue placeholder="Todos" /></SelectTrigger>
+              <Select isSearchableContent><Select isSearchableItem value="all">Todos</SelectItem>{clientes?.map(c => <Select isSearchableItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>

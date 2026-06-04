@@ -240,13 +240,13 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Safra *</Label>
-              <Select value={safraId} onValueChange={setSafraId} disabled={isEditing}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+              <Select isSearchable value={safraId} onValueChange={setSafraId} disabled={isEditing}>
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue placeholder="Selecione..." />
                 </SelectTrigger>
-                <SelectContent>
+                <Select isSearchableContent>
                   {safras?.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                    <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -254,13 +254,13 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
             <div className="space-y-2">
               <Label>Produto *</Label>
-              <Select value={produtoId} onValueChange={setProdutoId} disabled={isEditing}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+              <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={isEditing}>
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue placeholder="Selecione..." />
                 </SelectTrigger>
-                <SelectContent>
+                <Select isSearchableContent>
                   {produtos?.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                    <Select isSearchableItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -270,27 +270,27 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Local de Entrega *</Label>
-              <Select 
+              <Select isSearchable 
                 value={localEntregaId || undefined} 
                 onValueChange={setLocalEntregaId}
                 disabled={!safraId || !produtoId}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder={
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue placeholder={
                     !safraId || !produtoId 
                       ? "Selecione safra e produto primeiro..." 
                       : "Selecione..."
                   } />
                 </SelectTrigger>
-                <SelectContent>
+                <Select isSearchableContent>
                   {/* Garantir que o local atual apareça na edição */}
                   {isEditing && devolucao?.local_entrega && !locaisEntregaComColheitas?.some(l => l.id === devolucao.local_entrega_id) && (
-                    <SelectItem key={devolucao.local_entrega_id!} value={devolucao.local_entrega_id!}>
+                    <Select isSearchableItem key={devolucao.local_entrega_id!} value={devolucao.local_entrega_id!}>
                       {devolucao.local_entrega.nome} {devolucao.local_entrega.is_sede ? '(Sede)' : ''}
                     </SelectItem>
                   )}
                   {locaisEntregaComColheitas?.map(l => (
-                    <SelectItem key={l.id} value={l.id}>
+                    <Select isSearchableItem key={l.id} value={l.id}>
                       {l.nome} {l.is_sede ? '(Sede)' : ''}
                     </SelectItem>
                   ))}
@@ -310,13 +310,13 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="space-y-2">
             <Label>Silo</Label>
-            <Select value={siloId} onValueChange={setSiloId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
+            <Select isSearchable value={siloId} onValueChange={setSiloId}>
+              <Select isSearchableTrigger>
+                <Select isSearchableValue placeholder="Selecione..." />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {silos?.map(s => (
-                  <SelectItem key={s.id} value={s.id}>
+                  <Select isSearchableItem key={s.id} value={s.id}>
                     {s.nome}
                   </SelectItem>
                 ))}
@@ -326,13 +326,13 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="space-y-2">
             <Label>Emitente (Sócio) *</Label>
-            <Select value={inscricaoEmitenteId} onValueChange={setInscricaoEmitenteId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o emitente..." />
+            <Select isSearchable value={inscricaoEmitenteId} onValueChange={setInscricaoEmitenteId}>
+              <Select isSearchableTrigger>
+                <Select isSearchableValue placeholder="Selecione o emitente..." />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {inscricoesSocio?.map(i => (
-                  <SelectItem key={i.id} value={i.id}>
+                  <Select isSearchableItem key={i.id} value={i.id}>
                     {i.produtores?.nome} - IE: {i.inscricao_estadual}
                   </SelectItem>
                 ))}
@@ -342,27 +342,27 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="space-y-2">
             <Label>Produtor (Destinatário) *</Label>
-            <Select 
+            <Select isSearchable 
               value={inscricaoProdutorId || undefined} 
               onValueChange={setInscricaoProdutorId}
               disabled={!safraId || !produtoId || !localEntregaId}
             >
-              <SelectTrigger>
-                <SelectValue placeholder={
+              <Select isSearchableTrigger>
+                <Select isSearchableValue placeholder={
                   !safraId || !produtoId || !localEntregaId
                     ? "Selecione safra, produto e local primeiro..." 
                     : "Selecione o produtor..."
                 } />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {/* Garantir que o produtor atual apareça na edição */}
                 {isEditing && devolucao?.inscricao_produtor && !inscricoesComSaldo?.some(i => i.id === devolucao.inscricao_produtor_id) && (
-                  <SelectItem key={devolucao.inscricao_produtor_id} value={devolucao.inscricao_produtor_id}>
+                  <Select isSearchableItem key={devolucao.inscricao_produtor_id} value={devolucao.inscricao_produtor_id}>
                     {devolucao.inscricao_produtor.produtores?.nome} - IE: {devolucao.inscricao_produtor.inscricao_estadual}
                   </SelectItem>
                 )}
                 {inscricoesComSaldo?.map(i => (
-                  <SelectItem key={i.id} value={i.id}>
+                  <Select isSearchableItem key={i.id} value={i.id}>
                     {i.produtor_nome} - IE: {i.inscricao_estadual} (Saldo: {formatKg(i.saldo_disponivel)} kg)
                   </SelectItem>
                 ))}
@@ -448,13 +448,13 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="space-y-2">
             <Label>Sócio que recebe a armazenagem</Label>
-            <Select value={inscricaoRecebeTaxaId || undefined} onValueChange={setInscricaoRecebeTaxaId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o sócio..." />
+            <Select isSearchable value={inscricaoRecebeTaxaId || undefined} onValueChange={setInscricaoRecebeTaxaId}>
+              <Select isSearchableTrigger>
+                <Select isSearchableValue placeholder="Selecione o sócio..." />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {inscricoesSocio?.map(i => (
-                  <SelectItem key={i.id} value={i.id}>
+                  <Select isSearchableItem key={i.id} value={i.id}>
                     {i.produtores?.nome} - IE: {i.inscricao_estadual}
                   </SelectItem>
                 ))}

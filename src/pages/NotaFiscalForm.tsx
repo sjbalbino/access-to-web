@@ -1391,7 +1391,7 @@ export default function NotaFiscalForm() {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="inscricao_produtor_id">Inscrição do Sócio (Emitente) *</Label>
-          <Select
+          <Select isSearchable
             value={formData.inscricao_produtor_id || ""}
             onValueChange={(value) => {
               const inscricao = inscricoesSocio.find((i) => i.id === value);
@@ -1403,10 +1403,10 @@ export default function NotaFiscalForm() {
             }}
             disabled={isReadOnly}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione a inscrição do sócio" />
+            <Select isSearchableTrigger>
+              <Select isSearchableValue placeholder="Selecione a inscrição do sócio" />
             </SelectTrigger>
-            <SelectContent>
+            <Select isSearchableContent>
               {(() => {
                 const comEmitente = inscricoesSocio.filter((i) => i.emitente_id);
                 const atual = inscricoesSocio.find((i) => i.id === formData.inscricao_produtor_id);
@@ -1419,7 +1419,7 @@ export default function NotaFiscalForm() {
                   );
                 }
                 return lista.map((inscricao) => (
-                  <SelectItem key={inscricao.id} value={inscricao.id}>
+                  <Select isSearchableItem key={inscricao.id} value={inscricao.id}>
                     <div className="flex flex-col">
                       <span className="font-medium">
                         {inscricao.is_emitente_principal && "★ "}
@@ -1476,17 +1476,17 @@ export default function NotaFiscalForm() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label htmlFor="operacao">Operação</Label>
-            <Select
+            <Select isSearchable
               value={String(formData.operacao)}
               onValueChange={(value) => setFormData({ ...formData, operacao: Number(value) })}
               disabled={isReadOnly}
             >
-              <SelectTrigger>
-                <SelectValue />
+              <Select isSearchableTrigger>
+                <Select isSearchableValue />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {OPERACOES.map((op) => (
-                  <SelectItem key={op.value} value={String(op.value)}>
+                  <Select isSearchableItem key={op.value} value={String(op.value)}>
                     {op.label}
                   </SelectItem>
                 ))}
@@ -1495,17 +1495,17 @@ export default function NotaFiscalForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="finalidade">Finalidade</Label>
-            <Select
+            <Select isSearchable
               value={String(formData.finalidade)}
               onValueChange={(value) => setFormData({ ...formData, finalidade: Number(value) })}
               disabled={isReadOnly}
             >
-              <SelectTrigger>
-                <SelectValue />
+              <Select isSearchableTrigger>
+                <Select isSearchableValue />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {FINALIDADES.map((fin) => (
-                  <SelectItem key={fin.value} value={String(fin.value)}>
+                  <Select isSearchableItem key={fin.value} value={String(fin.value)}>
                     {fin.label}
                   </SelectItem>
                 ))}
@@ -1595,13 +1595,13 @@ export default function NotaFiscalForm() {
         {!isReadOnly && formData.operacao === 0 && (
           <div className="space-y-2">
             <Label>Importar de Inscrição de Produtor (Remetente)</Label>
-            <Select onValueChange={handleInscricaoRemetenteSelect} disabled={isReadOnly}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma inscrição de produtor" />
+            <Select isSearchable onValueChange={handleInscricaoRemetenteSelect} disabled={isReadOnly}>
+              <Select isSearchableTrigger>
+                <Select isSearchableValue placeholder="Selecione uma inscrição de produtor" />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {inscricoesCompletas.filter((i) => i.ativa).map((inscricao) => (
-                  <SelectItem key={inscricao.id} value={inscricao.id}>
+                  <Select isSearchableItem key={inscricao.id} value={inscricao.id}>
                     {inscricao.produtores?.nome || inscricao.granja} - IE: {inscricao.inscricao_estadual}
                   </SelectItem>
                 ))}
@@ -1618,17 +1618,17 @@ export default function NotaFiscalForm() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="dest_tipo">Tipo</Label>
-            <Select
+            <Select isSearchable
               value={formData.dest_tipo || "1"}
               onValueChange={(value) => setFormData({ ...formData, dest_tipo: value })}
               disabled={isReadOnly}
             >
-              <SelectTrigger>
-                <SelectValue />
+              <Select isSearchableTrigger>
+                <Select isSearchableValue />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {TIPOS_PESSOA.map((tipo) => (
-                  <SelectItem key={tipo.value} value={tipo.value}>
+                  <Select isSearchableItem key={tipo.value} value={tipo.value}>
                     {tipo.label}
                   </SelectItem>
                 ))}
@@ -1760,17 +1760,17 @@ export default function NotaFiscalForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="dest_uf">UF</Label>
-            <Select
+            <Select isSearchable
               value={formData.dest_uf || ""}
               onValueChange={(value) => setFormData({ ...formData, dest_uf: value })}
               disabled={isReadOnly}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="UF" />
+              <Select isSearchableTrigger>
+                <Select isSearchableValue placeholder="UF" />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {UFS.map((uf) => (
-                  <SelectItem key={uf} value={uf}>
+                  <Select isSearchableItem key={uf} value={uf}>
                     {uf}
                   </SelectItem>
                 ))}
@@ -2127,17 +2127,17 @@ export default function NotaFiscalForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="modalidade_frete">Modalidade do Frete</Label>
-            <Select
+            <Select isSearchable
               value={String(formData.modalidade_frete)}
               onValueChange={(value) => setFormData({ ...formData, modalidade_frete: Number(value) })}
               disabled={isReadOnly}
             >
-              <SelectTrigger>
-                <SelectValue />
+              <Select isSearchableTrigger>
+                <Select isSearchableValue />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {MODALIDADES_FRETE.map((mod) => (
-                  <SelectItem key={mod.value} value={String(mod.value)}>
+                  <Select isSearchableItem key={mod.value} value={String(mod.value)}>
                     {mod.label}
                   </SelectItem>
                 ))}
@@ -2147,13 +2147,13 @@ export default function NotaFiscalForm() {
           {formData.modalidade_frete !== 9 && !isReadOnly && (
             <div className="space-y-2">
               <Label>Importar Transportadora</Label>
-              <Select onValueChange={handleTransportadoraSelect} disabled={isReadOnly}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione transportadora" />
+              <Select isSearchable onValueChange={handleTransportadoraSelect} disabled={isReadOnly}>
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue placeholder="Selecione transportadora" />
                 </SelectTrigger>
-                <SelectContent>
+                <Select isSearchableContent>
                   {transportadoras.filter((t) => t.ativa).map((transp) => (
-                    <SelectItem key={transp.id} value={transp.id}>
+                    <Select isSearchableItem key={transp.id} value={transp.id}>
                       {transp.nome}
                     </SelectItem>
                   ))}
@@ -2214,16 +2214,16 @@ export default function NotaFiscalForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="transp_uf">UF</Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.transp_uf || ""}
                     onValueChange={(value) => setFormData({ ...formData, transp_uf: value })}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="UF" />
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="UF" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {UFS.map((uf) => (
-                        <SelectItem key={uf} value={uf}>
+                        <Select isSearchableItem key={uf} value={uf}>
                           {uf}
                         </SelectItem>
                       ))}
@@ -2246,16 +2246,16 @@ export default function NotaFiscalForm() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="veiculo_uf">UF</Label>
-                <Select
+                <Select isSearchable
                   value={formData.veiculo_uf || ""}
                   onValueChange={(value) => setFormData({ ...formData, veiculo_uf: value })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="UF" />
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="UF" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {UFS.map((uf) => (
-                      <SelectItem key={uf} value={uf}>
+                      <Select isSearchableItem key={uf} value={uf}>
                         {uf}
                       </SelectItem>
                     ))}
@@ -2476,17 +2476,17 @@ export default function NotaFiscalForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="forma_pagamento">Forma</Label>
-              <Select
+              <Select isSearchable
                 value={String(formData.forma_pagamento)}
                 onValueChange={(value) => setFormData({ ...formData, forma_pagamento: Number(value) })}
                 disabled={isReadOnly}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue />
                 </SelectTrigger>
-                <SelectContent>
+                <Select isSearchableContent>
                   {FORMAS_PAGAMENTO.map((forma) => (
-                    <SelectItem key={forma.value} value={String(forma.value)}>
+                    <Select isSearchableItem key={forma.value} value={String(forma.value)}>
                       {forma.label}
                     </SelectItem>
                   ))}
@@ -2495,17 +2495,17 @@ export default function NotaFiscalForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="tipo_pagamento">Tipo</Label>
-              <Select
+              <Select isSearchable
                 value={formData.tipo_pagamento || "90"}
                 onValueChange={(value) => setFormData({ ...formData, tipo_pagamento: value })}
                 disabled={isReadOnly}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue />
                 </SelectTrigger>
-                <SelectContent>
+                <Select isSearchableContent>
                   {TIPOS_PAGAMENTO.map((tipo) => (
-                    <SelectItem key={tipo.value} value={tipo.value}>
+                    <Select isSearchableItem key={tipo.value} value={tipo.value}>
                       {tipo.label}
                     </SelectItem>
                   ))}
@@ -3415,17 +3415,17 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_icms">CST ICMS</Label>
-                  <Select
+                  <Select isSearchable
                     value={itemFormData.cst_icms || undefined}
                     onValueChange={(value) => {
                       setItemFormData({ ...itemFormData, cst_icms: value });
                       setImpostosEditadosManualmente(true);
                     }}
                   >
-                    <SelectTrigger id="item_cst_icms"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent className="max-h-72">
+                    <Select isSearchableTrigger id="item_cst_icms"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                    <Select isSearchableContent className="max-h-72">
                       {getCstIcmsOptions(emitentes.find((e) => e.id === formData.emitente_id)?.crt).map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -3448,17 +3448,17 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_pis">CST PIS</Label>
-                  <Select
+                  <Select isSearchable
                     value={itemFormData.cst_pis || undefined}
                     onValueChange={(value) => {
                       setItemFormData({ ...itemFormData, cst_pis: value });
                       setImpostosEditadosManualmente(true);
                     }}
                   >
-                    <SelectTrigger id="item_cst_pis"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent className="max-h-72">
+                    <Select isSearchableTrigger id="item_cst_pis"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                    <Select isSearchableContent className="max-h-72">
                       {CST_PIS_COFINS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -3478,17 +3478,17 @@ export default function NotaFiscalForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_cofins">CST COFINS</Label>
-                  <Select
+                  <Select isSearchable
                     value={itemFormData.cst_cofins || undefined}
                     onValueChange={(value) => {
                       setItemFormData({ ...itemFormData, cst_cofins: value });
                       setImpostosEditadosManualmente(true);
                     }}
                   >
-                    <SelectTrigger id="item_cst_cofins"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent className="max-h-72">
+                    <Select isSearchableTrigger id="item_cst_cofins"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                    <Select isSearchableContent className="max-h-72">
                       {CST_PIS_COFINS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -3515,17 +3515,17 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_ibs">CST IBS</Label>
-                  <Select
+                  <Select isSearchable
                     value={itemFormData.cst_ibs || undefined}
                     onValueChange={(value) => {
                       setItemFormData({ ...itemFormData, cst_ibs: value });
                       setImpostosEditadosManualmente(true);
                     }}
                   >
-                    <SelectTrigger id="item_cst_ibs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent className="max-h-72">
+                    <Select isSearchableTrigger id="item_cst_ibs"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                    <Select isSearchableContent className="max-h-72">
                       {CST_IBS_CBS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -3545,17 +3545,17 @@ export default function NotaFiscalForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_cbs">CST CBS</Label>
-                  <Select
+                  <Select isSearchable
                     value={itemFormData.cst_cbs || undefined}
                     onValueChange={(value) => {
                       setItemFormData({ ...itemFormData, cst_cbs: value });
                       setImpostosEditadosManualmente(true);
                     }}
                   >
-                    <SelectTrigger id="item_cst_cbs"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent className="max-h-72">
+                    <Select isSearchableTrigger id="item_cst_cbs"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                    <Select isSearchableContent className="max-h-72">
                       {CST_IBS_CBS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -3579,17 +3579,17 @@ export default function NotaFiscalForm() {
               <div className="grid grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="item_cst_is">CST IS</Label>
-                  <Select
+                  <Select isSearchable
                     value={itemFormData.cst_is || undefined}
                     onValueChange={(value) => {
                       setItemFormData({ ...itemFormData, cst_is: value });
                       setImpostosEditadosManualmente(true);
                     }}
                   >
-                    <SelectTrigger id="item_cst_is"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent className="max-h-72">
+                    <Select isSearchableTrigger id="item_cst_is"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                    <Select isSearchableContent className="max-h-72">
                       {CST_IS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -3609,28 +3609,28 @@ export default function NotaFiscalForm() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_cclass_trib_ibs">Cód. Class. IBS</Label>
-                  <Select
+                  <Select isSearchable
                     value={itemFormData.cclass_trib_ibs || ""}
                     onValueChange={(value) => setItemFormData({ ...itemFormData, cclass_trib_ibs: value })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
+                    <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                    <Select isSearchableContent className="max-h-[300px]">
                       {getClassificacoesPorCst(itemFormData.cst_ibs).map((c) => (
-                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                        <Select isSearchableItem key={c.value} value={c.value}>{c.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="item_cclass_trib_cbs">Cód. Class. CBS</Label>
-                  <Select
+                  <Select isSearchable
                     value={itemFormData.cclass_trib_cbs || ""}
                     onValueChange={(value) => setItemFormData({ ...itemFormData, cclass_trib_cbs: value })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
+                    <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                    <Select isSearchableContent className="max-h-[300px]">
                       {getClassificacoesPorCst(itemFormData.cst_cbs).map((c) => (
-                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                        <Select isSearchableItem key={c.value} value={c.value}>{c.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

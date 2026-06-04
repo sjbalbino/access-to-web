@@ -565,30 +565,30 @@ export default function Usuarios() {
             </div>
             <div className="space-y-2">
               <Label>Nível de Acesso *</Label>
-              <Select value={newUserRole} onValueChange={(value: AppRole) => setNewUserRole(value)}>
-                <SelectTrigger>
-                  <SelectValue />
+              <Select isSearchable value={newUserRole} onValueChange={(value: AppRole) => setNewUserRole(value)}>
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">
+                <Select isSearchableContent>
+                  <Select isSearchableItem value="admin">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="h-4 w-4 text-red-600" />
                       Administrador
                     </div>
                   </SelectItem>
-                  <SelectItem value="operador">
+                  <Select isSearchableItem value="operador">
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-blue-600" />
                       Operador
                     </div>
                   </SelectItem>
-                  <SelectItem value="gerente">
+                  <Select isSearchableItem value="gerente">
                     <div className="flex items-center gap-2">
                       <Briefcase className="h-4 w-4 text-green-600" />
                       Gerente
                     </div>
                   </SelectItem>
-                  <SelectItem value="visualizador">
+                  <Select isSearchableItem value="visualizador">
                     <div className="flex items-center gap-2">
                       <Eye className="h-4 w-4 text-gray-600" />
                       Visualizador
@@ -600,22 +600,22 @@ export default function Usuarios() {
             {isSuperAdmin && (
               <div className="space-y-2">
                 <Label>Empresa Contratante</Label>
-                <Select
+                <Select isSearchable
                   value={newUserTenantId || "none"}
                   onValueChange={(value) => setNewUserTenantId(value === "none" ? null : value)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma empresa" />
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Selecione uma empresa" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">
+                  <Select isSearchableContent>
+                    <Select isSearchableItem value="none">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-amber-600" />
                         Super Admin (sem empresa)
                       </div>
                     </SelectItem>
                     {tenants?.map((tenant) => (
-                      <SelectItem key={tenant.id} value={tenant.id}>
+                      <Select isSearchableItem key={tenant.id} value={tenant.id}>
                         {tenant.nome_fantasia || tenant.razao_social}
                       </SelectItem>
                     ))}
@@ -653,30 +653,30 @@ export default function Usuarios() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Nível de Acesso</Label>
-              <Select value={editingRole} onValueChange={(value: AppRole) => setEditingRole(value)}>
-                <SelectTrigger>
-                  <SelectValue />
+              <Select isSearchable value={editingRole} onValueChange={(value: AppRole) => setEditingRole(value)}>
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">
+                <Select isSearchableContent>
+                  <Select isSearchableItem value="admin">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="h-4 w-4 text-red-600" />
                       Administrador
                     </div>
                   </SelectItem>
-                  <SelectItem value="operador">
+                  <Select isSearchableItem value="operador">
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-blue-600" />
                       Operador
                     </div>
                   </SelectItem>
-                  <SelectItem value="gerente">
+                  <Select isSearchableItem value="gerente">
                     <div className="flex items-center gap-2">
                       <Briefcase className="h-4 w-4 text-green-600" />
                       Gerente
                     </div>
                   </SelectItem>
-                  <SelectItem value="visualizador">
+                  <Select isSearchableItem value="visualizador">
                     <div className="flex items-center gap-2">
                       <Eye className="h-4 w-4 text-gray-600" />
                       Visualizador
@@ -688,22 +688,22 @@ export default function Usuarios() {
             {isSuperAdmin && (
               <div className="space-y-2">
                 <Label>Empresa Contratante</Label>
-                <Select
+                <Select isSearchable
                   value={editingTenantId || "none"}
                   onValueChange={(value) => setEditingTenantId(value === "none" ? null : value)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma empresa" />
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Selecione uma empresa" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">
+                  <Select isSearchableContent>
+                    <Select isSearchableItem value="none">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-amber-600" />
                         Super Admin (sem empresa)
                       </div>
                     </SelectItem>
                     {tenants?.map((tenant) => (
-                      <SelectItem key={tenant.id} value={tenant.id}>
+                      <Select isSearchableItem key={tenant.id} value={tenant.id}>
                         {tenant.nome_fantasia || tenant.razao_social}
                       </SelectItem>
                     ))}

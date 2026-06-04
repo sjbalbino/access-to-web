@@ -620,13 +620,13 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Local (Granja) *</Label>
-                    <Select value={granjaId} onValueChange={(v) => { setGranjaId(v); setInscricaoId(""); }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o local" />
+                    <Select isSearchable value={granjaId} onValueChange={(v) => { setGranjaId(v); setInscricaoId(""); }}>
+                      <Select isSearchableTrigger>
+                        <Select isSearchableValue placeholder="Selecione o local" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <Select isSearchableContent>
                         {granjas.map((g) => (
-                          <SelectItem key={g.id} value={g.id}>
+                          <Select isSearchableItem key={g.id} value={g.id}>
                             {g.nome_fantasia || g.razao_social}
                           </SelectItem>
                         ))}
@@ -636,13 +636,13 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
                   <div className="space-y-2">
                     <Label>Safra *</Label>
-                    <Select value={safraId} onValueChange={(v) => { setSafraId(v); setInscricaoId(""); }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a safra" />
+                    <Select isSearchable value={safraId} onValueChange={(v) => { setSafraId(v); setInscricaoId(""); }}>
+                      <Select isSearchableTrigger>
+                        <Select isSearchableValue placeholder="Selecione a safra" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <Select isSearchableContent>
                         {safras.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>
+                          <Select isSearchableItem key={s.id} value={s.id}>
                             {s.nome}
                           </SelectItem>
                         ))}
@@ -652,17 +652,17 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
                   <div className="space-y-2">
                     <Label>Inscrição Estadual *</Label>
-                    <Select 
+                    <Select isSearchable 
                       value={inscricaoId} 
                       onValueChange={setInscricaoId}
                       disabled={!granjaId || !safraId}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder={!granjaId || !safraId ? "Selecione local e safra" : "Selecione a inscrição"} />
+                      <Select isSearchableTrigger>
+                        <Select isSearchableValue placeholder={!granjaId || !safraId ? "Selecione local e safra" : "Selecione a inscrição"} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <Select isSearchableContent>
                         {inscricoesComSaldo.map((i) => (
-                          <SelectItem key={i.id} value={i.id}>
+                          <Select isSearchableItem key={i.id} value={i.id}>
                             {i.inscricao_estadual || i.cpf_cnpj} - {i.produtor_nome || i.granja}
                           </SelectItem>
                         ))}
@@ -848,13 +848,13 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label>Variedade *</Label>
-                        <Select value={produtoId} onValueChange={setProdutoId}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a variedade" />
+                        <Select isSearchable value={produtoId} onValueChange={setProdutoId}>
+                          <Select isSearchableTrigger>
+                            <Select isSearchableValue placeholder="Selecione a variedade" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <Select isSearchableContent>
                             {saldos.filter(s => s.saldo_a_emitir_kg > 0).map((s) => (
-                              <SelectItem key={s.produto_id} value={s.produto_id}>
+                              <Select isSearchableItem key={s.produto_id} value={s.produto_id}>
                                 {s.produto_nome} (Saldo: {formatKg(s.saldo_a_emitir_kg)} kg)
                               </SelectItem>
                             ))}

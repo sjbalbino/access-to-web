@@ -337,13 +337,13 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Silo *</Label>
-                  <Select value={siloId} onValueChange={setSiloId} disabled={isReadOnly}>
-                    <SelectTrigger disabled={isReadOnly}>
-                      <SelectValue placeholder="Selecione..." />
+                  <Select isSearchable value={siloId} onValueChange={setSiloId} disabled={isReadOnly}>
+                    <Select isSearchableTrigger disabled={isReadOnly}>
+                      <Select isSearchableValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {silos?.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                        <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -408,13 +408,13 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
-                  <Select value={transportadoraId} onValueChange={setTransportadoraId} disabled={isReadOnly}>
-                    <SelectTrigger disabled={isReadOnly}>
-                      <SelectValue placeholder="Selecione..." />
+                  <Select isSearchable value={transportadoraId} onValueChange={setTransportadoraId} disabled={isReadOnly}>
+                    <Select isSearchableTrigger disabled={isReadOnly}>
+                      <Select isSearchableValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {transportadoras?.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                        <Select isSearchableItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

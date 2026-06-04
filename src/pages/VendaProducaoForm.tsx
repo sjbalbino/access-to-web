@@ -498,26 +498,26 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Safra *</Label>
-                <Select value={watch("safra_id")} onValueChange={(v) => setValue("safra_id", v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
+                <Select isSearchable value={watch("safra_id")} onValueChange={(v) => setValue("safra_id", v)}>
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Selecione..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {safras?.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                      <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Produto *</Label>
-                <Select value={watch("produto_id")} onValueChange={(v) => setValue("produto_id", v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
+                <Select isSearchable value={watch("produto_id")} onValueChange={(v) => setValue("produto_id", v)}>
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Selecione..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {produtos?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                      <Select isSearchableItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -538,13 +538,13 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2">
                 <Label>Vendedor (Parceiro)</Label>
-                <Select value={watch("inscricao_produtor_id")} onValueChange={(v) => setValue("inscricao_produtor_id", v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
+                <Select isSearchable value={watch("inscricao_produtor_id")} onValueChange={(v) => setValue("inscricao_produtor_id", v)}>
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Selecione..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {inscricoesParceria?.map((i) => (
-                      <SelectItem key={i.id} value={i.id}>
+                      <Select isSearchableItem key={i.id} value={i.id}>
                         {(i.produtores?.nome || i.granjas?.razao_social)}
                         {i.nome && i.nome !== i.produtores?.nome ? ` (${i.nome})` : ""}
                         {" - "}{i.inscricao_estadual}
@@ -570,13 +570,13 @@ export default function VendaProducaoForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2 sm:col-span-2">
                 <Label>Comprador *</Label>
-                <Select value={watch("comprador_id")} onValueChange={(v) => setValue("comprador_id", v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o comprador..." />
+                <Select isSearchable value={watch("comprador_id")} onValueChange={(v) => setValue("comprador_id", v)}>
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Selecione o comprador..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {compradores?.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
+                      <Select isSearchableItem key={c.id} value={c.id}>
                         {c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''} {c.cpf_cnpj ? `- ${c.cpf_cnpj}` : ""}
                       </SelectItem>
                     ))}
@@ -585,13 +585,13 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2">
                 <Label>Tipo de Venda</Label>
-                <Select value={watch("tipo_venda")} onValueChange={(v) => setValue("tipo_venda", v)}>
-                  <SelectTrigger>
-                    <SelectValue />
+                <Select isSearchable value={watch("tipo_venda")} onValueChange={(v) => setValue("tipo_venda", v)}>
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="industria">Indústria</SelectItem>
-                    <SelectItem value="semente">Semente</SelectItem>
+                  <Select isSearchableContent>
+                    <Select isSearchableItem value="industria">Indústria</SelectItem>
+                    <Select isSearchableItem value="semente">Semente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -688,13 +688,13 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2">
                 <Label>UF</Label>
-                <Select value={watch("local_entrega_uf")} onValueChange={(v) => setValue("local_entrega_uf", v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="UF" />
+                <Select isSearchable value={watch("local_entrega_uf")} onValueChange={(v) => setValue("local_entrega_uf", v)}>
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="UF" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map(uf => (
-                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                      <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -878,18 +878,18 @@ export default function VendaProducaoForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Modalidade Frete</Label>
-                <Select 
+                <Select isSearchable 
                   value={watch("modalidade_frete")?.toString()} 
                   onValueChange={(v) => setValue("modalidade_frete", parseInt(v))}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">0 - Por conta do Emitente (CIF)</SelectItem>
-                    <SelectItem value="1">1 - Por conta do Destinatário (FOB)</SelectItem>
-                    <SelectItem value="2">2 - Por conta de Terceiros</SelectItem>
-                    <SelectItem value="9">9 - Sem Frete</SelectItem>
+                  <Select isSearchableContent>
+                    <Select isSearchableItem value="0">0 - Por conta do Emitente (CIF)</SelectItem>
+                    <Select isSearchableItem value="1">1 - Por conta do Destinatário (FOB)</SelectItem>
+                    <Select isSearchableItem value="2">2 - Por conta de Terceiros</SelectItem>
+                    <Select isSearchableItem value="9">9 - Sem Frete</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

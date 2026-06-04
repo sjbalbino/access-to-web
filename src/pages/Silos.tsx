@@ -155,14 +155,14 @@ export default function Silos() {
           <CardContent className="py-4">
             <div className="flex items-center gap-4">
               <Label className="whitespace-nowrap">Filtrar por Safra:</Label>
-              <Select value={safraFiltro} onValueChange={setSafraFiltro}>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Todas as safras" />
+              <Select isSearchable value={safraFiltro} onValueChange={setSafraFiltro}>
+                <Select isSearchableTrigger className="w-64">
+                  <Select isSearchableValue placeholder="Todas as safras" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as safras</SelectItem>
+                <Select isSearchableContent>
+                  <Select isSearchableItem value="all">Todas as safras</SelectItem>
                   {safras?.map((safra) => (
-                    <SelectItem key={safra.id} value={safra.id}>{safra.nome}</SelectItem>
+                    <Select isSearchableItem key={safra.id} value={safra.id}>{safra.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -233,22 +233,22 @@ export default function Silos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Tipo</Label>
-                        <Select value={formData.tipo || 'armazenamento'} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="armazenamento">Armazenamento</SelectItem>
-                            <SelectItem value="secagem">Secagem</SelectItem>
-                            <SelectItem value="transbordo">Transbordo</SelectItem>
+                        <Select isSearchable value={formData.tipo || 'armazenamento'} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                          <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                          <Select isSearchableContent>
+                            <Select isSearchableItem value="armazenamento">Armazenamento</SelectItem>
+                            <Select isSearchableItem value="secagem">Secagem</SelectItem>
+                            <Select isSearchableItem value="transbordo">Transbordo</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
                         <Label>Granja</Label>
-                        <Select value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
+                        <Select isSearchable value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
+                          <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                          <Select isSearchableContent>
                             {granjas?.map((granja) => (
-                              <SelectItem key={granja.id} value={granja.id}>{granja.razao_social}</SelectItem>
+                              <Select isSearchableItem key={granja.id} value={granja.id}>{granja.razao_social}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>

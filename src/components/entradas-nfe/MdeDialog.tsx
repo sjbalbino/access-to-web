@@ -166,18 +166,18 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         <div className="flex flex-wrap gap-4 items-end mb-4">
           <div className="w-96">
             <label className="text-sm font-medium mb-1 block">Inscrição do Produtor</label>
-            <Select value={inscricaoId || undefined} onValueChange={setInscricaoId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a inscrição emissora" />
+            <Select isSearchable value={inscricaoId || undefined} onValueChange={setInscricaoId}>
+              <Select isSearchableTrigger>
+                <Select isSearchableValue placeholder="Selecione a inscrição emissora" />
               </SelectTrigger>
-              <SelectContent>
+              <Select isSearchableContent>
                 {inscricoesEmissoras.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-muted-foreground">
                     Nenhuma inscrição com emitente NF-e configurado.
                   </div>
                 ) : (
                   inscricoesEmissoras.map((i: any) => (
-                    <SelectItem key={i.id} value={i.id}>
+                    <Select isSearchableItem key={i.id} value={i.id}>
                       {(i.nome || "").toUpperCase()} — {formatCpfCnpj(i.cpf_cnpj)}
                     </SelectItem>
                   ))

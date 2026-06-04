@@ -123,13 +123,13 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
           <div className="space-y-2">
             <Label>Safra *</Label>
             {mode === 'create' ? (
-              <Select value={safraId} onValueChange={setSafraId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a safra" />
+              <Select isSearchable value={safraId} onValueChange={setSafraId}>
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue placeholder="Selecione a safra" />
                 </SelectTrigger>
-                <SelectContent>
+                <Select isSearchableContent>
                   {safras.map((safra) => (
-                    <SelectItem key={safra.id} value={safra.id}>
+                    <Select isSearchableItem key={safra.id} value={safra.id}>
                       {safra.nome}
                     </SelectItem>
                   ))}
@@ -148,13 +148,13 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
           <div className="space-y-2">
             <Label>Lavoura *</Label>
             {mode === 'create' ? (
-              <Select value={lavouraId} onValueChange={setLavouraId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a lavoura" />
+              <Select isSearchable value={lavouraId} onValueChange={setLavouraId}>
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue placeholder="Selecione a lavoura" />
                 </SelectTrigger>
-                <SelectContent>
+                <Select isSearchableContent>
                   {lavouras.map((lavoura) => (
-                    <SelectItem key={lavoura.id} value={lavoura.id}>
+                    <Select isSearchableItem key={lavoura.id} value={lavoura.id}>
                       {lavoura.nome}
                     </SelectItem>
                   ))}

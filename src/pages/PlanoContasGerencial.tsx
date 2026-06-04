@@ -132,11 +132,11 @@ export default function PlanoContasGerencial() {
                       <div className="space-y-2"><Label>Descrição *</Label><Input value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} required /></div>
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
-                        <Select value={formData.tipo || 'despesa'} onValueChange={v => setFormData({ ...formData, tipo: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="receita">Receita</SelectItem>
-                            <SelectItem value="despesa">Despesa</SelectItem>
+                        <Select isSearchable value={formData.tipo || 'despesa'} onValueChange={v => setFormData({ ...formData, tipo: v })}>
+                          <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                          <Select isSearchableContent>
+                            <Select isSearchableItem value="receita">Receita</SelectItem>
+                            <Select isSearchableItem value="despesa">Despesa</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -269,11 +269,11 @@ export default function PlanoContasGerencial() {
             <div className="space-y-2"><Label>Descrição *</Label><Input value={subFormData.descricao} onChange={e => setSubFormData({ ...subFormData, descricao: e.target.value })} required /></div>
             <div className="space-y-2">
               <Label>Conta DRE</Label>
-              <Select value={subFormData.codigo_dre || ''} onValueChange={v => setSubFormData({ ...subFormData, codigo_dre: v || null })}>
-                <SelectTrigger><SelectValue placeholder="Selecione uma conta DRE" /></SelectTrigger>
-                <SelectContent>
+              <Select isSearchable value={subFormData.codigo_dre || ''} onValueChange={v => setSubFormData({ ...subFormData, codigo_dre: v || null })}>
+                <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione uma conta DRE" /></SelectTrigger>
+                <Select isSearchableContent>
                   {dreContasFiltered.map(dre => (
-                    <SelectItem key={dre.id} value={dre.codigo}>{dre.codigo} - {dre.descricao}</SelectItem>
+                    <Select isSearchableItem key={dre.id} value={dre.codigo}>{dre.codigo} - {dre.descricao}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

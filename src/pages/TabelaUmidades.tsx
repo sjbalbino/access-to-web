@@ -171,11 +171,11 @@ export default function TabelaUmidades() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label>Cultura</Label>
-                    <Select value={formData.cultura_id || ''} onValueChange={(value) => setFormData({ ...formData, cultura_id: value || null })}>
-                      <SelectTrigger><SelectValue placeholder="Todas as culturas" /></SelectTrigger>
-                      <SelectContent>
+                    <Select isSearchable value={formData.cultura_id || ''} onValueChange={(value) => setFormData({ ...formData, cultura_id: value || null })}>
+                      <Select isSearchableTrigger><Select isSearchableValue placeholder="Todas as culturas" /></SelectTrigger>
+                      <Select isSearchableContent>
                         {culturas?.filter(c => c.ativa).map((cultura) => (
-                          <SelectItem key={cultura.id} value={cultura.id}>{cultura.nome}</SelectItem>
+                          <Select isSearchableItem key={cultura.id} value={cultura.id}>{cultura.nome}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -252,14 +252,14 @@ export default function TabelaUmidades() {
               <Filter className="h-4 w-4" />
               <span className="text-sm font-medium">Filtrar:</span>
             </div>
-            <Select value={filtroCultura} onValueChange={setFiltroCultura}>
-              <SelectTrigger className="w-[250px]">
-                <SelectValue placeholder="Todas as culturas" />
+            <Select isSearchable value={filtroCultura} onValueChange={setFiltroCultura}>
+              <Select isSearchableTrigger className="w-[250px]">
+                <Select isSearchableValue placeholder="Todas as culturas" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as culturas</SelectItem>
+              <Select isSearchableContent>
+                <Select isSearchableItem value="all">Todas as culturas</SelectItem>
                 {culturas?.filter(c => c.ativa).map((cultura) => (
-                  <SelectItem key={cultura.id} value={cultura.id}>{cultura.nome}</SelectItem>
+                  <Select isSearchableItem key={cultura.id} value={cultura.id}>{cultura.nome}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -343,15 +343,15 @@ export default function TabelaUmidades() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Itens por página:</span>
-                <Select value={itensPorPagina.toString()} onValueChange={(value) => setItensPorPagina(parseInt(value))}>
-                  <SelectTrigger className="w-[80px]">
-                    <SelectValue />
+                <Select isSearchable value={itensPorPagina.toString()} onValueChange={(value) => setItensPorPagina(parseInt(value))}>
+                  <Select isSearchableTrigger className="w-[80px]">
+                    <Select isSearchableValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
+                  <Select isSearchableContent>
+                    <Select isSearchableItem value="10">10</SelectItem>
+                    <Select isSearchableItem value="20">20</SelectItem>
+                    <Select isSearchableItem value="50">50</SelectItem>
+                    <Select isSearchableItem value="100">100</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

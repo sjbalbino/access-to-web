@@ -226,13 +226,13 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Granja</Label>
-                <Select value={granjaId} onValueChange={setGranjaId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a granja" />
+                <Select isSearchable value={granjaId} onValueChange={setGranjaId}>
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Selecione a granja" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {granjas?.map((g: any) => (
-                      <SelectItem key={g.id} value={g.id}>
+                      <Select isSearchableItem key={g.id} value={g.id}>
                         {g.razao_social}
                       </SelectItem>
                     ))}
@@ -342,14 +342,14 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-muted/20 p-3 rounded-lg border">
               <div className="space-y-1">
                 <Label className="text-[10px] uppercase font-bold text-muted-foreground">Granja</Label>
-                <Select value={auditGranjaId} onValueChange={setAuditGranjaId}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Todas as Granjas" />
+                <Select isSearchable value={auditGranjaId} onValueChange={setAuditGranjaId}>
+                  <Select isSearchableTrigger className="h-8 text-xs">
+                    <Select isSearchableValue placeholder="Todas as Granjas" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as Granjas</SelectItem>
+                  <Select isSearchableContent>
+                    <Select isSearchableItem value="all">Todas as Granjas</SelectItem>
                     {granjas?.map((g: any) => (
-                      <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
+                      <Select isSearchableItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -357,14 +357,14 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
 
               <div className="space-y-1">
                 <Label className="text-[10px] uppercase font-bold text-muted-foreground">Usuário</Label>
-                <Select value={auditUserId} onValueChange={setAuditUserId}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Todos os Usuários" />
+                <Select isSearchable value={auditUserId} onValueChange={setAuditUserId}>
+                  <Select isSearchableTrigger className="h-8 text-xs">
+                    <Select isSearchableValue placeholder="Todos os Usuários" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Usuários</SelectItem>
+                  <Select isSearchableContent>
+                    <Select isSearchableItem value="all">Todos os Usuários</SelectItem>
                     {profiles?.map((p: any) => (
-                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                      <Select isSearchableItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

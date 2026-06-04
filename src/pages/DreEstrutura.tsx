@@ -151,21 +151,21 @@ export default function DreEstrutura() {
             </div>
             <div className="space-y-2">
               <Label>Conta Pai</Label>
-              <Select value={formData.parent_id || 'none'} onValueChange={v => setFormData({ ...formData, parent_id: v === 'none' ? null : v })}>
-                <SelectTrigger><SelectValue placeholder="Nenhuma (raiz)" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Nenhuma (raiz)</SelectItem>
-                  {parentOptions.map(p => <SelectItem key={p.id} value={p.id}>{p.codigo} - {p.descricao}</SelectItem>)}
+              <Select isSearchable value={formData.parent_id || 'none'} onValueChange={v => setFormData({ ...formData, parent_id: v === 'none' ? null : v })}>
+                <Select isSearchableTrigger><Select isSearchableValue placeholder="Nenhuma (raiz)" /></SelectTrigger>
+                <Select isSearchableContent>
+                  <Select isSearchableItem value="none">Nenhuma (raiz)</SelectItem>
+                  {parentOptions.map(p => <Select isSearchableItem key={p.id} value={p.id}>{p.codigo} - {p.descricao}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Tipo de Saldo</Label>
-              <Select value={formData.tipo_saldo || 'debito'} onValueChange={v => setFormData({ ...formData, tipo_saldo: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="debito">Débito</SelectItem>
-                  <SelectItem value="credito">Crédito</SelectItem>
+              <Select isSearchable value={formData.tipo_saldo || 'debito'} onValueChange={v => setFormData({ ...formData, tipo_saldo: v })}>
+                <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                <Select isSearchableContent>
+                  <Select isSearchableItem value="debito">Débito</SelectItem>
+                  <Select isSearchableItem value="credito">Crédito</SelectItem>
                 </SelectContent>
               </Select>
             </div>

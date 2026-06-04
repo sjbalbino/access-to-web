@@ -243,13 +243,13 @@ export function NotaReferenciadaForm({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>UF *</Label>
-                  <Select value={nfpUf} onValueChange={setNfpUf}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="UF" />
+                  <Select isSearchable value={nfpUf} onValueChange={setNfpUf}>
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="UF" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {UFS.map((uf) => (
-                        <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                        <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

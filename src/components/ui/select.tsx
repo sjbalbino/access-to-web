@@ -18,8 +18,8 @@ const Select = ({
   const [searchValue, setSearchValue] = React.useState("");
 
   return (
-    <SelectContext.Provider value={{ searchValue, setSearchValue, isSearchable }}>
-      <SelectPrimitive.Root
+    <Select isSearchableContext.Provider value={{ searchValue, setSearchValue, isSearchable }}>
+      <Select isSearchablePrimitive.Root
         {...props}
         onOpenChange={(open) => {
           if (!open) setSearchValue("");
@@ -40,7 +40,7 @@ const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
 >(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
+  <Select isSearchablePrimitive.Trigger
     ref={ref}
     className={cn(
       "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
@@ -49,7 +49,7 @@ const SelectTrigger = React.forwardRef<
     {...props}
   >
     {children}
-    <SelectPrimitive.Icon asChild>
+    <Select isSearchablePrimitive.Icon asChild>
       <ChevronDown className="h-4 w-4 opacity-50" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
@@ -60,7 +60,7 @@ const SelectScrollUpButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
 >(({ className, ...props }, ref) => (
-  <SelectPrimitive.ScrollUpButton
+  <Select isSearchablePrimitive.ScrollUpButton
     ref={ref}
     className={cn("flex cursor-default items-center justify-center py-1", className)}
     {...props}
@@ -74,7 +74,7 @@ const SelectScrollDownButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollDownButton>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownButton>
 >(({ className, ...props }, ref) => (
-  <SelectPrimitive.ScrollDownButton
+  <Select isSearchablePrimitive.ScrollDownButton
     ref={ref}
     className={cn("flex cursor-default items-center justify-center py-1", className)}
     {...props}
@@ -91,8 +91,8 @@ const SelectContent = React.forwardRef<
   const context = React.useContext(SelectContext);
 
   return (
-    <SelectPrimitive.Portal>
-      <SelectPrimitive.Content
+    <Select isSearchablePrimitive.Portal>
+      <Select isSearchablePrimitive.Content
         ref={ref}
         className={cn(
           "relative z-50 max-h-[--radix-select-content-available-height] min-w-[8rem] origin-[--radix-select-content-transform-origin] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
@@ -103,7 +103,7 @@ const SelectContent = React.forwardRef<
         position={position}
         {...props}
       >
-        <SelectScrollUpButton />
+        <Select isSearchableScrollUpButton />
         {context?.isSearchable && (
           <div className="flex items-center border-b px-3 sticky top-0 bg-popover z-10">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -121,7 +121,7 @@ const SelectContent = React.forwardRef<
             />
           </div>
         )}
-        <SelectPrimitive.Viewport
+        <Select isSearchablePrimitive.Viewport
           className={cn(
             "p-1",
             position === "popper" &&
@@ -130,7 +130,7 @@ const SelectContent = React.forwardRef<
         >
           {children}
         </SelectPrimitive.Viewport>
-        <SelectScrollDownButton />
+        <Select isSearchableScrollDownButton />
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );
@@ -141,7 +141,7 @@ const SelectLabel = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Label>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
 >(({ className, ...props }, ref) => (
-  <SelectPrimitive.Label ref={ref} className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)} {...props} />
+  <Select isSearchablePrimitive.Label ref={ref} className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)} {...props} />
 ));
 SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
@@ -173,7 +173,7 @@ const SelectItem = React.forwardRef<
   if (!isVisible) return null;
 
   return (
-    <SelectPrimitive.Item
+    <Select isSearchablePrimitive.Item
       ref={ref}
       className={cn(
         "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground",
@@ -182,12 +182,12 @@ const SelectItem = React.forwardRef<
       {...props}
     >
       <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-        <SelectPrimitive.ItemIndicator>
+        <Select isSearchablePrimitive.ItemIndicator>
           <Check className="h-4 w-4" />
         </SelectPrimitive.ItemIndicator>
       </span>
 
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <Select isSearchablePrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   );
 });
@@ -197,7 +197,7 @@ const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
 >(({ className, ...props }, ref) => (
-  <SelectPrimitive.Separator ref={ref} className={cn("-mx-1 my-1 h-px bg-muted", className)} {...props} />
+  <Select isSearchablePrimitive.Separator ref={ref} className={cn("-mx-1 my-1 h-px bg-muted", className)} {...props} />
 ));
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 

@@ -152,17 +152,17 @@ export default function GruposProdutos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Sub-Centro de Custo</Label>
-                        <Select
+                        <Select isSearchable
                           value={formData.conta_gerencial_id || 'none'}
                           onValueChange={(value) => setFormData({ ...formData, conta_gerencial_id: value === 'none' ? null : value })}
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um sub-centro" />
+                          <Select isSearchableTrigger>
+                            <Select isSearchableValue placeholder="Selecione um sub-centro" />
                           </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhum</SelectItem>
+                          <Select isSearchableContent>
+                            <Select isSearchableItem value="none">Nenhum</SelectItem>
                             {subCentrosAtivos.map((sub: any) => (
-                              <SelectItem key={sub.id} value={sub.id}>
+                              <Select isSearchableItem key={sub.id} value={sub.id}>
                                 {sub.descricao}
                               </SelectItem>
                             ))}

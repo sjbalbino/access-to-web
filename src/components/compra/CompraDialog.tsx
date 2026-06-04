@@ -770,13 +770,13 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Granja *</Label>
-                  <Select value={granjaId} onValueChange={setGranjaId} disabled={isEmitting}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                  <Select isSearchable value={granjaId} onValueChange={setGranjaId} disabled={isEmitting}>
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {granjas?.map(g => (
-                        <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
+                        <Select isSearchableItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -784,13 +784,13 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
                 <div className="space-y-2">
                   <Label>Safra *</Label>
-                  <Select value={safraId} onValueChange={setSafraId} disabled={isEmitting}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                  <Select isSearchable value={safraId} onValueChange={setSafraId} disabled={isEmitting}>
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {safras?.map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                        <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -798,13 +798,13 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
                 <div className="space-y-2">
                   <Label>Produto *</Label>
-                  <Select value={produtoId} onValueChange={setProdutoId} disabled={isEmitting}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                  <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={isEmitting}>
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {produtos?.map(p => (
-                        <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                        <Select isSearchableItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -832,13 +832,13 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
                 <div className="space-y-2">
                   <Label>Silo</Label>
-                  <Select value={siloId} onValueChange={setSiloId} disabled={isEmitting}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                  <Select isSearchable value={siloId} onValueChange={setSiloId} disabled={isEmitting}>
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {silos?.map(s => (
-                        <SelectItem key={s.id} value={s.id}>
+                        <Select isSearchableItem key={s.id} value={s.id}>
                           {s.nome}
                         </SelectItem>
                       ))}
@@ -850,13 +850,13 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Local de Entrega</Label>
-                  <Select value={localEntregaId} onValueChange={setLocalEntregaId} disabled={isEmitting}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                  <Select isSearchable value={localEntregaId} onValueChange={setLocalEntregaId} disabled={isEmitting}>
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {locaisEntrega?.map(l => (
-                        <SelectItem key={l.id} value={l.id}>
+                        <Select isSearchableItem key={l.id} value={l.id}>
                           {l.nome}
                         </SelectItem>
                       ))}
@@ -866,13 +866,13 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
                 <div className="space-y-2">
                   <Label>Tipo de Produto</Label>
-                  <Select value={tipoProduto} onValueChange={setTipoProduto} disabled={isEmitting}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                  <Select isSearchable value={tipoProduto} onValueChange={setTipoProduto} disabled={isEmitting}>
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="industria">Indústria</SelectItem>
-                      <SelectItem value="semente">Semente</SelectItem>
+                    <Select isSearchableContent>
+                      <Select isSearchableItem value="industria">Indústria</SelectItem>
+                      <Select isSearchableItem value="semente">Semente</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -880,13 +880,13 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
               <div className="space-y-2">
                 <Label>Comprador (Sócio) *</Label>
-                <Select value={inscricaoCompradorId} onValueChange={setInscricaoCompradorId} disabled={isEmitting}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o comprador..." />
+                <Select isSearchable value={inscricaoCompradorId} onValueChange={setInscricaoCompradorId} disabled={isEmitting}>
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Selecione o comprador..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {inscricoesSocio?.map(i => (
-                      <SelectItem key={i.id} value={i.id}>
+                      <Select isSearchableItem key={i.id} value={i.id}>
                         {i.produtores?.nome} - IE: {i.inscricao_estadual}
                       </SelectItem>
                     ))}
@@ -896,17 +896,17 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
               <div className="space-y-2">
                 <Label>Vendedor (Produtor com saldo) *</Label>
-                <Select 
+                <Select isSearchable 
                   value={inscricaoVendedorId} 
                   onValueChange={setInscricaoVendedorId}
                   disabled={!granjaId || !safraId || isEmitting}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder={!granjaId || !safraId ? "Selecione Granja e Safra primeiro" : "Selecione o vendedor..."} />
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder={!granjaId || !safraId ? "Selecione Granja e Safra primeiro" : "Selecione o vendedor..."} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {inscricoesComSaldo?.map(i => (
-                      <SelectItem key={i.id} value={i.id}>
+                      <Select isSearchableItem key={i.id} value={i.id}>
                         {i.produtor_nome} - IE: {i.inscricao_estadual} ({i.total_depositado?.toLocaleString('pt-BR')} kg)
                       </SelectItem>
                     ))}

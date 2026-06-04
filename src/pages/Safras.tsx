@@ -324,16 +324,16 @@ export default function Safras() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="cultura_id">Cultura</Label>
-              <Select
+              <Select isSearchable
                 value={formData.cultura_id || ""}
                 onValueChange={(value) => setFormData({ ...formData, cultura_id: value || null })}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma cultura" />
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue placeholder="Selecione uma cultura" />
                 </SelectTrigger>
-                <SelectContent>
+                <Select isSearchableContent>
                   {culturas?.map((cultura) => (
-                    <SelectItem key={cultura.id} value={cultura.id}>
+                    <Select isSearchableItem key={cultura.id} value={cultura.id}>
                       {cultura.nome}
                     </SelectItem>
                   ))}
@@ -362,17 +362,17 @@ export default function Safras() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select
+              <Select isSearchable
                 value={formData.status || "ativa"}
                 onValueChange={(value) => setFormData({ ...formData, status: value })}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <Select isSearchableTrigger>
+                  <Select isSearchableValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="planejada">Planejada</SelectItem>
-                  <SelectItem value="ativa">Ativa</SelectItem>
-                  <SelectItem value="encerrada">Encerrada</SelectItem>
+                <Select isSearchableContent>
+                  <Select isSearchableItem value="planejada">Planejada</SelectItem>
+                  <Select isSearchableItem value="ativa">Ativa</SelectItem>
+                  <Select isSearchableItem value="encerrada">Encerrada</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -306,22 +306,22 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Unidade de Medida</Label>
-                        <Select value={formData.unidade_medida_id || ''} onValueChange={(value) => setFormData({ ...formData, unidade_medida_id: value || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
+                        <Select isSearchable value={formData.unidade_medida_id || ''} onValueChange={(value) => setFormData({ ...formData, unidade_medida_id: value || null })}>
+                          <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                          <Select isSearchableContent>
                             {unidades?.filter(u => u.ativa).map((und) => (
-                              <SelectItem key={und.id} value={und.id}>{und.codigo} - {und.descricao}</SelectItem>
+                              <Select isSearchableItem key={und.id} value={und.id}>{und.codigo} - {und.descricao}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
                         <Label>Grupo</Label>
-                        <Select value={formData.grupo || ''} onValueChange={(value) => setFormData({ ...formData, grupo: value || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
+                        <Select isSearchable value={formData.grupo || ''} onValueChange={(value) => setFormData({ ...formData, grupo: value || null })}>
+                          <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                          <Select isSearchableContent>
                             {gruposAtivos?.map((grupo) => (
-                              <SelectItem key={grupo.id} value={grupo.nome}>{grupo.nome}</SelectItem>
+                              <Select isSearchableItem key={grupo.id} value={grupo.nome}>{grupo.nome}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -334,12 +334,12 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
-                        <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="insumo">Insumo</SelectItem>
-                            <SelectItem value="produto">Produto</SelectItem>
-                            <SelectItem value="semente">Semente</SelectItem>
+                        <Select isSearchable value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                          <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
+                          <Select isSearchableContent>
+                            <Select isSearchableItem value="insumo">Insumo</SelectItem>
+                            <Select isSearchableItem value="produto">Produto</SelectItem>
+                            <Select isSearchableItem value="semente">Semente</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -413,11 +413,11 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Produto Resíduo</Label>
-                        <Select value={formData.produto_residuo_id || ''} onValueChange={(value) => setFormData({ ...formData, produto_residuo_id: value || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione o produto resultante..." /></SelectTrigger>
-                          <SelectContent>
+                        <Select isSearchable value={formData.produto_residuo_id || ''} onValueChange={(value) => setFormData({ ...formData, produto_residuo_id: value || null })}>
+                          <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione o produto resultante..." /></SelectTrigger>
+                          <Select isSearchableContent>
                             {produtosAtivos?.map((prod: any) => (
-                              <SelectItem key={prod.id} value={prod.id}>{prod.nome}</SelectItem>
+                              <Select isSearchableItem key={prod.id} value={prod.id}>{prod.nome}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -495,44 +495,44 @@ export default function Produtos() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
                         <Label>CST PIS</Label>
-                        <Select value={formData.cst_pis || ''} onValueChange={(value) => setFormData({ ...formData, cst_pis: value || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
+                        <Select isSearchable value={formData.cst_pis || ''} onValueChange={(value) => setFormData({ ...formData, cst_pis: value || null })}>
+                          <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                          <Select isSearchableContent>
                             {CST_PIS_COFINS.map((cst) => (
-                              <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                              <Select isSearchableItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
                         <Label>CST COFINS</Label>
-                        <Select value={formData.cst_cofins || ''} onValueChange={(value) => setFormData({ ...formData, cst_cofins: value || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
+                        <Select isSearchable value={formData.cst_cofins || ''} onValueChange={(value) => setFormData({ ...formData, cst_cofins: value || null })}>
+                          <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                          <Select isSearchableContent>
                             {CST_PIS_COFINS.map((cst) => (
-                              <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                              <Select isSearchableItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
                         <Label>CST ICMS</Label>
-                        <Select value={formData.cst_icms || ''} onValueChange={(value) => setFormData({ ...formData, cst_icms: value || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
+                        <Select isSearchable value={formData.cst_icms || ''} onValueChange={(value) => setFormData({ ...formData, cst_icms: value || null })}>
+                          <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                          <Select isSearchableContent>
                             {CST_ICMS.map((cst) => (
-                              <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                              <Select isSearchableItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
                         <Label>CST IPI</Label>
-                        <Select value={formData.cst_ipi || ''} onValueChange={(value) => setFormData({ ...formData, cst_ipi: value || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
+                        <Select isSearchable value={formData.cst_ipi || ''} onValueChange={(value) => setFormData({ ...formData, cst_ipi: value || null })}>
+                          <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                          <Select isSearchableContent>
                             {CST_IPI.map((cst) => (
-                              <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                              <Select isSearchableItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -549,33 +549,33 @@ export default function Produtos() {
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label>CST IBS</Label>
-                          <Select value={formData.cst_ibs || ''} onValueChange={(value) => setFormData({ ...formData, cst_ibs: value || null })}>
-                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                            <SelectContent>
+                          <Select isSearchable value={formData.cst_ibs || ''} onValueChange={(value) => setFormData({ ...formData, cst_ibs: value || null })}>
+                            <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                            <Select isSearchableContent>
                               {CST_IBS_CBS.map((cst) => (
-                                <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                                <Select isSearchableItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
                           <Label>CST CBS</Label>
-                          <Select value={formData.cst_cbs || ''} onValueChange={(value) => setFormData({ ...formData, cst_cbs: value || null })}>
-                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                            <SelectContent>
+                          <Select isSearchable value={formData.cst_cbs || ''} onValueChange={(value) => setFormData({ ...formData, cst_cbs: value || null })}>
+                            <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                            <Select isSearchableContent>
                               {CST_IBS_CBS.map((cst) => (
-                                <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                                <Select isSearchableItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
                           <Label>CST IS</Label>
-                          <Select value={formData.cst_is || ''} onValueChange={(value) => setFormData({ ...formData, cst_is: value || null })}>
-                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                            <SelectContent>
+                          <Select isSearchable value={formData.cst_is || ''} onValueChange={(value) => setFormData({ ...formData, cst_is: value || null })}>
+                            <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                            <Select isSearchableContent>
                               {CST_IS.map((cst) => (
-                                <SelectItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
+                                <Select isSearchableItem key={cst.value} value={cst.value}>{cst.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -584,22 +584,22 @@ export default function Produtos() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div className="space-y-2">
                           <Label>Classificação Tributária IBS</Label>
-                          <Select value={formData.cclass_trib_ibs || ''} onValueChange={(value) => setFormData({ ...formData, cclass_trib_ibs: value || null })}>
-                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                            <SelectContent className="max-h-[300px]">
+                          <Select isSearchable value={formData.cclass_trib_ibs || ''} onValueChange={(value) => setFormData({ ...formData, cclass_trib_ibs: value || null })}>
+                            <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                            <Select isSearchableContent className="max-h-[300px]">
                               {getClassificacoesPorCst(formData.cst_ibs).map((c) => (
-                                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                                <Select isSearchableItem key={c.value} value={c.value}>{c.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
                           <Label>Classificação Tributária CBS</Label>
-                          <Select value={formData.cclass_trib_cbs || ''} onValueChange={(value) => setFormData({ ...formData, cclass_trib_cbs: value || null })}>
-                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                            <SelectContent className="max-h-[300px]">
+                          <Select isSearchable value={formData.cclass_trib_cbs || ''} onValueChange={(value) => setFormData({ ...formData, cclass_trib_cbs: value || null })}>
+                            <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                            <Select isSearchableContent className="max-h-[300px]">
                               {getClassificacoesPorCst(formData.cst_cbs).map((c) => (
-                                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                                <Select isSearchableItem key={c.value} value={c.value}>{c.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -618,11 +618,11 @@ export default function Produtos() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Fornecedor Principal</Label>
-                        <Select value={formData.fornecedor_id || ''} onValueChange={(value) => setFormData({ ...formData, fornecedor_id: value || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
+                        <Select isSearchable value={formData.fornecedor_id || ''} onValueChange={(value) => setFormData({ ...formData, fornecedor_id: value || null })}>
+                          <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
+                          <Select isSearchableContent>
                             {fornecedoresFiltrados?.map((forn) => (
-                              <SelectItem key={forn.id} value={forn.id}>{forn.nome}</SelectItem>
+                              <Select isSearchableItem key={forn.id} value={forn.id}>{forn.nome}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>

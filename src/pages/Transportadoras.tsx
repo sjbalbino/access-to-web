@@ -414,16 +414,16 @@ export default function Transportadoras() {
 
               <div className="space-y-2">
                 <Label htmlFor="uf">UF</Label>
-                <Select
+                <Select isSearchable
                   value={formData.uf || ""}
                   onValueChange={(value) => setFormData({ ...formData, uf: value })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="UF" />
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="UF" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {UFS.map((uf) => (
-                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                      <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -431,16 +431,16 @@ export default function Transportadoras() {
 
               <div className="space-y-2">
                 <Label htmlFor="granja_id">Granja</Label>
-                <Select
+                <Select isSearchable
                   value={formData.granja_id || ""}
                   onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {granjas.map((granja) => (
-                      <SelectItem key={granja.id} value={granja.id}>
+                      <Select isSearchableItem key={granja.id} value={granja.id}>
                         {granja.nome_fantasia || granja.razao_social}
                       </SelectItem>
                     ))}
@@ -486,16 +486,16 @@ export default function Transportadoras() {
 
               <div className="space-y-2">
                 <Label htmlFor="uf_placa_padrao">UF Placa</Label>
-                <Select
+                <Select isSearchable
                   value={formData.uf_placa_padrao || ""}
                   onValueChange={(value) => setFormData({ ...formData, uf_placa_padrao: value })}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="UF" />
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="UF" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <Select isSearchableContent>
                     {UFS.map((uf) => (
-                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                      <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

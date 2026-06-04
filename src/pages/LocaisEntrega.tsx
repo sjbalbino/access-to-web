@@ -206,14 +206,14 @@ export default function LocaisEntrega() {
                 </div>
               </div>
               <div className="w-full md:w-64">
-                <Select value={granjaFilter || "__all__"} onValueChange={(val) => setGranjaFilter(val === "__all__" ? "" : val)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas as granjas" />
+                <Select isSearchable value={granjaFilter || "__all__"} onValueChange={(val) => setGranjaFilter(val === "__all__" ? "" : val)}>
+                  <Select isSearchableTrigger>
+                    <Select isSearchableValue placeholder="Todas as granjas" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">Todas as granjas</SelectItem>
+                  <Select isSearchableContent>
+                    <Select isSearchableItem value="__all__">Todas as granjas</SelectItem>
                     {granjas.map((g) => (
-                      <SelectItem key={g.id} value={g.id}>
+                      <Select isSearchableItem key={g.id} value={g.id}>
                         {g.nome_fantasia || g.razao_social}
                       </SelectItem>
                     ))}
@@ -322,17 +322,17 @@ export default function LocaisEntrega() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Granja</Label>
-                  <Select 
+                  <Select isSearchable 
                     value={formData.granja_id || "__none__"} 
                     onValueChange={(val) => setFormData({ ...formData, granja_id: val === "__none__" ? null : val })}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a granja" />
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione a granja" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">Nenhuma</SelectItem>
+                    <Select isSearchableContent>
+                      <Select isSearchableItem value="__none__">Nenhuma</SelectItem>
                       {granjas.map((g) => (
-                        <SelectItem key={g.id} value={g.id}>
+                        <Select isSearchableItem key={g.id} value={g.id}>
                           {g.nome_fantasia || g.razao_social}
                         </SelectItem>
                       ))}
@@ -354,17 +354,17 @@ export default function LocaisEntrega() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Tipo de Pessoa</Label>
-                  <Select 
+                  <Select isSearchable 
                     value={formData.tipo_pessoa || "juridica"} 
                     onValueChange={(val) => setFormData({ ...formData, tipo_pessoa: val, cpf_cnpj: "" })}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
-                      <SelectItem value="fisica">Pessoa Física</SelectItem>
-                      <SelectItem value="estrangeiro">Estrangeiro</SelectItem>
+                    <Select isSearchableContent>
+                      <Select isSearchableItem value="juridica">Pessoa Jurídica</SelectItem>
+                      <Select isSearchableItem value="fisica">Pessoa Física</SelectItem>
+                      <Select isSearchableItem value="estrangeiro">Estrangeiro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -491,17 +491,17 @@ export default function LocaisEntrega() {
 
                   <div className="space-y-2">
                     <Label>UF</Label>
-                    <Select 
+                    <Select isSearchable 
                       value={formData.uf || "__none__"} 
                       onValueChange={(val) => setFormData({ ...formData, uf: val === "__none__" ? null : val })}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="UF" />
+                      <Select isSearchableTrigger>
+                        <Select isSearchableValue placeholder="UF" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">Selecione</SelectItem>
+                      <Select isSearchableContent>
+                        <Select isSearchableItem value="__none__">Selecione</SelectItem>
                         {UF_OPTIONS.map((uf) => (
-                          <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                          <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

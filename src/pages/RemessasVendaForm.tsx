@@ -565,13 +565,13 @@ export default function RemessasVendaForm() {
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Silo *</Label>
-                  <Select value={watch("silo_id")} onValueChange={(v) => setValue("silo_id", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                  <Select isSearchable value={watch("silo_id")} onValueChange={(v) => setValue("silo_id", v)}>
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {silos?.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                        <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -615,13 +615,13 @@ export default function RemessasVendaForm() {
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
-                  <Select value={watch("transportadora_id")} onValueChange={(v) => setValue("transportadora_id", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                  <Select isSearchable value={watch("transportadora_id")} onValueChange={(v) => setValue("transportadora_id", v)}>
+                    <Select isSearchableTrigger>
+                      <Select isSearchableValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <Select isSearchableContent>
                       {transportadoras?.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                        <Select isSearchableItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

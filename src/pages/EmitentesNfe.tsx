@@ -507,7 +507,7 @@ export default function EmitentesNfe() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="inscricao_produtor_id">Inscrição *</Label>
-                    <Select
+                    <Select isSearchable
                       value={formData.inscricao_produtor_id || ""}
                       onValueChange={(value) => {
                         const insc = inscricoes.find((i) => i.id === value);
@@ -519,10 +519,10 @@ export default function EmitentesNfe() {
                       }}
                       disabled={!!selectedEmitente}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a inscrição do sócio" />
+                      <Select isSearchableTrigger>
+                        <Select isSearchableValue placeholder="Selecione a inscrição do sócio" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <Select isSearchableContent>
                         {(selectedEmitente
                           ? inscricoes.filter((i) => i.id === selectedEmitente.inscricao_produtor_id || !emitentes.some((e) => e.inscricao_produtor_id === i.id))
                           : inscricoesDisponiveis
@@ -530,7 +530,7 @@ export default function EmitentesNfe() {
                           const nome = insc.produtores?.nome || insc.nome || "—";
                           const granjaNome = insc.granjas?.nome_fantasia || insc.granjas?.razao_social || "";
                           return (
-                            <SelectItem key={insc.id} value={insc.id}>
+                            <Select isSearchableItem key={insc.id} value={insc.id}>
                               {nome} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
                             </SelectItem>
                           );
@@ -555,18 +555,18 @@ export default function EmitentesNfe() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="ambiente">Ambiente</Label>
-                      <Select
+                      <Select isSearchable
                         value={String(formData.ambiente)}
                         onValueChange={(value) =>
                           setFormData({ ...formData, ambiente: Number(value) })
                         }
                       >
-                        <SelectTrigger>
-                          <SelectValue />
+                        <Select isSearchableTrigger>
+                          <Select isSearchableValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <Select isSearchableContent>
                           {AMBIENTES.map((amb) => (
-                            <SelectItem key={amb.value} value={String(amb.value)}>
+                            <Select isSearchableItem key={amb.value} value={String(amb.value)}>
                               {amb.label}
                             </SelectItem>
                           ))}
@@ -575,18 +575,18 @@ export default function EmitentesNfe() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="crt">Regime Tributário</Label>
-                      <Select
+                      <Select isSearchable
                         value={String(formData.crt)}
                         onValueChange={(value) =>
                           setFormData({ ...formData, crt: Number(value), ...getDefaultsByCrt(Number(value)) })
                         }
                       >
-                        <SelectTrigger>
-                          <SelectValue />
+                        <Select isSearchableTrigger>
+                          <Select isSearchableValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <Select isSearchableContent>
                           {REGIMES_TRIBUTARIOS.map((reg) => (
-                            <SelectItem key={reg.value} value={String(reg.value)}>
+                            <Select isSearchableItem key={reg.value} value={String(reg.value)}>
                               {reg.label}
                             </SelectItem>
                           ))}
@@ -742,98 +742,98 @@ export default function EmitentesNfe() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="cst_icms_padrao">CST ICMS {formData.crt === 1 || formData.crt === 2 ? "(CSOSN)" : ""}</Label>
-                      <Select
+                      <Select isSearchable
                         value={formData.cst_icms_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_icms_padrao: v })}
                       >
-                        <SelectTrigger id="cst_icms_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
+                        <Select isSearchableTrigger id="cst_icms_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                        <Select isSearchableContent>
                           {getCstIcmsOptions(formData.crt).map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="cst_pis_padrao">CST PIS</Label>
-                      <Select
+                      <Select isSearchable
                         value={formData.cst_pis_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_pis_padrao: v })}
                       >
-                        <SelectTrigger id="cst_pis_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
+                        <Select isSearchableTrigger id="cst_pis_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                        <Select isSearchableContent>
                           {CST_PIS_COFINS.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="cst_cofins_padrao">CST COFINS</Label>
-                      <Select
+                      <Select isSearchable
                         value={formData.cst_cofins_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_cofins_padrao: v })}
                       >
-                        <SelectTrigger id="cst_cofins_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
+                        <Select isSearchableTrigger id="cst_cofins_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                        <Select isSearchableContent>
                           {CST_PIS_COFINS.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="cst_ipi_padrao">CST IPI</Label>
-                      <Select
+                      <Select isSearchable
                         value={formData.cst_ipi_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_ipi_padrao: v })}
                       >
-                        <SelectTrigger id="cst_ipi_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
+                        <Select isSearchableTrigger id="cst_ipi_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                        <Select isSearchableContent>
                           {CST_IPI.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="cst_ibs_padrao">CST IBS</Label>
-                      <Select
+                      <Select isSearchable
                         value={formData.cst_ibs_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_ibs_padrao: v })}
                       >
-                        <SelectTrigger id="cst_ibs_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
+                        <Select isSearchableTrigger id="cst_ibs_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                        <Select isSearchableContent>
                           {CST_IBS_CBS.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="cst_cbs_padrao">CST CBS</Label>
-                      <Select
+                      <Select isSearchable
                         value={formData.cst_cbs_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_cbs_padrao: v })}
                       >
-                        <SelectTrigger id="cst_cbs_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
+                        <Select isSearchableTrigger id="cst_cbs_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                        <Select isSearchableContent>
                           {CST_IBS_CBS.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2 lg:col-span-1">
                       <Label htmlFor="cst_is_padrao">CST IS</Label>
-                      <Select
+                      <Select isSearchable
                         value={formData.cst_is_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_is_padrao: v })}
                       >
-                        <SelectTrigger id="cst_is_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
+                        <Select isSearchableTrigger id="cst_is_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
+                        <Select isSearchableContent>
                           {CST_IS.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -854,18 +854,18 @@ export default function EmitentesNfe() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="api_provider">Provedor</Label>
-                      <Select
+                      <Select isSearchable
                         value={formData.api_provider || ""}
                         onValueChange={(value) =>
                           setFormData({ ...formData, api_provider: value })
                         }
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o provedor" />
+                        <Select isSearchableTrigger>
+                          <Select isSearchableValue placeholder="Selecione o provedor" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <Select isSearchableContent>
                           {API_PROVIDERS.map((prov) => (
-                            <SelectItem key={prov.value} value={prov.value}>
+                            <Select isSearchableItem key={prov.value} value={prov.value}>
                               {prov.label}
                             </SelectItem>
                           ))}
