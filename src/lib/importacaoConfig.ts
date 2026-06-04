@@ -144,11 +144,34 @@ const toFormaPagamento = (v: any): string | null => {
 
 export const tableConfigs: TableConfig[] = [
   {
+    key: 'dre_contas',
+    label: 'Estrutura DRE',
+    tableName: 'dre_contas',
+    description: 'Contas do Demonstrativo de Resultado (Tabela DRE do Access)',
+    order: 1,
+    columns: [
+      { accessName: 'codigo', dbName: 'codigo', required: true, transform: toStr },
+      { accessName: 'descricao', dbName: 'descricao', required: true, transform: toStr },
+      { accessName: 'nivel', dbName: 'nivel', transform: toInt },
+      { accessName: 'tipo_saldo', dbName: 'tipo_saldo', transform: (v: any) => {
+          const s = toStr(v)?.toLowerCase();
+          if (s === 'c' || s === 'credito') return 'credito';
+          return 'debito';
+        } 
+      },
+      { accessName: 'ordem', dbName: 'ordem', transform: toInt },
+      { accessName: 'ativo', dbName: 'ativo', transform: toBool },
+    ],
+    references: [
+      { dbColumn: 'parent_id', sourceColumn: 'codigo_pai', lookupTable: 'dre_contas', lookupColumn: 'codigo', selfReference: true },
+    ],
+  },
+  {
     key: 'granjas',
     label: 'Granjas',
     tableName: 'granjas',
     description: 'Fazendas/Empresas',
-    order: 1,
+    order: 2,
     columns: [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'razao_social', dbName: 'razao_social', required: true, transform: toStr },
@@ -174,7 +197,7 @@ export const tableConfigs: TableConfig[] = [
     label: 'Plano Grupo (Centros de Custo)',
     tableName: 'plano_contas_gerencial',
     description: 'Grupos do plano de contas (Tabela Plano Grupo do Access)',
-    order: 1,
+    order: 2,
     columns: [
       { accessName: 'codigo', dbName: 'codigo', required: true, transform: toStr },
       { accessName: 'Grupo', dbName: 'descricao', required: true, transform: toStr },
