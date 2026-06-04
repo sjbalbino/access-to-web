@@ -561,6 +561,11 @@ export default function Produtores() {
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      <RecalcularRateioDialog 
+        open={isRecalcularOpen} 
+        onOpenChange={setIsRecalcularOpen} 
+      />
     </AppLayout>
   );
 }
