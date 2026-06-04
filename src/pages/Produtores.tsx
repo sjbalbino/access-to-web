@@ -26,6 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { InscricoesTab } from "@/components/produtores/InscricoesTab";
+import { RecalcularRateioDialog } from "@/components/produtores/RecalcularRateioDialog";
 import { useCreateInscricao } from "@/hooks/useInscricoesProdutor";
 import { formatCpf, formatCpfCnpj, formatTelefone, validateCpf, validateCnpj } from "@/lib/formatters";
 import { toast } from "sonner";
