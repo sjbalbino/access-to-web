@@ -80,20 +80,64 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
       const parsed = parseNfeXml(xmlText);
 
-      // Buscar granja_id a partir da inscrição
+      // 1. Buscar granja_id e tenant_id a partir da inscrição
       const { data: insc } = await supabase
         .from("inscricoes_produtor")
-        .select("granja_id")
+        .select("granja_id, granjas(tenant_id)")
         .eq("id", inscricaoId)
         .maybeSingle();
 
       const granjaId = insc?.granja_id;
-      if (!granjaId) {
-        throw new Error("Inscrição sem granja vinculada.");
+      const tenantId = (insc?.granjas as any)?.tenant_id;
+
+      if (!granjaId || !tenantId) {
+        throw new Error("Inscrição sem granja ou empresa contratante vinculada.");
+      }
+
+      // 2. Buscar ou Criar Fornecedor
+      const cnpjCpf = (parsed.emitente.cnpj || parsed.emitente.cpf || "").replace(/\D/g, "");
+      let fornecedorId = null;
+
+      if (cnpjCpf) {
+        const { data: fornecedores } = await supabase
+          .from("clientes_fornecedores")
+          .select("id")
+          .or(`cpf_cnpj.eq.${cnpjCpf},cpf_cnpj.eq.${formatCpfCnpj(cnpjCpf)}`)
+          .maybeSingle();
+
+        if (fornecedores) {
+          fornecedorId = fornecedores.id;
+        } else {
+          // Criar fornecedor
+          const { data: novoFornecedor, error: createError } = await supabase
+            .from("clientes_fornecedores")
+            .insert({
+              nome: parsed.emitente.nome,
+              cpf_cnpj: cnpjCpf,
+              inscricao_estadual: parsed.emitente.inscricaoEstadual,
+              logradouro: parsed.emitente.logradouro,
+              numero: parsed.emitente.numero,
+              bairro: parsed.emitente.bairro,
+              cidade: parsed.emitente.cidade,
+              uf: parsed.emitente.uf,
+              cep: parsed.emitente.cep,
+              ativo: true,
+              tenant_id: tenantId,
+              tipo: 'fornecedor'
+            })
+            .select("id")
+            .single();
+          
+          if (!createError && novoFornecedor) {
+            fornecedorId = novoFornecedor.id;
+          }
+        }
       }
 
       const header: Record<string, unknown> = {
         granja_id: granjaId,
+        inscricao_produtor_id: inscricaoId,
+        fornecedor_id: fornecedorId,
         numero_nfe: parsed.numero,
         serie: parsed.serie,
         chave_acesso: nfe.chave,
@@ -114,40 +158,52 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         modo_entrada: "xml",
         status: "pendente",
         xml_content: xmlText,
+        _duplicatas: parsed.duplicatas,
       };
 
-      const itens = parsed.itens.map((item) => ({
-        produto_xml_codigo: item.codigoProduto,
-        produto_xml_descricao: item.descricao,
-        produto_xml_ncm: item.ncm,
-        cfop: item.cfop,
-        unidade_medida: item.unidade,
-        quantidade: item.quantidade,
-        valor_unitario: item.valorUnitario,
-        valor_total: item.valorTotal,
-        valor_desconto: item.valorDesconto,
-        cst_icms: item.cstIcms,
-        base_icms: item.baseIcms,
-        aliq_icms: item.aliqIcms,
-        valor_icms: item.valorIcms,
-        cst_ipi: item.cstIpi,
-        base_ipi: item.baseIpi,
-        aliq_ipi: item.aliqIpi,
-        valor_ipi: item.valorIpi,
-        cst_pis: item.cstPis,
-        base_pis: item.basePis,
-        aliq_pis: item.aliqPis,
-        valor_pis: item.valorPis,
-        cst_cofins: item.cstCofins,
-        base_cofins: item.baseCofins,
-        aliq_cofins: item.aliqCofins,
-        valor_cofins: item.valorCofins,
-        vinculado: false,
+      // 3. Preparar itens e tentar auto-vincular produtos
+      const itens = await Promise.all(parsed.itens.map(async (item) => {
+        const { data: existingProd } = await supabase
+          .from("produtos")
+          .select("id")
+          .or(`cod_fornecedor.eq.${item.codigoProduto},nome.ilike.${item.descricao}`)
+          .eq('ativo', true)
+          .maybeSingle();
+
+        return {
+          produto_id: existingProd?.id || null,
+          produto_xml_codigo: item.codigoProduto,
+          produto_xml_descricao: item.descricao,
+          produto_xml_ncm: item.ncm,
+          cfop: item.cfop,
+          unidade_medida: item.unidade,
+          quantidade: item.quantidade,
+          valor_unitario: item.valorUnitario,
+          valor_total: item.valorTotal,
+          valor_desconto: item.valorDesconto,
+          cst_icms: item.cstIcms,
+          base_icms: item.baseIcms,
+          aliq_icms: item.aliqIcms,
+          valor_icms: item.valorIcms,
+          cst_ipi: item.cstIpi,
+          base_ipi: item.baseIpi,
+          aliq_ipi: item.aliqIpi,
+          valor_ipi: item.valorIpi,
+          cst_pis: item.cstPis,
+          base_pis: item.basePis,
+          aliq_pis: item.aliqPis,
+          valor_pis: item.valorPis,
+          cst_cofins: item.cstCofins,
+          base_cofins: item.baseCofins,
+          aliq_cofins: item.aliqCofins,
+          valor_cofins: item.valorCofins,
+          vinculado: !!existingProd?.id,
+        };
       }));
 
       await createEntrada.mutateAsync({ ...header, itens });
-    } catch {
-      // errors handled inside hooks
+    } catch (error) {
+      console.error("Erro ao importar NF-e:", error);
     } finally {
       setImportingChave(null);
     }
