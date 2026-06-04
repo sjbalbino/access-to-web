@@ -566,12 +566,12 @@ export default function RemessasVendaForm() {
                 <div className="space-y-2">
                   <Label>Silo *</Label>
                   <Select isSearchable value={watch("silo_id")} onValueChange={(v) => setValue("silo_id", v)}>
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {silos?.map((s) => (
-                        <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -616,12 +616,12 @@ export default function RemessasVendaForm() {
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
                   <Select isSearchable value={watch("transportadora_id")} onValueChange={(v) => setValue("transportadora_id", v)}>
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {transportadoras?.map((t) => (
-                        <Select isSearchableItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                        <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

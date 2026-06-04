@@ -228,12 +228,12 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
             <div className="space-y-2">
               <Label>Safra *</Label>
               <Select isSearchable value={safraId} onValueChange={setSafraId}>
-                <Select isSearchableTrigger>
-                  <Select isSearchableValue placeholder="Selecione" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <Select isSearchableContent>
+                <SelectContent>
                   {safras.map((s) => (
-                    <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -242,12 +242,12 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
             <div className="space-y-2">
               <Label>Produto *</Label>
               <Select isSearchable value={produtoId} onValueChange={setProdutoId}>
-                <Select isSearchableTrigger>
-                  <Select isSearchableValue placeholder="Selecione" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <Select isSearchableContent>
+                <SelectContent>
                   {produtos.map((p) => (
-                    <Select isSearchableItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                    <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -256,13 +256,13 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
             <div className="space-y-2">
               <Label>Silo</Label>
               <Select isSearchable value={siloId || "__none__"} onValueChange={(v) => setSiloId(v === "__none__" ? "" : v)}>
-                <Select isSearchableTrigger>
-                  <Select isSearchableValue placeholder="Nenhum" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
-                <Select isSearchableContent>
-                  <Select isSearchableItem value="__none__">Nenhum</SelectItem>
+                <SelectContent>
+                  <SelectItem value="__none__">Nenhum</SelectItem>
                   {silos.map((s) => (
-                    <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -273,13 +273,13 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
           <div className="space-y-2">
             <Label>Tipo</Label>
             <Select isSearchable value={tipo || "__none__"} onValueChange={(v) => setTipo(v === "__none__" ? "" : v)}>
-              <Select isSearchableTrigger>
-                <Select isSearchableValue placeholder="Selecione" />
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
               </SelectTrigger>
-              <Select isSearchableContent>
-                <Select isSearchableItem value="__none__">Nenhum</SelectItem>
-                <Select isSearchableItem value="industria">Indústria</SelectItem>
-                <Select isSearchableItem value="semente">Semente</SelectItem>
+              <SelectContent>
+                <SelectItem value="__none__">Nenhum</SelectItem>
+                <SelectItem value="industria">Indústria</SelectItem>
+                <SelectItem value="semente">Semente</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -347,12 +347,12 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
             <div className="space-y-2">
               <Label>Local de Saída *</Label>
               <Select isSearchable value={localSaidaId} onValueChange={setLocalSaidaId}>
-                <Select isSearchableTrigger>
-                  <Select isSearchableValue placeholder="Selecione o local" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o local" />
                 </SelectTrigger>
-                <Select isSearchableContent>
+                <SelectContent>
                   {locaisEntrega.map((l) => (
-                    <Select isSearchableItem key={l.id} value={l.id}>
+                    <SelectItem key={l.id} value={l.id}>
                       {l.nome} {l.cidade ? `- ${l.cidade}/${l.uf}` : ''}
                     </SelectItem>
                   ))}
@@ -423,12 +423,12 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
             <div className="space-y-2">
               <Label>Local de Entrada *</Label>
               <Select isSearchable value={localEntradaId} onValueChange={setLocalEntradaId}>
-                <Select isSearchableTrigger>
-                  <Select isSearchableValue placeholder="Selecione o local" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o local" />
                 </SelectTrigger>
-                <Select isSearchableContent>
+                <SelectContent>
                   {locaisEntrega.map((l) => (
-                    <Select isSearchableItem key={l.id} value={l.id}>
+                    <SelectItem key={l.id} value={l.id}>
                       {l.nome} {l.cidade ? `- ${l.cidade}/${l.uf}` : ''}
                     </SelectItem>
                   ))}

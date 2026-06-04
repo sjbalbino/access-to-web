@@ -418,12 +418,12 @@ export default function Transportadoras() {
                   value={formData.uf || ""}
                   onValueChange={(value) => setFormData({ ...formData, uf: value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="UF" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="UF" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
+                  <SelectContent>
                     {UFS.map((uf) => (
-                      <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
+                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -435,12 +435,12 @@ export default function Transportadoras() {
                   value={formData.granja_id || ""}
                   onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
+                  <SelectContent>
                     {granjas.map((granja) => (
-                      <Select isSearchableItem key={granja.id} value={granja.id}>
+                      <SelectItem key={granja.id} value={granja.id}>
                         {granja.nome_fantasia || granja.razao_social}
                       </SelectItem>
                     ))}
@@ -490,12 +490,12 @@ export default function Transportadoras() {
                   value={formData.uf_placa_padrao || ""}
                   onValueChange={(value) => setFormData({ ...formData, uf_placa_padrao: value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="UF" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="UF" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
+                  <SelectContent>
                     {UFS.map((uf) => (
-                      <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
+                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

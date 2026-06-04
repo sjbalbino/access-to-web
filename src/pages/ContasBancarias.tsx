@@ -276,9 +276,9 @@ export default function ContasBancarias() {
             <div>
               <Label>Tipo</Label>
               <Select isSearchable value={form.tipo} onValueChange={(v: any) => setForm({ ...form, tipo: v })}>
-                <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                <Select isSearchableContent>
-                  {TIPOS.map(t => <Select isSearchableItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TIPOS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -336,10 +336,10 @@ export default function ContasBancarias() {
                 value={form.granja_id || "_none"}
                 onValueChange={(v) => setForm({ ...form, granja_id: v === "_none" ? null : v })}
               >
-                <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                <Select isSearchableContent>
-                  <Select isSearchableItem value="_none">(nenhuma)</SelectItem>
-                  {granjas.map(g => <Select isSearchableItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">(nenhuma)</SelectItem>
+                  {granjas.map(g => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -367,10 +367,10 @@ export default function ContasBancarias() {
                 value={form.pix_tipo || "_none"}
                 onValueChange={(v) => setForm({ ...form, pix_tipo: v === "_none" ? null : (v as any) })}
               >
-                <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                <Select isSearchableContent>
-                  <Select isSearchableItem value="_none">(nenhum)</SelectItem>
-                  {PIX_TIPOS.map(t => <Select isSearchableItem key={t} value={t}>{t}</SelectItem>)}
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">(nenhum)</SelectItem>
+                  {PIX_TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

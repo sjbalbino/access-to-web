@@ -519,10 +519,10 @@ export default function EmitentesNfe() {
                       }}
                       disabled={!!selectedEmitente}
                     >
-                      <Select isSearchableTrigger>
-                        <Select isSearchableValue placeholder="Selecione a inscrição do sócio" />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a inscrição do sócio" />
                       </SelectTrigger>
-                      <Select isSearchableContent>
+                      <SelectContent>
                         {(selectedEmitente
                           ? inscricoes.filter((i) => i.id === selectedEmitente.inscricao_produtor_id || !emitentes.some((e) => e.inscricao_produtor_id === i.id))
                           : inscricoesDisponiveis
@@ -530,7 +530,7 @@ export default function EmitentesNfe() {
                           const nome = insc.produtores?.nome || insc.nome || "—";
                           const granjaNome = insc.granjas?.nome_fantasia || insc.granjas?.razao_social || "";
                           return (
-                            <Select isSearchableItem key={insc.id} value={insc.id}>
+                            <SelectItem key={insc.id} value={insc.id}>
                               {nome} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
                             </SelectItem>
                           );
@@ -561,12 +561,12 @@ export default function EmitentesNfe() {
                           setFormData({ ...formData, ambiente: Number(value) })
                         }
                       >
-                        <Select isSearchableTrigger>
-                          <Select isSearchableValue />
+                        <SelectTrigger>
+                          <SelectValue />
                         </SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectContent>
                           {AMBIENTES.map((amb) => (
-                            <Select isSearchableItem key={amb.value} value={String(amb.value)}>
+                            <SelectItem key={amb.value} value={String(amb.value)}>
                               {amb.label}
                             </SelectItem>
                           ))}
@@ -581,12 +581,12 @@ export default function EmitentesNfe() {
                           setFormData({ ...formData, crt: Number(value), ...getDefaultsByCrt(Number(value)) })
                         }
                       >
-                        <Select isSearchableTrigger>
-                          <Select isSearchableValue />
+                        <SelectTrigger>
+                          <SelectValue />
                         </SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectContent>
                           {REGIMES_TRIBUTARIOS.map((reg) => (
-                            <Select isSearchableItem key={reg.value} value={String(reg.value)}>
+                            <SelectItem key={reg.value} value={String(reg.value)}>
                               {reg.label}
                             </SelectItem>
                           ))}
@@ -746,10 +746,10 @@ export default function EmitentesNfe() {
                         value={formData.cst_icms_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_icms_padrao: v })}
                       >
-                        <Select isSearchableTrigger id="cst_icms_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectTrigger id="cst_icms_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
                           {getCstIcmsOptions(formData.crt).map((o) => (
-                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -760,10 +760,10 @@ export default function EmitentesNfe() {
                         value={formData.cst_pis_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_pis_padrao: v })}
                       >
-                        <Select isSearchableTrigger id="cst_pis_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectTrigger id="cst_pis_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
                           {CST_PIS_COFINS.map((o) => (
-                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -774,10 +774,10 @@ export default function EmitentesNfe() {
                         value={formData.cst_cofins_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_cofins_padrao: v })}
                       >
-                        <Select isSearchableTrigger id="cst_cofins_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectTrigger id="cst_cofins_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
                           {CST_PIS_COFINS.map((o) => (
-                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -788,10 +788,10 @@ export default function EmitentesNfe() {
                         value={formData.cst_ipi_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_ipi_padrao: v })}
                       >
-                        <Select isSearchableTrigger id="cst_ipi_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectTrigger id="cst_ipi_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
                           {CST_IPI.map((o) => (
-                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -802,10 +802,10 @@ export default function EmitentesNfe() {
                         value={formData.cst_ibs_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_ibs_padrao: v })}
                       >
-                        <Select isSearchableTrigger id="cst_ibs_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectTrigger id="cst_ibs_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
                           {CST_IBS_CBS.map((o) => (
-                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -816,10 +816,10 @@ export default function EmitentesNfe() {
                         value={formData.cst_cbs_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_cbs_padrao: v })}
                       >
-                        <Select isSearchableTrigger id="cst_cbs_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectTrigger id="cst_cbs_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
                           {CST_IBS_CBS.map((o) => (
-                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -830,10 +830,10 @@ export default function EmitentesNfe() {
                         value={formData.cst_is_padrao || undefined}
                         onValueChange={(v) => setFormData({ ...formData, cst_is_padrao: v })}
                       >
-                        <Select isSearchableTrigger id="cst_is_padrao"><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectTrigger id="cst_is_padrao"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
                           {CST_IS.map((o) => (
-                            <Select isSearchableItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -860,12 +860,12 @@ export default function EmitentesNfe() {
                           setFormData({ ...formData, api_provider: value })
                         }
                       >
-                        <Select isSearchableTrigger>
-                          <Select isSearchableValue placeholder="Selecione o provedor" />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o provedor" />
                         </SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectContent>
                           {API_PROVIDERS.map((prov) => (
-                            <Select isSearchableItem key={prov.value} value={prov.value}>
+                            <SelectItem key={prov.value} value={prov.value}>
                               {prov.label}
                             </SelectItem>
                           ))}

@@ -156,13 +156,13 @@ export default function Silos() {
             <div className="flex items-center gap-4">
               <Label className="whitespace-nowrap">Filtrar por Safra:</Label>
               <Select isSearchable value={safraFiltro} onValueChange={setSafraFiltro}>
-                <Select isSearchableTrigger className="w-64">
-                  <Select isSearchableValue placeholder="Todas as safras" />
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Todas as safras" />
                 </SelectTrigger>
-                <Select isSearchableContent>
-                  <Select isSearchableItem value="all">Todas as safras</SelectItem>
+                <SelectContent>
+                  <SelectItem value="all">Todas as safras</SelectItem>
                   {safras?.map((safra) => (
-                    <Select isSearchableItem key={safra.id} value={safra.id}>{safra.nome}</SelectItem>
+                    <SelectItem key={safra.id} value={safra.id}>{safra.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -234,21 +234,21 @@ export default function Silos() {
                       <div className="space-y-2">
                         <Label>Tipo</Label>
                         <Select isSearchable value={formData.tipo || 'armazenamento'} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
-                          <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                          <Select isSearchableContent>
-                            <Select isSearchableItem value="armazenamento">Armazenamento</SelectItem>
-                            <Select isSearchableItem value="secagem">Secagem</SelectItem>
-                            <Select isSearchableItem value="transbordo">Transbordo</SelectItem>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="armazenamento">Armazenamento</SelectItem>
+                            <SelectItem value="secagem">Secagem</SelectItem>
+                            <SelectItem value="transbordo">Transbordo</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
                         <Label>Granja</Label>
                         <Select isSearchable value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
-                          <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
-                          <Select isSearchableContent>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
                             {granjas?.map((granja) => (
-                              <Select isSearchableItem key={granja.id} value={granja.id}>{granja.razao_social}</SelectItem>
+                              <SelectItem key={granja.id} value={granja.id}>{granja.razao_social}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>

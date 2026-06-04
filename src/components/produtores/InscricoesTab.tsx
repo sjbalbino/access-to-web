@@ -453,12 +453,12 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                     value={formData.tipo || undefined}
                     onValueChange={(value) => setFormData({ ...formData, tipo: value })}
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {TIPOS_CONTRATO.map((tipo) => (
-                        <Select isSearchableItem key={tipo.value} value={tipo.value}>
+                        <SelectItem key={tipo.value} value={tipo.value}>
                           {tipo.label}
                         </SelectItem>
                       ))}
@@ -471,12 +471,12 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                     value={formData.granja_id || undefined}
                     onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione a granja" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a granja" />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {granjas?.map((granja) => (
-                        <Select isSearchableItem key={granja.id} value={granja.id}>
+                        <SelectItem key={granja.id} value={granja.id}>
                           {granja.nome_fantasia || granja.razao_social}
                         </SelectItem>
                       ))}
@@ -561,12 +561,12 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                       setUfCidade(value);
                     }}
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="UF" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="UF" />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"].map(uf => (
-                        <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
+                        <SelectItem key={uf} value={uf}>{uf}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -656,13 +656,13 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   value={formData.emitente_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, emitente_id: value === "none" ? null : value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione o emitente" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o emitente" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="none">Nenhum</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {emitentesAtivos.map((emitente) => (
-                      <Select isSearchableItem key={emitente.id} value={emitente.id}>
+                      <SelectItem key={emitente.id} value={emitente.id}>
                         {emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "Emitente"}
                         {emitente.ambiente === 1 ? " (Produção)" : " (Homologação)"}
                       </SelectItem>

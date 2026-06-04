@@ -111,10 +111,10 @@ export function AtribuicaoSocioSection({ granjaId, valorTotal, modo, socioUnicoI
             value={socioUnicoId || undefined}
             onValueChange={(v) => onChange({ modo, socio_produtor_id: v, manual })}
           >
-            <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione o sócio" /></SelectTrigger>
-            <Select isSearchableContent>
+            <SelectTrigger><SelectValue placeholder="Selecione o sócio" /></SelectTrigger>
+            <SelectContent>
               {sociosDaGranja.map((s: any) => (
-                <Select isSearchableItem key={s.id} value={s.id}>{s.nome}{s.cpf_cnpj ? ` (${s.cpf_cnpj})` : ''}</SelectItem>
+                <SelectItem key={s.id} value={s.id}>{s.nome}{s.cpf_cnpj ? ` (${s.cpf_cnpj})` : ''}</SelectItem>
               ))}
             </SelectContent>
           </Select>

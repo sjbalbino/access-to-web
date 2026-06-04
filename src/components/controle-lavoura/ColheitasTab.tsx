@@ -545,13 +545,13 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   value={formData.placa_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, placa_id: value === "none" ? null : value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="none">Nenhum</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {placas?.map((p) => (
-                      <Select isSearchableItem key={p.id} value={p.id}>{p.placa}</SelectItem>
+                      <SelectItem key={p.id} value={p.id}>{p.placa}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -571,12 +571,12 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   value={formData.tipo_colheita || 'industria'}
                   onValueChange={(value) => setFormData({ ...formData, tipo_colheita: value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue />
+                  <SelectTrigger>
+                    <SelectValue />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="industria">Indústria (60kg)</SelectItem>
-                    <Select isSearchableItem value="semente">Semente (40kg)</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="industria">Indústria (60kg)</SelectItem>
+                    <SelectItem value="semente">Semente (40kg)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -775,13 +775,13 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                     setFormData({ ...formData, inscricao_produtor_id: null }); // Limpa inscrição ao mudar produtor
                   }}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione o produtor" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o produtor" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="none">Nenhum</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {produtores?.filter(p => p.ativo).map((prod) => (
-                      <Select isSearchableItem key={prod.id} value={prod.id}>
+                      <SelectItem key={prod.id} value={prod.id}>
                         {prod.nome} ({prod.tipo_produtor === 'socio' ? 'Sócio' : 'Produtor'})
                       </SelectItem>
                     ))}
@@ -796,15 +796,15 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   onValueChange={(value) => setFormData({ ...formData, inscricao_produtor_id: value === "none" ? null : value })}
                   disabled={!selectedProdutorId}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder={selectedProdutorId ? "Selecione a inscrição" : "Selecione o produtor primeiro"} />
+                  <SelectTrigger>
+                    <SelectValue placeholder={selectedProdutorId ? "Selecione a inscrição" : "Selecione o produtor primeiro"} />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="none">Nenhuma</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma</SelectItem>
                     {inscricoesPorProdutor
                       ?.sort((a, b) => (b.ativa ? 1 : 0) - (a.ativa ? 1 : 0))
                       .map((insc) => (
-                      <Select isSearchableItem key={insc.id} value={insc.id}>
+                      <SelectItem key={insc.id} value={insc.id}>
                         IE: {insc.inscricao_estadual || 'N/A'} - {insc.tipo || 'Sem tipo'} ({insc.cidade}/{insc.uf}){!insc.ativa && ' (Inativa)'}
                       </SelectItem>
                     ))}
@@ -818,13 +818,13 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   value={formData.local_entrega_terceiro_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, local_entrega_terceiro_id: value === "none" ? null : value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="none">Nenhum (Silo próprio)</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum (Silo próprio)</SelectItem>
                     {locaisEntrega?.filter(le => le.ativo).map((le) => (
-                      <Select isSearchableItem key={le.id} value={le.id}>{le.nome}</SelectItem>
+                      <SelectItem key={le.id} value={le.id}>{le.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -851,13 +851,13 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   value={formData.variedade_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, variedade_id: value === "none" ? null : value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="none">Nenhuma</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma</SelectItem>
                     {sementes?.map((s) => (
-                      <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -869,13 +869,13 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   value={formData.silo_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, silo_id: value === "none" ? null : value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="none">Nenhum</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {silos?.map((s) => (
-                      <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

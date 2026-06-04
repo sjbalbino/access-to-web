@@ -296,11 +296,11 @@ export default function Produtores() {
               <div className="space-y-1">
                 <Label className="text-xs">Tipo</Label>
                 <Select isSearchable value={filtroTipo} onValueChange={(v) => { setFiltroTipo(v); setPaginaAtual(1); }}>
-                  <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="todos">Todos</SelectItem>
-                    <Select isSearchableItem value="produtor">Produtores</SelectItem>
-                    <Select isSearchableItem value="socio">Sócios</SelectItem>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="produtor">Produtores</SelectItem>
+                    <SelectItem value="socio">Sócios</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -311,11 +311,11 @@ export default function Produtores() {
               <div className="space-y-1">
                 <Label className="text-xs">Status</Label>
                 <Select isSearchable value={filtroAtivo} onValueChange={(v) => { setFiltroAtivo(v); setPaginaAtual(1); }}>
-                  <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="ativo">Ativos</SelectItem>
-                    <Select isSearchableItem value="inativo">Inativos</SelectItem>
-                    <Select isSearchableItem value="todos">Todos</SelectItem>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ativo">Ativos</SelectItem>
+                    <SelectItem value="inativo">Inativos</SelectItem>
+                    <SelectItem value="todos">Todos</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -416,18 +416,18 @@ export default function Produtores() {
                   <div className="space-y-2">
                     <Label>Tipo</Label>
                     <Select isSearchable value={formData.tipo_produtor || "produtor"} onValueChange={(v) => setFormData({ ...formData, tipo_produtor: v })}>
-                      <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                      <Select isSearchableContent>
-                        {TIPOS_PRODUTOR.map((t) => <Select isSearchableItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TIPOS_PRODUTOR.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Tipo Pessoa</Label>
                     <Select isSearchable value={formData.tipo_pessoa || "fisica"} onValueChange={(v) => setFormData({ ...formData, tipo_pessoa: v, cpf_cnpj: "" })}>
-                      <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                      <Select isSearchableContent>
-                        {TIPOS_PESSOA.map((t) => <Select isSearchableItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TIPOS_PESSOA.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -460,9 +460,9 @@ export default function Produtores() {
                   <div className="space-y-2">
                     <Label>Granja</Label>
                     <Select isSearchable value={formData.granja_id || ""} onValueChange={(v) => setFormData({ ...formData, granja_id: v || null })}>
-                      <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
-                      <Select isSearchableContent>
-                        {granjas?.map((g) => <Select isSearchableItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {granjas?.map((g) => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>

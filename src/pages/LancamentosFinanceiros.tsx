@@ -281,8 +281,8 @@ export default function LancamentosFinanceiros() {
               <div className="space-y-2">
                 <Label>Tipo *</Label>
                 <Select isSearchable value={formData.tipo} onValueChange={v => setFormData({ ...formData, tipo: v })}>
-                  <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                  <Select isSearchableContent><Select isSearchableItem value="receita">Receita</SelectItem><Select isSearchableItem value="despesa">Despesa</SelectItem></SelectContent>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="receita">Receita</SelectItem><SelectItem value="despesa">Despesa</SelectItem></SelectContent>
                 </Select>
               </div>
             </div>
@@ -295,21 +295,21 @@ export default function LancamentosFinanceiros() {
               <div className="space-y-2">
                 <Label>Granja *</Label>
                 <Select isSearchable value={formData.granja_id} onValueChange={v => setFormData({ ...formData, granja_id: v })}>
-                  <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                  <Select isSearchableContent>{granjas?.map(g => <Select isSearchableItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}</SelectContent>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{granjas?.map(g => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-2">
               <Label>Sub-Centro de Custo</Label>
               <Select isSearchable value={formData.sub_centro_custo_id || 'none'} onValueChange={v => setFormData({ ...formData, sub_centro_custo_id: v === 'none' ? null : v })}>
-                <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                <Select isSearchableContent>
-                  <Select isSearchableItem value="none">Nenhum</SelectItem>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
                   {subCentrosByCentro.map(g => (
                     <div key={g.centro.id}>
                       <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">{g.centro.codigo} - {g.centro.descricao}</div>
-                      {g.subs.map(s => <Select isSearchableItem key={s.id} value={s.id}>&nbsp;&nbsp;{s.codigo} - {s.descricao}</SelectItem>)}
+                      {g.subs.map(s => <SelectItem key={s.id} value={s.id}>&nbsp;&nbsp;{s.codigo} - {s.descricao}</SelectItem>)}
                     </div>
                   ))}
                 </SelectContent>
@@ -318,10 +318,10 @@ export default function LancamentosFinanceiros() {
             <div className="space-y-2">
               <Label>Conta DRE</Label>
               <Select isSearchable value={formData.dre_conta_id || 'none'} onValueChange={v => setFormData({ ...formData, dre_conta_id: v === 'none' ? null : v })}>
-                <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                <Select isSearchableContent>
-                  <Select isSearchableItem value="none">Nenhuma</SelectItem>
-                  {dreContas?.map(d => <Select isSearchableItem key={d.id} value={d.id}>{d.codigo} - {d.descricao}</SelectItem>)}
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhuma</SelectItem>
+                  {dreContas?.map(d => <SelectItem key={d.id} value={d.id}>{d.codigo} - {d.descricao}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -329,15 +329,15 @@ export default function LancamentosFinanceiros() {
               <div className="space-y-2">
                 <Label>Fornecedor</Label>
                 <Select isSearchable value={formData.fornecedor_id || 'none'} onValueChange={v => setFormData({ ...formData, fornecedor_id: v === 'none' ? null : v })}>
-                  <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                  <Select isSearchableContent><Select isSearchableItem value="none">Nenhum</SelectItem>{clientes?.map(c => <Select isSearchableItem key={c.id} value={c.id}>{c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}</SelectItem>)}</SelectContent>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent><SelectItem value="none">Nenhum</SelectItem>{clientes?.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Safra</Label>
                 <Select isSearchable value={formData.safra_id || 'none'} onValueChange={v => setFormData({ ...formData, safra_id: v === 'none' ? null : v })}>
-                  <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-                  <Select isSearchableContent><Select isSearchableItem value="none">Nenhuma</SelectItem>{safras?.map(s => <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}</SelectContent>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent><SelectItem value="none">Nenhuma</SelectItem>{safras?.map(s => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>

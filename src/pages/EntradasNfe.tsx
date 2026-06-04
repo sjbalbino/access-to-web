@@ -105,11 +105,11 @@ export default function EntradasNfe() {
           <div className="w-48">
             <label className="text-sm font-medium mb-1 block">Granja</label>
             <Select isSearchable value={granjaId} onValueChange={setGranjaId}>
-              <Select isSearchableTrigger><Select isSearchableValue placeholder="Todas" /></SelectTrigger>
-              <Select isSearchableContent>
-                <Select isSearchableItem value="all">Todas</SelectItem>
+              <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
                 {granjas?.map((g: any) => (
-                  <Select isSearchableItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
+                  <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

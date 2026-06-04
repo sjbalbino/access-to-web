@@ -989,12 +989,12 @@ export default function EntradaColheita() {
               <div className="space-y-2">
                 <Label>Safra *</Label>
                 <Select isSearchable value={safraId} onValueChange={setSafraId}>
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
+                  <SelectContent>
                     {safras.filter(s => s.status === 'ativa').map(s => (
-                      <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1069,13 +1069,13 @@ export default function EntradaColheita() {
               <div className="space-y-2">
                 <Label>Silo (Destino)</Label>
                 <Select isSearchable value={siloId || "_none"} onValueChange={v => setSiloId(v === "_none" ? "" : v)}>
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="_none">Nenhum</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="_none">Nenhum</SelectItem>
                     {silos.filter(s => s.ativo).map(s => (
-                      <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1084,13 +1084,13 @@ export default function EntradaColheita() {
               <div className="space-y-2">
                 <Label>Local Entrega</Label>
                 <Select isSearchable value={localEntregaId || "_none"} onValueChange={v => setLocalEntregaId(v === "_none" ? "" : v)}>
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="_none">Nenhum</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="_none">Nenhum</SelectItem>
                     {locaisEntrega.filter(l => l.ativo).map(l => (
-                      <Select isSearchableItem key={l.id} value={l.id}>
+                      <SelectItem key={l.id} value={l.id}>
                         {l.nome} {l.is_sede && "(Sede)"}
                       </SelectItem>
                     ))}
@@ -1320,12 +1320,12 @@ export default function EntradaColheita() {
                         value={formEntrada.tipo_colheita} 
                         onValueChange={v => setFormEntrada(prev => ({ ...prev, tipo_colheita: v }))}
                       >
-                        <Select isSearchableTrigger>
-                          <Select isSearchableValue />
+                        <SelectTrigger>
+                          <SelectValue />
                         </SelectTrigger>
-                        <Select isSearchableContent>
-                          <Select isSearchableItem value="industria">Indústria (60kg)</SelectItem>
-                          <Select isSearchableItem value="semente">Semente (40kg)</SelectItem>
+                        <SelectContent>
+                          <SelectItem value="industria">Indústria (60kg)</SelectItem>
+                          <SelectItem value="semente">Semente (40kg)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1336,13 +1336,13 @@ export default function EntradaColheita() {
                         value={formEntrada.variedade_id || "_none"} 
                         onValueChange={v => setFormEntrada(prev => ({ ...prev, variedade_id: v === "_none" ? "" : v }))}
                       >
-                        <Select isSearchableTrigger>
-                          <Select isSearchableValue placeholder="Selecione" />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
-                        <Select isSearchableContent>
-                          <Select isSearchableItem value="_none">Nenhuma</SelectItem>
+                        <SelectContent>
+                          <SelectItem value="_none">Nenhuma</SelectItem>
                           {sementes.map(s => (
-                            <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                            <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -1602,12 +1602,12 @@ export default function EntradaColheita() {
                                 setFormContraNota(prev => ({ ...prev, tipo: v }))
                               }
                             >
-                              <Select isSearchableTrigger>
-                                <Select isSearchableValue />
+                              <SelectTrigger>
+                                <SelectValue />
                               </SelectTrigger>
-                              <Select isSearchableContent>
-                                <Select isSearchableItem value="bloco">NFP Bloco</SelectItem>
-                                <Select isSearchableItem value="nfpe">NFPe Eletrônica</SelectItem>
+                              <SelectContent>
+                                <SelectItem value="bloco">NFP Bloco</SelectItem>
+                                <SelectItem value="nfpe">NFPe Eletrônica</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>

@@ -108,24 +108,24 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
             />
           </div>
           <Select isSearchable value={statusSafraFilter} onValueChange={(v) => setStatusSafraFilter(v)}>
-            <Select isSearchableTrigger className="w-full sm:w-48">
-              <Select isSearchableValue placeholder="Status da safra" />
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Status da safra" />
             </SelectTrigger>
-            <Select isSearchableContent>
-              <Select isSearchableItem value="all">Todos os status</SelectItem>
-              <Select isSearchableItem value="ativa">Ativas</SelectItem>
-              <Select isSearchableItem value="encerrada">Encerradas</SelectItem>
-              <Select isSearchableItem value="planejada">Planejadas</SelectItem>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="ativa">Ativas</SelectItem>
+              <SelectItem value="encerrada">Encerradas</SelectItem>
+              <SelectItem value="planejada">Planejadas</SelectItem>
             </SelectContent>
           </Select>
           <Select isSearchable value={safraFilter || 'all'} onValueChange={(v) => setSafraFilter(v === 'all' ? null : v)}>
-            <Select isSearchableTrigger className="w-full sm:w-48">
-              <Select isSearchableValue placeholder="Filtrar por safra" />
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Filtrar por safra" />
             </SelectTrigger>
-            <Select isSearchableContent>
-              <Select isSearchableItem value="all">Todas as safras</SelectItem>
+            <SelectContent>
+              <SelectItem value="all">Todas as safras</SelectItem>
               {filteredSafras.map((safra) => (
-                <Select isSearchableItem key={safra.id} value={safra.id}>
+                <SelectItem key={safra.id} value={safra.id}>
                   {safra.nome}
                 </SelectItem>
               ))}

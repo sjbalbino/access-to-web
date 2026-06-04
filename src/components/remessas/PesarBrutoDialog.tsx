@@ -294,12 +294,12 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
                 <div className="space-y-2">
                   <Label>Silo *</Label>
                   <Select isSearchable value={siloId} onValueChange={setSiloId}>
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {silos?.map((s) => (
-                        <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

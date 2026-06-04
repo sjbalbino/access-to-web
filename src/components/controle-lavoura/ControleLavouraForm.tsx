@@ -124,12 +124,12 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
             <Label>Safra *</Label>
             {mode === 'create' ? (
               <Select isSearchable value={safraId} onValueChange={setSafraId}>
-                <Select isSearchableTrigger>
-                  <Select isSearchableValue placeholder="Selecione a safra" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a safra" />
                 </SelectTrigger>
-                <Select isSearchableContent>
+                <SelectContent>
                   {safras.map((safra) => (
-                    <Select isSearchableItem key={safra.id} value={safra.id}>
+                    <SelectItem key={safra.id} value={safra.id}>
                       {safra.nome}
                     </SelectItem>
                   ))}
@@ -149,12 +149,12 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
             <Label>Lavoura *</Label>
             {mode === 'create' ? (
               <Select isSearchable value={lavouraId} onValueChange={setLavouraId}>
-                <Select isSearchableTrigger>
-                  <Select isSearchableValue placeholder="Selecione a lavoura" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a lavoura" />
                 </SelectTrigger>
-                <Select isSearchableContent>
+                <SelectContent>
                   {lavouras.map((lavoura) => (
-                    <Select isSearchableItem key={lavoura.id} value={lavoura.id}>
+                    <SelectItem key={lavoura.id} value={lavoura.id}>
                       {lavoura.nome}
                     </SelectItem>
                   ))}

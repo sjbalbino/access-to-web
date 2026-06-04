@@ -156,13 +156,13 @@ export default function GruposProdutos() {
                           value={formData.conta_gerencial_id || 'none'}
                           onValueChange={(value) => setFormData({ ...formData, conta_gerencial_id: value === 'none' ? null : value })}
                         >
-                          <Select isSearchableTrigger>
-                            <Select isSearchableValue placeholder="Selecione um sub-centro" />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um sub-centro" />
                           </SelectTrigger>
-                          <Select isSearchableContent>
-                            <Select isSearchableItem value="none">Nenhum</SelectItem>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhum</SelectItem>
                             {subCentrosAtivos.map((sub: any) => (
-                              <Select isSearchableItem key={sub.id} value={sub.id}>
+                              <SelectItem key={sub.id} value={sub.id}>
                                 {sub.descricao}
                               </SelectItem>
                             ))}

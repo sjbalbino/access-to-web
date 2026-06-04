@@ -250,13 +250,13 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
                   value={formData.variedade_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, variedade_id: value === "none" ? null : value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione a semente" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a semente" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="none">Nenhuma</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma</SelectItem>
                     {produtosSementes?.map((p) => (
-                      <Select isSearchableItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

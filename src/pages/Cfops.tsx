@@ -290,13 +290,13 @@ export default function Cfops() {
               />
             </div>
             <Select isSearchable value={tipoFilter} onValueChange={setTipoFilter}>
-              <Select isSearchableTrigger className="w-full sm:w-40">
-                <Select isSearchableValue placeholder="Tipo" />
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Tipo" />
               </SelectTrigger>
-              <Select isSearchableContent>
-                <Select isSearchableItem value="todos">Todos os tipos</SelectItem>
+              <SelectContent>
+                <SelectItem value="todos">Todos os tipos</SelectItem>
                 {TIPOS_CFOP.map((tipo) => (
-                  <Select isSearchableItem key={tipo.value} value={tipo.value}>
+                  <SelectItem key={tipo.value} value={tipo.value}>
                     {tipo.label}
                   </SelectItem>
                 ))}
@@ -409,12 +409,12 @@ export default function Cfops() {
                       setFormData({ ...formData, tipo: value })
                     }
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue />
+                    <SelectTrigger>
+                      <SelectValue />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {TIPOS_CFOP.map((tipo) => (
-                        <Select isSearchableItem key={tipo.value} value={tipo.value}>
+                        <SelectItem key={tipo.value} value={tipo.value}>
                           {tipo.label}
                         </SelectItem>
                       ))}
@@ -511,12 +511,12 @@ export default function Cfops() {
                       setFormData({ ...formData, cst_icms_padrao: value || null })
                     }
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {CST_ICMS.map((cst) => (
-                        <Select isSearchableItem key={cst.value} value={cst.value}>
+                        <SelectItem key={cst.value} value={cst.value}>
                           {cst.label}
                         </SelectItem>
                       ))}
@@ -531,12 +531,12 @@ export default function Cfops() {
                       setFormData({ ...formData, cst_ipi_padrao: value || null })
                     }
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {CST_IPI.map((cst) => (
-                        <Select isSearchableItem key={cst.value} value={cst.value}>
+                        <SelectItem key={cst.value} value={cst.value}>
                           {cst.label}
                         </SelectItem>
                       ))}
@@ -554,12 +554,12 @@ export default function Cfops() {
                       setFormData({ ...formData, cst_pis_padrao: value || null })
                     }
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {CST_PIS_COFINS.map((cst) => (
-                        <Select isSearchableItem key={cst.value} value={cst.value}>
+                        <SelectItem key={cst.value} value={cst.value}>
                           {cst.label}
                         </SelectItem>
                       ))}
@@ -574,12 +574,12 @@ export default function Cfops() {
                       setFormData({ ...formData, cst_cofins_padrao: value || null })
                     }
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {CST_PIS_COFINS.map((cst) => (
-                        <Select isSearchableItem key={cst.value} value={cst.value}>
+                        <SelectItem key={cst.value} value={cst.value}>
                           {cst.label}
                         </SelectItem>
                       ))}
@@ -597,12 +597,12 @@ export default function Cfops() {
                       setFormData({ ...formData, cst_ibs_padrao: value || null })
                     }
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {CST_IBS_CBS.map((cst) => (
-                        <Select isSearchableItem key={cst.value} value={cst.value}>
+                        <SelectItem key={cst.value} value={cst.value}>
                           {cst.label}
                         </SelectItem>
                       ))}
@@ -617,12 +617,12 @@ export default function Cfops() {
                       setFormData({ ...formData, cst_cbs_padrao: value || null })
                     }
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {CST_IBS_CBS.map((cst) => (
-                        <Select isSearchableItem key={cst.value} value={cst.value}>
+                        <SelectItem key={cst.value} value={cst.value}>
                           {cst.label}
                         </SelectItem>
                       ))}
@@ -637,12 +637,12 @@ export default function Cfops() {
                       setFormData({ ...formData, cst_is_padrao: value || null })
                     }
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {CST_IS.map((cst) => (
-                        <Select isSearchableItem key={cst.value} value={cst.value}>
+                        <SelectItem key={cst.value} value={cst.value}>
                           {cst.label}
                         </SelectItem>
                       ))}

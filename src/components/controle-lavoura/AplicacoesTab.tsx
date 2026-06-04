@@ -258,13 +258,13 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
                   value={formData.produto_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, produto_id: value === "none" ? null : value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="none">Nenhum</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {produtosFiltrados?.map((p) => (
-                      <Select isSearchableItem key={p.id} value={p.id}>
+                      <SelectItem key={p.id} value={p.id}>
                         {p.nome} {p.unidades_medida?.sigla ? `(${p.unidades_medida.sigla})` : ''}
                       </SelectItem>
                     ))}
@@ -353,15 +353,15 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
                   value={formData.condicao_climatica || "none"}
                   onValueChange={(value) => setFormData({ ...formData, condicao_climatica: value === "none" ? null : value })}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="none">Não informada</SelectItem>
-                    <Select isSearchableItem value="ensolarado">Ensolarado</SelectItem>
-                    <Select isSearchableItem value="nublado">Nublado</SelectItem>
-                    <Select isSearchableItem value="chuvoso">Chuvoso</SelectItem>
-                    <Select isSearchableItem value="ventoso">Ventoso</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="none">Não informada</SelectItem>
+                    <SelectItem value="ensolarado">Ensolarado</SelectItem>
+                    <SelectItem value="nublado">Nublado</SelectItem>
+                    <SelectItem value="chuvoso">Chuvoso</SelectItem>
+                    <SelectItem value="ventoso">Ventoso</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

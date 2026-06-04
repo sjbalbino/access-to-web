@@ -294,28 +294,28 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   <div>
                     <Label>Granja *</Label>
                     <Select isSearchable value={granjaId} onValueChange={setGranjaId} disabled={isFinalizado}>
-                      <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
-                      <Select isSearchableContent>
-                        {granjas?.map((g: any) => (<Select isSearchableItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>))}
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {granjas?.map((g: any) => (<SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Fornecedor</Label>
                     <Select isSearchable value={fornecedorId} onValueChange={setFornecedorId} disabled={isFinalizado}>
-                      <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
-                      <Select isSearchableContent>
-                        {fornecedores.map((f: any) => (<Select isSearchableItem key={f.id} value={f.id}>{f.nome}</SelectItem>))}
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {fornecedores.map((f: any) => (<SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>CFOP</Label>
                     <Select isSearchable value={cfopId} onValueChange={setCfopId} disabled={isFinalizado}>
-                      <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
-                      <Select isSearchableContent>
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
                         {cfops?.filter((c: any) => c.tipo === 'entrada').map((c: any) => (
-                          <Select isSearchableItem key={c.id} value={c.id}>{c.codigo} - {c.descricao}</SelectItem>
+                          <SelectItem key={c.id} value={c.id}>{c.codigo} - {c.descricao}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -347,10 +347,10 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   <div>
                     <Label>IE do Produtor *</Label>
                     <Select isSearchable value={inscricaoId} onValueChange={setInscricaoId} disabled={isFinalizado || !granjaId}>
-                      <Select isSearchableTrigger><Select isSearchableValue placeholder={granjaId ? 'Selecione...' : 'Escolha granja'} /></SelectTrigger>
-                      <Select isSearchableContent>
+                      <SelectTrigger><SelectValue placeholder={granjaId ? 'Selecione...' : 'Escolha granja'} /></SelectTrigger>
+                      <SelectContent>
                         {inscricoesFiltradas.map((i) => (
-                          <Select isSearchableItem key={i.id} value={i.id}>
+                          <SelectItem key={i.id} value={i.id}>
                             {(i.inscricao_estadual || i.cpf_cnpj || '—').toUpperCase()} {i.nome ? `— ${i.nome.toUpperCase()}` : ''}
                           </SelectItem>
                         ))}
@@ -360,18 +360,18 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   <div>
                     <Label>Safra *</Label>
                     <Select isSearchable value={safraId} onValueChange={setSafraId} disabled={isFinalizado}>
-                      <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
-                      <Select isSearchableContent>
-                        {safras?.map((s: any) => (<Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>))}
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {safras?.map((s: any) => (<SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Forma de Pagamento {!isEdit && '*'}</Label>
                     <Select isSearchable value={formaPagamento} onValueChange={(v) => { setFormaPagamento(v); setJaPago(false); }} disabled={isFinalizado}>
-                      <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
-                      <Select isSearchableContent>
-                        {FORMAS.map((f) => (<Select isSearchableItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectContent>
+                        {FORMAS.map((f) => (<SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -379,10 +379,10 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     <div>
                       <Label>Conta Bancária</Label>
                       <Select isSearchable value={contaBancariaId} onValueChange={setContaBancariaId} disabled={isFinalizado}>
-                        <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione..." /></SelectTrigger>
-                        <Select isSearchableContent>
+                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>
                           {(contasBancarias || []).map((c) => (
-                            <Select isSearchableItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                            <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -441,9 +441,9 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                                 </div>
                               ) : (
                                 <Select isSearchable value={item.produto_id || ''} onValueChange={(v) => { updateItem(idx, 'produto_id', v); updateItem(idx, 'vinculado', true); }}>
-                                  <Select isSearchableTrigger className="min-w-[180px]"><Select isSearchableValue placeholder="Selecione produto..." /></SelectTrigger>
-                                  <Select isSearchableContent>
-                                    {produtos?.map((p: any) => (<Select isSearchableItem key={p.id} value={p.id}>{p.nome}</SelectItem>))}
+                                  <SelectTrigger className="min-w-[180px]"><SelectValue placeholder="Selecione produto..." /></SelectTrigger>
+                                  <SelectContent>
+                                    {produtos?.map((p: any) => (<SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>))}
                                   </SelectContent>
                                 </Select>
                               )}

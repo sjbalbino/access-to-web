@@ -22,13 +22,13 @@ export function FiltroControle({ safraId, lavouraId, onSafraChange, onLavouraCha
           value={safraId || "all"} 
           onValueChange={(value) => onSafraChange(value === "all" ? null : value)}
         >
-          <Select isSearchableTrigger id="safra-filter">
-            <Select isSearchableValue placeholder="Todas as safras" />
+          <SelectTrigger id="safra-filter">
+            <SelectValue placeholder="Todas as safras" />
           </SelectTrigger>
-          <Select isSearchableContent>
-            <Select isSearchableItem value="all">Todas as safras</SelectItem>
+          <SelectContent>
+            <SelectItem value="all">Todas as safras</SelectItem>
             {safras?.map((safra) => (
-              <Select isSearchableItem key={safra.id} value={safra.id}>
+              <SelectItem key={safra.id} value={safra.id}>
                 {safra.nome}
               </SelectItem>
             ))}
@@ -42,13 +42,13 @@ export function FiltroControle({ safraId, lavouraId, onSafraChange, onLavouraCha
           value={lavouraId || "all"} 
           onValueChange={(value) => onLavouraChange(value === "all" ? null : value)}
         >
-          <Select isSearchableTrigger id="lavoura-filter">
-            <Select isSearchableValue placeholder="Todas as lavouras" />
+          <SelectTrigger id="lavoura-filter">
+            <SelectValue placeholder="Todas as lavouras" />
           </SelectTrigger>
-          <Select isSearchableContent>
-            <Select isSearchableItem value="all">Todas as lavouras</SelectItem>
+          <SelectContent>
+            <SelectItem value="all">Todas as lavouras</SelectItem>
             {lavouras?.map((lavoura) => (
-              <Select isSearchableItem key={lavoura.id} value={lavoura.id}>
+              <SelectItem key={lavoura.id} value={lavoura.id}>
                 {lavoura.nome}
               </SelectItem>
             ))}

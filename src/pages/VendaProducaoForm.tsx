@@ -499,12 +499,12 @@ export default function VendaProducaoForm() {
               <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Safra *</Label>
                 <Select isSearchable value={watch("safra_id")} onValueChange={(v) => setValue("safra_id", v)}>
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione..." />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
-                  <Select isSearchableContent>
+                  <SelectContent>
                     {safras?.map((s) => (
-                      <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -512,12 +512,12 @@ export default function VendaProducaoForm() {
               <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Produto *</Label>
                 <Select isSearchable value={watch("produto_id")} onValueChange={(v) => setValue("produto_id", v)}>
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione..." />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
-                  <Select isSearchableContent>
+                  <SelectContent>
                     {produtos?.map((p) => (
-                      <Select isSearchableItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                      <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -539,12 +539,12 @@ export default function VendaProducaoForm() {
               <div className="space-y-2">
                 <Label>Vendedor (Parceiro)</Label>
                 <Select isSearchable value={watch("inscricao_produtor_id")} onValueChange={(v) => setValue("inscricao_produtor_id", v)}>
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione..." />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
-                  <Select isSearchableContent>
+                  <SelectContent>
                     {inscricoesParceria?.map((i) => (
-                      <Select isSearchableItem key={i.id} value={i.id}>
+                      <SelectItem key={i.id} value={i.id}>
                         {(i.produtores?.nome || i.granjas?.razao_social)}
                         {i.nome && i.nome !== i.produtores?.nome ? ` (${i.nome})` : ""}
                         {" - "}{i.inscricao_estadual}
@@ -571,12 +571,12 @@ export default function VendaProducaoForm() {
               <div className="space-y-2 sm:col-span-2">
                 <Label>Comprador *</Label>
                 <Select isSearchable value={watch("comprador_id")} onValueChange={(v) => setValue("comprador_id", v)}>
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Selecione o comprador..." />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o comprador..." />
                   </SelectTrigger>
-                  <Select isSearchableContent>
+                  <SelectContent>
                     {compradores?.map((c) => (
-                      <Select isSearchableItem key={c.id} value={c.id}>
+                      <SelectItem key={c.id} value={c.id}>
                         {c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''} {c.cpf_cnpj ? `- ${c.cpf_cnpj}` : ""}
                       </SelectItem>
                     ))}
@@ -586,12 +586,12 @@ export default function VendaProducaoForm() {
               <div className="space-y-2">
                 <Label>Tipo de Venda</Label>
                 <Select isSearchable value={watch("tipo_venda")} onValueChange={(v) => setValue("tipo_venda", v)}>
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue />
+                  <SelectTrigger>
+                    <SelectValue />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="industria">Indústria</SelectItem>
-                    <Select isSearchableItem value="semente">Semente</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="industria">Indústria</SelectItem>
+                    <SelectItem value="semente">Semente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -689,12 +689,12 @@ export default function VendaProducaoForm() {
               <div className="space-y-2">
                 <Label>UF</Label>
                 <Select isSearchable value={watch("local_entrega_uf")} onValueChange={(v) => setValue("local_entrega_uf", v)}>
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="UF" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="UF" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
+                  <SelectContent>
                     {["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].map(uf => (
-                      <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
+                      <SelectItem key={uf} value={uf}>{uf}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -882,14 +882,14 @@ export default function VendaProducaoForm() {
                   value={watch("modalidade_frete")?.toString()} 
                   onValueChange={(v) => setValue("modalidade_frete", parseInt(v))}
                 >
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue />
+                  <SelectTrigger>
+                    <SelectValue />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="0">0 - Por conta do Emitente (CIF)</SelectItem>
-                    <Select isSearchableItem value="1">1 - Por conta do Destinatário (FOB)</SelectItem>
-                    <Select isSearchableItem value="2">2 - Por conta de Terceiros</SelectItem>
-                    <Select isSearchableItem value="9">9 - Sem Frete</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="0">0 - Por conta do Emitente (CIF)</SelectItem>
+                    <SelectItem value="1">1 - Por conta do Destinatário (FOB)</SelectItem>
+                    <SelectItem value="2">2 - Por conta de Terceiros</SelectItem>
+                    <SelectItem value="9">9 - Sem Frete</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

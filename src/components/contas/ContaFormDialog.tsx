@@ -100,18 +100,18 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
           <div>
             <Label>Granja *</Label>
             <Select isSearchable value={form.granja_id || undefined} onValueChange={(v) => update('granja_id', v)} disabled={lockedByOrigem}>
-              <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-              <Select isSearchableContent>
-                {granjas?.map(g => <Select isSearchableItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {granjas?.map(g => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label>{partyLabel}</Label>
             <Select isSearchable value={form[partyField] || undefined} onValueChange={(v) => update(partyField, v)}>
-              <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-              <Select isSearchableContent>
-                {clientes?.map(c => <Select isSearchableItem key={c.id} value={c.id}>{c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}</SelectItem>)}
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {clientes?.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -138,27 +138,27 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
           <div>
             <Label>Safra</Label>
             <Select isSearchable value={form.safra_id || undefined} onValueChange={(v) => update('safra_id', v)}>
-              <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-              <Select isSearchableContent>
-                {safras?.map(s => <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {safras?.map(s => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label>Conta DRE</Label>
             <Select isSearchable value={form.dre_conta_id || undefined} onValueChange={(v) => update('dre_conta_id', v)}>
-              <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-              <Select isSearchableContent>
-                {dreContas?.map(d => <Select isSearchableItem key={d.id} value={d.id}>{d.codigo} - {d.descricao}</SelectItem>)}
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {dreContas?.map(d => <SelectItem key={d.id} value={d.id}>{d.codigo} - {d.descricao}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label>Sub-centro de custo</Label>
             <Select isSearchable value={form.sub_centro_custo_id || undefined} onValueChange={(v) => update('sub_centro_custo_id', v)}>
-              <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione" /></SelectTrigger>
-              <Select isSearchableContent>
-                {subCentros?.map((s: any) => <Select isSearchableItem key={s.id} value={s.id}>{s.codigo} - {s.descricao}</SelectItem>)}
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {subCentros?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.codigo} - {s.descricao}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

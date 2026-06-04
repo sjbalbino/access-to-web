@@ -92,11 +92,11 @@ export function LiberarUsuarioDialog({ usuario, open, onOpenChange }: Props) {
             <Label>Empresa (Tenant)</Label>
             {isSuperAdmin ? (
               <Select isSearchable value={tenantId} onValueChange={(v) => setTenantId(v as any)}>
-                <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                <Select isSearchableContent>
-                  <Select isSearchableItem value="__none__">Sem empresa (Super Admin)</SelectItem>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sem empresa (Super Admin)</SelectItem>
                   {tenants?.map((t: any) => (
-                    <Select isSearchableItem key={t.id} value={t.id}>
+                    <SelectItem key={t.id} value={t.id}>
                       {t.nome_fantasia || t.razao_social}
                     </SelectItem>
                   ))}
@@ -114,12 +114,12 @@ export function LiberarUsuarioDialog({ usuario, open, onOpenChange }: Props) {
           <div className="space-y-2">
             <Label>Nível de acesso</Label>
             <Select isSearchable value={role} onValueChange={(v) => setRole(v as AppRole)}>
-              <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-              <Select isSearchableContent>
-                <Select isSearchableItem value="visualizador">Visualizador</SelectItem>
-                <Select isSearchableItem value="operador">Operador</SelectItem>
-                <Select isSearchableItem value="gerente">Gerente</SelectItem>
-                <Select isSearchableItem value="admin">Administrador</SelectItem>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="visualizador">Visualizador</SelectItem>
+                <SelectItem value="operador">Operador</SelectItem>
+                <SelectItem value="gerente">Gerente</SelectItem>
+                <SelectItem value="admin">Administrador</SelectItem>
               </SelectContent>
             </Select>
           </div>

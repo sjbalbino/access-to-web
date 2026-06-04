@@ -133,10 +133,10 @@ export default function PlanoContasGerencial() {
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
                         <Select isSearchable value={formData.tipo || 'despesa'} onValueChange={v => setFormData({ ...formData, tipo: v })}>
-                          <Select isSearchableTrigger><Select isSearchableValue /></SelectTrigger>
-                          <Select isSearchableContent>
-                            <Select isSearchableItem value="receita">Receita</SelectItem>
-                            <Select isSearchableItem value="despesa">Despesa</SelectItem>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="receita">Receita</SelectItem>
+                            <SelectItem value="despesa">Despesa</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -270,10 +270,10 @@ export default function PlanoContasGerencial() {
             <div className="space-y-2">
               <Label>Conta DRE</Label>
               <Select isSearchable value={subFormData.codigo_dre || ''} onValueChange={v => setSubFormData({ ...subFormData, codigo_dre: v || null })}>
-                <Select isSearchableTrigger><Select isSearchableValue placeholder="Selecione uma conta DRE" /></SelectTrigger>
-                <Select isSearchableContent>
+                <SelectTrigger><SelectValue placeholder="Selecione uma conta DRE" /></SelectTrigger>
+                <SelectContent>
                   {dreContasFiltered.map(dre => (
-                    <Select isSearchableItem key={dre.id} value={dre.codigo}>{dre.codigo} - {dre.descricao}</SelectItem>
+                    <SelectItem key={dre.id} value={dre.codigo}>{dre.codigo} - {dre.descricao}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

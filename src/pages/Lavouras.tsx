@@ -282,12 +282,12 @@ export default function Lavouras() {
                 value={formData.granja_id || ""}
                 onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}
               >
-                <Select isSearchableTrigger>
-                  <Select isSearchableValue placeholder="Selecione uma granja" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma granja" />
                 </SelectTrigger>
-                <Select isSearchableContent>
+                <SelectContent>
                   {granjas?.map((granja) => (
-                    <Select isSearchableItem key={granja.id} value={granja.id}>
+                    <SelectItem key={granja.id} value={granja.id}>
                       {granja.razao_social}
                     </SelectItem>
                   ))}

@@ -328,12 +328,12 @@ export default function Safras() {
                 value={formData.cultura_id || ""}
                 onValueChange={(value) => setFormData({ ...formData, cultura_id: value || null })}
               >
-                <Select isSearchableTrigger>
-                  <Select isSearchableValue placeholder="Selecione uma cultura" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma cultura" />
                 </SelectTrigger>
-                <Select isSearchableContent>
+                <SelectContent>
                   {culturas?.map((cultura) => (
-                    <Select isSearchableItem key={cultura.id} value={cultura.id}>
+                    <SelectItem key={cultura.id} value={cultura.id}>
                       {cultura.nome}
                     </SelectItem>
                   ))}
@@ -366,13 +366,13 @@ export default function Safras() {
                 value={formData.status || "ativa"}
                 onValueChange={(value) => setFormData({ ...formData, status: value })}
               >
-                <Select isSearchableTrigger>
-                  <Select isSearchableValue />
+                <SelectTrigger>
+                  <SelectValue />
                 </SelectTrigger>
-                <Select isSearchableContent>
-                  <Select isSearchableItem value="planejada">Planejada</SelectItem>
-                  <Select isSearchableItem value="ativa">Ativa</SelectItem>
-                  <Select isSearchableItem value="encerrada">Encerrada</SelectItem>
+                <SelectContent>
+                  <SelectItem value="planejada">Planejada</SelectItem>
+                  <SelectItem value="ativa">Ativa</SelectItem>
+                  <SelectItem value="encerrada">Encerrada</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -207,13 +207,13 @@ export default function LocaisEntrega() {
               </div>
               <div className="w-full md:w-64">
                 <Select isSearchable value={granjaFilter || "__all__"} onValueChange={(val) => setGranjaFilter(val === "__all__" ? "" : val)}>
-                  <Select isSearchableTrigger>
-                    <Select isSearchableValue placeholder="Todas as granjas" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas as granjas" />
                   </SelectTrigger>
-                  <Select isSearchableContent>
-                    <Select isSearchableItem value="__all__">Todas as granjas</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todas as granjas</SelectItem>
                     {granjas.map((g) => (
-                      <Select isSearchableItem key={g.id} value={g.id}>
+                      <SelectItem key={g.id} value={g.id}>
                         {g.nome_fantasia || g.razao_social}
                       </SelectItem>
                     ))}
@@ -326,13 +326,13 @@ export default function LocaisEntrega() {
                     value={formData.granja_id || "__none__"} 
                     onValueChange={(val) => setFormData({ ...formData, granja_id: val === "__none__" ? null : val })}
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="Selecione a granja" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a granja" />
                     </SelectTrigger>
-                    <Select isSearchableContent>
-                      <Select isSearchableItem value="__none__">Nenhuma</SelectItem>
+                    <SelectContent>
+                      <SelectItem value="__none__">Nenhuma</SelectItem>
                       {granjas.map((g) => (
-                        <Select isSearchableItem key={g.id} value={g.id}>
+                        <SelectItem key={g.id} value={g.id}>
                           {g.nome_fantasia || g.razao_social}
                         </SelectItem>
                       ))}
@@ -358,13 +358,13 @@ export default function LocaisEntrega() {
                     value={formData.tipo_pessoa || "juridica"} 
                     onValueChange={(val) => setFormData({ ...formData, tipo_pessoa: val, cpf_cnpj: "" })}
                   >
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue />
+                    <SelectTrigger>
+                      <SelectValue />
                     </SelectTrigger>
-                    <Select isSearchableContent>
-                      <Select isSearchableItem value="juridica">Pessoa Jurídica</SelectItem>
-                      <Select isSearchableItem value="fisica">Pessoa Física</SelectItem>
-                      <Select isSearchableItem value="estrangeiro">Estrangeiro</SelectItem>
+                    <SelectContent>
+                      <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
+                      <SelectItem value="fisica">Pessoa Física</SelectItem>
+                      <SelectItem value="estrangeiro">Estrangeiro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -495,13 +495,13 @@ export default function LocaisEntrega() {
                       value={formData.uf || "__none__"} 
                       onValueChange={(val) => setFormData({ ...formData, uf: val === "__none__" ? null : val })}
                     >
-                      <Select isSearchableTrigger>
-                        <Select isSearchableValue placeholder="UF" />
+                      <SelectTrigger>
+                        <SelectValue placeholder="UF" />
                       </SelectTrigger>
-                      <Select isSearchableContent>
-                        <Select isSearchableItem value="__none__">Selecione</SelectItem>
+                      <SelectContent>
+                        <SelectItem value="__none__">Selecione</SelectItem>
                         {UF_OPTIONS.map((uf) => (
-                          <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
+                          <SelectItem key={uf} value={uf}>{uf}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

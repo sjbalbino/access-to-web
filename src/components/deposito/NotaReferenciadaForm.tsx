@@ -244,12 +244,12 @@ export function NotaReferenciadaForm({
                 <div className="space-y-2">
                   <Label>UF *</Label>
                   <Select isSearchable value={nfpUf} onValueChange={setNfpUf}>
-                    <Select isSearchableTrigger>
-                      <Select isSearchableValue placeholder="UF" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="UF" />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {UFS.map((uf) => (
-                        <Select isSearchableItem key={uf} value={uf}>{uf}</SelectItem>
+                        <SelectItem key={uf} value={uf}>{uf}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

@@ -621,12 +621,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                   <div className="space-y-2">
                     <Label>Local (Granja) *</Label>
                     <Select isSearchable value={granjaId} onValueChange={(v) => { setGranjaId(v); setInscricaoId(""); }}>
-                      <Select isSearchableTrigger>
-                        <Select isSearchableValue placeholder="Selecione o local" />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o local" />
                       </SelectTrigger>
-                      <Select isSearchableContent>
+                      <SelectContent>
                         {granjas.map((g) => (
-                          <Select isSearchableItem key={g.id} value={g.id}>
+                          <SelectItem key={g.id} value={g.id}>
                             {g.nome_fantasia || g.razao_social}
                           </SelectItem>
                         ))}
@@ -637,12 +637,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                   <div className="space-y-2">
                     <Label>Safra *</Label>
                     <Select isSearchable value={safraId} onValueChange={(v) => { setSafraId(v); setInscricaoId(""); }}>
-                      <Select isSearchableTrigger>
-                        <Select isSearchableValue placeholder="Selecione a safra" />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a safra" />
                       </SelectTrigger>
-                      <Select isSearchableContent>
+                      <SelectContent>
                         {safras.map((s) => (
-                          <Select isSearchableItem key={s.id} value={s.id}>
+                          <SelectItem key={s.id} value={s.id}>
                             {s.nome}
                           </SelectItem>
                         ))}
@@ -657,12 +657,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                       onValueChange={setInscricaoId}
                       disabled={!granjaId || !safraId}
                     >
-                      <Select isSearchableTrigger>
-                        <Select isSearchableValue placeholder={!granjaId || !safraId ? "Selecione local e safra" : "Selecione a inscrição"} />
+                      <SelectTrigger>
+                        <SelectValue placeholder={!granjaId || !safraId ? "Selecione local e safra" : "Selecione a inscrição"} />
                       </SelectTrigger>
-                      <Select isSearchableContent>
+                      <SelectContent>
                         {inscricoesComSaldo.map((i) => (
-                          <Select isSearchableItem key={i.id} value={i.id}>
+                          <SelectItem key={i.id} value={i.id}>
                             {i.inscricao_estadual || i.cpf_cnpj} - {i.produtor_nome || i.granja}
                           </SelectItem>
                         ))}
@@ -849,12 +849,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                       <div className="space-y-2">
                         <Label>Variedade *</Label>
                         <Select isSearchable value={produtoId} onValueChange={setProdutoId}>
-                          <Select isSearchableTrigger>
-                            <Select isSearchableValue placeholder="Selecione a variedade" />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a variedade" />
                           </SelectTrigger>
-                          <Select isSearchableContent>
+                          <SelectContent>
                             {saldos.filter(s => s.saldo_a_emitir_kg > 0).map((s) => (
-                              <Select isSearchableItem key={s.produto_id} value={s.produto_id}>
+                              <SelectItem key={s.produto_id} value={s.produto_id}>
                                 {s.produto_nome} (Saldo: {formatKg(s.saldo_a_emitir_kg)} kg)
                               </SelectItem>
                             ))}

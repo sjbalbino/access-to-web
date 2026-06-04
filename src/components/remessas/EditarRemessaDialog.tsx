@@ -338,12 +338,12 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                 <div className="space-y-2">
                   <Label>Silo *</Label>
                   <Select isSearchable value={siloId} onValueChange={setSiloId} disabled={isReadOnly}>
-                    <Select isSearchableTrigger disabled={isReadOnly}>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger disabled={isReadOnly}>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {silos?.map((s) => (
-                        <Select isSearchableItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                        <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -409,12 +409,12 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
                   <Select isSearchable value={transportadoraId} onValueChange={setTransportadoraId} disabled={isReadOnly}>
-                    <Select isSearchableTrigger disabled={isReadOnly}>
-                      <Select isSearchableValue placeholder="Selecione..." />
+                    <SelectTrigger disabled={isReadOnly}>
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <Select isSearchableContent>
+                    <SelectContent>
                       {transportadoras?.map((t) => (
-                        <Select isSearchableItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                        <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

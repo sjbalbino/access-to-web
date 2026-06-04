@@ -103,7 +103,7 @@ const SelectContent = React.forwardRef<
         position={position}
         {...props}
       >
-        <Select isSearchableScrollUpButton />
+        <SelectScrollUpButton />
         {context?.isSearchable && (
           <div className="flex items-center border-b px-3 sticky top-0 bg-popover z-10">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -130,7 +130,7 @@ const SelectContent = React.forwardRef<
         >
           {children}
         </SelectPrimitive.Viewport>
-        <Select isSearchableScrollDownButton />
+        <SelectScrollDownButton />
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );

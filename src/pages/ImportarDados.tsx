@@ -208,12 +208,12 @@ export default function ImportarDados() {
           <div className="max-w-md">
             <Label htmlFor="tenant-select">Empresa Contratante *</Label>
             <Select isSearchable value={selectedTenantId} onValueChange={setSelectedTenantId}>
-              <Select isSearchableTrigger id="tenant-select" className="mt-1">
-                <Select isSearchableValue placeholder={isLoadingTenants ? "Carregando..." : "Selecione a empresa contratante"} />
+              <SelectTrigger id="tenant-select" className="mt-1">
+                <SelectValue placeholder={isLoadingTenants ? "Carregando..." : "Selecione a empresa contratante"} />
               </SelectTrigger>
-              <Select isSearchableContent>
+              <SelectContent>
                 {tenants?.map((tenant) => (
-                  <Select isSearchableItem key={tenant.id} value={tenant.id}>
+                  <SelectItem key={tenant.id} value={tenant.id}>
                     {tenant.razao_social} {tenant.cnpj ? `(${tenant.cnpj})` : ''}
                   </SelectItem>
                 ))}
