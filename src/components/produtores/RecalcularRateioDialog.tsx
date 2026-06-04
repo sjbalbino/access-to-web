@@ -199,14 +199,34 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
               <Label className="text-xs text-muted-foreground uppercase">Últimos recálculos para esta granja</Label>
               <div className="space-y-1">
                 {logs.map((log) => (
-                  <div key={log.id} className="text-[10px] p-2 border rounded bg-muted/30 flex justify-between items-center">
-                    <div>
-                      <span className="font-semibold">{new Date(log.created_at).toLocaleDateString()}</span> - 
-                      {log.observacoes || log.status}
+                  <div key={log.id} className="text-[10px] p-2 border rounded bg-muted/30 flex justify-between items-center gap-2">
+                    <div className="flex-1">
+                      <div className="font-semibold">
+                        {new Date(log.created_at).toLocaleDateString()} {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <div className="text-muted-foreground italic">
+                        Por: {log.profiles?.nome || 'Sistema'}
+                      </div>
+                      <div className="mt-0.5">{log.observacoes || log.status}</div>
                     </div>
-                    <div className="text-muted-foreground italic">
-                      Por: {log.profiles?.nome || 'Sistema'}
-                    </div>
+                    {log.backup_data && log.status !== 'desfeito' && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        onClick={() => undoMutation.mutate(log.id)}
+                        disabled={undoMutation.isPending}
+                      >
+                        {undoMutation.isPending && undoMutation.variables === log.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <Undo2 className="h-3 w-3" />
+                            <span>Desfazer</span>
+                          </div>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
