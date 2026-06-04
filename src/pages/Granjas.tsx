@@ -30,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Building2, Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Search, Loader2, Star } from "lucide-react";
 import {
   useGranjas,
   useCreateGranja,
@@ -59,6 +59,7 @@ const emptyGranja: GranjaInput = {
   email: "",
   total_hectares: 0,
   ativa: true,
+  is_principal: false,
 };
 
 export default function Granjas() {
@@ -111,6 +112,7 @@ export default function Granjas() {
       email: granja.email || "",
       total_hectares: granja.total_hectares || 0,
       ativa: granja.ativa ?? true,
+      is_principal: granja.is_principal ?? false,
     });
     setDialogOpen(true);
   };
@@ -204,7 +206,12 @@ export default function Granjas() {
                     <TableRow key={granja.id}>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{granja.razao_social}</p>
+                          <p className="font-medium flex items-center gap-1.5">
+                            {granja.razao_social}
+                            {granja.is_principal && (
+                              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            )}
+                          </p>
                           {granja.nome_fantasia && (
                             <p className="text-sm text-muted-foreground">{granja.nome_fantasia}</p>
                           )}
@@ -397,6 +404,13 @@ export default function Granjas() {
                 onCheckedChange={(checked) => setFormData({ ...formData, ativa: checked })}
               />
               <Label>Granja Ativa</Label>
+            </div>
+            <div className="flex items-center gap-2 pt-6">
+              <Switch
+                checked={formData.is_principal ?? false}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_principal: checked })}
+              />
+              <Label>Granja Principal</Label>
             </div>
           </div>
           <div className="flex justify-end gap-2">

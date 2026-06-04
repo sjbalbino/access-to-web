@@ -2524,6 +2524,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          is_principal: boolean | null
           logradouro: string | null
           nome_fantasia: string | null
           numero: string | null
@@ -2544,6 +2545,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_principal?: boolean | null
           logradouro?: string | null
           nome_fantasia?: string | null
           numero?: string | null
@@ -2564,6 +2566,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_principal?: boolean | null
           logradouro?: string | null
           nome_fantasia?: string | null
           numero?: string | null

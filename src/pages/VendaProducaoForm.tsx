@@ -385,7 +385,7 @@ export default function VendaProducaoForm() {
       remessa_deposito: data.remessa_deposito,
       retorno_deposito: data.retorno_deposito,
       observacoes: data.observacoes || null,
-      granja_id: data.granja_id || granjas?.[0]?.id || null,
+      granja_id: data.granja_id || (granjas?.find(g => g.is_principal) || granjas?.[0])?.id || null,
     };
 
     if (isEditing) {

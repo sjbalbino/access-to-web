@@ -69,7 +69,8 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         ja_pago: initial.status === 'pago',
       });
     } else {
-      setForm((f: any) => ({ ...f, granja_id: granjas?.[0]?.id || '' }));
+      const principal = granjas?.find(g => g.is_principal) || granjas?.[0];
+      setForm((f: any) => ({ ...f, granja_id: principal?.id || '' }));
     }
   }, [initial, open, granjas]);
 

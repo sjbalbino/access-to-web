@@ -18,6 +18,7 @@ export interface Granja {
   email: string | null;
   total_hectares: number | null;
   ativa: boolean | null;
+  is_principal: boolean | null;
   tenant_id: string | null;
   created_at: string;
   updated_at: string;
