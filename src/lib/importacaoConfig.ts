@@ -1214,8 +1214,12 @@ export async function resolveReferences(
       } else if (!ref.optional) {
         errors.push(`Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" não encontrado`);
       }
-      if (foundKey) delete newRow[foundKey];
-      if (compositeFoundKey) delete newRow[compositeFoundKey];
+      // We only delete the foundKey if it was a temporary/auxiliary column (starting with _)
+      // or if it's NOT a column already mapped in the DB.
+      // However, to keep it simple and safe for all tables, we'll only delete it if it starts with '_'
+      // as those are clearly auxiliary. For others, we keep them so they can be saved to their own columns.
+      if (foundKey && foundKey.startsWith('_')) delete newRow[foundKey];
+      if (compositeFoundKey && compositeFoundKey.startsWith('_')) delete newRow[compositeFoundKey];
     }
     return newRow;
   });
