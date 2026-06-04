@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Pencil, Trash2, FolderOpen, Search, Check } from 'lucide-react';
 import { useGruposProdutos, useCreateGrupoProduto, useUpdateGrupoProduto, useDeleteGrupoProduto, GrupoProdutoInput } from '@/hooks/useGruposProdutos';
 import { useSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
+import { useDreContas } from '@/hooks/useDreContas';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { usePaginacao } from "@/hooks/usePaginacao";
@@ -24,6 +25,7 @@ export default function GruposProdutos() {
   const { canEdit } = useAuth();
   const { data: grupos, isLoading } = useGruposProdutos();
   const { data: subCentros } = useSubCentrosCusto();
+  const { data: dreContas } = useDreContas();
   const createMutation = useCreateGrupoProduto();
   const updateMutation = useUpdateGrupoProduto();
   const deleteMutation = useDeleteGrupoProduto();
@@ -36,6 +38,7 @@ export default function GruposProdutos() {
     descricao: '',
     ativo: true,
     conta_gerencial_id: null,
+    codigo_dre: null,
     maquinas_implementos: false,
     bens_benfeitorias: false,
     insumos: false,
@@ -50,7 +53,7 @@ export default function GruposProdutos() {
   const subCentrosAtivos = subCentros?.filter((c: any) => c.ativo) ?? [];
 
   const resetForm = () => {
-    setFormData({ nome: '', descricao: '', ativo: true, conta_gerencial_id: null, maquinas_implementos: false, bens_benfeitorias: false, insumos: false, venda_producao: false });
+    setFormData({ nome: '', descricao: '', ativo: true, conta_gerencial_id: null, codigo_dre: null, maquinas_implementos: false, bens_benfeitorias: false, insumos: false, venda_producao: false });
     setEditingItem(null);
   };
 
@@ -72,6 +75,7 @@ export default function GruposProdutos() {
       descricao: item.descricao || '',
       ativo: item.ativo ?? true,
       conta_gerencial_id: item.conta_gerencial_id || null,
+      codigo_dre: item.codigo_dre || null,
       maquinas_implementos: item.maquinas_implementos ?? false,
       bens_benfeitorias: item.bens_benfeitorias ?? false,
       insumos: item.insumos ?? false,
@@ -169,6 +173,25 @@ export default function GruposProdutos() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div className="space-y-2">
+                        <Label>Conta DRE (Rateio automático)</Label>
+                        <Select isSearchable
+                          value={formData.codigo_dre || 'none'}
+                          onValueChange={(value) => setFormData({ ...formData, codigo_dre: value === 'none' ? null : value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma conta DRE" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhuma</SelectItem>
+                            {dreContas?.filter(c => c.ativo).map((dre: any) => (
+                              <SelectItem key={dre.id} value={dre.codigo}>
+                                {dre.codigo} - {dre.descricao}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="space-y-3 rounded-lg border p-4">
                         <Label className="text-sm font-semibold">Classificação</Label>
                         <div className="grid grid-cols-2 gap-3">
@@ -249,7 +272,8 @@ export default function GruposProdutos() {
                   <TableRow>
                     <TableHead>Nome</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead>Conta Gerencial</TableHead>
+                    <TableHead>Sub-Centro</TableHead>
+                    <TableHead>Conta DRE</TableHead>
                     <TableHead>Classificação</TableHead>
                     <TableHead>Status</TableHead>
                     {canEdit && <TableHead className="w-24">Ações</TableHead>}
@@ -261,6 +285,7 @@ export default function GruposProdutos() {
                       <TableCell className="font-medium">{grupo.nome}</TableCell>
                       <TableCell className="text-muted-foreground">{grupo.descricao || '-'}</TableCell>
                       <TableCell className="text-sm">{grupo.sub_centros_custo ? grupo.sub_centros_custo.descricao : '-'}</TableCell>
+                      <TableCell className="text-sm font-mono">{grupo.codigo_dre || '-'}</TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {grupo.insumos && <Badge variant="outline" className="text-xs">Insumos</Badge>}
