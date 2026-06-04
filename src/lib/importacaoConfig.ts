@@ -355,8 +355,10 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'unidade_medida_id', sourceColumn: 'unidade_medida', lookupTable: 'unidades_medida', lookupColumn: 'sigla', lookupLabel: 'descricao', fallbackColumns: ['codigo', 'descricao'], optional: true },
       { dbColumn: 'fornecedor_id', sourceColumn: 'fornecedor', lookupTable: 'clientes_fornecedores', lookupColumn: 'nome', lookupLabel: 'nome', optional: true },
       { dbColumn: 'grupo_id', sourceColumn: 'grupo_produto', lookupTable: 'grupos_produtos', lookupColumn: 'nome', lookupLabel: 'nome', sourceColumnAliases: ['grupo', 'Grupo', 'GRUPO'], optional: true },
+      { dbColumn: 'conta_gerencial_id', sourceColumn: 'conta_gerencial', lookupTable: 'sub_centros_custo', lookupColumn: 'descricao', lookupLabel: 'descricao', sourceColumnAliases: ['CONTA_GERENCIAL', 'Conta Gerencial', 'sub_centro_custo', 'CONTA', 'Conta'], optional: true },
       { dbColumn: 'produto_residuo_id', sourceColumn: 'produto_residuo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', selfReference: true, optional: true },
     ],
+    interactiveColumns: ['conta_gerencial_id'],
   },
   {
     key: 'silos',
