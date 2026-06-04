@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Plus, Pencil, Trash2, Loader2, Phone, Mail, FileText } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Loader2, Phone, Mail, FileText, RefreshCcw } from "lucide-react";
 import {
   useProdutores, useCreateProdutor, useUpdateProdutor, useDeleteProdutor, ProdutorInput,
 } from "@/hooks/useProdutores";
