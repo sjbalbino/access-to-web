@@ -127,11 +127,16 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const normalize = (s: string) =>
     s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-  // Auto-match sub-centros by name
+  // Auto-match sub-centros by name or by specific column
   useEffect(() => {
     if (!needsContaGerencial || transformedData.length === 0 || subCentros.length === 0) return;
     const autoMap: Record<number, string> = {};
     transformedData.forEach((row, idx) => {
+      // Prioritize resolved FK if it came from the spreadsheet
+      if (row.conta_gerencial_id) {
+        autoMap[idx] = row.conta_gerencial_id;
+        return;
+      }
       const nome = normalize(String(row.nome ?? ''));
       if (!nome) return;
       const match = subCentros.find(s => normalize(s.descricao) === nome);
