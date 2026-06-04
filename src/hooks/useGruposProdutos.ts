@@ -8,6 +8,7 @@ export interface GrupoProduto {
   descricao: string | null;
   ativo: boolean | null;
   conta_gerencial_id: string | null;
+  codigo_dre: string | null;
   maquinas_implementos: boolean | null;
   bens_benfeitorias: boolean | null;
   insumos: boolean | null;
