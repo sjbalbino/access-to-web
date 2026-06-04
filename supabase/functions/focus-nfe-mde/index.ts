@@ -154,7 +154,7 @@ serve(async (req) => {
         return new Response(xmlContent, {
           headers: {
             ...corsHeaders,
-            "Content-Type": "application/xml",
+            "Content-Type": "text/plain; charset=utf-8",
           },
         });
       }

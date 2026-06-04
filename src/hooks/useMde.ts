@@ -85,6 +85,7 @@ export function useMde() {
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
         body: { action: "download_xml", inscricaoId, chave },
+        headers: { "X-Content-Type": "text/plain" }
       });
       if (error) throw new Error(error.message);
 
