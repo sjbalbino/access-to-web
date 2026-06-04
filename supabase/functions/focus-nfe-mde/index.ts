@@ -144,6 +144,9 @@ serve(async (req) => {
 
         if (!response.ok) {
           const errorText = await response.text();
+          if (response.status === 404) {
+            throw new Error("XML não disponível. Manifeste a NF-e (Ciência da Operação) antes de baixar o XML.");
+          }
           throw new Error(`Erro ao baixar XML: ${response.status} - ${errorText}`);
         }
 
@@ -170,6 +173,9 @@ serve(async (req) => {
 
         if (!response.ok) {
           const errorText = await response.text();
+          if (response.status === 404) {
+            throw new Error("DANFe não disponível. Manifeste a NF-e (Ciência da Operação) antes de baixar o DANFe.");
+          }
           throw new Error(`Erro ao baixar DANFe: ${response.status} - ${errorText}`);
         }
 
