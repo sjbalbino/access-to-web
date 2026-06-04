@@ -85,6 +85,29 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
     },
   });
 
+  const undoMutation = useMutation({
+    mutationFn: async (logId: string) => {
+      if (!user?.id) throw new Error('Usuário não autenticado');
+      
+      const { data, error } = await supabase.rpc('desfazer_recalculo_rateio', {
+        p_log_id: logId,
+        p_user_id: user.id,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Recálculo desfeito com sucesso!');
+      qc.invalidateQueries({ queryKey: ['lancamento_rateio_socios'] });
+      qc.invalidateQueries({ queryKey: ['rateios_periodo'] });
+      qc.invalidateQueries({ queryKey: ['rateio_recalculo_logs'] });
+    },
+    onError: (error: any) => {
+      toast.error('Erro ao desfazer recálculo: ' + error.message);
+    },
+  });
+
   const resetForm = () => {
     setGranjaId('');
     setDataInicio('');
