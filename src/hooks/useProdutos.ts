@@ -55,7 +55,8 @@ export function useProdutos() {
         .select(`
           *,
           unidade_medida:unidades_medida(id, codigo, descricao, sigla),
-          fornecedor:clientes_fornecedores(id, nome)
+          fornecedor:clientes_fornecedores(id, nome),
+          grupo_vinculado:grupos_produtos(id, nome)
         `)
         .order('nome');
       if (error) throw error;
