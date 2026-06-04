@@ -22,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RefreshCcw, AlertTriangle, Loader2, Undo2 } from 'lucide-react';
+import { RefreshCcw, AlertTriangle, Loader2, Undo2, FileText } from 'lucide-react';
+import { gerarRelatorioAuditoriaRateioPdf } from '@/lib/relatoriosGestao';
 
 interface RecalcularRateioDialogProps {
   open: boolean;
