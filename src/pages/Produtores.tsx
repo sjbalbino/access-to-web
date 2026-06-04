@@ -90,6 +90,7 @@ export default function Produtores() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<ProdutorInput>(emptyProdutor);
   const [activeTab, setActiveTab] = useState<string>("dados");
+  const [isRecalcularOpen, setIsRecalcularOpen] = useState(false);
 
   const dadosFiltrados = useMemo(() => {
     let dados = produtores || [];
