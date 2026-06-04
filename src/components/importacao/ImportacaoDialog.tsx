@@ -109,6 +109,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   // Tabelas que suportam upsert (atualizar existentes + inserir novos)
   // baseado em índices únicos existentes no banco
   const UPSERT_KEYS: Record<string, string> = {
+    dre_contas: 'tenant_id,codigo',
     granjas: 'tenant_id,codigo',
     safras: 'tenant_id,codigo',
     culturas: 'tenant_id,codigo',
