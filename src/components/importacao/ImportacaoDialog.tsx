@@ -118,6 +118,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     contas_pagar: 'tenant_id,codigo_legado',
     contas_receber: 'tenant_id,codigo_legado',
     produtores: 'granja_id,codigo',
+    produtos: 'tenant_id,codigo',
   };
   const upsertConflict = UPSERT_KEYS[config.tableName];
   const upsertSupported = !!upsertConflict && !config.updateMode;
