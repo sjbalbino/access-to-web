@@ -271,10 +271,16 @@ export default function Produtores() {
               Lista de Sócios e Produtores
             </CardTitle>
             {canEdit && (
-              <Button className="gap-2" size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Novo Registro</span>
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="gap-2" size="sm" onClick={() => setIsRecalcularOpen(true)}>
+                  <RefreshCcw className="h-4 w-4" />
+                  <span className="hidden sm:inline">Recalcular Rateios</span>
+                </Button>
+                <Button className="gap-2" size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Novo Registro</span>
+                </Button>
+              </div>
             )}
           </CardHeader>
           <CardContent className="min-w-0 space-y-4">
