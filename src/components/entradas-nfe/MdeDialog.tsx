@@ -80,7 +80,45 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
       const parsed = parseNfeXml(xmlText);
 
-      // Buscar granja_id a partir da inscrição
+      // 1. Buscar ou Criar Fornecedor
+      const cnpjCpf = (parsed.emitente.cnpj || parsed.emitente.cpf || "").replace(/\D/g, "");
+      let fornecedorId = null;
+
+      if (cnpjCpf) {
+        const { data: fornecedores } = await supabase
+          .from("fornecedores")
+          .select("id")
+          .or(`cpf_cnpj.eq.${cnpjCpf},cpf_cnpj.eq.${formatCpfCnpj(cnpjCpf)}`)
+          .maybeSingle();
+
+        if (fornecedores) {
+          fornecedorId = fornecedores.id;
+        } else {
+          // Criar fornecedor
+          const { data: novoFornecedor, error: createError } = await supabase
+            .from("fornecedores")
+            .insert({
+              nome: parsed.emitente.nome,
+              cpf_cnpj: cnpjCpf,
+              ie: parsed.emitente.inscricaoEstadual,
+              logradouro: parsed.emitente.logradouro,
+              numero: parsed.emitente.numero,
+              bairro: parsed.emitente.bairro,
+              cidade: parsed.emitente.cidade,
+              uf: parsed.emitente.uf,
+              cep: parsed.emitente.cep,
+              ativo: true
+            })
+            .select("id")
+            .single();
+          
+          if (!createError && novoFornecedor) {
+            fornecedorId = novoFornecedor.id;
+          }
+        }
+      }
+
+      // 2. Buscar granja_id a partir da inscrição
       const { data: insc } = await supabase
         .from("inscricoes_produtor")
         .select("granja_id")
@@ -94,6 +132,8 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
       const header: Record<string, unknown> = {
         granja_id: granjaId,
+        inscricao_produtor_id: inscricaoId,
+        fornecedor_id: fornecedorId,
         numero_nfe: parsed.numero,
         serie: parsed.serie,
         chave_acesso: nfe.chave,
@@ -114,6 +154,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         modo_entrada: "xml",
         status: "pendente",
         xml_content: xmlText,
+        _duplicatas: parsed.duplicatas, // Passar duplicatas para gerar Contas a Pagar
       };
 
       const itens = parsed.itens.map((item) => ({
@@ -146,8 +187,8 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
       }));
 
       await createEntrada.mutateAsync({ ...header, itens });
-    } catch {
-      // errors handled inside hooks
+    } catch (error) {
+      console.error("Erro ao importar NF-e:", error);
     } finally {
       setImportingChave(null);
     }
