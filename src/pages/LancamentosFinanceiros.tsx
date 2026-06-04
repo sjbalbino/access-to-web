@@ -70,7 +70,7 @@ export default function LancamentosFinanceiros() {
 
   const resetForm = () => {
     setFormData({
-      granja_id: granjas?.[0]?.id || '', data_lancamento: new Date().toISOString().split('T')[0],
+      granja_id: (granjas?.find(g => g.is_principal) || granjas?.[0])?.id || '', data_lancamento: new Date().toISOString().split('T')[0],
       sub_centro_custo_id: null, dre_conta_id: null, descricao: '', valor: 0, tipo: 'despesa',
       fornecedor_id: null, documento: null, observacoes: null, safra_id: null,
       rateio_modo: 'rateio_granja', socio_produtor_id: null,
