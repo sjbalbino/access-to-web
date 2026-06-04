@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useProdutos } from '@/hooks/useProdutos';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Pencil, Trash2, DollarSign, Search, TrendingUp, TrendingDown } from 'lucide-react';
 import { useLancamentosFinanceiros, useCreateLancamento, useUpdateLancamento, useDeleteLancamento, LancamentoFinanceiroInput } from '@/hooks/useLancamentosFinanceiros';
@@ -36,6 +37,7 @@ export default function LancamentosFinanceiros() {
   const { data: clientes } = useClientesFornecedores();
   const { data: safras } = useSafras();
   const { data: centrosCusto } = usePlanoContasGerencial();
+  const { data: produtos } = useProdutos();
 
   // Filters
   const [filtroGranja, setFiltroGranja] = useState('');
@@ -65,6 +67,7 @@ export default function LancamentosFinanceiros() {
     dre_conta_id: null, descricao: '', valor: 0, tipo: 'despesa', fornecedor_id: null,
     documento: null, observacoes: null, safra_id: null,
     rateio_modo: 'rateio_granja', socio_produtor_id: null,
+    produto_id: null,
   });
   const [rateioManualLanc, setRateioManualLanc] = useState<{ socio_produtor_id: string; percentual: number }[]>([]);
 
@@ -74,6 +77,7 @@ export default function LancamentosFinanceiros() {
       sub_centro_custo_id: null, dre_conta_id: null, descricao: '', valor: 0, tipo: 'despesa',
       fornecedor_id: null, documento: null, observacoes: null, safra_id: null,
       rateio_modo: 'rateio_granja', socio_produtor_id: null,
+      produto_id: null,
     });
     setRateioManualLanc([]);
     setEditingItem(null);
@@ -81,9 +85,10 @@ export default function LancamentosFinanceiros() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const { produto_id, ...payload } = formData as any;
     let saved: any;
-    if (editingItem) saved = await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
-    else saved = await createMutation.mutateAsync(formData);
+    if (editingItem) saved = await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
+    else saved = await createMutation.mutateAsync(payload);
     if (formData.rateio_modo === 'manual' && saved?.id) {
       await salvarManualLanc.mutateAsync({
         origem_tipo: 'lancamento',
@@ -109,6 +114,7 @@ export default function LancamentosFinanceiros() {
       observacoes: item.observacoes, safra_id: item.safra_id,
       rateio_modo: item.rateio_modo || 'rateio_granja',
       socio_produtor_id: item.socio_produtor_id || null,
+      produto_id: null,
     });
     setIsDialogOpen(true);
   };
@@ -301,8 +307,48 @@ export default function LancamentosFinanceiros() {
               </div>
             </div>
             <div className="space-y-2">
+              <Label>Produto</Label>
+              <Select isSearchable value={(formData as any).produto_id || 'none'} onValueChange={v => {
+                const val = v === 'none' ? null : v;
+                setFormData(prev => {
+                  const newForm = { ...prev, produto_id: val } as any;
+                  if (val) {
+                    const produto = produtos?.find((p: any) => p.id === val);
+                    if (produto?.conta_gerencial_id) {
+                      newForm.sub_centro_custo_id = produto.conta_gerencial_id;
+                      const sub = subCentros?.find(s => s.id === produto.conta_gerencial_id);
+                      if (sub?.codigo_dre) {
+                        const dre = dreContas?.find(d => d.codigo === sub.codigo_dre);
+                        if (dre) newForm.dre_conta_id = dre.id;
+                      }
+                    }
+                  }
+                  return newForm;
+                });
+              }}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {produtos?.filter(p => p.ativo).map(p => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label>Sub-Centro de Custo</Label>
-              <Select isSearchable value={formData.sub_centro_custo_id || 'none'} onValueChange={v => setFormData({ ...formData, sub_centro_custo_id: v === 'none' ? null : v })}>
+              <Select isSearchable value={formData.sub_centro_custo_id || 'none'} onValueChange={v => {
+                const val = v === 'none' ? null : v;
+                setFormData(prev => {
+                  const newForm = { ...prev, sub_centro_custo_id: val };
+                  if (val) {
+                    const sub = subCentros?.find(s => s.id === val);
+                    if (sub?.codigo_dre) {
+                      const dre = dreContas?.find(d => d.codigo === sub.codigo_dre);
+                      if (dre) newForm.dre_conta_id = dre.id;
+                    }
+                  }
+                  return newForm;
+                });
+              }}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhum</SelectItem>

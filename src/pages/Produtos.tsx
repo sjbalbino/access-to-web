@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAllSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +65,7 @@ export default function Produtos() {
   const { data: unidades } = useUnidadesMedida();
   const { data: fornecedores } = useClientesFornecedores();
   const { data: grupos } = useGruposProdutos();
+  const { data: subCentros } = useAllSubCentrosCusto();
   const { results: ncmResults, isLoading: ncmLoading, searchNcm } = useNcmSearch();
   const createMutation = useCreateProduto();
   const updateMutation = useUpdateProduto();
@@ -111,6 +113,7 @@ export default function Produtos() {
     cst_is: null,
     cclass_trib_ibs: null,
     cclass_trib_cbs: null,
+    conta_gerencial_id: null,
   });
 
   const resetForm = () => {
@@ -149,6 +152,7 @@ export default function Produtos() {
       cst_is: null,
       cclass_trib_ibs: null,
       cclass_trib_cbs: null,
+      conta_gerencial_id: null,
     });
     setEditingItem(null);
   };
@@ -201,6 +205,7 @@ export default function Produtos() {
       cst_is: item.cst_is || null,
       cclass_trib_ibs: item.cclass_trib_ibs || null,
       cclass_trib_cbs: item.cclass_trib_cbs || null,
+      conta_gerencial_id: item.conta_gerencial_id || null,
     });
     setIsDialogOpen(true);
   };
@@ -322,6 +327,17 @@ export default function Produtos() {
                           <SelectContent>
                             {gruposAtivos?.map((grupo) => (
                               <SelectItem key={grupo.id} value={grupo.nome}>{grupo.nome}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Conta Gerencial (DRE)</Label>
+                        <Select isSearchable value={formData.conta_gerencial_id || ''} onValueChange={(value) => setFormData({ ...formData, conta_gerencial_id: value || null })}>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            {subCentros?.map((sub: any) => (
+                              <SelectItem key={sub.id} value={sub.id}>{sub.codigo} - {sub.descricao}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
