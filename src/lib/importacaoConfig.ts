@@ -251,6 +251,9 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'insumos', dbName: 'insumos', transform: toBool },
       { accessName: 'venda_producao', dbName: 'venda_producao', transform: toBool },
     ],
+    references: [
+      { dbColumn: 'conta_gerencial_id', sourceColumn: 'conta_gerencial', lookupTable: 'sub_centros_custo', lookupColumn: 'descricao', lookupLabel: 'descricao', sourceColumnAliases: ['CONTA_GERENCIAL', 'Conta Gerencial', 'sub_centro_custo', 'CONTA', 'Conta'], optional: true },
+    ],
     interactiveColumns: ['conta_gerencial_id'],
   },
   {
