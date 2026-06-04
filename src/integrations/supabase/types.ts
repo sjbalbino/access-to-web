@@ -4526,6 +4526,7 @@ export type Database = {
       }
       rateio_recalculo_logs: {
         Row: {
+          backup_data: Json | null
           created_at: string
           data_final: string
           data_inicial: string
@@ -4536,6 +4537,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          backup_data?: Json | null
           created_at?: string
           data_final: string
           data_inicial: string
@@ -4546,6 +4548,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          backup_data?: Json | null
           created_at?: string
           data_final?: string
           data_inicial?: string
@@ -5386,6 +5389,10 @@ export type Database = {
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      desfazer_recalculo_rateio: {
+        Args: { p_log_id: string; p_user_id: string }
+        Returns: Json
       }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
