@@ -2611,6 +2611,7 @@ export type Database = {
         Row: {
           ativo: boolean | null
           bens_benfeitorias: boolean | null
+          codigo_dre: string | null
           conta_gerencial_id: string | null
           created_at: string | null
           descricao: string | null
@@ -2625,6 +2626,7 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           bens_benfeitorias?: boolean | null
+          codigo_dre?: string | null
           conta_gerencial_id?: string | null
           created_at?: string | null
           descricao?: string | null
@@ -2639,6 +2641,7 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           bens_benfeitorias?: boolean | null
+          codigo_dre?: string | null
           conta_gerencial_id?: string | null
           created_at?: string | null
           descricao?: string | null
