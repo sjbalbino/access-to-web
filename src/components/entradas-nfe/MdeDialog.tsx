@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import } from "lucide-react";
+import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe } from "lucide-react";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useMde, type NfeRecebida } from "@/hooks/useMde";
 import { formatNumber } from "@/lib/formatters";
@@ -211,20 +211,60 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Manifesto do Destinatário (MD-e)</DialogTitle>
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            <Globe className="h-6 w-6 text-blue-600" />
+            NF-es Recebidas (DFe)
+          </DialogTitle>
           <DialogDescription>
-            Consulte NF-es emitidas contra o CNPJ da inscrição do produtor (sócio emissor), manifeste e importe o XML.
+            Notas fiscais emitidas contra o CNPJ desta empresa e manifestação do destinatário.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-wrap gap-4 items-end mb-4">
-          <div className="w-96">
-            <label className="text-sm font-medium mb-1 block">Inscrição do Produtor</label>
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 mt-4">
+          <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center justify-center text-center">
+            <span className="text-sm text-muted-foreground uppercase font-semibold">Total</span>
+            <span className="text-3xl font-bold mt-1">{nfesRecebidas.length}</span>
+          </div>
+          <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center justify-center text-center border-l-4 border-l-amber-500">
+            <span className="text-sm text-amber-600 uppercase font-semibold">Sem manifestação</span>
+            <span className="text-3xl font-bold mt-1 text-amber-600">
+              {nfesRecebidas.filter(n => !n.manifestacao_destinatario).length}
+            </span>
+          </div>
+          <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center justify-center text-center border-l-4 border-l-blue-500">
+            <span className="text-sm text-blue-600 uppercase font-semibold">Ciência</span>
+            <span className="text-3xl font-bold mt-1 text-blue-600">
+              {nfesRecebidas.filter(n => n.manifestacao_destinatario === "ciencia").length}
+            </span>
+          </div>
+          <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center justify-center text-center border-l-4 border-l-green-500">
+            <span className="text-sm text-green-600 uppercase font-semibold">Confirmadas</span>
+            <span className="text-3xl font-bold mt-1 text-green-600">
+              {nfesRecebidas.filter(n => n.manifestacao_destinatario === "confirmacao").length}
+            </span>
+          </div>
+          <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center justify-center text-center border-l-4 border-l-orange-500">
+            <span className="text-sm text-orange-600 uppercase font-semibold">Desconhecidas</span>
+            <span className="text-3xl font-bold mt-1 text-orange-600">
+              {nfesRecebidas.filter(n => n.manifestacao_destinatario === "desconhecimento").length}
+            </span>
+          </div>
+          <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center justify-center text-center border-l-4 border-l-red-500">
+            <span className="text-sm text-red-600 uppercase font-semibold">Não realizadas</span>
+            <span className="text-3xl font-bold mt-1 text-red-600">
+              {nfesRecebidas.filter(n => n.manifestacao_destinatario === "nao_realizada").length}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-4 items-end mb-6 bg-slate-50 p-6 rounded-lg border">
+          <div className="flex-1 min-w-[300px]">
+            <label className="text-sm font-medium mb-1.5 block">Inscrição do Produtor (CNPJ Destinatário)</label>
             <Select isSearchable value={inscricaoId || undefined} onValueChange={setInscricaoId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a inscrição emissora" />
+              <SelectTrigger className="bg-white h-11">
+                <SelectValue placeholder="Selecione a inscrição para consultar" />
               </SelectTrigger>
               <SelectContent>
                 {inscricoesEmissoras.length === 0 ? (
@@ -241,82 +281,126 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
               </SelectContent>
             </Select>
             {inscricaoSelecionada?.granjas?.razao_social && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Granja: {inscricaoSelecionada.granjas.razao_social}
+              <p className="text-xs text-muted-foreground mt-1.5 ml-1">
+                Granja vinculada: <span className="font-medium">{inscricaoSelecionada.granjas.razao_social}</span>
               </p>
             )}
           </div>
-          <Button onClick={handleConsultar} disabled={!inscricaoId || isLoading}>
-            {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
-            Consultar SEFAZ
+          <Button 
+            onClick={handleConsultar} 
+            disabled={!inscricaoId || isLoading} 
+            className="bg-blue-600 hover:bg-blue-700 h-11 px-8 font-semibold shadow-md"
+          >
+            {isLoading ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Search className="h-5 w-5 mr-2" />}
+            Sincronizar DFe
           </Button>
         </div>
 
-        <div className="rounded-lg border overflow-x-auto">
+        <div className="rounded-xl border shadow-sm overflow-hidden">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="whitespace-nowrap">Nº NF-e</TableHead>
-                <TableHead className="whitespace-nowrap">Emitente</TableHead>
-                <TableHead className="whitespace-nowrap">CNPJ</TableHead>
-                <TableHead className="whitespace-nowrap">Data Emissão</TableHead>
-                <TableHead className="whitespace-nowrap text-right">Valor</TableHead>
-                <TableHead className="whitespace-nowrap">Situação</TableHead>
-                <TableHead className="whitespace-nowrap">Manifestação</TableHead>
-                <TableHead className="text-right whitespace-nowrap">Ações</TableHead>
+            <TableHeader className="bg-slate-50">
+              <TableRow className="hover:bg-slate-50 border-b-2">
+                <TableHead className="whitespace-nowrap font-bold text-slate-700 py-4 px-6">Emitente</TableHead>
+                <TableHead className="whitespace-nowrap font-bold text-slate-700 py-4 px-6">Nº / Série</TableHead>
+                <TableHead className="whitespace-nowrap font-bold text-slate-700 py-4 px-6 text-center">Emissão</TableHead>
+                <TableHead className="whitespace-nowrap font-bold text-slate-700 py-4 px-6 text-right">Valor</TableHead>
+                <TableHead className="whitespace-nowrap font-bold text-slate-700 py-4 px-6">Status</TableHead>
+                <TableHead className="text-right whitespace-nowrap font-bold text-slate-700 py-4 px-6">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {nfesRecebidas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    {isLoading ? "Consultando SEFAZ..." : "Selecione uma inscrição e clique em Consultar"}
+                  <TableCell colSpan={6} className="text-center py-20 text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2">
+                      <Search className="h-10 w-10 text-slate-200" />
+                      <p className="text-lg font-medium text-slate-400">
+                        {isLoading ? "Consultando SEFAZ..." : "Selecione uma inscrição e clique em Sincronizar DFe"}
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 nfesRecebidas.map((nfe) => (
-                  <TableRow key={nfe.chave}>
-                    <TableCell className="font-medium">{nfe.numero || "-"}</TableCell>
-                    <TableCell className="max-w-[200px] truncate" title={nfe.nome}>{nfe.nome || "-"}</TableCell>
-                    <TableCell>{nfe.cnpj || "-"}</TableCell>
-                    <TableCell>
+                  <TableRow key={nfe.chave} className="hover:bg-blue-50/30 transition-colors border-b last:border-0">
+                    <TableCell className="py-4 px-6">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-[13px] text-slate-900 uppercase leading-tight">{nfe.nome || "-"}</span>
+                        <span className="text-xs font-medium text-slate-500">{formatCpfCnpj(nfe.cnpj)}</span>
+                        <span className="text-[10px] text-slate-400 font-mono mt-1 select-all">{nfe.chave}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-slate-700">{nfe.numero || "-"}</span>
+                        <span className="text-xs text-slate-400 font-mono">/ {nfe.serie || "-"}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center text-sm px-6 text-slate-600">
                       {nfe.data_emissao
                         ? new Date(nfe.data_emissao).toLocaleDateString("pt-BR")
                         : "-"}
                     </TableCell>
-                    <TableCell className="text-right">{formatNumber(nfe.valor || 0)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{nfe.situacao || "-"}</Badge>
+                    <TableCell className="text-right font-bold text-slate-800 px-6">
+                      {formatNumber(nfe.valor || 0)}
                     </TableCell>
-                    <TableCell>
-                      {nfe.manifestacao_destinatario ? (
-                        <Badge variant={manifestacaoVariants[nfe.manifestacao_destinatario] || "secondary"}>
-                          {manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">Pendente</span>
-                      )}
+                    <TableCell className="px-6">
+                      <div className="flex flex-col gap-1.5">
+                        {nfe.manifestacao_destinatario ? (
+                          <Badge variant={manifestacaoVariants[nfe.manifestacao_destinatario] || "secondary"} className="w-fit text-[11px] h-5">
+                            {manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 w-fit text-[11px] h-5">Sem manifestação</Badge>
+                        )}
+                        <Badge variant="outline" className="text-[10px] w-fit h-4 text-slate-400 border-slate-100">{nfe.situacao || "-"}</Badge>
+                      </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-1 justify-end">
+                    <TableCell className="text-right px-6">
+                      <div className="flex gap-2 justify-end items-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-9 px-3 flex items-center gap-2 text-xs font-semibold hover:bg-slate-100"
+                          disabled={isLoading}
+                          onClick={() => downloadXml(inscricaoId, nfe.chave)}
+                        >
+                          <Download className="h-4 w-4" /> XML
+                        </Button>
+
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="h-9 px-3 flex items-center gap-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 shadow-sm"
+                          disabled={isLoading || importingChave === nfe.chave}
+                          onClick={() => handleImportar(nfe)}
+                        >
+                          {importingChave === nfe.chave ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Import className="h-4 w-4" />
+                          )}
+                          Dar entrada
+                        </Button>
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button size="sm" variant="outline" disabled={isLoading}>
+                            <Button size="sm" className="h-9 bg-blue-600 hover:bg-blue-700 text-xs font-bold px-4 shadow-sm">
                               Manifestar
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleManifestar(nfe.chave, "ciencia")}>
-                              <HelpCircle className="h-4 w-4 mr-2" /> Ciência da Operação
+                          <DropdownMenuContent align="end" className="w-60 p-2">
+                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "ciencia")}>
+                              <HelpCircle className="h-4 w-4 mr-2 text-blue-500" /> Ciência da Operação
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleManifestar(nfe.chave, "confirmacao")}>
-                              <Check className="h-4 w-4 mr-2" /> Confirmação da Operação
+                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "confirmacao")}>
+                              <Check className="h-4 w-4 mr-2 text-green-500" /> Confirmação da Operação
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleManifestar(nfe.chave, "desconhecimento")}>
-                              <X className="h-4 w-4 mr-2" /> Desconhecimento da Operação
+                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "desconhecimento")}>
+                              <X className="h-4 w-4 mr-2 text-orange-500" /> Desconhecimento da Operação
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleManifestar(nfe.chave, "nao_realizada")}>
-                              <X className="h-4 w-4 mr-2" /> Operação Não Realizada
+                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "nao_realizada")}>
+                              <X className="h-4 w-4 mr-2 text-red-500" /> Operação Não Realizada
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -324,36 +408,12 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          title="Baixar XML"
-                          disabled={isLoading}
-                          onClick={() => downloadXml(inscricaoId, nfe.chave)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-
-                        <Button
-                          size="icon"
-                          variant="ghost"
+                          className="h-9 w-9 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
                           title="Baixar DANFe"
                           disabled={isLoading}
                           onClick={() => downloadDanfe(inscricaoId, nfe.chave)}
                         >
-                          <FileText className="h-4 w-4" />
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="default"
-                          title="Importar para Entradas NF-e"
-                          disabled={isLoading || importingChave === nfe.chave}
-                          onClick={() => handleImportar(nfe)}
-                        >
-                          {importingChave === nfe.chave ? (
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                          ) : (
-                            <Import className="h-4 w-4 mr-1" />
-                          )}
-                          Importar
+                          <FileText className="h-5 w-5" />
                         </Button>
                       </div>
                     </TableCell>
