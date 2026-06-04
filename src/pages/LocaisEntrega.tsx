@@ -206,7 +206,7 @@ export default function LocaisEntrega() {
                 </div>
               </div>
               <div className="w-full md:w-64">
-                <Select value={granjaFilter || "__all__"} onValueChange={(val) => setGranjaFilter(val === "__all__" ? "" : val)}>
+                <Select isSearchable value={granjaFilter || "__all__"} onValueChange={(val) => setGranjaFilter(val === "__all__" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todas as granjas" />
                   </SelectTrigger>
@@ -322,7 +322,7 @@ export default function LocaisEntrega() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Granja</Label>
-                  <Select 
+                  <Select isSearchable 
                     value={formData.granja_id || "__none__"} 
                     onValueChange={(val) => setFormData({ ...formData, granja_id: val === "__none__" ? null : val })}
                   >
@@ -354,7 +354,7 @@ export default function LocaisEntrega() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Tipo de Pessoa</Label>
-                  <Select 
+                  <Select isSearchable 
                     value={formData.tipo_pessoa || "juridica"} 
                     onValueChange={(val) => setFormData({ ...formData, tipo_pessoa: val, cpf_cnpj: "" })}
                   >
@@ -491,7 +491,7 @@ export default function LocaisEntrega() {
 
                   <div className="space-y-2">
                     <Label>UF</Label>
-                    <Select 
+                    <Select isSearchable 
                       value={formData.uf || "__none__"} 
                       onValueChange={(val) => setFormData({ ...formData, uf: val === "__none__" ? null : val })}
                     >

@@ -278,7 +278,7 @@ export default function Lavouras() {
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="granja_id">Granja</Label>
-              <Select
+              <Select isSearchable
                 value={formData.granja_id || ""}
                 onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}
               >

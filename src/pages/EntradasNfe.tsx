@@ -104,7 +104,7 @@ export default function EntradasNfe() {
         <div className="flex flex-wrap gap-4 items-end">
           <div className="w-48">
             <label className="text-sm font-medium mb-1 block">Granja</label>
-            <Select value={granjaId} onValueChange={setGranjaId}>
+            <Select isSearchable value={granjaId} onValueChange={setGranjaId}>
               <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>

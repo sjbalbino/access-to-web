@@ -172,7 +172,7 @@ export function InsetosTab({ controleLavouraId, canEdit }: InsetosTabProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nível de Infestação</Label>
-                <Select
+                <Select isSearchable
                   value={formData.nivel_infestacao || ''}
                   onValueChange={(v) => setFormData({ ...formData, nivel_infestacao: v })}
                 >

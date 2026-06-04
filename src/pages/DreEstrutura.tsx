@@ -151,7 +151,7 @@ export default function DreEstrutura() {
             </div>
             <div className="space-y-2">
               <Label>Conta Pai</Label>
-              <Select value={formData.parent_id || 'none'} onValueChange={v => setFormData({ ...formData, parent_id: v === 'none' ? null : v })}>
+              <Select isSearchable value={formData.parent_id || 'none'} onValueChange={v => setFormData({ ...formData, parent_id: v === 'none' ? null : v })}>
                 <SelectTrigger><SelectValue placeholder="Nenhuma (raiz)" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhuma (raiz)</SelectItem>
@@ -161,7 +161,7 @@ export default function DreEstrutura() {
             </div>
             <div className="space-y-2">
               <Label>Tipo de Saldo</Label>
-              <Select value={formData.tipo_saldo || 'debito'} onValueChange={v => setFormData({ ...formData, tipo_saldo: v })}>
+              <Select isSearchable value={formData.tipo_saldo || 'debito'} onValueChange={v => setFormData({ ...formData, tipo_saldo: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="debito">Débito</SelectItem>

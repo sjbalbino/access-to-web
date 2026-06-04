@@ -324,7 +324,7 @@ export default function Safras() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="cultura_id">Cultura</Label>
-              <Select
+              <Select isSearchable
                 value={formData.cultura_id || ""}
                 onValueChange={(value) => setFormData({ ...formData, cultura_id: value || null })}
               >
@@ -362,7 +362,7 @@ export default function Safras() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <Select
+              <Select isSearchable
                 value={formData.status || "ativa"}
                 onValueChange={(value) => setFormData({ ...formData, status: value })}
               >

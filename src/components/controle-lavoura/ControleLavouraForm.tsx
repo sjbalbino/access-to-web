@@ -123,7 +123,7 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
           <div className="space-y-2">
             <Label>Safra *</Label>
             {mode === 'create' ? (
-              <Select value={safraId} onValueChange={setSafraId}>
+              <Select isSearchable value={safraId} onValueChange={setSafraId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a safra" />
                 </SelectTrigger>
@@ -148,7 +148,7 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
           <div className="space-y-2">
             <Label>Lavoura *</Label>
             {mode === 'create' ? (
-              <Select value={lavouraId} onValueChange={setLavouraId}>
+              <Select isSearchable value={lavouraId} onValueChange={setLavouraId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a lavoura" />
                 </SelectTrigger>

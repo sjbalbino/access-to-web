@@ -240,7 +240,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Safra *</Label>
-              <Select value={safraId} onValueChange={setSafraId} disabled={isEditing}>
+              <Select isSearchable value={safraId} onValueChange={setSafraId} disabled={isEditing}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
@@ -254,7 +254,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
             <div className="space-y-2">
               <Label>Produto *</Label>
-              <Select value={produtoId} onValueChange={setProdutoId} disabled={isEditing}>
+              <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={isEditing}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
@@ -270,7 +270,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Local de Entrega *</Label>
-              <Select 
+              <Select isSearchable 
                 value={localEntregaId || undefined} 
                 onValueChange={setLocalEntregaId}
                 disabled={!safraId || !produtoId}
@@ -310,7 +310,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="space-y-2">
             <Label>Silo</Label>
-            <Select value={siloId} onValueChange={setSiloId}>
+            <Select isSearchable value={siloId} onValueChange={setSiloId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
@@ -326,7 +326,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="space-y-2">
             <Label>Emitente (Sócio) *</Label>
-            <Select value={inscricaoEmitenteId} onValueChange={setInscricaoEmitenteId}>
+            <Select isSearchable value={inscricaoEmitenteId} onValueChange={setInscricaoEmitenteId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o emitente..." />
               </SelectTrigger>
@@ -342,7 +342,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="space-y-2">
             <Label>Produtor (Destinatário) *</Label>
-            <Select 
+            <Select isSearchable 
               value={inscricaoProdutorId || undefined} 
               onValueChange={setInscricaoProdutorId}
               disabled={!safraId || !produtoId || !localEntregaId}
@@ -448,7 +448,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="space-y-2">
             <Label>Sócio que recebe a armazenagem</Label>
-            <Select value={inscricaoRecebeTaxaId || undefined} onValueChange={setInscricaoRecebeTaxaId}>
+            <Select isSearchable value={inscricaoRecebeTaxaId || undefined} onValueChange={setInscricaoRecebeTaxaId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o sócio..." />
               </SelectTrigger>

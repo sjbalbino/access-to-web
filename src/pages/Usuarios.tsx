@@ -565,7 +565,7 @@ export default function Usuarios() {
             </div>
             <div className="space-y-2">
               <Label>Nível de Acesso *</Label>
-              <Select value={newUserRole} onValueChange={(value: AppRole) => setNewUserRole(value)}>
+              <Select isSearchable value={newUserRole} onValueChange={(value: AppRole) => setNewUserRole(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -600,7 +600,7 @@ export default function Usuarios() {
             {isSuperAdmin && (
               <div className="space-y-2">
                 <Label>Empresa Contratante</Label>
-                <Select
+                <Select isSearchable
                   value={newUserTenantId || "none"}
                   onValueChange={(value) => setNewUserTenantId(value === "none" ? null : value)}
                 >
@@ -653,7 +653,7 @@ export default function Usuarios() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Nível de Acesso</Label>
-              <Select value={editingRole} onValueChange={(value: AppRole) => setEditingRole(value)}>
+              <Select isSearchable value={editingRole} onValueChange={(value: AppRole) => setEditingRole(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -688,7 +688,7 @@ export default function Usuarios() {
             {isSuperAdmin && (
               <div className="space-y-2">
                 <Label>Empresa Contratante</Label>
-                <Select
+                <Select isSearchable
                   value={editingTenantId || "none"}
                   onValueChange={(value) => setEditingTenantId(value === "none" ? null : value)}
                 >

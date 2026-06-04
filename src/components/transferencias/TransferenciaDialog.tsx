@@ -227,7 +227,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
 
             <div className="space-y-2">
               <Label>Safra *</Label>
-              <Select value={safraId} onValueChange={setSafraId}>
+              <Select isSearchable value={safraId} onValueChange={setSafraId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
@@ -241,7 +241,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
 
             <div className="space-y-2">
               <Label>Produto *</Label>
-              <Select value={produtoId} onValueChange={setProdutoId}>
+              <Select isSearchable value={produtoId} onValueChange={setProdutoId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
@@ -255,7 +255,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
 
             <div className="space-y-2">
               <Label>Silo</Label>
-              <Select value={siloId || "__none__"} onValueChange={(v) => setSiloId(v === "__none__" ? "" : v)}>
+              <Select isSearchable value={siloId || "__none__"} onValueChange={(v) => setSiloId(v === "__none__" ? "" : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
@@ -272,7 +272,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
           {/* Tipo */}
           <div className="space-y-2">
             <Label>Tipo</Label>
-            <Select value={tipo || "__none__"} onValueChange={(v) => setTipo(v === "__none__" ? "" : v)}>
+            <Select isSearchable value={tipo || "__none__"} onValueChange={(v) => setTipo(v === "__none__" ? "" : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
@@ -346,7 +346,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
 
             <div className="space-y-2">
               <Label>Local de Saída *</Label>
-              <Select value={localSaidaId} onValueChange={setLocalSaidaId}>
+              <Select isSearchable value={localSaidaId} onValueChange={setLocalSaidaId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o local" />
                 </SelectTrigger>
@@ -422,7 +422,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
 
             <div className="space-y-2">
               <Label>Local de Entrada *</Label>
-              <Select value={localEntradaId} onValueChange={setLocalEntradaId}>
+              <Select isSearchable value={localEntradaId} onValueChange={setLocalEntradaId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o local" />
                 </SelectTrigger>

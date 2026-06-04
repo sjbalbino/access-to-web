@@ -243,7 +243,7 @@ export function NotaReferenciadaForm({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>UF *</Label>
-                  <Select value={nfpUf} onValueChange={setNfpUf}>
+                  <Select isSearchable value={nfpUf} onValueChange={setNfpUf}>
                     <SelectTrigger>
                       <SelectValue placeholder="UF" />
                     </SelectTrigger>

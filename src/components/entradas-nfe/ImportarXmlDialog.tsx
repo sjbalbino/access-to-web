@@ -205,7 +205,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <Label>Granja *</Label>
-              <Select value={granjaId} onValueChange={setGranjaId}>
+              <Select isSearchable value={granjaId} onValueChange={setGranjaId}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   {granjas?.map((g: any) => (<SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>))}
@@ -214,7 +214,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
             </div>
             <div>
               <Label>IE do Produtor *</Label>
-              <Select value={inscricaoId} onValueChange={setInscricaoId} disabled={!granjaId}>
+              <Select isSearchable value={inscricaoId} onValueChange={setInscricaoId} disabled={!granjaId}>
                 <SelectTrigger><SelectValue placeholder={granjaId ? 'Selecione...' : 'Escolha granja'} /></SelectTrigger>
                 <SelectContent>
                   {inscricoesFiltradas.map((i) => (
@@ -227,7 +227,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
             </div>
             <div>
               <Label>Safra *</Label>
-              <Select value={safraId} onValueChange={setSafraId}>
+              <Select isSearchable value={safraId} onValueChange={setSafraId}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   {safras?.map((s: any) => (<SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>))}
@@ -236,7 +236,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
             </div>
             <div>
               <Label>Forma de Pagamento *</Label>
-              <Select value={formaPagamento} onValueChange={(v) => { setFormaPagamento(v); setJaPago(false); }}>
+              <Select isSearchable value={formaPagamento} onValueChange={(v) => { setFormaPagamento(v); setJaPago(false); }}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   {FORMAS.map((f) => (<SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
@@ -246,7 +246,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
             {isAvista && (
               <div>
                 <Label>Conta Bancária</Label>
-                <Select value={contaBancariaId} onValueChange={setContaBancariaId}>
+                <Select isSearchable value={contaBancariaId} onValueChange={setContaBancariaId}>
                   <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     {(contasBancarias || []).map((c) => (

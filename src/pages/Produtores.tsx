@@ -295,7 +295,7 @@ export default function Produtores() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Tipo</Label>
-                <Select value={filtroTipo} onValueChange={(v) => { setFiltroTipo(v); setPaginaAtual(1); }}>
+                <Select isSearchable value={filtroTipo} onValueChange={(v) => { setFiltroTipo(v); setPaginaAtual(1); }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos</SelectItem>
@@ -310,7 +310,7 @@ export default function Produtores() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Status</Label>
-                <Select value={filtroAtivo} onValueChange={(v) => { setFiltroAtivo(v); setPaginaAtual(1); }}>
+                <Select isSearchable value={filtroAtivo} onValueChange={(v) => { setFiltroAtivo(v); setPaginaAtual(1); }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ativo">Ativos</SelectItem>
@@ -415,7 +415,7 @@ export default function Produtores() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label>Tipo</Label>
-                    <Select value={formData.tipo_produtor || "produtor"} onValueChange={(v) => setFormData({ ...formData, tipo_produtor: v })}>
+                    <Select isSearchable value={formData.tipo_produtor || "produtor"} onValueChange={(v) => setFormData({ ...formData, tipo_produtor: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {TIPOS_PRODUTOR.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
@@ -424,7 +424,7 @@ export default function Produtores() {
                   </div>
                   <div className="space-y-2">
                     <Label>Tipo Pessoa</Label>
-                    <Select value={formData.tipo_pessoa || "fisica"} onValueChange={(v) => setFormData({ ...formData, tipo_pessoa: v, cpf_cnpj: "" })}>
+                    <Select isSearchable value={formData.tipo_pessoa || "fisica"} onValueChange={(v) => setFormData({ ...formData, tipo_pessoa: v, cpf_cnpj: "" })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {TIPOS_PESSOA.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
@@ -459,7 +459,7 @@ export default function Produtores() {
                   </div>
                   <div className="space-y-2">
                     <Label>Granja</Label>
-                    <Select value={formData.granja_id || ""} onValueChange={(v) => setFormData({ ...formData, granja_id: v || null })}>
+                    <Select isSearchable value={formData.granja_id || ""} onValueChange={(v) => setFormData({ ...formData, granja_id: v || null })}>
                       <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
                         {granjas?.map((g) => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}

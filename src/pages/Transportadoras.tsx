@@ -414,7 +414,7 @@ export default function Transportadoras() {
 
               <div className="space-y-2">
                 <Label htmlFor="uf">UF</Label>
-                <Select
+                <Select isSearchable
                   value={formData.uf || ""}
                   onValueChange={(value) => setFormData({ ...formData, uf: value })}
                 >
@@ -431,7 +431,7 @@ export default function Transportadoras() {
 
               <div className="space-y-2">
                 <Label htmlFor="granja_id">Granja</Label>
-                <Select
+                <Select isSearchable
                   value={formData.granja_id || ""}
                   onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
                 >
@@ -486,7 +486,7 @@ export default function Transportadoras() {
 
               <div className="space-y-2">
                 <Label htmlFor="uf_placa_padrao">UF Placa</Label>
-                <Select
+                <Select isSearchable
                   value={formData.uf_placa_padrao || ""}
                   onValueChange={(value) => setFormData({ ...formData, uf_placa_padrao: value })}
                 >

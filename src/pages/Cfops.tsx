@@ -289,7 +289,7 @@ export default function Cfops() {
                 className="pl-9"
               />
             </div>
-            <Select value={tipoFilter} onValueChange={setTipoFilter}>
+            <Select isSearchable value={tipoFilter} onValueChange={setTipoFilter}>
               <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
@@ -403,7 +403,7 @@ export default function Cfops() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tipo">Tipo *</Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.tipo || "saida"}
                     onValueChange={(value) =>
                       setFormData({ ...formData, tipo: value })
@@ -505,7 +505,7 @@ export default function Cfops() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="cst_icms_padrao">CST ICMS Padrão</Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.cst_icms_padrao || ""}
                     onValueChange={(value) =>
                       setFormData({ ...formData, cst_icms_padrao: value || null })
@@ -525,7 +525,7 @@ export default function Cfops() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cst_ipi_padrao">CST IPI Padrão</Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.cst_ipi_padrao || ""}
                     onValueChange={(value) =>
                       setFormData({ ...formData, cst_ipi_padrao: value || null })
@@ -548,7 +548,7 @@ export default function Cfops() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="cst_pis_padrao">CST PIS Padrão</Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.cst_pis_padrao || ""}
                     onValueChange={(value) =>
                       setFormData({ ...formData, cst_pis_padrao: value || null })
@@ -568,7 +568,7 @@ export default function Cfops() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cst_cofins_padrao">CST COFINS Padrão</Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.cst_cofins_padrao || ""}
                     onValueChange={(value) =>
                       setFormData({ ...formData, cst_cofins_padrao: value || null })
@@ -591,7 +591,7 @@ export default function Cfops() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="cst_ibs_padrao">CST IBS Padrão</Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.cst_ibs_padrao || ""}
                     onValueChange={(value) =>
                       setFormData({ ...formData, cst_ibs_padrao: value || null })
@@ -611,7 +611,7 @@ export default function Cfops() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cst_cbs_padrao">CST CBS Padrão</Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.cst_cbs_padrao || ""}
                     onValueChange={(value) =>
                       setFormData({ ...formData, cst_cbs_padrao: value || null })
@@ -631,7 +631,7 @@ export default function Cfops() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cst_is_padrao">CST IS Padrão</Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.cst_is_padrao || ""}
                     onValueChange={(value) =>
                       setFormData({ ...formData, cst_is_padrao: value || null })

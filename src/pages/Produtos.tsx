@@ -306,7 +306,7 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Unidade de Medida</Label>
-                        <Select value={formData.unidade_medida_id || ''} onValueChange={(value) => setFormData({ ...formData, unidade_medida_id: value || null })}>
+                        <Select isSearchable value={formData.unidade_medida_id || ''} onValueChange={(value) => setFormData({ ...formData, unidade_medida_id: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             {unidades?.filter(u => u.ativa).map((und) => (
@@ -317,7 +317,7 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Grupo</Label>
-                        <Select value={formData.grupo || ''} onValueChange={(value) => setFormData({ ...formData, grupo: value || null })}>
+                        <Select isSearchable value={formData.grupo || ''} onValueChange={(value) => setFormData({ ...formData, grupo: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             {gruposAtivos?.map((grupo) => (
@@ -334,7 +334,7 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
-                        <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                        <Select isSearchable value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="insumo">Insumo</SelectItem>
@@ -413,7 +413,7 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Produto Resíduo</Label>
-                        <Select value={formData.produto_residuo_id || ''} onValueChange={(value) => setFormData({ ...formData, produto_residuo_id: value || null })}>
+                        <Select isSearchable value={formData.produto_residuo_id || ''} onValueChange={(value) => setFormData({ ...formData, produto_residuo_id: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione o produto resultante..." /></SelectTrigger>
                           <SelectContent>
                             {produtosAtivos?.map((prod: any) => (
@@ -495,7 +495,7 @@ export default function Produtos() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
                         <Label>CST PIS</Label>
-                        <Select value={formData.cst_pis || ''} onValueChange={(value) => setFormData({ ...formData, cst_pis: value || null })}>
+                        <Select isSearchable value={formData.cst_pis || ''} onValueChange={(value) => setFormData({ ...formData, cst_pis: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             {CST_PIS_COFINS.map((cst) => (
@@ -506,7 +506,7 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>CST COFINS</Label>
-                        <Select value={formData.cst_cofins || ''} onValueChange={(value) => setFormData({ ...formData, cst_cofins: value || null })}>
+                        <Select isSearchable value={formData.cst_cofins || ''} onValueChange={(value) => setFormData({ ...formData, cst_cofins: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             {CST_PIS_COFINS.map((cst) => (
@@ -517,7 +517,7 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>CST ICMS</Label>
-                        <Select value={formData.cst_icms || ''} onValueChange={(value) => setFormData({ ...formData, cst_icms: value || null })}>
+                        <Select isSearchable value={formData.cst_icms || ''} onValueChange={(value) => setFormData({ ...formData, cst_icms: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             {CST_ICMS.map((cst) => (
@@ -528,7 +528,7 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>CST IPI</Label>
-                        <Select value={formData.cst_ipi || ''} onValueChange={(value) => setFormData({ ...formData, cst_ipi: value || null })}>
+                        <Select isSearchable value={formData.cst_ipi || ''} onValueChange={(value) => setFormData({ ...formData, cst_ipi: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             {CST_IPI.map((cst) => (
@@ -549,7 +549,7 @@ export default function Produtos() {
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label>CST IBS</Label>
-                          <Select value={formData.cst_ibs || ''} onValueChange={(value) => setFormData({ ...formData, cst_ibs: value || null })}>
+                          <Select isSearchable value={formData.cst_ibs || ''} onValueChange={(value) => setFormData({ ...formData, cst_ibs: value || null })}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
                               {CST_IBS_CBS.map((cst) => (
@@ -560,7 +560,7 @@ export default function Produtos() {
                         </div>
                         <div className="space-y-2">
                           <Label>CST CBS</Label>
-                          <Select value={formData.cst_cbs || ''} onValueChange={(value) => setFormData({ ...formData, cst_cbs: value || null })}>
+                          <Select isSearchable value={formData.cst_cbs || ''} onValueChange={(value) => setFormData({ ...formData, cst_cbs: value || null })}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
                               {CST_IBS_CBS.map((cst) => (
@@ -571,7 +571,7 @@ export default function Produtos() {
                         </div>
                         <div className="space-y-2">
                           <Label>CST IS</Label>
-                          <Select value={formData.cst_is || ''} onValueChange={(value) => setFormData({ ...formData, cst_is: value || null })}>
+                          <Select isSearchable value={formData.cst_is || ''} onValueChange={(value) => setFormData({ ...formData, cst_is: value || null })}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent>
                               {CST_IS.map((cst) => (
@@ -584,7 +584,7 @@ export default function Produtos() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div className="space-y-2">
                           <Label>Classificação Tributária IBS</Label>
-                          <Select value={formData.cclass_trib_ibs || ''} onValueChange={(value) => setFormData({ ...formData, cclass_trib_ibs: value || null })}>
+                          <Select isSearchable value={formData.cclass_trib_ibs || ''} onValueChange={(value) => setFormData({ ...formData, cclass_trib_ibs: value || null })}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent className="max-h-[300px]">
                               {getClassificacoesPorCst(formData.cst_ibs).map((c) => (
@@ -595,7 +595,7 @@ export default function Produtos() {
                         </div>
                         <div className="space-y-2">
                           <Label>Classificação Tributária CBS</Label>
-                          <Select value={formData.cclass_trib_cbs || ''} onValueChange={(value) => setFormData({ ...formData, cclass_trib_cbs: value || null })}>
+                          <Select isSearchable value={formData.cclass_trib_cbs || ''} onValueChange={(value) => setFormData({ ...formData, cclass_trib_cbs: value || null })}>
                             <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                             <SelectContent className="max-h-[300px]">
                               {getClassificacoesPorCst(formData.cst_cbs).map((c) => (
@@ -618,7 +618,7 @@ export default function Produtos() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Fornecedor Principal</Label>
-                        <Select value={formData.fornecedor_id || ''} onValueChange={(value) => setFormData({ ...formData, fornecedor_id: value || null })}>
+                        <Select isSearchable value={formData.fornecedor_id || ''} onValueChange={(value) => setFormData({ ...formData, fornecedor_id: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             {fornecedoresFiltrados?.map((forn) => (

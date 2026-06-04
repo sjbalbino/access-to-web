@@ -541,7 +541,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
 
               <div className="space-y-2">
                 <Label>Placa</Label>
-                <Select
+                <Select isSearchable
                   value={formData.placa_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, placa_id: value === "none" ? null : value })}
                 >
@@ -567,7 +567,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
 
               <div className="space-y-2">
                 <Label>Tipo</Label>
-                <Select
+                <Select isSearchable
                   value={formData.tipo_colheita || 'industria'}
                   onValueChange={(value) => setFormData({ ...formData, tipo_colheita: value })}
                 >
@@ -768,7 +768,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Sócio/Produtor</Label>
-                <Select
+                <Select isSearchable
                   value={selectedProdutorId || "none"}
                   onValueChange={(value) => {
                     setSelectedProdutorId(value === "none" ? null : value);
@@ -791,7 +791,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
 
               <div className="space-y-2">
                 <Label>Inscrição Estadual</Label>
-                <Select
+                <Select isSearchable
                   value={formData.inscricao_produtor_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, inscricao_produtor_id: value === "none" ? null : value })}
                   disabled={!selectedProdutorId}
@@ -814,7 +814,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
 
               <div className="space-y-2">
                 <Label>Local Entrega</Label>
-                <Select
+                <Select isSearchable
                   value={formData.local_entrega_terceiro_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, local_entrega_terceiro_id: value === "none" ? null : value })}
                 >
@@ -847,7 +847,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
 
               <div className="space-y-2">
                 <Label>Semente</Label>
-                <Select
+                <Select isSearchable
                   value={formData.variedade_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, variedade_id: value === "none" ? null : value })}
                 >
@@ -865,7 +865,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
 
               <div className="space-y-2">
                 <Label>Destino (Silo Próprio)</Label>
-                <Select
+                <Select isSearchable
                   value={formData.silo_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, silo_id: value === "none" ? null : value })}
                 >

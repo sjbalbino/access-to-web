@@ -449,7 +449,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tipo">Tipo de Contrato <span className="text-destructive">*</span></Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.tipo || undefined}
                     onValueChange={(value) => setFormData({ ...formData, tipo: value })}
                   >
@@ -467,7 +467,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="granja_id">Granja <span className="text-destructive">*</span></Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.granja_id || undefined}
                     onValueChange={(value) => setFormData({ ...formData, granja_id: value })}
                   >
@@ -554,7 +554,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="uf">UF <span className="text-destructive">*</span></Label>
-                  <Select
+                  <Select isSearchable
                     value={formData.uf || undefined}
                     onValueChange={(value) => {
                       setFormData({ ...formData, uf: value, cidade: "" });
@@ -652,7 +652,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               </h5>
               <div className="space-y-2">
                 <Label htmlFor="emitente_id">Emitente para emissão de NFP-e</Label>
-                <Select
+                <Select isSearchable
                   value={formData.emitente_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, emitente_id: value === "none" ? null : value })}
                 >

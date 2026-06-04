@@ -91,7 +91,7 @@ export function LiberarUsuarioDialog({ usuario, open, onOpenChange }: Props) {
           <div className="space-y-2">
             <Label>Empresa (Tenant)</Label>
             {isSuperAdmin ? (
-              <Select value={tenantId} onValueChange={(v) => setTenantId(v as any)}>
+              <Select isSearchable value={tenantId} onValueChange={(v) => setTenantId(v as any)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">Sem empresa (Super Admin)</SelectItem>
@@ -113,7 +113,7 @@ export function LiberarUsuarioDialog({ usuario, open, onOpenChange }: Props) {
 
           <div className="space-y-2">
             <Label>Nível de acesso</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+            <Select isSearchable value={role} onValueChange={(v) => setRole(v as AppRole)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="visualizador">Visualizador</SelectItem>

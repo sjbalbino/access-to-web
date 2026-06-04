@@ -166,7 +166,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         <div className="flex flex-wrap gap-4 items-end mb-4">
           <div className="w-96">
             <label className="text-sm font-medium mb-1 block">Inscrição do Produtor</label>
-            <Select value={inscricaoId || undefined} onValueChange={setInscricaoId}>
+            <Select isSearchable value={inscricaoId || undefined} onValueChange={setInscricaoId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a inscrição emissora" />
               </SelectTrigger>

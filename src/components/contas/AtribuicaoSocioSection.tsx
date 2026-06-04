@@ -107,7 +107,7 @@ export function AtribuicaoSocioSection({ granjaId, valorTotal, modo, socioUnicoI
       {modo === 'socio_unico' && (
         <div>
           <Label className="text-xs">Sócio</Label>
-          <Select
+          <Select isSearchable
             value={socioUnicoId || undefined}
             onValueChange={(v) => onChange({ modo, socio_produtor_id: v, manual })}
           >

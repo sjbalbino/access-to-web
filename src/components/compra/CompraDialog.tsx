@@ -770,7 +770,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Granja *</Label>
-                  <Select value={granjaId} onValueChange={setGranjaId} disabled={isEmitting}>
+                  <Select isSearchable value={granjaId} onValueChange={setGranjaId} disabled={isEmitting}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
@@ -784,7 +784,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
                 <div className="space-y-2">
                   <Label>Safra *</Label>
-                  <Select value={safraId} onValueChange={setSafraId} disabled={isEmitting}>
+                  <Select isSearchable value={safraId} onValueChange={setSafraId} disabled={isEmitting}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
@@ -798,7 +798,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
                 <div className="space-y-2">
                   <Label>Produto *</Label>
-                  <Select value={produtoId} onValueChange={setProdutoId} disabled={isEmitting}>
+                  <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={isEmitting}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
@@ -832,7 +832,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
                 <div className="space-y-2">
                   <Label>Silo</Label>
-                  <Select value={siloId} onValueChange={setSiloId} disabled={isEmitting}>
+                  <Select isSearchable value={siloId} onValueChange={setSiloId} disabled={isEmitting}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
@@ -850,7 +850,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Local de Entrega</Label>
-                  <Select value={localEntregaId} onValueChange={setLocalEntregaId} disabled={isEmitting}>
+                  <Select isSearchable value={localEntregaId} onValueChange={setLocalEntregaId} disabled={isEmitting}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
@@ -866,7 +866,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
                 <div className="space-y-2">
                   <Label>Tipo de Produto</Label>
-                  <Select value={tipoProduto} onValueChange={setTipoProduto} disabled={isEmitting}>
+                  <Select isSearchable value={tipoProduto} onValueChange={setTipoProduto} disabled={isEmitting}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
@@ -880,7 +880,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
               <div className="space-y-2">
                 <Label>Comprador (Sócio) *</Label>
-                <Select value={inscricaoCompradorId} onValueChange={setInscricaoCompradorId} disabled={isEmitting}>
+                <Select isSearchable value={inscricaoCompradorId} onValueChange={setInscricaoCompradorId} disabled={isEmitting}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o comprador..." />
                   </SelectTrigger>
@@ -896,7 +896,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
               <div className="space-y-2">
                 <Label>Vendedor (Produtor com saldo) *</Label>
-                <Select 
+                <Select isSearchable 
                   value={inscricaoVendedorId} 
                   onValueChange={setInscricaoVendedorId}
                   disabled={!granjaId || !safraId || isEmitting}

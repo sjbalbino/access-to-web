@@ -280,7 +280,7 @@ export default function LancamentosFinanceiros() {
               </div>
               <div className="space-y-2">
                 <Label>Tipo *</Label>
-                <Select value={formData.tipo} onValueChange={v => setFormData({ ...formData, tipo: v })}>
+                <Select isSearchable value={formData.tipo} onValueChange={v => setFormData({ ...formData, tipo: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="receita">Receita</SelectItem><SelectItem value="despesa">Despesa</SelectItem></SelectContent>
                 </Select>
@@ -294,7 +294,7 @@ export default function LancamentosFinanceiros() {
               </div>
               <div className="space-y-2">
                 <Label>Granja *</Label>
-                <Select value={formData.granja_id} onValueChange={v => setFormData({ ...formData, granja_id: v })}>
+                <Select isSearchable value={formData.granja_id} onValueChange={v => setFormData({ ...formData, granja_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>{granjas?.map(g => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}</SelectContent>
                 </Select>
@@ -302,7 +302,7 @@ export default function LancamentosFinanceiros() {
             </div>
             <div className="space-y-2">
               <Label>Sub-Centro de Custo</Label>
-              <Select value={formData.sub_centro_custo_id || 'none'} onValueChange={v => setFormData({ ...formData, sub_centro_custo_id: v === 'none' ? null : v })}>
+              <Select isSearchable value={formData.sub_centro_custo_id || 'none'} onValueChange={v => setFormData({ ...formData, sub_centro_custo_id: v === 'none' ? null : v })}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhum</SelectItem>
@@ -317,7 +317,7 @@ export default function LancamentosFinanceiros() {
             </div>
             <div className="space-y-2">
               <Label>Conta DRE</Label>
-              <Select value={formData.dre_conta_id || 'none'} onValueChange={v => setFormData({ ...formData, dre_conta_id: v === 'none' ? null : v })}>
+              <Select isSearchable value={formData.dre_conta_id || 'none'} onValueChange={v => setFormData({ ...formData, dre_conta_id: v === 'none' ? null : v })}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhuma</SelectItem>
@@ -328,14 +328,14 @@ export default function LancamentosFinanceiros() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Fornecedor</Label>
-                <Select value={formData.fornecedor_id || 'none'} onValueChange={v => setFormData({ ...formData, fornecedor_id: v === 'none' ? null : v })}>
+                <Select isSearchable value={formData.fornecedor_id || 'none'} onValueChange={v => setFormData({ ...formData, fornecedor_id: v === 'none' ? null : v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent><SelectItem value="none">Nenhum</SelectItem>{clientes?.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}{c.nome_fantasia ? ` (${c.nome_fantasia})` : ''}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Safra</Label>
-                <Select value={formData.safra_id || 'none'} onValueChange={v => setFormData({ ...formData, safra_id: v === 'none' ? null : v })}>
+                <Select isSearchable value={formData.safra_id || 'none'} onValueChange={v => setFormData({ ...formData, safra_id: v === 'none' ? null : v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent><SelectItem value="none">Nenhuma</SelectItem>{safras?.map(s => <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>)}</SelectContent>
                 </Select>

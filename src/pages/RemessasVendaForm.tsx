@@ -565,7 +565,7 @@ export default function RemessasVendaForm() {
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Silo *</Label>
-                  <Select value={watch("silo_id")} onValueChange={(v) => setValue("silo_id", v)}>
+                  <Select isSearchable value={watch("silo_id")} onValueChange={(v) => setValue("silo_id", v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
@@ -615,7 +615,7 @@ export default function RemessasVendaForm() {
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
-                  <Select value={watch("transportadora_id")} onValueChange={(v) => setValue("transportadora_id", v)}>
+                  <Select isSearchable value={watch("transportadora_id")} onValueChange={(v) => setValue("transportadora_id", v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>

@@ -18,7 +18,7 @@ export function FiltroControle({ safraId, lavouraId, onSafraChange, onLavouraCha
     <div className="flex flex-col sm:flex-row gap-4 p-4 bg-muted/50 rounded-lg border">
       <div className="flex-1 space-y-2">
         <Label htmlFor="safra-filter">Safra</Label>
-        <Select 
+        <Select isSearchable 
           value={safraId || "all"} 
           onValueChange={(value) => onSafraChange(value === "all" ? null : value)}
         >
@@ -38,7 +38,7 @@ export function FiltroControle({ safraId, lavouraId, onSafraChange, onLavouraCha
 
       <div className="flex-1 space-y-2">
         <Label htmlFor="lavoura-filter">Lavoura</Label>
-        <Select 
+        <Select isSearchable 
           value={lavouraId || "all"} 
           onValueChange={(value) => onLavouraChange(value === "all" ? null : value)}
         >

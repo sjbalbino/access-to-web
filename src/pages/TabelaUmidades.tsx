@@ -171,7 +171,7 @@ export default function TabelaUmidades() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <Label>Cultura</Label>
-                    <Select value={formData.cultura_id || ''} onValueChange={(value) => setFormData({ ...formData, cultura_id: value || null })}>
+                    <Select isSearchable value={formData.cultura_id || ''} onValueChange={(value) => setFormData({ ...formData, cultura_id: value || null })}>
                       <SelectTrigger><SelectValue placeholder="Todas as culturas" /></SelectTrigger>
                       <SelectContent>
                         {culturas?.filter(c => c.ativa).map((cultura) => (
@@ -252,7 +252,7 @@ export default function TabelaUmidades() {
               <Filter className="h-4 w-4" />
               <span className="text-sm font-medium">Filtrar:</span>
             </div>
-            <Select value={filtroCultura} onValueChange={setFiltroCultura}>
+            <Select isSearchable value={filtroCultura} onValueChange={setFiltroCultura}>
               <SelectTrigger className="w-[250px]">
                 <SelectValue placeholder="Todas as culturas" />
               </SelectTrigger>
@@ -343,7 +343,7 @@ export default function TabelaUmidades() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Itens por página:</span>
-                <Select value={itensPorPagina.toString()} onValueChange={(value) => setItensPorPagina(parseInt(value))}>
+                <Select isSearchable value={itensPorPagina.toString()} onValueChange={(value) => setItensPorPagina(parseInt(value))}>
                   <SelectTrigger className="w-[80px]">
                     <SelectValue />
                   </SelectTrigger>

@@ -275,7 +275,7 @@ export default function ContasBancarias() {
             </div>
             <div>
               <Label>Tipo</Label>
-              <Select value={form.tipo} onValueChange={(v: any) => setForm({ ...form, tipo: v })}>
+              <Select isSearchable value={form.tipo} onValueChange={(v: any) => setForm({ ...form, tipo: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {TIPOS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
@@ -332,7 +332,7 @@ export default function ContasBancarias() {
             </div>
             <div>
               <Label>Granja vinculada</Label>
-              <Select
+              <Select isSearchable
                 value={form.granja_id || "_none"}
                 onValueChange={(v) => setForm({ ...form, granja_id: v === "_none" ? null : v })}
               >
@@ -363,7 +363,7 @@ export default function ContasBancarias() {
             </div>
             <div>
               <Label>Tipo PIX</Label>
-              <Select
+              <Select isSearchable
                 value={form.pix_tipo || "_none"}
                 onValueChange={(v) => setForm({ ...form, pix_tipo: v === "_none" ? null : (v as any) })}
               >

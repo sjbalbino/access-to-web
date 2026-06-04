@@ -152,7 +152,7 @@ export default function GruposProdutos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Sub-Centro de Custo</Label>
-                        <Select
+                        <Select isSearchable
                           value={formData.conta_gerencial_id || 'none'}
                           onValueChange={(value) => setFormData({ ...formData, conta_gerencial_id: value === 'none' ? null : value })}
                         >

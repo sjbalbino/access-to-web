@@ -988,7 +988,7 @@ export default function EntradaColheita() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div className="space-y-2">
                 <Label>Safra *</Label>
-                <Select value={safraId} onValueChange={setSafraId}>
+                <Select isSearchable value={safraId} onValueChange={setSafraId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
@@ -1068,7 +1068,7 @@ export default function EntradaColheita() {
 
               <div className="space-y-2">
                 <Label>Silo (Destino)</Label>
-                <Select value={siloId || "_none"} onValueChange={v => setSiloId(v === "_none" ? "" : v)}>
+                <Select isSearchable value={siloId || "_none"} onValueChange={v => setSiloId(v === "_none" ? "" : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
@@ -1083,7 +1083,7 @@ export default function EntradaColheita() {
 
               <div className="space-y-2">
                 <Label>Local Entrega</Label>
-                <Select value={localEntregaId || "_none"} onValueChange={v => setLocalEntregaId(v === "_none" ? "" : v)}>
+                <Select isSearchable value={localEntregaId || "_none"} onValueChange={v => setLocalEntregaId(v === "_none" ? "" : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
@@ -1316,7 +1316,7 @@ export default function EntradaColheita() {
 
                     <div className="space-y-2">
                       <Label>Tipo</Label>
-                      <Select 
+                      <Select isSearchable 
                         value={formEntrada.tipo_colheita} 
                         onValueChange={v => setFormEntrada(prev => ({ ...prev, tipo_colheita: v }))}
                       >
@@ -1332,7 +1332,7 @@ export default function EntradaColheita() {
 
                     <div className="space-y-2">
                       <Label>Variedade</Label>
-                      <Select 
+                      <Select isSearchable 
                         value={formEntrada.variedade_id || "_none"} 
                         onValueChange={v => setFormEntrada(prev => ({ ...prev, variedade_id: v === "_none" ? "" : v }))}
                       >
@@ -1596,7 +1596,7 @@ export default function EntradaColheita() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>Tipo NFP</Label>
-                            <Select 
+                            <Select isSearchable 
                               value={formContraNota.tipo} 
                               onValueChange={(v: "bloco" | "nfpe") => 
                                 setFormContraNota(prev => ({ ...prev, tipo: v }))

@@ -498,7 +498,7 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Safra *</Label>
-                <Select value={watch("safra_id")} onValueChange={(v) => setValue("safra_id", v)}>
+                <Select isSearchable value={watch("safra_id")} onValueChange={(v) => setValue("safra_id", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
@@ -511,7 +511,7 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Produto *</Label>
-                <Select value={watch("produto_id")} onValueChange={(v) => setValue("produto_id", v)}>
+                <Select isSearchable value={watch("produto_id")} onValueChange={(v) => setValue("produto_id", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
@@ -538,7 +538,7 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2">
                 <Label>Vendedor (Parceiro)</Label>
-                <Select value={watch("inscricao_produtor_id")} onValueChange={(v) => setValue("inscricao_produtor_id", v)}>
+                <Select isSearchable value={watch("inscricao_produtor_id")} onValueChange={(v) => setValue("inscricao_produtor_id", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
@@ -570,7 +570,7 @@ export default function VendaProducaoForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2 sm:col-span-2">
                 <Label>Comprador *</Label>
-                <Select value={watch("comprador_id")} onValueChange={(v) => setValue("comprador_id", v)}>
+                <Select isSearchable value={watch("comprador_id")} onValueChange={(v) => setValue("comprador_id", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o comprador..." />
                   </SelectTrigger>
@@ -585,7 +585,7 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2">
                 <Label>Tipo de Venda</Label>
-                <Select value={watch("tipo_venda")} onValueChange={(v) => setValue("tipo_venda", v)}>
+                <Select isSearchable value={watch("tipo_venda")} onValueChange={(v) => setValue("tipo_venda", v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -688,7 +688,7 @@ export default function VendaProducaoForm() {
               </div>
               <div className="space-y-2">
                 <Label>UF</Label>
-                <Select value={watch("local_entrega_uf")} onValueChange={(v) => setValue("local_entrega_uf", v)}>
+                <Select isSearchable value={watch("local_entrega_uf")} onValueChange={(v) => setValue("local_entrega_uf", v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="UF" />
                   </SelectTrigger>
@@ -878,7 +878,7 @@ export default function VendaProducaoForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Modalidade Frete</Label>
-                <Select 
+                <Select isSearchable 
                   value={watch("modalidade_frete")?.toString()} 
                   onValueChange={(v) => setValue("modalidade_frete", parseInt(v))}
                 >

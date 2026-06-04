@@ -312,7 +312,7 @@ export default function ClientesFornecedores() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Tipo</Label>
-                      <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                      <Select isSearchable value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="cliente">Cliente</SelectItem>
@@ -323,7 +323,7 @@ export default function ClientesFornecedores() {
                     </div>
                     <div className="space-y-2">
                       <Label>Tipo Pessoa</Label>
-                      <Select value={formData.tipo_pessoa || 'juridica'} onValueChange={(value) => setFormData({ ...formData, tipo_pessoa: value, cpf_cnpj: '' })}>
+                      <Select isSearchable value={formData.tipo_pessoa || 'juridica'} onValueChange={(value) => setFormData({ ...formData, tipo_pessoa: value, cpf_cnpj: '' })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="fisica">Pessoa Física</SelectItem>
@@ -472,7 +472,7 @@ export default function ClientesFornecedores() {
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Tipo</Label>
-              <Select value={filtroTipo} onValueChange={v => { setFiltroTipo(v); setPaginaAtual(1); }}>
+              <Select isSearchable value={filtroTipo} onValueChange={v => { setFiltroTipo(v); setPaginaAtual(1); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
@@ -488,7 +488,7 @@ export default function ClientesFornecedores() {
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Status</Label>
-              <Select value={filtroAtivo} onValueChange={v => { setFiltroAtivo(v); setPaginaAtual(1); }}>
+              <Select isSearchable value={filtroAtivo} onValueChange={v => { setFiltroAtivo(v); setPaginaAtual(1); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ativo">Ativos</SelectItem>

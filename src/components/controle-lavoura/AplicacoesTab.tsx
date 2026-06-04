@@ -254,7 +254,7 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
 
               <div className="space-y-2">
                 <Label>Produto ({grupoNome})</Label>
-                <Select
+                <Select isSearchable
                   value={formData.produto_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, produto_id: value === "none" ? null : value })}
                 >
@@ -349,7 +349,7 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
 
               <div className="space-y-2">
                 <Label>Condição Climática</Label>
-                <Select
+                <Select isSearchable
                   value={formData.condicao_climatica || "none"}
                   onValueChange={(value) => setFormData({ ...formData, condicao_climatica: value === "none" ? null : value })}
                 >

@@ -155,7 +155,7 @@ export default function Silos() {
           <CardContent className="py-4">
             <div className="flex items-center gap-4">
               <Label className="whitespace-nowrap">Filtrar por Safra:</Label>
-              <Select value={safraFiltro} onValueChange={setSafraFiltro}>
+              <Select isSearchable value={safraFiltro} onValueChange={setSafraFiltro}>
                 <SelectTrigger className="w-64">
                   <SelectValue placeholder="Todas as safras" />
                 </SelectTrigger>
@@ -233,7 +233,7 @@ export default function Silos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Tipo</Label>
-                        <Select value={formData.tipo || 'armazenamento'} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                        <Select isSearchable value={formData.tipo || 'armazenamento'} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="armazenamento">Armazenamento</SelectItem>
@@ -244,7 +244,7 @@ export default function Silos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Granja</Label>
-                        <Select value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
+                        <Select isSearchable value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             {granjas?.map((granja) => (

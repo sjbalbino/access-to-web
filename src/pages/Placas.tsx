@@ -177,7 +177,7 @@ export default function Placas() {
                     </div>
                     <div className="space-y-2">
                       <Label>Tipo</Label>
-                      <Select value={formData.tipo || 'veiculo'} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                      <Select isSearchable value={formData.tipo || 'veiculo'} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="veiculo">Veículo</SelectItem>
@@ -188,7 +188,7 @@ export default function Placas() {
                     </div>
                     <div className="space-y-2">
                       <Label>Granja</Label>
-                      <Select value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
+                      <Select isSearchable value={formData.granja_id || ''} onValueChange={(value) => setFormData({ ...formData, granja_id: value || null })}>
                         <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                         <SelectContent>
                           {granjas?.map((granja) => (
@@ -221,7 +221,7 @@ export default function Placas() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <Label>Propriedade</Label>
-                      <Select value={formData.propriedade || 'propria'} onValueChange={(value) => setFormData({ ...formData, propriedade: value })}>
+                      <Select isSearchable value={formData.propriedade || 'propria'} onValueChange={(value) => setFormData({ ...formData, propriedade: value })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="propria">Própria</SelectItem>

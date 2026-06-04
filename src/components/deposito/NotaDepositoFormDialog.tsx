@@ -620,7 +620,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Local (Granja) *</Label>
-                    <Select value={granjaId} onValueChange={(v) => { setGranjaId(v); setInscricaoId(""); }}>
+                    <Select isSearchable value={granjaId} onValueChange={(v) => { setGranjaId(v); setInscricaoId(""); }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o local" />
                       </SelectTrigger>
@@ -636,7 +636,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
                   <div className="space-y-2">
                     <Label>Safra *</Label>
-                    <Select value={safraId} onValueChange={(v) => { setSafraId(v); setInscricaoId(""); }}>
+                    <Select isSearchable value={safraId} onValueChange={(v) => { setSafraId(v); setInscricaoId(""); }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a safra" />
                       </SelectTrigger>
@@ -652,7 +652,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
                   <div className="space-y-2">
                     <Label>Inscrição Estadual *</Label>
-                    <Select 
+                    <Select isSearchable 
                       value={inscricaoId} 
                       onValueChange={setInscricaoId}
                       disabled={!granjaId || !safraId}
@@ -848,7 +848,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label>Variedade *</Label>
-                        <Select value={produtoId} onValueChange={setProdutoId}>
+                        <Select isSearchable value={produtoId} onValueChange={setProdutoId}>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione a variedade" />
                           </SelectTrigger>

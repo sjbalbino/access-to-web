@@ -246,7 +246,7 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
 
               <div className="space-y-2">
                 <Label>Semente</Label>
-                <Select
+                <Select isSearchable
                   value={formData.variedade_id || "none"}
                   onValueChange={(value) => setFormData({ ...formData, variedade_id: value === "none" ? null : value })}
                 >
