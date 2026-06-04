@@ -4524,6 +4524,47 @@ export type Database = {
           },
         ]
       }
+      rateio_recalculo_logs: {
+        Row: {
+          created_at: string
+          data_final: string
+          data_inicial: string
+          granja_id: string
+          id: string
+          observacoes: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data_final: string
+          data_inicial: string
+          granja_id: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data_final?: string
+          data_inicial?: string
+          granja_id?: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rateio_recalculo_logs_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       remessas_venda: {
         Row: {
           balanceiro: string | null
@@ -5387,6 +5428,15 @@ export type Database = {
       }
       recalc_conta_pagar: { Args: { _conta_id: string }; Returns: undefined }
       recalc_conta_receber: { Args: { _conta_id: string }; Returns: undefined }
+      recalcular_rateios_granja: {
+        Args: {
+          p_data_fim: string
+          p_data_inicio: string
+          p_granja_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       seed_tenant_defaults: { Args: { _tenant_id: string }; Returns: undefined }
     }
     Enums: {

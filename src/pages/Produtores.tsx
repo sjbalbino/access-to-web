@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Plus, Pencil, Trash2, Loader2, Phone, Mail, FileText } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Loader2, Phone, Mail, FileText, RefreshCcw } from "lucide-react";
 import {
   useProdutores, useCreateProdutor, useUpdateProdutor, useDeleteProdutor, ProdutorInput,
 } from "@/hooks/useProdutores";
@@ -26,6 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { InscricoesTab } from "@/components/produtores/InscricoesTab";
+import { RecalcularRateioDialog } from "@/components/produtores/RecalcularRateioDialog";
 import { useCreateInscricao } from "@/hooks/useInscricoesProdutor";
 import { formatCpf, formatCpfCnpj, formatTelefone, validateCpf, validateCnpj } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -89,6 +90,7 @@ export default function Produtores() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<ProdutorInput>(emptyProdutor);
   const [activeTab, setActiveTab] = useState<string>("dados");
+  const [isRecalcularOpen, setIsRecalcularOpen] = useState(false);
 
   const dadosFiltrados = useMemo(() => {
     let dados = produtores || [];
@@ -269,10 +271,16 @@ export default function Produtores() {
               Lista de Sócios e Produtores
             </CardTitle>
             {canEdit && (
-              <Button className="gap-2" size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Novo Registro</span>
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" className="gap-2" size="sm" onClick={() => setIsRecalcularOpen(true)}>
+                  <RefreshCcw className="h-4 w-4" />
+                  <span className="hidden sm:inline">Recalcular Rateios</span>
+                </Button>
+                <Button className="gap-2" size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Novo Registro</span>
+                </Button>
+              </div>
             )}
           </CardHeader>
           <CardContent className="min-w-0 space-y-4">
@@ -553,6 +561,11 @@ export default function Produtores() {
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      <RecalcularRateioDialog 
+        open={isRecalcularOpen} 
+        onOpenChange={setIsRecalcularOpen} 
+      />
     </AppLayout>
   );
 }
