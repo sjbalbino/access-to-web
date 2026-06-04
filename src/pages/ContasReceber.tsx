@@ -94,6 +94,11 @@ export default function ContasReceber() {
 
   const handleSave = async (data: any) => {
     let saved: any;
+    if (data._isBatch) {
+      const { _isBatch, ...config } = data;
+      await gerarParcelas.mutateAsync(config);
+      return;
+    }
     if (editing?.id) saved = await update.mutateAsync({ id: editing.id, ...data });
     else saved = await create.mutateAsync(data);
     setEditing(null);
