@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,18 @@ export default function ContasReceber() {
   const { data: clientes } = useClientesFornecedores();
 
   const [filtroGranja, setFiltroGranja] = useState<string | undefined>();
-  const [filtroStatus, setFiltroStatus] = useState<string | undefined>();
+  const [filtroStatus, setFiltroStatus] = useState<string | undefined>('aberto');
+
+  useEffect(() => {
+    if (granjas && !filtroGranja) {
+      const principal = granjas.find(g => g.is_principal);
+      if (principal) {
+        setFiltroGranja(principal.id);
+      } else if (granjas.length > 0) {
+        setFiltroGranja(granjas[0].id);
+      }
+    }
+  }, [granjas, filtroGranja]);
   const [filtroCliente, setFiltroCliente] = useState<string | undefined>();
   const [vencDe, setVencDe] = useState('');
   const [vencAte, setVencAte] = useState('');
