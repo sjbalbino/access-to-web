@@ -5428,6 +5428,15 @@ export type Database = {
       }
       recalc_conta_pagar: { Args: { _conta_id: string }; Returns: undefined }
       recalc_conta_receber: { Args: { _conta_id: string }; Returns: undefined }
+      recalcular_rateios_granja: {
+        Args: {
+          p_data_fim: string
+          p_data_inicio: string
+          p_granja_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       seed_tenant_defaults: { Args: { _tenant_id: string }; Returns: undefined }
     }
     Enums: {
