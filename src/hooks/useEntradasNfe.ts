@@ -65,6 +65,7 @@ export interface AutoCpPagamento {
 
 async function gerarContasPagarAutomatico(
   entrada: any,
+  itens: any[] | undefined,
   duplicatas: AutoCpDuplicata[] | undefined,
   pagamento: AutoCpPagamento | undefined
 ) {
@@ -73,16 +74,59 @@ async function gerarContasPagarAutomatico(
 
   const dataEmissao = entrada.data_emissao || entrada.data_entrada || new Date().toISOString().slice(0, 10);
 
+  // 1. Determinar o rateio por conta DRE / Sub-Centro baseado nos itens
+  let rateioItens: Record<string, { sub_centro_id: string | null; dre_id: string | null; valor: number }> = {};
+
+  if (itens && itens.length > 0) {
+    // Buscar metadados dos produtos, grupos e sub-centros
+    const produtoIds = itens.map(i => i.produto_id).filter(Boolean);
+    
+    const { data: produtosMeta } = await supabase
+      .from('produtos')
+      .select(`
+        id,
+        grupo:grupo_id(
+          id,
+          sub_centro:conta_gerencial_id(
+            id,
+            codigo_dre
+          )
+        )
+      `)
+      .in('id', produtoIds);
+
+    const { data: todasDreContas } = await supabase
+      .from('dre_contas')
+      .select('id, codigo')
+      .eq('ativo', true);
+
+    itens.forEach(item => {
+      const meta = produtosMeta?.find(p => p.id === item.produto_id);
+      const subCentroId = (meta?.grupo as any)?.sub_centro?.id || null;
+      const codigoDre = (meta?.grupo as any)?.sub_centro?.codigo_dre || null;
+      const dreConta = todasDreContas?.find(d => d.codigo === codigoDre);
+      const dreId = dreConta?.id || null;
+      
+      const key = `${subCentroId || 'null'}_${dreId || 'null'}`;
+      if (!rateioItens[key]) {
+        rateioItens[key] = { sub_centro_id: subCentroId, dre_id: dreId, valor: 0 };
+      }
+      rateioItens[key].valor += (Number(item.valor_total) || (Number(item.quantidade) * Number(item.valor_unitario)));
+    });
+  }
+
+  const splits = Object.values(rateioItens);
+  const totalValorItens = splits.reduce((sum, s) => sum + s.valor, 0);
+
   // Monta lista de parcelas
   let parcelas: Array<{ numero: string; vencimento: string; valor: number }>;
   if (duplicatas && duplicatas.length > 0) {
     parcelas = duplicatas.map((d, i) => ({
       numero: `${i + 1}/${duplicatas.length}`,
       vencimento: d.vencimento || dataEmissao,
-      valor: d.valor,
+      valor: Number(d.valor),
     }));
   } else {
-    // Sem duplicatas → cria 1 CP única (à vista ou prazo único)
     parcelas = [{
       numero: '1/1',
       vencimento: dataEmissao,
@@ -90,30 +134,81 @@ async function gerarContasPagarAutomatico(
     }];
   }
 
-  const rows = parcelas.map((p) => ({
-    granja_id: entrada.granja_id,
-    fornecedor_id: entrada.fornecedor_id || null,
-    entrada_nfe_id: entrada.id,
-    safra_id: entrada.safra_id || null,
-    socio_produtor_id: entrada.socio_produtor_id || null,
-    rateio_modo: entrada.socio_produtor_id ? 'socio_unico' : 'rateio_granja',
-    documento: entrada.numero_nfe || null,
-    parcela: p.numero,
-    data_emissao: dataEmissao,
-    data_vencimento: p.vencimento,
-    valor_original: p.valor,
-    observacoes: pagamento?.forma_pagamento ? `Forma: ${pagamento.forma_pagamento}` : null,
-  }));
+  // Se não tem itens ou valor total zerado no rateio, usa padrão
+  if (splits.length === 0) {
+    const rows = parcelas.map((p) => ({
+      granja_id: entrada.granja_id,
+      fornecedor_id: entrada.fornecedor_id || null,
+      entrada_nfe_id: entrada.id,
+      safra_id: entrada.safra_id || null,
+      socio_produtor_id: entrada.socio_produtor_id || null,
+      rateio_modo: entrada.socio_produtor_id ? 'socio_unico' : 'rateio_granja',
+      documento: entrada.numero_nfe || null,
+      parcela: p.numero,
+      data_emissao: dataEmissao,
+      data_vencimento: p.vencimento,
+      valor_original: p.valor,
+      observacoes: pagamento?.forma_pagamento ? `Forma: ${pagamento.forma_pagamento}` : null,
+    }));
+
+    const { data: criadas, error } = await supabase
+      .from('contas_pagar')
+      .insert(rows)
+      .select('id, valor_original');
+    if (error) throw error;
+    return criadas;
+  }
+
+  // Gera registros rateados para cada parcela
+  const rows: any[] = [];
+  parcelas.forEach(p => {
+    splits.forEach((s, idx) => {
+      // Proporção do valor deste split em relação ao total dos itens
+      const prop = s.valor / totalValorItens;
+      let valorSplit = Number((p.valor * prop).toFixed(2));
+      
+      // Ajuste de arredondamento no último split da parcela
+      if (idx === splits.length - 1) {
+        const jaCalculado = rows
+          .filter(r => r.parcela === p.numero)
+          .reduce((sum, r) => sum + r.valor_original, 0);
+        valorSplit = Number((p.valor - jaCalculado).toFixed(2));
+      }
+
+      if (valorSplit > 0) {
+        rows.push({
+          granja_id: entrada.granja_id,
+          fornecedor_id: entrada.fornecedor_id || null,
+          entrada_nfe_id: entrada.id,
+          safra_id: entrada.safra_id || null,
+          sub_centro_custo_id: s.sub_centro_id,
+          dre_conta_id: s.dre_id,
+          socio_produtor_id: entrada.socio_produtor_id || null,
+          rateio_modo: entrada.socio_produtor_id ? 'socio_unico' : 'rateio_granja',
+          documento: entrada.numero_nfe || null,
+          parcela: p.numero,
+          data_emissao: dataEmissao,
+          data_vencimento: p.vencimento,
+          valor_original: valorSplit,
+          observacoes: pagamento?.forma_pagamento ? `Forma: ${pagamento.forma_pagamento} (Rateio DRE)` : 'Rateio DRE',
+        });
+      }
+    });
+  });
 
   const { data: criadas, error } = await supabase
     .from('contas_pagar')
     .insert(rows)
     .select('id, valor_original');
   if (error) throw error;
+  return criadas;
+}
+  if (error) throw error;
 
   // Se "já pago" e forma de pagamento à vista → gera baixas
   if (pagamento?.ja_pago && pagamento.forma_pagamento && criadas?.length) {
     const hoje = new Date().toISOString().slice(0, 10);
+
     const baixas = criadas.map((c: any) => ({
       conta_id: c.id,
       data_pagamento: hoje,
@@ -169,9 +264,11 @@ export function useCreateEntradaNfe() {
       try {
         await gerarContasPagarAutomatico(
           { ...data, socio_produtor_id: socioProdutorId },
+          itens,
           _duplicatas,
           _pagamento,
         );
+
       } catch (err: any) {
         console.error('Erro ao gerar contas a pagar automáticas:', err);
         toast.error('Entrada criada, mas falha ao gerar Contas a Pagar: ' + err.message);
