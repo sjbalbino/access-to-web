@@ -85,11 +85,11 @@ export function useMde() {
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
         body: { action: "download_xml", inscricaoId, chave },
-        headers: { "X-Content-Type": "text/plain" }
       });
       if (error) throw new Error(error.message);
+      if (!data?.success) throw new Error(data?.error || "Erro ao baixar XML");
 
-      const xmlText = typeof data === "string" ? data : new TextDecoder().decode(data);
+      const xmlText = data.xml;
 
       const blob = new Blob([xmlText], { type: "application/xml" });
       const url = window.URL.createObjectURL(blob);

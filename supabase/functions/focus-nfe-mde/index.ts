@@ -151,10 +151,10 @@ serve(async (req) => {
         }
 
         const xmlContent = await response.text();
-        return new Response(xmlContent, {
+        return new Response(JSON.stringify({ success: true, xml: xmlContent }), {
           headers: {
             ...corsHeaders,
-            "Content-Type": "text/plain; charset=utf-8",
+            "Content-Type": "application/json",
           },
         });
       }
