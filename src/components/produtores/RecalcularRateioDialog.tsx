@@ -170,6 +170,25 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
               </Label>
             </div>
           </div>
+
+          {logs && logs.length > 0 && (
+            <div className="mt-2 space-y-2">
+              <Label className="text-xs text-muted-foreground uppercase">Últimos recálculos para esta granja</Label>
+              <div className="space-y-1">
+                {logs.map((log) => (
+                  <div key={log.id} className="text-[10px] p-2 border rounded bg-muted/30 flex justify-between items-center">
+                    <div>
+                      <span className="font-semibold">{new Date(log.created_at).toLocaleDateString()}</span> - 
+                      {log.observacoes || log.status}
+                    </div>
+                    <div className="text-muted-foreground italic">
+                      Por: {log.profiles?.nome || 'Sistema'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
