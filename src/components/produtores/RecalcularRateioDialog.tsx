@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RefreshCcw, AlertTriangle, Loader2 } from 'lucide-react';
+import { RefreshCcw, AlertTriangle, Loader2, Undo2 } from 'lucide-react';
 
 interface RecalcularRateioDialogProps {
   open: boolean;
@@ -82,6 +82,29 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
     },
     onError: (error: any) => {
       toast.error('Erro ao recalcular: ' + error.message);
+    },
+  });
+
+  const undoMutation = useMutation({
+    mutationFn: async (logId: string) => {
+      if (!user?.id) throw new Error('Usuário não autenticado');
+      
+      const { data, error } = await supabase.rpc('desfazer_recalculo_rateio', {
+        p_log_id: logId,
+        p_user_id: user.id,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Recálculo desfeito com sucesso!');
+      qc.invalidateQueries({ queryKey: ['lancamento_rateio_socios'] });
+      qc.invalidateQueries({ queryKey: ['rateios_periodo'] });
+      qc.invalidateQueries({ queryKey: ['rateio_recalculo_logs'] });
+    },
+    onError: (error: any) => {
+      toast.error('Erro ao desfazer recálculo: ' + error.message);
     },
   });
 
@@ -155,7 +178,7 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
               Atenção
             </div>
             <p className="text-xs text-amber-700">
-              Isso apagará rateios manuais feitos anteriormente no período para esta granja. Esta ação é irreversível e será registrada em log de auditoria.
+              Isso atualizará rateios manuais feitos anteriormente no período para esta granja. A ação será registrada e pode ser desfeita usando o log abaixo.
             </p>
             <div className="flex items-center gap-2 pt-1">
               <input
@@ -176,14 +199,34 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
               <Label className="text-xs text-muted-foreground uppercase">Últimos recálculos para esta granja</Label>
               <div className="space-y-1">
                 {logs.map((log) => (
-                  <div key={log.id} className="text-[10px] p-2 border rounded bg-muted/30 flex justify-between items-center">
-                    <div>
-                      <span className="font-semibold">{new Date(log.created_at).toLocaleDateString()}</span> - 
-                      {log.observacoes || log.status}
+                  <div key={log.id} className="text-[10px] p-2 border rounded bg-muted/30 flex justify-between items-center gap-2">
+                    <div className="flex-1">
+                      <div className="font-semibold">
+                        {new Date(log.created_at).toLocaleDateString()} {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <div className="text-muted-foreground italic">
+                        Por: {log.profiles?.nome || 'Sistema'}
+                      </div>
+                      <div className="mt-0.5">{log.observacoes || log.status}</div>
                     </div>
-                    <div className="text-muted-foreground italic">
-                      Por: {log.profiles?.nome || 'Sistema'}
-                    </div>
+                    {log.backup_data && log.status !== 'desfeito' && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        onClick={() => undoMutation.mutate(log.id)}
+                        disabled={undoMutation.isPending}
+                      >
+                        {undoMutation.isPending && undoMutation.variables === log.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <Undo2 className="h-3 w-3" />
+                            <span>Desfazer</span>
+                          </div>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
