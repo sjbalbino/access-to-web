@@ -35,25 +35,73 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
   const { user } = useAuth();
   const { data: granjas } = useGranjas();
   const qc = useQueryClient();
+  const [activeTab, setActiveTab] = useState('recalcular');
+  
+  // States para Recálculo
   const [granjaId, setGranjaId] = useState('');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [confirmacao, setConfirmacao] = useState(false);
 
-  const { data: logs, isLoading: loadingLogs } = useQuery({
-    queryKey: ['rateio_recalculo_logs', granjaId],
+  // States para Auditoria
+  const [auditGranjaId, setAuditGranjaId] = useState('all');
+  const [auditUserId, setAuditUserId] = useState('all');
+  const [auditDataInicio, setAuditDataInicio] = useState('');
+  const [auditDataFim, setAuditDataFim] = useState('');
+  const [auditSearch, setAuditSearch] = useState('');
+
+  // Busca de perfis para filtro
+  const { data: profiles } = useQuery({
+    queryKey: ['profiles_audit'],
     queryFn: async () => {
-      if (!granjaId) return [];
       const { data, error } = await supabase
+        .from('profiles')
+        .select('id, nome')
+        .order('nome');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: logs, isLoading: loadingLogs } = useQuery({
+    queryKey: ['rateio_recalculo_logs', auditGranjaId, auditUserId, auditDataInicio, auditDataFim, auditSearch, granjaId, activeTab],
+    queryFn: async () => {
+      // Se estiver na aba de recálculo e não houver granja selecionada, mostramos os últimos logs gerais ou limitamos
+      let query = supabase
         .from('rateio_recalculo_logs' as any)
         .select('*, profiles:user_id(nome)')
-        .eq('granja_id', granjaId)
-        .order('created_at', { ascending: false })
-        .limit(3);
+        .order('created_at', { ascending: false });
+
+      if (activeTab === 'recalcular') {
+        if (granjaId) {
+          query = query.eq('granja_id', granjaId);
+        }
+        query = query.limit(3);
+      } else {
+        // Filtros da Auditoria
+        if (auditGranjaId !== 'all') {
+          query = query.eq('granja_id', auditGranjaId);
+        }
+        if (auditUserId !== 'all') {
+          query = query.eq('user_id', auditUserId);
+        }
+        if (auditDataInicio) {
+          query = query.gte('created_at', `${auditDataInicio}T00:00:00`);
+        }
+        if (auditDataFim) {
+          query = query.lte('created_at', `${auditDataFim}T23:59:59`);
+        }
+        if (auditSearch) {
+          query = query.or(`observacoes.ilike.%${auditSearch}%,status.ilike.%${auditSearch}%`);
+        }
+        query = query.limit(50);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as any[];
     },
-    enabled: !!granjaId,
+    enabled: open,
   });
 
   const mutation = useMutation({
