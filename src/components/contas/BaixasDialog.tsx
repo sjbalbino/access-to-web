@@ -318,7 +318,7 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                     </Select>
                   </div>
                   <div>
-                    <Label>Conta bancária</Label>
+                    <Label>Conta bancária *</Label>
                     <ComboboxFilter
                       value={contaBancariaId}
                       onValueChange={setContaBancariaId}
