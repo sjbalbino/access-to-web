@@ -208,7 +208,9 @@ export default function Granjas() {
                         <div>
                           <p className="font-medium flex items-center gap-1.5">
                             {granja.razao_social}
-                            {granja.is_principal && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" title="Granja Principal" />}
+                            {granja.is_principal && (
+                              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            )}
                           </p>
                           {granja.nome_fantasia && (
                             <p className="text-sm text-muted-foreground">{granja.nome_fantasia}</p>
