@@ -321,3 +321,87 @@ function formatDateBr(d: string) {
     return `${day}/${m}/${y}`;
   } catch { return d; }
 }
+
+// =============================================
+// Auditoria de Recálculo de Rateio
+// =============================================
+export interface AuditoriaRateioLog {
+  id: string;
+  created_at: string;
+  data_inicial: string;
+  data_final: string;
+  granja_nome: string;
+  usuario_nome: string;
+  status: string;
+  observacoes: string | null;
+  backup_data: any;
+}
+
+export function gerarRelatorioAuditoriaRateioPdf(log: AuditoriaRateioLog) {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Cabeçalho
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Relatório de Auditoria: Recálculo de Rateio', pageWidth / 2, 15, { align: 'center' });
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`ID do Log: ${log.id}`, 14, 25);
+  doc.text(`Data/Hora da Ação: ${new Date(log.created_at).toLocaleString('pt-BR')}`, 14, 30);
+  doc.text(`Usuário Responsável: ${log.usuario_nome}`, 14, 35);
+  doc.text(`Granja: ${log.granja_nome}`, 14, 40);
+  doc.text(`Período Processado: ${formatDateBr(log.data_inicial)} até ${formatDateBr(log.data_final)}`, 14, 45);
+  doc.text(`Status Atual: ${log.status.toUpperCase()}`, 14, 50);
+
+  if (log.observacoes) {
+    doc.text(`Observações: ${log.observacoes}`, 14, 55);
+  }
+
+  let cursorY = 65;
+
+  // Resumo das alterações
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Resumo das Alterações', 14, cursorY);
+  cursorY += 5;
+
+  const backup = log.backup_data;
+  const numLancamentos = Array.isArray(backup) ? backup.length : 0;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Total de lançamentos afetados: ${numLancamentos}`, 14, cursorY);
+  cursorY += 10;
+
+  if (numLancamentos > 0) {
+    // Tabela com amostra ou resumo por lançamento
+    const rows = backup.slice(0, 50).map((b: any) => [
+      b.lancamento_id?.substring(0, 8) || '-',
+      b.data ? formatDateBr(b.data) : '-',
+      b.descricao || '-',
+      { content: fmtCurr(b.valor || 0), styles: { halign: 'right' as const } },
+      b.socio_nome || '-',
+      { content: `${b.percentual_antigo || 0}%`, styles: { halign: 'center' as const } },
+      { content: `${b.percentual_novo || 0}%`, styles: { halign: 'center' as const } }
+    ]);
+
+    if (numLancamentos > 50) {
+      rows.push([{ content: `... e mais ${numLancamentos - 50} alterações não listadas neste resumo.`, colSpan: 7, styles: { halign: 'center' as const, fontStyle: 'italic' as const } }]);
+    }
+
+    autoTable(doc, {
+      startY: cursorY,
+      head: [['ID Lanç.', 'Data', 'Descrição', { content: 'Valor (R$)', styles: { halign: 'right' } }, 'Sócio', { content: '% Ant.', styles: { halign: 'center' } }, { content: '% Novo', styles: { halign: 'center' } }]],
+      body: rows,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [60, 60, 60] },
+    });
+  } else {
+    doc.text('Nenhum dado de backup detalhado disponível para este log.', 14, cursorY);
+  }
+
+  const fileName = `auditoria-rateio-${log.id.substring(0, 8)}.pdf`;
+  doc.save(fileName);
+}

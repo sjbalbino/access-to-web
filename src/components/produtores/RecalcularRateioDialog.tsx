@@ -22,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RefreshCcw, AlertTriangle, Loader2, Undo2 } from 'lucide-react';
+import { RefreshCcw, AlertTriangle, Loader2, Undo2, FileText } from 'lucide-react';
+import { gerarRelatorioAuditoriaRateioPdf } from '@/lib/relatoriosGestao';
 
 interface RecalcularRateioDialogProps {
   open: boolean;
@@ -113,6 +114,22 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
     setDataInicio('');
     setDataFim('');
     setConfirmacao(false);
+  };
+
+  const handleExportarAuditoria = (log: any) => {
+    const granja = granjas?.find((g: any) => g.id === log.granja_id);
+    gerarRelatorioAuditoriaRateioPdf({
+      id: log.id,
+      created_at: log.created_at,
+      data_inicial: log.data_inicial,
+      data_final: log.data_final,
+      granja_nome: granja?.razao_social || 'Desconhecida',
+      usuario_nome: log.profiles?.nome || 'Sistema',
+      status: log.status,
+      observacoes: log.observacoes,
+      backup_data: log.backup_data
+    });
+    toast.success('Relatório de auditoria gerado!');
   };
 
   const handleRecalcular = () => {
@@ -209,23 +226,38 @@ export function RecalcularRateioDialog({ open, onOpenChange }: RecalcularRateioD
                       </div>
                       <div className="mt-0.5">{log.observacoes || log.status}</div>
                     </div>
-                    {log.backup_data && log.status !== 'desfeito' && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                        onClick={() => undoMutation.mutate(log.id)}
-                        disabled={undoMutation.isPending}
-                      >
-                        {undoMutation.isPending && undoMutation.variables === log.id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <div className="flex items-center gap-1">
-                            <Undo2 className="h-3 w-3" />
-                            <span>Desfazer</span>
-                          </div>
+                    {log.backup_data && (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-primary hover:text-primary hover:bg-primary/10"
+                          onClick={() => handleExportarAuditoria(log)}
+                          title="Gerar relatório de auditoria"
+                        >
+                          <FileText className="h-3 w-3" />
+                          <span className="hidden sm:inline ml-1 text-[10px]">Auditoria</span>
+                        </Button>
+                        
+                        {log.status !== 'desfeito' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                            onClick={() => undoMutation.mutate(log.id)}
+                            disabled={undoMutation.isPending}
+                          >
+                            {undoMutation.isPending && undoMutation.variables === log.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <Undo2 className="h-3 w-3" />
+                                <span className="hidden sm:inline ml-1 text-[10px]">Desfazer</span>
+                              </div>
+                            )}
+                          </Button>
                         )}
-                      </Button>
+                      </div>
                     )}
                   </div>
                 ))}
