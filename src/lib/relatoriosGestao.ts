@@ -119,9 +119,8 @@ export function gerarDrePdf(data: DreReportData) {
     columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 55 } },
   });
 
-  // Preview instead of immediate save
-  const pdfOutput = doc.output('bloburl');
-  window.open(pdfOutput, '_blank');
+  // Save the PDF instead of opening a window to avoid browser blockers
+  doc.save(`dre_${data.periodo.replace(/\s+/g, '_')}.pdf`);
 }
 
 // =============================================

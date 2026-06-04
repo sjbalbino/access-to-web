@@ -76,11 +76,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   // Efeito para definir a granja padrão
   useEffect(() => {
     if (granjas && granjas.length > 0 && !granjaId) {
-      // Ordenar por data de criação para pegar a "principal" (geralmente a primeira criada)
-      const sortedGranjas = [...granjas].sort((a, b) => 
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      );
-      setGranjaId(sortedGranjas[0].id);
+      const principal = granjas.find(g => g.is_principal);
+      if (principal) {
+        setGranjaId(principal.id);
+      } else {
+        // Fallback: ordenar por data de criação
+        const sortedGranjas = [...granjas].sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        setGranjaId(sortedGranjas[0].id);
+      }
     }
   }, [granjas, granjaId]);
 
@@ -545,18 +550,88 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const gerarDre = async () => {
     if (!dataInicial || !dataFinal) { toast({ title: "Filtros obrigatórios", description: "Informe o período.", variant: "destructive" }); return; }
-    const { data: dreContas } = await supabase.from("dre_contas" as any).select("*").order("codigo");
+    
+    // 1. Fetch DRE structure
+    const { data: dreContas } = await supabase.from("dre_contas").select("*").order("codigo");
     if (!dreContas || dreContas.length === 0) { toast({ title: "Sem estrutura", description: "Cadastre a estrutura do DRE primeiro." }); return; }
 
-    let query = supabase.from("lancamentos_financeiros" as any).select("valor, tipo, dre_conta_id")
-      .gte("data_lancamento", dataInicial).lte("data_lancamento", dataFinal).not("dre_conta_id", "is", null);
-    if (granjaId) query = query.eq("granja_id", granjaId);
-    const { data: lancamentos } = await query;
+    // 2. Fetch all mapping data
+    const [{ data: subCentros }, { data: produtosData }, { data: grupos }] = await Promise.all([
+      supabase.from("sub_centros_custo").select("id, codigo_dre"),
+      supabase.from("produtos").select("id, grupo_id"),
+      supabase.from("grupos_produtos").select("id, codigo_dre")
+    ]);
 
-    let queryAnterior = supabase.from("lancamentos_financeiros" as any).select("valor, tipo, dre_conta_id")
-      .lt("data_lancamento", dataInicial).not("dre_conta_id", "is", null);
-    if (granjaId) queryAnterior = queryAnterior.eq("granja_id", granjaId);
-    const { data: lancamentosAnt } = await queryAnterior;
+    const getDreIdFromCode = (code: string) => dreContas.find(c => c.codigo === code)?.id;
+
+    const mapRecordToDreId = (rec: any) => {
+      if (rec.dre_conta_id) return rec.dre_conta_id;
+      
+      // Map via sub_centro_custo
+      if (rec.sub_centro_custo_id) {
+        const sc = subCentros?.find(s => s.id === rec.sub_centro_custo_id);
+        if (sc?.codigo_dre) return getDreIdFromCode(sc.codigo_dre);
+      }
+
+      // Map via produto -> grupo
+      if (rec.produto_id) {
+        const prod = produtosData?.find(p => p.id === rec.produto_id);
+        if (prod?.grupo_id) {
+          const grp = grupos?.find(g => g.id === prod.grupo_id);
+          if (grp?.codigo_dre) return getDreIdFromCode(grp.codigo_dre);
+        }
+      }
+
+      return null;
+    };
+
+    // 3. Fetch financial data from 3 sources
+    const fetchPeriodData = async (start: string | null, end: string) => {
+      const queries = [
+        supabase.from("lancamentos_financeiros").select("valor, tipo, dre_conta_id, sub_centro_custo_id, produto_id"),
+        supabase.from("contas_pagar").select("valor_pago, dre_conta_id, sub_centro_custo_id, produto_id").neq("status", "cancelado"),
+        supabase.from("contas_receber").select("valor_pago, dre_conta_id, sub_centro_custo_id, produto_id").neq("status", "cancelado")
+      ];
+
+      const scopedQueries = queries.map(q => {
+        let sq = q;
+        if (start) {
+          if ((sq as any).table === 'lancamentos_financeiros') sq = sq.gte("data_lancamento", start);
+          else sq = sq.gte("data_emissao", start); // Using emission date for DRE accrual/period
+        }
+        if (end) {
+          if ((sq as any).table === 'lancamentos_financeiros') sq = sq.lte("data_lancamento", end);
+          else sq = sq.lte("data_emissao", end);
+        }
+        if (granjaId) sq = sq.eq("granja_id", granjaId);
+        return sq;
+      });
+
+      const results = await Promise.all(scopedQueries);
+      const allData: any[] = [];
+      
+      // Normalizar dados
+      (results[0].data || []).forEach(l => allData.push({ 
+        valor: Number(l.valor), 
+        tipo: l.tipo, 
+        dre_id: mapRecordToDreId(l) 
+      }));
+      (results[1].data || []).forEach(l => allData.push({ 
+        valor: Number(l.valor_pago || 0), 
+        tipo: 'despesa', 
+        dre_id: mapRecordToDreId(l) 
+      }));
+      (results[2].data || []).forEach(l => allData.push({ 
+        valor: Number(l.valor_pago || 0), 
+        tipo: 'receita', 
+        dre_id: mapRecordToDreId(l) 
+      }));
+
+      return allData.filter(d => d.dre_id);
+    };
+
+    const lancamentos = await fetchPeriodData(dataInicial, dataFinal);
+    const lancamentosAnt = await fetchPeriodData(null, new Date(new Date(dataInicial).getTime() - 86400000).toISOString().split('T')[0]);
 
     // Cache para somas recursivas
     const memoAnt: Record<string, number> = {};
@@ -565,12 +640,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const getSomaRecursiva = (list: any[], contaId: string, allContas: any[], memo: Record<string, number>): number => {
       if (memo[contaId] !== undefined) return memo[contaId];
       
-      let total = (list || []).filter(l => l.dre_conta_id === contaId)
-        .reduce((s, l) => {
-          const valor = Number(l.valor);
-          // O tipo do lançamento (receita/despesa) define o sinal
-          return s + (l.tipo === 'receita' ? valor : -valor);
-        }, 0);
+      let total = list.filter(l => l.dre_id === contaId)
+        .reduce((s, l) => s + (l.tipo === 'receita' ? l.valor : -l.valor), 0);
       
       const children = allContas.filter(c => c.parent_id === contaId);
       children.forEach(child => {
@@ -582,11 +653,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     };
 
     const contas: DreReportData["contas"] = (dreContas as any[]).map(c => {
-      const saldo_anterior = getSomaRecursiva(lancamentosAnt || [], c.id, dreContas, memoAnt);
-      const valor_periodo = getSomaRecursiva(lancamentos || [], c.id, dreContas, memoPeriodo);
-      
-      // Ajuste de sinal baseado no tipo_saldo da conta se necessário
-      // Por enquanto mantendo a lógica de receita (+) e despesa (-)
+      const saldo_anterior = getSomaRecursiva(lancamentosAnt, c.id, dreContas, memoAnt);
+      const valor_periodo = getSomaRecursiva(lancamentos, c.id, dreContas, memoPeriodo);
       
       return { 
         codigo: c.codigo, 
