@@ -525,7 +525,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const gerarDre = async () => {
     if (!dataInicial || !dataFinal) { toast({ title: "Filtros obrigatórios", description: "Informe o período.", variant: "destructive" }); return; }
-    const { data: dreContas } = await supabase.from("dre_contas" as any).select("*").order("ordem").order("codigo");
+    const { data: dreContas } = await supabase.from("dre_contas" as any).select("*").order("codigo");
     if (!dreContas || dreContas.length === 0) { toast({ title: "Sem estrutura", description: "Cadastre a estrutura do DRE primeiro." }); return; }
 
     let query = supabase.from("lancamentos_financeiros" as any).select("valor, tipo, dre_conta_id")
@@ -538,15 +538,36 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     if (granjaId) queryAnterior = queryAnterior.eq("granja_id", granjaId);
     const { data: lancamentosAnt } = await queryAnterior;
 
-    const somaPorConta = (list: any[], contaId: string) => {
-      return (list || []).filter(l => l.dre_conta_id === contaId)
+    // Cache para somas recursivas
+    const memoAnt: Record<string, number> = {};
+    const memoPeriodo: Record<string, number> = {};
+
+    const getSomaRecursiva = (list: any[], contaId: string, allContas: any[], memo: Record<string, number>): number => {
+      if (memo[contaId] !== undefined) return memo[contaId];
+      
+      let total = (list || []).filter(l => l.dre_conta_id === contaId)
         .reduce((s, l) => s + (l.tipo === 'receita' ? Number(l.valor) : -Number(l.valor)), 0);
+      
+      const children = allContas.filter(c => c.parent_id === contaId);
+      children.forEach(child => {
+        total += getSomaRecursiva(list, child.id, allContas, memo);
+      });
+      
+      memo[contaId] = total;
+      return total;
     };
 
     const contas: DreReportData["contas"] = (dreContas as any[]).map(c => {
-      const saldo_anterior = somaPorConta(lancamentosAnt || [], c.id);
-      const valor_periodo = somaPorConta(lancamentos || [], c.id);
-      return { codigo: c.codigo, descricao: c.descricao, nivel: c.nivel, saldo_anterior, valor_periodo, saldo_atual: saldo_anterior + valor_periodo };
+      const saldo_anterior = getSomaRecursiva(lancamentosAnt || [], c.id, dreContas, memoAnt);
+      const valor_periodo = getSomaRecursiva(lancamentos || [], c.id, dreContas, memoPeriodo);
+      return { 
+        codigo: c.codigo, 
+        descricao: c.descricao, 
+        nivel: c.nivel || 1, 
+        saldo_anterior, 
+        valor_periodo, 
+        saldo_atual: saldo_anterior + valor_periodo 
+      };
     });
 
     gerarDrePdf({ periodo: `${fmtD(dataInicial)} a ${fmtD(dataFinal)}`, contas });
