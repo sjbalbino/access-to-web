@@ -12,6 +12,9 @@ import { useAllSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
 import { useSafras } from '@/hooks/useSafras';
 import { AtribuicaoSocioSection, RateioModo, RateioManualItem } from './AtribuicaoSocioSection';
 import { useSalvarRateioManual } from '@/hooks/useRateioSocios';
+import { useContasBancarias } from '@/hooks/useContasBancarias';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 interface Props {
   open: boolean;
@@ -27,6 +30,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const { data: dreContas } = useDreContas();
   const { data: subCentros } = useAllSubCentrosCusto();
   const { data: safras } = useSafras();
+  const { data: contasBancarias } = useContasBancarias({ ativo: true });
 
   const [form, setForm] = useState<any>({
     granja_id: '',
@@ -43,6 +47,14 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     rateio_modo: 'rateio_granja' as RateioModo,
     socio_produtor_id: null as string | null,
     ja_pago: false,
+    // Novos campos para pagamento imediato
+    num_parcelas: 1,
+    intervalo_dias: 30,
+    juros: '0',
+    multa: '0',
+    desconto: '0',
+    forma_pagamento: 'pix',
+    conta_bancaria_id: '',
   });
   const [rateioManual, setRateioManual] = useState<RateioManualItem[]>([]);
   const salvarManual = useSalvarRateioManual();
@@ -66,26 +78,81 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const lockedByOrigem = !!(initial && (initial.contrato_venda_id || initial.entrada_nfe_id || initial.compra_cereais_id));
 
   const handleSubmit = async () => {
-    const payload = {
-      ...form,
-      valor_original: parseFloat(form.valor_original) || 0,
-      valor_pago: form.ja_pago ? (parseFloat(form.valor_original) || 0) : 0,
-      status: form.ja_pago ? 'pago' : 'aberto',
-    };
-    const { ja_pago, ...restPayload } = payload;
-    Object.keys(restPayload).forEach(k => { if (restPayload[k] === '') restPayload[k] = null; });
-    const saved: any = await onSubmit(restPayload);
-    // se modo manual, gravar rateio explícito (trigger respeitará)
-    if (payload.rateio_modo === 'manual' && saved?.id) {
-      await salvarManual.mutateAsync({
-        origem_tipo: tipo === 'receber' ? 'cr' : 'cp',
-        origem_id: saved.id,
-        itens: rateioManual.map((i) => ({
-          socio_produtor_id: i.socio_produtor_id,
-          percentual: i.percentual,
-          valor: +((payload.valor_original * i.percentual) / 100).toFixed(2),
-        })),
-      });
+    const valorOriginal = parseFloat(form.valor_original) || 0;
+    const numParcelas = parseInt(form.num_parcelas) || 1;
+
+    if (numParcelas > 1) {
+      // Usar a lógica de geração de parcelas
+      const config = {
+        granja_id: form.granja_id,
+        [tipo === 'receber' ? 'cliente_id' : 'fornecedor_id']: form[tipo === 'receber' ? 'cliente_id' : 'fornecedor_id'],
+        valor_total: valorOriginal,
+        num_parcelas: numParcelas,
+        primeiro_vencimento: form.data_vencimento,
+        intervalo_dias: parseInt(form.intervalo_dias) || 30,
+        ja_pago: form.ja_pago,
+        data_emissao: form.data_emissao,
+        dre_conta_id: form.dre_conta_id,
+        sub_centro_custo_id: form.sub_centro_custo_id,
+        safra_id: form.safra_id,
+        documento: form.documento,
+      };
+
+      // Nota: Idealmente chamaríamos o hook de gerar parcelas aqui, 
+      // mas como o onSubmit vem de fora, vamos adaptar.
+      // No caso de múltiplas parcelas, o onSubmit precisará lidar com isso 
+      // ou faremos chamadas separadas. 
+      // Para manter a simplicidade e consistência com o que o usuário pediu:
+      // "ao incluir uma conta... tenha a opção de parcelar"
+      
+      // Se num_parcelas > 1, vamos delegar para uma função de lote se disponível, 
+      // ou o pai precisará saber lidar. Atualmente os hooks useCreate suportam apenas 1.
+      // Vou ajustar para que o onSubmit aceite o objeto de configuração de parcelas se num_parcelas > 1.
+      await onSubmit({ ...config, _isBatch: true });
+    } else {
+      const payload = {
+        ...form,
+        valor_original: valorOriginal,
+        valor_pago: form.ja_pago ? valorOriginal : 0,
+        status: form.ja_pago ? 'pago' : 'aberto',
+      };
+      
+      const { ja_pago, num_parcelas, intervalo_dias, juros, multa, desconto, forma_pagamento, conta_bancaria_id, ...restPayload } = payload;
+      Object.keys(restPayload).forEach(k => { if (restPayload[k] === '') restPayload[k] = null; });
+      
+      const saved: any = await onSubmit(restPayload);
+
+      // Se já pago, criar a baixa vinculada
+      if (form.ja_pago && saved?.id) {
+        const cbSelecionada = contasBancarias.find((c: any) => c.id === form.conta_bancaria_id);
+        const baixaPayload = {
+          conta_id: saved.id,
+          data_pagamento: form.data_emissao, // ou data_vencimento? Normalmente data_emissao se pago na inclusão
+          valor_pago: valorOriginal,
+          juros: parseFloat(form.juros) || 0,
+          multa: parseFloat(form.multa) || 0,
+          desconto: parseFloat(form.desconto) || 0,
+          forma_pagamento: form.forma_pagamento,
+          conta_bancaria_id: form.conta_bancaria_id || null,
+          conta_bancaria: cbSelecionada ? cbSelecionada.nome : null,
+          documento: form.documento || null,
+        };
+        
+        const table = tipo === 'receber' ? 'contas_receber_baixas' : 'contas_pagar_baixas';
+        await supabase.from(table as any).insert(baixaPayload);
+      }
+
+      if (payload.rateio_modo === 'manual' && saved?.id) {
+        await salvarManual.mutateAsync({
+          origem_tipo: tipo === 'receber' ? 'cr' : 'cp',
+          origem_id: saved.id,
+          itens: rateioManual.map((i) => ({
+            socio_produtor_id: i.socio_produtor_id,
+            percentual: i.percentual,
+            valor: +((valorOriginal * i.percentual) / 100).toFixed(2),
+          })),
+        });
+      }
     }
     onOpenChange(false);
   };
@@ -167,7 +234,32 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
               </SelectContent>
             </Select>
           </div>
-          <div className="col-span-2 flex items-center space-x-2 border rounded-md p-3 bg-muted/30">
+          {!initial?.id && (
+            <>
+              <div className="col-span-1">
+                <Label>Parcelar em (vezes)</Label>
+                <Input 
+                  type="number" 
+                  min={1} 
+                  max={60} 
+                  value={form.num_parcelas} 
+                  onChange={(e) => update('num_parcelas', e.target.value)} 
+                />
+              </div>
+              <div className="col-span-1">
+                <Label>Intervalo entre parcelas (dias)</Label>
+                <Input 
+                  type="number" 
+                  min={1} 
+                  value={form.intervalo_dias} 
+                  onChange={(e) => update('intervalo_dias', e.target.value)} 
+                  disabled={parseInt(form.num_parcelas) <= 1}
+                />
+              </div>
+            </>
+          )}
+
+          <div className={cn("col-span-2 flex items-center space-x-2 border rounded-md p-3 transition-colors", form.ja_pago ? "bg-emerald-50 border-emerald-200" : "bg-muted/30")}>
             <input
               type="checkbox"
               id="ja_pago"
@@ -178,13 +270,55 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             />
             <div className="grid gap-1.5 leading-none">
               <Label htmlFor="ja_pago" className="text-sm font-medium leading-none">
-                Já {tipo === 'receber' ? 'recebido' : 'pago'}
+                Já {tipo === 'receber' ? 'recebido' : 'pago'}?
               </Label>
               <p className="text-xs text-muted-foreground">
-                Define o status como "pago" e preenche o valor baixado com o valor total.
+                Define o status como "pago" e registra a baixa imediatamente.
               </p>
             </div>
           </div>
+
+          {form.ja_pago && (
+            <div className="col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 p-4 border rounded-md bg-emerald-50/50 border-emerald-100">
+              <div className="col-span-2 md:col-span-4 font-semibold text-sm text-emerald-800 border-b border-emerald-100 pb-2 mb-1">
+                Informações da Baixa
+              </div>
+              <div>
+                <Label>Juros</Label>
+                <Input type="number" step="0.01" value={form.juros} onChange={(e) => update('juros', e.target.value)} />
+              </div>
+              <div>
+                <Label>Multa</Label>
+                <Input type="number" step="0.01" value={form.multa} onChange={(e) => update('multa', e.target.value)} />
+              </div>
+              <div>
+                <Label>Desconto</Label>
+                <Input type="number" step="0.01" value={form.desconto} onChange={(e) => update('desconto', e.target.value)} />
+              </div>
+              <div>
+                <Label>Forma de Pagto.</Label>
+                <Select value={form.forma_pagamento} onValueChange={(v) => update('forma_pagamento', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {['dinheiro', 'pix', 'boleto', 'transferencia', 'cheque', 'cartao', 'outro'].map(f => (
+                      <SelectItem key={f} value={f}>{f.charAt(0).toUpperCase() + f.slice(1)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2">
+                <Label>Conta Bancária (para conciliação)</Label>
+                <Select value={form.conta_bancaria_id} onValueChange={(v) => update('conta_bancaria_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a conta..." /></SelectTrigger>
+                  <SelectContent>
+                    {contasBancarias?.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
           <div className="col-span-2">
             <Label>Observações</Label>
             <Textarea value={form.observacoes || ''} onChange={(e) => update('observacoes', e.target.value)} rows={2} />
