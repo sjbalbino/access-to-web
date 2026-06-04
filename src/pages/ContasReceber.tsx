@@ -278,7 +278,7 @@ export default function ContasReceber() {
           // Na verdade, o hook useGerarParcelasReceber espera contrato_venda_id.
           // Vou ajustar o hook para ser mais flexível ou passar um valor dummy se necessário.
           await gerarParcelas.mutateAsync({
-            granja_id: filtroGranja || granjas?.[0]?.id || '',
+            granja_id: filtroGranja || (granjas?.find(g => g.is_principal) || granjas?.[0])?.id || '',
             valor_total: valorGerar,
             num_parcelas: config.num_parcelas,
             primeiro_vencimento: config.primeiro_vencimento,
