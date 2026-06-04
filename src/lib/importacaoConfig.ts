@@ -350,7 +350,7 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
       { dbColumn: 'unidade_medida_id', sourceColumn: 'unidade_medida', lookupTable: 'unidades_medida', lookupColumn: 'sigla', lookupLabel: 'descricao', fallbackColumns: ['codigo', 'descricao'] },
       { dbColumn: 'fornecedor_id', sourceColumn: 'fornecedor', lookupTable: 'clientes_fornecedores', lookupColumn: 'nome', lookupLabel: 'nome' },
-      { dbColumn: 'grupo_id', sourceColumn: 'grupo_produto', lookupTable: 'grupos_produtos', lookupColumn: 'nome', lookupLabel: 'nome' },
+      { dbColumn: 'grupo_id', sourceColumn: 'grupo', lookupTable: 'grupos_produtos', lookupColumn: 'nome', lookupLabel: 'nome', sourceColumnAliases: ['grupo_produto'] },
       { dbColumn: 'produto_residuo_id', sourceColumn: 'produto_residuo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', selfReference: true },
     ],
   },
