@@ -671,7 +671,7 @@ export default function Produtos() {
                   <TableCell className="font-mono hidden sm:table-cell">{item.codigo || '-'}</TableCell>
                   <TableCell className="font-medium max-w-[200px] truncate">{item.nome}</TableCell>
                   <TableCell className="hidden sm:table-cell">{getTipoBadge(item.tipo)}</TableCell>
-                  <TableCell className="hidden md:table-cell">{item.grupo || '-'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{item.grupo_vinculado?.nome || item.grupo || '-'}</TableCell>
                   <TableCell className="hidden md:table-cell">{item.unidade_medida?.sigla || item.unidade_medida?.codigo || '-'}</TableCell>
                   <TableCell className="text-right hidden sm:table-cell">{item.estoque_atual?.toLocaleString('pt-BR') || '0'}</TableCell>
                   <TableCell className="text-right hidden lg:table-cell">{formatCurrency(item.preco_venda)}</TableCell>
