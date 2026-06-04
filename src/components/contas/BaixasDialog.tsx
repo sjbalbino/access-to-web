@@ -67,6 +67,13 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
   const [documento, setDocumento] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
+  // Ao abrir o modal com um saldo positivo, sugere o valor total para baixa
+  useEffect(() => {
+    if (open && saldo > 0 && valorPago === '') {
+      setValorPago(saldo.toFixed(2));
+    }
+  }, [open, saldo]);
+
   const [proximoRecibo, setProximoRecibo] = useState<string>('');
 
   // Buscar próximo nº de recibo ao abrir
@@ -303,7 +310,7 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                   </div>
                   <div>
                     <Label>Forma de pagamento</Label>
-                    <Select isSearchable value={formaPagamento} onValueChange={setFormaPagamento}>
+                    <Select value={formaPagamento} onValueChange={setFormaPagamento}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
@@ -333,8 +340,17 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                   <Label>Observações</Label>
                   <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={2} />
                 </div>
-                <Button onClick={handleSalvarBaixa} disabled={!valorPago || parseFloat(valorPago) <= 0}>
-                  <Plus className="h-4 w-4 mr-2" /> Registrar baixa
+                <Button 
+                  onClick={handleSalvarBaixa} 
+                  disabled={!valorPago || parseFloat(valorPago) <= 0 || !contaBancariaId || createRec.isPending || createPag.isPending}
+                >
+                  {createRec.isPending || createPag.isPending ? (
+                    "Registrando..."
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" /> Registrar baixa
+                    </>
+                  )}
                 </Button>
               </div>
             )}
