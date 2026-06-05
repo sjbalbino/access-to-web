@@ -86,8 +86,7 @@ export default function ImportarDados() {
         // Try to filter by tenant_id first
         let { count, error } = await query.eq('tenant_id', selectedTenantId);
 
-        // Algumas tabelas podem não ter tenant_id diretamente (ex: produtores, colheitas)
-        // Essas dependem de granja_id ou controle_lavoura_id.
+        // If tenant_id doesn't exist, check via granja_id (for producers, etc)
         if (error && error.message.includes('column "tenant_id" does not exist')) {
           const { data: granjas } = await supabase
             .from('granjas')
@@ -97,13 +96,10 @@ export default function ImportarDados() {
           if (granjas && granjas.length > 0) {
             const granjaIds = granjas.map(g => g.id);
             
-            // Check if table has granja_id
-            const { data: hasGranjaId } = await supabase.rpc('check_column_exists', { 
-              p_table: config.tableName, 
-              p_column: 'granja_id' 
-            });
-
-            if (hasGranjaId) {
+            // Check specific tables that we know use granja_id for hierarchy
+            const tablesWithGranjaId = ['produtores', 'lavouras', 'silos', 'inscricoes_produtor', 'placas'];
+            
+            if (tablesWithGranjaId.includes(config.tableName)) {
               const subQuery = await supabase
                 .from(config.tableName as any)
                 .select('*', { count: 'exact', head: true })
@@ -111,11 +107,6 @@ export default function ImportarDados() {
               
               count = subQuery.count;
               error = subQuery.error;
-            } else {
-              // Fallback for tables that might not have granja_id but depend on others
-              // For now, if we can't easily link to tenant, we keep it as pending
-              count = 0;
-              error = null;
             }
           }
         }
