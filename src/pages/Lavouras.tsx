@@ -76,11 +76,14 @@ export default function Lavouras() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedLavoura, setSelectedLavoura] = useState<any>(null);
+  const [selectedGranja, setSelectedGranja] = useState<string>("all");
   const [formData, setFormData] = useState<LavouraInput>(emptyLavoura);
 
-  const filteredLavouras = lavouras?.filter(
-    (l: any) => l.nome.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredLavouras = lavouras?.filter((l: any) => {
+    const matchesSearch = l.nome.toLowerCase().includes(search.toLowerCase());
+    const matchesGranja = selectedGranja === "all" || l.granja_id === selectedGranja;
+    return matchesSearch && matchesGranja;
+  });
 
   const handleEdit = (lavoura: any) => {
     setSelectedLavoura(lavoura);
@@ -162,14 +165,31 @@ export default function Lavouras() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>Lista de Lavouras</CardTitle>
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar lavoura..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+              <div className="relative w-full md:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar lavoura..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="w-full md:w-64">
+                <Select value={selectedGranja} onValueChange={setSelectedGranja}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filtrar por granja" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as Granjas</SelectItem>
+                    {granjas?.map((granja) => (
+                      <SelectItem key={granja.id} value={granja.id}>
+                        {granja.razao_social}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </CardHeader>
