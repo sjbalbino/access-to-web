@@ -86,7 +86,7 @@ export default function ImportarDados() {
         // Try to filter by tenant_id first
         let { count, error } = await query.eq('tenant_id', selectedTenantId);
 
-        // If tenant_id doesn't exist, check for granja_id (for producers, etc)
+        // If tenant_id doesn't exist, check via granja_id (for producers, etc)
         if (error && error.message.includes('column "tenant_id" does not exist')) {
           const { data: granjas } = await supabase
             .from('granjas')
@@ -95,13 +95,19 @@ export default function ImportarDados() {
           
           if (granjas && granjas.length > 0) {
             const granjaIds = granjas.map(g => g.id);
-            const subQuery = await supabase
-              .from(config.tableName as any)
-              .select('*', { count: 'exact', head: true })
-              .in('granja_id', granjaIds);
             
-            count = subQuery.count;
-            error = subQuery.error;
+            // Check specific tables that we know use granja_id for hierarchy
+            const tablesWithGranjaId = ['produtores', 'lavouras', 'silos', 'inscricoes_produtor', 'placas'];
+            
+            if (tablesWithGranjaId.includes(config.tableName)) {
+              const subQuery = await supabase
+                .from(config.tableName as any)
+                .select('*', { count: 'exact', head: true })
+                .in('granja_id', granjaIds);
+              
+              count = subQuery.count;
+              error = subQuery.error;
+            }
           }
         }
 
