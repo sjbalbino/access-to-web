@@ -27,6 +27,7 @@ import { BaixasDialog } from '@/components/contas/BaixasDialog';
 import { GerarParcelasDialog } from '@/components/contas/GerarParcelasDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 
 const formatBR = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -80,6 +81,7 @@ export default function ContasPagar() {
   const [baixaConta, setBaixaConta] = useState<any>(null);
   const [openGerar, setOpenGerar] = useState(false);
   const [valorGerar, setValorGerar] = useState(0);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const totais = useMemo(() => {
     const hoje = new Date().toISOString().slice(0, 10);
@@ -227,7 +229,7 @@ export default function ContasPagar() {
                               <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setOpenForm(true); }}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
-                              <Button size="icon" variant="ghost" onClick={() => { if (confirm('Excluir esta conta?')) del.mutate(c.id); }}>
+                              <Button size="icon" variant="ghost" onClick={() => setDeleteId(c.id)}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </>
@@ -283,6 +285,18 @@ export default function ContasPagar() {
             ja_pago: config.ja_pago,
           });
         }}
+      />
+      <ConfirmDeleteDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) {
+            del.mutate(deleteId);
+            setDeleteId(null);
+          }
+        }}
+        title="Excluir Conta a Pagar"
+        description="Tem certeza que deseja excluir esta conta a pagar? Esta ação não pode ser desfeita."
       />
     </AppLayout>
   );
