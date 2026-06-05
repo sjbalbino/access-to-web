@@ -603,17 +603,15 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       if (config.interactiveColumns) {
         config.interactiveColumns.forEach(c => validDbColumns.add(c));
       }
-      // Incluir controle_lavoura_id calculado no composite lookup de colheitas
+      // Incluir campos calculados ou injetados
       if (config.key === 'colheitas') {
         validDbColumns.add('controle_lavoura_id');
       }
-      // Contra-notas: campos injetados a partir da CR
       if (config.key === 'contra_notas_recebidas') {
         validDbColumns.add('contrato_venda_id');
         validDbColumns.add('granja_id');
         validDbColumns.add('eh_contra_nota');
       }
-      // Baixas CR: conta_id injetado a partir do codigo_legado
       if (config.key === 'baixas_contas_receber' || config.key === 'baixas_contas_pagar') {
         validDbColumns.add('conta_id');
       }
@@ -622,41 +620,11 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         const clean: Record<string, any> = {};
         
         // Use mapping config to determine which fields should go to DB
-        config.columns.forEach(col => {
-          if (row[col.dbName] !== undefined) {
-            clean[col.dbName] = row[col.dbName];
+        // We iterate over the row keys but only keep what's valid
+        for (const [key, value] of Object.entries(row)) {
+          if (validDbColumns.has(key)) {
+            clean[key] = value;
           }
-        });
-
-        // Add references
-        if (config.references) {
-          config.references.forEach(r => {
-            if (row[r.dbColumn] !== undefined) {
-              clean[r.dbColumn] = row[r.dbColumn];
-            }
-          });
-        }
-
-        // Add interactive columns
-        if (config.interactiveColumns) {
-          config.interactiveColumns.forEach(c => {
-            if (row[c] !== undefined) {
-              clean[c] = row[c];
-            }
-          });
-        }
-
-        // Special logic for specific keys
-        if (config.key === 'colheitas' && row.controle_lavoura_id) {
-          clean.controle_lavoura_id = row.controle_lavoura_id;
-        }
-        if (config.key === 'contra_notas_recebidas') {
-          if (row.contrato_venda_id) clean.contrato_venda_id = row.contrato_venda_id;
-          if (row.granja_id) clean.granja_id = row.granja_id;
-          if (row.eh_contra_nota !== undefined) clean.eh_contra_nota = row.eh_contra_nota;
-        }
-        if ((config.key === 'baixas_contas_receber' || config.key === 'baixas_contas_pagar') && row.conta_id) {
-          clean.conta_id = row.conta_id;
         }
 
         // Inject tenant_id para tabelas isoladas por empresa contratante
