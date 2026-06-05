@@ -164,11 +164,15 @@ export default function ImportarDados() {
         setCleanProgress(Math.round(((i) / CLEANUP_STEPS.length) * 100));
 
         for (const table of step.tables) {
-          const { error } = await supabase
-            .from(table as any)
-            .delete()
-            .eq('tenant_id', selectedTenantId)
-            .neq('id', '00000000-0000-0000-0000-000000000000');
+          const isGlobalTable = ['cfops', 'ncm', 'ibge_municipios'].includes(table);
+          
+          let query = supabase.from(table as any).delete();
+          
+          if (!isGlobalTable) {
+            query = query.eq('tenant_id', selectedTenantId);
+          }
+          
+          const { error } = await query.neq('id', '00000000-0000-0000-0000-000000000000');
 
           if (error) {
             console.warn(`Erro ao limpar ${table}:`, error.message);
