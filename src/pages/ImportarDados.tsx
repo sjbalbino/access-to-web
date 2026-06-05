@@ -76,7 +76,7 @@ export default function ImportarDados() {
   const checkExistingRecords = useCallback(async () => {
     if (!selectedTenantId) return;
     const newStatuses: Record<string, { status: TableStatus; count: number }> = {};
-    const tablesWithGranjaId = new Set(['produtores', 'lavouras', 'silos', 'inscricoes_produtor', 'placas']);
+    const tablesWithGranjaId = new Set(['produtores', 'inscricoes_produtor']);
 
     for (const config of tableConfigs) {
       try {
