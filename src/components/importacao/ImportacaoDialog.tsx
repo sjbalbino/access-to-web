@@ -531,12 +531,13 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           contas_receber: ['contas_receber_baixas'],
         };
         const TENANT_COL_TABLES = new Set([
-          'contas_pagar', 'contas_receber',
+          'contas_pagar', 'contas_receber', 'contas_pagar_baixas', 'contas_receber_baixas',
           'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
           'lavouras','silos','controle_lavouras','plantios','aplicacoes','chuvas','floracoes',
           'insetos','plantas_invasoras','analises_solo','pivos','dre_contas','tabela_umidades',
           'plano_contas_gerencial','culturas','unidades_medida','sub_centros_custo',
-          'contratos_venda','remessas_venda','clientes_fornecedores',
+          'contratos_venda','remessas_venda','clientes_fornecedores','compras_cereais',
+          'devolucoes_deposito','entradas_nfe','entradas_nfe_itens','notas_deposito_emitidas'
         ]);
 
         const resolveTargetIds = async (table: string): Promise<string[] | null> => {
@@ -618,12 +619,14 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         }
         // Inject tenant_id para tabelas isoladas por empresa contratante
         const TENANT_SCOPED_TABLES = new Set([
+          'contas_pagar', 'contas_receber', 'contas_pagar_baixas', 'contas_receber_baixas',
           'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
           'lavouras','silos','controle_lavouras',
           'plantios','aplicacoes','chuvas','floracoes','insetos','plantas_invasoras','analises_solo','pivos',
           'dre_contas','tabela_umidades','plano_contas_gerencial',
           'culturas','unidades_medida','sub_centros_custo',
-          'contratos_venda','remessas_venda','clientes_fornecedores'
+          'contratos_venda','remessas_venda','clientes_fornecedores','compras_cereais',
+          'devolucoes_deposito','entradas_nfe','entradas_nfe_itens','notas_deposito_emitidas'
         ]);
         if (TENANT_SCOPED_TABLES.has(config.tableName) && tenantId) {
           clean['tenant_id'] = tenantId;
@@ -637,12 +640,14 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
       // ===== VALIDAÇÃO DE INTEGRIDADE POR TENANT =====
       const TENANT_SCOPED_TABLES = new Set([
+        'contas_pagar', 'contas_receber', 'contas_pagar_baixas', 'contas_receber_baixas',
         'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
         'lavouras','silos','controle_lavouras',
         'plantios','aplicacoes','chuvas','floracoes','insetos','plantas_invasoras','analises_solo','pivos',
         'dre_contas','tabela_umidades','plano_contas_gerencial',
         'culturas','unidades_medida','sub_centros_custo',
-        'contratos_venda','remessas_venda','clientes_fornecedores'
+        'contratos_venda','remessas_venda','clientes_fornecedores','compras_cereais',
+        'devolucoes_deposito','entradas_nfe','entradas_nfe_itens','notas_deposito_emitidas'
       ]);
       const REQUIRES_GRANJA = new Set(['contratos_venda']);
       const validationErrors: string[] = [];
