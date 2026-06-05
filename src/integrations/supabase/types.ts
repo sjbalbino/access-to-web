@@ -1053,6 +1053,7 @@ export type Database = {
       }
       contas_pagar_baixas: {
         Row: {
+          conciliado: boolean | null
           conta_bancaria: string | null
           conta_bancaria_id: string | null
           conta_id: string
@@ -1060,6 +1061,7 @@ export type Database = {
           data_pagamento: string
           desconto: number
           documento: string | null
+          extrato_id: string | null
           forma_pagamento: string | null
           id: string
           juros: number
@@ -1072,6 +1074,7 @@ export type Database = {
           valor_pago: number
         }
         Insert: {
+          conciliado?: boolean | null
           conta_bancaria?: string | null
           conta_bancaria_id?: string | null
           conta_id: string
@@ -1079,6 +1082,7 @@ export type Database = {
           data_pagamento?: string
           desconto?: number
           documento?: string | null
+          extrato_id?: string | null
           forma_pagamento?: string | null
           id?: string
           juros?: number
@@ -1091,6 +1095,7 @@ export type Database = {
           valor_pago: number
         }
         Update: {
+          conciliado?: boolean | null
           conta_bancaria?: string | null
           conta_bancaria_id?: string | null
           conta_id?: string
@@ -1098,6 +1103,7 @@ export type Database = {
           data_pagamento?: string
           desconto?: number
           documento?: string | null
+          extrato_id?: string | null
           forma_pagamento?: string | null
           id?: string
           juros?: number
@@ -1122,6 +1128,13 @@ export type Database = {
             columns: ["conta_id"]
             isOneToOne: false
             referencedRelation: "contas_pagar"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_pagar_baixas_extrato_id_fkey"
+            columns: ["extrato_id"]
+            isOneToOne: false
+            referencedRelation: "extratos_bancarios"
             referencedColumns: ["id"]
           },
           {
@@ -1296,6 +1309,7 @@ export type Database = {
       }
       contas_receber_baixas: {
         Row: {
+          conciliado: boolean | null
           conta_bancaria: string | null
           conta_bancaria_id: string | null
           conta_id: string
@@ -1303,6 +1317,7 @@ export type Database = {
           data_pagamento: string
           desconto: number
           documento: string | null
+          extrato_id: string | null
           forma_pagamento: string | null
           id: string
           juros: number
@@ -1317,6 +1332,7 @@ export type Database = {
           valor_pago: number
         }
         Insert: {
+          conciliado?: boolean | null
           conta_bancaria?: string | null
           conta_bancaria_id?: string | null
           conta_id: string
@@ -1324,6 +1340,7 @@ export type Database = {
           data_pagamento?: string
           desconto?: number
           documento?: string | null
+          extrato_id?: string | null
           forma_pagamento?: string | null
           id?: string
           juros?: number
@@ -1338,6 +1355,7 @@ export type Database = {
           valor_pago: number
         }
         Update: {
+          conciliado?: boolean | null
           conta_bancaria?: string | null
           conta_bancaria_id?: string | null
           conta_id?: string
@@ -1345,6 +1363,7 @@ export type Database = {
           data_pagamento?: string
           desconto?: number
           documento?: string | null
+          extrato_id?: string | null
           forma_pagamento?: string | null
           id?: string
           juros?: number
@@ -1371,6 +1390,13 @@ export type Database = {
             columns: ["conta_id"]
             isOneToOne: false
             referencedRelation: "contas_receber"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contas_receber_baixas_extrato_id_fkey"
+            columns: ["extrato_id"]
+            isOneToOne: false
+            referencedRelation: "extratos_bancarios"
             referencedColumns: ["id"]
           },
           {
@@ -2482,6 +2508,56 @@ export type Database = {
           },
         ]
       }
+      extratos_bancarios: {
+        Row: {
+          conciliado: boolean | null
+          conta_bancaria_id: string
+          created_at: string | null
+          data_transacao: string
+          descricao: string
+          documento: string | null
+          fitid: string | null
+          id: string
+          tipo: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          conciliado?: boolean | null
+          conta_bancaria_id: string
+          created_at?: string | null
+          data_transacao: string
+          descricao: string
+          documento?: string | null
+          fitid?: string | null
+          id?: string
+          tipo: string
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          conciliado?: boolean | null
+          conta_bancaria_id?: string
+          created_at?: string | null
+          data_transacao?: string
+          descricao?: string
+          documento?: string | null
+          fitid?: string | null
+          id?: string
+          tipo?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extratos_bancarios_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "contas_bancarias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       floracoes: {
         Row: {
           controle_lavoura_id: string
@@ -2888,11 +2964,13 @@ export type Database = {
       }
       lancamentos_financeiros: {
         Row: {
+          conciliado: boolean | null
           created_at: string | null
           data_lancamento: string
           descricao: string
           documento: string | null
           dre_conta_id: string | null
+          extrato_id: string | null
           fornecedor_id: string | null
           granja_id: string
           id: string
@@ -2907,11 +2985,13 @@ export type Database = {
           valor: number
         }
         Insert: {
+          conciliado?: boolean | null
           created_at?: string | null
           data_lancamento?: string
           descricao: string
           documento?: string | null
           dre_conta_id?: string | null
+          extrato_id?: string | null
           fornecedor_id?: string | null
           granja_id: string
           id?: string
@@ -2926,11 +3006,13 @@ export type Database = {
           valor?: number
         }
         Update: {
+          conciliado?: boolean | null
           created_at?: string | null
           data_lancamento?: string
           descricao?: string
           documento?: string | null
           dre_conta_id?: string | null
+          extrato_id?: string | null
           fornecedor_id?: string | null
           granja_id?: string
           id?: string
@@ -2950,6 +3032,13 @@ export type Database = {
             columns: ["dre_conta_id"]
             isOneToOne: false
             referencedRelation: "dre_contas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lancamentos_financeiros_extrato_id_fkey"
+            columns: ["extrato_id"]
+            isOneToOne: false
+            referencedRelation: "extratos_bancarios"
             referencedColumns: ["id"]
           },
           {
