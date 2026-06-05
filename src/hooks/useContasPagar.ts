@@ -114,6 +114,17 @@ export function useDeleteContaPagar() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // Verificar se existem baixas antes de excluir
+      const { data: baixas, error: errorBaixas } = await supabase
+        .from('contas_pagar_baixas' as any)
+        .select('id')
+        .eq('conta_id', id);
+
+      if (errorBaixas) throw errorBaixas;
+      if (baixas && baixas.length > 0) {
+        throw new Error('Não é possível excluir uma conta que já possui baixas vinculadas. Exclua as baixas primeiro.');
+      }
+
       const { error } = await supabase.from('contas_pagar' as any).delete().eq('id', id);
       if (error) throw error;
     },

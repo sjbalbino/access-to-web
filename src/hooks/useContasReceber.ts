@@ -114,6 +114,17 @@ export function useDeleteContaReceber() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      // Verificar se existem baixas antes de excluir
+      const { data: baixas, error: errorBaixas } = await supabase
+        .from('contas_receber_baixas' as any)
+        .select('id')
+        .eq('conta_id', id);
+
+      if (errorBaixas) throw errorBaixas;
+      if (baixas && baixas.length > 0) {
+        throw new Error('Não é possível excluir uma conta que já possui recebimentos vinculados. Exclua as baixas primeiro.');
+      }
+
       const { error } = await supabase.from('contas_receber' as any).delete().eq('id', id);
       if (error) throw error;
     },
