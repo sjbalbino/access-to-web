@@ -50,7 +50,9 @@ import ContasReceber from "./pages/ContasReceber";
 import ContasPagar from "./pages/ContasPagar";
 import ContasBancarias from "./pages/ContasBancarias";
 import RelatoriosIR from "./pages/RelatoriosIR";
+import ConciliacaoBancaria from "./pages/ConciliacaoBancaria";
 import NotFound from "./pages/NotFound";
+
 
 
 const queryClient = new QueryClient();
@@ -103,7 +105,9 @@ const App = () => (
               <Route path="/contas-receber" element={<ProtectedRoute><ContasReceber /></ProtectedRoute>} />
               <Route path="/contas-pagar" element={<ProtectedRoute><ContasPagar /></ProtectedRoute>} />
               <Route path="/contas-bancarias" element={<ProtectedRoute><ContasBancarias /></ProtectedRoute>} />
+              <Route path="/conciliacao-bancaria" element={<ProtectedRoute><ConciliacaoBancaria /></ProtectedRoute>} />
               <Route path="/relatorios-ir" element={<ProtectedRoute><RelatoriosIR /></ProtectedRoute>} />
+
               <Route path="/dre-estrutura" element={<ProtectedRoute><DreEstrutura /></ProtectedRoute>} />
 
               <Route path="/locais-entrega" element={<ProtectedRoute><LocaisEntrega /></ProtectedRoute>} />
