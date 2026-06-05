@@ -76,18 +76,14 @@ export default function ImportarDados() {
   const checkExistingRecords = useCallback(async () => {
     if (!selectedTenantId) return;
     const newStatuses: Record<string, { status: TableStatus; count: number }> = {};
+    const tablesWithGranjaId = new Set(['produtores', 'lavouras', 'silos', 'inscricoes_produtor', 'placas']);
 
     for (const config of tableConfigs) {
       try {
-        let query = supabase
-          .from(config.tableName as any)
-          .select('*', { count: 'exact', head: true });
+        let count: number | null = 0;
+        let error: { message: string } | null = null;
 
-        // Try to filter by tenant_id first
-        let { count, error } = await query.eq('tenant_id', selectedTenantId);
-
-        // If tenant_id doesn't exist, check via granja_id (for producers, etc)
-        if (error && error.message.includes('column "tenant_id" does not exist')) {
+        if (tablesWithGranjaId.has(config.tableName)) {
           const { data: granjas } = await supabase
             .from('granjas')
             .select('id')
@@ -95,20 +91,23 @@ export default function ImportarDados() {
           
           if (granjas && granjas.length > 0) {
             const granjaIds = granjas.map(g => g.id);
-            
-            // Check specific tables that we know use granja_id for hierarchy
-            const tablesWithGranjaId = ['produtores', 'lavouras', 'silos', 'inscricoes_produtor', 'placas'];
-            
-            if (tablesWithGranjaId.includes(config.tableName)) {
-              const subQuery = await supabase
-                .from(config.tableName as any)
-                .select('*', { count: 'exact', head: true })
-                .in('granja_id', granjaIds);
-              
-              count = subQuery.count;
-              error = subQuery.error;
-            }
+
+            const subQuery = await supabase
+              .from(config.tableName as any)
+              .select('*', { count: 'exact', head: true })
+              .in('granja_id', granjaIds);
+
+            count = subQuery.count;
+            error = subQuery.error;
           }
+        } else {
+          const query = supabase
+            .from(config.tableName as any)
+            .select('*', { count: 'exact', head: true });
+
+          const result = await query.eq('tenant_id', selectedTenantId);
+          count = result.count;
+          error = result.error;
         }
 
         if (!error && count !== null && count > 0) {
