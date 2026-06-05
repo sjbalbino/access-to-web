@@ -28,7 +28,7 @@ export function useExtratosBancarios(contaBancariaId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as ExtratoBancario[];
+      return data as unknown as ExtratoBancario[];
     },
     enabled: !!contaBancariaId,
   });
