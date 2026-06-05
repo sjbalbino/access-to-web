@@ -81,7 +81,8 @@ export default function ImportarDados() {
       try {
         const { count, error } = await supabase
           .from(config.tableName as any)
-          .select('*', { count: 'exact', head: true });
+          .select('*', { count: 'exact', head: true })
+          .eq('tenant_id', selectedTenantId);
 
         if (!error && count && count > 0) {
           newStatuses[config.key] = { status: 'importada', count };
@@ -166,6 +167,7 @@ export default function ImportarDados() {
           const { error } = await supabase
             .from(table as any)
             .delete()
+            .eq('tenant_id', selectedTenantId)
             .neq('id', '00000000-0000-0000-0000-000000000000');
 
           if (error) {
