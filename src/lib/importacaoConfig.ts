@@ -108,7 +108,7 @@ const toInt = (v: any): number | null => {
 const toDigitsMax = (v: any, maxLen: number): string | null => {
   const s = toStr(v);
   if (!s) return null;
-  const digits = s.replace(/\D/g, '');
+  const digits = s.replace(/[^\d]/g, ''); // Garante que apenas números sejam mantidos
   if (!digits) return null;
   return digits.slice(0, maxLen);
 };
