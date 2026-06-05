@@ -79,12 +79,21 @@ export default function ImportarDados() {
 
     for (const config of tableConfigs) {
       try {
-        const { count, error } = await supabase
+        let query = supabase
           .from(config.tableName as any)
           .select('*', { count: 'exact', head: true });
 
-        if (!error && count && count > 0) {
+        // Algumas tabelas podem não ter tenant_id diretamente (ex: produtores, colheitas)
+        // Essas dependem de granja_id ou controle_lavoura_id. 
+        // Por enquanto, tentamos filtrar por tenant_id e se falhar (coluna não existe),
+        // assumimos 0 para não mostrar dados de outras empresas.
+        const { count, error } = await query.eq('tenant_id', selectedTenantId);
+
+        if (!error && count !== null && count > 0) {
           newStatuses[config.key] = { status: 'importada', count };
+        } else if (error && error.message.includes('column "tenant_id" does not exist')) {
+           // Se a coluna não existe, não mostramos como importada para evitar confusão entre tenants
+           // No futuro, poderíamos implementar uma contagem baseada nos relacionamentos
         }
       } catch {
         // ignore
@@ -163,10 +172,15 @@ export default function ImportarDados() {
         setCleanProgress(Math.round(((i) / CLEANUP_STEPS.length) * 100));
 
         for (const table of step.tables) {
-          const { error } = await supabase
-            .from(table as any)
-            .delete()
-            .neq('id', '00000000-0000-0000-0000-000000000000');
+          const isGlobalTable = ['cfops', 'ncm', 'ibge_municipios'].includes(table);
+          
+          let query = supabase.from(table as any).delete();
+          
+          if (!isGlobalTable) {
+            query = query.eq('tenant_id', selectedTenantId);
+          }
+          
+          const { error } = await query.neq('id', '00000000-0000-0000-0000-000000000000');
 
           if (error) {
             console.warn(`Erro ao limpar ${table}:`, error.message);
