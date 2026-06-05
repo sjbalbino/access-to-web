@@ -322,12 +322,24 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                     <ComboboxFilter
                       value={contaBancariaId}
                       onValueChange={setContaBancariaId}
-                      options={contasBancarias.map((c: any) => ({
-                        value: c.id,
-                        label: c.nome,
-                        sublabel: c.banco ? `${c.banco.codigo} - ${c.banco.nome}` : undefined,
-                      }))}
-                      placeholder="(nenhuma)"
+                      options={contasBancarias.map((c: any) => {
+                        const bancoInfo = c.banco ? `${c.banco.codigo} - ${c.banco.nome}` : '';
+                        const agenciaConta = [
+                          c.agencia ? `Ag. ${c.agencia}${c.agencia_dv ? '-' + c.agencia_dv : ''}` : '',
+                          c.conta ? `C/C ${c.conta}${c.conta_dv ? '-' + c.conta_dv : ''}` : ''
+                        ].filter(Boolean).join(' | ');
+                        
+                        return {
+                          value: c.id,
+                          label: `${c.nome} ${agenciaConta ? `(${agenciaConta})` : ''}`,
+                          sublabel: [
+                            bancoInfo,
+                            c.socio?.nome ? `Sócio: ${c.socio.nome}` : '',
+                            c.titular ? `Titular: ${c.titular}` : ''
+                          ].filter(Boolean).join(' | '),
+                        };
+                      })}
+                      placeholder="Selecione a conta bancária"
                       allLabel="(nenhuma)"
                     />
                   </div>
