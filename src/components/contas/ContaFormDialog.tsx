@@ -349,11 +349,32 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
               <div className="col-span-2">
                 <Label>Conta Bancária (para conciliação)</Label>
                 <Select value={form.conta_bancaria_id} onValueChange={(v) => update('conta_bancaria_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecione a conta..." /></SelectTrigger>
+                  <SelectTrigger className="h-auto py-2">
+                    <SelectValue placeholder="Selecione a conta..." />
+                  </SelectTrigger>
                   <SelectContent>
-                    {contasBancarias?.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                    ))}
+                    {contasBancarias?.map((c: any) => {
+                      const bancoInfo = c.banco ? `${c.banco.codigo} - ${c.banco.nome}` : '';
+                      const agenciaConta = [
+                        c.agencia ? `Ag. ${c.agencia}${c.agencia_dv ? '-' + c.agencia_dv : ''}` : '',
+                        c.conta ? `C/C ${c.conta}${c.conta_dv ? '-' + c.conta_dv : ''}` : ''
+                      ].filter(Boolean).join(' | ');
+                      
+                      return (
+                        <SelectItem key={c.id} value={c.id} className="py-2">
+                          <div className="flex flex-col items-start gap-0.5 text-left">
+                            <span className="font-medium">{c.nome} {agenciaConta ? `(${agenciaConta})` : ''}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase leading-none">
+                              {[
+                                bancoInfo,
+                                c.socio?.nome ? `Sócio: ${c.socio.nome}` : '',
+                                c.titular ? `Titular: ${c.titular}` : ''
+                              ].filter(Boolean).join(' | ')}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
