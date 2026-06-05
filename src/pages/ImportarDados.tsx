@@ -83,17 +83,30 @@ export default function ImportarDados() {
           .from(config.tableName as any)
           .select('*', { count: 'exact', head: true });
 
-        // Algumas tabelas podem não ter tenant_id diretamente (ex: produtores, colheitas)
-        // Essas dependem de granja_id ou controle_lavoura_id. 
-        // Por enquanto, tentamos filtrar por tenant_id e se falhar (coluna não existe),
-        // assumimos 0 para não mostrar dados de outras empresas.
-        const { count, error } = await query.eq('tenant_id', selectedTenantId);
+        // Try to filter by tenant_id first
+        let { count, error } = await query.eq('tenant_id', selectedTenantId);
+
+        // If tenant_id doesn't exist, check for granja_id (for producers, etc)
+        if (error && error.message.includes('column "tenant_id" does not exist')) {
+          const { data: granjas } = await supabase
+            .from('granjas')
+            .select('id')
+            .eq('tenant_id', selectedTenantId);
+          
+          if (granjas && granjas.length > 0) {
+            const granjaIds = granjas.map(g => g.id);
+            const subQuery = await supabase
+              .from(config.tableName as any)
+              .select('*', { count: 'exact', head: true })
+              .in('granja_id', granjaIds);
+            
+            count = subQuery.count;
+            error = subQuery.error;
+          }
+        }
 
         if (!error && count !== null && count > 0) {
           newStatuses[config.key] = { status: 'importada', count };
-        } else if (error && error.message.includes('column "tenant_id" does not exist')) {
-           // Se a coluna não existe, não mostramos como importada para evitar confusão entre tenants
-           // No futuro, poderíamos implementar uma contagem baseada nos relacionamentos
         }
       } catch {
         // ignore
