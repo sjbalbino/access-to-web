@@ -81,7 +81,15 @@ function SubCentroCombobox({ value, onChange, subCentros }: SubCentroComboboxPro
 function extractErroredLineNumbers(errors: string[]) {
   return new Set(
     errors
-      .map((error) => error.match(/^Linha\s+(\d+):/i)?.[1])
+      .map((error) => {
+        // Handle "Linha X: ..." format
+        const match = error.match(/^Linha\s+(\d+):/i);
+        if (match) return match[1];
+        // Handle PostgREST "Could not find column '...' of '...' in the schema cache"
+        // These don't have line numbers in the raw error message from Supabase usually,
+        // but if they come from our internal mapping they might.
+        return null;
+      })
       .filter((line): line is string => Boolean(line))
       .map(Number)
   );

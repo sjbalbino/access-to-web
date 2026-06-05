@@ -108,7 +108,7 @@ const toInt = (v: any): number | null => {
 const toDigitsMax = (v: any, maxLen: number): string | null => {
   const s = toStr(v);
   if (!s) return null;
-  const digits = s.replace(/\D/g, '');
+  const digits = s.replace(/[^\d]/g, ''); // Garante que apenas números sejam mantidos
   if (!digits) return null;
   return digits.slice(0, maxLen);
 };
@@ -177,9 +177,9 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'codigo', dbName: 'codigo', transform: toStr },
       { accessName: 'razao_social', dbName: 'razao_social', required: true, transform: toStr },
       { accessName: 'nome_fantasia', dbName: 'nome_fantasia', transform: toStr },
-      { accessName: 'cnpj', dbName: 'cnpj', transform: toStr },
-      { accessName: 'cpf', dbName: 'cpf', transform: toStr },
-      { accessName: 'inscricao_estadual', dbName: 'inscricao_estadual', transform: toStr },
+      { accessName: 'cnpj', dbName: 'cnpj', transform: (v: any) => toDigitsMax(v, 14) },
+      { accessName: 'cpf', dbName: 'cpf', transform: (v: any) => toDigitsMax(v, 11) },
+      { accessName: 'inscricao_estadual', dbName: 'inscricao_estadual', transform: (v: any) => toDigitsMax(v, 20) },
       { accessName: 'logradouro', dbName: 'logradouro', transform: toStr },
       { accessName: 'numero', dbName: 'numero', transform: toStr },
       { accessName: 'complemento', dbName: 'complemento', transform: toStr },
