@@ -32,8 +32,10 @@ import {
   GitBranch,
   Repeat,
   Landmark,
+  CheckCircle2,
   LucideIcon,
 } from "lucide-react";
+
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -104,7 +106,9 @@ const menuGroups: MenuGroup[] = [
       { title: "Contas a Receber", icon: DollarSign, path: "/contas-receber", color: "text-emerald-600" },
       { title: "Contas a Pagar", icon: DollarSign, path: "/contas-pagar", color: "text-rose-600" },
       { title: "Lançamentos", icon: DollarSign, path: "/lancamentos-financeiros", color: "text-emerald-600" },
+      { title: "Conciliação Bancária", icon: CheckCircle2, path: "/conciliacao-bancaria", color: "text-emerald-600" },
       { title: "Contas Bancárias", icon: Landmark, path: "/contas-bancarias", color: "text-emerald-600" },
+
       { title: "Estrutura DRE", icon: GitBranch, path: "/dre-estrutura", color: "text-blue-600" },
       { title: "Relatórios", icon: BarChart3, path: "/relatorios", color: "text-purple-600" },
       { title: "Relatórios IR (Sócios)", icon: FileText, path: "/relatorios-ir", color: "text-amber-600" },
