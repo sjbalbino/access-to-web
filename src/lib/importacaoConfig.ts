@@ -454,8 +454,8 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'ativa', dbName: 'ativa', transform: toBool },
     ],
     references: [
-      { dbColumn: 'produtor_id', sourceColumn: 'produtor_codigo', lookupTable: 'produtores', lookupColumn: 'codigo', lookupLabel: 'nome' },
-      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
+      { dbColumn: 'produtor_id', sourceColumn: 'produtor_codigo', lookupTable: 'produtores', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
+      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
     ],
   },
   {

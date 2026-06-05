@@ -659,7 +659,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         'contratos_venda','remessas_venda','clientes_fornecedores','compras_cereais',
         'devolucoes_deposito','entradas_nfe','entradas_nfe_itens','notas_deposito_emitidas'
       ]);
-      const REQUIRES_GRANJA = new Set(['contratos_venda']);
+      const REQUIRES_GRANJA = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores']);
       const validationErrors: string[] = [];
       const validRows: Record<string, any>[] = [];
 
