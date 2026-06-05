@@ -620,11 +620,45 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
       const sanitizedRows = cleanRows.map((row, idx) => {
         const clean: Record<string, any> = {};
-        for (const [key, value] of Object.entries(row)) {
-          if (validDbColumns.has(key)) {
-            clean[key] = value;
+        
+        // Use mapping config to determine which fields should go to DB
+        config.columns.forEach(col => {
+          if (row[col.dbName] !== undefined) {
+            clean[col.dbName] = row[col.dbName];
           }
+        });
+
+        // Add references
+        if (config.references) {
+          config.references.forEach(r => {
+            if (row[r.dbColumn] !== undefined) {
+              clean[r.dbColumn] = row[r.dbColumn];
+            }
+          });
         }
+
+        // Add interactive columns
+        if (config.interactiveColumns) {
+          config.interactiveColumns.forEach(c => {
+            if (row[c] !== undefined) {
+              clean[c] = row[c];
+            }
+          });
+        }
+
+        // Special logic for specific keys
+        if (config.key === 'colheitas' && row.controle_lavoura_id) {
+          clean.controle_lavoura_id = row.controle_lavoura_id;
+        }
+        if (config.key === 'contra_notas_recebidas') {
+          if (row.contrato_venda_id) clean.contrato_venda_id = row.contrato_venda_id;
+          if (row.granja_id) clean.granja_id = row.granja_id;
+          if (row.eh_contra_nota !== undefined) clean.eh_contra_nota = row.eh_contra_nota;
+        }
+        if ((config.key === 'baixas_contas_receber' || config.key === 'baixas_contas_pagar') && row.conta_id) {
+          clean.conta_id = row.conta_id;
+        }
+
         // Inject tenant_id para tabelas isoladas por empresa contratante
         const TENANT_SCOPED_TABLES = new Set([
           'contas_pagar', 'contas_receber', 'contas_pagar_baixas', 'contas_receber_baixas',
