@@ -489,6 +489,9 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
       { accessName: 'ativa', dbName: 'ativa', transform: toBool },
     ],
+    references: [
+      { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', optional: true },
+    ],
   },
   {
     key: 'transportadoras',
