@@ -150,7 +150,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
               <SelectItem value="all">Todas as granjas</SelectItem>
               {granjas.map((granja) => (
                 <SelectItem key={granja.id} value={granja.id}>
-                  {granja.razao_social}
+                  {granja.nome_fantasia || granja.razao_social}
                 </SelectItem>
               ))}
             </SelectContent>
