@@ -13,7 +13,8 @@ import {
   Map,
   ArrowRight,
   TrendingUp,
-import { Wheat, LayoutDashboard, Building2, Leaf, Calendar, Users, Map, ArrowRight, TrendingUp } from "lucide-react";
+  Wheat,
+} from "lucide-react";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useCulturas } from "@/hooks/useCulturas";
 import { useSafras } from "@/hooks/useSafras";
