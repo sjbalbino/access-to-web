@@ -36,6 +36,11 @@ export interface ControleLavoura {
       informar_ph: boolean | null;
     } | null;
   };
+  granja?: {
+    id: string;
+    razao_social: string;
+    nome_fantasia: string | null;
+  } | null;
 }
 
 export type ControleLavouraInput = {
