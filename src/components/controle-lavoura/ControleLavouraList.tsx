@@ -58,12 +58,14 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
         return (
           controle.lavouras?.nome?.toLowerCase().includes(term) ||
           controle.safras?.nome?.toLowerCase().includes(term) ||
+          controle.granja?.razao_social?.toLowerCase().includes(term) ||
+          controle.granja?.nome_fantasia?.toLowerCase().includes(term) ||
           controle.lavouras?.granjas?.razao_social?.toLowerCase().includes(term) ||
           (controle.codigo && controle.codigo.toString().toLowerCase().includes(term))
         );
       }
       // Filtro por granja
-      if (granjaFilter && granjaFilter !== 'all' && controle.lavouras?.granja_id !== granjaFilter) {
+      if (granjaFilter && granjaFilter !== 'all' && controle.granja_id !== granjaFilter && (controle.lavouras as any)?.granja_id !== granjaFilter) {
         return false;
       }
       return true;
@@ -78,7 +80,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
       return nomeA.localeCompare(nomeB);
     });
     return result;
-  }, [controles, searchTerm, statusSafraFilter]);
+  }, [controles, searchTerm, statusSafraFilter, granjaFilter]);
 
   if (isLoading) {
     return (
@@ -148,7 +150,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
               <SelectItem value="all">Todas as granjas</SelectItem>
               {granjas.map((granja) => (
                 <SelectItem key={granja.id} value={granja.id}>
-                  {granja.razao_social}
+                  {granja.nome_fantasia || granja.razao_social}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -192,7 +194,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
                   >
                     <TableCell>{controle.codigo || '-'}</TableCell>
                      <TableCell className="font-medium">{controle.safras?.nome || '-'}</TableCell>
-                    <TableCell>{controle.lavouras?.granjas?.razao_social || '-'}</TableCell>
+                    <TableCell>{controle.granja?.nome_fantasia || controle.granja?.razao_social || controle.lavouras?.granjas?.razao_social || '-'}</TableCell>
                     <TableCell>{controle.lavouras?.nome || '-'}</TableCell>
                     <TableCell className="text-right">{controle.area_total?.toFixed(2) || '0.00'}</TableCell>
                     <TableCell className="text-right">{controle.ha_plantado?.toFixed(2) || '0.00'}</TableCell>

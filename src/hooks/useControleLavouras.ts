@@ -4,7 +4,8 @@ import { toast } from '@/hooks/use-toast';
 
 export interface ControleLavoura {
   id: string;
-  lavoura_id: string;
+  lavoura_id: string | null;
+  granja_id: string | null;
   safra_id: string;
   codigo: string | null;
   area_total: number | null;
@@ -35,6 +36,11 @@ export interface ControleLavoura {
       informar_ph: boolean | null;
     } | null;
   };
+  granja?: {
+    id: string;
+    razao_social: string;
+    nome_fantasia: string | null;
+  } | null;
 }
 
 export type ControleLavouraInput = {
@@ -54,6 +60,7 @@ export function useControleLavouras(safraId?: string | null, lavouraId?: string 
         .from('controle_lavouras')
         .select(`
           *,
+          granja:granja_id(id, razao_social, nome_fantasia),
           lavouras:lavoura_id(id, nome, codigo, total_hectares, granja_id, granjas:granja_id(id, razao_social)),
           safras:safra_id(id, nome, codigo, status, cultura_id, culturas:cultura_id(id, nome, informar_ph))
         `)
