@@ -264,19 +264,14 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             normalize(k) === 'granjacodigo' || normalize(k) === 'granjid' || normalize(k) === 'granja'
           );
           
-          if (!row.granja_id && !hasGranjaInSheet && selectedGranjaId) {
+          if (!row.granja_id && !hasGranjaInSheet && selectedGranjaId && selectedGranjaId !== 'none') {
             row.granja_id = selectedGranjaId;
           }
         }
-
-        
-        // --- LOGICA DE GRANJA PARA IMPORTAÇÃO ---
-        // Se a tabela exige granja_id mas a planilha não tem granja_codigo/granja_id, 
-        // e o usuário forneceu uma granja via UI (será implementado na UI), usamos ela.
-        // Ou se tivermos um granja_id explícito na linha (ex: importando de bancos separados), mantemos.
         
         const geoErrors: string[] = [];
         const compositeErrors: string[] = [];
+
         
 
         // Composite lookup: controle_lavoura_id for colheitas (via safra_codigo)
@@ -1129,6 +1124,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                       ))}
                     </SelectContent>
                   </Select>
+
                 </div>
               </CardContent>
             </Card>
@@ -1225,6 +1221,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             {status === 'done' ? 'Fechar' : 'Cancelar'}
           </Button>
           {status === 'previewing' && (
+
             <Button onClick={handleImport} disabled={importTargetCount === 0}>
               {config.updateMode ? 'Atualizar' : (upsertMode ? 'Sincronizar' : 'Importar')} {importTargetCount} registros
             </Button>
