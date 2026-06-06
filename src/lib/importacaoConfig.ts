@@ -1242,6 +1242,13 @@ function normalizeColName(name: any): string {
     .replace(/[\s_\-\.\/\\]/g, '');
 }
 
+// Helper to check if a row has a certain property by normalized name
+function hasNormalizedProperty(row: Record<string, any>, name: string): boolean {
+  const normTarget = normalizeColName(name);
+  return Object.keys(row).some(k => normalizeColName(k) === normTarget);
+}
+
+
 // Find column value with fuzzy matching (case-insensitive + accent-insensitive)
 function findColumnValue(row: Record<string, any>, accessName: string): { value: any; key: string | null } {
   if (row[accessName] !== undefined) return { value: row[accessName], key: accessName };
