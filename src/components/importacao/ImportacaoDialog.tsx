@@ -272,39 +272,78 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           
           setReferenceErrors([...refErrors, ...compositeErrors]);
         } else if (config.key === 'inscricoes' || config.key === 'produtores') {
-          // Lookup automático de cidade/uf via codigo_ibge
-          const ibgeErrors: string[] = [];
-          const codigos = Array.from(new Set(
+          // Lookup automático de cidade/uf via codigo_ibge ou CEP
+          const geoErrors: string[] = [];
+          
+          // 1. Coletar códigos IBGE únicos
+          const codigosIbge = Array.from(new Set(
             resolved
               .map(r => String((r as any)._codigo_ibge ?? '').trim())
               .filter(c => c.length > 0)
           ));
+          
+          // 2. Coletar CEPs únicos (apenas se cidade ou UF estiverem vazios na linha)
+          const ceps = Array.from(new Set(
+            resolved
+              .filter(r => {
+                const row = r as any;
+                return (!row.cidade || !row.uf) && String(row.cep ?? '').replace(/\D/g, '').length === 8;
+              })
+              .map(r => String((r as any).cep ?? '').replace(/\D/g, ''))
+          ));
+
           let ibgeMap = new Map<string, { nome: string; uf: string }>();
-          if (codigos.length > 0) {
+          let cepMap = new Map<string, { nome: string; uf: string }>();
+
+          // Buscar por IBGE
+          if (codigosIbge.length > 0) {
             const { data: municipios } = await supabase
               .from('ibge_municipios')
               .select('codigo_ibge, nome, uf')
-              .in('codigo_ibge', codigos);
+              .in('codigo_ibge', codigosIbge);
             (municipios || []).forEach((m: any) => {
               ibgeMap.set(String(m.codigo_ibge), { nome: m.nome, uf: m.uf });
             });
           }
+
+          // Buscar por CEP (apenas o que não foi resolvido por IBGE ou já preenchido)
+          if (ceps.length > 0) {
+            const { data: cepData } = await supabase
+              .from('cep_municipios' as any)
+              .select('cep, nome_municipio, uf')
+              .in('cep', ceps);
+            (cepData || []).forEach((c: any) => {
+              cepMap.set(String(c.cep), { nome: c.nome_municipio, uf: c.uf });
+            });
+          }
+
           for (let i = 0; i < resolved.length; i++) {
             const row = resolved[i] as any;
             const codIbge = String(row._codigo_ibge ?? '').trim();
+            const cleanCep = String(row.cep ?? '').replace(/\D/g, '');
             delete row._codigo_ibge;
+
+            let geoMatch: { nome: string; uf: string } | undefined;
+
+            // Prioridade 1: Código IBGE
             if (codIbge) {
-              const match = ibgeMap.get(codIbge);
-              if (match) {
-                // Preenche se estiver vazio ou se encontrou no IBGE
-                if (!row.cidade) row.cidade = match.nome;
-                if (!row.uf) row.uf = match.uf;
-              } else {
-                ibgeErrors.push(`Linha ${i + 1}: código IBGE "${codIbge}" não encontrado`);
+              geoMatch = ibgeMap.get(codIbge);
+              if (!geoMatch) {
+                geoErrors.push(`Linha ${i + 1}: código IBGE "${codIbge}" não encontrado`);
               }
             }
+
+            // Prioridade 2: CEP (se cidade/uf ainda vazios e IBGE não resolveu)
+            if (!geoMatch && cleanCep.length === 8 && (!row.cidade || !row.uf)) {
+              geoMatch = cepMap.get(cleanCep);
+            }
+
+            if (geoMatch) {
+              if (!row.cidade) row.cidade = geoMatch.nome;
+              if (!row.uf) row.uf = geoMatch.uf;
+            }
           }
-          setReferenceErrors([...refErrors, ...ibgeErrors]);
+          setReferenceErrors([...refErrors, ...geoErrors]);
         } else if (config.key === 'contra_notas_recebidas') {
           // Resolver CR.codigo_legado -> contrato_venda_id + granja_id e deduplicar por contrato
           const crErrors: string[] = [];
