@@ -204,7 +204,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
                   >
                     <TableCell>{controle.codigo || '-'}</TableCell>
                      <TableCell className="font-medium">{controle.safras?.nome || '-'}</TableCell>
-                    <TableCell>{controle.granja?.nome_fantasia || controle.granja?.razao_social || controle.lavouras?.granjas?.razao_social || '-'}</TableCell>
+                    <TableCell>{controle.granja?.nome_fantasia || controle.granja?.razao_social || controle.lavouras?.granjas?.nome_fantasia || controle.lavouras?.granjas?.razao_social || '-'}</TableCell>
                     <TableCell>{controle.lavouras?.nome || '-'}</TableCell>
                     <TableCell className="text-right">{controle.area_total?.toFixed(2) || '0.00'}</TableCell>
                     <TableCell className="text-right">{controle.ha_plantado?.toFixed(2) || '0.00'}</TableCell>
