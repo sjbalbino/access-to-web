@@ -74,11 +74,9 @@ export function useControleLavouras(safraId?: string | null, lavouraId?: string 
       }
       
       if (granjaId) {
-        // Como o filtro pode ser pela granja direta no controle ou via lavoura, 
-        // usamos um filtro OR para garantir que pegamos ambos os casos se necessário.
-        // No entanto, se o usuário já filtrou na UI, a lógica de filtro do useMemo 
-        // no componente já cuida disso. Aqui adicionamos o filtro base se fornecido.
-        query = query.or(`granja_id.eq.${granjaId},lavoura_id.in.(select id from lavouras where granja_id = '${granjaId}')`);
+        // Removemos o filtro complexo que pode estar falhando devido à sintaxe de sub-query no .or() do PostgREST
+        // Vamos filtrar apenas pelo granja_id direto, e a lógica do useMemo no componente cuida do restante
+        query = query.eq('granja_id', granjaId);
       }
 
       const { data, error } = await query;
