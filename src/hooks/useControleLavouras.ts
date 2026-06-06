@@ -4,7 +4,8 @@ import { toast } from '@/hooks/use-toast';
 
 export interface ControleLavoura {
   id: string;
-  lavoura_id: string;
+  lavoura_id: string | null;
+  granja_id: string | null;
   safra_id: string;
   codigo: string | null;
   area_total: number | null;
