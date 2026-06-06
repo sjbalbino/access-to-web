@@ -58,12 +58,14 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
         return (
           controle.lavouras?.nome?.toLowerCase().includes(term) ||
           controle.safras?.nome?.toLowerCase().includes(term) ||
+          (controle.granja as any)?.razao_social?.toLowerCase().includes(term) ||
+          (controle.granja as any)?.nome_fantasia?.toLowerCase().includes(term) ||
           controle.lavouras?.granjas?.razao_social?.toLowerCase().includes(term) ||
           (controle.codigo && controle.codigo.toString().toLowerCase().includes(term))
         );
       }
       // Filtro por granja
-      if (granjaFilter && granjaFilter !== 'all' && controle.lavouras?.granja_id !== granjaFilter) {
+      if (granjaFilter && granjaFilter !== 'all' && controle.granja_id !== granjaFilter && (controle.lavouras as any)?.granja_id !== granjaFilter) {
         return false;
       }
       return true;
@@ -78,7 +80,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
       return nomeA.localeCompare(nomeB);
     });
     return result;
-  }, [controles, searchTerm, statusSafraFilter]);
+  }, [controles, searchTerm, statusSafraFilter, granjaFilter]);
 
   if (isLoading) {
     return (
