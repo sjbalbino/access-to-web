@@ -534,7 +534,7 @@ export const tableConfigs: TableConfig[] = [
     ],
     references: [
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
-      { dbColumn: 'lavoura_id', sourceColumn: 'lavoura_codigo', lookupTable: 'lavouras', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
+      { dbColumn: '_lavoura_codigo', sourceColumn: 'lavoura_codigo', lookupTable: 'lavouras', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true, sourceColumnAliases: ['granja', 'codigo_granja', 'cod_granja', 'granjacodigo'] },
     ],
   },
