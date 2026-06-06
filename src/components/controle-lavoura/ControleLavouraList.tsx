@@ -6,12 +6,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
-import { Plus, Pencil, Trash2, Search, Wheat, Building2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Wheat, Building2, Check, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useControleLavouras, useDeleteControleLavoura } from '@/hooks/useControleLavouras';
 import { useSafras } from '@/hooks/useSafras';
 import { useGranjas } from '@/hooks/useGranjas';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
 interface ControleLavouraListProps {
   onNew: () => void;
@@ -24,6 +27,11 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
   const [granjaFilter, setGranjaFilter] = useState<string | null>(null);
   const [statusSafraFilter, setStatusSafraFilter] = useState<string>('ativa');
   const [searchTerm, setSearchTerm] = useState('');
+  const [openSafra, setOpenSafra] = useState(false);
+  
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
@@ -93,6 +101,17 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
     return result;
   }, [controles, searchTerm, statusSafraFilter, granjaFilter]);
 
+  const totalPages = Math.ceil(filteredControles.length / pageSize);
+  const paginatedControles = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredControles.slice(start, start + pageSize);
+  }, [filteredControles, currentPage, pageSize]);
+
+  // Resetar página quando filtros mudam
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusSafraFilter, safraFilter, granjaFilter]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -140,19 +159,64 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
               <SelectItem value="planejada">Planejadas</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={safraFilter || 'all'} onValueChange={(v) => setSafraFilter(v === 'all' ? null : v)}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filtrar por safra" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as safras</SelectItem>
-              {filteredSafras.map((safra) => (
-                <SelectItem key={safra.id} value={safra.id}>
-                  {safra.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={openSafra} onOpenChange={setOpenSafra}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={openSafra}
+                className="w-full sm:w-64 justify-between"
+              >
+                {safraFilter
+                  ? filteredSafras.find((safra) => safra.id === safraFilter)?.nome
+                  : "Todas as safras"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full sm:w-64 p-0">
+              <Command>
+                <CommandInput placeholder="Pesquisar safra..." />
+                <CommandList>
+                  <CommandEmpty>Nenhuma safra encontrada.</CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem
+                      value="all"
+                      onSelect={() => {
+                        setSafraFilter(null);
+                        setOpenSafra(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          !safraFilter ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      Todas as safras
+                    </CommandItem>
+                    {filteredSafras.map((safra) => (
+                      <CommandItem
+                        key={safra.id}
+                        value={safra.nome}
+                        onSelect={() => {
+                          setSafraFilter(safra.id);
+                          setOpenSafra(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            safraFilter === safra.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {safra.nome}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           <Select value={granjaFilter || 'all'} onValueChange={(v) => setGranjaFilter(v === 'all' ? null : v)}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Filtrar por granja" />
@@ -169,7 +233,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
         </div>
 
         {/* Tabela */}
-        {filteredControles.length === 0 ? (
+        {paginatedControles.length === 0 ? (
           <Empty className="border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -197,7 +261,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredControles.map((controle) => (
+                {paginatedControles.map((controle) => (
                   <TableRow 
                     key={controle.id} 
                     className="cursor-pointer hover:bg-muted/50"
@@ -265,6 +329,48 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
                 ))}
               </TableBody>
             </Table>
+          </div>
+        )}
+
+        {/* Paginação */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-muted-foreground">
+              Mostrando {Math.min(filteredControles.length, (currentPage - 1) * pageSize + 1)} a {Math.min(filteredControles.length, currentPage * pageSize)} de {filteredControles.length} registros
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Anterior
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    className="w-9"
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Próximo
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
