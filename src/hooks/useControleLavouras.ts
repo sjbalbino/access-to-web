@@ -54,6 +54,7 @@ export function useControleLavouras(safraId?: string | null, lavouraId?: string 
         .from('controle_lavouras')
         .select(`
           *,
+          granja:granja_id(id, razao_social, nome_fantasia),
           lavouras:lavoura_id(id, nome, codigo, total_hectares, granja_id, granjas:granja_id(id, razao_social)),
           safras:safra_id(id, nome, codigo, status, cultura_id, culturas:cultura_id(id, nome, informar_ph))
         `)
