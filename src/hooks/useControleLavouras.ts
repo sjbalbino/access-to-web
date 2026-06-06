@@ -73,13 +73,9 @@ export function useControleLavouras(safraId?: string | null, lavouraId?: string 
         query = query.eq('lavoura_id', lavouraId);
       }
       
-      if (granjaId) {
-        // Como o filtro pode ser pela granja direta no controle ou via lavoura, 
-        // usamos um filtro OR para garantir que pegamos ambos os casos se necessário.
-        // No entanto, se o usuário já filtrou na UI, a lógica de filtro do useMemo 
-        // no componente já cuida disso. Aqui adicionamos o filtro base se fornecido.
-        query = query.or(`granja_id.eq.${granjaId},lavoura_id.in.(select id from lavouras where granja_id = '${granjaId}')`);
-      }
+      // Removido filtro de granja do hook para evitar conflitos com a lógica de exibição
+      // A filtragem será feita exclusivamente no componente ControleLavouraList.tsx via useMemo
+
 
       const { data, error } = await query;
       if (error) throw error;
