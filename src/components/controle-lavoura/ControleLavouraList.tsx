@@ -58,8 +58,8 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
         return (
           controle.lavouras?.nome?.toLowerCase().includes(term) ||
           controle.safras?.nome?.toLowerCase().includes(term) ||
-          (controle.granja as any)?.razao_social?.toLowerCase().includes(term) ||
-          (controle.granja as any)?.nome_fantasia?.toLowerCase().includes(term) ||
+          controle.granja?.razao_social?.toLowerCase().includes(term) ||
+          controle.granja?.nome_fantasia?.toLowerCase().includes(term) ||
           controle.lavouras?.granjas?.razao_social?.toLowerCase().includes(term) ||
           (controle.codigo && controle.codigo.toString().toLowerCase().includes(term))
         );
