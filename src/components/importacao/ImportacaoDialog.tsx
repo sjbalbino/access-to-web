@@ -1103,28 +1103,30 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           )}
 
           {status === 'previewing' && needsGranja && (
-            <Card>
+            <Card className="border-primary/50 bg-primary/5">
               <CardContent className="pt-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">Granja de Destino (Opcional)</Label>
-                    <Badge variant="outline" className="text-[10px] font-normal uppercase">Dica</Badge>
+                    <Label className="text-sm font-semibold text-primary flex items-center gap-2">
+                      <Building className="h-4 w-4" />
+                      Granja de Destino (Obrigatório se não houver na planilha)
+                    </Label>
+                    <Badge variant="outline" className="text-[10px] font-normal uppercase bg-background">Padrão</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Se a planilha não contiver o código da granja, selecione uma abaixo para aplicar a todos os registros.
+                    Selecione a granja para a qual estes dados pertencem. Se a planilha já contiver o código da granja, a seleção abaixo será ignorada para aquelas linhas.
                   </p>
                   <Select value={selectedGranjaId} onValueChange={setSelectedGranjaId}>
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Selecione a granja (padrão)" />
+                    <SelectTrigger className="h-10 border-primary/30">
+                      <SelectValue placeholder="Selecione a granja correspondente..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Nenhuma (usar apenas dados da planilha)</SelectItem>
+                      <SelectItem value="none">Usar apenas códigos da planilha</SelectItem>
                       {granjas.map(g => (
                         <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-
                 </div>
               </CardContent>
             </Card>
