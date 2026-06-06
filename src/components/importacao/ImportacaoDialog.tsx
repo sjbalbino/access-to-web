@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -111,6 +113,11 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [excelColumns, setExcelColumns] = useState<string[]>([]);
   const [contaGerencialMap, setContaGerencialMap] = useState<Record<number, string>>({});
   const [subCentros, setSubCentros] = useState<{ id: string; descricao: string; centro_nome: string }[]>([]);
+  const [granjas, setGranjas] = useState<{ id: string; razao_social: string }[]>([]);
+  const [selectedGranjaId, setSelectedGranjaId] = useState<string>('');
+
+  const needsGranja = config.references?.some(r => r.dbColumn === 'granja_id') && config.key !== 'granjas';
+
 
   const needsContaGerencial = config.interactiveColumns?.includes('conta_gerencial_id');
 
@@ -179,6 +186,19 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     }
   }, [open, needsContaGerencial]);
 
+  useEffect(() => {
+    if (open && tenantId) {
+      supabase
+        .from('granjas')
+        .select('id, razao_social')
+        .eq('tenant_id', tenantId)
+        .order('razao_social')
+        .then(({ data }) => {
+          if (data) setGranjas(data);
+        });
+    }
+  }, [open, tenantId]);
+
   const resetState = () => {
     setFile(null);
     setRawData([]);
@@ -193,7 +213,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     setImportedCount(0);
     setExcelColumns([]);
     setContaGerencialMap({});
+    setSelectedGranjaId('');
   };
+
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -230,24 +252,43 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
       // Resolve references if any
       if (config.references && config.references.length > 0) {
+        // Prepare resolved references
         const { resolved, errors: refErrors } = await resolveReferences(config.references, transformed, tenantId);
         
+        // --- LOGICA DE GRANJA PARA IMPORTAÇÃO ---
+        // Se a planilha não tem coluna de granja mas o usuário selecionou uma na UI, aplicamos a todas as linhas
+        // que ainda não tenham granja_id resolvido.
+        for (let i = 0; i < resolved.length; i++) {
+          const row = resolved[i];
+          const hasGranjaInSheet = Object.keys(jsonData[i] || {}).some(k => 
+            normalize(k) === 'granjacodigo' || normalize(k) === 'granjid' || normalize(k) === 'granja'
+          );
+          
+          if (!row.granja_id && !hasGranjaInSheet && selectedGranjaId && selectedGranjaId !== 'none') {
+            row.granja_id = selectedGranjaId;
+          }
+        }
+        
+        const geoErrors: string[] = [];
+        const compositeErrors: string[] = [];
+
+        
+
         // Composite lookup: controle_lavoura_id for colheitas (via safra_codigo)
         if (config.key === 'colheitas') {
-          const compositeErrors: string[] = [];
-          
           // Buscar controle_lavouras pelo campo codigo para cache direto
           const { data: controles } = await supabase
             .from('controle_lavouras')
-            .select('id, safra_id, codigo');
+            .select('id, safra_id, codigo, granja_id');
           
-          // Cache: controle_lavouras.codigo (normalizado) → { controle_id, safra_id }
+          // Cache: controle_lavouras.codigo (normalizado) + granja_id → { controle_id, safra_id }
           const ctrlMap = new Map<string, { controle_id: string; safra_id: string }>();
           (controles || []).forEach((c: any) => {
             if (c.codigo) {
               const norm = String(c.codigo).trim().replace(/^0+/, '') || c.codigo;
-              if (!ctrlMap.has(norm)) {
-                ctrlMap.set(norm, { controle_id: c.id, safra_id: c.safra_id });
+              const key = c.granja_id ? `${norm}|${c.granja_id}` : norm;
+              if (!ctrlMap.has(key)) {
+                ctrlMap.set(key, { controle_id: c.id, safra_id: c.safra_id });
               }
             }
           });
@@ -256,19 +297,26 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             const row = resolved[i];
             const rawCode = row._safra_codigo || jsonData[i]?.['safra_codigo'] || jsonData[i]?.['SAFRA_CODIGO'] || jsonData[i]?.['safras_codigo'] || '';
             const codigoControle = String(rawCode).trim().replace(/^0+/, '');
+            const granjaId = row.granja_id;
+            
             // Limpar campo auxiliar antes do insert
             delete (row as any)._safra_codigo;
+            
             if (codigoControle) {
-              const match = ctrlMap.get(codigoControle);
+              // Tenta match com granja primeiro, depois fallback sem granja
+              const keyWithGranja = granjaId ? `${codigoControle}|${granjaId}` : codigoControle;
+              const match = ctrlMap.get(keyWithGranja) || ctrlMap.get(codigoControle);
+              
               if (match) {
                 row.controle_lavoura_id = match.controle_id;
               } else {
-                compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"`);
+                compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"${granjaId ? ' na Granja selecionada' : ''}`);
               }
             } else {
               compositeErrors.push(`Linha ${i + 1}: safra_codigo vazio — não é possível vincular ao Controle de Lavoura`);
             }
           }
+
           
           setReferenceErrors([...refErrors, ...compositeErrors]);
         } else if (config.key === 'inscricoes' || config.key === 'produtores') {
@@ -1054,7 +1102,35 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             </Card>
           )}
 
-          {status === 'previewing' && (
+          {status === 'previewing' && needsGranja && (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Granja de Destino (Opcional)</Label>
+                    <Badge variant="outline" className="text-[10px] font-normal uppercase">Dica</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Se a planilha não contiver o código da granja, selecione uma abaixo para aplicar a todos os registros.
+                  </p>
+                  <Select value={selectedGranjaId} onValueChange={setSelectedGranjaId}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Selecione a granja (padrão)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma (usar apenas dados da planilha)</SelectItem>
+                      {granjas.map(g => (
+                        <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+
             <div className="space-y-2">
               {upsertSupported && (
                 <div className="flex items-start gap-2">
@@ -1085,7 +1161,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 </Label>
               </div>
             </div>
-          )}
+
+
+
 
           {/* Import progress */}
           {status === 'importing' && (
@@ -1143,6 +1221,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             {status === 'done' ? 'Fechar' : 'Cancelar'}
           </Button>
           {status === 'previewing' && (
+
             <Button onClick={handleImport} disabled={importTargetCount === 0}>
               {config.updateMode ? 'Atualizar' : (upsertMode ? 'Sincronizar' : 'Importar')} {importTargetCount} registros
             </Button>
