@@ -1162,8 +1162,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                   Limpar dados existentes de "{config.label}" antes de importar
                 </Label>
               </div>
-            </div>
-          )}
+
 
           {/* Import progress */}
           {status === 'importing' && (
