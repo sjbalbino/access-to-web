@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Upload, FileSpreadsheet, Loader2, AlertTriangle, CheckCircle2, XCircle, ChevronsUpDown, Check } from 'lucide-react';
+import { Upload, FileSpreadsheet, Loader2, AlertTriangle, CheckCircle2, XCircle, ChevronsUpDown, Check, Building } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
