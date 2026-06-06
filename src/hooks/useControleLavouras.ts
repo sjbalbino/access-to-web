@@ -74,9 +74,10 @@ export function useControleLavouras(safraId?: string | null, lavouraId?: string 
       }
       
       if (granjaId) {
-        // Removemos o filtro complexo que pode estar falhando devido à sintaxe de sub-query no .or() do PostgREST
-        // Vamos filtrar apenas pelo granja_id direto, e a lógica do useMemo no componente cuida do restante
-        query = query.eq('granja_id', granjaId);
+        // O filtro por granja_id deve ser mais flexível pois alguns registros podem ter granja_id nulo
+        // mas estarem vinculados via lavoura. Por simplicidade e segurança, vamos trazer os dados 
+        // e deixar o componente filtrar, ou usar um OR simples se os campos existirem.
+        query = query.or(`granja_id.eq.${granjaId},lavoura_id.not.is.null`);
       }
 
       const { data, error } = await query;
