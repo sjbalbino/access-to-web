@@ -22,6 +22,7 @@ export interface ControleLavoura {
     granjas?: {
       id: string;
       razao_social: string;
+      nome_fantasia: string | null;
     } | null;
   };
   safras?: {
@@ -61,7 +62,7 @@ export function useControleLavouras(safraId?: string | null, lavouraId?: string 
         .select(`
           *,
           granja:granja_id(id, razao_social, nome_fantasia),
-          lavouras:lavoura_id(id, nome, codigo, total_hectares, granja_id, granjas:granja_id(id, razao_social)),
+          lavouras:lavoura_id(id, nome, codigo, total_hectares, granja_id, granjas:granja_id(id, razao_social, nome_fantasia)),
           safras:safra_id(id, nome, codigo, status, cultura_id, culturas:cultura_id(id, nome, informar_ph))
         `)
         .order('created_at', { ascending: false });
@@ -93,7 +94,7 @@ export function useControleLavoura(id: string | null) {
         .from('controle_lavouras')
         .select(`
           *,
-          lavouras:lavoura_id(id, nome, codigo, total_hectares, granja_id, granjas:granja_id(id, razao_social)),
+          lavouras:lavoura_id(id, nome, codigo, total_hectares, granja_id, granjas:granja_id(id, razao_social, nome_fantasia)),
           safras:safra_id(id, nome, codigo, status, cultura_id, culturas:cultura_id(id, nome, informar_ph))
         `)
         .eq('id', id)
@@ -114,7 +115,7 @@ export function useControleLavouraBySafraLavoura(safraId: string | null, lavoura
         .from('controle_lavouras')
         .select(`
           *,
-          lavouras:lavoura_id(id, nome, codigo, total_hectares, granja_id, granjas:granja_id(id, razao_social)),
+          lavouras:lavoura_id(id, nome, codigo, total_hectares, granja_id, granjas:granja_id(id, razao_social, nome_fantasia)),
           safras:safra_id(id, nome, codigo, status, cultura_id, culturas:cultura_id(id, nome, informar_ph))
         `)
         .eq('safra_id', safraId)
