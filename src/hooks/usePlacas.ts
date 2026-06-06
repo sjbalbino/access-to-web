@@ -30,10 +30,7 @@ export function usePlacas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('placas')
-        .select(`
-          *,
-          granja:granjas(id, razao_social)
-        `)
+        .select('*')
         .order('placa');
       if (error) throw error;
       return data;
