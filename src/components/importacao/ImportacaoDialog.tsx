@@ -731,6 +731,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       if (config.key === 'colheitas') {
         validDbColumns.add('controle_lavoura_id');
       }
+      if (config.key === 'controle_lavouras') {
+        validDbColumns.add('lavoura_id');
+      }
       if (config.key === 'contra_notas_recebidas') {
         validDbColumns.add('contrato_venda_id');
         validDbColumns.add('granja_id');
