@@ -114,7 +114,6 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [granjas, setGranjas] = useState<{ id: string; razao_social: string }[]>([]);
   const [selectedGranjaId, setSelectedGranjaId] = useState<string>('');
 
-  const needsContaGerencial = config.interactiveColumns?.includes('conta_gerencial_id');
   const needsGranja = config.references?.some(r => r.dbColumn === 'granja_id') && config.key !== 'granjas';
 
 
@@ -1106,7 +1105,34 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             </Card>
           )}
 
-          {status === 'previewing' && (
+          {status === 'previewing' && needsGranja && (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Granja de Destino (Opcional)</Label>
+                    <Badge variant="outline" className="text-[10px] font-normal uppercase">Dica</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Se a planilha não contiver o código da granja, selecione uma abaixo para aplicar a todos os registros.
+                  </p>
+                  <Select value={selectedGranjaId} onValueChange={setSelectedGranjaId}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Selecione a granja (padrão)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma (usar apenas dados da planilha)</SelectItem>
+                      {granjas.map(g => (
+                        <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+
             <div className="space-y-2">
               {upsertSupported && (
                 <div className="flex items-start gap-2">
