@@ -11,6 +11,7 @@ interface Profile {
   avatar_url: string | null;
   ativo: boolean | null;
   tenant_id: string | null;
+  granja_id: string | null;
   is_super_admin_original?: boolean | null;
 }
 

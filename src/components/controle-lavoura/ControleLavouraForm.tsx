@@ -155,7 +155,7 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
                 <SelectContent>
                   {lavouras.map((lavoura) => (
                     <SelectItem key={lavoura.id} value={lavoura.id}>
-                      {lavoura.nome}
+                      {lavoura.nome} {(lavoura as any).granja?.razao_social ? `(${ (lavoura as any).granja.razao_social })` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>

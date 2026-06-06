@@ -6,9 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
-import { Plus, Pencil, Trash2, Search, Wheat } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Wheat, Building2 } from 'lucide-react';
 import { useControleLavouras, useDeleteControleLavoura } from '@/hooks/useControleLavouras';
 import { useSafras } from '@/hooks/useSafras';
+import { useGranjas } from '@/hooks/useGranjas';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from '@/hooks/use-toast';
 
@@ -20,10 +21,12 @@ interface ControleLavouraListProps {
 
 export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraListProps) {
   const [safraFilter, setSafraFilter] = useState<string | null>(null);
+  const [granjaFilter, setGranjaFilter] = useState<string | null>(null);
   const [statusSafraFilter, setStatusSafraFilter] = useState<string>('ativa');
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: safras = [] } = useSafras();
+  const { data: granjas = [] } = useGranjas();
   const { data: controles = [], isLoading } = useControleLavouras(safraFilter);
   const deleteMutation = useDeleteControleLavoura();
 
@@ -54,8 +57,13 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
         const term = searchTerm.toLowerCase();
         return (
           controle.lavouras?.nome?.toLowerCase().includes(term) ||
-          controle.safras?.nome?.toLowerCase().includes(term)
+          controle.safras?.nome?.toLowerCase().includes(term) ||
+          controle.lavouras?.granjas?.razao_social?.toLowerCase().includes(term)
         );
+      }
+      // Filtro por granja
+      if (granjaFilter && granjaFilter !== 'all' && controle.lavouras?.granja_id !== granjaFilter) {
+        return false;
       }
       return true;
     });
@@ -131,6 +139,19 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
               ))}
             </SelectContent>
           </Select>
+          <Select isSearchable value={granjaFilter || 'all'} onValueChange={(v) => setGranjaFilter(v === 'all' ? null : v)}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Filtrar por granja" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as granjas</SelectItem>
+              {granjas.map((granja) => (
+                <SelectItem key={granja.id} value={granja.id}>
+                  {granja.razao_social}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Tabela */}
@@ -152,7 +173,8 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
               <TableHeader>
                 <TableRow>
                   <TableHead>Código</TableHead>
-                  <TableHead>Safra</TableHead>
+                   <TableHead>Safra</TableHead>
+                  <TableHead>Granja</TableHead>
                   <TableHead>Lavoura</TableHead>
                   <TableHead className="text-right">Área Total (ha)</TableHead>
                   <TableHead className="text-right">Ha Plantado</TableHead>
@@ -168,7 +190,8 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
                     onClick={() => onEdit(controle.id)}
                   >
                     <TableCell>{controle.codigo || '-'}</TableCell>
-                    <TableCell className="font-medium">{controle.safras?.nome || '-'}</TableCell>
+                     <TableCell className="font-medium">{controle.safras?.nome || '-'}</TableCell>
+                    <TableCell>{controle.lavouras?.granjas?.razao_social || '-'}</TableCell>
                     <TableCell>{controle.lavouras?.nome || '-'}</TableCell>
                     <TableCell className="text-right">{controle.area_total?.toFixed(2) || '0.00'}</TableCell>
                     <TableCell className="text-right">{controle.ha_plantado?.toFixed(2) || '0.00'}</TableCell>

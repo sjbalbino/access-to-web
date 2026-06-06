@@ -19,7 +19,7 @@ import { useGranjas } from "@/hooks/useGranjas";
 import { useCulturas } from "@/hooks/useCulturas";
 import { useSafras } from "@/hooks/useSafras";
 import { useProdutores } from "@/hooks/useProdutores";
-import { useLavouras } from "@/hooks/useLavouras";
+import { useControleLavouras } from "@/hooks/useControleLavouras";
 
 const quickAccessItems = [
   {
@@ -57,10 +57,10 @@ export default function Index() {
   const { data: culturas, isLoading: loadingCulturas } = useCulturas();
   const { data: safras, isLoading: loadingSafras } = useSafras();
   const { data: produtores, isLoading: loadingProdutores } = useProdutores();
-  const { data: lavouras, isLoading: loadingLavouras } = useLavouras();
+  const { data: controlesLavouras, isLoading: loadingLavouras } = useControleLavouras();
 
   const safrasAtivas = safras?.filter((s) => s.status === "ativa") || [];
-  const totalHectares = lavouras?.reduce((acc, l) => acc + (l.total_hectares || 0), 0) || 0;
+  const totalHectares = controlesLavouras?.reduce((acc, l) => acc + (l.area_total || 0), 0) || 0;
 
   return (
     <AppLayout>
@@ -191,27 +191,27 @@ export default function Index() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Map className="h-5 w-5 text-chart-5" />
-              Lavouras
+              Controles de Lavoura
             </CardTitle>
           </CardHeader>
           <CardContent>
             {loadingLavouras ? (
               <p className="text-muted-foreground">Carregando...</p>
-            ) : lavouras && lavouras.length > 0 ? (
+            ) : controlesLavouras && controlesLavouras.length > 0 ? (
               <div className="space-y-3">
-                {lavouras.slice(0, 5).map((lavoura: any) => (
+                {controlesLavouras.slice(0, 5).map((controle: any) => (
                   <div
-                    key={lavoura.id}
+                    key={controle.id}
                     className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                   >
                     <div>
-                      <p className="font-medium">{lavoura.nome}</p>
+                      <p className="font-medium">{controle.lavouras?.nome}</p>
                       <p className="text-sm text-muted-foreground">
-                        {lavoura.granja?.razao_social || "Sem granja vinculada"}
+                        {controle.safras?.nome} • {controle.lavouras?.granjas?.razao_social || "Sem granja vinculada"}
                       </p>
                     </div>
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                      {lavoura.total_hectares?.toLocaleString("pt-BR") || 0} ha
+                      {controle.area_total?.toLocaleString("pt-BR") || 0} ha
                     </span>
                   </div>
                 ))}
@@ -219,9 +219,9 @@ export default function Index() {
             ) : (
               <div className="text-center py-8">
                 <Map className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                <p className="text-muted-foreground">Nenhuma lavoura cadastrada</p>
+                <p className="text-muted-foreground">Nenhum controle de lavoura cadastrado</p>
                 <Button asChild variant="link" className="mt-2">
-                  <Link to="/lavouras">Cadastrar lavoura</Link>
+                  <Link to="/controle-lavoura">Gerenciar controles</Link>
                 </Button>
               </div>
             )}
