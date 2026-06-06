@@ -27,7 +27,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
 
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
-  const { data: controles = [], isLoading } = useControleLavouras(safraFilter);
+  const { data: controles = [], isLoading } = useControleLavouras(safraFilter, null, granjaFilter);
   const deleteMutation = useDeleteControleLavoura();
 
   const handleDelete = async (id: string) => {
@@ -65,8 +65,13 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
         );
       }
       // Filtro por granja
-      if (granjaFilter && granjaFilter !== 'all' && controle.granja_id !== granjaFilter && (controle.lavouras as any)?.granja_id !== granjaFilter) {
-        return false;
+      if (granjaFilter && granjaFilter !== 'all') {
+        const idGranjaControle = controle.granja_id;
+        const idGranjaLavoura = (controle.lavouras as any)?.granja_id;
+        
+        if (idGranjaControle !== granjaFilter && idGranjaLavoura !== granjaFilter) {
+          return false;
+        }
       }
       return true;
     });
