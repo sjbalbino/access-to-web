@@ -265,18 +265,53 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             normalize(k) === 'granjacodigo' || normalize(k) === 'granjid' || normalize(k) === 'granja'
           );
           
-          if (!row.granja_id && !hasGranjaInSheet && selectedGranjaId && selectedGranjaId !== 'none') {
+          if (!row.granja_id && !row._granja_id && !hasGranjaInSheet && selectedGranjaId && selectedGranjaId !== 'none') {
             row.granja_id = selectedGranjaId;
+          }
+          if (row._granja_id && !row.granja_id) {
+            row.granja_id = row._granja_id;
           }
         }
         
-        const geoErrors: string[] = [];
         const compositeErrors: string[] = [];
 
-        
+        // Composite lookup: lavoura_id for controle_lavouras (via _lavoura_codigo + granja_id)
+        if (config.key === 'controle_lavouras') {
+          const { data: lavouras } = await supabase
+            .from('lavouras')
+            .select('id, codigo, granja_id');
+          
+          const lavMap = new Map<string, string>();
+          (lavouras || []).forEach((l: any) => {
+            if (l.codigo) {
+              const norm = String(l.codigo).trim();
+              const key = l.granja_id ? `${norm}|${l.granja_id}` : norm;
+              lavMap.set(key, l.id);
+            }
+          });
 
+          for (let i = 0; i < resolved.length; i++) {
+            const row = resolved[i];
+            const codigoLavoura = String(row._lavoura_codigo || '').trim();
+            const granjaId = row.granja_id;
+            delete row._lavoura_codigo;
+
+            if (codigoLavoura) {
+              const key = granjaId ? `${codigoLavoura}|${granjaId}` : codigoLavoura;
+              const match = lavMap.get(key) || lavMap.get(codigoLavoura);
+              if (match) {
+                row.lavoura_id = match;
+              } else {
+                compositeErrors.push(`Linha ${i + 1}: Lavoura não encontrada para código "${codigoLavoura}" na Granja selecionada`);
+              }
+            } else {
+              compositeErrors.push(`Linha ${i + 1}: Código da lavoura ausente`);
+            }
+          }
+          setReferenceErrors([...refErrors, ...compositeErrors]);
+        }
         // Composite lookup: controle_lavoura_id for colheitas (via safra_codigo)
-        if (config.key === 'colheitas') {
+        else if (config.key === 'colheitas') {
           // Buscar controle_lavouras pelo campo codigo para cache direto
           const { data: controles } = await supabase
             .from('controle_lavouras')
@@ -298,10 +333,11 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             const row = resolved[i];
             const rawCode = row._safra_codigo || jsonData[i]?.['safra_codigo'] || jsonData[i]?.['SAFRA_CODIGO'] || jsonData[i]?.['safras_codigo'] || '';
             const codigoControle = String(rawCode).trim().replace(/^0+/, '');
-            const granjaId = row.granja_id;
+            const granjaId = row.granja_id || row._granja_id;
             
             // Limpar campo auxiliar antes do insert
             delete (row as any)._safra_codigo;
+            delete (row as any)._granja_id;
             
             if (codigoControle) {
               // Tenta match com granja primeiro, depois fallback sem granja
@@ -317,7 +353,6 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
               compositeErrors.push(`Linha ${i + 1}: safra_codigo vazio — não é possível vincular ao Controle de Lavoura`);
             }
           }
-
           
           setReferenceErrors([...refErrors, ...compositeErrors]);
         } else if (config.key === 'inscricoes' || config.key === 'produtores') {
