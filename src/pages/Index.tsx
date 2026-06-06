@@ -57,10 +57,10 @@ export default function Index() {
   const { data: culturas, isLoading: loadingCulturas } = useCulturas();
   const { data: safras, isLoading: loadingSafras } = useSafras();
   const { data: produtores, isLoading: loadingProdutores } = useProdutores();
-  const { data: lavouras, isLoading: loadingLavouras } = useLavouras();
+  const { data: controlesLavouras, isLoading: loadingLavouras } = useControleLavouras();
 
   const safrasAtivas = safras?.filter((s) => s.status === "ativa") || [];
-  const totalHectares = lavouras?.reduce((acc, l) => acc + (l.total_hectares || 0), 0) || 0;
+  const totalHectares = controlesLavouras?.reduce((acc, l) => acc + (l.area_total || 0), 0) || 0;
 
   return (
     <AppLayout>
