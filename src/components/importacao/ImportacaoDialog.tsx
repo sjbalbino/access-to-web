@@ -116,7 +116,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [granjas, setGranjas] = useState<{ id: string; razao_social: string }[]>([]);
   const [selectedGranjaId, setSelectedGranjaId] = useState<string>('');
 
-  const needsGranja = config.references?.some(r => r.dbColumn === 'granja_id') && config.key !== 'granjas';
+  const needsGranja = config.references?.some(r => r.dbColumn === 'granja_id' || r.dbColumn === '_granja_id') && config.key !== 'granjas';
 
 
   const needsContaGerencial = config.interactiveColumns?.includes('conta_gerencial_id');
