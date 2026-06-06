@@ -58,7 +58,8 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
         return (
           controle.lavouras?.nome?.toLowerCase().includes(term) ||
           controle.safras?.nome?.toLowerCase().includes(term) ||
-          controle.lavouras?.granjas?.razao_social?.toLowerCase().includes(term)
+          controle.lavouras?.granjas?.razao_social?.toLowerCase().includes(term) ||
+          (controle.codigo && controle.codigo.toString().toLowerCase().includes(term))
         );
       }
       // Filtro por granja
