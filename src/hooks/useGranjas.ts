@@ -30,10 +30,23 @@ export function useGranjas() {
   return useQuery({
     queryKey: ["granjas"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user?.id)
+        .single();
+
+      let query = supabase
         .from("granjas")
         .select("*")
         .order("razao_social");
+
+      if (profile?.tenant_id) {
+        query = query.eq('tenant_id', profile.tenant_id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as Granja[];
     },

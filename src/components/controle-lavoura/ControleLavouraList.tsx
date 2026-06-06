@@ -116,7 +116,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
               className="pl-9"
             />
           </div>
-          <Select isSearchable value={statusSafraFilter} onValueChange={(v) => setStatusSafraFilter(v)}>
+          <Select value={statusSafraFilter} onValueChange={(v) => setStatusSafraFilter(v)}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Status da safra" />
             </SelectTrigger>
@@ -127,7 +127,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
               <SelectItem value="planejada">Planejadas</SelectItem>
             </SelectContent>
           </Select>
-          <Select isSearchable value={safraFilter || 'all'} onValueChange={(v) => setSafraFilter(v === 'all' ? null : v)}>
+          <Select value={safraFilter || 'all'} onValueChange={(v) => setSafraFilter(v === 'all' ? null : v)}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Filtrar por safra" />
             </SelectTrigger>
@@ -140,7 +140,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
               ))}
             </SelectContent>
           </Select>
-          <Select isSearchable value={granjaFilter || 'all'} onValueChange={(v) => setGranjaFilter(v === 'all' ? null : v)}>
+          <Select value={granjaFilter || 'all'} onValueChange={(v) => setGranjaFilter(v === 'all' ? null : v)}>
             <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Filtrar por granja" />
             </SelectTrigger>
