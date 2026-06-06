@@ -61,7 +61,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
           controle.granja?.razao_social?.toLowerCase().includes(term) ||
           controle.granja?.nome_fantasia?.toLowerCase().includes(term) ||
           controle.lavouras?.granjas?.razao_social?.toLowerCase().includes(term) ||
-          (controle.codigo && controle.codigo.toString().toLowerCase().includes(term))
+          (controle.lavouras?.codigo != null && controle.lavouras.codigo.toString().toLowerCase().includes(term))
         );
       }
       // Filtro por granja - Prioriza granja_id do controle, 
