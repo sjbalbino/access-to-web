@@ -4621,6 +4621,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           email: string | null
+          granja_id: string | null
           id: string
           is_super_admin_original: boolean
           nome: string | null
@@ -4632,6 +4633,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email?: string | null
+          granja_id?: string | null
           id: string
           is_super_admin_original?: boolean
           nome?: string | null
@@ -4643,6 +4645,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email?: string | null
+          granja_id?: string | null
           id?: string
           is_super_admin_original?: boolean
           nome?: string | null
@@ -4650,6 +4653,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_tenant_id_fkey"
             columns: ["tenant_id"]
