@@ -61,7 +61,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
           controle.granja?.razao_social?.toLowerCase().includes(term) ||
           controle.granja?.nome_fantasia?.toLowerCase().includes(term) ||
           controle.lavouras?.granjas?.razao_social?.toLowerCase().includes(term) ||
-          (controle.codigo && controle.codigo.toString().toLowerCase().includes(term))
+          (controle.lavouras?.codigo != null && controle.lavouras.codigo.toString().toLowerCase().includes(term))
         );
       }
       // Filtro por granja - Prioriza granja_id do controle, 
@@ -202,7 +202,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => onEdit(controle.id)}
                   >
-                    <TableCell>{controle.codigo || '-'}</TableCell>
+                    <TableCell>{controle.lavouras?.codigo ?? '-'}</TableCell>
                      <TableCell className="font-medium">{controle.safras?.nome || '-'}</TableCell>
                     <TableCell>{controle.granja?.nome_fantasia || controle.granja?.razao_social || controle.lavouras?.granjas?.nome_fantasia || controle.lavouras?.granjas?.razao_social || '-'}</TableCell>
                     <TableCell>{controle.lavouras?.nome || '-'}</TableCell>
