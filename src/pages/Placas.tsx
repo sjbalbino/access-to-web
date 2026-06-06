@@ -30,7 +30,6 @@ export default function Placas() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<PlacaInsert>({
-    granja_id: null,
     placa: '',
     tipo: 'veiculo',
     marca: '',
@@ -48,7 +47,6 @@ export default function Placas() {
 
   const resetForm = () => {
     setFormData({
-      granja_id: null,
       placa: '',
       tipo: 'veiculo',
       marca: '',
@@ -80,7 +78,6 @@ export default function Placas() {
   const handleEdit = (item: any) => {
     setEditingItem(item);
     setFormData({
-      granja_id: item.granja_id,
       placa: item.placa,
       tipo: item.tipo || 'veiculo',
       marca: item.marca || '',
