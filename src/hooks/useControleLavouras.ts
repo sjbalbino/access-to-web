@@ -50,25 +50,14 @@ export function useControleLavouras(safraId?: string | null, lavouraId?: string 
   return useQuery({
     queryKey: ['controle_lavouras', safraId, lavouraId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('id', user?.id)
-        .single();
-
       let query = supabase
         .from('controle_lavouras')
         .select(`
           *,
-          lavouras:lavoura_id!inner(id, nome, codigo, total_hectares, granja_id, granjas:granja_id!inner(id, razao_social, tenant_id)),
+          lavouras:lavoura_id!inner(id, nome, codigo, total_hectares, granja_id, granjas:granja_id!inner(id, razao_social)),
           safras:safra_id(id, nome, codigo, status, cultura_id, culturas:cultura_id(id, nome, informar_ph))
         `)
         .order('created_at', { ascending: false });
-
-      if (profile?.tenant_id) {
-        query = query.eq('lavouras.granjas.tenant_id', profile.tenant_id);
-      }
 
       if (safraId) {
         query = query.eq('safra_id', safraId);
