@@ -271,7 +271,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
           
           setReferenceErrors([...refErrors, ...compositeErrors]);
-        } else if (config.key === 'inscricoes') {
+        } else if (config.key === 'inscricoes' || config.key === 'produtores') {
           // Lookup automático de cidade/uf via codigo_ibge
           const ibgeErrors: string[] = [];
           const codigos = Array.from(new Set(
@@ -296,8 +296,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             if (codIbge) {
               const match = ibgeMap.get(codIbge);
               if (match) {
-                row.cidade = match.nome;
-                row.uf = match.uf;
+                // Preenche se estiver vazio ou se encontrou no IBGE
+                if (!row.cidade) row.cidade = match.nome;
+                if (!row.uf) row.uf = match.uf;
               } else {
                 ibgeErrors.push(`Linha ${i + 1}: código IBGE "${codIbge}" não encontrado`);
               }
