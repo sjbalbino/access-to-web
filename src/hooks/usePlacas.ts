@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 export type Placa = {
   id: string;
-  granja_id: string | null;
+  granja_id?: string | null;
   placa: string;
   tipo: string | null;
   marca: string | null;
