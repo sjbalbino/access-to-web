@@ -64,13 +64,18 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
           (controle.codigo && controle.codigo.toString().toLowerCase().includes(term))
         );
       }
-      // Filtro por granja
+      // Filtro por granja - Prioriza granja_id do controle, 
+      // mas se for nulo, verifica a granja da lavoura
       if (granjaFilter && granjaFilter !== 'all') {
         const idGranjaControle = controle.granja_id;
-        const idGranjaLavoura = (controle.lavouras as any)?.granja_id;
         
-        if (idGranjaControle !== granjaFilter && idGranjaLavoura !== granjaFilter) {
-          return false;
+        // Se o controle tem uma granja vinculada explicitamente, usa ela
+        if (idGranjaControle) {
+          if (idGranjaControle !== granjaFilter) return false;
+        } else {
+          // Se não tem granja no controle, verifica a granja da lavoura
+          const idGranjaLavoura = (controle.lavouras as any)?.granja_id;
+          if (idGranjaLavoura !== granjaFilter) return false;
         }
       }
       return true;
