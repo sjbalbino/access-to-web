@@ -1612,6 +1612,7 @@ export type Database = {
           cobertura_solo: string | null
           codigo: string | null
           created_at: string
+          granja_id: string | null
           ha_plantado: number | null
           id: string
           lavoura_id: string
@@ -1624,6 +1625,7 @@ export type Database = {
           cobertura_solo?: string | null
           codigo?: string | null
           created_at?: string
+          granja_id?: string | null
           ha_plantado?: number | null
           id?: string
           lavoura_id: string
@@ -1636,6 +1638,7 @@ export type Database = {
           cobertura_solo?: string | null
           codigo?: string | null
           created_at?: string
+          granja_id?: string | null
           ha_plantado?: number | null
           id?: string
           lavoura_id?: string
@@ -1644,6 +1647,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "controle_lavouras_granja_id_fkey"
+            columns: ["granja_id"]
+            isOneToOne: false
+            referencedRelation: "granjas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "controle_lavouras_lavoura_id_fkey"
             columns: ["lavoura_id"]
