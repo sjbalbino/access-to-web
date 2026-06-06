@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 export type Placa = {
   id: string;
-  granja_id: string | null;
+  granja_id?: string | null;
   placa: string;
   tipo: string | null;
   marca: string | null;
@@ -30,10 +30,7 @@ export function usePlacas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('placas')
-        .select(`
-          *,
-          granja:granjas(id, razao_social)
-        `)
+        .select('*')
         .order('placa');
       if (error) throw error;
       return data;
