@@ -282,7 +282,12 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             .select('id, codigo, granja_id');
           
           const lavMap = new Map<string, string>();
+          const lavIdMap = new Map<string, string>(); // New map for UUID lookup
+
           (lavouras || []).forEach((l: any) => {
+            if (l.id) {
+              lavIdMap.set(l.id, l.id);
+            }
             if (l.codigo) {
               const norm = String(l.codigo).trim();
               const key = l.granja_id ? `${norm}|${l.granja_id}` : norm;
@@ -297,12 +302,18 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             delete row._lavoura_codigo;
 
             if (codigoLavoura) {
-              const key = granjaId ? `${codigoLavoura}|${granjaId}` : codigoLavoura;
-              const match = lavMap.get(key) || lavMap.get(codigoLavoura);
-              if (match) {
-                row.lavoura_id = match;
+              // Priority 1: Check if it's already a UUID (happens if resolved by resolveReferences via numeric code fallback)
+              if (lavIdMap.has(codigoLavoura)) {
+                row.lavoura_id = codigoLavoura;
               } else {
-                compositeErrors.push(`Linha ${i + 1}: Lavoura não encontrada para código "${codigoLavoura}" na Granja selecionada`);
+                // Priority 2: Composite key (code|granja) or fallback to code
+                const key = granjaId ? `${codigoLavoura}|${granjaId}` : codigoLavoura;
+                const match = lavMap.get(key) || lavMap.get(codigoLavoura);
+                if (match) {
+                  row.lavoura_id = match;
+                } else {
+                  compositeErrors.push(`Linha ${i + 1}: Lavoura não encontrada para código "${codigoLavoura}" na Granja selecionada`);
+                }
               }
             } else {
               compositeErrors.push(`Linha ${i + 1}: Código da lavoura ausente`);
