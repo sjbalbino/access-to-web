@@ -279,10 +279,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         if (config.key === 'controle_lavouras') {
           const { data: lavouras } = await supabase
             .from('lavouras')
-            .select('id, codigo, granja_id');
+            .select('id, codigo, granja_id, tenant_id');
           
           const lavMap = new Map<string, string>();
-          const lavIdMap = new Map<string, string>(); // New map for UUID lookup
+          const lavIdMap = new Map<string, string>();
 
           (lavouras || []).forEach((l: any) => {
             if (l.id) {
@@ -290,7 +290,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             }
             if (l.codigo) {
               const norm = String(l.codigo).trim();
-              const key = l.granja_id ? `${norm}|${l.granja_id}` : norm;
+              // Build key combining tenant_id, granja_id and code to ensure uniqueness
+              // Even if different tenants or different granjas have the same code, we isolate it.
+              const key = `${l.tenant_id}|${l.granja_id}|${norm}`;
               lavMap.set(key, l.id);
             }
           });
@@ -299,16 +301,18 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             const row = resolved[i];
             const codigoLavoura = String(row._lavoura_codigo || '').trim();
             const granjaId = row.granja_id;
+            const rowTenantId = tenantId; // The selected tenant in the UI
             delete row._lavoura_codigo;
 
             if (codigoLavoura) {
-              // Priority 1: Check if it's already a UUID (happens if resolved by resolveReferences via numeric code fallback)
+              // Priority 1: Check if it's already a UUID
               if (lavIdMap.has(codigoLavoura)) {
                 row.lavoura_id = codigoLavoura;
               } else {
-                // Priority 2: Composite key (code|granja) or fallback to code
-                const key = granjaId ? `${codigoLavoura}|${granjaId}` : codigoLavoura;
-                const match = lavMap.get(key) || lavMap.get(codigoLavoura);
+                // Priority 2: Use the composite key with tenant_id and granja_id
+                const key = `${rowTenantId}|${granjaId}|${codigoLavoura}`;
+                const match = lavMap.get(key);
+                
                 if (match) {
                   row.lavoura_id = match;
                 } else {
