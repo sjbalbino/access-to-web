@@ -330,22 +330,33 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           // Buscar controle_lavouras pelo campo codigo para cache direto
           const { data: controles } = await supabase
             .from('controle_lavouras')
-            .select('id, safra_id, codigo, granja_id');
+            .select('id, safra_id, codigo, granja_id, lavoura_id');
           
           // Cache: controle_lavouras.codigo (normalizado) + granja_id → { controle_id, safra_id }
           // Cache: controle_lavouras.codigo (normalizado) + granja_id + safra_id → { controle_id, safra_id }
-          const ctrlMap = new Map<string, { controle_id: string; safra_id: string }>();
+          const ctrlMap = new Map<string, { controle_id: string; safra_id: string; granja_id: string; lavoura_id: string }>();
           (controles || []).forEach((c: any) => {
             if (c.codigo) {
               const norm = String(c.codigo).trim().replace(/^0+/, '') || c.codigo;
-              // Add safra_id to the key for better precision if available
-              const key = `${norm}|${c.granja_id}|${c.safra_id}`;
-              ctrlMap.set(key, { controle_id: c.id, safra_id: c.safra_id });
+              const val = { 
+                controle_id: c.id, 
+                safra_id: c.safra_id, 
+                granja_id: c.granja_id,
+                lavoura_id: c.lavoura_id 
+              };
+
+              // Cache: codigo + granja + safra (most specific)
+              ctrlMap.set(`${norm}|${c.granja_id}|${c.safra_id}`, val);
               
-              // Fallback key without safra_id (might be ambiguous if same code used in different safras for same farm)
-              const fallbackKey = `${norm}|${c.granja_id}`;
-              if (!ctrlMap.has(fallbackKey)) {
-                ctrlMap.set(fallbackKey, { controle_id: c.id, safra_id: c.safra_id });
+              // Cache: codigo + granja
+              const keyWithGranja = `${norm}|${c.granja_id}`;
+              if (!ctrlMap.has(keyWithGranja)) {
+                ctrlMap.set(keyWithGranja, val);
+              }
+
+              // Cache: just codigo
+              if (!ctrlMap.has(norm)) {
+                ctrlMap.set(norm, val);
               }
             }
           });
@@ -373,6 +384,12 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 // If the row doesn't have a safra_id yet, we can use the one from the controle
                 if (!row.safra_id && match.safra_id) {
                   row.safra_id = match.safra_id;
+                }
+                if (!row.granja_id && match.granja_id) {
+                  row.granja_id = match.granja_id;
+                }
+                if (!row.lavoura_id && match.lavoura_id) {
+                  row.lavoura_id = match.lavoura_id;
                 }
               } else {
                 compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"${granjaId ? ' na Granja selecionada' : ''}${safraId ? ' para a Safra selecionada' : ''}`);
