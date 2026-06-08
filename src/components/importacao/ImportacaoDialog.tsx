@@ -814,6 +814,15 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
         }
 
+        // Blindagem: colheitas NÃO possui granja_id nem lavoura_id no schema
+        if (config.key === 'colheitas') {
+          delete clean.granja_id;
+          delete clean.lavoura_id;
+          delete clean._granja_id;
+          delete clean._granja_codigo_raw;
+          delete clean._safra_codigo;
+        }
+
         // Inject tenant_id para tabelas isoladas por empresa contratante
         const SCR_TENANT_SCOPED_TABLES = new Set([
           'contas_pagar', 'contas_receber', 'contas_pagar_baixas', 'contas_receber_baixas',
