@@ -841,10 +841,6 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           delete clean._granja_codigo_raw;
           delete clean._safra_codigo;
         }
-          delete clean._granja_id;
-          delete clean._granja_codigo_raw;
-          delete clean._safra_codigo;
-        }
 
         // Inject tenant_id para tabelas isoladas por empresa contratante
         const SCR_TENANT_SCOPED_TABLES = new Set([
