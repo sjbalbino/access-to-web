@@ -403,6 +403,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             delete (row as any)._safra_codigo;
             delete (row as any)._granja_id;
             delete (row as any)._granja_codigo_raw;
+            delete (row as any)._produto_codigo_raw;
             delete (row as any).granja_id;
             // NÃO deletamos lavoura_id aqui se ele foi preenchido acima
             if (config.key !== 'plantios') {

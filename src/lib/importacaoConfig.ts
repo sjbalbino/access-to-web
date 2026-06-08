@@ -1079,12 +1079,13 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
       { accessName: 'safra_codigo', dbName: '_safra_codigo', transform: toStr, sourceColumnAliases: ['safra_codigo', 'SAFRA_CODIGO', 'safras_codigo', 'CODIGO_SAFRA'] },
       { accessName: 'granja_codigo', dbName: '_granja_codigo_raw', transform: toStr, sourceColumnAliases: ['granja', 'codigo_granja', 'cod_granja', 'granjacodigo'] },
+      { accessName: 'produto_codigo', dbName: '_produto_codigo_raw', transform: toStr, sourceColumnAliases: ['semente_codigo', 'codigo_semente', 'variedade_codigo', 'variedade', 'produto', 'semente'] },
     ],
     references: [
       { dbColumn: '_granja_id', sourceColumn: '_granja_codigo_raw', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', optional: true },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
       { dbColumn: 'cultura_id', sourceColumn: 'cultura_codigo', lookupTable: 'culturas', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
-      { dbColumn: 'variedade_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
+      { dbColumn: 'variedade_id', sourceColumn: '_produto_codigo_raw', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
     ],
   },
 ];
