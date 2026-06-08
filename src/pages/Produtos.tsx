@@ -298,11 +298,54 @@ export default function Produtos() {
       />
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
             Lista de Produtos
           </CardTitle>
+          <div className="flex flex-col sm:flex-row gap-2 flex-1 max-w-4xl">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou código..."
+                className="pl-9"
+                value={filtros.busca}
+                onChange={(e) => setFiltros({ ...filtros, busca: e.target.value })}
+              />
+            </div>
+            <Select value={filtros.tipo} onValueChange={(v) => setFiltros({ ...filtros, tipo: v })}>
+              <SelectTrigger className="w-full sm:w-[140px]">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos Tipos</SelectItem>
+                <SelectItem value="insumo">Insumo</SelectItem>
+                <SelectItem value="produto">Produto</SelectItem>
+                <SelectItem value="semente">Semente</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filtros.grupo} onValueChange={(v) => setFiltros({ ...filtros, grupo: v })}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="Grupo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos Grupos</SelectItem>
+                {gruposAtivos?.map(g => (
+                  <SelectItem key={g.id} value={g.nome}>{g.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filtros.status} onValueChange={(v) => setFiltros({ ...filtros, status: v })}>
+              <SelectTrigger className="w-full sm:w-[130px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="ativos">Ativos</SelectItem>
+                <SelectItem value="inativos">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {canEdit && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
               <DialogTrigger asChild>
