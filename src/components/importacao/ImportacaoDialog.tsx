@@ -310,8 +310,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             const codigoLavoura = String(row._lavoura_codigo || '').trim();
             const granjaId = row.granja_id;
             const rowTenantId = tenantId; // The selected tenant in the UI
-            delete row._lavoura_codigo;
-
+            
             if (codigoLavoura) {
               // Priority 1: Check if it's already a UUID
               if (lavIdMap.has(codigoLavoura)) {
@@ -324,12 +323,13 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 if (match) {
                   row.lavoura_id = match;
                 } else {
-                  compositeErrors.push(`Linha ${i + 1}: Lavoura não encontrada para código "${codigoLavoura}" na Granja selecionada`);
+                  compositeErrors.push(`Linha ${i + 1}: Lavoura não encontrada para código "${codigoLavoura}" na Granja selecionada (ID: ${granjaId})`);
                 }
               }
             } else {
               compositeErrors.push(`Linha ${i + 1}: Código da lavoura ausente`);
             }
+            delete row._lavoura_codigo;
           }
           setReferenceErrors([...refErrors, ...compositeErrors]);
         }
@@ -383,18 +383,22 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
               const match = ctrlMap.get(keyFull) || ctrlMap.get(keyWithGranja) || ctrlMap.get(codigoControle);
 
               if (match) {
-                row.controle_lavoura_id = match.controle_id;
-                if (!row.safra_id && match.safra_id) {
-                  row.safra_id = match.safra_id;
-                }
-                
-                // Em plantios, o lavoura_id deve ser preenchido com o valor vindo do controle_lavoura
-                // Se o lavoura_id já estiver presente (vido da planilha), mantemos o da planilha
-                if (config.key === 'plantios' && match.lavoura_id && !row.lavoura_id) {
-                   row.lavoura_id = match.lavoura_id;
+                // Se a granja do controle encontrado não bater com a granja selecionada, avisamos
+                if (granjaId && match.granja_id !== granjaId) {
+                  compositeErrors.push(`Linha ${i + 1}: Código de Controle "${codigoControle}" pertence à outra granja`);
+                } else {
+                  row.controle_lavoura_id = match.controle_id;
+                  if (!row.safra_id && match.safra_id) {
+                    row.safra_id = match.safra_id;
+                  }
+                  
+                  // Em plantios, o lavoura_id deve ser preenchido com o valor vindo do controle_lavoura
+                  if (config.key === 'plantios' && match.lavoura_id && !row.lavoura_id) {
+                     row.lavoura_id = match.lavoura_id;
+                  }
                 }
               } else {
-                compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"${granjaId ? ' na Granja selecionada' : ''}${safraId ? ' para a Safra selecionada' : ''}`);
+                compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"${granjaId ? ' na Granja selecionada' : ''}`);
               }
             } else {
               compositeErrors.push(`Linha ${i + 1}: safra_codigo vazio — não é possível vincular ao Controle de Lavoura`);
@@ -406,7 +410,6 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             delete (row as any)._granja_codigo_raw;
             delete (row as any)._produto_codigo_raw;
             delete (row as any).granja_id;
-            // NÃO deletamos lavoura_id aqui se ele foi preenchido acima
             if (config.key !== 'plantios') {
                delete (row as any).lavoura_id;
             }
