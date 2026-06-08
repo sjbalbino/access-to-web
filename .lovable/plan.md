@@ -1,36 +1,35 @@
-# Plano para corrigir a importação de colheitas
+## Objetivo
+Corrigir o problema em que registros do **Controle de Lavoura** da **Granja Cruz Alta** continuam exibindo nomes de lavouras da **Granja Bom Jesus**.
 
-Vou ajustar o fluxo para que `granja_id` seja usado apenas como dado auxiliar de resolução e nunca mais seja enviado no `POST` de `colheitas`.
+## Diagnóstico encontrado
+Os registros já gravados no banco estão com **vínculo incorreto de `lavoura_id`**.
+Exemplo identificado: controles da **Granja Cruz Alta** apontando para lavouras cuja granja real é **Granja Bom Jesus**.
 
-## O que será corrigido
+Ou seja: não é só um problema visual da tela; há também dados salvos incorretamente.
 
-1. **Ajustar a configuração de colheitas**
-   - Em `src/lib/importacaoConfig.ts`, trocar a referência de `colheitas` que hoje resolve para `granja_id` por um campo auxiliar interno.
-   - Manter o código da granja apenas para localizar o `controle_lavoura_id`.
+## Plano
+1. **Corrigir a importação do Controle de Lavoura**
+   - Ajustar a rotina para nunca aceitar uma `lavoura_id` cuja granja da lavoura seja diferente da granja do controle.
+   - Remover qualquer fallback que permita vincular pelo código da lavoura sem validar a granja correspondente.
+   - Fazer a busca sempre pelo par: **granja + código da lavoura**.
 
-2. **Parar a injeção indevida de `granja_id` durante a preparação das linhas**
-   - Em `src/components/importacao/ImportacaoDialog.tsx`, revisar a etapa que aplica a granja selecionada/global.
-   - Para `colheitas`, usar somente um campo auxiliar e não preencher `row.granja_id`.
+2. **Corrigir a listagem e os detalhes da tela**
+   - Garantir que a tela de Controle de Lavoura priorize o vínculo consistente entre `controle_lavouras.granja_id` e `lavouras.granja_id`.
+   - Evitar exibir nomes cruzados quando houver registro inconsistente.
+   - Se necessário, mostrar somente registros válidos ou destacar inconsistências para não confundir a operação.
 
-3. **Corrigir a resolução composta de colheitas**
-   - Continuar usando `safra_codigo` + granja auxiliar para encontrar `controle_lavoura_id`.
-   - Remover a lógica que volta a popular `row.granja_id` e `row.lavoura_id` na linha final de `colheitas`.
+3. **Corrigir os dados já importados incorretamente**
+   - Atualizar os registros existentes da safra afetada para apontarem para a lavoura correta da **Granja Cruz Alta**, usando o código legado + granja.
+   - Onde não for possível determinar com segurança, deixar esses registros sinalizados para nova importação em vez de manter vínculo errado.
 
-4. **Blindar a sanitização antes do insert**
-   - Garantir que o payload final de `colheitas` contenha apenas colunas reais da tabela.
-   - Excluir explicitamente campos auxiliares e quaisquer campos indevidos, inclusive `granja_id` e `lavoura_id`.
-
-5. **Validar o resultado**
-   - Conferir que o request `POST /colheitas` não envia mais `granja_id`.
-   - Confirmar que a importação passa a falhar apenas se o `controle_lavoura_id` não puder ser resolvido.
+4. **Validar o resultado**
+   - Conferir a safra **SOJA 2025/2026** da **Granja Cruz Alta**.
+   - Verificar que nomes como **CHICO** e demais lavouras passem a refletir a granja correta na lista e no detalhe.
 
 ## Detalhes técnicos
-
-- **Causa atual identificada:** o `granja_id` ainda entra no payload por mais de um ponto no frontend:
-  - a configuração de `colheitas` ainda o trata como referência resolvida;
-  - a etapa genérica de aplicação de granja pode preencher `row.granja_id`;
-  - a resolução composta de `colheitas` volta a escrever `row.granja_id` e `row.lavoura_id`.
-- **Arquivos envolvidos:**
-  - `src/lib/importacaoConfig.ts`
+- Arquivos principais já identificados:
   - `src/components/importacao/ImportacaoDialog.tsx`
-- **Objetivo final:** o insert de `colheitas` deve sair apenas com campos como `controle_lavoura_id`, `safra_id`, `silo_id`, `placa_id`, `variedade_id`, `inscricao_produtor_id` e demais colunas reais da tabela.
+  - `src/hooks/useControleLavouras.ts`
+  - `src/components/controle-lavoura/ControleLavouraList.tsx`
+- Também será necessária **correção de dados no backend**, porque parte dos registros atuais está salva com `lavoura_id` errada.
+- A correção será feita de forma segura, respeitando a granja do controle e o código da lavoura importada.
