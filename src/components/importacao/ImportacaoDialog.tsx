@@ -310,8 +310,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             const codigoLavoura = String(row._lavoura_codigo || '').trim();
             const granjaId = row.granja_id;
             const rowTenantId = tenantId; // The selected tenant in the UI
-            delete row._lavoura_codigo;
-
+            
             if (codigoLavoura) {
               // Priority 1: Check if it's already a UUID
               if (lavIdMap.has(codigoLavoura)) {
@@ -324,12 +323,13 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 if (match) {
                   row.lavoura_id = match;
                 } else {
-                  compositeErrors.push(`Linha ${i + 1}: Lavoura não encontrada para código "${codigoLavoura}" na Granja selecionada`);
+                  compositeErrors.push(`Linha ${i + 1}: Lavoura não encontrada para código "${codigoLavoura}" na Granja selecionada (ID: ${granjaId})`);
                 }
               }
             } else {
               compositeErrors.push(`Linha ${i + 1}: Código da lavoura ausente`);
             }
+            delete row._lavoura_codigo;
           }
           setReferenceErrors([...refErrors, ...compositeErrors]);
         }
