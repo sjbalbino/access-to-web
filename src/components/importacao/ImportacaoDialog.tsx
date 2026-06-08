@@ -886,6 +886,13 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           );
           return;
         }
+        // 3. Colheitas: exigem controle_lavoura_id (não têm granja_id)
+        if (config.tableName === 'colheitas' && !row['controle_lavoura_id']) {
+          validationErrors.push(
+            `Linha ${lineNum}: controle_lavoura_id não resolvido — verifique se "safra_codigo" da planilha corresponde ao código de um Controle de Lavoura cadastrado.`
+          );
+          return;
+        }
         validRows.push(row);
       });
 
