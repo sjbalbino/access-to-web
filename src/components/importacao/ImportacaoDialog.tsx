@@ -265,8 +265,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             normalize(k) === 'granjacodigo' || normalize(k) === 'granjid' || normalize(k) === 'granja'
           );
 
-          // colheitas NÃO possui granja_id na tabela — manter apenas em _granja_id auxiliar
-          if (config.key === 'colheitas') {
+          // colheitas e plantios NÃO possuem granja_id na tabela — manter apenas em _granja_id auxiliar
+          if (config.key === 'colheitas' || config.key === 'plantios') {
             if (!row._granja_id && selectedGranjaId && selectedGranjaId !== 'none') {
               row._granja_id = selectedGranjaId;
             }
@@ -333,8 +333,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
           setReferenceErrors([...refErrors, ...compositeErrors]);
         }
-        // Composite lookup: controle_lavoura_id for colheitas (via safra_codigo)
-        else if (config.key === 'colheitas') {
+        // Composite lookup: controle_lavoura_id for colheitas and plantios (via safra_codigo)
+        else if (config.key === 'colheitas' || config.key === 'plantios') {
           // Buscar controle_lavouras pelo campo codigo para cache direto
           const { data: controles } = await supabase
             .from('controle_lavouras')
@@ -777,15 +777,20 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         config.interactiveColumns.forEach(c => validDbColumns.add(c));
       }
       // Incluir campos calculados ou injetados
-      if (config.key === 'colheitas') {
-        // Tabela colheitas NÃO possui granja_id nem lavoura_id (esses ficam em controle_lavouras)
+      if (config.key === 'colheitas' || config.key === 'plantios') {
+        // Tabela colheitas e plantios NÃO possuem granja_id nem lavoura_id (esses ficam em controle_lavouras)
         validDbColumns.add('controle_lavoura_id');
         validDbColumns.add('safra_id');
-        validDbColumns.add('silo_id');
-        validDbColumns.add('placa_id');
-        validDbColumns.add('variedade_id');
-        validDbColumns.add('inscricao_produtor_id');
-        validDbColumns.add('local_entrega_terceiro_id');
+        if (config.key === 'colheitas') {
+          validDbColumns.add('silo_id');
+          validDbColumns.add('placa_id');
+          validDbColumns.add('variedade_id');
+          validDbColumns.add('inscricao_produtor_id');
+          validDbColumns.add('local_entrega_terceiro_id');
+        } else if (config.key === 'plantios') {
+          validDbColumns.add('cultura_id');
+          validDbColumns.add('variedade_id');
+        }
       }
       if (config.key === 'controle_lavouras') {
         validDbColumns.add('lavoura_id');
@@ -814,8 +819,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
         }
 
-        // Blindagem: colheitas NÃO possui granja_id nem lavoura_id no schema
-        if (config.key === 'colheitas') {
+        // Blindagem: colheitas e plantios NÃO possuem granja_id nem lavoura_id no schema
+        if (config.key === 'colheitas' || config.key === 'plantios') {
           delete clean.granja_id;
           delete clean.lavoura_id;
           delete clean._granja_id;
