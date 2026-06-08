@@ -387,11 +387,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 if (!row.safra_id && match.safra_id) {
                   row.safra_id = match.safra_id;
                 }
-                // Permitir lavoura_id em plantios se vier da planilha (para não quebrar validação de campos requeridos no DB se o vínculo for manual)
-                if (config.key === 'plantios' && row.lavoura_id) {
-                   // mantemos o lavoura_id se ele foi informado
-                } else {
-                   delete row.lavoura_id;
+                
+                // Em plantios, o lavoura_id deve ser preenchido com o valor vindo do controle_lavoura
+                if (config.key === 'plantios' && match.lavoura_id) {
+                   row.lavoura_id = match.lavoura_id;
                 }
               } else {
                 compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"${granjaId ? ' na Granja selecionada' : ''}${safraId ? ' para a Safra selecionada' : ''}`);
@@ -405,7 +404,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             delete (row as any)._granja_id;
             delete (row as any)._granja_codigo_raw;
             delete (row as any).granja_id;
-            delete (row as any).lavoura_id;
+            // NÃO deletamos lavoura_id aqui se ele foi preenchido acima
+            if (config.key !== 'plantios') {
+               delete (row as any).lavoura_id;
+            }
           }
           
           setReferenceErrors([...refErrors, ...compositeErrors]);
