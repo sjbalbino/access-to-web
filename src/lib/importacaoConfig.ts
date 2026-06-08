@@ -1069,7 +1069,7 @@ export const tableConfigs: TableConfig[] = [
     dependsOn: ['safras', 'lavouras', 'controle_lavouras', 'produtos'],
     columns: [
       { accessName: 'data_plantio', dbName: 'data_plantio', transform: toDate, required: true },
-      
+      { accessName: 'lavoura_id', dbName: 'lavoura_id', transform: toStr },
       { accessName: 'area_plantada', dbName: 'area_plantada', transform: toNumber },
       { accessName: 'quantidade_semente', dbName: 'quantidade_semente', transform: toNumber },
       { accessName: 'populacao_ha', dbName: 'populacao_ha', transform: toNumber },
