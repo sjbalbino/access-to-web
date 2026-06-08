@@ -798,6 +798,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         validDbColumns.add('conta_id');
       }
 
+      const TABLES_WITH_GRANJA_ID = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras', 'colheitas', 'granjas', 'produtos', 'silos', 'lavouras', 'contas_pagar', 'contas_receber', 'compras_cereais', 'devolucoes_deposito', 'notas_deposito_emitidas', 'placas']);
+
       const sanitizedRows = cleanRows.map((row, idx) => {
         const clean: Record<string, any> = {};
         
@@ -841,6 +843,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         'contratos_venda','remessas_venda','clientes_fornecedores','compras_cereais',
         'devolucoes_deposito','entradas_nfe','entradas_nfe_itens','notas_deposito_emitidas'
       ]);
+      const REQUIRES_GRANJA = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras', 'colheitas']);
       const validationErrors: string[] = [];
       const validRows: Record<string, any>[] = [];
 
