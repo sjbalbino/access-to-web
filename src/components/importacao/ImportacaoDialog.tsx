@@ -389,7 +389,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 }
                 
                 // Em plantios, o lavoura_id deve ser preenchido com o valor vindo do controle_lavoura
-                if (config.key === 'plantios' && match.lavoura_id) {
+                // Se o lavoura_id já estiver presente (vido da planilha), mantemos o da planilha
+                if (config.key === 'plantios' && match.lavoura_id && !row.lavoura_id) {
                    row.lavoura_id = match.lavoura_id;
                 }
               } else {
