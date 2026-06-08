@@ -824,10 +824,21 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
         }
 
-        // Blindagem: colheitas e plantios NÃO possuem granja_id nem lavoura_id no schema
-        if (config.key === 'colheitas' || config.key === 'plantios') {
+        // Blindagem: colheitas NÃO possuem granja_id nem lavoura_id no schema
+        // Plantios NÃO possuem granja_id, mas PODEM possuir lavoura_id (embora geralmente venha do controle_lavoura_id)
+        if (config.key === 'colheitas') {
           delete clean.granja_id;
           delete clean.lavoura_id;
+          delete clean._granja_id;
+          delete clean._granja_codigo_raw;
+          delete clean._safra_codigo;
+        } else if (config.key === 'plantios') {
+          delete clean.granja_id;
+          // Mantemos lavoura_id se ele existir (pode ter vindo do match ou da planilha)
+          delete clean._granja_id;
+          delete clean._granja_codigo_raw;
+          delete clean._safra_codigo;
+        }
           delete clean._granja_id;
           delete clean._granja_codigo_raw;
           delete clean._safra_codigo;
