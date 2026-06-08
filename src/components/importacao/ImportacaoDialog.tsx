@@ -265,8 +265,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             normalize(k) === 'granjacodigo' || normalize(k) === 'granjid' || normalize(k) === 'granja'
           );
 
-          // colheitas NÃO possui granja_id na tabela — manter apenas em _granja_id auxiliar
-          if (config.key === 'colheitas') {
+          // colheitas e plantios NÃO possuem granja_id na tabela — manter apenas em _granja_id auxiliar
+          if (config.key === 'colheitas' || config.key === 'plantios') {
             if (!row._granja_id && selectedGranjaId && selectedGranjaId !== 'none') {
               row._granja_id = selectedGranjaId;
             }
@@ -333,8 +333,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
           setReferenceErrors([...refErrors, ...compositeErrors]);
         }
-        // Composite lookup: controle_lavoura_id for colheitas (via safra_codigo)
-        else if (config.key === 'colheitas') {
+        // Composite lookup: controle_lavoura_id for colheitas and plantios (via safra_codigo)
+        else if (config.key === 'colheitas' || config.key === 'plantios') {
           // Buscar controle_lavouras pelo campo codigo para cache direto
           const { data: controles } = await supabase
             .from('controle_lavouras')

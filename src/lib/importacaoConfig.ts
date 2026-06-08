@@ -1060,6 +1060,32 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'conta_bancaria_id', sourceColumn: 'conta_bancaria_codigo_legado', sourceColumnAliases: ['conta_bancaria_codigo','conta_codigo'], lookupTable: 'contas_bancarias', lookupColumn: 'codigo_legado', optional: true },
     ],
   },
+  {
+    key: 'plantios',
+    label: 'Plantios',
+    tableName: 'plantios',
+    description: 'Registros de plantio vinculados ao Controle de Lavoura',
+    order: 12,
+    dependsOn: ['safras', 'lavouras', 'controle_lavouras', 'produtos'],
+    columns: [
+      { accessName: 'data_plantio', dbName: 'data_plantio', transform: toDate, required: true },
+      { accessName: 'area_plantada', dbName: 'area_plantada', transform: toNumber },
+      { accessName: 'quantidade_semente', dbName: 'quantidade_semente', transform: toNumber },
+      { accessName: 'populacao_ha', dbName: 'populacao_ha', transform: toNumber },
+      { accessName: 'espacamento_linha', dbName: 'espacamento_linha', transform: toNumber },
+      { accessName: 'valor_unitario', dbName: 'valor_unitario', transform: toNumber },
+      { accessName: 'valor_total', dbName: 'valor_total', transform: toNumber },
+      { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
+      { accessName: 'safra_codigo', dbName: '_safra_codigo', transform: toStr, sourceColumnAliases: ['safra_codigo', 'SAFRA_CODIGO', 'safras_codigo', 'CODIGO_SAFRA'] },
+      { accessName: 'granja_codigo', dbName: '_granja_codigo_raw', transform: toStr, sourceColumnAliases: ['granja', 'codigo_granja', 'cod_granja', 'granjacodigo'] },
+    ],
+    references: [
+      { dbColumn: '_granja_id', sourceColumn: '_granja_codigo_raw', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', optional: true },
+      { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
+      { dbColumn: 'cultura_id', sourceColumn: 'cultura_codigo', lookupTable: 'culturas', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
+      { dbColumn: 'variedade_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
+    ],
+  },
 ];
 
 // Tabelas que possuem coluna tenant_id (isoladas por empresa contratante)
