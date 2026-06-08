@@ -774,10 +774,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       }
       // Incluir campos calculados ou injetados
       if (config.key === 'colheitas') {
+        // Tabela colheitas NÃO possui granja_id nem lavoura_id (esses ficam em controle_lavouras)
         validDbColumns.add('controle_lavoura_id');
-        validDbColumns.add('granja_id');
         validDbColumns.add('safra_id');
-        validDbColumns.add('lavoura_id');
         validDbColumns.add('silo_id');
         validDbColumns.add('placa_id');
         validDbColumns.add('variedade_id');
@@ -798,7 +797,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         validDbColumns.add('conta_id');
       }
 
-      const TABLES_WITH_GRANJA_ID = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras', 'colheitas', 'granjas', 'produtos', 'silos', 'lavouras', 'contas_pagar', 'contas_receber', 'compras_cereais', 'devolucoes_deposito', 'notas_deposito_emitidas', 'placas']);
+      const TABLES_WITH_GRANJA_ID = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras', 'granjas', 'produtos', 'silos', 'lavouras', 'contas_pagar', 'contas_receber', 'compras_cereais', 'devolucoes_deposito', 'notas_deposito_emitidas', 'placas']);
 
       const sanitizedRows = cleanRows.map((row, idx) => {
         const clean: Record<string, any> = {};
@@ -843,7 +842,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         'contratos_venda','remessas_venda','clientes_fornecedores','compras_cereais',
         'devolucoes_deposito','entradas_nfe','entradas_nfe_itens','notas_deposito_emitidas'
       ]);
-      const REQUIRES_GRANJA = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras', 'colheitas']);
+      const REQUIRES_GRANJA = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras']);
       const validationErrors: string[] = [];
       const validRows: Record<string, any>[] = [];
 
@@ -884,6 +883,13 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             : ' Nenhuma granja cadastrada para a empresa selecionada.';
           validationErrors.push(
             `Linha ${lineNum}: granja_id não resolvido — verifique se a coluna "granja_codigo" existe na planilha e se o código corresponde a uma granja da empresa selecionada.${lista}`
+          );
+          return;
+        }
+        // 3. Colheitas: exigem controle_lavoura_id (não têm granja_id)
+        if (config.tableName === 'colheitas' && !row['controle_lavoura_id']) {
+          validationErrors.push(
+            `Linha ${lineNum}: controle_lavoura_id não resolvido — verifique se "safra_codigo" da planilha corresponde ao código de um Controle de Lavoura cadastrado.`
           );
           return;
         }
