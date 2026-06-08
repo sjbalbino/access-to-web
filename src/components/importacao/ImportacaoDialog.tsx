@@ -831,7 +831,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       });
 
       // ===== VALIDAÇÃO DE INTEGRIDADE POR TENANT =====
-      const TENANT_SCOPED_TABLES = new Set([
+      const SCR_VALIDATION_TENANT_SCOPED_TABLES = new Set([
         'contas_pagar', 'contas_receber', 'contas_pagar_baixas', 'contas_receber_baixas',
         'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
         'lavouras','silos','controle_lavouras',
@@ -841,8 +841,6 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         'contratos_venda','remessas_venda','clientes_fornecedores','compras_cereais',
         'devolucoes_deposito','entradas_nfe','entradas_nfe_itens','notas_deposito_emitidas'
       ]);
-      const REQUIRES_GRANJA = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras', 'colheitas']);
-      const TABLES_WITH_GRANJA_ID = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras', 'colheitas', 'granjas', 'produtos', 'silos', 'lavouras', 'contas_pagar', 'contas_receber', 'compras_cereais', 'devolucoes_deposito', 'notas_deposito_emitidas', 'placas']);
       const validationErrors: string[] = [];
       const validRows: Record<string, any>[] = [];
 
@@ -862,7 +860,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       sanitizedRows.forEach((row, idx) => {
         const lineNum = idx + 1;
         // 1. Tabela isolada por tenant → exige tenantId selecionado
-        if (TENANT_SCOPED_TABLES.has(config.tableName)) {
+        if (SCR_VALIDATION_TENANT_SCOPED_TABLES.has(config.tableName)) {
           if (!tenantId) {
             validationErrors.push(`Linha ${lineNum}: empresa contratante não selecionada.`);
             return;
