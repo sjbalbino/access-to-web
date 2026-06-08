@@ -376,32 +376,31 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             const granjaId = row._granja_id;
             const safraId = row.safra_id;
 
-            if (codigoControle) {
+            if (!codigoControle) {
+              compositeErrors.push(`Linha ${i + 1}: safra_codigo vazio — não é possível vincular ao Controle de Lavoura`);
+            } else if (!granjaId) {
+              compositeErrors.push(`Linha ${i + 1}: Granja não informada — selecione a Granja correta acima do upload ou inclua a coluna "granja" / "codigo_granja" na planilha (código de controle "${codigoControle}" pode existir em mais de uma granja)`);
+            } else {
               const keyFull = `${codigoControle}|${granjaId}|${safraId}`;
               const keyWithGranja = `${codigoControle}|${granjaId}`;
 
-              const match = ctrlMap.get(keyFull) || ctrlMap.get(keyWithGranja) || ctrlMap.get(codigoControle);
+              // ATENÇÃO: NÃO usar fallback por código puro — isso vincula a granja errada
+              // quando o mesmo código de controle existe em mais de uma granja.
+              const match = ctrlMap.get(keyFull) || ctrlMap.get(keyWithGranja);
 
               if (match) {
-                // Se a granja do controle encontrado não bater com a granja selecionada, avisamos
-                if (granjaId && match.granja_id !== granjaId) {
-                  compositeErrors.push(`Linha ${i + 1}: Código de Controle "${codigoControle}" pertence à outra granja`);
-                } else {
-                  row.controle_lavoura_id = match.controle_id;
-                  if (!row.safra_id && match.safra_id) {
-                    row.safra_id = match.safra_id;
-                  }
-                  
-                  // Em plantios, o lavoura_id deve ser preenchido com o valor vindo do controle_lavoura
-                  if (config.key === 'plantios' && match.lavoura_id && !row.lavoura_id) {
-                     row.lavoura_id = match.lavoura_id;
-                  }
+                row.controle_lavoura_id = match.controle_id;
+                if (match.safra_id) {
+                  row.safra_id = match.safra_id;
+                }
+
+                // Em plantios, o lavoura_id deve ser preenchido com o valor vindo do controle_lavoura
+                if (config.key === 'plantios' && match.lavoura_id) {
+                  row.lavoura_id = match.lavoura_id;
                 }
               } else {
-                compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"${granjaId ? ' na Granja selecionada' : ''}`);
+                compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura código "${codigoControle}" não encontrado na Granja selecionada`);
               }
-            } else {
-              compositeErrors.push(`Linha ${i + 1}: safra_codigo vazio — não é possível vincular ao Controle de Lavoura`);
             }
 
             // Limpar campos auxiliares após resolução
@@ -414,6 +413,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                delete (row as any).lavoura_id;
             }
           }
+
           
           setReferenceErrors([...refErrors, ...compositeErrors]);
         } else if (config.key === 'inscricoes' || config.key === 'produtores') {
