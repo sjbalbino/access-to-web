@@ -74,6 +74,13 @@ export default function Produtos() {
   const [ncmOpen, setNcmOpen] = useState(false);
   const [ncmSearch, setNcmSearch] = useState('');
 
+  const [filtros, setFiltros] = useState({
+    busca: '',
+    tipo: 'todos',
+    grupo: 'todos',
+    status: 'ativos',
+  });
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<ProdutoInsert>({
