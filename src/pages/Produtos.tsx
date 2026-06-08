@@ -770,9 +770,13 @@ export default function Produtos() {
                   )}
                 </TableRow>
               ))}
-              {(!produtos || produtos.length === 0) && (
+              {(!dadosPaginados || dadosPaginados.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 9 : 8} className="text-center text-muted-foreground py-8">Nenhum produto cadastrado</TableCell>
+                  <TableCell colSpan={canEdit ? 9 : 8} className="text-center text-muted-foreground py-8">
+                    {filtros.busca || filtros.tipo !== 'todos' || filtros.grupo !== 'todos' || filtros.status !== 'ativos' 
+                      ? 'Nenhum produto encontrado com os filtros selecionados' 
+                      : 'Nenhum produto cadastrado'}
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
