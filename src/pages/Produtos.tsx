@@ -74,6 +74,13 @@ export default function Produtos() {
   const [ncmOpen, setNcmOpen] = useState(false);
   const [ncmSearch, setNcmSearch] = useState('');
 
+  const [filtros, setFiltros] = useState({
+    busca: '',
+    tipo: 'todos',
+    grupo: 'todos',
+    status: 'ativos',
+  });
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<ProdutoInsert>({
@@ -252,6 +259,22 @@ export default function Produtos() {
     return () => clearTimeout(timer);
   }, [ncmSearch]);
 
+  const produtosFiltrados = (produtos || []).filter((p: any) => {
+    const matchesBusca = 
+      !filtros.busca || 
+      p.nome.toLowerCase().includes(filtros.busca.toLowerCase()) || 
+      (p.codigo && p.codigo.toLowerCase().includes(filtros.busca.toLowerCase()));
+    
+    const matchesTipo = filtros.tipo === 'todos' || p.tipo === filtros.tipo;
+    const matchesGrupo = filtros.grupo === 'todos' || p.grupo === filtros.grupo || p.grupo_vinculado?.nome === filtros.grupo;
+    const matchesStatus = 
+      filtros.status === 'todos' || 
+      (filtros.status === 'ativos' && p.ativo) || 
+      (filtros.status === 'inativos' && !p.ativo);
+
+    return matchesBusca && matchesTipo && matchesGrupo && matchesStatus;
+  });
+
   const {
     dadosPaginados,
     paginaAtual,
@@ -259,7 +282,7 @@ export default function Produtos() {
     totalRegistros,
     setPaginaAtual,
     gerarNumerosPaginas,
-  } = usePaginacao(produtos || []);
+  } = usePaginacao(produtosFiltrados);
 
   if (isLoading) {
     return <div className="p-8">Carregando...</div>;
@@ -275,11 +298,54 @@ export default function Produtos() {
       />
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
             Lista de Produtos
           </CardTitle>
+          <div className="flex flex-col sm:flex-row gap-2 flex-1 max-w-4xl">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou código..."
+                className="pl-9"
+                value={filtros.busca}
+                onChange={(e) => setFiltros({ ...filtros, busca: e.target.value })}
+              />
+            </div>
+            <Select value={filtros.tipo} onValueChange={(v) => setFiltros({ ...filtros, tipo: v })}>
+              <SelectTrigger className="w-full sm:w-[140px]">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos Tipos</SelectItem>
+                <SelectItem value="insumo">Insumo</SelectItem>
+                <SelectItem value="produto">Produto</SelectItem>
+                <SelectItem value="semente">Semente</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filtros.grupo} onValueChange={(v) => setFiltros({ ...filtros, grupo: v })}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="Grupo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos Grupos</SelectItem>
+                {gruposAtivos?.map(g => (
+                  <SelectItem key={g.id} value={g.nome}>{g.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filtros.status} onValueChange={(v) => setFiltros({ ...filtros, status: v })}>
+              <SelectTrigger className="w-full sm:w-[130px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="ativos">Ativos</SelectItem>
+                <SelectItem value="inativos">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {canEdit && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
               <DialogTrigger asChild>
@@ -704,9 +770,13 @@ export default function Produtos() {
                   )}
                 </TableRow>
               ))}
-              {(!produtos || produtos.length === 0) && (
+              {(!dadosPaginados || dadosPaginados.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={canEdit ? 9 : 8} className="text-center text-muted-foreground py-8">Nenhum produto cadastrado</TableCell>
+                  <TableCell colSpan={canEdit ? 9 : 8} className="text-center text-muted-foreground py-8">
+                    {filtros.busca || filtros.tipo !== 'todos' || filtros.grupo !== 'todos' || filtros.status !== 'ativos' 
+                      ? 'Nenhum produto encontrado com os filtros selecionados' 
+                      : 'Nenhum produto cadastrado'}
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
