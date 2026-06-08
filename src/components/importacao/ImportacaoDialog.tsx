@@ -775,9 +775,13 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       // Incluir campos calculados ou injetados
       if (config.key === 'colheitas') {
         validDbColumns.add('controle_lavoura_id');
+        validDbColumns.add('granja_id');
+        validDbColumns.add('safra_id');
+        validDbColumns.add('lavoura_id');
       }
       if (config.key === 'controle_lavouras') {
         validDbColumns.add('lavoura_id');
+        validDbColumns.add('granja_id');
       }
       if (config.key === 'contra_notas_recebidas') {
         validDbColumns.add('contrato_venda_id');
@@ -794,7 +798,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         // Use mapping config to determine which fields should go to DB
         // We iterate over the row keys but only keep what's valid
         for (const [key, value] of Object.entries(row)) {
-          if (validDbColumns.has(key)) {
+          if (validDbColumns.has(key) || TABLES_WITH_GRANJA_ID.has(config.tableName) && key === 'granja_id') {
             clean[key] = value;
           }
         }
@@ -832,6 +836,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         'devolucoes_deposito','entradas_nfe','entradas_nfe_itens','notas_deposito_emitidas'
       ]);
       const REQUIRES_GRANJA = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras', 'colheitas']);
+      const TABLES_WITH_GRANJA_ID = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras', 'colheitas', 'granjas', 'produtos', 'silos', 'lavouras', 'contas_pagar', 'contas_receber', 'compras_cereais', 'devolucoes_deposito', 'notas_deposito_emitidas', 'placas']);
       const validationErrors: string[] = [];
       const validRows: Record<string, any>[] = [];
 
