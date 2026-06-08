@@ -205,6 +205,7 @@ export default function Lavouras() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Código</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead className="hidden sm:table-cell">Granja</TableHead>
                     <TableHead className="hidden md:table-cell">Total Ha</TableHead>
@@ -216,6 +217,7 @@ export default function Lavouras() {
                 <TableBody>
                   {dadosPaginados.map((lavoura: any) => (
                     <TableRow key={lavoura.id}>
+                      <TableCell className="font-medium">{lavoura.codigo || "-"}</TableCell>
                       <TableCell className="font-medium">{lavoura.nome}</TableCell>
                       <TableCell className="hidden sm:table-cell">{lavoura.granja?.razao_social || "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">{lavoura.total_hectares?.toLocaleString("pt-BR") || 0}</TableCell>
