@@ -387,7 +387,11 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 if (!row.safra_id && match.safra_id) {
                   row.safra_id = match.safra_id;
                 }
-                // NÃO escrever granja_id nem lavoura_id — colunas não existem em colheitas
+                
+                // Em plantios, o lavoura_id deve ser preenchido com o valor vindo do controle_lavoura
+                if (config.key === 'plantios' && match.lavoura_id) {
+                   row.lavoura_id = match.lavoura_id;
+                }
               } else {
                 compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"${granjaId ? ' na Granja selecionada' : ''}${safraId ? ' para a Safra selecionada' : ''}`);
               }
@@ -400,7 +404,10 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             delete (row as any)._granja_id;
             delete (row as any)._granja_codigo_raw;
             delete (row as any).granja_id;
-            delete (row as any).lavoura_id;
+            // NÃO deletamos lavoura_id aqui se ele foi preenchido acima
+            if (config.key !== 'plantios') {
+               delete (row as any).lavoura_id;
+            }
           }
           
           setReferenceErrors([...refErrors, ...compositeErrors]);
@@ -819,10 +826,17 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
         }
 
-        // Blindagem: colheitas e plantios NÃO possuem granja_id nem lavoura_id no schema
-        if (config.key === 'colheitas' || config.key === 'plantios') {
+        // Blindagem: colheitas NÃO possuem granja_id nem lavoura_id no schema
+        // Plantios NÃO possuem granja_id, mas PODEM possuir lavoura_id (embora geralmente venha do controle_lavoura_id)
+        if (config.key === 'colheitas') {
           delete clean.granja_id;
           delete clean.lavoura_id;
+          delete clean._granja_id;
+          delete clean._granja_codigo_raw;
+          delete clean._safra_codigo;
+        } else if (config.key === 'plantios') {
+          delete clean.granja_id;
+          // Mantemos lavoura_id se ele existir (pode ter vindo do match ou da planilha)
           delete clean._granja_id;
           delete clean._granja_codigo_raw;
           delete clean._safra_codigo;
