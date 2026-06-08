@@ -264,7 +264,15 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           const hasGranjaInSheet = Object.keys(jsonData[i] || {}).some(k => 
             normalize(k) === 'granjacodigo' || normalize(k) === 'granjid' || normalize(k) === 'granja'
           );
-          
+
+          // colheitas NÃO possui granja_id na tabela — manter apenas em _granja_id auxiliar
+          if (config.key === 'colheitas') {
+            if (!row._granja_id && selectedGranjaId && selectedGranjaId !== 'none') {
+              row._granja_id = selectedGranjaId;
+            }
+            continue;
+          }
+
           if (!row.granja_id && !row._granja_id && !hasGranjaInSheet && selectedGranjaId && selectedGranjaId !== 'none') {
             row.granja_id = selectedGranjaId;
           }
@@ -365,38 +373,34 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             const row = resolved[i];
             const rawCode = row._safra_codigo || jsonData[i]?.['safra_codigo'] || jsonData[i]?.['SAFRA_CODIGO'] || jsonData[i]?.['safras_codigo'] || '';
             const codigoControle = String(rawCode).trim().replace(/^0+/, '');
-            const granjaId = row.granja_id || row._granja_id;
-            const safraId = row.safra_id; // Colheitas depends on safras and should have safra_id resolved
-            
-            // Limpar campo auxiliar antes do insert
-            delete (row as any)._safra_codigo;
-            delete (row as any)._granja_id;
-            
+            const granjaId = row._granja_id;
+            const safraId = row.safra_id;
+
             if (codigoControle) {
-              // Try match with granja and safra first (most precise)
               const keyFull = `${codigoControle}|${granjaId}|${safraId}`;
               const keyWithGranja = `${codigoControle}|${granjaId}`;
-              
+
               const match = ctrlMap.get(keyFull) || ctrlMap.get(keyWithGranja) || ctrlMap.get(codigoControle);
-              
+
               if (match) {
                 row.controle_lavoura_id = match.controle_id;
-                // If the row doesn't have a safra_id yet, we can use the one from the controle
                 if (!row.safra_id && match.safra_id) {
                   row.safra_id = match.safra_id;
                 }
-                if (!row.granja_id && match.granja_id) {
-                  row.granja_id = match.granja_id;
-                }
-                if (!row.lavoura_id && match.lavoura_id) {
-                  row.lavoura_id = match.lavoura_id;
-                }
+                // NÃO escrever granja_id nem lavoura_id — colunas não existem em colheitas
               } else {
                 compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"${granjaId ? ' na Granja selecionada' : ''}${safraId ? ' para a Safra selecionada' : ''}`);
               }
             } else {
               compositeErrors.push(`Linha ${i + 1}: safra_codigo vazio — não é possível vincular ao Controle de Lavoura`);
             }
+
+            // Limpar campos auxiliares após resolução
+            delete (row as any)._safra_codigo;
+            delete (row as any)._granja_id;
+            delete (row as any)._granja_codigo_raw;
+            delete (row as any).granja_id;
+            delete (row as any).lavoura_id;
           }
           
           setReferenceErrors([...refErrors, ...compositeErrors]);

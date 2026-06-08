@@ -627,7 +627,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'granja_codigo', dbName: '_granja_codigo_raw', transform: toStr, sourceColumnAliases: ['granja', 'codigo_granja', 'cod_granja', 'granjacodigo'] },
     ],
     references: [
-      { dbColumn: 'granja_id', sourceColumn: '_granja_codigo_raw', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', optional: true },
+      { dbColumn: '_granja_id', sourceColumn: '_granja_codigo_raw', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', optional: true },
       { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', optional: true },
       { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
       { dbColumn: 'variedade_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
