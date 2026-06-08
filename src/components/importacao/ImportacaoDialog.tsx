@@ -387,7 +387,12 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 if (!row.safra_id && match.safra_id) {
                   row.safra_id = match.safra_id;
                 }
-                // NÃO escrever granja_id nem lavoura_id — colunas não existem em colheitas
+                // Permitir lavoura_id em plantios se vier da planilha (para não quebrar validação de campos requeridos no DB se o vínculo for manual)
+                if (config.key === 'plantios' && row.lavoura_id) {
+                   // mantemos o lavoura_id se ele foi informado
+                } else {
+                   delete row.lavoura_id;
+                }
               } else {
                 compositeErrors.push(`Linha ${i + 1}: Controle de Lavoura não encontrado para código "${codigoControle}"${granjaId ? ' na Granja selecionada' : ''}${safraId ? ' para a Safra selecionada' : ''}`);
               }
