@@ -1,47 +1,36 @@
-## Diagnóstico
-O erro atual não está na planilha em si: a importação de **colheitas** está montando o `POST /colheitas` com campos que a tabela não possui.
+# Plano para corrigir a importação de colheitas
 
-**Problema exato**
-- O payload enviado hoje inclui `granja_id` e `lavoura_id`.
-- Pela estrutura real da tabela `colheitas`, existem `controle_lavoura_id`, `safra_id`, `silo_id`, `placa_id`, `variedade_id`, `inscricao_produtor_id` e `local_entrega_terceiro_id`.
-- **`granja_id` e `lavoura_id` não existem em `colheitas`**.
-- Por isso o backend responde `PGRST204: Could not find the 'granja_id' column of 'colheitas' in the schema cache`.
+Vou ajustar o fluxo para que `granja_id` seja usado apenas como dado auxiliar de resolução e nunca mais seja enviado no `POST` de `colheitas`.
 
-## O que vou corrigir
-1. **Ajustar a configuração de importação de colheitas**
-   - Remover `granja_id` como coluna persistida da configuração final de `colheitas`.
-   - Manter a granja apenas como dado auxiliar para resolver o `controle_lavoura_id`.
+## O que será corrigido
 
-2. **Corrigir a sanitização antes do insert**
-   - Parar de incluir `granja_id` e `lavoura_id` em `validDbColumns` para `colheitas`.
-   - Garantir que o payload final envie apenas colunas realmente existentes na tabela.
+1. **Ajustar a configuração de colheitas**
+   - Em `src/lib/importacaoConfig.ts`, trocar a referência de `colheitas` que hoje resolve para `granja_id` por um campo auxiliar interno.
+   - Manter o código da granja apenas para localizar o `controle_lavoura_id`.
 
-3. **Preservar o vínculo correto da colheita**
-   - Continuar usando `granja`/`safra` apenas para localizar o `controle_lavoura_id` quando necessário.
-   - Se preciso, armazenar esse valor em campo auxiliar temporário (`_granja_id`) e removê-lo antes do insert.
+2. **Parar a injeção indevida de `granja_id` durante a preparação das linhas**
+   - Em `src/components/importacao/ImportacaoDialog.tsx`, revisar a etapa que aplica a granja selecionada/global.
+   - Para `colheitas`, usar somente um campo auxiliar e não preencher `row.granja_id`.
 
-4. **Ajustar a validação da importação**
-   - Em vez de exigir `row.granja_id` para salvar em `colheitas`, validar que a linha conseguiu resolver o `controle_lavoura_id`.
-   - Assim a importação continua segura sem tentar gravar coluna inexistente.
+3. **Corrigir a resolução composta de colheitas**
+   - Continuar usando `safra_codigo` + granja auxiliar para encontrar `controle_lavoura_id`.
+   - Remover a lógica que volta a popular `row.granja_id` e `row.lavoura_id` na linha final de `colheitas`.
+
+4. **Blindar a sanitização antes do insert**
+   - Garantir que o payload final de `colheitas` contenha apenas colunas reais da tabela.
+   - Excluir explicitamente campos auxiliares e quaisquer campos indevidos, inclusive `granja_id` e `lavoura_id`.
 
 5. **Validar o resultado**
-   - Reexecutar a importação e conferir que o request de `colheitas` não carrega mais `granja_id` nem `lavoura_id`.
-   - Confirmar que a importação passa a inserir as linhas válidas.
+   - Conferir que o request `POST /colheitas` não envia mais `granja_id`.
+   - Confirmar que a importação passa a falhar apenas se o `controle_lavoura_id` não puder ser resolvido.
 
 ## Detalhes técnicos
-- Arquivos principais:
+
+- **Causa atual identificada:** o `granja_id` ainda entra no payload por mais de um ponto no frontend:
+  - a configuração de `colheitas` ainda o trata como referência resolvida;
+  - a etapa genérica de aplicação de granja pode preencher `row.granja_id`;
+  - a resolução composta de `colheitas` volta a escrever `row.granja_id` e `row.lavoura_id`.
+- **Arquivos envolvidos:**
   - `src/lib/importacaoConfig.ts`
   - `src/components/importacao/ImportacaoDialog.tsx`
-- Pontos já identificados:
-  - `importacaoConfig.ts`: `colheitas` ainda resolve `granja_id` como referência persistida.
-  - `ImportacaoDialog.tsx`: a montagem final do payload adiciona manualmente `granja_id` e `lavoura_id` para `colheitas`.
-- Referência oficial do erro:
-  - `PGRST204` acontece quando uma coluna enviada/solicitada não existe para aquela rota.
-
-<presentation-actions>
-  <presentation-open-history>View History</presentation-open-history>
-</presentation-actions>
-
-<presentation-actions>
-<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
-</presentation-actions>
+- **Objetivo final:** o insert de `colheitas` deve sair apenas com campos como `controle_lavoura_id`, `safra_id`, `silo_id`, `placa_id`, `variedade_id`, `inscricao_produtor_id` e demais colunas reais da tabela.
