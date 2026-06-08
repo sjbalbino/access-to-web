@@ -849,7 +849,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
       // Buscar códigos de granjas disponíveis (apenas se necessário)
       let granjaCodigosDisponiveis: string[] = [];
-      if (REQUIRES_GRANJA.has(config.tableName) && tenantId) {
+      if (typeof REQUIRES_GRANJA !== 'undefined' && REQUIRES_GRANJA.has(config.tableName) && tenantId) {
         const { data: gs } = await supabase
           .from('granjas')
           .select('codigo')
@@ -878,7 +878,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
         }
         // 2. Tabelas que exigem granja_id (chave do isolamento operacional)
-        if (REQUIRES_GRANJA.has(config.tableName) && !row['granja_id']) {
+        if (typeof REQUIRES_GRANJA !== 'undefined' && REQUIRES_GRANJA.has(config.tableName) && !row['granja_id']) {
           const lista = granjaCodigosDisponiveis.length > 0
             ? ` Códigos de granja disponíveis para a empresa: ${granjaCodigosDisponiveis.join(', ')}.`
             : ' Nenhuma granja cadastrada para a empresa selecionada.';
