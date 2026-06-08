@@ -777,15 +777,20 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         config.interactiveColumns.forEach(c => validDbColumns.add(c));
       }
       // Incluir campos calculados ou injetados
-      if (config.key === 'colheitas') {
-        // Tabela colheitas NÃO possui granja_id nem lavoura_id (esses ficam em controle_lavouras)
+      if (config.key === 'colheitas' || config.key === 'plantios') {
+        // Tabela colheitas e plantios NÃO possuem granja_id nem lavoura_id (esses ficam em controle_lavouras)
         validDbColumns.add('controle_lavoura_id');
         validDbColumns.add('safra_id');
-        validDbColumns.add('silo_id');
-        validDbColumns.add('placa_id');
-        validDbColumns.add('variedade_id');
-        validDbColumns.add('inscricao_produtor_id');
-        validDbColumns.add('local_entrega_terceiro_id');
+        if (config.key === 'colheitas') {
+          validDbColumns.add('silo_id');
+          validDbColumns.add('placa_id');
+          validDbColumns.add('variedade_id');
+          validDbColumns.add('inscricao_produtor_id');
+          validDbColumns.add('local_entrega_terceiro_id');
+        } else if (config.key === 'plantios') {
+          validDbColumns.add('cultura_id');
+          validDbColumns.add('variedade_id');
+        }
       }
       if (config.key === 'controle_lavouras') {
         validDbColumns.add('lavoura_id');
@@ -814,8 +819,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           }
         }
 
-        // Blindagem: colheitas NÃO possui granja_id nem lavoura_id no schema
-        if (config.key === 'colheitas') {
+        // Blindagem: colheitas e plantios NÃO possuem granja_id nem lavoura_id no schema
+        if (config.key === 'colheitas' || config.key === 'plantios') {
           delete clean.granja_id;
           delete clean.lavoura_id;
           delete clean._granja_id;
