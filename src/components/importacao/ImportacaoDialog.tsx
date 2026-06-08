@@ -778,10 +778,16 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         validDbColumns.add('granja_id');
         validDbColumns.add('safra_id');
         validDbColumns.add('lavoura_id');
+        validDbColumns.add('silo_id');
+        validDbColumns.add('placa_id');
+        validDbColumns.add('variedade_id');
+        validDbColumns.add('inscricao_produtor_id');
+        validDbColumns.add('local_entrega_terceiro_id');
       }
       if (config.key === 'controle_lavouras') {
         validDbColumns.add('lavoura_id');
         validDbColumns.add('granja_id');
+        validDbColumns.add('safra_id');
       }
       if (config.key === 'contra_notas_recebidas') {
         validDbColumns.add('contrato_venda_id');
@@ -798,7 +804,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         // Use mapping config to determine which fields should go to DB
         // We iterate over the row keys but only keep what's valid
         for (const [key, value] of Object.entries(row)) {
-          if (validDbColumns.has(key) || TABLES_WITH_GRANJA_ID.has(config.tableName) && key === 'granja_id') {
+          if (validDbColumns.has(key) || (TABLES_WITH_GRANJA_ID.has(config.tableName) && key === 'granja_id')) {
             clean[key] = value;
           }
         }
