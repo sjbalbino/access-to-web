@@ -259,6 +259,22 @@ export default function Produtos() {
     return () => clearTimeout(timer);
   }, [ncmSearch]);
 
+  const produtosFiltrados = (produtos || []).filter((p: any) => {
+    const matchesBusca = 
+      !filtros.busca || 
+      p.nome.toLowerCase().includes(filtros.busca.toLowerCase()) || 
+      (p.codigo && p.codigo.toLowerCase().includes(filtros.busca.toLowerCase()));
+    
+    const matchesTipo = filtros.tipo === 'todos' || p.tipo === filtros.tipo;
+    const matchesGrupo = filtros.grupo === 'todos' || p.grupo === filtros.grupo || p.grupo_vinculado?.nome === filtros.grupo;
+    const matchesStatus = 
+      filtros.status === 'todos' || 
+      (filtros.status === 'ativos' && p.ativo) || 
+      (filtros.status === 'inativos' && !p.ativo);
+
+    return matchesBusca && matchesTipo && matchesGrupo && matchesStatus;
+  });
+
   const {
     dadosPaginados,
     paginaAtual,
@@ -266,7 +282,7 @@ export default function Produtos() {
     totalRegistros,
     setPaginaAtual,
     gerarNumerosPaginas,
-  } = usePaginacao(produtos || []);
+  } = usePaginacao(produtosFiltrados);
 
   if (isLoading) {
     return <div className="p-8">Carregando...</div>;
