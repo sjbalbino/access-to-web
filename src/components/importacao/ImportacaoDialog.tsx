@@ -810,7 +810,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         }
 
         // Inject tenant_id para tabelas isoladas por empresa contratante
-        const TENANT_SCOPED_TABLES = new Set([
+        const SCR_TENANT_SCOPED_TABLES = new Set([
           'contas_pagar', 'contas_receber', 'contas_pagar_baixas', 'contas_receber_baixas',
           'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
           'lavouras','silos','controle_lavouras',
@@ -820,7 +820,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           'contratos_venda','remessas_venda','clientes_fornecedores','compras_cereais',
           'devolucoes_deposito','entradas_nfe','entradas_nfe_itens','notas_deposito_emitidas'
         ]);
-        if (TENANT_SCOPED_TABLES.has(config.tableName) && tenantId) {
+        if (SCR_TENANT_SCOPED_TABLES.has(config.tableName) && tenantId) {
           clean['tenant_id'] = tenantId;
         }
         // Inject interactive conta_gerencial_id
