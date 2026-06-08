@@ -1085,7 +1085,7 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: '_granja_id', sourceColumn: '_granja_codigo_raw', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', optional: true },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
       { dbColumn: 'cultura_id', sourceColumn: 'cultura_codigo', lookupTable: 'culturas', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
-      { dbColumn: 'variedade_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
+      { dbColumn: 'variedade_id', sourceColumn: '_produto_codigo_raw', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
     ],
   },
 ];
