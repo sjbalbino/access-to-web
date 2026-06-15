@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,9 +44,10 @@ function formatCpfCnpj(value?: string | null) {
 export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [inscricaoId, setInscricaoId] = useState<string>("");
   const { data: inscricoes } = useInscricoesCompletas();
-  const { isLoading, nfesRecebidas, consultarDestinatarias, manifestar, downloadXml, downloadDanfe } = useMde();
+  const { isLoading, nfesRecebidas, consultarDestinatarias, consultarPorChave, manifestar, downloadXml, downloadDanfe } = useMde();
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
+  const [chaveBusca, setChaveBusca] = useState("");
 
   const inscricoesEmissoras = useMemo(() => {
     return (inscricoes || []).filter((i: any) => {
@@ -63,6 +65,11 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const handleConsultar = () => {
     if (!inscricaoId) return;
     consultarDestinatarias(inscricaoId);
+  };
+
+  const handleConsultarChave = () => {
+    if (!inscricaoId || !chaveBusca) return;
+    consultarPorChave(inscricaoId, chaveBusca);
   };
 
   const handleManifestar = async (chave: string, tipo: string) => {
@@ -295,6 +302,29 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
             Sincronizar DFe
           </Button>
         </div>
+
+        <div className="flex flex-wrap gap-3 items-end mb-6 bg-blue-50/40 p-4 rounded-lg border border-blue-100">
+          <div className="flex-1 min-w-[320px]">
+            <label className="text-sm font-medium mb-1.5 block">Buscar NF-e por Chave de Acesso (44 dígitos)</label>
+            <Input
+              value={chaveBusca}
+              onChange={(e) => setChaveBusca(e.target.value.replace(/\D/g, "").slice(0, 44))}
+              placeholder="00000000000000000000000000000000000000000000"
+              className="bg-white h-11 font-mono text-sm"
+              maxLength={44}
+            />
+          </div>
+          <Button
+            onClick={handleConsultarChave}
+            disabled={!inscricaoId || isLoading || chaveBusca.length !== 44}
+            variant="outline"
+            className="h-11 px-6 font-semibold border-blue-300 text-blue-700 hover:bg-blue-100"
+          >
+            {isLoading ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Search className="h-5 w-5 mr-2" />}
+            Buscar por Chave
+          </Button>
+        </div>
+
 
         <div className="rounded-xl border shadow-sm overflow-hidden">
           <Table>
