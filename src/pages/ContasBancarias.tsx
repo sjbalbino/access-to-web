@@ -62,6 +62,7 @@ const emptyForm = (): Partial<ContaBancariaInput> => ({
   saldo_inicial: 0,
   data_saldo_inicial: null,
   ativo: true,
+  is_padrao_granja: false,
   observacoes: null,
 });
 
