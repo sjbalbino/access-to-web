@@ -304,28 +304,34 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             </Select>
           </div>
           {!initial?.id && (
-            <>
-              <div className="col-span-1">
+            <div className="col-span-2 grid grid-cols-2 gap-3 p-3 border rounded-md bg-muted/30">
+              <div className="col-span-2 text-sm font-semibold">
+                Gerar várias parcelas
+                <p className="text-xs font-normal text-muted-foreground">
+                  Cria N contas com vencimentos espaçados. O valor original será dividido e o nº da parcela preenchido como 1/N, 2/N, …
+                </p>
+              </div>
+              <div>
                 <Label>Parcelar em (vezes)</Label>
-                <Input 
-                  type="number" 
-                  min={1} 
-                  max={60} 
-                  value={form.num_parcelas} 
-                  onChange={(e) => update('num_parcelas', e.target.value)} 
+                <Input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={form.num_parcelas}
+                  onChange={(e) => update('num_parcelas', e.target.value)}
                 />
               </div>
-              <div className="col-span-1">
+              <div>
                 <Label>Intervalo entre parcelas (dias)</Label>
-                <Input 
-                  type="number" 
-                  min={1} 
-                  value={form.intervalo_dias} 
-                  onChange={(e) => update('intervalo_dias', e.target.value)} 
+                <Input
+                  type="number"
+                  min={1}
+                  value={form.intervalo_dias}
+                  onChange={(e) => update('intervalo_dias', e.target.value)}
                   disabled={parseInt(form.num_parcelas) <= 1}
                 />
               </div>
-            </>
+            </div>
           )}
 
           <div className={cn("col-span-2 flex items-center space-x-2 border rounded-md p-3 transition-colors", form.ja_pago ? "bg-emerald-50 border-emerald-200" : "bg-muted/30")}>
