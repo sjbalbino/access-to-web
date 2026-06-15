@@ -242,8 +242,18 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             <Input value={form.documento || ''} onChange={(e) => update('documento', e.target.value)} />
           </div>
           <div>
-            <Label>Parcela</Label>
-            <Input value={form.parcela || ''} onChange={(e) => update('parcela', e.target.value)} placeholder="1/3" />
+            <Label>Nº da parcela (ex.: 1/3)</Label>
+            <Input
+              value={form.parcela || ''}
+              onChange={(e) => update('parcela', e.target.value)}
+              placeholder="1/3"
+              disabled={!initial?.id && parseInt(form.num_parcelas) > 1}
+            />
+            {!initial?.id && parseInt(form.num_parcelas) > 1 && (
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Será preenchido automaticamente (1/{form.num_parcelas}, 2/{form.num_parcelas}, …)
+              </p>
+            )}
           </div>
           <div>
             <Label>Data emissão</Label>
