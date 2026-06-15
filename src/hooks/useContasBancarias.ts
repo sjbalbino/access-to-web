@@ -41,6 +41,13 @@ export function useContasBancarias(filtros?: Filtros) {
   return useQuery({
     queryKey: ['contas_bancarias', filtros],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user?.id as string)
+        .single();
+
       let q = supabase
         .from('contas_bancarias' as any)
         .select(`*,
@@ -49,6 +56,7 @@ export function useContasBancarias(filtros?: Filtros) {
           granja:granja_id(razao_social)
         `)
         .order('nome');
+      if (profile?.tenant_id) q = q.eq('tenant_id', profile.tenant_id);
       if (filtros?.socioProdutorId) q = q.eq('socio_produtor_id', filtros.socioProdutorId);
       if (filtros?.granjaId) q = q.eq('granja_id', filtros.granjaId);
       if (typeof filtros?.ativo === 'boolean') q = q.eq('ativo', filtros.ativo);
