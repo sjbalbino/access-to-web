@@ -79,6 +79,15 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     }
   }, [initial, open, granjas]);
 
+  // Auto-preenche conta bancária padrão da granja selecionada
+  useEffect(() => {
+    if (!form.granja_id || form.conta_bancaria_id) return;
+    const padrao = contasBancarias?.find((c: any) => c.granja_id === form.granja_id && c.is_padrao_granja);
+    if (padrao) {
+      setForm((f: any) => ({ ...f, conta_bancaria_id: padrao.id }));
+    }
+  }, [form.granja_id, contasBancarias]);
+
   const update = (k: string, v: any) => {
     setForm((f: any) => {
       const newForm = { ...f, [k]: v };
