@@ -87,9 +87,17 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
       if (k === 'produto_id' && v) {
         const produto = produtos?.find((p: any) => p.id === v);
         if (produto) {
-          if (produto.conta_gerencial_id) {
-            newForm.sub_centro_custo_id = produto.conta_gerencial_id;
-            const sub = subCentros?.find((s: any) => s.id === produto.conta_gerencial_id);
+          const grupo = grupos?.find((g: any) => g.id === produto.grupo_id);
+          const subId = grupo?.conta_gerencial_id || produto.conta_gerencial_id;
+          if (subId) {
+            newForm.sub_centro_custo_id = subId;
+          }
+          const codigoDre = grupo?.codigo_dre;
+          if (codigoDre) {
+            const dre = dreContas?.find((d: any) => d.codigo === codigoDre);
+            if (dre) newForm.dre_conta_id = dre.id;
+          } else if (subId) {
+            const sub = subCentros?.find((s: any) => s.id === subId);
             if (sub?.codigo_dre) {
               const dre = dreContas?.find((d: any) => d.codigo === sub.codigo_dre);
               if (dre) newForm.dre_conta_id = dre.id;
