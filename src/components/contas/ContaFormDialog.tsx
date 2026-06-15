@@ -34,6 +34,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const { data: safras } = useSafras();
   const { data: contasBancarias } = useContasBancarias({ ativo: true });
   const { data: produtos } = useProdutos();
+  const { data: grupos } = useGruposProdutos();
 
   const [form, setForm] = useState<any>({
     granja_id: '',
