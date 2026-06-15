@@ -112,6 +112,28 @@ serve(async (req) => {
         break;
       }
 
+      case "consultar_chave": {
+        if (!chave) throw new Error("chave é obrigatória");
+        const cleanChave = String(chave).replace(/\D/g, "");
+        if (cleanChave.length !== 44) throw new Error("Chave de acesso deve ter 44 dígitos.");
+
+        const url = `${baseUrl}/v2/nfes_recebidas/${cleanChave}`;
+        console.log("MD-e Consultar por chave:", url);
+
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { Authorization: authHeader },
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          const msg = data?.mensagem || data?.message || `Erro ${response.status} ao consultar chave`;
+          throw new Error(msg);
+        }
+        result = [data];
+        break;
+      }
+
       case "manifestar": {
         if (!chave) throw new Error("chave é obrigatória para manifestar");
         if (!tipo) throw new Error("tipo é obrigatório (ciencia, confirmacao, desconhecimento, nao_realizada)");
