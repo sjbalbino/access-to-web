@@ -386,6 +386,14 @@ export default function ContasBancarias() {
               <Switch checked={!!form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} />
               <Label>Ativa</Label>
             </div>
+            <div className="flex items-center gap-2 md:col-span-2">
+              <Switch
+                checked={!!form.is_padrao_granja}
+                onCheckedChange={(v) => setForm({ ...form, is_padrao_granja: v })}
+                disabled={!form.granja_id}
+              />
+              <Label>Conta padrão da granja {form.granja_id ? '' : '(vincule uma granja)'}</Label>
+            </div>
           </div>
 
           <DialogFooter>
