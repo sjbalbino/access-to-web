@@ -1,41 +1,29 @@
-## Diagnóstico
+## Objetivo
+Ao incluir/editar uma conta (a pagar ou receber), quando o usuário selecionar o **Produto**, os campos **Sub-centro de custo** e **Conta DRE** devem ser preenchidos automaticamente com base no **Grupo do Produto** (e não mais usando apenas o `conta_gerencial_id` do próprio produto).
 
-Foram importados **299 plantios** recentemente. Os 4 registros que deveriam ir para os controles **314, 316, 317 e 318** da **Granja Bom Jesus / SOJA 2025/2026** foram salvos nos controles da **Granja Cruz Alta** (MILHO 2024/2025 e SOJA 2024/2025), porque esses códigos existem em mais de uma granja:
+## Comportamento atual
+Em `src/components/contas/ContaFormDialog.tsx` (linhas 85–96), ao escolher um produto o código lê `produto.conta_gerencial_id` e tenta achar o sub-centro/DRE a partir dele. Muitos produtos não têm esse campo preenchido, então os campos ficam em branco.
 
-- **314** existe em: Cruz Alta (MILHO 2024/2025), Grings (MILHO 2021/2022), **Bom Jesus (SOJA 2025/2026)**
-- **316, 317, 318** existem em: Cruz Alta, Grings e **Bom Jesus (SOJA 2025/2026)**
+## Nova regra
+1. Ao selecionar um produto:
+   - Buscar o `grupo_id` do produto.
+   - Buscar o grupo em `grupos_produtos` e ler:
+     - `conta_gerencial_id` → preenche **Sub-centro de custo**.
+     - `codigo_dre` → localiza o registro correspondente em `dre_contas` e preenche **Conta DRE**.
+   - Se o grupo tiver `codigo_dre` mas não `conta_gerencial_id` (ou vice-versa), preenche apenas o campo disponível.
+   - Se o grupo não estiver definido ou não tiver nenhum dos dois, mantém o comportamento atual como fallback (lê do próprio produto).
+2. Sempre sobrescreve os valores atuais dos campos para refletir o grupo do produto recém-selecionado (o usuário ainda pode editar manualmente depois).
+3. A regra ao alterar manualmente o Sub-centro (linhas 97–103) permanece igual: ao trocar o sub-centro, o DRE é recalculado pelo `codigo_dre` do sub-centro.
 
-### Causa raiz no código
+## Arquivos afetados
+- `src/components/contas/ContaFormDialog.tsx` — ajustar a lógica do `update('produto_id', …)` para usar `grupos_produtos` via hook `useGruposProdutos`.
 
-Em `src/components/importacao/ImportacaoDialog.tsx` (linhas 336–416), o lookup para resolver `controle_lavoura_id` em **plantios/colheitas** tenta três chaves em sequência:
+## Detalhes técnicos
+- Importar `useGruposProdutos` e carregar a lista junto com `produtos`.
+- No bloco `if (k === 'produto_id' && v)`:
+  - `const produto = produtos?.find(p => p.id === v)`
+  - `const grupo = grupos?.find(g => g.id === produto?.grupo_id)`
+  - Preferência: usar `grupo.conta_gerencial_id` → sub-centro; `grupo.codigo_dre` → DRE.
+  - Fallback (somente se grupo não trouxer dados): usar `produto.conta_gerencial_id` como hoje.
 
-```text
-1) codigo + granja + safra   (específico)
-2) codigo + granja            (fallback)
-3) codigo                     (fallback global)
-```
-
-Quando a planilha **não traz coluna de granja** e o usuário **não seleciona uma granja no dropdown**, `granjaId` fica vazio e o sistema cai no fallback nº 3, pegando o **primeiro controle com aquele código** — que normalmente é o mais antigo (Cruz Alta), não o atual (Bom Jesus SOJA 2025/2026). Como `granjaId` é nulo, a checagem `match.granja_id !== granjaId` não dispara aviso, e o registro é gravado silenciosamente no controle errado.
-
-## Plano
-
-### 1. Corrigir a rotina de importação de Plantios e Colheitas
-Arquivo: `src/components/importacao/ImportacaoDialog.tsx`
-
-- **Tornar a Granja obrigatória** para importação de `plantios` e `colheitas` (igual ao que já acontece em `controle_lavouras`): exigir seleção no dropdown da UI ou coluna `granja_codigo` na planilha. Se faltar, bloquear a importação com mensagem clara.
-- **Remover o fallback nº 3 (`ctrlMap.get(codigoControle)`)** — só permitir match quando `codigo + granja` (ou `codigo + granja + safra`) corresponderem.
-- Quando o código existir em mais de um controle dentro da mesma granja (várias safras), preferir o vínculo `codigo + granja + safra`. Se a planilha tiver `safra_codigo` apenas como referência ao controle (caso atual), continuar usando `codigo + granja` como chave principal.
-- Mensagens de erro mais específicas, do tipo: *"Linha X: código 314 existe em mais de uma granja; selecione a Granja correta acima do upload"*.
-
-### 2. Corrigir os 4 vínculos errados já gravados
-Atualizar no banco os plantios criados nas últimas importações cujo `controle_lavoura_id` aponta para Cruz Alta (códigos 314/316/317/318) e remapeá-los para os controles correspondentes de **Bom Jesus / SOJA 2025/2026**.
-
-Também atualizar `safra_id` e `lavoura_id` desses plantios para refletir o controle correto.
-
-### 3. Validar
-- Conferir tela **Controle de Lavoura → Granja Bom Jesus → SOJA 2025/2026 → códigos 314/316/317/318**: os plantios devem aparecer na aba **Plantios**.
-- Conferir que os controles de Cruz Alta (MILHO 2024/2025 e SOJA 2024/2025) não exibem mais os plantios que foram remanejados.
-- Reimportar uma planilha de teste sem selecionar granja e confirmar que o sistema bloqueia em vez de gravar no controle errado.
-
-## Observação para o usuário
-Para a próxima importação de Plantios/Colheitas, **sempre selecione a granja correta no campo acima do upload** (ou inclua a coluna `granja` / `codigo_granja` na planilha). Sem isso, códigos repetidos entre granjas levam ao vínculo errado.
+Sem alterações de banco, sem migrações.
