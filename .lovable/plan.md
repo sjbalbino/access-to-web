@@ -1,29 +1,39 @@
-## Objetivo
-Ao incluir/editar uma conta (a pagar ou receber), quando o usuário selecionar o **Produto**, os campos **Sub-centro de custo** e **Conta DRE** devem ser preenchidos automaticamente com base no **Grupo do Produto** (e não mais usando apenas o `conta_gerencial_id` do próprio produto).
+## Esclarecendo os dois campos
 
-## Comportamento atual
-Em `src/components/contas/ContaFormDialog.tsx` (linhas 85–96), ao escolher um produto o código lê `produto.conta_gerencial_id` e tenta achar o sub-centro/DRE a partir dele. Muitos produtos não têm esse campo preenchido, então os campos ficam em branco.
+Hoje o formulário de Contas a Pagar / Receber tem dois campos parecidos, mas com funções diferentes:
 
-## Nova regra
-1. Ao selecionar um produto:
-   - Buscar o `grupo_id` do produto.
-   - Buscar o grupo em `grupos_produtos` e ler:
-     - `conta_gerencial_id` → preenche **Sub-centro de custo**.
-     - `codigo_dre` → localiza o registro correspondente em `dre_contas` e preenche **Conta DRE**.
-   - Se o grupo tiver `codigo_dre` mas não `conta_gerencial_id` (ou vice-versa), preenche apenas o campo disponível.
-   - Se o grupo não estiver definido ou não tiver nenhum dos dois, mantém o comportamento atual como fallback (lê do próprio produto).
-2. Sempre sobrescreve os valores atuais dos campos para refletir o grupo do produto recém-selecionado (o usuário ainda pode editar manualmente depois).
-3. A regra ao alterar manualmente o Sub-centro (linhas 97–103) permanece igual: ao trocar o sub-centro, o DRE é recalculado pelo `codigo_dre` do sub-centro.
+### 1. `Parcela` (texto livre — ex.: "1/3")
+- Campo `parcela` na tabela `contas_pagar` / `contas_receber`.
+- É só um **rótulo identificador** da parcela dentro do documento (ex.: "1/3", "2/3").
+- Usado em listagens, recibos e PDFs para mostrar a qual parcela do título aquela linha pertence.
+- **Não gera nada automaticamente.** O usuário digita.
 
-## Arquivos afetados
-- `src/components/contas/ContaFormDialog.tsx` — ajustar a lógica do `update('produto_id', …)` para usar `grupos_produtos` via hook `useGruposProdutos`.
+### 2. `Parcelar em (vezes)` + `Intervalo entre parcelas (dias)`
+- Campos `num_parcelas` e `intervalo_dias`, que **não são salvos** — servem só para o ato da inclusão.
+- Quando `num_parcelas > 1`, o sistema **gera N registros** de conta, dividindo o valor e somando o intervalo no vencimento.
+- Cada conta gerada recebe o rótulo `parcela` no formato "i/N" automaticamente.
+- Só aparece em **nova conta** (não em edição).
 
-## Detalhes técnicos
-- Importar `useGruposProdutos` e carregar a lista junto com `produtos`.
-- No bloco `if (k === 'produto_id' && v)`:
-  - `const produto = produtos?.find(p => p.id === v)`
-  - `const grupo = grupos?.find(g => g.id === produto?.grupo_id)`
-  - Preferência: usar `grupo.conta_gerencial_id` → sub-centro; `grupo.codigo_dre` → DRE.
-  - Fallback (somente se grupo não trouxer dados): usar `produto.conta_gerencial_id` como hoje.
+### A ambiguidade
+Os dois ficam um do lado do outro, sem rótulo que deixe claro que:
+- `Parcela` = rótulo desta linha;
+- `Parcelar em (vezes)` = gerador de várias linhas.
 
-Sem alterações de banco, sem migrações.
+E se o usuário digita "1/3" em `Parcela` e ao mesmo tempo coloca `num_parcelas = 3`, o rótulo digitado é ignorado (o gerador sobrescreve com "1/3", "2/3", "3/3").
+
+## Plano de ajuste de UX (sem mudar lógica de negócio)
+
+1. **Renomear e reagrupar visualmente:**
+   - `Parcela` → rótulo **"Nº da parcela (ex.: 1/3)"** com tooltip "Identificação desta parcela. Preenchido automaticamente quando você gerar várias parcelas abaixo."
+   - `Parcelar em (vezes)` / `Intervalo entre parcelas (dias)` → mover para um bloco separado **"Gerar várias parcelas"** com borda/fundo sutil, e descrição: "Cria N contas com vencimentos espaçados. O valor original será dividido."
+
+2. **Esconder/desabilitar `Parcela` (rótulo) quando `num_parcelas > 1`**, mostrando um aviso "Será preenchido automaticamente (1/N, 2/N, …)".
+
+3. **Em edição** (`initial?.id`): manter só o campo `Parcela` (rótulo). O bloco "Gerar várias parcelas" continua oculto, como já é hoje.
+
+4. **Sem alteração de schema** nem de regras de cálculo — apenas labels, agrupamento visual e o desabilitar condicional.
+
+### Arquivo afetado
+- `src/components/contas/ContaFormDialog.tsx`
+
+Confirma que quer este ajuste de UX, ou prefere outro caminho (ex.: remover o campo `Parcela` manual e deixar só o gerador)?
