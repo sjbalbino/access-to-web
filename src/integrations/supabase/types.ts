@@ -817,6 +817,7 @@ export type Database = {
           data_saldo_inicial: string | null
           granja_id: string | null
           id: string
+          is_padrao_granja: boolean
           nome: string
           observacoes: string | null
           pix_chave: string | null
@@ -841,6 +842,7 @@ export type Database = {
           data_saldo_inicial?: string | null
           granja_id?: string | null
           id?: string
+          is_padrao_granja?: boolean
           nome: string
           observacoes?: string | null
           pix_chave?: string | null
@@ -865,6 +867,7 @@ export type Database = {
           data_saldo_inicial?: string | null
           granja_id?: string | null
           id?: string
+          is_padrao_granja?: boolean
           nome?: string
           observacoes?: string | null
           pix_chave?: string | null
