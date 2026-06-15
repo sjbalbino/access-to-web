@@ -22,6 +22,7 @@ export interface ContaBancaria {
   saldo_inicial: number;
   data_saldo_inicial: string | null;
   ativo: boolean;
+  is_padrao_granja: boolean;
   observacoes: string | null;
   banco?: { codigo: string; nome: string } | null;
   socio?: { nome: string } | null;
