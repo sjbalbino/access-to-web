@@ -10,6 +10,7 @@ import { useClientesFornecedores } from '@/hooks/useClientesFornecedores';
 import { useDreContas } from '@/hooks/useDreContas';
 import { useAllSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
 import { useProdutos } from '@/hooks/useProdutos';
+import { useGruposProdutos } from '@/hooks/useGruposProdutos';
 import { useSafras } from '@/hooks/useSafras';
 import { AtribuicaoSocioSection, RateioModo, RateioManualItem } from './AtribuicaoSocioSection';
 import { useSalvarRateioManual } from '@/hooks/useRateioSocios';
