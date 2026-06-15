@@ -280,15 +280,6 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             </Select>
           </div>
           <div>
-            <Label>Conta DRE</Label>
-            <Select isSearchable value={form.dre_conta_id || undefined} onValueChange={(v) => update('dre_conta_id', v)}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>
-                {dreContas?.map(d => <SelectItem key={d.id} value={d.id}>{d.codigo} - {d.descricao}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
             <Label>Produto</Label>
             <Select isSearchable value={form.produto_id || undefined} onValueChange={(v) => update('produto_id', v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -303,6 +294,15 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {subCentros?.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.codigo} - {s.descricao}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Conta DRE</Label>
+            <Select isSearchable value={form.dre_conta_id || undefined} onValueChange={(v) => update('dre_conta_id', v)}>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
+                {dreContas?.map(d => <SelectItem key={d.id} value={d.id}>{d.codigo} - {d.descricao}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
