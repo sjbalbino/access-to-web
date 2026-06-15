@@ -62,6 +62,7 @@ const emptyForm = (): Partial<ContaBancariaInput> => ({
   saldo_inicial: 0,
   data_saldo_inicial: null,
   ativo: true,
+  is_padrao_granja: false,
   observacoes: null,
 });
 
@@ -119,6 +120,7 @@ export default function ContasBancarias() {
       saldo_inicial: Number(c.saldo_inicial) || 0,
       data_saldo_inicial: c.data_saldo_inicial,
       ativo: c.ativo,
+      is_padrao_granja: !!c.is_padrao_granja,
       observacoes: c.observacoes,
     });
     setOpen(true);
@@ -383,6 +385,14 @@ export default function ContasBancarias() {
             <div className="flex items-center gap-2">
               <Switch checked={!!form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} />
               <Label>Ativa</Label>
+            </div>
+            <div className="flex items-center gap-2 md:col-span-2">
+              <Switch
+                checked={!!form.is_padrao_granja}
+                onCheckedChange={(v) => setForm({ ...form, is_padrao_granja: v })}
+                disabled={!form.granja_id}
+              />
+              <Label>Conta padrão da granja {form.granja_id ? '' : '(vincule uma granja)'}</Label>
             </div>
           </div>
 

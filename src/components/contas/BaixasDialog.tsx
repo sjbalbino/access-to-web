@@ -66,6 +66,24 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
   const { data: contasBancarias = [] } = useContasBancarias({ ativo: true });
   const [documento, setDocumento] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [granjaIdConta, setGranjaIdConta] = useState<string | null>(null);
+
+  // Busca granja_id da conta para definir conta bancária padrão
+  useEffect(() => {
+    if (!open || !conta) { setGranjaIdConta(null); return; }
+    const table = tipo === 'receber' ? 'contas_receber' : 'contas_pagar';
+    (async () => {
+      const { data } = await supabase.from(table as any).select('granja_id').eq('id', conta.id).single();
+      setGranjaIdConta((data as any)?.granja_id || null);
+    })();
+  }, [open, conta, tipo]);
+
+  // Auto-seleciona conta bancária padrão da granja
+  useEffect(() => {
+    if (!granjaIdConta || contaBancariaId) return;
+    const padrao = contasBancarias.find((c: any) => c.granja_id === granjaIdConta && c.is_padrao_granja);
+    if (padrao) setContaBancariaId(padrao.id);
+  }, [granjaIdConta, contasBancarias]);
 
   // Ao abrir o modal com um saldo positivo, sugere o valor total para baixa
   useEffect(() => {

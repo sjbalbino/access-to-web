@@ -158,6 +158,14 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
     }
   }, [open, isEdit, entradaData]);
 
+  // Auto-seleciona conta bancária padrão da granja
+  useEffect(() => {
+    if (!granjaId || contaBancariaId) return;
+    const padrao = contasBancarias?.find((c: any) => c.granja_id === granjaId && c.is_padrao_granja);
+    if (padrao) setContaBancariaId(padrao.id);
+  }, [granjaId, contasBancarias]);
+
+
   // Pré-seleciona IE principal ao trocar granja (somente criação)
   useEffect(() => {
     if (isEdit || !granjaId) return;
