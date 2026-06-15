@@ -65,6 +65,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const salvarManual = useSalvarRateioManual();
 
   useEffect(() => {
+    if (!open) return;
     if (initial) {
       setForm({
         ...initial,
@@ -75,9 +76,11 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
       });
     } else {
       const principal = granjas?.find(g => g.is_principal) || granjas?.[0];
-      setForm((f: any) => ({ ...f, granja_id: principal?.id || '' }));
+      setForm((f: any) => ({ ...f, granja_id: f.granja_id || principal?.id || '' }));
     }
-  }, [initial, open, granjas]);
+    // Intencionalmente sem `granjas` nas deps para não resetar o form quando refetch ocorrer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial?.id]);
 
   // Auto-preenche conta bancária padrão da granja selecionada
   useEffect(() => {
