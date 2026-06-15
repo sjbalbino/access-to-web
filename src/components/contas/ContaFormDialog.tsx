@@ -248,6 +248,8 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         });
       }
     }
+    clearDraft();
+    setForm(defaultForm());
     onOpenChange(false);
   };
 
@@ -255,8 +257,18 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const partyField = tipo === 'receber' ? 'cliente_id' : 'fornecedor_id';
   const partyLabel = tipo === 'receber' ? 'Cliente' : 'Fornecedor';
 
+  const handleOpenChange = (v: boolean) => {
+    if (!v && !initial) {
+      // Fechamento manual → descarta rascunho
+      clearDraft();
+      setForm(defaultForm());
+    }
+    onOpenChange(v);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{initial?.id ? 'Editar' : 'Nova'} {tipo === 'receber' ? 'Conta a Receber' : 'Conta a Pagar'}</DialogTitle>
