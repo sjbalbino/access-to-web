@@ -58,6 +58,44 @@ export function useMde() {
       setIsLoading(false);
     }
   };
+  const consultarPorChave = async (inscricaoId: string, chave: string) => {
+    setIsLoading(true);
+    try {
+      const cleanChave = (chave || "").replace(/\D/g, "");
+      if (cleanChave.length !== 44) {
+        toast.error("Chave de acesso inválida", { description: "A chave deve conter 44 dígitos." });
+        return [];
+      }
+      const result = await invokeAction({ action: "consultar_chave", inscricaoId, chave: cleanChave });
+      const raw: any[] = Array.isArray(result.data) ? result.data : [];
+      const items: NfeRecebida[] = raw.map((r) => ({
+        chave: r.chave ?? r.chave_nfe ?? r.chaveNFe ?? cleanChave,
+        nome: r.nome ?? r.emitente_nome ?? r.razao_social_emitente ?? r.emitente_razao_social ?? r.emitente?.nome ?? "",
+        cnpj: r.cnpj ?? r.cnpj_emitente ?? r.emitente_cnpj ?? r.cnpj_cpf_emitente ?? r.emitente?.cnpj ?? "",
+        valor: Number(r.valor ?? r.valor_total ?? r.valor_nfe ?? r.valor_total_nota ?? 0),
+        data_emissao: r.data_emissao ?? r.dataEmissao ?? r.data_emissao_nfe ?? r.dh_emissao ?? "",
+        situacao: r.situacao ?? r.status ?? "",
+        tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
+        numero: String(r.numero ?? r.numero_nfe ?? r.numero_nfe_recebida ?? r.numero_nota ?? ""),
+        serie: String(r.serie ?? r.serie_nfe ?? r.serie_nota ?? ""),
+        manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
+      }));
+      setNfesRecebidas(items);
+      if (items.length === 0) {
+        toast.info("NF-e não encontrada para esta chave.");
+      } else {
+        toast.success("NF-e encontrada!");
+      }
+      return items;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro desconhecido";
+      toast.error("Erro ao consultar por chave", { description: msg });
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   const manifestar = async (inscricaoId: string, chave: string, tipo: string) => {
     setIsLoading(true);
