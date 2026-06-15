@@ -120,6 +120,7 @@ export default function ContasBancarias() {
       saldo_inicial: Number(c.saldo_inicial) || 0,
       data_saldo_inicial: c.data_saldo_inicial,
       ativo: c.ativo,
+      is_padrao_granja: !!c.is_padrao_granja,
       observacoes: c.observacoes,
     });
     setOpen(true);
