@@ -67,6 +67,11 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     consultarDestinatarias(inscricaoId);
   };
 
+  const handleConsultarChave = () => {
+    if (!inscricaoId || !chaveBusca) return;
+    consultarPorChave(inscricaoId, chaveBusca);
+  };
+
   const handleManifestar = async (chave: string, tipo: string) => {
     if (!inscricaoId) return;
     const ok = await manifestar(inscricaoId, chave, tipo);
