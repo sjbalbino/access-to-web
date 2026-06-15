@@ -181,6 +181,7 @@ export function useMde() {
     isLoading,
     nfesRecebidas,
     consultarDestinatarias,
+    consultarPorChave,
     manifestar,
     downloadXml,
     downloadDanfe,
