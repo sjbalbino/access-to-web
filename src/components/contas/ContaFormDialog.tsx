@@ -36,7 +36,9 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const { data: produtos } = useProdutos();
   const { data: grupos } = useGruposProdutos();
 
-  const [form, setForm] = useState<any>({
+  const DRAFT_KEY = `conta-form-draft-${tipo}`;
+
+  const defaultForm = () => ({
     granja_id: '',
     [tipo === 'receber' ? 'cliente_id' : 'fornecedor_id']: undefined,
     documento: '',
@@ -61,8 +63,34 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     forma_pagamento: 'pix',
     conta_bancaria_id: '',
   });
+
+  // Carrega rascunho do localStorage (apenas para novos cadastros)
+  const loadDraft = (): { form: any; open: boolean } | null => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem(DRAFT_KEY) : null;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.__draft) {
+          return { form: { ...defaultForm(), ...parsed.form }, open: !!parsed.open };
+        }
+      }
+    } catch {}
+    return null;
+  };
+
+  const initialDraft = !initial ? loadDraft() : null;
+
+  const [form, setForm] = useState<any>(initialDraft?.form || defaultForm());
   const [rateioManual, setRateioManual] = useState<RateioManualItem[]>([]);
   const salvarManual = useSalvarRateioManual();
+
+  // Reabre o dialog automaticamente se havia rascunho em edição antes do refresh
+  useEffect(() => {
+    if (initialDraft?.open && !open && !initial) {
+      onOpenChange(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -81,6 +109,19 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     // Intencionalmente sem `granjas` nas deps para não resetar o form quando refetch ocorrer
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial?.id]);
+
+  // Persiste rascunho enquanto o usuário edita um novo lançamento
+  useEffect(() => {
+    if (!open || initial) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ __draft: true, open: true, form }));
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, open]);
+
+  const clearDraft = () => {
+    try { localStorage.removeItem(DRAFT_KEY); } catch {}
+  };
 
   // Auto-preenche conta bancária padrão da granja selecionada
   useEffect(() => {
@@ -207,6 +248,8 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         });
       }
     }
+    clearDraft();
+    setForm(defaultForm());
     onOpenChange(false);
   };
 
@@ -214,8 +257,18 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const partyField = tipo === 'receber' ? 'cliente_id' : 'fornecedor_id';
   const partyLabel = tipo === 'receber' ? 'Cliente' : 'Fornecedor';
 
+  const handleOpenChange = (v: boolean) => {
+    if (!v && !initial) {
+      // Fechamento manual → descarta rascunho
+      clearDraft();
+      setForm(defaultForm());
+    }
+    onOpenChange(v);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{initial?.id ? 'Editar' : 'Nova'} {tipo === 'receber' ? 'Conta a Receber' : 'Conta a Pagar'}</DialogTitle>
