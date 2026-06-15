@@ -124,13 +124,17 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   };
 
   // Auto-preenche conta bancária padrão da granja selecionada
+  // Re-dispara quando o usuário marca "Já pago" para garantir o preenchimento
   useEffect(() => {
-    if (!form.granja_id || form.conta_bancaria_id) return;
-    const padrao = contasBancarias?.find((c: any) => c.granja_id === form.granja_id && c.is_padrao_granja);
+    if (!form.granja_id) return;
+    if (form.conta_bancaria_id) return;
+    if (!contasBancarias || contasBancarias.length === 0) return;
+    const padrao = contasBancarias.find((c: any) => c.granja_id === form.granja_id && c.is_padrao_granja && c.ativo);
     if (padrao) {
       setForm((f: any) => ({ ...f, conta_bancaria_id: padrao.id }));
     }
-  }, [form.granja_id, contasBancarias]);
+  }, [form.granja_id, form.ja_pago, contasBancarias]);
+
 
   const update = (k: string, v: any) => {
     setForm((f: any) => {
