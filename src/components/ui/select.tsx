@@ -115,8 +115,8 @@ const SelectContent = React.forwardRef<
               value={context.searchValue}
               onChange={(e) => context.setSearchValue(e.target.value)}
               onKeyDown={(e) => {
-                // Prevent space from selecting item when typing
-                if (e.key === " ") {
+                // Prevent Radix Select typeahead from stealing focus on every keystroke
+                if (e.key !== "Escape" && e.key !== "Enter" && e.key !== "ArrowDown" && e.key !== "ArrowUp") {
                   e.stopPropagation();
                 }
               }}
