@@ -58,6 +58,18 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+    // Tenant isolation
+    {
+      const caller = await getCallerTenant(supabase, _userData.user.id);
+      const guardE = await assertEmitenteTenant(supabase, emitente_id, caller);
+      if (!guardE.ok) return tenantErrorResponse(guardE, corsHeaders);
+      if (inscricao_produtor_id) {
+        const guardI = await assertInscricaoTenant(supabase, inscricao_produtor_id, caller);
+        if (!guardI.ok) return tenantErrorResponse(guardI, corsHeaders);
+      }
+    }
+
+
     // Buscar token + ambiente do emitente
     const { data: emitenteRow, error: eErr } = await supabase
       .from("emitentes_nfe")
