@@ -60,6 +60,13 @@ serve(async (req) => {
       throw new Error("Correção é obrigatória e deve ter no mínimo 15 caracteres");
     }
 
+    // Tenant isolation
+    if (notaFiscalId) {
+      const caller = await getCallerTenant(_adminClient, _userData.user.id);
+      const guard = await assertNotaFiscalTenant(_adminClient, notaFiscalId, caller);
+      if (!guard.ok) return tenantErrorResponse(guard, corsHeaders);
+    }
+
     console.log("Emitindo Carta de Correção para NF-e:", ref);
 
     // Buscar ambiente e token do emitente
