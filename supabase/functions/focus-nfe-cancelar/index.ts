@@ -60,6 +60,13 @@ serve(async (req) => {
       throw new Error("Justificativa é obrigatória e deve ter no mínimo 15 caracteres");
     }
 
+    // Tenant isolation: caller só pode cancelar notas do próprio tenant
+    if (notaFiscalId) {
+      const caller = await getCallerTenant(_adminClient, _userData.user.id);
+      const guard = await assertNotaFiscalTenant(_adminClient, notaFiscalId, caller);
+      if (!guard.ok) return tenantErrorResponse(guard, corsHeaders);
+    }
+
     console.log("Cancelando NF-e:", ref);
 
     // Buscar ambiente e token do emitente
