@@ -92,8 +92,9 @@ export function useContratosVenda(filtros?: ContratoVendaFiltros) {
       if (filtros?.comprador_id) {
         query = query.eq("comprador_id", filtros.comprador_id);
       }
-      if (filtros?.numero) {
-        query = query.ilike("numero", `%${filtros.numero}%`);
+      const numeroFiltro = filtros?.numero?.trim();
+      if (numeroFiltro) {
+        query = query.or(`numero.ilike.%${numeroFiltro}%,numero_contrato_comprador.ilike.%${numeroFiltro}%`);
       }
 
       const { data, error } = await query;
