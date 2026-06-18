@@ -286,6 +286,17 @@ serve(async (req) => {
 
     console.log("Nota fiscal atualizada com sucesso no banco de dados");
 
+    // Atualizar numero_atual_nfe do emitente para o número usado
+    const numeroEmitido = Number(responseData.numero ?? proximoNumero);
+    if (emitenteData?.id && numeroEmitido > 0) {
+      const { error: emitErr } = await supabase
+        .from("emitentes_nfe")
+        .update({ numero_atual_nfe: numeroEmitido })
+        .eq("id", emitenteData.id);
+      if (emitErr) console.error("Erro ao atualizar numero_atual_nfe:", emitErr);
+      else console.log(`numero_atual_nfe atualizado para ${numeroEmitido}`);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
