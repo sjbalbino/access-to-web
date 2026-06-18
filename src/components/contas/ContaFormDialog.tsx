@@ -240,7 +240,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         const cbSelecionada = contasBancarias.find((c: any) => c.id === form.conta_bancaria_id);
         const baixaPayload = {
           conta_id: saved.id,
-          data_pagamento: form.data_emissao, // ou data_vencimento? Normalmente data_emissao se pago na inclusão
+          data_pagamento: form.data_pagamento || form.data_vencimento || form.data_emissao,
           valor_pago: valorOriginal,
           juros: parseFloat(form.juros) || 0,
           multa: parseFloat(form.multa) || 0,
