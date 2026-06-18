@@ -133,8 +133,8 @@ export default function ContasPagar() {
       </div>
 
       <Card className="mb-4">
-        <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
-          <div className="min-w-0">
+        <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 items-end">
+          <div className="min-w-0 lg:col-span-2">
             <Label>Granja</Label>
             <Select isSearchable value={filtroGranja} onValueChange={(v) => setFiltroGranja(v === 'all' ? undefined : v)}>
               <SelectTrigger className="w-full"><SelectValue placeholder="Todas" /></SelectTrigger>
