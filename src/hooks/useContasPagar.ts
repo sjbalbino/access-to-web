@@ -281,6 +281,9 @@ export function useGerarParcelasPagar() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: GerarParcelasInput) => {
+      if (input.ja_pago && !input.data_pagamento) {
+        throw new Error('Para gerar parcelas já pagas é obrigatório informar a data de pagamento.');
+      }
       const filterField = input.entrada_nfe_id ? 'entrada_nfe_id' : 'compra_cereais_id';
       const filterValue = input.entrada_nfe_id || input.compra_cereais_id;
       if (filterValue) {
