@@ -222,6 +222,12 @@ export function useCreateBaixaPagar() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: Omit<BaixaContaPagar, 'id'>) => {
+      if (!input.data_pagamento) {
+        throw new Error('Data de pagamento é obrigatória para registrar a baixa.');
+      }
+      if (Number(input.valor_pago) <= 0) {
+        throw new Error('Valor pago deve ser maior que zero.');
+      }
       const { data, error } = await supabase.from('contas_pagar_baixas' as any).insert(input as any).select().single();
       if (error) throw error;
       return data;
