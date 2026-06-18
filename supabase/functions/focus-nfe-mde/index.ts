@@ -93,6 +93,14 @@ serve(async (req) => {
     if (!inscricaoId) throw new Error("inscricaoId é obrigatório");
     if (!action) throw new Error("action é obrigatório");
 
+    // Tenant isolation
+    {
+      const adminCli = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const caller = await getCallerTenant(adminCli, _userData.user.id);
+      const guard = await assertInscricaoTenant(adminCli, inscricaoId, caller);
+      if (!guard.ok) return tenantErrorResponse(guard, corsHeaders);
+    }
+
     const { token, ambiente, doc, docType } = await getInscricaoContext(inscricaoId);
     const baseUrl = getBaseUrl(ambiente);
     const authHeader = `Basic ${btoa(`${token}:`)}`;
