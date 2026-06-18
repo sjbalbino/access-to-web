@@ -66,7 +66,7 @@ serve(async (req) => {
         status, 
         motivo_status,
         emitente_id,
-        emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao))
+        emitentes_nfe!notas_fiscais_emitente_id_fkey(id, ambiente, numero_atual_nfe, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao))
       `)
       .eq("id", notaFiscalId)
       .maybeSingle();
@@ -86,7 +86,7 @@ serve(async (req) => {
     }
 
     // Obter ambiente e token do emitente
-    const emitenteData = (existingNota as unknown as { emitentes_nfe?: { ambiente: number | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null; api_access_token_homologacao: string | null }> | { api_access_token: string | null; api_access_token_homologacao: string | null } | null } })?.emitentes_nfe;
+    const emitenteData = (existingNota as unknown as { emitente_id?: string; emitentes_nfe?: { id?: string; ambiente: number | null; numero_atual_nfe?: number | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null; api_access_token_homologacao: string | null }> | { api_access_token: string | null; api_access_token_homologacao: string | null } | null } })?.emitentes_nfe;
     const ambiente = emitenteData?.ambiente;
     const credObj = Array.isArray(emitenteData?.emitentes_nfe_credentials) ? emitenteData?.emitentes_nfe_credentials?.[0] : emitenteData?.emitentes_nfe_credentials;
     const emitenteToken = ambiente === 2 ? credObj?.api_access_token_homologacao : credObj?.api_access_token;
@@ -133,6 +133,12 @@ serve(async (req) => {
     console.log("Gerando NOVA referência única:", ref);
     console.log("Status anterior:", existingNota?.status);
     console.log("UUID_API anterior:", existingNota?.uuid_api || "NENHUM");
+
+    // Forçar número sequencial a partir de emitentes_nfe.numero_atual_nfe + 1
+    const numeroAtual = Number(emitenteData?.numero_atual_nfe ?? 0) || 0;
+    const proximoNumero = numeroAtual + 1;
+    (notaData as Record<string, unknown>).numero = proximoNumero;
+    console.log(`Forçando número da NFe: ${proximoNumero} (numero_atual_nfe=${numeroAtual})`);
 
     console.log("Emitindo NF-e:", notaFiscalId);
     console.log("Referência:", ref);
@@ -279,6 +285,17 @@ serve(async (req) => {
     }
 
     console.log("Nota fiscal atualizada com sucesso no banco de dados");
+
+    // Atualizar numero_atual_nfe do emitente para o número usado
+    const numeroEmitido = Number(responseData.numero ?? proximoNumero);
+    if (emitenteData?.id && numeroEmitido > 0) {
+      const { error: emitErr } = await supabase
+        .from("emitentes_nfe")
+        .update({ numero_atual_nfe: numeroEmitido })
+        .eq("id", emitenteData.id);
+      if (emitErr) console.error("Erro ao atualizar numero_atual_nfe:", emitErr);
+      else console.log(`numero_atual_nfe atualizado para ${numeroEmitido}`);
+    }
 
     return new Response(
       JSON.stringify({
