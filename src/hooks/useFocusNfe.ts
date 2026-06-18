@@ -106,14 +106,39 @@ export function useFocusNfe() {
         };
       }
 
+      // Buscar observações tributárias dos produtos vinculados aos itens desta nota
+      const { data: itensComProduto } = await supabase
+        .from("notas_fiscais_itens")
+        .select("produto:produtos(observacao_tributaria)")
+        .eq("nota_fiscal_id", notaFiscalId);
+
+      const observacoesTributarias = Array.from(
+        new Set(
+          (itensComProduto || [])
+            .map((i: { produto: { observacao_tributaria: string | null } | null }) =>
+              i.produto?.observacao_tributaria?.trim()
+            )
+            .filter((o): o is string => !!o)
+        )
+      );
+
+      const infoComplementarFinal =
+        [notaData.info_complementar?.trim(), ...observacoesTributarias]
+          .filter((s): s is string => !!s)
+          .join(" | ") || null;
+
       // Garantir que notaData tenha numero e serie do banco
       const notaDataComNumero: NotaFiscalData = {
         ...notaData,
         numero: notaCompleta?.numero ?? notaData.numero,
         serie: notaCompleta?.serie ?? notaData.serie,
+        info_complementar: infoComplementarFinal,
       };
 
       console.log("Emitindo NFe com numero:", notaDataComNumero.numero, "serie:", notaDataComNumero.serie);
+      if (observacoesTributarias.length > 0) {
+        console.log("Observações tributárias dos produtos adicionadas:", observacoesTributarias);
+      }
 
       // Mapear para formato Focus NFe (incluindo notas referenciadas)
       const focusNfeData = mapNotaToFocusNfe(notaDataComNumero, itens, notasReferenciadasMapeadas);
