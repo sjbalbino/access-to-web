@@ -133,12 +133,19 @@ export default function ContasPagar() {
       </div>
 
       <Card className="mb-4">
-        <CardContent className="pt-4 grid grid-cols-2 md:grid-cols-6 gap-3">
-          <div>
+        <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+          <div className="min-w-0">
             <Label>Granja</Label>
             <Select isSearchable value={filtroGranja} onValueChange={(v) => setFiltroGranja(v === 'all' ? undefined : v)}>
-              <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">Todas</SelectItem>{granjas?.map(g => <SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>)}</SelectContent>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Todas" /></SelectTrigger>
+              <SelectContent className="max-w-[90vw]">
+                <SelectItem value="all">Todas</SelectItem>
+                {granjas?.map(g => (
+                  <SelectItem key={g.id} value={g.id} className="whitespace-normal break-words">
+                    {g.razao_social}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div>
