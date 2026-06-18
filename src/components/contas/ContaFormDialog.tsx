@@ -140,7 +140,21 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const update = (k: string, v: any) => {
     setForm((f: any) => {
       const newForm = { ...f, [k]: v };
-      
+
+      // Cascata de datas: emissão → vencimento → pagamento
+      if (k === 'data_emissao' && v) {
+        if (!f.data_vencimento || f.data_vencimento === f.data_emissao) {
+          newForm.data_vencimento = v;
+        }
+        if (!f.data_pagamento || f.data_pagamento === f.data_vencimento || f.data_pagamento === f.data_emissao) {
+          newForm.data_pagamento = newForm.data_vencimento;
+        }
+      } else if (k === 'data_vencimento' && v) {
+        if (!f.data_pagamento || f.data_pagamento === f.data_vencimento) {
+          newForm.data_pagamento = v;
+        }
+      }
+
       // Lógica de vínculo automático
       if (k === 'produto_id' && v) {
         const produto = produtos?.find((p: any) => p.id === v);
