@@ -45,6 +45,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     parcela: '',
     data_emissao: new Date().toISOString().slice(0, 10),
     data_vencimento: new Date().toISOString().slice(0, 10),
+    data_pagamento: new Date().toISOString().slice(0, 10),
     valor_original: '',
     dre_conta_id: undefined,
     sub_centro_custo_id: undefined,
@@ -139,7 +140,21 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const update = (k: string, v: any) => {
     setForm((f: any) => {
       const newForm = { ...f, [k]: v };
-      
+
+      // Cascata de datas: emissão → vencimento → pagamento
+      if (k === 'data_emissao' && v) {
+        if (!f.data_vencimento || f.data_vencimento === f.data_emissao) {
+          newForm.data_vencimento = v;
+        }
+        if (!f.data_pagamento || f.data_pagamento === f.data_vencimento || f.data_pagamento === f.data_emissao) {
+          newForm.data_pagamento = newForm.data_vencimento;
+        }
+      } else if (k === 'data_vencimento' && v) {
+        if (!f.data_pagamento || f.data_pagamento === f.data_vencimento) {
+          newForm.data_pagamento = v;
+        }
+      }
+
       // Lógica de vínculo automático
       if (k === 'produto_id' && v) {
         const produto = produtos?.find((p: any) => p.id === v);
@@ -225,7 +240,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         const cbSelecionada = contasBancarias.find((c: any) => c.id === form.conta_bancaria_id);
         const baixaPayload = {
           conta_id: saved.id,
-          data_pagamento: form.data_emissao, // ou data_vencimento? Normalmente data_emissao se pago na inclusão
+          data_pagamento: form.data_pagamento || form.data_vencimento || form.data_emissao,
           valor_pago: valorOriginal,
           juros: parseFloat(form.juros) || 0,
           multa: parseFloat(form.multa) || 0,
@@ -417,6 +432,14 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             <div className="col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 p-4 border rounded-md bg-emerald-50/50 border-emerald-100">
               <div className="col-span-2 md:col-span-4 font-semibold text-sm text-emerald-800 border-b border-emerald-100 pb-2 mb-1">
                 Informações da Baixa
+              </div>
+              <div>
+                <Label>Data do Pagamento *</Label>
+                <Input
+                  type="date"
+                  value={form.data_pagamento || ''}
+                  onChange={(e) => update('data_pagamento', e.target.value)}
+                />
               </div>
               <div>
                 <Label>Juros</Label>
