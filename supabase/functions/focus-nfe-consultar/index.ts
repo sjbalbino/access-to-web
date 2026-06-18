@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,6 +47,14 @@ serve(async (req) => {
 
     if (!ref) {
       throw new Error("ref é obrigatório");
+    }
+
+    // Tenant isolation
+    if (notaFiscalId) {
+      const adminCli = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+      const caller = await getCallerTenant(adminCli, _userData.user.id);
+      const guard = await assertNotaFiscalTenant(adminCli, notaFiscalId, caller);
+      if (!guard.ok) return tenantErrorResponse(guard, corsHeaders);
     }
 
     console.log("Consultando NF-e:", ref);

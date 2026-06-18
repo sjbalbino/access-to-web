@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +58,13 @@ serve(async (req) => {
 
     if (!justificativa || justificativa.length < 15) {
       throw new Error("Justificativa é obrigatória e deve ter no mínimo 15 caracteres");
+    }
+
+    // Tenant isolation: caller só pode cancelar notas do próprio tenant
+    if (notaFiscalId) {
+      const caller = await getCallerTenant(_adminClient, _userData.user.id);
+      const guard = await assertNotaFiscalTenant(_adminClient, notaFiscalId, caller);
+      if (!guard.ok) return tenantErrorResponse(guard, corsHeaders);
     }
 
     console.log("Cancelando NF-e:", ref);

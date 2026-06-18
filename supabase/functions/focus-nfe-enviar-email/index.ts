@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,6 +64,14 @@ serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+
+    // Tenant isolation
+    {
+      const caller = await getCallerTenant(supabase, _userData.user.id);
+      const guard = await assertNotaFiscalTenant(supabase, notaFiscalId, caller);
+      if (!guard.ok) return tenantErrorResponse(guard, corsHeaders);
+    }
+
 
     const { data: nota } = await supabase
       .from("notas_fiscais")
