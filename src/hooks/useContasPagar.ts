@@ -78,16 +78,62 @@ export function useContasPagar(filtros?: Filtros) {
   });
 }
 
+// Garante que existe pelo menos uma baixa com data_pagamento preenchida
+// antes de permitir status 'pago' ou 'parcial'.
+async function assertBaixaComDataPagamento(contaId: string) {
+  const { data, error } = await supabase
+    .from('contas_pagar_baixas' as any)
+    .select('id, data_pagamento')
+    .eq('conta_id', contaId);
+  if (error) throw error;
+  const valida = (data || []).some((b: any) => !!b.data_pagamento);
+  if (!valida) {
+    throw new Error(
+      'Não é possível marcar a conta como paga/parcial sem uma baixa correspondente com data de pagamento preenchida.'
+    );
+  }
+}
+
 export function useCreateContaPagar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: ContaPagarInput) => {
-      const { data, error } = await supabase.from('contas_pagar' as any).insert(input as any).select().single();
+    mutationFn: async (input: ContaPagarInput & { ja_pago?: boolean; data_pagamento?: string; forma_pagamento?: string | null; conta_bancaria_id?: string | null }) => {
+      const { ja_pago, data_pagamento, forma_pagamento, conta_bancaria_id, ...header } = input as any;
+
+      // Validação: ja_pago exige data_pagamento
+      if (ja_pago && !data_pagamento) {
+        throw new Error('Para marcar como já pago é obrigatório informar a data de pagamento.');
+      }
+
+      const { data, error } = await supabase
+        .from('contas_pagar' as any)
+        .insert({ ...header, valor_pago: 0, status: 'aberto' } as any)
+        .select()
+        .single();
       if (error) throw error;
+
+      if (ja_pago) {
+        const { error: errBaixa } = await supabase.from('contas_pagar_baixas' as any).insert({
+          conta_id: (data as any).id,
+          data_pagamento,
+          valor_pago: Number((data as any).valor_original),
+          juros: 0,
+          multa: 0,
+          desconto: 0,
+          forma_pagamento: forma_pagamento || null,
+          conta_bancaria: conta_bancaria_id || null,
+          documento: (data as any).documento || null,
+        } as any);
+        if (errBaixa) throw errBaixa;
+        // Trigger recalc_conta_pagar atualiza valor_pago/status
+        await assertBaixaComDataPagamento((data as any).id);
+      }
+
       return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contas_pagar'] });
+      qc.invalidateQueries({ queryKey: ['contas_pagar_baixas'] });
       toast.success('Conta a pagar criada!');
     },
     onError: (e: any) => toast.error('Erro: ' + e.message),
@@ -98,6 +144,10 @@ export function useUpdateContaPagar() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...input }: Partial<ContaPagarInput> & { id: string; status?: string }) => {
+      // Validação: bloqueia status pago/parcial sem baixa com data_pagamento
+      if (input.status === 'pago' || input.status === 'parcial') {
+        await assertBaixaComDataPagamento(id);
+      }
       const { data, error } = await supabase.from('contas_pagar' as any).update(input as any).eq('id', id).select().single();
       if (error) throw error;
       return data;
@@ -172,6 +222,12 @@ export function useCreateBaixaPagar() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: Omit<BaixaContaPagar, 'id'>) => {
+      if (!input.data_pagamento) {
+        throw new Error('Data de pagamento é obrigatória para registrar a baixa.');
+      }
+      if (Number(input.valor_pago) <= 0) {
+        throw new Error('Valor pago deve ser maior que zero.');
+      }
       const { data, error } = await supabase.from('contas_pagar_baixas' as any).insert(input as any).select().single();
       if (error) throw error;
       return data;
@@ -225,6 +281,9 @@ export function useGerarParcelasPagar() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: GerarParcelasInput) => {
+      if (input.ja_pago && !input.data_pagamento) {
+        throw new Error('Para gerar parcelas já pagas é obrigatório informar a data de pagamento.');
+      }
       const filterField = input.entrada_nfe_id ? 'entrada_nfe_id' : 'compra_cereais_id';
       const filterValue = input.entrada_nfe_id || input.compra_cereais_id;
       if (filterValue) {
