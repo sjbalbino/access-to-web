@@ -494,7 +494,13 @@ export default function VendaProducaoForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
               <div className="space-y-2">
                 <Label>Número</Label>
-                <Input {...register("numero")} placeholder="Nº do contrato" />
+                <Input
+                  {...register("numero")}
+                  placeholder="Automático"
+                  readOnly
+                  disabled
+                  className="bg-muted cursor-not-allowed"
+                />
               </div>
               <div className="space-y-2 sm:col-span-1 lg:col-span-2">
                 <Label>Safra *</Label>
