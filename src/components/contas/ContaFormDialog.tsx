@@ -434,6 +434,14 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
                 Informações da Baixa
               </div>
               <div>
+                <Label>Data do Pagamento *</Label>
+                <Input
+                  type="date"
+                  value={form.data_pagamento || ''}
+                  onChange={(e) => update('data_pagamento', e.target.value)}
+                />
+              </div>
+              <div>
                 <Label>Juros</Label>
                 <Input type="number" step="0.01" value={form.juros} onChange={(e) => update('juros', e.target.value)} />
               </div>
