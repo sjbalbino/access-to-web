@@ -16,9 +16,9 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    const { user_id, email, nome } = await req.json();
-    if (!user_id || !email) {
-      return new Response(JSON.stringify({ error: "user_id e email obrigatórios" }), {
+    const { user_id } = await req.json();
+    if (!user_id) {
+      return new Response(JSON.stringify({ error: "user_id obrigatório" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -27,23 +27,36 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Confirma que esse user_id realmente existe e está pendente (segurança mínima)
+    // Carrega dados do profile do servidor (nunca confia em email/nome do body — evita spoofing/spam)
     const { data: profile } = await admin
-      .from("profiles").select("id, ativo, tenant_id").eq("id", user_id).single();
-    if (!profile) {
+      .from("profiles").select("id, email, nome, ativo, tenant_id, created_at").eq("id", user_id).single();
+    if (!profile || !profile.email) {
       return new Response(JSON.stringify({ error: "Usuário não encontrado" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // E-mail 1: confirmação ao usuário
+    // Anti-spam: só envia se o profile foi criado nos últimos 5 minutos.
+    // Como o idempotencyKey é `signup-user-${user_id}`, reenviar para o mesmo user_id
+    // é ignorado pelo send-transactional-email, mas a janela evita reuso indefinido.
+    const createdAt = profile.created_at ? new Date(profile.created_at).getTime() : 0;
+    if (Date.now() - createdAt > 5 * 60 * 1000) {
+      return new Response(JSON.stringify({ success: true, skipped: "fora_janela_signup" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const usuarioEmail = profile.email;
+    const usuarioNome = profile.nome || "";
+
+    // E-mail 1: confirmação ao usuário (usa email do profile, não do body)
     try {
       await admin.functions.invoke("send-transactional-email", {
         body: {
           templateName: "cadastro-recebido-usuario",
-          recipientEmail: email,
+          recipientEmail: usuarioEmail,
           idempotencyKey: `signup-user-${user_id}`,
-          templateData: { nome: nome || "" },
+          templateData: { nome: usuarioNome },
         },
       });
     } catch (e) {
@@ -69,8 +82,8 @@ serve(async (req) => {
               idempotencyKey: `signup-admin-${user_id}-${ap.email}`,
               templateData: {
                 adminNome: ap.nome || "",
-                usuarioNome: nome || "",
-                usuarioEmail: email,
+                usuarioNome,
+                usuarioEmail,
               },
             },
           });
