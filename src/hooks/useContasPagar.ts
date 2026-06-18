@@ -216,6 +216,9 @@ export interface GerarParcelasInput {
   dre_conta_id?: string | null;
   sub_centro_custo_id?: string | null;
   safra_id?: string | null;
+  forma_pagamento?: string | null;
+  conta_bancaria_id?: string | null;
+  data_pagamento?: string;
 }
 
 export function useGerarParcelasPagar() {
