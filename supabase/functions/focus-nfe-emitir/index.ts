@@ -134,6 +134,12 @@ serve(async (req) => {
     console.log("Status anterior:", existingNota?.status);
     console.log("UUID_API anterior:", existingNota?.uuid_api || "NENHUM");
 
+    // Forçar número sequencial a partir de emitentes_nfe.numero_atual_nfe + 1
+    const numeroAtual = Number(emitenteData?.numero_atual_nfe ?? 0) || 0;
+    const proximoNumero = numeroAtual + 1;
+    (notaData as Record<string, unknown>).numero = proximoNumero;
+    console.log(`Forçando número da NFe: ${proximoNumero} (numero_atual_nfe=${numeroAtual})`);
+
     console.log("Emitindo NF-e:", notaFiscalId);
     console.log("Referência:", ref);
     console.log("Dados:", JSON.stringify(notaData, null, 2));
