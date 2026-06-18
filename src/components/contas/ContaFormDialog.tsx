@@ -45,6 +45,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     parcela: '',
     data_emissao: new Date().toISOString().slice(0, 10),
     data_vencimento: new Date().toISOString().slice(0, 10),
+    data_pagamento: new Date().toISOString().slice(0, 10),
     valor_original: '',
     dre_conta_id: undefined,
     sub_centro_custo_id: undefined,
