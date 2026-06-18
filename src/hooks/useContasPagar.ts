@@ -216,6 +216,9 @@ export interface GerarParcelasInput {
   dre_conta_id?: string | null;
   sub_centro_custo_id?: string | null;
   safra_id?: string | null;
+  forma_pagamento?: string | null;
+  conta_bancaria_id?: string | null;
+  data_pagamento?: string;
 }
 
 export function useGerarParcelasPagar() {
@@ -254,14 +257,37 @@ export function useGerarParcelasPagar() {
           data_emissao: input.data_emissao || new Date().toISOString().slice(0, 10),
           data_vencimento: d.toISOString().slice(0, 10),
           valor_original: valor,
-          valor_pago: input.ja_pago ? valor : 0,
-          status: input.ja_pago ? 'pago' : 'aberto',
+          valor_pago: 0,
+          status: 'aberto',
           dre_conta_id: input.dre_conta_id || null,
           sub_centro_custo_id: input.sub_centro_custo_id || null,
         };
       });
-      const { error } = await supabase.from('contas_pagar' as any).insert(parcelas as any);
+      const { data: criadas, error } = await supabase
+        .from('contas_pagar' as any)
+        .insert(parcelas as any)
+        .select('id, valor_original');
       if (error) throw error;
+
+      // Se "já pago" → gera baixas com data_pagamento (trigger recalc atualiza status/valor_pago)
+      if (input.ja_pago && criadas?.length) {
+        const dataPagamento = input.data_pagamento || new Date().toISOString().slice(0, 10);
+        const baixas = (criadas as any[]).map((c) => ({
+          conta_id: c.id,
+          data_pagamento: dataPagamento,
+          valor_pago: Number(c.valor_original),
+          juros: 0,
+          multa: 0,
+          desconto: 0,
+          forma_pagamento: input.forma_pagamento || null,
+          conta_bancaria: input.conta_bancaria_id || null,
+          documento: input.documento || null,
+        }));
+        const { error: errBaixa } = await supabase
+          .from('contas_pagar_baixas' as any)
+          .insert(baixas as any);
+        if (errBaixa) throw errBaixa;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contas_pagar'] });
