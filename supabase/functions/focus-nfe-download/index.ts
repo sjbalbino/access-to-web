@@ -53,6 +53,14 @@ serve(async (req) => {
       throw new Error("tipo deve ser 'xml', 'danfe' ou 'xml_cancelamento'");
     }
 
+    // Tenant isolation
+    if (notaFiscalId) {
+      const adminCli = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+      const caller = await getCallerTenant(adminCli, _userData.user.id);
+      const guard = await assertNotaFiscalTenant(adminCli, notaFiscalId, caller);
+      if (!guard.ok) return tenantErrorResponse(guard, corsHeaders);
+    }
+
     console.log("Baixando", tipo, "para NF-e:", ref);
 
     // Buscar ambiente e token do emitente
