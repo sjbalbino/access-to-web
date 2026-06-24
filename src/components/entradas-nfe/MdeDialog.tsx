@@ -415,7 +415,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                nfesRecebidas.map((nfe) => (
+                nfesFiltradas.map((nfe) => (
                   <TableRow key={nfe.chave} className="hover:bg-blue-50/30 transition-colors border-b last:border-0">
                     <TableCell className="py-4 px-6">
                       <div className="flex flex-col gap-0.5">
