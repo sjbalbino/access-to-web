@@ -16,6 +16,37 @@ const getBaseUrl = (ambiente: number | null | undefined) => {
     : "https://api.focusnfe.com.br";
 };
 
+function friendlyKeyLookupError(
+  rawMsg: string,
+  chave: string,
+  doc: string,
+  docType: string,
+  ambiente: number | null | undefined,
+): string {
+  const ambienteLabel = ambiente === 2 ? "homologação" : "produção";
+  const docLabel = `${docType.toUpperCase()} ${doc}`;
+  const lower = (rawMsg || "").toLowerCase();
+
+  if (!rawMsg || lower.includes("não encontrad") || lower.includes("not found") || lower.includes("nao encontrad")) {
+    return `Não encontramos esta NF-e na sua caixa de documentos recebidos.\n\n` +
+      `Chave: ${chave}\nEmitente consultado: ${docLabel} (${ambienteLabel})\n\n` +
+      `Possíveis causas:\n` +
+      `• O destinatário da nota não é este emitente (confira o CNPJ/CPF).\n` +
+      `• A SEFAZ ainda não distribuiu o evento (geralmente leva alguns minutos).\n` +
+      `• O ambiente está incorreto (produção × homologação).`;
+  }
+  if (lower.includes("token") || lower.includes("autoriza") || lower.includes("unauthor")) {
+    return "Token da Focus NFe inválido ou sem permissão para consultar este documento.";
+  }
+  if (lower.includes("timeout") || lower.includes("indispon")) {
+    return "A SEFAZ está temporariamente indisponível. Tente novamente em alguns minutos.";
+  }
+  if (lower.includes("chave")) {
+    return `Chave de acesso inválida ou rejeitada pela SEFAZ.\nChave informada: ${chave}`;
+  }
+  return `Não foi possível consultar a NF-e na SEFAZ.\n${rawMsg}`;
+}
+
 async function getInscricaoContext(inscricaoId: string) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
