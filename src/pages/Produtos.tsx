@@ -324,6 +324,7 @@ export default function Produtos() {
                 <SelectItem value="insumo">Insumo</SelectItem>
                 <SelectItem value="produto">Produto</SelectItem>
                 <SelectItem value="semente">Semente</SelectItem>
+                <SelectItem value="maquina_equipamento">Máquinas, Equipamentos e Implementos Agrícolas</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filtros.grupo} onValueChange={(v) => setFiltros({ ...filtros, grupo: v })}>
