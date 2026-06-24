@@ -372,7 +372,10 @@ export default function Produtos() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Nome / Descrição *</Label>
-                        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value.toUpperCase() })} className="uppercase" required />
+                        <Input value={formData.nome} onChange={(e) => {
+                          const v = e.target.value.toUpperCase();
+                          setFormData((prev) => ({ ...prev, nome: v, artigo_nfe: (!prev.artigo_nfe || prev.artigo_nfe === prev.nome) ? v : prev.artigo_nfe }));
+                        }} className="uppercase" required />
                       </div>
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
