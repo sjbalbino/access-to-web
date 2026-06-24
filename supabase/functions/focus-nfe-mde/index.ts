@@ -166,7 +166,7 @@ serve(async (req) => {
         });
         let data: any = await response.json().catch(() => ({}));
 
-        // 2) Se não encontrou, tenta via listagem MD-e filtrando por chave
+        // 2) Se não encontrou, tenta via listagem MD-e e filtra por chave (Focus ignora o filtro `chave` na URL)
         if (!response.ok || !data || (Array.isArray(data) && data.length === 0)) {
           const urlListagem = `${baseUrl}/v2/nfes_recebidas?${docType}=${doc}&chave=${cleanChave}&versao=1`;
           console.log("MD-e Consultar por chave (listagem):", urlListagem);
@@ -175,14 +175,19 @@ serve(async (req) => {
             headers: { Authorization: authHeader },
           });
           const listData = await respList.json().catch(() => null);
-          if (respList.ok && Array.isArray(listData) && listData.length > 0) {
-            result = listData;
-            break;
+          if (respList.ok && Array.isArray(listData)) {
+            const match = listData.filter((it: any) => {
+              const k = String(it?.chave ?? it?.chave_nfe ?? "").replace(/\D/g, "");
+              return k === cleanChave;
+            });
+            if (match.length > 0) {
+              result = match;
+              break;
+            }
           }
           const rawMsg = data?.mensagem || data?.message || listData?.mensagem || listData?.message || "";
           const msg = friendlyKeyLookupError(rawMsg, cleanChave, doc, docType, ambiente);
           throw new Error(msg);
-
         }
         result = Array.isArray(data) ? data : [data];
         break;
