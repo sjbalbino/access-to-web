@@ -26,36 +26,99 @@ export function useMde() {
     return data;
   };
 
+  const getTenantFromInscricao = async (inscricaoId: string): Promise<string | null> => {
+    const { data } = await supabase
+      .from("inscricoes_produtor")
+      .select("granjas(tenant_id)")
+      .eq("id", inscricaoId)
+      .maybeSingle();
+    return ((data?.granjas as any)?.tenant_id as string) ?? null;
+  };
+
+  const upsertCache = async (inscricaoId: string, items: NfeRecebida[]) => {
+    if (items.length === 0) return;
+    const tenantId = await getTenantFromInscricao(inscricaoId);
+    if (!tenantId) return;
+    const rows = items.map((n) => ({
+      tenant_id: tenantId,
+      inscricao_id: inscricaoId,
+      chave: n.chave,
+      numero: n.numero || null,
+      serie: n.serie || null,
+      nome: n.nome || null,
+      cnpj: n.cnpj || null,
+      valor: n.valor || 0,
+      data_emissao: n.data_emissao || null,
+      situacao: n.situacao || null,
+      tipo_nfe: n.tipo_nfe || null,
+      manifestacao_destinatario: n.manifestacao_destinatario || null,
+    }));
+    await supabase
+      .from("dfe_nfes_cache" as any)
+      .upsert(rows, { onConflict: "inscricao_id,chave" });
+  };
+
+  const loadCache = async (inscricaoId: string): Promise<NfeRecebida[]> => {
+    const { data } = await supabase
+      .from("dfe_nfes_cache" as any)
+      .select("chave,numero,serie,nome,cnpj,valor,data_emissao,situacao,tipo_nfe,manifestacao_destinatario")
+      .eq("inscricao_id", inscricaoId);
+    return ((data as any[]) || []).map((r) => ({
+      chave: r.chave,
+      nome: r.nome ?? "",
+      cnpj: r.cnpj ?? "",
+      valor: Number(r.valor ?? 0),
+      data_emissao: r.data_emissao ?? "",
+      situacao: r.situacao ?? "",
+      tipo_nfe: r.tipo_nfe ?? "",
+      numero: r.numero ?? "",
+      serie: r.serie ?? "",
+      manifestacao_destinatario: r.manifestacao_destinatario ?? undefined,
+    }));
+  };
+
+  const mapRaw = (r: any, fallbackChave = ""): NfeRecebida => {
+    const chave = r.chave ?? r.chave_nfe ?? r.chaveNFe ?? fallbackChave;
+    const cd = String(chave || "").replace(/\D/g, "");
+    const serieFromChave = cd.length === 44 ? String(parseInt(cd.slice(22, 25), 10)) : "";
+    const numeroFromChave = cd.length === 44 ? String(parseInt(cd.slice(25, 34), 10)) : "";
+    return {
+      chave,
+      nome: r.nome ?? r.emitente_nome ?? r.razao_social_emitente ?? r.emitente_razao_social ?? r.emitente?.nome ?? "",
+      cnpj: r.cnpj ?? r.cnpj_emitente ?? r.emitente_cnpj ?? r.cnpj_cpf_emitente ?? r.emitente?.cnpj ?? "",
+      valor: Number(r.valor ?? r.valor_total ?? r.valor_nfe ?? r.valor_total_nota ?? 0),
+      data_emissao: r.data_emissao ?? r.dataEmissao ?? r.data_emissao_nfe ?? r.dh_emissao ?? "",
+      situacao: r.situacao ?? r.status ?? "",
+      tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
+      numero: String(r.numero ?? r.numero_nfe ?? r.numero_nfe_recebida ?? r.numero_nota ?? numeroFromChave ?? ""),
+      serie: String(r.serie ?? r.serie_nfe ?? r.serie_nota ?? serieFromChave ?? ""),
+      manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
+    };
+  };
+
   const consultarDestinatarias = async (inscricaoId: string) => {
     setIsLoading(true);
     try {
       const result = await invokeAction({ action: "consultar", inscricaoId });
       const raw: any[] = Array.isArray(result.data) ? result.data : [];
-      const items: NfeRecebida[] = raw.map((r) => {
-        const chave = r.chave ?? r.chave_nfe ?? r.chaveNFe ?? "";
-        const cd = String(chave || "").replace(/\D/g, "");
-        const serieFromChave = cd.length === 44 ? String(parseInt(cd.slice(22, 25), 10)) : "";
-        const numeroFromChave = cd.length === 44 ? String(parseInt(cd.slice(25, 34), 10)) : "";
-        return {
-          chave,
-          nome: r.nome ?? r.emitente_nome ?? r.razao_social_emitente ?? r.emitente_razao_social ?? r.emitente?.nome ?? "",
-          cnpj: r.cnpj ?? r.cnpj_emitente ?? r.emitente_cnpj ?? r.cnpj_cpf_emitente ?? r.emitente?.cnpj ?? "",
-          valor: Number(r.valor ?? r.valor_total ?? r.valor_nfe ?? r.valor_total_nota ?? 0),
-          data_emissao: r.data_emissao ?? r.dataEmissao ?? r.data_emissao_nfe ?? r.dh_emissao ?? "",
-          situacao: r.situacao ?? r.status ?? "",
-          tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
-          numero: String(r.numero ?? r.numero_nfe ?? r.numero_nfe_recebida ?? r.numero_nota ?? numeroFromChave ?? ""),
-          serie: String(r.serie ?? r.serie_nfe ?? r.serie_nota ?? serieFromChave ?? ""),
-          manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
-        };
-      });
-      setNfesRecebidas(items);
-      if (items.length === 0) {
+      const items: NfeRecebida[] = raw.map((r) => mapRaw(r));
+      // Atualiza cache com o que veio da SEFAZ
+      await upsertCache(inscricaoId, items);
+      // Merge com cache (NFes consultadas por chave que já saíram da janela do DFe)
+      const cached = await loadCache(inscricaoId);
+      const byChave = new Map<string, NfeRecebida>();
+      cached.forEach((n) => byChave.set(n.chave, n));
+      items.forEach((n) => byChave.set(n.chave, n)); // API prevalece
+      const merged = Array.from(byChave.values()).sort((a, b) =>
+        (b.data_emissao || "").localeCompare(a.data_emissao || "")
+      );
+      setNfesRecebidas(merged);
+      if (merged.length === 0) {
         toast.info("Nenhuma NF-e destinada encontrada.");
       } else {
-        toast.success(`${items.length} NF-e(s) encontrada(s).`);
+        toast.success(`${merged.length} NF-e(s) encontrada(s).`);
       }
-      return items;
+      return merged;
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
       toast.error("Erro ao consultar NF-es destinadas", { description: msg });
@@ -64,6 +127,7 @@ export function useMde() {
       setIsLoading(false);
     }
   };
+
   const consultarPorChave = async (inscricaoId: string, chave: string) => {
     setIsLoading(true);
     try {
@@ -74,29 +138,22 @@ export function useMde() {
       }
       const result = await invokeAction({ action: "consultar_chave", inscricaoId, chave: cleanChave });
       const raw: any[] = Array.isArray(result.data) ? result.data : [];
-      const items: NfeRecebida[] = raw.map((r) => {
-        const chave = r.chave ?? r.chave_nfe ?? r.chaveNFe ?? cleanChave;
-        const cd = String(chave || "").replace(/\D/g, "");
-        const serieFromChave = cd.length === 44 ? String(parseInt(cd.slice(22, 25), 10)) : "";
-        const numeroFromChave = cd.length === 44 ? String(parseInt(cd.slice(25, 34), 10)) : "";
-        return {
-          chave,
-          nome: r.nome ?? r.emitente_nome ?? r.razao_social_emitente ?? r.emitente_razao_social ?? r.emitente?.nome ?? "",
-          cnpj: r.cnpj ?? r.cnpj_emitente ?? r.emitente_cnpj ?? r.cnpj_cpf_emitente ?? r.emitente?.cnpj ?? "",
-          valor: Number(r.valor ?? r.valor_total ?? r.valor_nfe ?? r.valor_total_nota ?? 0),
-          data_emissao: r.data_emissao ?? r.dataEmissao ?? r.data_emissao_nfe ?? r.dh_emissao ?? "",
-          situacao: r.situacao ?? r.status ?? "",
-          tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
-          numero: String(r.numero ?? r.numero_nfe ?? r.numero_nfe_recebida ?? r.numero_nota ?? numeroFromChave ?? ""),
-          serie: String(r.serie ?? r.serie_nfe ?? r.serie_nota ?? serieFromChave ?? ""),
-          manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
-        };
+      const items: NfeRecebida[] = raw.map((r) => mapRaw(r, cleanChave));
+      // Persiste no cache para aparecer na próxima sincronização
+      await upsertCache(inscricaoId, items);
+      // Merge no estado atual sem perder o que já estava listado
+      setNfesRecebidas((prev) => {
+        const byChave = new Map<string, NfeRecebida>();
+        prev.forEach((n) => byChave.set(n.chave, n));
+        items.forEach((n) => byChave.set(n.chave, n));
+        return Array.from(byChave.values()).sort((a, b) =>
+          (b.data_emissao || "").localeCompare(a.data_emissao || "")
+        );
       });
-      setNfesRecebidas(items);
       if (items.length === 0) {
         toast.info("NF-e não encontrada para esta chave.");
       } else {
-        toast.success("NF-e encontrada!");
+        toast.success("NF-e encontrada e adicionada à lista!");
       }
       return items;
     } catch (error) {
@@ -107,6 +164,7 @@ export function useMde() {
       setIsLoading(false);
     }
   };
+
 
 
   const manifestar = async (inscricaoId: string, chave: string, tipo: string) => {
