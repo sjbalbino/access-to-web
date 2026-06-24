@@ -256,7 +256,7 @@ export default function GruposProdutos() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead>Sub-Centro</TableHead>
-                    <TableHead>Conta DRE</TableHead>
+                    
                     <TableHead>Classificação</TableHead>
                     <TableHead>Status</TableHead>
                     {canEdit && <TableHead className="w-24">Ações</TableHead>}
