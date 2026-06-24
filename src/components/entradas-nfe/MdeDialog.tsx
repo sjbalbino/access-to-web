@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -97,6 +97,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     if (!inscricaoId) return;
     consultarDestinatarias(inscricaoId);
   };
+
+  useEffect(() => {
+    if (open && inscricaoId) {
+      consultarDestinatarias(inscricaoId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inscricaoId, open]);
 
   const handleConsultarChave = () => {
     if (!inscricaoId || !chaveBusca) return;
@@ -297,7 +304,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 items-end mb-6 bg-slate-50 p-6 rounded-lg border">
+        <div className="flex flex-wrap gap-4 items-start mb-6 bg-slate-50 p-6 rounded-lg border">
           <div className="flex-1 min-w-[300px]">
             <label className="text-sm font-medium mb-1.5 block">Inscrição do Produtor (CNPJ Destinatário)</label>
             <Select isSearchable value={inscricaoId || undefined} onValueChange={setInscricaoId}>
@@ -324,10 +331,10 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
               </p>
             )}
           </div>
-          <Button 
-            onClick={handleConsultar} 
-            disabled={!inscricaoId || isLoading} 
-            className="bg-blue-600 hover:bg-blue-700 h-11 px-8 font-semibold shadow-md"
+          <Button
+            onClick={handleConsultar}
+            disabled={!inscricaoId || isLoading}
+            className="bg-blue-600 hover:bg-blue-700 h-11 px-8 font-semibold shadow-md mt-[26px]"
           >
             {isLoading ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Search className="h-5 w-5 mr-2" />}
             Sincronizar DFe
