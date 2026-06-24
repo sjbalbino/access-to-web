@@ -1866,6 +1866,71 @@ export type Database = {
           },
         ]
       }
+      dfe_nfes_cache: {
+        Row: {
+          chave: string
+          cnpj: string | null
+          created_at: string
+          data_emissao: string | null
+          id: string
+          inscricao_id: string
+          manifestacao_destinatario: string | null
+          nome: string | null
+          numero: string | null
+          raw: Json | null
+          serie: string | null
+          situacao: string | null
+          tenant_id: string
+          tipo_nfe: string | null
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          chave: string
+          cnpj?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          id?: string
+          inscricao_id: string
+          manifestacao_destinatario?: string | null
+          nome?: string | null
+          numero?: string | null
+          raw?: Json | null
+          serie?: string | null
+          situacao?: string | null
+          tenant_id: string
+          tipo_nfe?: string | null
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          chave?: string
+          cnpj?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          id?: string
+          inscricao_id?: string
+          manifestacao_destinatario?: string | null
+          nome?: string | null
+          numero?: string | null
+          raw?: Json | null
+          serie?: string | null
+          situacao?: string | null
+          tenant_id?: string
+          tipo_nfe?: string | null
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dfe_nfes_cache_inscricao_id_fkey"
+            columns: ["inscricao_id"]
+            isOneToOne: false
+            referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dre_contas: {
         Row: {
           ativo: boolean | null
