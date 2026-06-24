@@ -148,9 +148,10 @@ serve(async (req) => {
             result = listData;
             break;
           }
-          const msg = data?.mensagem || data?.message ||
-            `NF-e ${cleanChave} não encontrada na caixa de MD-e deste emitente (${docType.toUpperCase()} ${doc}, ${ambiente === 2 ? "homologação" : "produção"}). Verifique se o CNPJ destinatário da nota corresponde ao emitente consultado e se a SEFAZ já distribuiu o evento.`;
+          const rawMsg = data?.mensagem || data?.message || listData?.mensagem || listData?.message || "";
+          const msg = friendlyKeyLookupError(rawMsg, cleanChave, doc, docType, ambiente);
           throw new Error(msg);
+
         }
         result = Array.isArray(data) ? data : [data];
         break;
