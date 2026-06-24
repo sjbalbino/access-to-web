@@ -405,7 +405,14 @@ export default function Produtos() {
                       </div>
                       <div className="space-y-2">
                         <Label>Grupo</Label>
-                        <Select isSearchable value={formData.grupo || ''} onValueChange={(value) => setFormData({ ...formData, grupo: value || null })}>
+                        <Select isSearchable value={formData.grupo || ''} onValueChange={(value) => {
+                          const grupoSel = gruposAtivos?.find(g => g.nome === value);
+                          setFormData({
+                            ...formData,
+                            grupo: value || null,
+                            conta_gerencial_id: grupoSel?.conta_gerencial_id ?? formData.conta_gerencial_id,
+                          });
+                        }}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             {gruposAtivos?.map((grupo) => (
