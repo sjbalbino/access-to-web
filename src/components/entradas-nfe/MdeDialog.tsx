@@ -535,8 +535,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button size="sm" className="h-9 bg-blue-600 hover:bg-blue-700 text-xs font-bold px-4 shadow-sm">
-                              Manifestar
+                            <Button
+                              size="sm"
+                              className="h-9 bg-blue-600 hover:bg-blue-700 text-xs font-bold px-4 shadow-sm disabled:bg-slate-300 disabled:cursor-not-allowed"
+                              disabled={isLoading || !!nfe.manifestacao_destinatario}
+                              title={nfe.manifestacao_destinatario ? `Já manifestada: ${manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}` : "Registrar manifestação do destinatário"}
+                            >
+                              {nfe.manifestacao_destinatario ? "Manifestada" : "Manifestar"}
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-60 p-2">
