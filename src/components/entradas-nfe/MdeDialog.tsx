@@ -48,6 +48,31 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
   const [chaveBusca, setChaveBusca] = useState("");
+  const RECENT_KEYS_STORAGE = "mde:chaves-recentes";
+  const [chavesRecentes, setChavesRecentes] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(RECENT_KEYS_STORAGE);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  const salvarChaveRecente = (chave: string) => {
+    const c = (chave || "").replace(/\D/g, "");
+    if (c.length !== 44) return;
+    setChavesRecentes((prev) => {
+      const next = [c, ...prev.filter((k) => k !== c)].slice(0, 10);
+      try { localStorage.setItem(RECENT_KEYS_STORAGE, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
+  const removerChaveRecente = (chave: string) => {
+    setChavesRecentes((prev) => {
+      const next = prev.filter((k) => k !== chave);
+      try { localStorage.setItem(RECENT_KEYS_STORAGE, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
   const [filtroBusca, setFiltroBusca] = useState("");
   const [filtroManifest, setFiltroManifest] = useState<string>("all");
   const [filtroDataIni, setFiltroDataIni] = useState("");
@@ -107,6 +132,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
   const handleConsultarChave = () => {
     if (!inscricaoId || !chaveBusca) return;
+    salvarChaveRecente(chaveBusca);
     consultarPorChave(inscricaoId, chaveBusca);
   };
 
@@ -341,7 +367,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
           </Button>
         </div>
 
-        <div className="flex flex-wrap gap-3 items-end mb-6 bg-blue-50/40 p-4 rounded-lg border border-blue-100">
+        <div className="flex flex-wrap gap-3 items-end mb-2 bg-blue-50/40 p-4 rounded-lg border border-blue-100">
           <div className="flex-1 min-w-[320px]">
             <label className="text-sm font-medium mb-1.5 block">Buscar NF-e por Chave de Acesso (44 dígitos)</label>
             <Input
@@ -350,7 +376,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
               placeholder="00000000000000000000000000000000000000000000"
               className="bg-white h-11 font-mono text-sm"
               maxLength={44}
+              list="chaves-recentes-dl"
             />
+            <datalist id="chaves-recentes-dl">
+              {chavesRecentes.map((k) => (
+                <option key={k} value={k} />
+              ))}
+            </datalist>
           </div>
           <Button
             onClick={handleConsultarChave}
@@ -362,6 +394,22 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
             Buscar por Chave
           </Button>
         </div>
+
+        {chavesRecentes.length > 0 && (
+          <div className="mb-6 px-1">
+            <div className="text-xs font-medium text-slate-600 mb-1.5">Chaves recentes (clique para reutilizar)</div>
+            <div className="flex flex-wrap gap-1.5">
+              {chavesRecentes.map((k) => (
+                <span key={k} className="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md px-2 py-1 text-[11px] font-mono">
+                  <button type="button" className="hover:text-blue-700" onClick={() => setChaveBusca(k)} title="Usar esta chave">
+                    {k.slice(0, 6)}…{k.slice(-6)}
+                  </button>
+                  <button type="button" className="text-slate-400 hover:text-destructive" onClick={() => removerChaveRecente(k)} title="Remover">×</button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
 
         {nfesRecebidas.length > 0 && (
