@@ -268,7 +268,7 @@ export default function GruposProdutos() {
                       <TableCell className="font-medium">{grupo.nome}</TableCell>
                       <TableCell className="text-muted-foreground">{grupo.descricao || '-'}</TableCell>
                       <TableCell className="text-sm">{grupo.sub_centros_custo ? grupo.sub_centros_custo.descricao : '-'}</TableCell>
-                      <TableCell className="text-sm font-mono">{grupo.codigo_dre || '-'}</TableCell>
+                      
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {grupo.insumos && <Badge variant="outline" className="text-xs">Insumos</Badge>}
