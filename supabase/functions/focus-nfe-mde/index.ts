@@ -126,20 +126,33 @@ serve(async (req) => {
         const cleanChave = String(chave).replace(/\D/g, "");
         if (cleanChave.length !== 44) throw new Error("Chave de acesso deve ter 44 dígitos.");
 
-        const url = `${baseUrl}/v2/nfes_recebidas/${cleanChave}`;
-        console.log("MD-e Consultar por chave:", url);
-
-        const response = await fetch(url, {
+        // 1) Tenta endpoint direto
+        const urlDireto = `${baseUrl}/v2/nfes_recebidas/${cleanChave}`;
+        console.log("MD-e Consultar por chave (direto):", urlDireto);
+        let response = await fetch(urlDireto, {
           method: "GET",
           headers: { Authorization: authHeader },
         });
-        const data = await response.json();
+        let data: any = await response.json().catch(() => ({}));
 
-        if (!response.ok) {
-          const msg = data?.mensagem || data?.message || `Erro ${response.status} ao consultar chave`;
+        // 2) Se não encontrou, tenta via listagem MD-e filtrando por chave
+        if (!response.ok || !data || (Array.isArray(data) && data.length === 0)) {
+          const urlListagem = `${baseUrl}/v2/nfes_recebidas?${docType}=${doc}&chave=${cleanChave}&versao=1`;
+          console.log("MD-e Consultar por chave (listagem):", urlListagem);
+          const respList = await fetch(urlListagem, {
+            method: "GET",
+            headers: { Authorization: authHeader },
+          });
+          const listData = await respList.json().catch(() => null);
+          if (respList.ok && Array.isArray(listData) && listData.length > 0) {
+            result = listData;
+            break;
+          }
+          const msg = data?.mensagem || data?.message ||
+            `NF-e ${cleanChave} não encontrada na caixa de MD-e deste emitente (${docType.toUpperCase()} ${doc}, ${ambiente === 2 ? "homologação" : "produção"}). Verifique se o CNPJ destinatário da nota corresponde ao emitente consultado e se a SEFAZ já distribuiu o evento.`;
           throw new Error(msg);
         }
-        result = [data];
+        result = Array.isArray(data) ? data : [data];
         break;
       }
 
