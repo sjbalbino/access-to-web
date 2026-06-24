@@ -386,7 +386,8 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
               <Input type="date" value={filtroDataFim} onChange={(e) => setFiltroDataFim(e.target.value)} className="bg-white h-9" />
             </div>
             <Button variant="ghost" size="sm" onClick={limparFiltros} className="h-9 text-xs">Limpar</Button>
-            <span className="text-xs text-slate-500 ml-auto">{nfesFiltradas.length} de {nfesRecebidas.length}</span>
+            <span className="text-[11px] text-slate-500 italic">Filtros aplicados automaticamente</span>
+            <span className="text-xs text-slate-500 ml-auto font-medium">{nfesFiltradas.length} de {nfesRecebidas.length}</span>
           </div>
         )}
 
