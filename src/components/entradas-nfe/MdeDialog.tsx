@@ -48,6 +48,31 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
   const [chaveBusca, setChaveBusca] = useState("");
+  const RECENT_KEYS_STORAGE = "mde:chaves-recentes";
+  const [chavesRecentes, setChavesRecentes] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(RECENT_KEYS_STORAGE);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  const salvarChaveRecente = (chave: string) => {
+    const c = (chave || "").replace(/\D/g, "");
+    if (c.length !== 44) return;
+    setChavesRecentes((prev) => {
+      const next = [c, ...prev.filter((k) => k !== c)].slice(0, 10);
+      try { localStorage.setItem(RECENT_KEYS_STORAGE, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
+  const removerChaveRecente = (chave: string) => {
+    setChavesRecentes((prev) => {
+      const next = prev.filter((k) => k !== chave);
+      try { localStorage.setItem(RECENT_KEYS_STORAGE, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
   const [filtroBusca, setFiltroBusca] = useState("");
   const [filtroManifest, setFiltroManifest] = useState<string>("all");
   const [filtroDataIni, setFiltroDataIni] = useState("");
