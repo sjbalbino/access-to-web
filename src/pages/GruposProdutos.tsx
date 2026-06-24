@@ -142,7 +142,8 @@ export default function GruposProdutos() {
                         <Label>Nome *</Label>
                         <Input
                           value={formData.nome}
-                          onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, nome: e.target.value.toUpperCase() })}
+                          className="uppercase"
                           required
                         />
                       </div>
