@@ -48,6 +48,37 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
   const [chaveBusca, setChaveBusca] = useState("");
+  const [filtroBusca, setFiltroBusca] = useState("");
+  const [filtroManifest, setFiltroManifest] = useState<string>("all");
+  const [filtroDataIni, setFiltroDataIni] = useState("");
+  const [filtroDataFim, setFiltroDataFim] = useState("");
+
+  const nfesFiltradas = useMemo(() => {
+    const term = filtroBusca.trim().toLowerCase();
+    return nfesRecebidas.filter((n) => {
+      if (term) {
+        const hay = `${n.nome} ${n.cnpj} ${n.chave} ${n.numero} ${n.serie}`.toLowerCase();
+        if (!hay.includes(term)) return false;
+      }
+      if (filtroManifest !== "all") {
+        if (filtroManifest === "sem" && n.manifestacao_destinatario) return false;
+        if (filtroManifest !== "sem" && n.manifestacao_destinatario !== filtroManifest) return false;
+      }
+      if (filtroDataIni || filtroDataFim) {
+        const d = n.data_emissao ? new Date(n.data_emissao).toISOString().slice(0, 10) : "";
+        if (filtroDataIni && d < filtroDataIni) return false;
+        if (filtroDataFim && d > filtroDataFim) return false;
+      }
+      return true;
+    });
+  }, [nfesRecebidas, filtroBusca, filtroManifest, filtroDataIni, filtroDataFim]);
+
+  const limparFiltros = () => {
+    setFiltroBusca("");
+    setFiltroManifest("all");
+    setFiltroDataIni("");
+    setFiltroDataFim("");
+  };
 
   const inscricoesEmissoras = useMemo(() => {
     return (inscricoes || []).filter((i: any) => {
@@ -326,6 +357,39 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         </div>
 
 
+        {nfesRecebidas.length > 0 && (
+          <div className="flex flex-wrap gap-3 items-end mb-4 bg-slate-50/60 p-4 rounded-lg border">
+            <div className="flex-1 min-w-[220px]">
+              <label className="text-xs font-medium mb-1 block text-slate-600">Buscar (emitente, CNPJ, nº, chave)</label>
+              <Input value={filtroBusca} onChange={(e) => setFiltroBusca(e.target.value)} placeholder="Digite para filtrar..." className="bg-white h-9" />
+            </div>
+            <div className="w-52">
+              <label className="text-xs font-medium mb-1 block text-slate-600">Manifestação</label>
+              <Select value={filtroManifest} onValueChange={setFiltroManifest}>
+                <SelectTrigger className="bg-white h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="sem">Sem manifestação</SelectItem>
+                  <SelectItem value="ciencia">Ciência</SelectItem>
+                  <SelectItem value="confirmacao">Confirmada</SelectItem>
+                  <SelectItem value="desconhecimento">Desconhecida</SelectItem>
+                  <SelectItem value="nao_realizada">Não realizada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-40">
+              <label className="text-xs font-medium mb-1 block text-slate-600">Emissão de</label>
+              <Input type="date" value={filtroDataIni} onChange={(e) => setFiltroDataIni(e.target.value)} className="bg-white h-9" />
+            </div>
+            <div className="w-40">
+              <label className="text-xs font-medium mb-1 block text-slate-600">até</label>
+              <Input type="date" value={filtroDataFim} onChange={(e) => setFiltroDataFim(e.target.value)} className="bg-white h-9" />
+            </div>
+            <Button variant="ghost" size="sm" onClick={limparFiltros} className="h-9 text-xs">Limpar</Button>
+            <span className="text-xs text-slate-500 ml-auto">{nfesFiltradas.length} de {nfesRecebidas.length}</span>
+          </div>
+        )}
+
         <div className="rounded-xl border shadow-sm overflow-hidden">
           <Table>
             <TableHeader className="bg-slate-50">
@@ -339,7 +403,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {nfesRecebidas.length === 0 ? (
+              {nfesFiltradas.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-20 text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
@@ -351,7 +415,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                nfesRecebidas.map((nfe) => (
+                nfesFiltradas.map((nfe) => (
                   <TableRow key={nfe.chave} className="hover:bg-blue-50/30 transition-colors border-b last:border-0">
                     <TableCell className="py-4 px-6">
                       <div className="flex flex-col gap-0.5">
