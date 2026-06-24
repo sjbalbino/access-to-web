@@ -219,23 +219,63 @@ serve(async (req) => {
       case "download_xml": {
         if (!chave) throw new Error("chave é obrigatória para download");
 
-        const url = `${baseUrl}/v2/nfes_recebidas/${chave}.xml?completa=1`;
-        console.log("MD-e Download XML (completa):", url);
-
-        const response = await fetch(url, {
+        // Focus NFe: o endpoint .xml retorna apenas o RESUMO (nfeProc não completo).
+        // O XML completo (procNFe com todos os itens) só fica disponível após a
+        // Confirmação da Operação e deve ser baixado pelo caminho informado no
+        // JSON da consulta (campo caminho_xml_nota_fiscal / caminho_xml_completo).
+        const urlInfo = `${baseUrl}/v2/nfes_recebidas/${chave}`;
+        console.log("MD-e Consultar info p/ XML completo:", urlInfo);
+        const infoResp = await fetch(urlInfo, {
           method: "GET",
           headers: { Authorization: authHeader },
         });
+        const info: any = await infoResp.json().catch(() => ({}));
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          if (response.status === 404) {
-            throw new Error("XML não disponível. Manifeste a NF-e (Ciência da Operação) antes de baixar o XML.");
+        const caminhoCompleto: string | undefined =
+          info?.caminho_xml_nota_fiscal ||
+          info?.caminho_xml_completo ||
+          info?.caminho_completo_xml ||
+          info?.xml_nfe ||
+          info?.caminho_xml;
+
+        let xmlContent: string | null = null;
+
+        if (caminhoCompleto) {
+          const xmlUrl = caminhoCompleto.startsWith("http")
+            ? caminhoCompleto
+            : `${baseUrl}${caminhoCompleto.startsWith("/") ? "" : "/"}${caminhoCompleto}`;
+          console.log("MD-e Download XML completo (caminho):", xmlUrl);
+          const xmlResp = await fetch(xmlUrl, {
+            method: "GET",
+            headers: { Authorization: authHeader },
+            redirect: "follow",
+          });
+          if (xmlResp.ok) {
+            xmlContent = await xmlResp.text();
+          } else {
+            const errTxt = await xmlResp.text();
+            console.log("Falha no caminho completo:", xmlResp.status, errTxt);
           }
-          throw new Error(`Erro ao baixar XML: ${response.status} - ${errorText}`);
         }
 
-        const xmlContent = await response.text();
+        // Fallback: tenta o .xml direto (retorna resumo se não tiver completo)
+        if (!xmlContent) {
+          const urlFallback = `${baseUrl}/v2/nfes_recebidas/${chave}.xml`;
+          console.log("MD-e Download XML (fallback .xml):", urlFallback);
+          const response = await fetch(urlFallback, {
+            method: "GET",
+            headers: { Authorization: authHeader },
+          });
+          if (!response.ok) {
+            const errorText = await response.text();
+            if (response.status === 404) {
+              throw new Error("XML não disponível. Confirme a Operação (manifestação 'Confirmação') para liberar o XML completo na SEFAZ.");
+            }
+            throw new Error(`Erro ao baixar XML: ${response.status} - ${errorText}`);
+          }
+          xmlContent = await response.text();
+        }
+
         return new Response(JSON.stringify({ success: true, xml: xmlContent }), {
           headers: {
             ...corsHeaders,
@@ -243,6 +283,7 @@ serve(async (req) => {
           },
         });
       }
+
 
       case "download_danfe": {
         if (!chave) throw new Error("chave é obrigatória para download");
