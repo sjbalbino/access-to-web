@@ -173,25 +173,8 @@ export default function GruposProdutos() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Conta DRE (Rateio automático)</Label>
-                        <Select isSearchable
-                          value={formData.codigo_dre || 'none'}
-                          onValueChange={(value) => setFormData({ ...formData, codigo_dre: value === 'none' ? null : value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione uma conta DRE" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhuma</SelectItem>
-                            {dreContas?.filter(c => c.ativo).map((dre: any) => (
-                              <SelectItem key={dre.id} value={dre.codigo}>
-                                {dre.codigo} - {dre.descricao}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+
+
                       <div className="space-y-3 rounded-lg border p-4">
                         <Label className="text-sm font-semibold">Classificação</Label>
                         <div className="grid grid-cols-2 gap-3">
