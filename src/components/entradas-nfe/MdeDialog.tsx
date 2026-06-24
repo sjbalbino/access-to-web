@@ -48,6 +48,37 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
   const [chaveBusca, setChaveBusca] = useState("");
+  const [filtroBusca, setFiltroBusca] = useState("");
+  const [filtroManifest, setFiltroManifest] = useState<string>("all");
+  const [filtroDataIni, setFiltroDataIni] = useState("");
+  const [filtroDataFim, setFiltroDataFim] = useState("");
+
+  const nfesFiltradas = useMemo(() => {
+    const term = filtroBusca.trim().toLowerCase();
+    return nfesRecebidas.filter((n) => {
+      if (term) {
+        const hay = `${n.nome} ${n.cnpj} ${n.chave} ${n.numero} ${n.serie}`.toLowerCase();
+        if (!hay.includes(term)) return false;
+      }
+      if (filtroManifest !== "all") {
+        if (filtroManifest === "sem" && n.manifestacao_destinatario) return false;
+        if (filtroManifest !== "sem" && n.manifestacao_destinatario !== filtroManifest) return false;
+      }
+      if (filtroDataIni || filtroDataFim) {
+        const d = n.data_emissao ? new Date(n.data_emissao).toISOString().slice(0, 10) : "";
+        if (filtroDataIni && d < filtroDataIni) return false;
+        if (filtroDataFim && d > filtroDataFim) return false;
+      }
+      return true;
+    });
+  }, [nfesRecebidas, filtroBusca, filtroManifest, filtroDataIni, filtroDataFim]);
+
+  const limparFiltros = () => {
+    setFiltroBusca("");
+    setFiltroManifest("all");
+    setFiltroDataIni("");
+    setFiltroDataFim("");
+  };
 
   const inscricoesEmissoras = useMemo(() => {
     return (inscricoes || []).filter((i: any) => {
