@@ -368,10 +368,6 @@ export default function Produtos() {
                     <Separator />
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
-                        <Label>Código</Label>
-                        <Input value={formData.codigo || ''} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} />
-                      </div>
-                      <div className="space-y-2">
                         <Label>Cód. de Barras</Label>
                         <Input value={formData.codigo_barras || ''} onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })} />
                       </div>
@@ -736,7 +732,7 @@ export default function Produtos() {
           <Table className="min-w-[500px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="hidden sm:table-cell">Código</TableHead>
+                
                 <TableHead>Nome</TableHead>
                 <TableHead className="hidden sm:table-cell">Tipo</TableHead>
                 <TableHead className="hidden md:table-cell">Grupo</TableHead>
@@ -750,7 +746,7 @@ export default function Produtos() {
             <TableBody>
               {dadosPaginados?.map((item: any) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-mono hidden sm:table-cell">{item.codigo || '-'}</TableCell>
+                  
                   <TableCell className="font-medium max-w-[200px] truncate">{item.nome}</TableCell>
                   <TableCell className="hidden sm:table-cell">{getTipoBadge(item.tipo)}</TableCell>
                   <TableCell className="hidden md:table-cell">{item.grupo_vinculado?.nome || item.grupo || '-'}</TableCell>
