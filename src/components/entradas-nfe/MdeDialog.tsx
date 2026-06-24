@@ -98,6 +98,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     consultarDestinatarias(inscricaoId);
   };
 
+  useEffect(() => {
+    if (open && inscricaoId) {
+      consultarDestinatarias(inscricaoId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inscricaoId, open]);
+
   const handleConsultarChave = () => {
     if (!inscricaoId || !chaveBusca) return;
     consultarPorChave(inscricaoId, chaveBusca);
