@@ -732,7 +732,7 @@ export default function Produtos() {
           <Table className="min-w-[500px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="hidden sm:table-cell">Código</TableHead>
+                
                 <TableHead>Nome</TableHead>
                 <TableHead className="hidden sm:table-cell">Tipo</TableHead>
                 <TableHead className="hidden md:table-cell">Grupo</TableHead>
