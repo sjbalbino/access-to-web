@@ -231,6 +231,8 @@ export default function Produtos() {
         return <Badge className="bg-emerald-500">Produto</Badge>;
       case 'semente':
         return <Badge className="bg-sky-500">Semente</Badge>;
+      case 'maquina_equipamento':
+        return <Badge className="bg-slate-600">Máq./Equip./Implementos</Badge>;
       default:
         return <Badge>{tipo}</Badge>;
     }
