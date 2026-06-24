@@ -429,7 +429,7 @@ export default function Produtos() {
                     </div>
                     <div className="space-y-2">
                       <Label>Descrição Detalhada</Label>
-                      <Textarea value={formData.descricao || ''} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} rows={2} />
+                      <Textarea value={formData.descricao || ''} onChange={(e) => setFormData({ ...formData, descricao: e.target.value.toUpperCase() })} className="uppercase" rows={2} />
                     </div>
                   </div>
 
