@@ -357,6 +357,39 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         </div>
 
 
+        {nfesRecebidas.length > 0 && (
+          <div className="flex flex-wrap gap-3 items-end mb-4 bg-slate-50/60 p-4 rounded-lg border">
+            <div className="flex-1 min-w-[220px]">
+              <label className="text-xs font-medium mb-1 block text-slate-600">Buscar (emitente, CNPJ, nº, chave)</label>
+              <Input value={filtroBusca} onChange={(e) => setFiltroBusca(e.target.value)} placeholder="Digite para filtrar..." className="bg-white h-9" />
+            </div>
+            <div className="w-52">
+              <label className="text-xs font-medium mb-1 block text-slate-600">Manifestação</label>
+              <Select value={filtroManifest} onValueChange={setFiltroManifest}>
+                <SelectTrigger className="bg-white h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="sem">Sem manifestação</SelectItem>
+                  <SelectItem value="ciencia">Ciência</SelectItem>
+                  <SelectItem value="confirmacao">Confirmada</SelectItem>
+                  <SelectItem value="desconhecimento">Desconhecida</SelectItem>
+                  <SelectItem value="nao_realizada">Não realizada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-40">
+              <label className="text-xs font-medium mb-1 block text-slate-600">Emissão de</label>
+              <Input type="date" value={filtroDataIni} onChange={(e) => setFiltroDataIni(e.target.value)} className="bg-white h-9" />
+            </div>
+            <div className="w-40">
+              <label className="text-xs font-medium mb-1 block text-slate-600">até</label>
+              <Input type="date" value={filtroDataFim} onChange={(e) => setFiltroDataFim(e.target.value)} className="bg-white h-9" />
+            </div>
+            <Button variant="ghost" size="sm" onClick={limparFiltros} className="h-9 text-xs">Limpar</Button>
+            <span className="text-xs text-slate-500 ml-auto">{nfesFiltradas.length} de {nfesRecebidas.length}</span>
+          </div>
+        )}
+
         <div className="rounded-xl border shadow-sm overflow-hidden">
           <Table>
             <TableHeader className="bg-slate-50">
