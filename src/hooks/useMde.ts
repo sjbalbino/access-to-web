@@ -31,18 +31,24 @@ export function useMde() {
     try {
       const result = await invokeAction({ action: "consultar", inscricaoId });
       const raw: any[] = Array.isArray(result.data) ? result.data : [];
-      const items: NfeRecebida[] = raw.map((r) => ({
-        chave: r.chave ?? r.chave_nfe ?? r.chaveNFe ?? "",
-        nome: r.nome ?? r.emitente_nome ?? r.razao_social_emitente ?? r.emitente_razao_social ?? r.emitente?.nome ?? "",
-        cnpj: r.cnpj ?? r.cnpj_emitente ?? r.emitente_cnpj ?? r.cnpj_cpf_emitente ?? r.emitente?.cnpj ?? "",
-        valor: Number(r.valor ?? r.valor_total ?? r.valor_nfe ?? r.valor_total_nota ?? 0),
-        data_emissao: r.data_emissao ?? r.dataEmissao ?? r.data_emissao_nfe ?? r.dh_emissao ?? "",
-        situacao: r.situacao ?? r.status ?? "",
-        tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
-        numero: String(r.numero ?? r.numero_nfe ?? r.numero_nfe_recebida ?? r.numero_nota ?? ""),
-        serie: String(r.serie ?? r.serie_nfe ?? r.serie_nota ?? ""),
-        manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
-      }));
+      const items: NfeRecebida[] = raw.map((r) => {
+        const chave = r.chave ?? r.chave_nfe ?? r.chaveNFe ?? "";
+        const cd = String(chave || "").replace(/\D/g, "");
+        const serieFromChave = cd.length === 44 ? String(parseInt(cd.slice(22, 25), 10)) : "";
+        const numeroFromChave = cd.length === 44 ? String(parseInt(cd.slice(25, 34), 10)) : "";
+        return {
+          chave,
+          nome: r.nome ?? r.emitente_nome ?? r.razao_social_emitente ?? r.emitente_razao_social ?? r.emitente?.nome ?? "",
+          cnpj: r.cnpj ?? r.cnpj_emitente ?? r.emitente_cnpj ?? r.cnpj_cpf_emitente ?? r.emitente?.cnpj ?? "",
+          valor: Number(r.valor ?? r.valor_total ?? r.valor_nfe ?? r.valor_total_nota ?? 0),
+          data_emissao: r.data_emissao ?? r.dataEmissao ?? r.data_emissao_nfe ?? r.dh_emissao ?? "",
+          situacao: r.situacao ?? r.status ?? "",
+          tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
+          numero: String(r.numero ?? r.numero_nfe ?? r.numero_nfe_recebida ?? r.numero_nota ?? numeroFromChave ?? ""),
+          serie: String(r.serie ?? r.serie_nfe ?? r.serie_nota ?? serieFromChave ?? ""),
+          manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
+        };
+      });
       setNfesRecebidas(items);
       if (items.length === 0) {
         toast.info("Nenhuma NF-e destinada encontrada.");
@@ -68,18 +74,24 @@ export function useMde() {
       }
       const result = await invokeAction({ action: "consultar_chave", inscricaoId, chave: cleanChave });
       const raw: any[] = Array.isArray(result.data) ? result.data : [];
-      const items: NfeRecebida[] = raw.map((r) => ({
-        chave: r.chave ?? r.chave_nfe ?? r.chaveNFe ?? cleanChave,
-        nome: r.nome ?? r.emitente_nome ?? r.razao_social_emitente ?? r.emitente_razao_social ?? r.emitente?.nome ?? "",
-        cnpj: r.cnpj ?? r.cnpj_emitente ?? r.emitente_cnpj ?? r.cnpj_cpf_emitente ?? r.emitente?.cnpj ?? "",
-        valor: Number(r.valor ?? r.valor_total ?? r.valor_nfe ?? r.valor_total_nota ?? 0),
-        data_emissao: r.data_emissao ?? r.dataEmissao ?? r.data_emissao_nfe ?? r.dh_emissao ?? "",
-        situacao: r.situacao ?? r.status ?? "",
-        tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
-        numero: String(r.numero ?? r.numero_nfe ?? r.numero_nfe_recebida ?? r.numero_nota ?? ""),
-        serie: String(r.serie ?? r.serie_nfe ?? r.serie_nota ?? ""),
-        manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
-      }));
+      const items: NfeRecebida[] = raw.map((r) => {
+        const chave = r.chave ?? r.chave_nfe ?? r.chaveNFe ?? cleanChave;
+        const cd = String(chave || "").replace(/\D/g, "");
+        const serieFromChave = cd.length === 44 ? String(parseInt(cd.slice(22, 25), 10)) : "";
+        const numeroFromChave = cd.length === 44 ? String(parseInt(cd.slice(25, 34), 10)) : "";
+        return {
+          chave,
+          nome: r.nome ?? r.emitente_nome ?? r.razao_social_emitente ?? r.emitente_razao_social ?? r.emitente?.nome ?? "",
+          cnpj: r.cnpj ?? r.cnpj_emitente ?? r.emitente_cnpj ?? r.cnpj_cpf_emitente ?? r.emitente?.cnpj ?? "",
+          valor: Number(r.valor ?? r.valor_total ?? r.valor_nfe ?? r.valor_total_nota ?? 0),
+          data_emissao: r.data_emissao ?? r.dataEmissao ?? r.data_emissao_nfe ?? r.dh_emissao ?? "",
+          situacao: r.situacao ?? r.status ?? "",
+          tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
+          numero: String(r.numero ?? r.numero_nfe ?? r.numero_nfe_recebida ?? r.numero_nota ?? numeroFromChave ?? ""),
+          serie: String(r.serie ?? r.serie_nfe ?? r.serie_nota ?? serieFromChave ?? ""),
+          manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
+        };
+      });
       setNfesRecebidas(items);
       if (items.length === 0) {
         toast.info("NF-e não encontrada para esta chave.");
