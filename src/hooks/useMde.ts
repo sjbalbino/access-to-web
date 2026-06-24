@@ -153,7 +153,10 @@ export function useMde() {
       if (items.length === 0) {
         toast.info("NF-e não encontrada para esta chave.");
       } else {
-        toast.success("NF-e encontrada e adicionada à lista!");
+        toast.success(
+          `${items.length} NF-e localizada(s) na SEFAZ e adicionada(s) à lista.`,
+          { description: "Para baixar o XML, manifeste a NF-e (Ciência da Operação) e use a opção Importar." }
+        );
       }
       return items;
     } catch (error) {
