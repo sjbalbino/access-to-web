@@ -230,6 +230,8 @@ serve(async (req) => {
           headers: { Authorization: authHeader },
         });
         const info: any = await infoResp.json().catch(() => ({}));
+        console.log("MD-e info JSON keys:", Object.keys(info || {}));
+        console.log("MD-e info JSON sample:", JSON.stringify(info).slice(0, 1500));
 
         const caminhoCompleto: string | undefined =
           info?.caminho_xml_nota_fiscal ||
@@ -237,6 +239,7 @@ serve(async (req) => {
           info?.caminho_completo_xml ||
           info?.xml_nfe ||
           info?.caminho_xml;
+
 
         let xmlContent: string | null = null;
 
