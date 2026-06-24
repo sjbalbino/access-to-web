@@ -705,10 +705,6 @@ export default function Produtos() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Código no Fornecedor</Label>
-                        <Input value={formData.cod_fornecedor || ''} onChange={(e) => setFormData({ ...formData, cod_fornecedor: e.target.value })} />
-                      </div>
                     </div>
                   </div>
 
