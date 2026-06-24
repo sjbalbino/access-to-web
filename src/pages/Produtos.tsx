@@ -746,7 +746,7 @@ export default function Produtos() {
             <TableBody>
               {dadosPaginados?.map((item: any) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-mono hidden sm:table-cell">{item.codigo || '-'}</TableCell>
+                  
                   <TableCell className="font-medium max-w-[200px] truncate">{item.nome}</TableCell>
                   <TableCell className="hidden sm:table-cell">{getTipoBadge(item.tipo)}</TableCell>
                   <TableCell className="hidden md:table-cell">{item.grupo_vinculado?.nome || item.grupo || '-'}</TableCell>
