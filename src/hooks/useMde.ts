@@ -116,7 +116,12 @@ export function useMde() {
       if (merged.length === 0) {
         toast.info("Nenhuma NF-e destinada encontrada.");
       } else {
-        toast.success(`${merged.length} NF-e(s) encontrada(s).`);
+        toast.success(
+          `${items.length} NF-e(s) retornada(s) pela SEFAZ.`,
+          merged.length > items.length
+            ? { description: `${merged.length} no total exibidas (incluindo ${merged.length - items.length} do cache local).` }
+            : undefined
+        );
       }
       return merged;
     } catch (error) {
