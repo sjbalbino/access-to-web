@@ -151,7 +151,9 @@ export function useMde() {
         );
       });
       if (items.length === 0) {
-        toast.info("NF-e não encontrada para esta chave.");
+        toast.info("NF-e não encontrada para esta chave.", {
+          description: result?.warning || "Confira o CNPJ/CPF do destinatário e o ambiente (produção × homologação). A SEFAZ pode levar alguns minutos para distribuir a NF-e.",
+        });
       } else {
         toast.success(
           `${items.length} NF-e localizada(s) na SEFAZ e adicionada(s) à lista.`,

@@ -185,9 +185,13 @@ serve(async (req) => {
               break;
             }
           }
+          // Não encontrada: retorna lista vazia + aviso (sem 500)
           const rawMsg = data?.mensagem || data?.message || listData?.mensagem || listData?.message || "";
-          const msg = friendlyKeyLookupError(rawMsg, cleanChave, doc, docType, ambiente);
-          throw new Error(msg);
+          const aviso = friendlyKeyLookupError(rawMsg, cleanChave, doc, docType, ambiente);
+          return new Response(
+            JSON.stringify({ success: true, data: [], warning: aviso }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
         }
         result = Array.isArray(data) ? data : [data];
         break;
