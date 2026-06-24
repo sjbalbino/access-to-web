@@ -132,6 +132,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
   const handleConsultarChave = () => {
     if (!inscricaoId || !chaveBusca) return;
+    salvarChaveRecente(chaveBusca);
     consultarPorChave(inscricaoId, chaveBusca);
   };
 
