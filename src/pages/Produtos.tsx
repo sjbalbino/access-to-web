@@ -368,10 +368,6 @@ export default function Produtos() {
                     <Separator />
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
-                        <Label>Código</Label>
-                        <Input value={formData.codigo || ''} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} />
-                      </div>
-                      <div className="space-y-2">
                         <Label>Cód. de Barras</Label>
                         <Input value={formData.codigo_barras || ''} onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })} />
                       </div>
