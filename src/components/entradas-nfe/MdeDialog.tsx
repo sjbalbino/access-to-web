@@ -403,7 +403,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {nfesRecebidas.length === 0 ? (
+              {nfesFiltradas.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-20 text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
