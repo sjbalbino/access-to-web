@@ -366,6 +366,23 @@ export default function Produtos() {
                       Dados Básicos
                     </div>
                     <Separator />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Nome / Descrição *</Label>
+                        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Tipo *</Label>
+                        <Select isSearchable value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="insumo">Insumo</SelectItem>
+                            <SelectItem value="produto">Produto</SelectItem>
+                            <SelectItem value="semente">Semente</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
                         <Label>Cód. de Barras</Label>
@@ -401,23 +418,6 @@ export default function Produtos() {
                             {subCentros?.map((sub: any) => (
                               <SelectItem key={sub.id} value={sub.id}>{sub.codigo} - {sub.descricao}</SelectItem>
                             ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Nome / Descrição *</Label>
-                        <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Tipo *</Label>
-                        <Select isSearchable value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="insumo">Insumo</SelectItem>
-                            <SelectItem value="produto">Produto</SelectItem>
-                            <SelectItem value="semente">Semente</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
