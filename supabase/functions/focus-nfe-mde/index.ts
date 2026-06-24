@@ -219,8 +219,8 @@ serve(async (req) => {
       case "download_xml": {
         if (!chave) throw new Error("chave é obrigatória para download");
 
-        const url = `${baseUrl}/v2/nfes_recebidas/${chave}.xml`;
-        console.log("MD-e Download XML:", url);
+        const url = `${baseUrl}/v2/nfes_recebidas/${chave}.xml?completa=1`;
+        console.log("MD-e Download XML (completa):", url);
 
         const response = await fetch(url, {
           method: "GET",
