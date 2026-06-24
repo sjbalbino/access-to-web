@@ -173,25 +173,8 @@ export default function GruposProdutos() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Conta DRE (Rateio automático)</Label>
-                        <Select isSearchable
-                          value={formData.codigo_dre || 'none'}
-                          onValueChange={(value) => setFormData({ ...formData, codigo_dre: value === 'none' ? null : value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione uma conta DRE" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhuma</SelectItem>
-                            {dreContas?.filter(c => c.ativo).map((dre: any) => (
-                              <SelectItem key={dre.id} value={dre.codigo}>
-                                {dre.codigo} - {dre.descricao}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+
+
                       <div className="space-y-3 rounded-lg border p-4">
                         <Label className="text-sm font-semibold">Classificação</Label>
                         <div className="grid grid-cols-2 gap-3">
@@ -273,7 +256,7 @@ export default function GruposProdutos() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead>Sub-Centro</TableHead>
-                    <TableHead>Conta DRE</TableHead>
+                    
                     <TableHead>Classificação</TableHead>
                     <TableHead>Status</TableHead>
                     {canEdit && <TableHead className="w-24">Ações</TableHead>}
@@ -285,7 +268,7 @@ export default function GruposProdutos() {
                       <TableCell className="font-medium">{grupo.nome}</TableCell>
                       <TableCell className="text-muted-foreground">{grupo.descricao || '-'}</TableCell>
                       <TableCell className="text-sm">{grupo.sub_centros_custo ? grupo.sub_centros_custo.descricao : '-'}</TableCell>
-                      <TableCell className="text-sm font-mono">{grupo.codigo_dre || '-'}</TableCell>
+                      
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {grupo.insumos && <Badge variant="outline" className="text-xs">Insumos</Badge>}

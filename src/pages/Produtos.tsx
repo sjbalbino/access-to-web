@@ -387,7 +387,7 @@ export default function Produtos() {
                         </Select>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label>Cód. de Barras</Label>
                         <Input value={formData.codigo_barras || ''} onChange={(e) => setFormData({ ...formData, codigo_barras: e.target.value })} />
@@ -421,18 +421,8 @@ export default function Produtos() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Conta Gerencial (DRE)</Label>
-                        <Select isSearchable value={formData.conta_gerencial_id || ''} onValueChange={(value) => setFormData({ ...formData, conta_gerencial_id: value || null })}>
-                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                          <SelectContent>
-                            {subCentros?.map((sub: any) => (
-                              <SelectItem key={sub.id} value={sub.id}>{sub.codigo} - {sub.descricao}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
                     </div>
+
                     <div className="space-y-2">
                       <Label>Artigo NFe (nome para nota fiscal)</Label>
                       <Input value={formData.artigo_nfe || ''} onChange={(e) => setFormData({ ...formData, artigo_nfe: e.target.value })} />
