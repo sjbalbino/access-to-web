@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput, formatBrazilianNumber } from "@/components/ui/currency-input";
@@ -318,16 +318,21 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const isFinalizado = isEdit && entradaData?.status === 'finalizado';
   const fornecedores = clientes?.filter((c: any) => c.tipo === 'fornecedor' || c.tipo === 'ambos') || [];
 
+  if (!open) {
+    return null;
+  }
+
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-6xl max-h-[95vh] overflow-hidden flex flex-col p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle>{isEdit ? 'Detalhes da Entrada NF-e' : 'Nova Entrada Manual'}</DialogTitle>
-            <DialogDescription>
+      <div className="fixed inset-0 z-40 bg-background overflow-auto">
+        <div className="mx-auto max-w-6xl p-4 sm:p-6 flex flex-col min-h-screen">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold leading-none tracking-tight">{isEdit ? 'Detalhes da Entrada NF-e' : 'Nova Entrada Manual'}</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               {isFinalizado ? 'Esta entrada já foi finalizada.' : 'Preencha os dados da nota fiscal de compra.'}
-            </DialogDescription>
-          </DialogHeader>
+            </p>
+          </div>
+
 
           <Tabs defaultValue="cabecalho" className="flex-1 min-h-0 overflow-hidden flex flex-col">
             <TabsList className="w-full justify-start flex-none">
@@ -573,8 +578,9 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
               </Button>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
+
 
       {vincularIdx !== null && (
         <VincularProdutoDialog
