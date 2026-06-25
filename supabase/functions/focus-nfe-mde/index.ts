@@ -91,6 +91,89 @@ function friendlyKeyLookupError(
   return `Não foi possível consultar a NF-e na SEFAZ.\n${rawMsg}`;
 }
 
+function parseFocusList(data: any): any[] {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.notas)) return data.notas;
+  if (Array.isArray(data?.nfes)) return data.nfes;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+}
+
+function getFocusVersion(item: any): number {
+  const value = Number(item?.versao ?? item?.versao_focusnfe ?? 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
+async function fetchFocusJson(url: string, authHeader: string) {
+  const resp = await fetch(url, {
+    method: "GET",
+    headers: { Authorization: authHeader, Accept: "application/json" },
+  });
+  const text = await resp.text();
+  let data: any = null;
+  try { data = JSON.parse(text); } catch (_) { data = null; }
+  return {
+    ok: resp.ok,
+    status: resp.status,
+    text,
+    data,
+    totalCount: Number(resp.headers.get("X-Total-Count") || 0) || 0,
+    maxVersion: Number(resp.headers.get("X-Max-Version") || 0) || 0,
+  };
+}
+
+async function listarNfesRecebidasPaginado(params: {
+  baseUrl: string;
+  authHeader: string;
+  docType: "cpf" | "cnpj";
+  doc: string;
+  versaoInicial?: number;
+  chaveAlvo?: string;
+  completa?: boolean;
+}) {
+  const { baseUrl, authHeader, docType, doc, chaveAlvo } = params;
+  let versaoAtual = Number(params.versaoInicial ?? 0) || 0;
+  const items: any[] = [];
+  const attempts: string[] = [];
+  let found: any = null;
+  let lastError = "";
+
+  for (let safety = 0; safety < 50; safety++) {
+    const extra = params.completa ? "&completa=1" : "";
+    const url = `${baseUrl}/v2/nfes_recebidas?${docType}=${encodeURIComponent(doc)}&versao=${versaoAtual}${extra}`;
+    const resp = await fetchFocusJson(url, authHeader);
+    attempts.push(`listagem ${resp.status} versao=${versaoAtual} :: ${resp.text.slice(0, 180).replace(/\s+/g, " ")}`);
+
+    if (!resp.ok) {
+      lastError = getFocusErrorMessage(resp.data) || resp.text.slice(0, 300);
+      break;
+    }
+
+    const lista = parseFocusList(resp.data);
+    if (!lista.length) break;
+
+    for (const item of lista) {
+      items.push(item);
+      const k = String(item?.chave ?? item?.chave_nfe ?? "").replace(/\D/g, "");
+      if (chaveAlvo && k === chaveAlvo) {
+        found = item;
+      }
+    }
+
+    if (found) break;
+
+    const maxVersaoItens = lista.reduce((max, item) => Math.max(max, getFocusVersion(item)), versaoAtual);
+    const proximaVersao = Math.max(maxVersaoItens, resp.maxVersion || 0);
+    if (proximaVersao <= versaoAtual) break;
+    versaoAtual = proximaVersao;
+
+    // A Focus NFe documenta limite de 100 registros por chamada; abaixo disso não há próxima página.
+    if (lista.length < 100) break;
+  }
+
+  return { items, found, attempts, lastError };
+}
+
 async function getInscricaoContext(inscricaoId: string) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -189,15 +272,18 @@ serve(async (req) => {
 
     switch (action) {
       case "consultar": {
-        const v = versao || 1;
-        const url = `${baseUrl}/v2/nfes_recebidas?${docType}=${doc}&versao=${v}`;
-        console.log("MD-e Consultar:", url);
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: { Authorization: authHeader },
+        const v = Number(versao ?? 0) || 0;
+        console.log("MD-e Consultar paginado:", { docType, doc, versaoInicial: v });
+        const sync = await listarNfesRecebidasPaginado({
+          baseUrl,
+          authHeader,
+          docType,
+          doc,
+          versaoInicial: v,
         });
-        result = await response.json();
+        if (sync.lastError) throw new Error(friendlyKeyLookupError(sync.lastError, "", doc, docType, ambiente));
+        console.log("MD-e Consultar paginado retorno:", { total: sync.items.length, tentativas: sync.attempts.length });
+        result = sync.items;
         break;
       }
 
@@ -217,25 +303,21 @@ serve(async (req) => {
 
         // 2) Se não encontrou, tenta via listagem MD-e e filtra por chave (Focus ignora o filtro `chave` na URL)
         if (!response.ok || !data || (Array.isArray(data) && data.length === 0)) {
-          const urlListagem = `${baseUrl}/v2/nfes_recebidas?${docType}=${doc}&chave=${cleanChave}&versao=1`;
-          console.log("MD-e Consultar por chave (listagem):", urlListagem);
-          const respList = await fetch(urlListagem, {
-            method: "GET",
-            headers: { Authorization: authHeader },
+          console.log("MD-e Consultar por chave (listagem paginada):", cleanChave);
+          const sync = await listarNfesRecebidasPaginado({
+            baseUrl,
+            authHeader,
+            docType,
+            doc,
+            versaoInicial: 0,
+            chaveAlvo: cleanChave,
           });
-          const listData = await respList.json().catch(() => null);
-          if (respList.ok && Array.isArray(listData)) {
-            const match = listData.filter((it: any) => {
-              const k = String(it?.chave ?? it?.chave_nfe ?? "").replace(/\D/g, "");
-              return k === cleanChave;
-            });
-            if (match.length > 0) {
-              result = match;
-              break;
-            }
+          if (sync.found) {
+            result = [sync.found];
+            break;
           }
           // Não encontrada: retorna lista vazia + aviso (sem 500)
-          const rawMsg = data?.mensagem || data?.message || listData?.mensagem || listData?.message || "";
+          const rawMsg = data?.mensagem || data?.message || sync.lastError || "";
           const aviso = friendlyKeyLookupError(rawMsg, cleanChave, doc, docType, ambiente);
           return new Response(
             JSON.stringify({ success: true, data: [], warning: aviso }),
@@ -296,6 +378,26 @@ serve(async (req) => {
         const authHeaders = tokens.map((candidate) => `Basic ${btoa(`${candidate}:`)}`);
         let foundCompleteInfo = false;
 
+        const collectXmlCandidates = (candidateInfo: any) => {
+          const caminhos = [
+            candidateInfo?.caminho_xml_nota_completa,
+            candidateInfo?.caminho_xml_completo,
+            candidateInfo?.caminho_completo_xml,
+            candidateInfo?.xml_nota_completa,
+            candidateInfo?.xml_completo,
+            candidateInfo?.xml_nfe,
+            candidateInfo?.caminho_xml,
+            candidateInfo?.caminho_xml_nota_fiscal,
+          ].filter(Boolean);
+
+          for (const caminho of caminhos) {
+            const value = String(caminho).trim();
+            if (!value) continue;
+            if (value.startsWith("<")) xmlInlineCandidates.push(value);
+            else xmlUrls.push(makeUrl(value));
+          }
+        };
+
         for (const [tokenIndex, candidateAuthHeader] of authHeaders.entries()) {
           if (foundCompleteInfo) break;
           for (const urlInfo of resourceUrls) {
@@ -312,25 +414,37 @@ serve(async (req) => {
               info = (!info || candidateInfo?.nfe_completa === true || candidateInfo?.nfe_completa === "true")
                 ? candidateInfo
                 : info;
-              const caminhos = [
-                candidateInfo?.caminho_xml_nota_completa,
-                candidateInfo?.caminho_xml_completo,
-                candidateInfo?.caminho_completo_xml,
-                candidateInfo?.xml_nota_completa,
-                candidateInfo?.xml_completo,
-                candidateInfo?.xml_nfe,
-                candidateInfo?.caminho_xml,
-                candidateInfo?.caminho_xml_nota_fiscal,
-              ].filter(Boolean);
-
-              for (const caminho of caminhos) {
-                const value = String(caminho).trim();
-                if (!value) continue;
-                if (value.startsWith("<")) xmlInlineCandidates.push(value);
-                else xmlUrls.push(makeUrl(value));
-              }
+              collectXmlCandidates(candidateInfo);
 
               if (candidateInfo?.nfe_completa === true || candidateInfo?.nfe_completa === "true") {
+                foundCompleteInfo = true;
+                break;
+              }
+            }
+          }
+        }
+
+        // Quando a consulta individual fica com nfe_completa=false, forçamos uma varredura paginada
+        // desde a versão 0. Isso cobre notas dos dias recentes que não aparecem na primeira página
+        // e força a Focus a reavaliar o estado recebido da SEFAZ antes do download.
+        if (!foundCompleteInfo) {
+          for (const [tokenIndex, candidateAuthHeader] of authHeaders.entries()) {
+            const sync = await listarNfesRecebidasPaginado({
+              baseUrl,
+              authHeader: candidateAuthHeader,
+              docType,
+              doc,
+              versaoInicial: 0,
+              chaveAlvo: cleanChave,
+              completa: true,
+            });
+            attempts.push(...sync.attempts.map((a) => `token#${tokenIndex + 1} ${a}`));
+            if (sync.found) {
+              info = (!info || sync.found?.nfe_completa === true || sync.found?.nfe_completa === "true")
+                ? sync.found
+                : info;
+              collectXmlCandidates(sync.found);
+              if (sync.found?.nfe_completa === true || sync.found?.nfe_completa === "true") {
                 foundCompleteInfo = true;
                 break;
               }
@@ -395,10 +509,11 @@ serve(async (req) => {
             : " Manifestação registrada: nenhuma.";
           const completo = typeof info?.nfe_completa === "boolean" ? ` nfe_completa=${info.nfe_completa}.` : "";
           const diagnostico = (
-            `Análise do retorno da Focus NFe: a NF-e foi localizada e está ${info?.situacao || "com situação não informada"}. ` +
-            `A manifestação consta como ${info?.manifestacao_destinatario || "não registrada"}, porém a própria Focus NFe retornou nfe_completa=${String(info?.nfe_completa ?? false)}. ` +
-            `Todas as rotas de download testadas retornaram XML-resumo (tag resNFe) ou resposta sem itens da NF-e. ` +
-            `Por segurança, o sistema bloqueou o download para não salvar/importar o resumo como se fosse XML completo.`
+            `Análise do retorno da Focus NFe: a NF-e foi localizada na distribuição de DF-e e está ${info?.situacao || "com situação não informada"}. ` +
+            `A existência da nota na SEFAZ não significa que o XML completo já esteja disponível no MD-e: primeiro a SEFAZ distribui apenas o resumo (resNFe) e, após a manifestação ser processada, distribui o XML completo. ` +
+            `A manifestação consta como ${info?.manifestacao_destinatario || "não registrada"}, porém a própria Focus NFe ainda retornou nfe_completa=${String(info?.nfe_completa ?? false)}. ` +
+            `O sistema pesquisou a listagem paginada desde a versão 0 e testou as rotas de XML completo; todas retornaram XML-resumo (tag resNFe) ou resposta sem itens da NF-e. ` +
+            `Por segurança, o download foi bloqueado para não salvar/importar o resumo como se fosse XML completo.`
           );
           const message = (
             `${diagnostico}\n\nChave: ${cleanChave}.${situacao}${manifestacao}${completo} ` +
