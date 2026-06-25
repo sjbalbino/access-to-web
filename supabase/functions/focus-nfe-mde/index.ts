@@ -121,15 +121,16 @@ async function getInscricaoContext(inscricaoId: string) {
 
   const { data: cred, error: credErr } = await supabase
     .from("emitentes_nfe_credentials")
-    .select("api_access_token, api_access_token_homologacao")
+    .select("api_access_token_principal_producao, api_access_token, api_access_token_homologacao")
     .eq("emitente_id", insc.emitente_id)
     .maybeSingle();
 
   if (credErr) throw new Error("Erro ao buscar credenciais: " + credErr.message);
-  const ambienteLabel = emitente.ambiente === 2 ? "homologação" : "produção";
-  const token = emitente.ambiente === 2 ? cred?.api_access_token_homologacao : cred?.api_access_token;
+  const token = emitente.ambiente === 2
+    ? (cred?.api_access_token_homologacao || cred?.api_access_token_principal_producao || cred?.api_access_token)
+    : (cred?.api_access_token_principal_producao || cred?.api_access_token);
   if (!token) {
-    throw new Error(`Token de ${ambienteLabel} da Focus NFe não configurado para este emitente.`);
+    throw new Error(`Token ${emitente.ambiente === 2 ? "de homologação" : "principal de produção"} da Focus NFe não configurado para este emitente.`);
   }
 
   return {
