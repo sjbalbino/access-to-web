@@ -324,17 +324,17 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-background overflow-auto">
-        <div className="mx-auto max-w-6xl p-4 sm:p-6 flex flex-col min-h-screen">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold leading-none tracking-tight">{isEdit ? 'Detalhes da Entrada NF-e' : 'Nova Entrada Manual'}</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {isFinalizado ? 'Esta entrada já foi finalizada.' : 'Preencha os dados da nota fiscal de compra.'}
-            </p>
-          </div>
+      <div className="rounded-lg border bg-card p-4 sm:p-6 flex flex-col">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold leading-none tracking-tight">{isEdit ? 'Detalhes da Entrada NF-e' : 'Nova Entrada Manual'}</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isFinalizado ? 'Esta entrada já foi finalizada.' : 'Preencha os dados da nota fiscal de compra.'}
+          </p>
+        </div>
 
 
-          <Tabs defaultValue="cabecalho" className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <Tabs defaultValue="cabecalho" className="flex flex-col">
+
             <TabsList className="w-full justify-start flex-none">
               <TabsTrigger value="cabecalho">Cabeçalho</TabsTrigger>
               <TabsTrigger value="itens">Itens ({itens.length})</TabsTrigger>
