@@ -213,7 +213,8 @@ export default function EntradasNfe() {
       </div>
 
 
-      <EntradaNfeFormDialog open={formOpen} onOpenChange={setFormOpen} entradaId={editId} />
+
+
       <ImportarXmlDialog open={xmlOpen} onOpenChange={setXmlOpen} />
       <MdeDialog open={mdeOpen} onOpenChange={setMdeOpen} />
 
