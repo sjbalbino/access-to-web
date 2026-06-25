@@ -317,9 +317,10 @@ export default function ContasBancarias() {
             </div>
             <div>
               <Label>Saldo inicial</Label>
-              <Input type="number" step="0.01"
-                value={form.saldo_inicial ?? 0}
-                onChange={(e) => setForm({ ...form, saldo_inicial: parseFloat(e.target.value) || 0 })} />
+              <CurrencyInput
+                value={form.saldo_inicial ?? null}
+                onChange={(v) => setForm({ ...form, saldo_inicial: v ?? 0 })}
+              />
             </div>
 
             <div>
