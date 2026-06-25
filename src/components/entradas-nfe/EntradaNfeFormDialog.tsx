@@ -256,6 +256,11 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
     const itensSave = itens.map(({ ...item }) => {
       const { id, entrada_nfe_id, produto, created_at, updated_at, ...rest } = item as any;
+      // Sanitiza campos: datas vazias -> null, strings numéricas -> number
+      if (rest.data_validade === '' || rest.data_validade === undefined) rest.data_validade = null;
+      const numericFields = ['quantidade','valor_unitario','valor_total','valor_desconto','valor_frete_rateio','base_icms','aliq_icms','valor_icms','base_ipi','aliq_ipi','valor_ipi','base_pis','aliq_pis','valor_pis','base_cofins','aliq_cofins','valor_cofins'];
+      numericFields.forEach((f) => { rest[f] = toNumber(rest[f]); });
+      if (rest.quantidade_conferida === '' as any) rest.quantidade_conferida = null;
       return rest;
     });
 
