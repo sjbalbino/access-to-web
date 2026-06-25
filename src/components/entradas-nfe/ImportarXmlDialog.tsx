@@ -158,8 +158,10 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
         });
         const cfopMaisUsado = Object.entries(cfopCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
         const cfopHeader = cfopMaisUsado
-          ? (cfops || []).find((c: any) => String(c.codigo) === cfopMaisUsado && c.tipo === 'entrada')
+          ? ((cfops || []).find((c: any) => String(c.codigo) === cfopMaisUsado && c.tipo === 'entrada')
+             || (cfops || []).find((c: any) => String(c.codigo) === cfopMaisUsado))
           : null;
+
 
         await createMutation.mutateAsync({
           granja_id: granjaId,
