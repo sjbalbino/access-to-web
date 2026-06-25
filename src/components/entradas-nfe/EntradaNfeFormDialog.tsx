@@ -246,9 +246,13 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
   const handleSave = async () => {
     if (!granjaId) { toast.error('Selecione uma granja.'); return; }
+    if (!fornecedorId) { toast.error('Selecione o fornecedor.'); return; }
+    if (!cfopId) { toast.error('Selecione o CFOP.'); return; }
     if (!inscricaoId) { toast.error('Selecione a IE do produtor.'); return; }
     if (!safraId) { toast.error('Selecione a safra.'); return; }
     if (!isEdit && !formaPagamento) { toast.error('Selecione a forma de pagamento.'); return; }
+    if (formaPagamento === 'cheque' && !numeroCheque.trim()) { toast.error('Informe o número do cheque.'); return; }
+
 
     const itensSave = itens.map(({ ...item }) => {
       const { id, entrada_nfe_id, produto, created_at, updated_at, ...rest } = item as any;
