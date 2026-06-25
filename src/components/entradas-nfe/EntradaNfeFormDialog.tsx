@@ -353,7 +353,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     </Select>
                   </div>
                   <div>
-                    <Label>Fornecedor</Label>
+                    <Label>Fornecedor *</Label>
                     <Select isSearchable value={fornecedorId} onValueChange={setFornecedorId} disabled={isFinalizado}>
                       <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
@@ -362,7 +362,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     </Select>
                   </div>
                   <div>
-                    <Label>CFOP</Label>
+                    <Label>CFOP *</Label>
                     <Select isSearchable value={cfopId} onValueChange={setCfopId} disabled={isFinalizado}>
                       <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
