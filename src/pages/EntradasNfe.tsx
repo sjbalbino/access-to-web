@@ -101,6 +101,10 @@ export default function EntradasNfe() {
           }
         />
 
+        {formOpen ? (
+          <EntradaNfeFormDialog open={formOpen} onOpenChange={setFormOpen} entradaId={editId} />
+        ) : (
+          <>
         <div className="flex flex-wrap gap-4 items-end">
           <div className="w-48">
             <label className="text-sm font-medium mb-1 block">Granja</label>
@@ -204,7 +208,10 @@ export default function EntradasNfe() {
             </TableBody>
           </Table>
         </div>
+          </>
+        )}
       </div>
+
 
       <EntradaNfeFormDialog open={formOpen} onOpenChange={setFormOpen} entradaId={editId} />
       <ImportarXmlDialog open={xmlOpen} onOpenChange={setXmlOpen} />
