@@ -215,7 +215,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
   const resetForm = () => {
     setGranjaId(''); setInscricaoId(undefined); setSafraId(undefined);
-    setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false);
+    setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false); setNumeroCheque('');
     setFornecedorId(''); setNumeroNfe(''); setSerie('1'); setChaveAcesso('');
     setDataEmissao(''); setDataEntrada(new Date().toISOString().split('T')[0]);
     setCfopId(''); setNaturezaOperacao(''); setObservacoes('');
