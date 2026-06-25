@@ -250,15 +250,12 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
     if (!cfopId) { toast.error('Selecione o CFOP.'); return; }
     if (!inscricaoId) { toast.error('Selecione a IE do produtor.'); return; }
     if (!safraId) { toast.error('Selecione a safra.'); return; }
-    if (!isEdit && !formaPagamento) { toast.error('Selecione a forma de pagamento.'); return; }
-    if (formaPagamento === 'cheque' && !numeroCheque.trim()) { toast.error('Informe o número do cheque.'); return; }
     const itensValidos = itens.filter((i) => toNumber(i.quantidade) > 0 || toNumber(i.valor_total) > 0 || (i as any).produto_xml_descricao);
     if (itensValidos.length === 0) { toast.error('Adicione ao menos um item à NF-e.'); return; }
 
 
     const itensSave = itens.map(({ ...item }) => {
       const { id, entrada_nfe_id, produto, created_at, updated_at, ...rest } = item as any;
-      // Sanitiza campos: datas vazias -> null, strings numéricas -> number
       if (rest.data_validade === '' || rest.data_validade === undefined) rest.data_validade = null;
       const numericFields = ['quantidade','valor_unitario','valor_total','valor_desconto','valor_frete_rateio','base_icms','aliq_icms','valor_icms','base_ipi','aliq_ipi','valor_ipi','base_pis','aliq_pis','valor_pis','base_cofins','aliq_cofins','valor_cofins'];
       numericFields.forEach((f) => { rest[f] = toNumber(rest[f]); });
@@ -270,9 +267,9 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       granja_id: granjaId,
       inscricao_produtor_id: inscricaoId,
       safra_id: safraId,
-      forma_pagamento: formaPagamento || null,
-      conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
-      numero_cheque: formaPagamento === 'cheque' ? (numeroCheque || null) : null,
+      forma_pagamento: null,
+      conta_bancaria_id: null,
+      numero_cheque: null,
       fornecedor_id: fornecedorId || null,
       numero_nfe: numeroNfe,
       serie,
@@ -296,15 +293,6 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       itens: itensSave,
     };
 
-    if (!isEdit) {
-      payload._pagamento = {
-        forma_pagamento: formaPagamento,
-        conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
-        ja_pago: jaPago && isAvista,
-        numero_cheque: formaPagamento === 'cheque' ? (numeroCheque || null) : null,
-      };
-    }
-
     try {
       if (isEdit) {
         await updateMutation.mutateAsync({ id: entradaId, ...payload });
@@ -314,6 +302,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       onOpenChange(false);
     } catch {}
   };
+
 
 
   const handleVincular = (idx: number, produtoId: string) => {
