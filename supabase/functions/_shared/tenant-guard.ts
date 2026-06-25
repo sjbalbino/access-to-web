@@ -33,12 +33,14 @@ export async function assertNotaFiscalTenant(
 ): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
   const { data } = await admin
     .from("notas_fiscais")
-    .select("tenant_id")
+    .select("tenant_id, granja_id, granjas:granja_id(tenant_id)")
     .eq("id", notaFiscalId)
     .maybeSingle();
   if (!data) return { ok: false, status: 404, error: "Nota fiscal não encontrada" };
   if (caller.isSuper) return { ok: true };
-  if (data.tenant_id && data.tenant_id === caller.tenantId) return { ok: true };
+  // deno-lint-ignore no-explicit-any
+  const notaTenant = (data as any).tenant_id ?? (data as any).granjas?.tenant_id ?? null;
+  if (notaTenant && notaTenant === caller.tenantId) return { ok: true };
   return { ok: false, status: 403, error: "Sem permissão para acessar essa nota fiscal" };
 }
 
