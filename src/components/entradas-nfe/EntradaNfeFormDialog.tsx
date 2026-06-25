@@ -111,6 +111,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const [formaPagamento, setFormaPagamento] = useState<string | undefined>(undefined);
   const [contaBancariaId, setContaBancariaId] = useState<string | undefined>(undefined);
   const [jaPago, setJaPago] = useState(false);
+  const [numeroCheque, setNumeroCheque] = useState('');
   const [fornecedorId, setFornecedorId] = useState('');
   const [numeroNfe, setNumeroNfe] = useState('');
   const [serie, setSerie] = useState('1');
@@ -151,6 +152,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       setSafraId((entradaData as any).safra_id || undefined);
       setFormaPagamento((entradaData as any).forma_pagamento || undefined);
       setContaBancariaId((entradaData as any).conta_bancaria_id || undefined);
+      setNumeroCheque((entradaData as any).numero_cheque || '');
       setFornecedorId(entradaData.fornecedor_id || '');
       setNumeroNfe(entradaData.numero_nfe || '');
       setSerie(entradaData.serie || '1');
@@ -213,7 +215,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
   const resetForm = () => {
     setGranjaId(''); setInscricaoId(undefined); setSafraId(undefined);
-    setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false);
+    setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false); setNumeroCheque('');
     setFornecedorId(''); setNumeroNfe(''); setSerie('1'); setChaveAcesso('');
     setDataEmissao(''); setDataEntrada(new Date().toISOString().split('T')[0]);
     setCfopId(''); setNaturezaOperacao(''); setObservacoes('');
@@ -244,9 +246,13 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
   const handleSave = async () => {
     if (!granjaId) { toast.error('Selecione uma granja.'); return; }
+    if (!fornecedorId) { toast.error('Selecione o fornecedor.'); return; }
+    if (!cfopId) { toast.error('Selecione o CFOP.'); return; }
     if (!inscricaoId) { toast.error('Selecione a IE do produtor.'); return; }
     if (!safraId) { toast.error('Selecione a safra.'); return; }
     if (!isEdit && !formaPagamento) { toast.error('Selecione a forma de pagamento.'); return; }
+    if (formaPagamento === 'cheque' && !numeroCheque.trim()) { toast.error('Informe o número do cheque.'); return; }
+
 
     const itensSave = itens.map(({ ...item }) => {
       const { id, entrada_nfe_id, produto, created_at, updated_at, ...rest } = item as any;
@@ -259,6 +265,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       safra_id: safraId,
       forma_pagamento: formaPagamento || null,
       conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
+      numero_cheque: formaPagamento === 'cheque' ? (numeroCheque || null) : null,
       fornecedor_id: fornecedorId || null,
       numero_nfe: numeroNfe,
       serie,
@@ -287,6 +294,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
         forma_pagamento: formaPagamento,
         conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
         ja_pago: jaPago && isAvista,
+        numero_cheque: formaPagamento === 'cheque' ? (numeroCheque || null) : null,
       };
     }
 
@@ -345,7 +353,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     </Select>
                   </div>
                   <div>
-                    <Label>Fornecedor</Label>
+                    <Label>Fornecedor *</Label>
                     <Select isSearchable value={fornecedorId} onValueChange={setFornecedorId} disabled={isFinalizado}>
                       <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
@@ -354,7 +362,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     </Select>
                   </div>
                   <div>
-                    <Label>CFOP</Label>
+                    <Label>CFOP *</Label>
                     <Select isSearchable value={cfopId} onValueChange={setCfopId} disabled={isFinalizado}>
                       <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
@@ -430,6 +438,12 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                  )}
+                  {formaPagamento === 'cheque' && (
+                    <div>
+                      <Label>Nº do Cheque *</Label>
+                      <Input value={numeroCheque} onChange={(e) => setNumeroCheque(e.target.value)} placeholder="Ex: 000123" disabled={isFinalizado} />
                     </div>
                   )}
                   {isAvista && !isEdit && (

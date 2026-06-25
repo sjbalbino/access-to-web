@@ -1,0 +1,1 @@
+ALTER TABLE public.entradas_nfe ADD COLUMN IF NOT EXISTS numero_cheque text;

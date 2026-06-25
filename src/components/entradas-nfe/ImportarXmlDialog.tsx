@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useProdutos } from "@/hooks/useProdutos";
+import { useCfops } from "@/hooks/useCfops";
 import { useCreateEntradaNfe } from "@/hooks/useEntradasNfe";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useSafras } from "@/hooks/useSafras";
@@ -47,6 +48,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
   const [formaPagamento, setFormaPagamento] = useState<string | undefined>(undefined);
   const [contaBancariaId, setContaBancariaId] = useState<string | undefined>(undefined);
   const [jaPago, setJaPago] = useState(false);
+  const [numeroCheque, setNumeroCheque] = useState('');
   const [parsedFiles, setParsedFiles] = useState<ParsedFile[]>([]);
   const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -54,6 +56,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
   const { data: granjas } = useGranjas();
   const { data: clientes } = useClientesFornecedores();
   const { data: produtos } = useProdutos();
+  const { cfops } = useCfops();
   const { data: inscricoes } = useInscricoesCompletas();
   const { data: safras } = useSafras();
   const { data: contasBancarias } = useContasBancarias({ ativo: true });
@@ -129,7 +132,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
   const resetAll = () => {
     setParsedFiles([]);
     setGranjaId(undefined); setInscricaoId(undefined); setSafraId(undefined);
-    setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false);
+    setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false); setNumeroCheque('');
   };
 
   const handleImportar = async () => {
@@ -137,6 +140,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
     if (!inscricaoId) return toast.error('Selecione a inscrição do produtor.');
     if (!safraId) return toast.error('Selecione a safra.');
     if (!formaPagamento) return toast.error('Selecione a forma de pagamento.');
+    if (formaPagamento === 'cheque' && !numeroCheque.trim()) return toast.error('Informe o número do cheque.');
     const validFiles = parsedFiles.filter((f) => f.nfe);
     if (!validFiles.length) return toast.error('Nenhum XML válido para importar.');
 
@@ -146,6 +150,17 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
       const nfe = pf.nfe!;
       try {
         const itens = vincularProdutos(nfe);
+        // Deriva CFOP do cabeçalho a partir do CFOP mais frequente nos itens
+        const cfopCounts: Record<string, number> = {};
+        itens.forEach((it: any) => {
+          const c = (it.cfop || '').toString().trim();
+          if (c) cfopCounts[c] = (cfopCounts[c] || 0) + 1;
+        });
+        const cfopMaisUsado = Object.entries(cfopCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+        const cfopHeader = cfopMaisUsado
+          ? (cfops || []).find((c: any) => String(c.codigo) === cfopMaisUsado && c.tipo === 'entrada')
+          : null;
+
         await createMutation.mutateAsync({
           granja_id: granjaId,
           inscricao_produtor_id: inscricaoId,
@@ -157,6 +172,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
           serie: nfe.serie,
           chave_acesso: nfe.chaveAcesso,
           data_emissao: nfe.dataEmissao || null,
+          cfop_id: cfopHeader?.id || null,
           natureza_operacao: nfe.naturezaOperacao,
           valor_produtos: nfe.totais.valorProdutos,
           valor_frete: nfe.totais.valorFrete,
@@ -171,12 +187,14 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
           valor_total: nfe.totais.valorTotal,
           modo_entrada: 'xml',
           xml_content: nfe.xmlContent,
+          numero_cheque: formaPagamento === 'cheque' ? (numeroCheque || null) : null,
           itens,
           _duplicatas: nfe.duplicatas,
           _pagamento: {
             forma_pagamento: formaPagamento,
             conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
             ja_pago: jaPago && !!isAvista,
+            numero_cheque: formaPagamento === 'cheque' ? (numeroCheque || null) : null,
           },
         });
         success++;
@@ -254,6 +272,17 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+            {formaPagamento === 'cheque' && (
+              <div>
+                <Label>Nº do Cheque *</Label>
+                <input
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={numeroCheque}
+                  onChange={(e) => setNumeroCheque(e.target.value)}
+                  placeholder="Ex: 000123"
+                />
               </div>
             )}
             {isAvista && (

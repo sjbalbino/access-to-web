@@ -61,6 +61,7 @@ export interface AutoCpPagamento {
   forma_pagamento?: string | null;
   conta_bancaria_id?: string | null;
   ja_pago?: boolean;
+  numero_cheque?: string | null;
 }
 
 async function gerarContasPagarAutomatico(
@@ -194,6 +195,9 @@ async function gerarContasPagarAutomatico(
   // Se "já pago" e forma de pagamento à vista → gera baixas
   if (pagamento?.ja_pago && pagamento.forma_pagamento && criadas?.length) {
     const hoje = new Date().toISOString().slice(0, 10);
+    const docPagto = pagamento.forma_pagamento === 'cheque' && pagamento.numero_cheque
+      ? `Cheque ${pagamento.numero_cheque}`
+      : (entrada.numero_nfe || null);
     const baixas = criadas.map((c: any) => ({
       conta_id: c.id,
       data_pagamento: hoje,
@@ -203,7 +207,8 @@ async function gerarContasPagarAutomatico(
       desconto: 0,
       forma_pagamento: pagamento.forma_pagamento,
       conta_bancaria: pagamento.conta_bancaria_id || null,
-      documento: entrada.numero_nfe || null,
+      conta_bancaria_id: pagamento.conta_bancaria_id || null,
+      documento: docPagto,
     }));
     const { error: errBaixa } = await supabase.from('contas_pagar_baixas').insert(baixas);
     if (errBaixa) throw errBaixa;
