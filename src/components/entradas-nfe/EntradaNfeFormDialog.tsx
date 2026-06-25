@@ -165,6 +165,21 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
     if (padrao) setContaBancariaId(padrao.id);
   }, [granjaId, contasBancarias]);
 
+  // Código do CFOP do cabeçalho (para auto-preencher itens)
+  const cfopCabecalhoCodigo = useMemo(() => {
+    if (!cfopId) return '';
+    const c = cfops?.find((x: any) => x.id === cfopId);
+    return c?.codigo ? String(c.codigo) : '';
+  }, [cfopId, cfops]);
+
+  // Auto-preenche CFOP dos itens vazios quando CFOP do cabeçalho mudar
+  useEffect(() => {
+    if (!cfopCabecalhoCodigo || isFinalizado) return;
+    setItens((prev) => prev.map((it) => (it.cfop ? it : { ...it, cfop: cfopCabecalhoCodigo })));
+  }, [cfopCabecalhoCodigo]);
+
+
+
 
   // Pré-seleciona IE principal ao trocar granja (somente criação)
   useEffect(() => {
