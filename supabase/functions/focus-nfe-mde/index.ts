@@ -266,18 +266,63 @@ serve(async (req) => {
         const cleanChave = String(chave).replace(/\D/g, "");
         if (cleanChave.length !== 44) throw new Error("Chave de acesso deve ter 44 dígitos.");
 
-        // Consulta explicitamente com completa=1. Sem este parâmetro a API pode
-        // devolver apenas o resumo (resNFe), mesmo após manifestação.
-        const urlInfo = `${baseUrl}/v2/nfes_recebidas/${cleanChave}.json?completa=1`;
-        console.log("MD-e Consultar info p/ XML completo:", urlInfo);
-        const infoResp = await fetch(urlInfo, {
-          method: "GET",
-          headers: { Authorization: authHeader },
-        });
-        const info: any = await infoResp.json().catch(() => ({}));
+        // Mesmo fluxo validado no app stock-nfe: usar token principal,
+        // informar CPF/CNPJ do destinatário e testar as rotas JSON com completa=1.
+        const parseJson = (value: string) => {
+          try { return JSON.parse(value); } catch (_) { return null; }
+        };
+        const makeUrl = (path: string) => path.startsWith("http")
+          ? path
+          : `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+        const qs = `${docType}=${encodeURIComponent(doc)}&completa=1`;
+        const resourceUrls = [
+          `${baseUrl}/v2/nfes_recebidas/${cleanChave}?${qs}`,
+          `${baseUrl}/v2/nfes_recebidas/${cleanChave}.json?${qs}`,
+          `${baseUrl}/v2/nfes_recebidas/${cleanChave}.json?completa=1`,
+          `${baseUrl}/v2/nfes_recebidas/${cleanChave}?completa=1`,
+        ];
 
-        if (!infoResp.ok) {
-          throw new Error(`Erro ao consultar dados completos da NF-e: ${infoResp.status} - ${getFocusErrorMessage(info)}`);
+        let info: any = null;
+        const xmlUrls: string[] = [];
+        const xmlInlineCandidates: string[] = [];
+        const attempts: string[] = [];
+
+        for (const urlInfo of resourceUrls) {
+          console.log("MD-e Consultar info p/ XML completo:", urlInfo);
+          const infoResp = await fetch(urlInfo, {
+            method: "GET",
+            headers: { Authorization: authHeader, Accept: "application/json" },
+          });
+          const infoText = await infoResp.text();
+          const candidateInfo = parseJson(infoText) || {};
+          attempts.push(`${infoResp.status} ${urlInfo} :: ${infoText.slice(0, 180).replace(/\s+/g, " ")}`);
+
+          if (infoResp.ok && candidateInfo?.chave_nfe) {
+            info = candidateInfo;
+            const caminhos = [
+              candidateInfo?.caminho_xml_nota_completa,
+              candidateInfo?.caminho_xml_nota_fiscal,
+              candidateInfo?.caminho_xml_completo,
+              candidateInfo?.caminho_completo_xml,
+              candidateInfo?.xml_nota_completa,
+              candidateInfo?.xml_completo,
+              candidateInfo?.xml_nfe,
+              candidateInfo?.caminho_xml,
+            ].filter(Boolean);
+
+            for (const caminho of caminhos) {
+              const value = String(caminho).trim();
+              if (!value) continue;
+              if (value.startsWith("<")) xmlInlineCandidates.push(value);
+              else xmlUrls.push(makeUrl(value));
+            }
+
+            if (candidateInfo?.nfe_completa === true || candidateInfo?.nfe_completa === "true") break;
+          }
+        }
+
+        if (!info) {
+          throw new Error(`Erro ao consultar dados completos da NF-e: ${attempts.join(" | ")}`);
         }
 
         console.log("MD-e info completa keys:", Object.keys(info || {}));
@@ -290,27 +335,25 @@ serve(async (req) => {
           itens: Array.isArray(info?.requisicao_nota_fiscal?.itens) ? info.requisicao_nota_fiscal.itens.length : null,
         }));
 
-        const caminhoCompleto: string | undefined =
-          info?.caminho_xml_nota_fiscal ||
-          info?.caminho_xml_completo ||
-          info?.caminho_completo_xml ||
-          info?.xml_nfe ||
-          info?.caminho_xml;
-
-        const xmlUrls = [
-          caminhoCompleto
-            ? (caminhoCompleto.startsWith("http")
-              ? caminhoCompleto
-              : `${baseUrl}${caminhoCompleto.startsWith("/") ? "" : "/"}${caminhoCompleto}`)
-            : null,
+        xmlUrls.push(
+          `${baseUrl}/v2/nfes_recebidas/${cleanChave}.xml?${qs}`,
           `${baseUrl}/v2/nfes_recebidas/${cleanChave}.xml?completa=1`,
           `${baseUrl}/v2/nfes_recebidas/${cleanChave}.xml`,
-        ].filter((url, index, arr): url is string => !!url && arr.indexOf(url) === index);
+        );
 
         let xmlContent: string | null = null;
         let lastXmlError = "";
 
-        for (const xmlUrl of xmlUrls) {
+        for (const xmlCandidate of xmlInlineCandidates) {
+          if (isXmlNfeCompleto(xmlCandidate)) {
+            xmlContent = xmlCandidate;
+            break;
+          }
+          lastXmlError = "A API retornou XML inline incompleto/resumo.";
+        }
+
+        for (const xmlUrl of [...new Set(xmlUrls)]) {
+          if (xmlContent) break;
           console.log("MD-e Download XML candidato:", xmlUrl);
           const xmlResp = await fetchTextFollowingSignedRedirect(xmlUrl, authHeader);
           if (!xmlResp.ok) {
