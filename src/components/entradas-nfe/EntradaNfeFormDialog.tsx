@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput, formatBrazilianNumber } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -482,7 +483,13 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                               <Input type="number" value={item.quantidade} onChange={(e) => updateItem(idx, 'quantidade', parseFloat(e.target.value) || 0)} className="w-20 text-right" disabled={isFinalizado} />
                             </TableCell>
                             <TableCell className="text-right">
-                              <Input type="number" value={item.valor_unitario} onChange={(e) => updateItem(idx, 'valor_unitario', parseFloat(e.target.value) || 0)} className="w-24 text-right" step="0.01" disabled={isFinalizado} />
+                              <CurrencyInput
+                                value={item.valor_unitario ?? null}
+                                onChange={(v) => updateItem(idx, 'valor_unitario', v ?? 0)}
+                                className="w-28"
+                                prefix=""
+                                disabled={isFinalizado}
+                              />
                             </TableCell>
                             <TableCell className="text-right font-medium">{formatNumber(item.valor_total || 0)}</TableCell>
                             <TableCell>
@@ -515,48 +522,49 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl">
                   <div>
                     <Label>Valor Produtos</Label>
-                    <Input type="number" value={itens.reduce((s, i) => s + (i.valor_total || 0), 0)} readOnly className="bg-muted" />
+                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + (i.valor_total || 0), 0), 2)}`} readOnly className="bg-muted text-right" />
                   </div>
                   <div>
                     <Label>Frete</Label>
-                    <Input type="number" value={valorFrete} onChange={(e) => setValorFrete(parseFloat(e.target.value) || 0)} step="0.01" disabled={isFinalizado} />
+                    <CurrencyInput value={valorFrete || null} onChange={(v) => setValorFrete(v ?? 0)} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Seguro</Label>
-                    <Input type="number" value={valorSeguro} onChange={(e) => setValorSeguro(parseFloat(e.target.value) || 0)} step="0.01" disabled={isFinalizado} />
+                    <CurrencyInput value={valorSeguro || null} onChange={(v) => setValorSeguro(v ?? 0)} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Desconto</Label>
-                    <Input type="number" value={valorDesconto} onChange={(e) => setValorDesconto(parseFloat(e.target.value) || 0)} step="0.01" disabled={isFinalizado} />
+                    <CurrencyInput value={valorDesconto || null} onChange={(v) => setValorDesconto(v ?? 0)} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Outras Despesas</Label>
-                    <Input type="number" value={valorOutras} onChange={(e) => setValorOutras(parseFloat(e.target.value) || 0)} step="0.01" disabled={isFinalizado} />
+                    <CurrencyInput value={valorOutras || null} onChange={(v) => setValorOutras(v ?? 0)} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Total ICMS</Label>
-                    <Input type="number" value={itens.reduce((s, i) => s + (i.valor_icms || 0), 0)} readOnly className="bg-muted" />
+                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + (i.valor_icms || 0), 0), 2)}`} readOnly className="bg-muted text-right" />
                   </div>
                   <div>
                     <Label>Total IPI</Label>
-                    <Input type="number" value={itens.reduce((s, i) => s + (i.valor_ipi || 0), 0)} readOnly className="bg-muted" />
+                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + (i.valor_ipi || 0), 0), 2)}`} readOnly className="bg-muted text-right" />
                   </div>
                   <div>
                     <Label>Total PIS</Label>
-                    <Input type="number" value={itens.reduce((s, i) => s + (i.valor_pis || 0), 0)} readOnly className="bg-muted" />
+                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + (i.valor_pis || 0), 0), 2)}`} readOnly className="bg-muted text-right" />
                   </div>
                   <div>
                     <Label>Total COFINS</Label>
-                    <Input type="number" value={itens.reduce((s, i) => s + (i.valor_cofins || 0), 0)} readOnly className="bg-muted" />
+                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + (i.valor_cofins || 0), 0), 2)}`} readOnly className="bg-muted text-right" />
                   </div>
                   <div className="md:col-span-3">
                     <Label className="text-lg font-bold">Valor Total da NF-e</Label>
-                    <Input type="number" value={calcTotalNfe()} readOnly className="bg-muted text-lg font-bold" />
+                    <Input value={`R$ ${formatBrazilianNumber(calcTotalNfe(), 2)}`} readOnly className="bg-muted text-lg font-bold text-right" />
                   </div>
                 </div>
               </TabsContent>
             </ScrollArea>
           </Tabs>
+
 
           {isEdit && entradaData && (
             <ContasPagarEntradaSection entrada={entradaData} />
