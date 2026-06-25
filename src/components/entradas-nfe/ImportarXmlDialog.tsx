@@ -148,6 +148,17 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
       const nfe = pf.nfe!;
       try {
         const itens = vincularProdutos(nfe);
+        // Deriva CFOP do cabeçalho a partir do CFOP mais frequente nos itens
+        const cfopCounts: Record<string, number> = {};
+        itens.forEach((it: any) => {
+          const c = (it.cfop || '').toString().trim();
+          if (c) cfopCounts[c] = (cfopCounts[c] || 0) + 1;
+        });
+        const cfopMaisUsado = Object.entries(cfopCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+        const cfopHeader = cfopMaisUsado
+          ? (cfops || []).find((c: any) => String(c.codigo) === cfopMaisUsado && c.tipo === 'entrada')
+          : null;
+
         await createMutation.mutateAsync({
           granja_id: granjaId,
           inscricao_produtor_id: inscricaoId,
@@ -159,6 +170,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
           serie: nfe.serie,
           chave_acesso: nfe.chaveAcesso,
           data_emissao: nfe.dataEmissao || null,
+          cfop_id: cfopHeader?.id || null,
           natureza_operacao: nfe.naturezaOperacao,
           valor_produtos: nfe.totais.valorProdutos,
           valor_frete: nfe.totais.valorFrete,
