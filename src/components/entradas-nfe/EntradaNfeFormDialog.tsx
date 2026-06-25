@@ -425,42 +425,8 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>Forma de Pagamento {!isEdit && '*'}</Label>
-                    <Select isSearchable value={formaPagamento} onValueChange={(v) => { setFormaPagamento(v); setJaPago(false); }} disabled={isFinalizado}>
-                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                      <SelectContent>
-                        {FORMAS.map((f) => (<SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {isAvista && (
-                    <div>
-                      <Label>Conta Bancária</Label>
-                      <Select isSearchable value={contaBancariaId} onValueChange={setContaBancariaId} disabled={isFinalizado}>
-                        <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                        <SelectContent>
-                          {(contasBancarias || []).map((c) => (
-                            <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  {formaPagamento === 'cheque' && (
-                    <div>
-                      <Label>Nº do Cheque *</Label>
-                      <Input value={numeroCheque} onChange={(e) => setNumeroCheque(e.target.value)} placeholder="Ex: 000123" disabled={isFinalizado} />
-                    </div>
-                  )}
-                  {isAvista && !isEdit && (
-                    <div className="flex items-end">
-                      <label className="flex items-center gap-2 text-sm">
-                        <Checkbox checked={jaPago} onCheckedChange={(v) => setJaPago(!!v)} />
-                        Já está pago (gerar baixa automática)
-                      </label>
-                    </div>
-                  )}
+                  {/* Forma de pagamento removida do cabeçalho — será informada na baixa do contas a pagar */}
+
                   <div className="md:col-span-3">
                     <Label>Observações</Label>
                     <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={2} disabled={isFinalizado} />
