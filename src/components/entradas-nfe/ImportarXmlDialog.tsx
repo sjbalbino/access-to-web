@@ -274,6 +274,17 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
                 </Select>
               </div>
             )}
+            {formaPagamento === 'cheque' && (
+              <div>
+                <Label>Nº do Cheque *</Label>
+                <input
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={numeroCheque}
+                  onChange={(e) => setNumeroCheque(e.target.value)}
+                  placeholder="Ex: 000123"
+                />
+              </div>
+            )}
             {isAvista && (
               <div className="flex items-end">
                 <label className="flex items-center gap-2 text-sm">
