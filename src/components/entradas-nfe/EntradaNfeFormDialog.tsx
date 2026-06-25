@@ -75,12 +75,22 @@ const FORMAS_AVISTA = ['pix', 'dinheiro', 'cheque', 'cartao'];
 const toNumber = (value: number | string | null | undefined): number => {
   if (value === null || value === undefined || value === '') return 0;
   if (typeof value === 'number') return Number.isNaN(value) ? 0 : value;
-  const normalized = value.includes(',')
-    ? value.replace(/\./g, '').replace(',', '.')
-    : value;
+  const cleaned = value.replace(/[R$\s]/g, '');
+  const normalized = cleaned.includes(',')
+    ? cleaned.replace(/\./g, '').replace(',', '.')
+    : cleaned;
   const parsed = Number(normalized);
   return Number.isNaN(parsed) ? 0 : parsed;
 };
+
+const MoneyReadOnlyInput = ({ value, className = '' }: { value: number | string | null | undefined; className?: string }) => (
+  <CurrencyInput
+    value={toNumber(value)}
+    onChange={() => {}}
+    readOnly
+    className={`bg-muted ${className}`}
+  />
+);
 
 export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const isEdit = !!entradaId;
@@ -531,43 +541,43 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl">
                   <div>
                     <Label>Valor Produtos</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + toNumber(i.valor_total), 0), 2)}`} readOnly className="bg-muted text-right" />
+                    <MoneyReadOnlyInput value={itens.reduce((s, i) => s + toNumber(i.valor_total), 0)} />
                   </div>
                   <div>
                     <Label>Frete</Label>
-                    <CurrencyInput value={valorFrete || null} onChange={(v) => setValorFrete(v ?? 0)} disabled={isFinalizado} />
+                    <CurrencyInput value={toNumber(valorFrete)} onChange={(v) => setValorFrete(v ?? 0)} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Seguro</Label>
-                    <CurrencyInput value={valorSeguro || null} onChange={(v) => setValorSeguro(v ?? 0)} disabled={isFinalizado} />
+                    <CurrencyInput value={toNumber(valorSeguro)} onChange={(v) => setValorSeguro(v ?? 0)} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Desconto</Label>
-                    <CurrencyInput value={valorDesconto || null} onChange={(v) => setValorDesconto(v ?? 0)} disabled={isFinalizado} />
+                    <CurrencyInput value={toNumber(valorDesconto)} onChange={(v) => setValorDesconto(v ?? 0)} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Outras Despesas</Label>
-                    <CurrencyInput value={valorOutras || null} onChange={(v) => setValorOutras(v ?? 0)} disabled={isFinalizado} />
+                    <CurrencyInput value={toNumber(valorOutras)} onChange={(v) => setValorOutras(v ?? 0)} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Total ICMS</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + toNumber(i.valor_icms), 0), 2)}`} readOnly className="bg-muted text-right" />
+                    <MoneyReadOnlyInput value={itens.reduce((s, i) => s + toNumber(i.valor_icms), 0)} />
                   </div>
                   <div>
                     <Label>Total IPI</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + toNumber(i.valor_ipi), 0), 2)}`} readOnly className="bg-muted text-right" />
+                    <MoneyReadOnlyInput value={itens.reduce((s, i) => s + toNumber(i.valor_ipi), 0)} />
                   </div>
                   <div>
                     <Label>Total PIS</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + toNumber(i.valor_pis), 0), 2)}`} readOnly className="bg-muted text-right" />
+                    <MoneyReadOnlyInput value={itens.reduce((s, i) => s + toNumber(i.valor_pis), 0)} />
                   </div>
                   <div>
                     <Label>Total COFINS</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + toNumber(i.valor_cofins), 0), 2)}`} readOnly className="bg-muted text-right" />
+                    <MoneyReadOnlyInput value={itens.reduce((s, i) => s + toNumber(i.valor_cofins), 0)} />
                   </div>
                   <div className="md:col-span-3">
                     <Label className="text-lg font-bold">Valor Total da NF-e</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(calcTotalNfe(), 2)}`} readOnly className="bg-muted text-lg font-bold text-right" />
+                    <MoneyReadOnlyInput value={calcTotalNfe()} className="text-lg font-bold" />
                   </div>
                 </div>
               </TabsContent>
