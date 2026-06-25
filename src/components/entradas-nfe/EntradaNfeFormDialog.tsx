@@ -111,6 +111,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const [formaPagamento, setFormaPagamento] = useState<string | undefined>(undefined);
   const [contaBancariaId, setContaBancariaId] = useState<string | undefined>(undefined);
   const [jaPago, setJaPago] = useState(false);
+  const [numeroCheque, setNumeroCheque] = useState('');
   const [fornecedorId, setFornecedorId] = useState('');
   const [numeroNfe, setNumeroNfe] = useState('');
   const [serie, setSerie] = useState('1');
