@@ -55,6 +55,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
   const { data: granjas } = useGranjas();
   const { data: clientes } = useClientesFornecedores();
   const { data: produtos } = useProdutos();
+  const { cfops } = useCfops();
   const { data: inscricoes } = useInscricoesCompletas();
   const { data: safras } = useSafras();
   const { data: contasBancarias } = useContasBancarias({ ativo: true });
