@@ -61,6 +61,7 @@ export interface AutoCpPagamento {
   forma_pagamento?: string | null;
   conta_bancaria_id?: string | null;
   ja_pago?: boolean;
+  numero_cheque?: string | null;
 }
 
 async function gerarContasPagarAutomatico(
