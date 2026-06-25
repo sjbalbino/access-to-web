@@ -421,6 +421,20 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
           </div>
         )}
 
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="font-semibold mb-1 flex items-center gap-2">
+            <HelpCircle className="h-4 w-4" /> Como baixar o XML completo da SEFAZ
+          </div>
+          <ol className="list-decimal ml-5 space-y-1">
+            <li><b>Manifeste</b> a NF-e (menu de ações da linha): <b>Ciência da Operação</b> libera o XML; use <b>Confirmação</b> se for dar entrada no estoque.</li>
+            <li><b>Aguarde alguns segundos a alguns minutos</b> — a SEFAZ precisa processar a manifestação e disponibilizar o XML no serviço de distribuição (DFe). Em horários de pico pode levar mais tempo.</li>
+            <li>Depois clique em <b>XML</b> para baixar o arquivo ou <b>Importar</b> para dar entrada automática.</li>
+          </ol>
+          <p className="mt-2 text-xs text-amber-800">
+            Observação: notas localizadas pela <b>chave de acesso</b> entram nesta lista, mas o XML completo (<code>nfeProc</code>) só é entregue pela SEFAZ <b>após</b> a manifestação ser processada.
+          </p>
+        </div>
+
 
         {nfesRecebidas.length > 0 && (
           <div className="flex flex-wrap gap-3 items-end mb-4 bg-slate-50/60 p-4 rounded-lg border">
