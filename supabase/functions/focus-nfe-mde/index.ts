@@ -16,6 +16,50 @@ const getBaseUrl = (ambiente: number | null | undefined) => {
     : "https://api.focusnfe.com.br";
 };
 
+function isXmlNfeCompleto(xml: string | null | undefined): boolean {
+  if (!xml) return false;
+  const normalized = xml.replace(/\s+/g, " ").toLowerCase();
+  const isResumoDfe = normalized.includes("<resnfe") || normalized.includes(":resnfe");
+  const hasNfeProc = normalized.includes("<nfeproc") || normalized.includes(":nfeproc");
+  const hasFullNfe =
+    (normalized.includes("<nfe") || normalized.includes(":nfe")) &&
+    (normalized.includes("<infnfe") || normalized.includes(":infnfe")) &&
+    (normalized.includes("<det") || normalized.includes(":det")) &&
+    (normalized.includes("<total") || normalized.includes(":total"));
+
+  return !isResumoDfe && (hasNfeProc || hasFullNfe);
+}
+
+function getFocusErrorMessage(data: any): string {
+  return data?.mensagem || data?.message || data?.erro || data?.error || "Resposta inválida da Focus NFe";
+}
+
+async function fetchTextFollowingSignedRedirect(url: string, authHeader: string): Promise<{ ok: boolean; status: number; text: string }> {
+  const firstResp = await fetch(url, {
+    method: "GET",
+    headers: { Authorization: authHeader },
+    redirect: "manual",
+  });
+
+  const location = firstResp.headers.get("Location") || firstResp.headers.get("location");
+  if (firstResp.status >= 300 && firstResp.status < 400 && location) {
+    const redirectUrl = new URL(location, url).toString();
+    console.log("MD-e Download XML redirecionado:", redirectUrl);
+    const redirectedResp = await fetch(redirectUrl, { method: "GET" });
+    return {
+      ok: redirectedResp.ok,
+      status: redirectedResp.status,
+      text: await redirectedResp.text(),
+    };
+  }
+
+  return {
+    ok: firstResp.ok,
+    status: firstResp.status,
+    text: await firstResp.text(),
+  };
+}
+
 function friendlyKeyLookupError(
   rawMsg: string,
   chave: string,
@@ -218,20 +262,32 @@ serve(async (req) => {
 
       case "download_xml": {
         if (!chave) throw new Error("chave é obrigatória para download");
+        const cleanChave = String(chave).replace(/\D/g, "");
+        if (cleanChave.length !== 44) throw new Error("Chave de acesso deve ter 44 dígitos.");
 
-        // Focus NFe: o endpoint .xml retorna apenas o RESUMO (nfeProc não completo).
-        // O XML completo (procNFe com todos os itens) só fica disponível após a
-        // Confirmação da Operação e deve ser baixado pelo caminho informado no
-        // JSON da consulta (campo caminho_xml_nota_fiscal / caminho_xml_completo).
-        const urlInfo = `${baseUrl}/v2/nfes_recebidas/${chave}`;
+        // Consulta explicitamente com completa=1. Sem este parâmetro a API pode
+        // devolver apenas o resumo (resNFe), mesmo após manifestação.
+        const urlInfo = `${baseUrl}/v2/nfes_recebidas/${cleanChave}.json?completa=1`;
         console.log("MD-e Consultar info p/ XML completo:", urlInfo);
         const infoResp = await fetch(urlInfo, {
           method: "GET",
           headers: { Authorization: authHeader },
         });
         const info: any = await infoResp.json().catch(() => ({}));
-        console.log("MD-e info JSON keys:", Object.keys(info || {}));
-        console.log("MD-e info JSON sample:", JSON.stringify(info).slice(0, 1500));
+
+        if (!infoResp.ok) {
+          throw new Error(`Erro ao consultar dados completos da NF-e: ${infoResp.status} - ${getFocusErrorMessage(info)}`);
+        }
+
+        console.log("MD-e info completa keys:", Object.keys(info || {}));
+        console.log("MD-e info completa status:", JSON.stringify({
+          chave: cleanChave,
+          situacao: info?.situacao,
+          manifestacao_destinatario: info?.manifestacao_destinatario,
+          nfe_completa: info?.nfe_completa,
+          tem_requisicao: !!info?.requisicao_nota_fiscal,
+          itens: Array.isArray(info?.requisicao_nota_fiscal?.itens) ? info.requisicao_nota_fiscal.itens.length : null,
+        }));
 
         const caminhoCompleto: string | undefined =
           info?.caminho_xml_nota_fiscal ||
@@ -240,43 +296,46 @@ serve(async (req) => {
           info?.xml_nfe ||
           info?.caminho_xml;
 
+        const xmlUrls = [
+          caminhoCompleto
+            ? (caminhoCompleto.startsWith("http")
+              ? caminhoCompleto
+              : `${baseUrl}${caminhoCompleto.startsWith("/") ? "" : "/"}${caminhoCompleto}`)
+            : null,
+          `${baseUrl}/v2/nfes_recebidas/${cleanChave}.xml?completa=1`,
+          `${baseUrl}/v2/nfes_recebidas/${cleanChave}.xml`,
+        ].filter((url, index, arr): url is string => !!url && arr.indexOf(url) === index);
 
         let xmlContent: string | null = null;
+        let lastXmlError = "";
 
-        if (caminhoCompleto) {
-          const xmlUrl = caminhoCompleto.startsWith("http")
-            ? caminhoCompleto
-            : `${baseUrl}${caminhoCompleto.startsWith("/") ? "" : "/"}${caminhoCompleto}`;
-          console.log("MD-e Download XML completo (caminho):", xmlUrl);
-          const xmlResp = await fetch(xmlUrl, {
-            method: "GET",
-            headers: { Authorization: authHeader },
-            redirect: "follow",
-          });
-          if (xmlResp.ok) {
-            xmlContent = await xmlResp.text();
-          } else {
-            const errTxt = await xmlResp.text();
-            console.log("Falha no caminho completo:", xmlResp.status, errTxt);
+        for (const xmlUrl of xmlUrls) {
+          console.log("MD-e Download XML candidato:", xmlUrl);
+          const xmlResp = await fetchTextFollowingSignedRedirect(xmlUrl, authHeader);
+          if (!xmlResp.ok) {
+            lastXmlError = `HTTP ${xmlResp.status}: ${xmlResp.text.slice(0, 500)}`;
+            console.log("MD-e falha XML candidato:", lastXmlError);
+            continue;
           }
+          if (isXmlNfeCompleto(xmlResp.text)) {
+            xmlContent = xmlResp.text;
+            break;
+          }
+          lastXmlError = "A API retornou XML-resumo (resNFe), não o XML completo da NF-e.";
+          console.log("MD-e XML candidato rejeitado: resumo/incompleto", xmlResp.text.slice(0, 500));
         }
 
-        // Fallback: tenta o .xml direto (retorna resumo se não tiver completo)
         if (!xmlContent) {
-          const urlFallback = `${baseUrl}/v2/nfes_recebidas/${chave}.xml`;
-          console.log("MD-e Download XML (fallback .xml):", urlFallback);
-          const response = await fetch(urlFallback, {
-            method: "GET",
-            headers: { Authorization: authHeader },
-          });
-          if (!response.ok) {
-            const errorText = await response.text();
-            if (response.status === 404) {
-              throw new Error("XML não disponível. Confirme a Operação (manifestação 'Confirmação') para liberar o XML completo na SEFAZ.");
-            }
-            throw new Error(`Erro ao baixar XML: ${response.status} - ${errorText}`);
-          }
-          xmlContent = await response.text();
+          const situacao = info?.situacao ? ` Situação: ${info.situacao}.` : "";
+          const manifestacao = info?.manifestacao_destinatario
+            ? ` Manifestação registrada: ${info.manifestacao_destinatario}.`
+            : " Manifestação registrada: nenhuma.";
+          const completo = typeof info?.nfe_completa === "boolean" ? ` nfe_completa=${info.nfe_completa}.` : "";
+          throw new Error(
+            `XML completo ainda não disponível na Focus NFe/SEFAZ para a chave ${cleanChave}.${situacao}${manifestacao}${completo} ` +
+            `O download foi bloqueado para não salvar/importar o XML-resumo. ` +
+            `Refaça a manifestação como Confirmação da Operação e aguarde a distribuição do XML completo. ${lastXmlError}`.trim(),
+          );
         }
 
         return new Response(JSON.stringify({ success: true, xml: xmlContent }), {
