@@ -152,6 +152,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       setSafraId((entradaData as any).safra_id || undefined);
       setFormaPagamento((entradaData as any).forma_pagamento || undefined);
       setContaBancariaId((entradaData as any).conta_bancaria_id || undefined);
+      setNumeroCheque((entradaData as any).numero_cheque || '');
       setFornecedorId(entradaData.fornecedor_id || '');
       setNumeroNfe(entradaData.numero_nfe || '');
       setSerie(entradaData.serie || '1');
