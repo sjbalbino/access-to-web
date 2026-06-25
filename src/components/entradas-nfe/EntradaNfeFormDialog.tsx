@@ -254,12 +254,26 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
     if (itensValidos.length === 0) { toast.error('Adicione ao menos um item à NF-e.'); return; }
 
 
-    const itensSave = itens.map(({ ...item }) => {
-      const { id, entrada_nfe_id, produto, created_at, updated_at, ...rest } = item as any;
-      if (rest.data_validade === '' || rest.data_validade === undefined) rest.data_validade = null;
-      const numericFields = ['quantidade','valor_unitario','valor_total','valor_desconto','valor_frete_rateio','base_icms','aliq_icms','valor_icms','base_ipi','aliq_ipi','valor_ipi','base_pis','aliq_pis','valor_pis','base_cofins','aliq_cofins','valor_cofins'];
-      numericFields.forEach((f) => { rest[f] = toNumber(rest[f]); });
-      if (rest.quantidade_conferida === '' as any) rest.quantidade_conferida = null;
+    const ALLOWED_ITEM_FIELDS = [
+      'produto_id','produto_xml_codigo','produto_xml_descricao','produto_xml_ncm',
+      'cfop','unidade_medida','quantidade','valor_unitario','valor_total',
+      'valor_desconto','valor_frete_rateio',
+      'cst_icms','base_icms','aliq_icms','valor_icms',
+      'cst_ipi','base_ipi','aliq_ipi','valor_ipi',
+      'cst_pis','base_pis','aliq_pis','valor_pis',
+      'cst_cofins','base_cofins','aliq_cofins','valor_cofins',
+      'lote','data_validade','vinculado','quantidade_conferida',
+    ];
+    const NUMERIC_FIELDS = new Set(['quantidade','valor_unitario','valor_total','valor_desconto','valor_frete_rateio','base_icms','aliq_icms','valor_icms','base_ipi','aliq_ipi','valor_ipi','base_pis','aliq_pis','valor_pis','base_cofins','aliq_cofins','valor_cofins']);
+    const itensSave = itens.map((item: any) => {
+      const rest: any = {};
+      for (const f of ALLOWED_ITEM_FIELDS) {
+        let v = item[f];
+        if (NUMERIC_FIELDS.has(f)) v = toNumber(v);
+        if ((f === 'data_validade' || f === 'quantidade_conferida') && (v === '' || v === undefined)) v = null;
+        if (f === 'produto_id' && !v) v = null;
+        rest[f] = v;
+      }
       return rest;
     });
 
