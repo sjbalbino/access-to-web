@@ -294,6 +294,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
         forma_pagamento: formaPagamento,
         conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
         ja_pago: jaPago && isAvista,
+        numero_cheque: formaPagamento === 'cheque' ? (numeroCheque || null) : null,
       };
     }
 
