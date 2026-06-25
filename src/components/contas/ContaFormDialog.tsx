@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -340,7 +341,11 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
           </div>
           <div>
             <Label>Valor original *</Label>
-            <Input type="number" step="0.01" value={form.valor_original} onChange={(e) => update('valor_original', e.target.value)} disabled={lockedByOrigem} />
+            <CurrencyInput
+              value={form.valor_original === '' || form.valor_original == null ? null : Number(form.valor_original)}
+              onChange={(v) => update('valor_original', v == null ? '' : String(v))}
+              disabled={lockedByOrigem}
+            />
           </div>
           <div>
             <Label>Safra</Label>
@@ -443,15 +448,24 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
               </div>
               <div>
                 <Label>Juros</Label>
-                <Input type="number" step="0.01" value={form.juros} onChange={(e) => update('juros', e.target.value)} />
+                <CurrencyInput
+                  value={form.juros === '' || form.juros == null ? null : Number(form.juros)}
+                  onChange={(v) => update('juros', v == null ? '0' : String(v))}
+                />
               </div>
               <div>
                 <Label>Multa</Label>
-                <Input type="number" step="0.01" value={form.multa} onChange={(e) => update('multa', e.target.value)} />
+                <CurrencyInput
+                  value={form.multa === '' || form.multa == null ? null : Number(form.multa)}
+                  onChange={(v) => update('multa', v == null ? '0' : String(v))}
+                />
               </div>
               <div>
                 <Label>Desconto</Label>
-                <Input type="number" step="0.01" value={form.desconto} onChange={(e) => update('desconto', e.target.value)} />
+                <CurrencyInput
+                  value={form.desconto === '' || form.desconto == null ? null : Number(form.desconto)}
+                  onChange={(v) => update('desconto', v == null ? '0' : String(v))}
+                />
               </div>
               <div>
                 <Label>Forma de Pagto.</Label>

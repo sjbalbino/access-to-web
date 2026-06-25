@@ -1,39 +1,43 @@
-## Esclarecendo os dois campos
+# Padronização de campos monetários (R$ BR, 2 decimais)
 
-Hoje o formulário de Contas a Pagar / Receber tem dois campos parecidos, mas com funções diferentes:
+## Objetivo
+Garantir que todo campo que representa valor em dinheiro use o componente `CurrencyInput` (`src/components/ui/currency-input.tsx`), exibindo prefixo `R$`, separador de milhar `.`, decimal `,` e 2 casas decimais. Campos de quantidade (KG, sacas, %, unidades) NÃO são alterados — continuam com suas regras atuais (ex.: KG arredondado).
 
-### 1. `Parcela` (texto livre — ex.: "1/3")
-- Campo `parcela` na tabela `contas_pagar` / `contas_receber`.
-- É só um **rótulo identificador** da parcela dentro do documento (ex.: "1/3", "2/3").
-- Usado em listagens, recibos e PDFs para mostrar a qual parcela do título aquela linha pertence.
-- **Não gera nada automaticamente.** O usuário digita.
+## Critérios de identificação
+Um campo é "monetário" quando:
+- Nome contém: `valor`, `preco`, `preço`, `custo`, `total`, `subtotal`, `desconto`, `acrescimo`, `juros`, `multa`, `frete`, `seguro`, `comissao`, `taxa`, `saldo` (em R$), `vlr`, `montante`.
+- E NÃO é: `quantidade`, `kg`, `peso`, `sacos`, `percentual`, `aliquota`, `umidade`, `impureza`.
 
-### 2. `Parcelar em (vezes)` + `Intervalo entre parcelas (dias)`
-- Campos `num_parcelas` e `intervalo_dias`, que **não são salvos** — servem só para o ato da inclusão.
-- Quando `num_parcelas > 1`, o sistema **gera N registros** de conta, dividindo o valor e somando o intervalo no vencimento.
-- Cada conta gerada recebe o rótulo `parcela` no formato "i/N" automaticamente.
-- Só aparece em **nova conta** (não em edição).
+## Escopo de arquivos (varredura)
+Formulários e dialogs que contêm inputs `type="number"` ou `Input` ligados a campos monetários, incluindo (não exaustivo):
 
-### A ambiguidade
-Os dois ficam um do lado do outro, sem rótulo que deixe claro que:
-- `Parcela` = rótulo desta linha;
-- `Parcelar em (vezes)` = gerador de várias linhas.
+- `src/components/contas/ContaFormDialog.tsx` (valor, desconto, juros, multa, valor pago)
+- `src/components/contas/BaixasDialog.tsx`
+- `src/components/contas/GerarParcelasDialog.tsx`
+- `src/pages/LancamentosFinanceiros.tsx`
+- `src/pages/VendaProducaoForm.tsx` (preço/kg, valor total, comissão, frete)
+- `src/pages/RemessasVendaForm.tsx` (valor nota, frete)
+- `src/pages/NotaFiscalForm.tsx` (valores de itens, totais, desconto, frete, seguro)
+- `src/components/entradas-nfe/EntradaNfeFormDialog.tsx` (vUnCom, vProd, vDesc, vFrete, vSeg, vOutro, vTotal)
+- `src/components/compra/CompraDialog.tsx`
+- `src/components/devolucao/DevolucaoDialog.tsx`
+- `src/components/deposito/NotaDepositoFormDialog.tsx`
+- `src/components/transferencias/TransferenciaDialog.tsx`
+- `src/components/notas-fiscais/ContraNotaDialog.tsx`
+- `src/pages/ContasBancarias.tsx` (saldo inicial)
+- `src/pages/Produtos.tsx` (preço padrão se existir)
+- `src/pages/ContratosVenda*` / formulários relacionados
 
-E se o usuário digita "1/3" em `Parcela` e ao mesmo tempo coloca `num_parcelas = 3`, o rótulo digitado é ignorado (o gerador sobrescreve com "1/3", "2/3", "3/3").
+## Abordagem técnica
+1. Rodar `rg` para listar todos os inputs candidatos por nome de campo.
+2. Para cada arquivo, substituir `<Input type="number" ... />` por `<CurrencyInput value={...} onChange={(v) => ...} />`, ajustando o handler para receber `number | null` em vez de evento.
+3. Manter os campos de quantidade intactos (`QuantityInput` ou Input numérico atual).
+4. Onde o valor for somente leitura/calculado, exibir via `formatBrazilianNumber(value, 2)` com prefixo `R$ `.
 
-## Plano de ajuste de UX (sem mudar lógica de negócio)
+## Não inclui
+- Alteração de schema ou tipos no banco.
+- Alteração de relatórios PDF (já usam `formatCurrency`).
+- Campos de quantidade (KG, sacas, %, etc).
 
-1. **Renomear e reagrupar visualmente:**
-   - `Parcela` → rótulo **"Nº da parcela (ex.: 1/3)"** com tooltip "Identificação desta parcela. Preenchido automaticamente quando você gerar várias parcelas abaixo."
-   - `Parcelar em (vezes)` / `Intervalo entre parcelas (dias)` → mover para um bloco separado **"Gerar várias parcelas"** com borda/fundo sutil, e descrição: "Cria N contas com vencimentos espaçados. O valor original será dividido."
-
-2. **Esconder/desabilitar `Parcela` (rótulo) quando `num_parcelas > 1`**, mostrando um aviso "Será preenchido automaticamente (1/N, 2/N, …)".
-
-3. **Em edição** (`initial?.id`): manter só o campo `Parcela` (rótulo). O bloco "Gerar várias parcelas" continua oculto, como já é hoje.
-
-4. **Sem alteração de schema** nem de regras de cálculo — apenas labels, agrupamento visual e o desabilitar condicional.
-
-### Arquivo afetado
-- `src/components/contas/ContaFormDialog.tsx`
-
-Confirma que quer este ajuste de UX, ou prefere outro caminho (ex.: remover o campo `Parcela` manual e deixar só o gerador)?
+## Execução
+Será feito em lotes por módulo (financeiro → vendas → NFe → estoque) para manter cada edição revisável. Começo pelo módulo financeiro (Contas a Pagar/Receber, Baixas, Parcelas, Lançamentos) nesta primeira rodada e sigo nos demais nas próximas mensagens, confirmando a cada lote.

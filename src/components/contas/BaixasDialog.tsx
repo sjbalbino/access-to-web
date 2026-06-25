@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -312,19 +313,31 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
                   </div>
                   <div>
                     <Label>Valor *</Label>
-                    <Input type="number" step="0.01" value={valorPago} placeholder={saldo.toFixed(2)} onChange={(e) => setValorPago(e.target.value)} />
+                    <CurrencyInput
+                      value={valorPago === '' ? null : Number(valorPago)}
+                      onChange={(v) => setValorPago(v == null ? '' : String(v))}
+                    />
                   </div>
                   <div>
                     <Label>Juros</Label>
-                    <Input type="number" step="0.01" value={juros} onChange={(e) => setJuros(e.target.value)} />
+                    <CurrencyInput
+                      value={juros === '' ? null : Number(juros)}
+                      onChange={(v) => setJuros(v == null ? '0' : String(v))}
+                    />
                   </div>
                   <div>
                     <Label>Multa</Label>
-                    <Input type="number" step="0.01" value={multa} onChange={(e) => setMulta(e.target.value)} />
+                    <CurrencyInput
+                      value={multa === '' ? null : Number(multa)}
+                      onChange={(v) => setMulta(v == null ? '0' : String(v))}
+                    />
                   </div>
                   <div>
                     <Label>Desconto</Label>
-                    <Input type="number" step="0.01" value={desconto} onChange={(e) => setDesconto(e.target.value)} />
+                    <CurrencyInput
+                      value={desconto === '' ? null : Number(desconto)}
+                      onChange={(v) => setDesconto(v == null ? '0' : String(v))}
+                    />
                   </div>
                   <div>
                     <Label>Forma de pagamento</Label>

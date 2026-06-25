@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -317,9 +318,10 @@ export default function ContasBancarias() {
             </div>
             <div>
               <Label>Saldo inicial</Label>
-              <Input type="number" step="0.01"
-                value={form.saldo_inicial ?? 0}
-                onChange={(e) => setForm({ ...form, saldo_inicial: parseFloat(e.target.value) || 0 })} />
+              <CurrencyInput
+                value={form.saldo_inicial ?? null}
+                onChange={(v) => setForm({ ...form, saldo_inicial: v ?? 0 })}
+              />
             </div>
 
             <div>
