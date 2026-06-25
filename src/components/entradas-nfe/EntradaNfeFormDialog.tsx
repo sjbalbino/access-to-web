@@ -338,7 +338,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
             <ScrollArea className="flex-1">
               <TabsContent value="cabecalho" className="p-1">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 [&>div]:min-w-0">
                   <div>
                     <Label>Granja *</Label>
                     <Select isSearchable value={granjaId} onValueChange={setGranjaId} disabled={isFinalizado}>
