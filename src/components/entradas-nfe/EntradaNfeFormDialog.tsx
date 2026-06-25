@@ -265,6 +265,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       safra_id: safraId,
       forma_pagamento: formaPagamento || null,
       conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
+      numero_cheque: formaPagamento === 'cheque' ? (numeroCheque || null) : null,
       fornecedor_id: fornecedorId || null,
       numero_nfe: numeroNfe,
       serie,
