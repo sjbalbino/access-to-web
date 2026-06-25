@@ -321,7 +321,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-6xl max-h-[95vh] overflow-hidden flex flex-col p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>{isEdit ? 'Detalhes da Entrada NF-e' : 'Nova Entrada Manual'}</DialogTitle>
             <DialogDescription>
@@ -329,20 +329,20 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs defaultValue="cabecalho" className="flex-1 overflow-hidden flex flex-col">
-            <TabsList className="w-full justify-start">
+          <Tabs defaultValue="cabecalho" className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            <TabsList className="w-full justify-start flex-none">
               <TabsTrigger value="cabecalho">Cabeçalho</TabsTrigger>
               <TabsTrigger value="itens">Itens ({itens.length})</TabsTrigger>
               <TabsTrigger value="totais">Totais</TabsTrigger>
             </TabsList>
 
-            <ScrollArea className="flex-1">
-              <TabsContent value="cabecalho" className="p-1">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 [&>div]:min-w-0">
+            <ScrollArea className="flex-1 min-h-0 pr-3">
+              <TabsContent value="cabecalho" className="p-1 mt-3 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 [&>div]:min-w-0">
                   <div>
                     <Label>Granja *</Label>
                     <Select isSearchable value={granjaId} onValueChange={setGranjaId} disabled={isFinalizado}>
-                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
                         {granjas?.map((g: any) => (<SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>))}
                       </SelectContent>
@@ -351,7 +351,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   <div>
                     <Label>Fornecedor *</Label>
                     <Select isSearchable value={fornecedorId} onValueChange={setFornecedorId} disabled={isFinalizado}>
-                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
                         {fornecedores.map((f: any) => (<SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>))}
                       </SelectContent>
@@ -360,7 +360,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   <div>
                     <Label>CFOP *</Label>
                     <Select isSearchable value={cfopId} onValueChange={setCfopId} disabled={isFinalizado}>
-                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
                         {cfops?.filter((c: any) => c.tipo === 'entrada').map((c: any) => (
                           <SelectItem key={c.id} value={c.id}>{c.codigo} - {c.descricao}</SelectItem>
@@ -376,9 +376,9 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     <Label>Série</Label>
                     <Input value={serie} onChange={(e) => setSerie(e.target.value)} disabled={isFinalizado} />
                   </div>
-                  <div>
+                  <div className="md:col-span-2 xl:col-span-1">
                     <Label>Chave de Acesso</Label>
-                    <Input value={chaveAcesso} onChange={(e) => setChaveAcesso(e.target.value)} maxLength={44} disabled={isFinalizado} />
+                    <Input className="font-mono text-xs" value={chaveAcesso} onChange={(e) => setChaveAcesso(e.target.value)} maxLength={44} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Data Emissão</Label>
@@ -392,10 +392,10 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     <Label>Natureza da Operação</Label>
                     <Input value={naturezaOperacao} onChange={(e) => setNaturezaOperacao(e.target.value)} disabled={isFinalizado} />
                   </div>
-                  <div>
+                  <div className="md:col-span-2 xl:col-span-2">
                     <Label>IE do Produtor *</Label>
                     <Select isSearchable value={inscricaoId} onValueChange={setInscricaoId} disabled={isFinalizado || !granjaId}>
-                      <SelectTrigger><SelectValue placeholder={granjaId ? 'Selecione...' : 'Escolha granja'} /></SelectTrigger>
+                      <SelectTrigger className="w-full min-w-0"><SelectValue placeholder={granjaId ? 'Selecione...' : 'Escolha granja'} /></SelectTrigger>
                       <SelectContent>
                         {inscricoesFiltradas.map((i) => (
                           <SelectItem key={i.id} value={i.id}>
@@ -408,7 +408,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   <div>
                     <Label>Safra *</Label>
                     <Select isSearchable value={safraId} onValueChange={setSafraId} disabled={isFinalizado}>
-                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                      <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
                         {safras?.map((s: any) => (<SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>))}
                       </SelectContent>
@@ -416,15 +416,19 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   </div>
                   {/* Forma de pagamento removida do cabeçalho — será informada na baixa do contas a pagar */}
 
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-2 xl:col-span-3">
                     <Label>Observações</Label>
                     <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={2} disabled={isFinalizado} />
                   </div>
                 </div>
+
+                {isEdit && entradaData && (
+                  <ContasPagarEntradaSection entrada={entradaData} />
+                )}
               </TabsContent>
 
 
-              <TabsContent value="itens" className="p-1">
+              <TabsContent value="itens" className="p-1 mt-3">
                 {!isFinalizado && (
                   <div className="flex justify-end mb-2">
                     <Button size="sm" variant="outline" onClick={addItem}><Plus className="h-4 w-4 mr-1" /> Adicionar Item</Button>
@@ -513,8 +517,8 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                 </div>
               </TabsContent>
 
-              <TabsContent value="totais" className="p-1">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl [&>div]:min-w-0">
+              <TabsContent value="totais" className="p-1 mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-5xl [&>div]:min-w-0">
                   <div>
                     <Label>Valor Produtos</Label>
                     <MoneyReadOnlyInput value={itens.reduce((s, i) => s + toNumber(i.valor_total), 0)} />
@@ -551,9 +555,9 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     <Label>Total COFINS</Label>
                     <MoneyReadOnlyInput value={itens.reduce((s, i) => s + toNumber(i.valor_cofins), 0)} />
                   </div>
-                  <div className="md:col-span-3">
+                  <div className="sm:col-span-2 lg:col-span-3">
                     <Label className="text-lg font-bold">Valor Total da NF-e</Label>
-                    <MoneyReadOnlyInput value={calcTotalNfe()} className="text-lg font-bold h-12" />
+                    <MoneyReadOnlyInput value={calcTotalNfe()} className="text-base font-bold h-11" />
                   </div>
 
                 </div>
@@ -561,13 +565,8 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
             </ScrollArea>
           </Tabs>
 
-
-          {isEdit && entradaData && (
-            <ContasPagarEntradaSection entrada={entradaData} />
-          )}
-
           {!isFinalizado && (
-            <div className="flex justify-end gap-2 pt-4 border-t">
+            <div className="flex justify-end gap-2 pt-4 border-t flex-none">
               <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
               <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
                 {createMutation.isPending || updateMutation.isPending ? 'Salvando...' : 'Salvar'}
