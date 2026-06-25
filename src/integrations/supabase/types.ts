@@ -2262,6 +2262,7 @@ export type Database = {
           inscricao_produtor_id: string | null
           modo_entrada: string
           natureza_operacao: string | null
+          numero_cheque: string | null
           numero_nfe: string | null
           observacoes: string | null
           safra_id: string | null
@@ -2297,6 +2298,7 @@ export type Database = {
           inscricao_produtor_id?: string | null
           modo_entrada?: string
           natureza_operacao?: string | null
+          numero_cheque?: string | null
           numero_nfe?: string | null
           observacoes?: string | null
           safra_id?: string | null
@@ -2332,6 +2334,7 @@ export type Database = {
           inscricao_produtor_id?: string | null
           modo_entrada?: string
           natureza_operacao?: string | null
+          numero_cheque?: string | null
           numero_nfe?: string | null
           observacoes?: string | null
           safra_id?: string | null
