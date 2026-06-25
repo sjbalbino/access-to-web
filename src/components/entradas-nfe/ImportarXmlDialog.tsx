@@ -48,6 +48,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
   const [formaPagamento, setFormaPagamento] = useState<string | undefined>(undefined);
   const [contaBancariaId, setContaBancariaId] = useState<string | undefined>(undefined);
   const [jaPago, setJaPago] = useState(false);
+  const [numeroCheque, setNumeroCheque] = useState('');
   const [parsedFiles, setParsedFiles] = useState<ParsedFile[]>([]);
   const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
