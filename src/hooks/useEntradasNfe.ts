@@ -291,19 +291,18 @@ export function useUpdateEntradaNfe() {
         .single();
       if (error) throw error;
 
-      if (itens) {
-        // Remove itens antigos e insere novos
+      // Só substitui itens quando a lista vier preenchida — evita apagar itens
+      // existentes caso o formulário ainda não tenha carregado os itens.
+      if (Array.isArray(itens) && itens.length > 0) {
         await supabase.from('entradas_nfe_itens').delete().eq('entrada_nfe_id', id);
-        if (itens.length) {
-          const itensWithId = itens.map((item: any) => ({
-            ...item,
-            entrada_nfe_id: id,
-          }));
-          const { error: itensError } = await supabase
-            .from('entradas_nfe_itens')
-            .insert(itensWithId);
-          if (itensError) throw itensError;
-        }
+        const itensWithId = itens.map((item: any) => ({
+          ...item,
+          entrada_nfe_id: id,
+        }));
+        const { error: itensError } = await supabase
+          .from('entradas_nfe_itens')
+          .insert(itensWithId);
+        if (itensError) throw itensError;
       }
       return data;
     },

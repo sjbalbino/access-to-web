@@ -252,6 +252,8 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
     if (!safraId) { toast.error('Selecione a safra.'); return; }
     if (!isEdit && !formaPagamento) { toast.error('Selecione a forma de pagamento.'); return; }
     if (formaPagamento === 'cheque' && !numeroCheque.trim()) { toast.error('Informe o número do cheque.'); return; }
+    const itensValidos = itens.filter((i) => toNumber(i.quantidade) > 0 || toNumber(i.valor_total) > 0 || (i as any).produto_xml_descricao);
+    if (itensValidos.length === 0) { toast.error('Adicione ao menos um item à NF-e.'); return; }
 
 
     const itensSave = itens.map(({ ...item }) => {
