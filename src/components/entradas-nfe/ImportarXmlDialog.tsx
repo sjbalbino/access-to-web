@@ -132,7 +132,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
   const resetAll = () => {
     setParsedFiles([]);
     setGranjaId(undefined); setInscricaoId(undefined); setSafraId(undefined);
-    setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false);
+    setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false); setNumeroCheque('');
   };
 
   const handleImportar = async () => {
@@ -140,6 +140,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
     if (!inscricaoId) return toast.error('Selecione a inscrição do produtor.');
     if (!safraId) return toast.error('Selecione a safra.');
     if (!formaPagamento) return toast.error('Selecione a forma de pagamento.');
+    if (formaPagamento === 'cheque' && !numeroCheque.trim()) return toast.error('Informe o número do cheque.');
     const validFiles = parsedFiles.filter((f) => f.nfe);
     if (!validFiles.length) return toast.error('Nenhum XML válido para importar.');
 
