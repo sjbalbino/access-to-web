@@ -37,7 +37,7 @@ function getFocusErrorMessage(data: any): string {
 async function fetchTextFollowingSignedRedirect(url: string, authHeader: string): Promise<{ ok: boolean; status: number; text: string }> {
   const firstResp = await fetch(url, {
     method: "GET",
-    headers: { Authorization: authHeader },
+    headers: { Authorization: authHeader, Accept: "application/xml, text/xml, application/json;q=0.8" },
     redirect: "manual",
   });
 
@@ -126,15 +126,19 @@ async function getInscricaoContext(inscricaoId: string) {
     .maybeSingle();
 
   if (credErr) throw new Error("Erro ao buscar credenciais: " + credErr.message);
-  const token = emitente.ambiente === 2
-    ? (cred?.api_access_token_homologacao || cred?.api_access_token_principal_producao || cred?.api_access_token)
-    : (cred?.api_access_token_principal_producao || cred?.api_access_token);
+  const tokens = [
+    ...(emitente.ambiente === 2
+      ? [cred?.api_access_token_homologacao, cred?.api_access_token_principal_producao, cred?.api_access_token]
+      : [cred?.api_access_token_principal_producao, cred?.api_access_token, cred?.api_access_token_homologacao]),
+  ].filter((value, index, arr): value is string => !!value && arr.indexOf(value) === index);
+  const token = tokens[0];
   if (!token) {
     throw new Error(`Token ${emitente.ambiente === 2 ? "de homologação" : "principal de produção"} da Focus NFe não configurado para este emitente.`);
   }
 
   return {
     token,
+    tokens,
     ambiente: emitente.ambiente,
     doc,
     docType,
@@ -177,7 +181,7 @@ serve(async (req) => {
       if (!guard.ok) return tenantErrorResponse(guard, corsHeaders);
     }
 
-    const { token, ambiente, doc, docType } = await getInscricaoContext(inscricaoId);
+    const { token, tokens, ambiente, doc, docType } = await getInscricaoContext(inscricaoId);
     const baseUrl = getBaseUrl(ambiente);
     const authHeader = `Basic ${btoa(`${token}:`)}`;
 
@@ -268,6 +272,8 @@ serve(async (req) => {
 
         // Mesmo fluxo validado no app stock-nfe: usar token principal,
         // informar CPF/CNPJ do destinatário e testar as rotas JSON com completa=1.
+        // Diferença importante: aqui também testamos os demais tokens cadastrados,
+        // pois algumas contas retornam apenas resNFe com um token e o XML completo com outro.
         const parseJson = (value: string) => {
           try { return JSON.parse(value); } catch (_) { return null; }
         };
@@ -287,37 +293,48 @@ serve(async (req) => {
         const xmlInlineCandidates: string[] = [];
         const attempts: string[] = [];
 
-        for (const urlInfo of resourceUrls) {
-          console.log("MD-e Consultar info p/ XML completo:", urlInfo);
-          const infoResp = await fetch(urlInfo, {
-            method: "GET",
-            headers: { Authorization: authHeader, Accept: "application/json" },
-          });
-          const infoText = await infoResp.text();
-          const candidateInfo = parseJson(infoText) || {};
-          attempts.push(`${infoResp.status} ${urlInfo} :: ${infoText.slice(0, 180).replace(/\s+/g, " ")}`);
+        const authHeaders = tokens.map((candidate) => `Basic ${btoa(`${candidate}:`)}`);
+        let foundCompleteInfo = false;
 
-          if (infoResp.ok && candidateInfo?.chave_nfe) {
-            info = candidateInfo;
-            const caminhos = [
-              candidateInfo?.caminho_xml_nota_completa,
-              candidateInfo?.caminho_xml_nota_fiscal,
-              candidateInfo?.caminho_xml_completo,
-              candidateInfo?.caminho_completo_xml,
-              candidateInfo?.xml_nota_completa,
-              candidateInfo?.xml_completo,
-              candidateInfo?.xml_nfe,
-              candidateInfo?.caminho_xml,
-            ].filter(Boolean);
+        for (const [tokenIndex, candidateAuthHeader] of authHeaders.entries()) {
+          if (foundCompleteInfo) break;
+          for (const urlInfo of resourceUrls) {
+            console.log("MD-e Consultar info p/ XML completo:", urlInfo, "token#", tokenIndex + 1);
+            const infoResp = await fetch(urlInfo, {
+              method: "GET",
+              headers: { Authorization: candidateAuthHeader, Accept: "application/json" },
+            });
+            const infoText = await infoResp.text();
+            const candidateInfo = parseJson(infoText) || {};
+            attempts.push(`token#${tokenIndex + 1} ${infoResp.status} ${urlInfo} :: ${infoText.slice(0, 180).replace(/\s+/g, " ")}`);
 
-            for (const caminho of caminhos) {
-              const value = String(caminho).trim();
-              if (!value) continue;
-              if (value.startsWith("<")) xmlInlineCandidates.push(value);
-              else xmlUrls.push(makeUrl(value));
+            if (infoResp.ok && candidateInfo?.chave_nfe) {
+              info = (!info || candidateInfo?.nfe_completa === true || candidateInfo?.nfe_completa === "true")
+                ? candidateInfo
+                : info;
+              const caminhos = [
+                candidateInfo?.caminho_xml_nota_completa,
+                candidateInfo?.caminho_xml_completo,
+                candidateInfo?.caminho_completo_xml,
+                candidateInfo?.xml_nota_completa,
+                candidateInfo?.xml_completo,
+                candidateInfo?.xml_nfe,
+                candidateInfo?.caminho_xml,
+                candidateInfo?.caminho_xml_nota_fiscal,
+              ].filter(Boolean);
+
+              for (const caminho of caminhos) {
+                const value = String(caminho).trim();
+                if (!value) continue;
+                if (value.startsWith("<")) xmlInlineCandidates.push(value);
+                else xmlUrls.push(makeUrl(value));
+              }
+
+              if (candidateInfo?.nfe_completa === true || candidateInfo?.nfe_completa === "true") {
+                foundCompleteInfo = true;
+                break;
+              }
             }
-
-            if (candidateInfo?.nfe_completa === true || candidateInfo?.nfe_completa === "true") break;
           }
         }
 
@@ -355,18 +372,20 @@ serve(async (req) => {
         for (const xmlUrl of [...new Set(xmlUrls)]) {
           if (xmlContent) break;
           console.log("MD-e Download XML candidato:", xmlUrl);
-          const xmlResp = await fetchTextFollowingSignedRedirect(xmlUrl, authHeader);
-          if (!xmlResp.ok) {
-            lastXmlError = `HTTP ${xmlResp.status}: ${xmlResp.text.slice(0, 500)}`;
-            console.log("MD-e falha XML candidato:", lastXmlError);
-            continue;
+          for (const [tokenIndex, candidateAuthHeader] of authHeaders.entries()) {
+            const xmlResp = await fetchTextFollowingSignedRedirect(xmlUrl, candidateAuthHeader);
+            if (!xmlResp.ok) {
+              lastXmlError = `token#${tokenIndex + 1} HTTP ${xmlResp.status}: ${xmlResp.text.slice(0, 500)}`;
+              console.log("MD-e falha XML candidato:", lastXmlError);
+              continue;
+            }
+            if (isXmlNfeCompleto(xmlResp.text)) {
+              xmlContent = xmlResp.text;
+              break;
+            }
+            lastXmlError = `token#${tokenIndex + 1}: A API retornou XML-resumo (resNFe), não o XML completo da NF-e.`;
+            console.log("MD-e XML candidato rejeitado: resumo/incompleto", xmlResp.text.slice(0, 500));
           }
-          if (isXmlNfeCompleto(xmlResp.text)) {
-            xmlContent = xmlResp.text;
-            break;
-          }
-          lastXmlError = "A API retornou XML-resumo (resNFe), não o XML completo da NF-e.";
-          console.log("MD-e XML candidato rejeitado: resumo/incompleto", xmlResp.text.slice(0, 500));
         }
 
         if (!xmlContent) {
