@@ -187,12 +187,14 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
           valor_total: nfe.totais.valorTotal,
           modo_entrada: 'xml',
           xml_content: nfe.xmlContent,
+          numero_cheque: formaPagamento === 'cheque' ? (numeroCheque || null) : null,
           itens,
           _duplicatas: nfe.duplicatas,
           _pagamento: {
             forma_pagamento: formaPagamento,
             conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
             ja_pago: jaPago && !!isAvista,
+            numero_cheque: formaPagamento === 'cheque' ? (numeroCheque || null) : null,
           },
         });
         success++;
