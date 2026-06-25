@@ -6,6 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe } from "lucide-react";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useMde, type NfeRecebida } from "@/hooks/useMde";
@@ -44,7 +53,7 @@ function formatCpfCnpj(value?: string | null) {
 export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [inscricaoId, setInscricaoId] = useState<string>("");
   const { data: inscricoes } = useInscricoesCompletas();
-  const { isLoading, nfesRecebidas, consultarDestinatarias, consultarPorChave, manifestar, downloadXml, downloadDanfe } = useMde();
+  const { isLoading, nfesRecebidas, returnMessage, clearReturnMessage, consultarDestinatarias, consultarPorChave, manifestar, downloadXml, downloadDanfe } = useMde();
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
   const [chaveBusca, setChaveBusca] = useState("");
@@ -281,6 +290,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -580,5 +590,30 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         </div>
       </DialogContent>
     </Dialog>
+    <AlertDialog open={!!returnMessage} onOpenChange={(nextOpen) => !nextOpen && clearReturnMessage()}>
+      <AlertDialogContent className="max-w-2xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{returnMessage?.title || "Retorno"}</AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-4 text-left text-sm text-slate-700">
+              <div className="max-h-[45vh] overflow-y-auto whitespace-pre-line rounded-md border bg-slate-50 p-4 font-medium leading-relaxed">
+                {returnMessage?.message}
+              </div>
+              {!!returnMessage?.details?.length && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900">
+                  {returnMessage.details.map((detail) => (
+                    <div key={detail}>{detail}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction onClick={clearReturnMessage}>OK</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

@@ -394,10 +394,16 @@ serve(async (req) => {
             ? ` Manifestação registrada: ${info.manifestacao_destinatario}.`
             : " Manifestação registrada: nenhuma.";
           const completo = typeof info?.nfe_completa === "boolean" ? ` nfe_completa=${info.nfe_completa}.` : "";
+          const diagnostico = (
+            `Análise do retorno da Focus NFe: a NF-e foi localizada e está ${info?.situacao || "com situação não informada"}. ` +
+            `A manifestação consta como ${info?.manifestacao_destinatario || "não registrada"}, porém a própria Focus NFe retornou nfe_completa=${String(info?.nfe_completa ?? false)}. ` +
+            `Todas as rotas de download testadas retornaram XML-resumo (tag resNFe) ou resposta sem itens da NF-e. ` +
+            `Por segurança, o sistema bloqueou o download para não salvar/importar o resumo como se fosse XML completo.`
+          );
           const message = (
-            `XML completo ainda não disponível na Focus NFe/SEFAZ para a chave ${cleanChave}.${situacao}${manifestacao}${completo} ` +
+            `${diagnostico}\n\nChave: ${cleanChave}.${situacao}${manifestacao}${completo} ` +
             `O download foi bloqueado para não salvar/importar o XML-resumo. ` +
-            `Aguarde a distribuição do XML completo pela SEFAZ e tente novamente. ${lastXmlError}`
+            `Aguarde a distribuição do XML completo pela SEFAZ/Focus NFe e tente novamente. ${lastXmlError}`
           ).trim();
 
           return new Response(
@@ -406,9 +412,16 @@ serve(async (req) => {
               fallback: true,
               nfe_key: cleanChave,
               error: message,
+              diagnostico,
               nfe_completa: info?.nfe_completa ?? false,
               manifestacao_destinatario: info?.manifestacao_destinatario ?? null,
               situacao: info?.situacao ?? null,
+              retorno_focus: {
+                nfe_completa: info?.nfe_completa ?? false,
+                manifestacao_destinatario: info?.manifestacao_destinatario ?? null,
+                situacao: info?.situacao ?? null,
+                xml_resumo_detectado: lastXmlError.toLowerCase().includes("xml-resumo") || lastXmlError.toLowerCase().includes("resumo"),
+              },
             }),
             {
               status: 200,

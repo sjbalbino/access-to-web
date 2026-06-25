@@ -15,9 +15,16 @@ export interface NfeRecebida {
   manifestacao_destinatario?: string;
 }
 
+export interface MdeReturnMessage {
+  title: string;
+  message: string;
+  details?: string[];
+}
+
 export function useMde() {
   const [isLoading, setIsLoading] = useState(false);
   const [nfesRecebidas, setNfesRecebidas] = useState<NfeRecebida[]>([]);
+  const [returnMessage, setReturnMessage] = useState<MdeReturnMessage | null>(null);
 
   const invokeAction = async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("focus-nfe-mde", { body });
@@ -205,7 +212,20 @@ export function useMde() {
         body: { action: "download_xml", inscricaoId, chave },
       });
       if (error) throw new Error(error.message);
-      if (!data?.success) throw new Error(data?.error || "Erro ao baixar XML");
+      if (!data?.success) {
+        const msg = data?.error || "Erro ao baixar XML";
+        setReturnMessage({
+          title: "Retorno da Focus NFe",
+          message: msg,
+          details: [
+            data?.situacao ? `Situação: ${data.situacao}` : null,
+            data?.manifestacao_destinatario ? `Manifestação: ${data.manifestacao_destinatario}` : null,
+            typeof data?.nfe_completa !== "undefined" ? `XML completo liberado: ${data.nfe_completa ? "Sim" : "Não"}` : null,
+          ].filter(Boolean) as string[],
+        });
+        toast.error("XML completo não disponível", { description: "Leia o retorno completo na janela aberta." });
+        return null;
+      }
 
       const xmlText = data.xml;
 
@@ -223,6 +243,10 @@ export function useMde() {
       return xmlText;
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
+      setReturnMessage({
+        title: "Retorno da Focus NFe",
+        message: msg,
+      });
       toast.error("Erro ao baixar XML", { description: msg });
       return null;
     } finally {
@@ -260,6 +284,8 @@ export function useMde() {
   return {
     isLoading,
     nfesRecebidas,
+    returnMessage,
+    clearReturnMessage: () => setReturnMessage(null),
     consultarDestinatarias,
     consultarPorChave,
     manifestar,
