@@ -491,7 +491,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                                 disabled={isFinalizado}
                               />
                             </TableCell>
-                            <TableCell className="text-right font-medium">{formatNumber(item.valor_total || 0)}</TableCell>
+                            <TableCell className="text-right font-medium">R$ {formatBrazilianNumber(item.valor_total || 0, 2)}</TableCell>
                             <TableCell>
                               {item.vinculado ? (
                                 <Badge variant="default" className="text-xs">Vinculado</Badge>
