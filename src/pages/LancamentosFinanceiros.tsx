@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -296,7 +297,10 @@ export default function LancamentosFinanceiros() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Valor *</Label>
-                <Input type="number" step="0.01" min="0" value={formData.valor} onChange={e => setFormData({ ...formData, valor: parseFloat(e.target.value) || 0 })} required />
+                <CurrencyInput
+                  value={formData.valor || null}
+                  onChange={(v) => setFormData({ ...formData, valor: v || 0 })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Granja *</Label>
