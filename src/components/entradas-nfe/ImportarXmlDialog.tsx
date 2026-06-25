@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useProdutos } from "@/hooks/useProdutos";
+import { useCfops } from "@/hooks/useCfops";
 import { useCreateEntradaNfe } from "@/hooks/useEntradasNfe";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useSafras } from "@/hooks/useSafras";
