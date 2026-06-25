@@ -2,26 +2,43 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 interface CurrencyInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> {
-  value: number | null | undefined;
+  value: number | string | null | undefined;
   onChange: (value: number | null) => void;
   decimals?: number;
   prefix?: string;
 }
 
-const formatBrazilianNumber = (value: number | null | undefined, decimals: number = 2): string => {
-  if (value === null || value === undefined || isNaN(value)) return "";
-  return value.toLocaleString("pt-BR", {
+const normalizeNumber = (value: number | string | null | undefined): number | null => {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "number") return Number.isNaN(value) ? null : value;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const cleaned = trimmed.replace(/[R$\s]/g, "");
+  const hasComma = cleaned.includes(",");
+  const hasDot = cleaned.includes(".");
+  const normalized = hasComma
+    ? cleaned.replace(/\./g, "").replace(",", ".")
+    : hasDot
+      ? cleaned
+      : cleaned;
+
+  const num = parseFloat(normalized);
+  return Number.isNaN(num) ? null : num;
+};
+
+const formatBrazilianNumber = (value: number | string | null | undefined, decimals: number = 2): string => {
+  const numberValue = normalizeNumber(value);
+  if (numberValue === null) return "";
+  return numberValue.toLocaleString("pt-BR", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 };
 
 const parseBrazilianNumber = (value: string): number | null => {
-  if (!value || value.trim() === "") return null;
-  // Remove thousand separators (.) and replace decimal comma with point
-  const cleaned = value.replace(/\./g, "").replace(",", ".");
-  const num = parseFloat(cleaned);
-  return isNaN(num) ? null : num;
+  return normalizeNumber(value);
 };
 
 const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
