@@ -553,8 +553,9 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   </div>
                   <div className="md:col-span-3">
                     <Label className="text-lg font-bold">Valor Total da NF-e</Label>
-                    <MoneyReadOnlyInput value={calcTotalNfe()} className="text-lg font-bold" />
+                    <MoneyReadOnlyInput value={calcTotalNfe()} className="text-lg font-bold h-12" />
                   </div>
+
                 </div>
               </TabsContent>
             </ScrollArea>
