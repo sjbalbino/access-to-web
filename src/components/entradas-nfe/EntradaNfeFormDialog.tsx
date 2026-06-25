@@ -21,7 +21,6 @@ import { useEntradaNfe, useCreateEntradaNfe, useUpdateEntradaNfe } from "@/hooks
 import { ContasPagarEntradaSection } from "@/components/contas/ContasPagarEntradaSection";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { formatNumber } from "@/lib/formatters";
 import { Plus, Trash2, Link2 } from "lucide-react";
 import { VincularProdutoDialog } from "./VincularProdutoDialog";
 
@@ -72,6 +71,16 @@ const FORMAS = [
   { value: 'outro', label: 'Outro' },
 ];
 const FORMAS_AVISTA = ['pix', 'dinheiro', 'cheque', 'cartao'];
+
+const toNumber = (value: number | string | null | undefined): number => {
+  if (value === null || value === undefined || value === '') return 0;
+  if (typeof value === 'number') return Number.isNaN(value) ? 0 : value;
+  const normalized = value.includes(',')
+    ? value.replace(/\./g, '').replace(',', '.')
+    : value;
+  const parsed = Number(normalized);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
 
 export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const isEdit = !!entradaId;
@@ -141,11 +150,11 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       setCfopId(entradaData.cfop_id || '');
       setNaturezaOperacao(entradaData.natureza_operacao || '');
       setObservacoes(entradaData.observacoes || '');
-      setValorProdutos(entradaData.valor_produtos || 0);
-      setValorFrete(entradaData.valor_frete || 0);
-      setValorSeguro(entradaData.valor_seguro || 0);
-      setValorDesconto(entradaData.valor_desconto || 0);
-      setValorOutras(entradaData.valor_outras_despesas || 0);
+      setValorProdutos(toNumber(entradaData.valor_produtos));
+      setValorFrete(toNumber(entradaData.valor_frete));
+      setValorSeguro(toNumber(entradaData.valor_seguro));
+      setValorDesconto(toNumber(entradaData.valor_desconto));
+      setValorOutras(toNumber(entradaData.valor_outras_despesas));
       setItens(
         (entradaData as any).itens?.length
           ? (entradaData as any).itens.map((i: any) => ({
@@ -209,7 +218,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       const updated = [...prev];
       (updated[idx] as any)[field] = value;
       if (field === 'quantidade' || field === 'valor_unitario') {
-        updated[idx].valor_total = (updated[idx].quantidade || 0) * (updated[idx].valor_unitario || 0);
+        updated[idx].valor_total = toNumber(updated[idx].quantidade) * toNumber(updated[idx].valor_unitario);
       }
       return updated;
     });
@@ -219,8 +228,8 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const removeItem = (idx: number) => setItens((prev) => prev.filter((_, i) => i !== idx));
 
   const calcTotalNfe = () => {
-    const totalItens = itens.reduce((s, i) => s + (i.valor_total || 0), 0);
-    return totalItens + valorFrete + valorSeguro + valorOutras - valorDesconto;
+    const totalItens = itens.reduce((s, i) => s + toNumber(i.valor_total), 0);
+    return totalItens + toNumber(valorFrete) + toNumber(valorSeguro) + toNumber(valorOutras) - toNumber(valorDesconto);
   };
 
   const handleSave = async () => {
@@ -248,15 +257,15 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       data_entrada: dataEntrada,
       cfop_id: cfopId || null,
       natureza_operacao: naturezaOperacao,
-      valor_produtos: itens.reduce((s, i) => s + (i.valor_total || 0), 0),
-      valor_frete: valorFrete,
-      valor_seguro: valorSeguro,
-      valor_desconto: valorDesconto,
-      valor_outras_despesas: valorOutras,
-      valor_ipi: itens.reduce((s, i) => s + (i.valor_ipi || 0), 0),
-      valor_icms: itens.reduce((s, i) => s + (i.valor_icms || 0), 0),
-      valor_pis: itens.reduce((s, i) => s + (i.valor_pis || 0), 0),
-      valor_cofins: itens.reduce((s, i) => s + (i.valor_cofins || 0), 0),
+      valor_produtos: itens.reduce((s, i) => s + toNumber(i.valor_total), 0),
+      valor_frete: toNumber(valorFrete),
+      valor_seguro: toNumber(valorSeguro),
+      valor_desconto: toNumber(valorDesconto),
+      valor_outras_despesas: toNumber(valorOutras),
+      valor_ipi: itens.reduce((s, i) => s + toNumber(i.valor_ipi), 0),
+      valor_icms: itens.reduce((s, i) => s + toNumber(i.valor_icms), 0),
+      valor_pis: itens.reduce((s, i) => s + toNumber(i.valor_pis), 0),
+      valor_cofins: itens.reduce((s, i) => s + toNumber(i.valor_cofins), 0),
       valor_total: calcTotalNfe(),
       modo_entrada: 'manual',
       observacoes,
@@ -491,7 +500,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                                 disabled={isFinalizado}
                               />
                             </TableCell>
-                            <TableCell className="text-right font-medium">R$ {formatBrazilianNumber(item.valor_total || 0, 2)}</TableCell>
+                            <TableCell className="text-right font-medium">R$ {formatBrazilianNumber(toNumber(item.valor_total), 2)}</TableCell>
                             <TableCell>
                               {item.vinculado ? (
                                 <Badge variant="default" className="text-xs">Vinculado</Badge>
@@ -522,7 +531,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl">
                   <div>
                     <Label>Valor Produtos</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + (i.valor_total || 0), 0), 2)}`} readOnly className="bg-muted text-right" />
+                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + toNumber(i.valor_total), 0), 2)}`} readOnly className="bg-muted text-right" />
                   </div>
                   <div>
                     <Label>Frete</Label>
@@ -542,19 +551,19 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   </div>
                   <div>
                     <Label>Total ICMS</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + (i.valor_icms || 0), 0), 2)}`} readOnly className="bg-muted text-right" />
+                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + toNumber(i.valor_icms), 0), 2)}`} readOnly className="bg-muted text-right" />
                   </div>
                   <div>
                     <Label>Total IPI</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + (i.valor_ipi || 0), 0), 2)}`} readOnly className="bg-muted text-right" />
+                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + toNumber(i.valor_ipi), 0), 2)}`} readOnly className="bg-muted text-right" />
                   </div>
                   <div>
                     <Label>Total PIS</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + (i.valor_pis || 0), 0), 2)}`} readOnly className="bg-muted text-right" />
+                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + toNumber(i.valor_pis), 0), 2)}`} readOnly className="bg-muted text-right" />
                   </div>
                   <div>
                     <Label>Total COFINS</Label>
-                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + (i.valor_cofins || 0), 0), 2)}`} readOnly className="bg-muted text-right" />
+                    <Input value={`R$ ${formatBrazilianNumber(itens.reduce((s, i) => s + toNumber(i.valor_cofins), 0), 2)}`} readOnly className="bg-muted text-right" />
                   </div>
                   <div className="md:col-span-3">
                     <Label className="text-lg font-bold">Valor Total da NF-e</Label>
