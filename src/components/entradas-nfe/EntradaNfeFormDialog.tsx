@@ -174,8 +174,9 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
   // Auto-preenche CFOP dos itens vazios quando CFOP do cabeçalho mudar
   useEffect(() => {
-    if (!cfopCabecalhoCodigo || isFinalizado) return;
+    if (!cfopCabecalhoCodigo) return;
     setItens((prev) => prev.map((it) => (it.cfop ? it : { ...it, cfop: cfopCabecalhoCodigo })));
+
   }, [cfopCabecalhoCodigo]);
 
 
