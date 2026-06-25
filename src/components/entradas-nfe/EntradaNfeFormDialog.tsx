@@ -578,8 +578,9 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
               </Button>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
+
 
       {vincularIdx !== null && (
         <VincularProdutoDialog
