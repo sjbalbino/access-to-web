@@ -514,7 +514,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
               </TabsContent>
 
               <TabsContent value="totais" className="p-1">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl [&>div]:min-w-0">
                   <div>
                     <Label>Valor Produtos</Label>
                     <MoneyReadOnlyInput value={itens.reduce((s, i) => s + toNumber(i.valor_total), 0)} />
