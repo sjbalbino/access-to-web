@@ -331,10 +331,26 @@ serve(async (req) => {
             ? ` Manifestação registrada: ${info.manifestacao_destinatario}.`
             : " Manifestação registrada: nenhuma.";
           const completo = typeof info?.nfe_completa === "boolean" ? ` nfe_completa=${info.nfe_completa}.` : "";
-          throw new Error(
+          const message = (
             `XML completo ainda não disponível na Focus NFe/SEFAZ para a chave ${cleanChave}.${situacao}${manifestacao}${completo} ` +
             `O download foi bloqueado para não salvar/importar o XML-resumo. ` +
-            `Refaça a manifestação como Confirmação da Operação e aguarde a distribuição do XML completo. ${lastXmlError}`.trim(),
+            `Aguarde a distribuição do XML completo pela SEFAZ e tente novamente. ${lastXmlError}`
+          ).trim();
+
+          return new Response(
+            JSON.stringify({
+              success: false,
+              fallback: true,
+              nfe_key: cleanChave,
+              error: message,
+              nfe_completa: info?.nfe_completa ?? false,
+              manifestacao_destinatario: info?.manifestacao_destinatario ?? null,
+              situacao: info?.situacao ?? null,
+            }),
+            {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
           );
         }
 
