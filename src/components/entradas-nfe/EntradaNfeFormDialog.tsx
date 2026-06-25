@@ -440,6 +440,12 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                       </Select>
                     </div>
                   )}
+                  {formaPagamento === 'cheque' && (
+                    <div>
+                      <Label>Nº do Cheque *</Label>
+                      <Input value={numeroCheque} onChange={(e) => setNumeroCheque(e.target.value)} placeholder="Ex: 000123" disabled={isFinalizado} />
+                    </div>
+                  )}
                   {isAvista && !isEdit && (
                     <div className="flex items-end">
                       <label className="flex items-center gap-2 text-sm">
