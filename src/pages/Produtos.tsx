@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAllSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
@@ -83,6 +83,7 @@ export default function Produtos() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [errorDialog, setErrorDialog] = useState<{ open: boolean; message: string; detail: string }>({ open: false, message: '', detail: '' });
   const [formData, setFormData] = useState<ProdutoInsert>({
     granja_id: null,
     tipo: 'insumo',
@@ -166,13 +167,23 @@ export default function Produtos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingItem) {
-      await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
-    } else {
-      await createMutation.mutateAsync(formData);
+    try {
+      if (editingItem) {
+        await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
+      } else {
+        await createMutation.mutateAsync(formData);
+      }
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (err: any) {
+      const raw = err?.message || String(err);
+      let amigavel = 'Não foi possível salvar o produto. Verifique os dados informados e tente novamente.';
+      if (/duplicate key|already exists|unique/i.test(raw)) amigavel = 'Já existe um produto com esses dados (nome ou código duplicado).';
+      else if (/violates foreign key/i.test(raw)) amigavel = 'Algum vínculo informado (grupo, unidade, fornecedor, sub-centro) é inválido.';
+      else if (/not-null|null value/i.test(raw)) amigavel = 'Há um campo obrigatório não preenchido.';
+      else if (/permission|row-level security|policy/i.test(raw)) amigavel = 'Você não tem permissão para realizar esta operação.';
+      setErrorDialog({ open: true, message: amigavel, detail: raw });
     }
-    setIsDialogOpen(false);
-    resetForm();
   };
 
   const handleEdit = (item: any) => {
@@ -787,6 +798,23 @@ export default function Produtos() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={errorDialog.open} onOpenChange={(o) => setErrorDialog(s => ({ ...s, open: o }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Erro ao salvar produto</DialogTitle>
+            <DialogDescription>{errorDialog.message}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Detalhes técnicos</Label>
+            <Textarea readOnly value={errorDialog.detail} className="font-mono text-xs h-40" onClick={(e) => (e.target as HTMLTextAreaElement).select()} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { navigator.clipboard.writeText(errorDialog.detail); }}>Copiar erro</Button>
+            <Button onClick={() => setErrorDialog(s => ({ ...s, open: false }))}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </AppLayout>
   );
