@@ -405,7 +405,7 @@ export default function Produtos() {
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
                             {unidades?.filter(u => u.ativa).map((und) => (
-                              <SelectItem key={und.id} value={und.id}>{und.codigo} - {und.descricao}</SelectItem>
+                              <SelectItem key={und.id} value={und.id}>{und.descricao}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
