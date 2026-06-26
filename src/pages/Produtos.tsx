@@ -400,9 +400,9 @@ export default function Produtos() {
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="insumo">Insumo</SelectItem>
+                            <SelectItem value="maquina_equipamento">Máquinas, Equipamentos e Implementos Agrícolas</SelectItem>
                             <SelectItem value="produto">Produto</SelectItem>
                             <SelectItem value="semente">Semente</SelectItem>
-                            <SelectItem value="maquina_equipamento">Máquinas, Equipamentos e Implementos Agrícolas</SelectItem>
                             <SelectItem value="servico">Serviços</SelectItem>
                           </SelectContent>
                         </Select>
