@@ -168,10 +168,13 @@ export default function Produtos() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload: any = { ...formData };
+      // Evita colisão no índice único (tenant_id, codigo) quando código vem vazio
+      if (!payload.codigo || String(payload.codigo).trim() === '') payload.codigo = null;
       if (editingItem) {
-        await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
+        await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
       } else {
-        await createMutation.mutateAsync(formData);
+        await createMutation.mutateAsync(payload);
       }
       setIsDialogOpen(false);
       resetForm();
