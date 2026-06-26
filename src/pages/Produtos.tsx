@@ -798,6 +798,23 @@ export default function Produtos() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={errorDialog.open} onOpenChange={(o) => setErrorDialog(s => ({ ...s, open: o }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Erro ao salvar produto</DialogTitle>
+            <DialogDescription>{errorDialog.message}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Detalhes técnicos</Label>
+            <Textarea readOnly value={errorDialog.detail} className="font-mono text-xs h-40" onClick={(e) => (e.target as HTMLTextAreaElement).select()} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { navigator.clipboard.writeText(errorDialog.detail); }}>Copiar erro</Button>
+            <Button onClick={() => setErrorDialog(s => ({ ...s, open: false }))}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </AppLayout>
   );
