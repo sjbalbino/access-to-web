@@ -167,13 +167,23 @@ export default function Produtos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingItem) {
-      await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
-    } else {
-      await createMutation.mutateAsync(formData);
+    try {
+      if (editingItem) {
+        await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
+      } else {
+        await createMutation.mutateAsync(formData);
+      }
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (err: any) {
+      const raw = err?.message || String(err);
+      let amigavel = 'Não foi possível salvar o produto. Verifique os dados informados e tente novamente.';
+      if (/duplicate key|already exists|unique/i.test(raw)) amigavel = 'Já existe um produto com esses dados (nome ou código duplicado).';
+      else if (/violates foreign key/i.test(raw)) amigavel = 'Algum vínculo informado (grupo, unidade, fornecedor, sub-centro) é inválido.';
+      else if (/not-null|null value/i.test(raw)) amigavel = 'Há um campo obrigatório não preenchido.';
+      else if (/permission|row-level security|policy/i.test(raw)) amigavel = 'Você não tem permissão para realizar esta operação.';
+      setErrorDialog({ open: true, message: amigavel, detail: raw });
     }
-    setIsDialogOpen(false);
-    resetForm();
   };
 
   const handleEdit = (item: any) => {
