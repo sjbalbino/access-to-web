@@ -233,6 +233,8 @@ export default function Produtos() {
         return <Badge className="bg-sky-500">Semente</Badge>;
       case 'maquina_equipamento':
         return <Badge className="bg-slate-600">Máq./Equip./Implementos</Badge>;
+      case 'servico':
+        return <Badge className="bg-purple-600">Serviços</Badge>;
       default:
         return <Badge>{tipo}</Badge>;
     }
@@ -325,6 +327,7 @@ export default function Produtos() {
                 <SelectItem value="produto">Produto</SelectItem>
                 <SelectItem value="semente">Semente</SelectItem>
                 <SelectItem value="maquina_equipamento">Máquinas, Equipamentos e Implementos Agrícolas</SelectItem>
+                <SelectItem value="servico">Serviços</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filtros.grupo} onValueChange={(v) => setFiltros({ ...filtros, grupo: v })}>
@@ -386,6 +389,7 @@ export default function Produtos() {
                             <SelectItem value="produto">Produto</SelectItem>
                             <SelectItem value="semente">Semente</SelectItem>
                             <SelectItem value="maquina_equipamento">Máquinas, Equipamentos e Implementos Agrícolas</SelectItem>
+                            <SelectItem value="servico">Serviços</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
