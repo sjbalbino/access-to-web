@@ -379,6 +379,17 @@ export function useFinalizarEntrada() {
               data_validade: item.data_validade || null,
             });
         }
+
+        // Atualizar estoque_atual agregado em produtos
+        const { data: prod } = await supabase
+          .from('produtos')
+          .select('estoque_atual')
+          .eq('id', item.produto_id)
+          .maybeSingle();
+        await supabase
+          .from('produtos')
+          .update({ estoque_atual: Number(prod?.estoque_atual || 0) + Number(qty || 0) })
+          .eq('id', item.produto_id);
       }
 
       // Atualizar status
