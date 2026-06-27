@@ -241,7 +241,11 @@ export default function NotasFiscais() {
             />
           </div>
           {canEdit && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" onClick={() => setIsInutilizarDialogOpen(true)}>
+                <Ban className="h-4 w-4 mr-2" />
+                Inutilizar Numeração
+              </Button>
               <Button variant="outline" onClick={() => setIsContraNotaDialogOpen(true)}>
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Contra-Nota
