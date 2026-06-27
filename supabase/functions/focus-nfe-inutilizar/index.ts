@@ -111,7 +111,7 @@ serve(async (req) => {
     };
     console.log("Inutilizando numeração:", body);
 
-    const response = await fetch(`${baseUrl}/v2/nfe_inutilizacao`, {
+    const response = await fetch(`${baseUrl}/v2/nfes_inutilizacao`, {
       method: "POST",
       headers: {
         Authorization: `Basic ${btoa(`${token}:`)}`,
