@@ -433,6 +433,39 @@ export function useFocusNfe() {
     }
   };
 
+  const inutilizarNumeracao = async (params: {
+    emitenteId: string;
+    serie: number | string;
+    numeroInicial: number | string;
+    numeroFinal: number | string;
+    justificativa: string;
+  }): Promise<FocusNfeResult> => {
+    setIsLoading(true);
+    try {
+      if (params.justificativa.length < 15) {
+        toast.error("Justificativa deve ter no mínimo 15 caracteres");
+        return { success: false, error: "Justificativa deve ter no mínimo 15 caracteres" };
+      }
+      const { data, error } = await supabase.functions.invoke("focus-nfe-inutilizar", {
+        body: params,
+      });
+      if (error) throw new Error(error.message);
+      if (data?.success) {
+        toast.success("Numeração inutilizada com sucesso");
+        invalidateNfeRelatedQueries();
+      } else {
+        toast.error("Erro ao inutilizar numeração", { description: data?.error });
+      }
+      return data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro desconhecido";
+      toast.error("Erro ao inutilizar numeração", { description: message });
+      return { success: false, error: message };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     isLoading,
     status,
@@ -443,5 +476,6 @@ export function useFocusNfe() {
     downloadArquivo,
     pollStatus,
     enviarEmail,
+    inutilizarNumeracao,
   };
 }
