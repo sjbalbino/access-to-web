@@ -93,8 +93,10 @@ const MoneyReadOnlyInput = ({ value, className = '' }: { value: number | string 
 );
 
 export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
-  const isEdit = !!entradaId;
-  const { data: entradaData } = useEntradaNfe(entradaId);
+  const [currentId, setCurrentId] = useState<string | null>(entradaId);
+  useEffect(() => { setCurrentId(entradaId); }, [entradaId, open]);
+  const isEdit = !!currentId;
+  const { data: entradaData } = useEntradaNfe(currentId);
   const { data: granjas } = useGranjas();
   const { data: clientes } = useClientesFornecedores();
   const { cfops } = useCfops();
@@ -309,11 +311,12 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
     try {
       if (isEdit) {
-        await updateMutation.mutateAsync({ id: entradaId, ...payload });
+        await updateMutation.mutateAsync({ id: currentId, ...payload });
       } else {
-        await createMutation.mutateAsync(payload);
+        const created = await createMutation.mutateAsync(payload);
+        if (created?.id) setCurrentId(created.id);
       }
-      onOpenChange(false);
+      // Mantém o formulário aberto para permitir incluir mais itens
     } catch {}
   };
 
