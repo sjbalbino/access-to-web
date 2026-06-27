@@ -342,11 +342,16 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   return (
     <>
       <div className="rounded-lg border bg-card p-4 sm:p-6 flex flex-col">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold leading-none tracking-tight">{isEdit ? 'Detalhes da Entrada NF-e' : 'Nova Entrada Manual'}</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {isFinalizado ? 'Esta entrada já foi finalizada.' : 'Preencha os dados da nota fiscal de compra.'}
-          </p>
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold leading-none tracking-tight">{isEdit ? 'Detalhes da Entrada NF-e' : 'Nova Entrada Manual'}</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isFinalizado ? 'Esta entrada já foi finalizada.' : 'Preencha os dados da nota fiscal de compra.'}
+            </p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} aria-label="Fechar">
+            <X className="h-4 w-4" />
+          </Button>
         </div>
 
 
