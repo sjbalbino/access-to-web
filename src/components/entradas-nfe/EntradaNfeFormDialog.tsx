@@ -93,8 +93,10 @@ const MoneyReadOnlyInput = ({ value, className = '' }: { value: number | string 
 );
 
 export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
-  const isEdit = !!entradaId;
-  const { data: entradaData } = useEntradaNfe(entradaId);
+  const [currentId, setCurrentId] = useState<string | null>(entradaId);
+  useEffect(() => { setCurrentId(entradaId); }, [entradaId, open]);
+  const isEdit = !!currentId;
+  const { data: entradaData } = useEntradaNfe(currentId);
   const { data: granjas } = useGranjas();
   const { data: clientes } = useClientesFornecedores();
   const { cfops } = useCfops();
