@@ -93,17 +93,23 @@ serve(async (req) => {
     }
 
     const cpfCnpjRaw = (emitente as any)?.inscricao?.cpf_cnpj;
-    const cnpj = (cpfCnpjRaw || "").replace(/\D/g, "");
-    if (!cnpj) {
+    const cpfCnpj = (cpfCnpjRaw || "").replace(/\D/g, "");
+    if (!cpfCnpj) {
       return new Response(JSON.stringify({
         success: false,
         error: "CNPJ/CPF do emitente não encontrado na inscrição do produtor.",
       }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    if (![11, 14].includes(cpfCnpj.length)) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: "CPF/CNPJ do emitente inválido na inscrição do produtor.",
+      }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const baseUrl = getBaseUrl(ambiente);
     const body = {
-      cnpj,
+      ...(cpfCnpj.length === 11 ? { cpf: cpfCnpj } : { cnpj: cpfCnpj }),
       serie: String(serie),
       numero_inicial: String(numeroInicial),
       numero_final: String(numeroFinal),
@@ -111,7 +117,7 @@ serve(async (req) => {
     };
     console.log("Inutilizando numeração:", body);
 
-    const response = await fetch(`${baseUrl}/v2/nfes_inutilizacao`, {
+    const response = await fetch(`${baseUrl}/v2/nfe/inutilizacao`, {
       method: "POST",
       headers: {
         Authorization: `Basic ${btoa(`${token}:`)}`,
