@@ -120,6 +120,7 @@ export default function NotasFiscais() {
   const { notasFiscais, isLoading, deleteNotaFiscal } = useNotasFiscais();
   const { canEdit } = useAuth();
   const focusNfe = useFocusNfe();
+  const { emitentes } = useEmitentesNfe();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -128,9 +129,11 @@ export default function NotasFiscais() {
   const [isCartaCorrecaoDialogOpen, setIsCartaCorrecaoDialogOpen] = useState(false);
   const [isContraNotaDialogOpen, setIsContraNotaDialogOpen] = useState(false);
   const [isEnviarEmailDialogOpen, setIsEnviarEmailDialogOpen] = useState(false);
+  const [isInutilizarDialogOpen, setIsInutilizarDialogOpen] = useState(false);
   const [selectedNota, setSelectedNota] = useState<any>(null);
   const [justificativa, setJustificativa] = useState("");
   const [correcao, setCorrecao] = useState("");
+  const [inutForm, setInutForm] = useState({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
 
   const handleContraNotaSelect = (data: ContraNotaData) => {
     navigate("/notas-fiscais/nova", { state: { contraNotaData: data } });
