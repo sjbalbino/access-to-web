@@ -30,7 +30,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban } from "lucide-react";
+import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeDialog";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
