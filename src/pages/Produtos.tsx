@@ -25,6 +25,7 @@ import { useNcmSearch } from '@/hooks/useNcmSearch';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { QuantityInput } from '@/components/ui/quantity-input';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const CST_PIS_COFINS = [
   { value: '01', label: '01 - Tributável (Alíquota Básica)' },
