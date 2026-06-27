@@ -15,6 +15,9 @@ verify_jwt = true
 [functions.focus-nfe-carta-correcao]
 verify_jwt = true
 
+[functions.focus-nfe-inutilizar]
+verify_jwt = true
+
 [functions.focus-nfe-download]
 verify_jwt = true
 
