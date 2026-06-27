@@ -106,6 +106,12 @@ serve(async (req) => {
         error: "CPF/CNPJ do emitente inválido na inscrição do produtor.",
       }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    if (cpfCnpj.length === 11) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Inutilização de numeração não é permitida para emitente Pessoa Física (CPF), conforme NT 2018/001 da SEFAZ. Esse recurso está disponível apenas para emitentes com CNPJ. Para o produtor rural pessoa física, a numeração não utilizada simplesmente não precisa ser inutilizada — basta seguir a sequência normal de emissão.",
+      }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const baseUrl = getBaseUrl(ambiente);
     const body = {
