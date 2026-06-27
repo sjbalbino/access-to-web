@@ -459,6 +459,87 @@ export default function NotasFiscais() {
           onOpenChange={setIsEnviarEmailDialogOpen}
           nota={selectedNota}
         />
+
+        {/* Dialog de Inutilização de Numeração */}
+        <Dialog open={isInutilizarDialogOpen} onOpenChange={setIsInutilizarDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Inutilizar Numeração de NF-e</DialogTitle>
+              <DialogDescription>
+                Inutiliza uma faixa de numeração não utilizada na SEFAZ. Use quando houver
+                quebra de sequência (números pulados). Operação irreversível.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Emitente *</Label>
+                <Select value={inutForm.emitenteId} onValueChange={(v) => setInutForm({ ...inutForm, emitenteId: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o emitente" /></SelectTrigger>
+                  <SelectContent>
+                    {emitentes.map((e: any) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.inscricao?.nome || e.granja?.razao_social} - Série {e.serie_nfe} (Atual: {e.numero_atual_nfe})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-2">
+                  <Label>Série *</Label>
+                  <Input type="number" value={inutForm.serie} onChange={(e) => setInutForm({ ...inutForm, serie: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nº Inicial *</Label>
+                  <Input type="number" value={inutForm.numeroInicial} onChange={(e) => setInutForm({ ...inutForm, numeroInicial: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nº Final *</Label>
+                  <Input type="number" value={inutForm.numeroFinal} onChange={(e) => setInutForm({ ...inutForm, numeroFinal: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Justificativa *</Label>
+                <Textarea
+                  value={inutForm.justificativa}
+                  onChange={(e) => setInutForm({ ...inutForm, justificativa: e.target.value })}
+                  placeholder="Motivo da inutilização (mínimo 15 caracteres)..."
+                  rows={4}
+                />
+                <p className="text-xs text-muted-foreground">{inutForm.justificativa.length}/15 caracteres mínimos</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsInutilizarDialogOpen(false)}>Voltar</Button>
+              <Button
+                variant="destructive"
+                disabled={
+                  !inutForm.emitenteId ||
+                  !inutForm.serie ||
+                  !inutForm.numeroInicial ||
+                  !inutForm.numeroFinal ||
+                  inutForm.justificativa.length < 15 ||
+                  focusNfe.isLoading
+                }
+                onClick={async () => {
+                  const res = await focusNfe.inutilizarNumeracao({
+                    emitenteId: inutForm.emitenteId,
+                    serie: inutForm.serie,
+                    numeroInicial: inutForm.numeroInicial,
+                    numeroFinal: inutForm.numeroFinal,
+                    justificativa: inutForm.justificativa,
+                  });
+                  if (res?.success) {
+                    setIsInutilizarDialogOpen(false);
+                    setInutForm({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
+                  }
+                }}
+              >
+                Inutilizar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
