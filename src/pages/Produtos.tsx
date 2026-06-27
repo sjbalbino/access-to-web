@@ -25,6 +25,7 @@ import { useNcmSearch } from '@/hooks/useNcmSearch';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { QuantityInput } from '@/components/ui/quantity-input';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const CST_PIS_COFINS = [
   { value: '01', label: '01 - Tributável (Alíquota Básica)' },
@@ -173,8 +174,10 @@ export default function Produtos() {
       if (!payload.codigo || String(payload.codigo).trim() === '') payload.codigo = null;
       if (editingItem) {
         await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
+        toast.success('Produto atualizado com sucesso!', { description: payload.nome });
       } else {
         await createMutation.mutateAsync(payload);
+        toast.success('Produto cadastrado com sucesso!', { description: payload.nome });
       }
       setIsDialogOpen(false);
       resetForm();
