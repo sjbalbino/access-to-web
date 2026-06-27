@@ -592,14 +592,17 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
             </ScrollArea>
           </Tabs>
 
-          {!isFinalizado && (
-            <div className="flex justify-end gap-2 pt-4 border-t flex-none">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
-                {createMutation.isPending || updateMutation.isPending ? 'Salvando...' : 'Salvar'}
-              </Button>
-            </div>
-          )}
+          <div className="flex justify-end gap-2 pt-4 border-t flex-none">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            {!isFinalizado && (
+              <>
+                <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+                  {createMutation.isPending || updateMutation.isPending ? 'Salvando...' : 'Salvar'}
+                </Button>
+                <Button variant="secondary" onClick={() => onOpenChange(false)}>Sair</Button>
+              </>
+            )}
+          </div>
       </div>
 
 
