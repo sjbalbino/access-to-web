@@ -311,11 +311,12 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
 
     try {
       if (isEdit) {
-        await updateMutation.mutateAsync({ id: entradaId, ...payload });
+        await updateMutation.mutateAsync({ id: currentId, ...payload });
       } else {
-        await createMutation.mutateAsync(payload);
+        const created = await createMutation.mutateAsync(payload);
+        if (created?.id) setCurrentId(created.id);
       }
-      onOpenChange(false);
+      // Mantém o formulário aberto para permitir incluir mais itens
     } catch {}
   };
 
