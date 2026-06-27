@@ -21,7 +21,7 @@ import { useEntradaNfe, useCreateEntradaNfe, useUpdateEntradaNfe } from "@/hooks
 import { ContasPagarEntradaSection } from "@/components/contas/ContasPagarEntradaSection";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Trash2, Link2 } from "lucide-react";
+import { Plus, Trash2, Link2, X } from "lucide-react";
 import { VincularProdutoDialog } from "./VincularProdutoDialog";
 
 interface Props {
