@@ -174,8 +174,10 @@ export default function Produtos() {
       if (!payload.codigo || String(payload.codigo).trim() === '') payload.codigo = null;
       if (editingItem) {
         await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
+        toast.success('Produto atualizado com sucesso!', { description: payload.nome });
       } else {
         await createMutation.mutateAsync(payload);
+        toast.success('Produto cadastrado com sucesso!', { description: payload.nome });
       }
       setIsDialogOpen(false);
       resetForm();
