@@ -1,51 +1,20 @@
-## Causa raiz
+## Causa
 
-O `tenant-guard` das edge functions (`focus-nfe-emitir`, `focus-nfe-download`, `focus-nfe-cancelar`, `focus-nfe-carta-correcao`, `focus-nfe-consultar`, `focus-nfe-enviar-email`) faz:
+A tabela `contas_pagar_baixas` **não possui a coluna `tenant_id`**, mas o importador injeta `tenant_id` na linha porque ela está listada em `SCR_TENANT_SCOPED_TABLES`. O PostgREST rejeita com:
 
-```ts
-if (caller.isSuper) return { ok: true };
-if (data.tenant_id && data.tenant_id === caller.tenantId) return { ok: true };
-return 403;
-```
+> Could not find the 'tenant_id' column of 'contas_pagar_baixas' in the schema cache
 
-Consulta no banco confirma:
-- Fernando é `admin`, tenant `72db48ef…`, `is_super_admin_original=false`.
-- **Todas as 42 notas em `notas_fiscais` têm `tenant_id = NULL`** (a granja tem o tenant correto, mas a nota não).
+A irmã `contas_receber_baixas` já tem `tenant_id` + trigger `set_baixa_tenant_from_conta`. Vamos espelhar isso em `contas_pagar_baixas`.
 
-Resultado: super admin passa pelo bypass; Fernando recebe 403 → frontend mostra "Edge Function returned a non-2xx status code". Mesmo problema em emissão, download de DANFE/XML, cancelamento, etc.
+## Correção (migration única)
 
-## Correção
+1. `ALTER TABLE public.contas_pagar_baixas ADD COLUMN tenant_id uuid;`
+2. Backfill a partir de `contas_pagar.tenant_id`.
+3. Criar trigger `BEFORE INSERT` que preenche `tenant_id` a partir de `contas_pagar` quando vier nulo (reutilizando/clonando a função `set_baixa_tenant_from_conta` para o lado pagar).
+4. Índice em `tenant_id`.
 
-### 1. Backfill `notas_fiscais.tenant_id` a partir da granja (migration)
+(Não precisa mexer no código TS — o importador já envia `tenant_id` correto.)
 
-```sql
-UPDATE public.notas_fiscais nf
-SET tenant_id = g.tenant_id
-FROM public.granjas g
-WHERE nf.granja_id = g.id
-  AND nf.tenant_id IS NULL;
-```
+## Observação
 
-### 2. Garantir preenchimento futuro
-
-Adicionar trigger `BEFORE INSERT OR UPDATE` em `notas_fiscais` que, se `tenant_id IS NULL`, copia de `granjas.tenant_id` pelo `granja_id`.
-
-### 3. Tornar o tenant-guard resiliente
-
-Em `supabase/functions/_shared/tenant-guard.ts`, `assertNotaFiscalTenant` passa a fazer fallback para o tenant da granja quando `notas_fiscais.tenant_id` for nulo:
-
-```ts
-const { data } = await admin
-  .from("notas_fiscais")
-  .select("tenant_id, granja_id, granjas:granja_id(tenant_id)")
-  .eq("id", notaFiscalId)
-  .maybeSingle();
-const notaTenant = data?.tenant_id ?? data?.granjas?.tenant_id ?? null;
-```
-
-Assim mesmo notas legadas sem `tenant_id` deixam usuários do tenant correto operarem, sem afrouxar isolamento.
-
-## Verificação
-
-- Rodar a migration → conferir `SELECT COUNT(*) FROM notas_fiscais WHERE tenant_id IS NULL` = 0.
-- Fernando reemitir a Remessa #30 e baixar a DANFE.
+As políticas RLS atuais já isolam via `conta_id → contas_pagar → granja_belongs_to_tenant`, então a coluna nova é só para coerência de schema e o importador.

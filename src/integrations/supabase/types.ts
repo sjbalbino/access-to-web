@@ -1073,6 +1073,7 @@ export type Database = {
           observacoes: string | null
           rateio_modo: string | null
           socio_produtor_id: string | null
+          tenant_id: string | null
           updated_at: string
           valor_pago: number
         }
@@ -1094,6 +1095,7 @@ export type Database = {
           observacoes?: string | null
           rateio_modo?: string | null
           socio_produtor_id?: string | null
+          tenant_id?: string | null
           updated_at?: string
           valor_pago: number
         }
@@ -1115,6 +1117,7 @@ export type Database = {
           observacoes?: string | null
           rateio_modo?: string | null
           socio_produtor_id?: string | null
+          tenant_id?: string | null
           updated_at?: string
           valor_pago?: number
         }
