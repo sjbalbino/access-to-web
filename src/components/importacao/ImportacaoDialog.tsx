@@ -974,6 +974,11 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       if (isCpCr) {
         for (const row of finalRows) {
           if (!row.rateio_modo) row.rateio_modo = 'manual';
+          // Constraint contas_*_valor_original_check exige >= 0.
+          // Estornos do Access vinham negativos -> converter para ABS.
+          if (row.valor_original !== undefined && row.valor_original !== null && Number(row.valor_original) < 0) {
+            row.valor_original = Math.abs(Number(row.valor_original));
+          }
         }
       }
 
