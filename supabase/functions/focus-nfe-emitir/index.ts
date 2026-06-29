@@ -74,7 +74,7 @@ serve(async (req) => {
         status, 
         motivo_status,
         emitente_id,
-        emitentes_nfe!notas_fiscais_emitente_id_fkey(id, ambiente, numero_atual_nfe, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao))
+        emitentes_nfe!notas_fiscais_emitente_id_fkey(id, ambiente, numero_atual_nfe, serie_nfe, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao))
       `)
       .eq("id", notaFiscalId)
       .maybeSingle();
@@ -94,7 +94,7 @@ serve(async (req) => {
     }
 
     // Obter ambiente e token do emitente
-    const emitenteData = (existingNota as unknown as { emitente_id?: string; emitentes_nfe?: { id?: string; ambiente: number | null; numero_atual_nfe?: number | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null; api_access_token_homologacao: string | null }> | { api_access_token: string | null; api_access_token_homologacao: string | null } | null } })?.emitentes_nfe;
+    const emitenteData = (existingNota as unknown as { emitente_id?: string; emitentes_nfe?: { id?: string; ambiente: number | null; numero_atual_nfe?: number | null; serie_nfe?: number | string | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null; api_access_token_homologacao: string | null }> | { api_access_token: string | null; api_access_token_homologacao: string | null } | null } })?.emitentes_nfe;
     const ambiente = emitenteData?.ambiente;
     const credObj = Array.isArray(emitenteData?.emitentes_nfe_credentials) ? emitenteData?.emitentes_nfe_credentials?.[0] : emitenteData?.emitentes_nfe_credentials;
     const emitenteToken = ambiente === 2 ? credObj?.api_access_token_homologacao : credObj?.api_access_token;
@@ -143,15 +143,23 @@ serve(async (req) => {
     console.log("UUID_API anterior:", existingNota?.uuid_api || "NENHUM");
 
     // Validar série preenchida (vazia gera Rejeição 236 - DV da chave inválido)
-    const serieNota = (notaData as Record<string, unknown>).serie;
+    // Fallback: se a nota está sem série, usa a série configurada no emitente
+    let serieNota = (notaData as Record<string, unknown>).serie;
     if (serieNota === null || serieNota === undefined || String(serieNota).trim() === "") {
-      return new Response(
-        JSON.stringify({
-          error: "Série da NF-e não informada. Configure a série no emitente antes de emitir.",
-          codigo: "SERIE_VAZIA",
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const serieEmitente = emitenteData?.serie_nfe;
+      if (serieEmitente !== null && serieEmitente !== undefined && String(serieEmitente).trim() !== "") {
+        serieNota = serieEmitente;
+        (notaData as Record<string, unknown>).serie = serieEmitente;
+        console.log(`Série da nota vazia — usando série do emitente: ${serieEmitente}`);
+      } else {
+        return new Response(
+          JSON.stringify({
+            error: "Série da NF-e não informada. Configure a série no emitente antes de emitir.",
+            codigo: "SERIE_VAZIA",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Forçar número sequencial a partir de emitentes_nfe.numero_atual_nfe + 1
@@ -279,6 +287,8 @@ serve(async (req) => {
     }
     if (responseData.serie) {
       updateData.serie = responseData.serie;
+    } else if (serieNota !== undefined && serieNota !== null && String(serieNota).trim() !== "") {
+      updateData.serie = serieNota;
     }
     if (responseData.protocolo) {
       updateData.protocolo = responseData.protocolo;
