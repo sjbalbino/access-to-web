@@ -94,7 +94,7 @@ serve(async (req) => {
     }
 
     // Obter ambiente e token do emitente
-    const emitenteData = (existingNota as unknown as { emitente_id?: string; emitentes_nfe?: { id?: string; ambiente: number | null; numero_atual_nfe?: number | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null; api_access_token_homologacao: string | null }> | { api_access_token: string | null; api_access_token_homologacao: string | null } | null } })?.emitentes_nfe;
+    const emitenteData = (existingNota as unknown as { emitente_id?: string; emitentes_nfe?: { id?: string; ambiente: number | null; numero_atual_nfe?: number | null; serie_nfe?: number | string | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null; api_access_token_homologacao: string | null }> | { api_access_token: string | null; api_access_token_homologacao: string | null } | null } })?.emitentes_nfe;
     const ambiente = emitenteData?.ambiente;
     const credObj = Array.isArray(emitenteData?.emitentes_nfe_credentials) ? emitenteData?.emitentes_nfe_credentials?.[0] : emitenteData?.emitentes_nfe_credentials;
     const emitenteToken = ambiente === 2 ? credObj?.api_access_token_homologacao : credObj?.api_access_token;
