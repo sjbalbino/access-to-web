@@ -163,11 +163,12 @@ serve(async (req) => {
     }
 
     // Forçar número sequencial a partir de emitentes_nfe.numero_atual_nfe + 1
-    const numeroAtual = Number(emitenteData?.numero_atual_nfe ?? 0) || 0;
-    if (numeroAtual <= 0) {
+    // numero_atual_nfe = 0 é válido (emitente novo → próxima NFe será nº 1)
+    const numeroAtual = Number(emitenteData?.numero_atual_nfe ?? 0);
+    if (Number.isNaN(numeroAtual) || numeroAtual < 0) {
       return new Response(
         JSON.stringify({
-          error: "Numeração da NF-e não configurada. Defina 'numero_atual_nfe' no emitente com o último número autorizado na Focus NFe/SEFAZ antes de emitir.",
+          error: "Numeração da NF-e inválida no emitente. O campo 'numero_atual_nfe' deve ser zero ou o último número autorizado.",
           codigo: "NUMERO_ATUAL_INVALIDO",
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
