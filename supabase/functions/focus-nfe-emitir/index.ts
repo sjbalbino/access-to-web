@@ -142,11 +142,33 @@ serve(async (req) => {
     console.log("Status anterior:", existingNota?.status);
     console.log("UUID_API anterior:", existingNota?.uuid_api || "NENHUM");
 
+    // Validar série preenchida (vazia gera Rejeição 236 - DV da chave inválido)
+    const serieNota = (notaData as Record<string, unknown>).serie;
+    if (serieNota === null || serieNota === undefined || String(serieNota).trim() === "") {
+      return new Response(
+        JSON.stringify({
+          error: "Série da NF-e não informada. Configure a série no emitente antes de emitir.",
+          codigo: "SERIE_VAZIA",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Forçar número sequencial a partir de emitentes_nfe.numero_atual_nfe + 1
     const numeroAtual = Number(emitenteData?.numero_atual_nfe ?? 0) || 0;
+    if (numeroAtual <= 0) {
+      return new Response(
+        JSON.stringify({
+          error: "Numeração da NF-e não configurada. Defina 'numero_atual_nfe' no emitente com o último número autorizado na Focus NFe/SEFAZ antes de emitir.",
+          codigo: "NUMERO_ATUAL_INVALIDO",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const proximoNumero = numeroAtual + 1;
     (notaData as Record<string, unknown>).numero = proximoNumero;
-    console.log(`Forçando número da NFe: ${proximoNumero} (numero_atual_nfe=${numeroAtual})`);
+    console.log(`Forçando número da NFe: ${proximoNumero} (numero_atual_nfe=${numeroAtual}, serie=${serieNota})`);
+
 
     console.log("Emitindo NF-e:", notaFiscalId);
     console.log("Referência:", ref);
