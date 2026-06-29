@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { MobileNav } from "./MobileNav";
 import { TabBar } from "./TabBar";
+import { TenantBadge } from "./TenantBadge";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Wheat } from "lucide-react";
 
@@ -22,18 +23,23 @@ export function AppLayout({ children }: AppLayoutProps) {
           {/* Mobile Header */}
           <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-background sticky top-0 z-40">
             <MobileNav />
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-primary/20">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="p-1.5 rounded-lg bg-primary/20 shrink-0">
                 <Wheat className="h-5 w-5 text-primary" />
               </div>
-              <span className="font-bold text-lg">AgroGestão</span>
+              <TenantBadge compact />
             </div>
             <div className="w-10" />
           </header>
 
-          {/* Tab Bar */}
-          <div className="hidden md:block sticky top-0 z-30">
-            <TabBar />
+          {/* Desktop Top Bar: Tenant + Tabs */}
+          <div className="hidden md:flex sticky top-0 z-30 bg-background border-b border-border">
+            <div className="flex items-center px-4 py-2 border-r border-border shrink-0">
+              <TenantBadge />
+            </div>
+            <div className="flex-1 min-w-0">
+              <TabBar />
+            </div>
           </div>
 
           <main className="flex-1 overflow-auto">
