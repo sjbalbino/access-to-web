@@ -143,15 +143,23 @@ serve(async (req) => {
     console.log("UUID_API anterior:", existingNota?.uuid_api || "NENHUM");
 
     // Validar série preenchida (vazia gera Rejeição 236 - DV da chave inválido)
-    const serieNota = (notaData as Record<string, unknown>).serie;
+    // Fallback: se a nota está sem série, usa a série configurada no emitente
+    let serieNota = (notaData as Record<string, unknown>).serie;
     if (serieNota === null || serieNota === undefined || String(serieNota).trim() === "") {
-      return new Response(
-        JSON.stringify({
-          error: "Série da NF-e não informada. Configure a série no emitente antes de emitir.",
-          codigo: "SERIE_VAZIA",
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const serieEmitente = emitenteData?.serie_nfe;
+      if (serieEmitente !== null && serieEmitente !== undefined && String(serieEmitente).trim() !== "") {
+        serieNota = serieEmitente;
+        (notaData as Record<string, unknown>).serie = serieEmitente;
+        console.log(`Série da nota vazia — usando série do emitente: ${serieEmitente}`);
+      } else {
+        return new Response(
+          JSON.stringify({
+            error: "Série da NF-e não informada. Configure a série no emitente antes de emitir.",
+            codigo: "SERIE_VAZIA",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Forçar número sequencial a partir de emitentes_nfe.numero_atual_nfe + 1
