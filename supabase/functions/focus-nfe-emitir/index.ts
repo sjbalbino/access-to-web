@@ -287,6 +287,8 @@ serve(async (req) => {
     }
     if (responseData.serie) {
       updateData.serie = responseData.serie;
+    } else if (serieNota !== undefined && serieNota !== null && String(serieNota).trim() !== "") {
+      updateData.serie = serieNota;
     }
     if (responseData.protocolo) {
       updateData.protocolo = responseData.protocolo;
