@@ -65,62 +65,71 @@ export default function EntradasNfe() {
   const estornarMutation = useEstornarEntrada();
   const [estornarId, setEstornarId] = useState<string | null>(null);
   const { data: entradaEstorno } = useEntradaNfe(estornarId);
-  const [contraNotaId, setContraNotaId] = useState<string | null>(null);
-  const [contraNotaModo, setContraNotaModo] = useState<'contra' | 'devolucao'>('contra');
-  const { data: contraNotaEntrada } = useEntradaNfe(contraNotaId);
   const navigate = useNavigate();
+  const [gerandoContraNota, setGerandoContraNota] = useState(false);
 
-  const invertCfop = (cfop: string) => {
-    if (!cfop || cfop.length < 4) return cfop;
-    const map: Record<string, string> = { '1': '5', '5': '1', '2': '6', '6': '2', '3': '7', '7': '3' };
-    return (map[cfop[0]] || cfop[0]) + cfop.slice(1);
+  const handleGerarContraNota = async (entradaId: string, modo: 'contra' | 'devolucao') => {
+    if (gerandoContraNota) return;
+    setGerandoContraNota(true);
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: entrada, error } = await supabase
+        .from('entradas_nfe')
+        .select(`
+          *,
+          fornecedor:fornecedor_id(id, nome, cpf_cnpj, inscricao_estadual, email, logradouro, numero, complemento, bairro, cidade, uf, cep),
+          itens:entradas_nfe_itens(*, produto:produto_id(id, nome, codigo, ncm, cod_fornecedor))
+        `)
+        .eq('id', entradaId)
+        .single();
+      if (error || !entrada) {
+        const { toast } = await import('sonner');
+        toast.error('Erro ao carregar dados da entrada: ' + (error?.message || 'não encontrada'));
+        return;
+      }
+      const f: any = (entrada as any).fornecedor || {};
+      const cpfCnpj = (f.cpf_cnpj || '').replace(/\D/g, '');
+      const isDevolucao = modo === 'devolucao';
+      const data = {
+        chaveAcesso: (entrada as any).chave_acesso || '',
+        dest_tipo: cpfCnpj.length > 11 ? '1' : '0',
+        dest_cpf_cnpj: cpfCnpj,
+        dest_nome: f.nome || '',
+        dest_ie: f.inscricao_estadual || '',
+        dest_email: f.email || '',
+        dest_logradouro: f.logradouro || '',
+        dest_numero: f.numero || '',
+        dest_complemento: f.complemento || '',
+        dest_bairro: f.bairro || '',
+        dest_cidade: f.cidade || '',
+        dest_uf: f.uf || '',
+        dest_cep: (f.cep || '').replace(/\D/g, ''),
+        natureza_operacao: isDevolucao
+          ? 'Devolução de ' + ((entrada as any).natureza_operacao || 'mercadoria')
+          : 'Contra-nota de entrada - ' + ((entrada as any).natureza_operacao || 'compra'),
+        finalidade: isDevolucao ? 4 : 1,
+        operacao: 0,
+        itens: ((entrada as any).itens || []).map((it: any) => ({
+          codigo: it.produto?.codigo || it.produto_xml_codigo || '',
+          descricao: it.produto?.nome || it.produto_xml_descricao || '',
+          ncm: it.produto?.ncm || it.produto_xml_ncm || '',
+          cfop: it.cfop || '',
+          unidade: it.unidade_medida || '',
+          quantidade: Number(it.quantidade || 0),
+          valor_unitario: Number(it.valor_unitario || 0),
+          valor_total: Number(it.valor_total || 0),
+          valor_desconto: Number(it.valor_desconto || 0),
+          cst_icms: it.cst_icms || '', base_icms: Number(it.base_icms || 0), aliq_icms: Number(it.aliq_icms || 0), valor_icms: Number(it.valor_icms || 0),
+          cst_pis: it.cst_pis || '', base_pis: Number(it.base_pis || 0), aliq_pis: Number(it.aliq_pis || 0), valor_pis: Number(it.valor_pis || 0),
+          cst_cofins: it.cst_cofins || '', base_cofins: Number(it.base_cofins || 0), aliq_cofins: Number(it.aliq_cofins || 0), valor_cofins: Number(it.valor_cofins || 0),
+          cst_ipi: it.cst_ipi || '', base_ipi: Number(it.base_ipi || 0), aliq_ipi: Number(it.aliq_ipi || 0), valor_ipi: Number(it.valor_ipi || 0),
+        })),
+      };
+      navigate('/notas-fiscais/nova', { state: { contraNotaData: data } });
+    } finally {
+      setGerandoContraNota(false);
+    }
   };
-
-  useEffect(() => {
-    if (!contraNotaId || !contraNotaEntrada) return;
-    const f: any = contraNotaEntrada.fornecedor || {};
-    const cpfCnpj = (f.cpf_cnpj || '').replace(/\D/g, '');
-    const isDevolucao = contraNotaModo === 'devolucao';
-    const data = {
-      chaveAcesso: contraNotaEntrada.chave_acesso || '',
-      dest_tipo: cpfCnpj.length > 11 ? '1' : '0',
-      dest_cpf_cnpj: cpfCnpj,
-      dest_nome: f.nome || '',
-      dest_ie: f.inscricao_estadual || '',
-      dest_email: f.email || '',
-      dest_logradouro: f.logradouro || '',
-      dest_numero: f.numero || '',
-      dest_complemento: f.complemento || '',
-      dest_bairro: f.bairro || '',
-      dest_cidade: f.cidade || '',
-      dest_uf: f.uf || '',
-      dest_cep: (f.cep || '').replace(/\D/g, ''),
-      natureza_operacao: isDevolucao
-        ? 'Devolução de ' + (contraNotaEntrada.natureza_operacao || 'mercadoria')
-        : 'Contra-nota de entrada - ' + (contraNotaEntrada.natureza_operacao || 'compra'),
-      finalidade: isDevolucao ? 4 : 1,
-      operacao: 0, // entrada (tipo NF = 0) em ambos os casos, conforme regra do produtor rural
-      itens: ((contraNotaEntrada as any).itens || []).map((it: any) => ({
-        codigo: it.produto?.codigo || it.produto_xml_codigo || '',
-        descricao: it.produto?.nome || it.produto_xml_descricao || '',
-        ncm: it.produto?.ncm || it.produto_xml_ncm || '',
-        // Devolução: inverte (saida->entrada já está, então mantém entrada)
-        // Contra-nota: mantém CFOP de entrada já gravado
-        cfop: it.cfop || '',
-        unidade: it.unidade_medida || '',
-        quantidade: Number(it.quantidade || 0),
-        valor_unitario: Number(it.valor_unitario || 0),
-        valor_total: Number(it.valor_total || 0),
-        valor_desconto: Number(it.valor_desconto || 0),
-        cst_icms: it.cst_icms || '', base_icms: Number(it.base_icms || 0), aliq_icms: Number(it.aliq_icms || 0), valor_icms: Number(it.valor_icms || 0),
-        cst_pis: it.cst_pis || '', base_pis: Number(it.base_pis || 0), aliq_pis: Number(it.aliq_pis || 0), valor_pis: Number(it.valor_pis || 0),
-        cst_cofins: it.cst_cofins || '', base_cofins: Number(it.base_cofins || 0), aliq_cofins: Number(it.aliq_cofins || 0), valor_cofins: Number(it.valor_cofins || 0),
-        cst_ipi: it.cst_ipi || '', base_ipi: Number(it.base_ipi || 0), aliq_ipi: Number(it.aliq_ipi || 0), valor_ipi: Number(it.valor_ipi || 0),
-      })),
-    };
-    setContraNotaId(null);
-    navigate('/notas-fiscais/nova', { state: { contraNotaData: data } });
-  }, [contraNotaId, contraNotaEntrada, contraNotaModo, navigate]);
 
 
 
@@ -269,10 +278,10 @@ export default function EntradasNfe() {
                             <Undo2 className="h-4 w-4 text-amber-600" />
                           </Button>
                         )}
-                        <Button size="icon" variant="ghost" onClick={() => { setContraNotaModo('contra'); setContraNotaId(e.id); }} title="Emitir Contra-nota de entrada (NF-e do produtor para compra de máquinas/equipamentos)">
+                        <Button size="icon" variant="ghost" disabled={gerandoContraNota} onClick={() => handleGerarContraNota(e.id, 'contra')} title="Emitir Contra-nota de entrada (NF-e do produtor para compra de máquinas/equipamentos)">
                           <FileInput className="h-4 w-4 text-emerald-600" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => { setContraNotaModo('devolucao'); setContraNotaId(e.id); }} title="Emitir NF-e de Devolução de compra">
+                        <Button size="icon" variant="ghost" disabled={gerandoContraNota} onClick={() => handleGerarContraNota(e.id, 'devolucao')} title="Emitir NF-e de Devolução de compra">
                           <FileOutput className="h-4 w-4 text-blue-600" />
                         </Button>
 
