@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -159,7 +159,7 @@ export default function NotaFiscalForm() {
   const { id } = useParams();
   const location = useLocation();
   const isEditing = !!id;
-  const contraNotaData = (() => {
+  const contraNotaData = useMemo<ContraNotaData | undefined>(() => {
     const fromState = (location.state as any)?.contraNotaData as ContraNotaData | undefined;
     if (fromState) {
       try { sessionStorage.setItem("pendingContraNota", JSON.stringify(fromState)); } catch {}
@@ -169,7 +169,8 @@ export default function NotaFiscalForm() {
       const raw = sessionStorage.getItem("pendingContraNota");
       return raw ? (JSON.parse(raw) as ContraNotaData) : undefined;
     } catch { return undefined; }
-  })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { notasFiscais, createNotaFiscal, updateNotaFiscal, isLoading: isLoadingNotas } = useNotasFiscais();
   const { itens, createItem, updateItem, deleteItem, isLoading: isLoadingItens } = useNotaFiscalItens(id || null);
@@ -239,23 +240,23 @@ export default function NotaFiscalForm() {
     inscricao_produtor_id: "",
     cliente_fornecedor_id: "",
     data_emissao: new Date().toISOString().slice(0, 10),
-    operacao: 1,
-    natureza_operacao: "",
-    finalidade: 1,
+    operacao: contraNotaData?.operacao ?? 1,
+    natureza_operacao: contraNotaData?.natureza_operacao ?? "",
+    finalidade: contraNotaData?.finalidade ?? 1,
     cfop_id: "",
-    dest_tipo: "1", // 1 = Pessoa Jurídica (default)
-    dest_cpf_cnpj: "",
-    dest_nome: "",
-    dest_ie: "",
-    dest_email: "",
+    dest_tipo: contraNotaData?.dest_tipo ?? "1",
+    dest_cpf_cnpj: contraNotaData?.dest_cpf_cnpj ?? "",
+    dest_nome: contraNotaData?.dest_nome ?? "",
+    dest_ie: contraNotaData?.dest_ie ?? "",
+    dest_email: contraNotaData?.dest_email ?? "",
     dest_telefone: "",
-    dest_logradouro: "",
-    dest_numero: "",
-    dest_complemento: "",
-    dest_bairro: "",
-    dest_cidade: "",
-    dest_uf: "",
-    dest_cep: "",
+    dest_logradouro: contraNotaData?.dest_logradouro ?? "",
+    dest_numero: contraNotaData?.dest_numero ?? "",
+    dest_complemento: contraNotaData?.dest_complemento ?? "",
+    dest_bairro: contraNotaData?.dest_bairro ?? "",
+    dest_cidade: contraNotaData?.dest_cidade ?? "",
+    dest_uf: contraNotaData?.dest_uf ?? "",
+    dest_cep: contraNotaData?.dest_cep ?? "",
     ind_consumidor_final: 0,
     ind_presenca: 9,
     modalidade_frete: 9,
