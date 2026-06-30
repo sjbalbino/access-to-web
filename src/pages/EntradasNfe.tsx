@@ -61,6 +61,9 @@ export default function EntradasNfe() {
   );
   const deleteMutation = useDeleteEntradaNfe();
   const finalizarMutation = useFinalizarEntrada();
+  const estornarMutation = useEstornarEntrada();
+  const [estornarId, setEstornarId] = useState<string | null>(null);
+
 
   const safraOptions = (safras || []).map((s: any) => ({
     value: s.id,
