@@ -159,7 +159,7 @@ export default function NotaFiscalForm() {
   const { id } = useParams();
   const location = useLocation();
   const isEditing = !!id;
-  const contraNotaData = (() => {
+  const contraNotaData = useMemo<ContraNotaData | undefined>(() => {
     const fromState = (location.state as any)?.contraNotaData as ContraNotaData | undefined;
     if (fromState) {
       try { sessionStorage.setItem("pendingContraNota", JSON.stringify(fromState)); } catch {}
@@ -169,7 +169,8 @@ export default function NotaFiscalForm() {
       const raw = sessionStorage.getItem("pendingContraNota");
       return raw ? (JSON.parse(raw) as ContraNotaData) : undefined;
     } catch { return undefined; }
-  })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { notasFiscais, createNotaFiscal, updateNotaFiscal, isLoading: isLoadingNotas } = useNotasFiscais();
   const { itens, createItem, updateItem, deleteItem, isLoading: isLoadingItens } = useNotaFiscalItens(id || null);
