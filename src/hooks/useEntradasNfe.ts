@@ -411,16 +411,24 @@ export function useEstornarEntrada() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (entradaId: string) => {
+      // Flip atômico: só estorna se ainda estiver 'finalizado'. Evita duplicidade.
+      const { data: flipped, error: flipErr } = await supabase
+        .from('entradas_nfe')
+        .update({ status: 'pendente' })
+        .eq('id', entradaId)
+        .eq('status', 'finalizado')
+        .select('id');
+      if (flipErr) throw flipErr;
+      if (!flipped || flipped.length === 0) {
+        throw new Error('Esta entrada não está finalizada ou já foi estornada.');
+      }
+
       const { data: entrada, error } = await supabase
         .from('entradas_nfe')
         .select(`*, itens:entradas_nfe_itens(*)`)
         .eq('id', entradaId)
         .single();
       if (error) throw error;
-
-      if (entrada.status !== 'finalizado') {
-        throw new Error('Apenas entradas finalizadas podem ser estornadas.');
-      }
 
       const itensVinculados = (entrada as any).itens?.filter((i: any) => i.produto_id && i.vinculado) || [];
 
@@ -448,7 +456,7 @@ export function useEstornarEntrada() {
           .eq('id', item.produto_id);
       }
 
-      await supabase.from('entradas_nfe').update({ status: 'pendente' }).eq('id', entradaId);
+
 
       const { data: cps } = await supabase
         .from('contas_pagar')
