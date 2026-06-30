@@ -240,6 +240,21 @@ export default function EntradasNfe() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!estornarId} onOpenChange={() => setEstornarId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Estornar entrada?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O estoque dos itens será revertido, a entrada voltará para "Pendente" e as contas a pagar sem baixas serão removidas. Contas já pagas serão mantidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (estornarId) { estornarMutation.mutate(estornarId); setEstornarId(null); } }}>Estornar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
