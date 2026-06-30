@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Globe, Undo2 } from "lucide-react";
+import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Globe, Undo2, FileOutput } from "lucide-react";
 import { useEntradasNfe, useDeleteEntradaNfe, useFinalizarEntrada, useEstornarEntrada, useEntradaNfe } from "@/hooks/useEntradasNfe";
 
 import { useGranjas } from "@/hooks/useGranjas";
