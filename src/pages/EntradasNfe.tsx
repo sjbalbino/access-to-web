@@ -262,6 +262,9 @@ export default function EntradasNfe() {
                             <Undo2 className="h-4 w-4 text-amber-600" />
                           </Button>
                         )}
+                        <Button size="icon" variant="ghost" onClick={() => setContraNotaId(e.id)} title="Emitir NF-e de Contra-nota (devolução)">
+                          <FileOutput className="h-4 w-4 text-blue-600" />
+                        </Button>
 
 
                       </div>
