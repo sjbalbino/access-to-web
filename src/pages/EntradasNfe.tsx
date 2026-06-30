@@ -41,6 +41,23 @@ const statusVariants: Record<string, "default" | "secondary" | "destructive" | "
   finalizado: 'default',
 };
 
+const normalizeCfopCode = (cfop?: string | null) => (cfop || '').replace(/\D/g, '').slice(0, 4);
+
+const toEntradaCfop = (cfop?: string | null) => {
+  const codigo = normalizeCfopCode(cfop);
+  if (!codigo || codigo.length < 4) return codigo;
+  const map: Record<string, string> = { '5': '1', '6': '2', '7': '3' };
+  return (map[codigo[0]] || codigo[0]) + codigo.slice(1);
+};
+
+const getMostUsedCfop = (cfops: string[]) => {
+  const counts = cfops.reduce<Record<string, number>>((acc, cfop) => {
+    if (cfop) acc[cfop] = (acc[cfop] || 0) + 1;
+    return acc;
+  }, {});
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+};
+
 export default function EntradasNfe() {
   const [granjaId, setGranjaId] = useState<string>('all');
   const [safraId, setSafraId] = useState<string>('all');
@@ -94,6 +111,38 @@ export default function EntradasNfe() {
       const isDevolucao = modo === 'devolucao';
       const itensSrc: any[] = e.itens || [];
 
+      let cfopHeaderCodigo = '';
+      if (e.cfop_id) {
+        const { data: cfopHeader } = await supabase
+          .from('cfops')
+          .select('codigo')
+          .eq('id', e.cfop_id)
+          .maybeSingle();
+        cfopHeaderCodigo = toEntradaCfop((cfopHeader as any)?.codigo);
+      }
+
+      const itemCfopsEntrada = itensSrc.map((it) => toEntradaCfop(it.cfop || cfopHeaderCodigo));
+      const cfopNotaCodigo = getMostUsedCfop(itemCfopsEntrada) || cfopHeaderCodigo;
+      let cfopNota: any = null;
+      if (cfopNotaCodigo) {
+        const { data: cfopsEntrada } = await supabase
+          .from('cfops')
+          .select('id, codigo, natureza_operacao')
+          .eq('codigo', cfopNotaCodigo)
+          .eq('tipo', 'entrada')
+          .limit(1);
+        cfopNota = cfopsEntrada?.[0] || null;
+
+        if (!cfopNota) {
+          const { data: cfopsFallback } = await supabase
+            .from('cfops')
+            .select('id, codigo, natureza_operacao')
+            .eq('codigo', cfopNotaCodigo)
+            .limit(1);
+          cfopNota = cfopsFallback?.[0] || null;
+        }
+      }
+
       const totals = itensSrc.reduce((acc, it) => {
         acc.totalProdutos += Number(it.valor_total || 0);
         acc.totalIcms += Number(it.valor_icms || 0);
@@ -122,6 +171,7 @@ export default function EntradasNfe() {
         status: 'rascunho',
         operacao: 0,
         finalidade: isDevolucao ? 4 : 1,
+        cfop_id: cfopNota?.id || null,
         natureza_operacao: isDevolucao
           ? 'Devolução de ' + (e.natureza_operacao || 'mercadoria')
           : 'Contra-nota de entrada - ' + (e.natureza_operacao || 'compra'),
@@ -164,7 +214,7 @@ export default function EntradasNfe() {
           codigo: it.produto?.codigo || it.produto_xml_codigo || '',
           descricao: it.produto?.nome || it.produto_xml_descricao || '',
           ncm: it.produto?.ncm || it.produto_xml_ncm || '',
-          cfop: it.cfop || '',
+          cfop: itemCfopsEntrada[idx] || cfopNotaCodigo || '',
           unidade: it.unidade_medida || '',
           quantidade: Number(it.quantidade || 0),
           valor_unitario: Number(it.valor_unitario || 0),
