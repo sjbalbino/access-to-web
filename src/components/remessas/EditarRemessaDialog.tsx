@@ -226,7 +226,10 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Peso Tara (kg)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Peso Tara (kg)</Label>
+                    {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoTara(Math.round(kg))} />}
+                  </div>
                   <Input
                     type="number"
                     step="1"
