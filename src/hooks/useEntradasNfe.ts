@@ -390,7 +390,77 @@ export function useFinalizarEntrada() {
           .from('produtos')
           .update({ estoque_atual: Number(prod?.estoque_atual || 0) + Number(qty || 0) })
           .eq('id', item.produto_id);
+}
+
+export function useEstornarEntrada() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (entradaId: string) => {
+      // Buscar entrada + itens
+      const { data: entrada, error } = await supabase
+        .from('entradas_nfe')
+        .select(`*, itens:entradas_nfe_itens(*)`)
+        .eq('id', entradaId)
+        .single();
+      if (error) throw error;
+
+      if (entrada.status !== 'finalizado') {
+        throw new Error('Apenas entradas finalizadas podem ser estornadas.');
       }
+
+      const itensVinculados = (entrada as any).itens?.filter((i: any) => i.produto_id && i.vinculado) || [];
+
+      // Reverter estoque por granja e agregado em produtos
+      for (const item of itensVinculados) {
+        const qty = Number(item.quantidade_conferida ?? item.quantidade ?? 0);
+        if (qty <= 0) continue;
+
+        const { data: existing } = await supabase
+          .from('estoque_produtos')
+          .select('id, quantidade')
+          .eq('produto_id', item.produto_id)
+          .eq('granja_id', entrada.granja_id)
+          .eq('lote', item.lote || '')
+          .maybeSingle();
+
+        if (existing) {
+          const novaQtd = Math.max(0, Number(existing.quantidade || 0) - qty);
+          await supabase.from('estoque_produtos').update({ quantidade: novaQtd }).eq('id', existing.id);
+        }
+
+        const { data: prod } = await supabase
+          .from('produtos').select('estoque_atual').eq('id', item.produto_id).maybeSingle();
+        await supabase.from('produtos')
+          .update({ estoque_atual: Math.max(0, Number(prod?.estoque_atual || 0) - qty) })
+          .eq('id', item.produto_id);
+      }
+
+      // Reabrir entrada
+      await supabase.from('entradas_nfe').update({ status: 'pendente' }).eq('id', entradaId);
+
+      // Remover contas a pagar SEM baixas geradas por esta entrada
+      const { data: cps } = await supabase
+        .from('contas_pagar')
+        .select('id, valor_pago')
+        .eq('entrada_nfe_id', entradaId);
+      const semBaixa = (cps || []).filter((c: any) => Number(c.valor_pago || 0) === 0).map((c: any) => c.id);
+      if (semBaixa.length) {
+        await supabase.from('contas_pagar').delete().in('id', semBaixa);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['entradas_nfe'] });
+      qc.invalidateQueries({ queryKey: ['entrada_nfe'] });
+      qc.invalidateQueries({ queryKey: ['estoque_produtos'] });
+      qc.invalidateQueries({ queryKey: ['contas_pagar'] });
+      toast.success('Entrada estornada e reaberta para edição!');
+    },
+    onError: (error: any) => {
+      toast.error('Erro ao estornar entrada: ' + error.message);
+    },
+  });
+}
+
 
       // Atualizar status
       await supabase.from('entradas_nfe').update({ status: 'finalizado' }).eq('id', entradaId);
