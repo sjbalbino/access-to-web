@@ -105,6 +105,14 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
     });
   };
 
+  // Converte CFOP de saída (do XML do fornecedor) para CFOP de entrada equivalente.
+  // 5xxx → 1xxx (mesma UF), 6xxx → 2xxx (outra UF), 7xxx → 3xxx (exterior).
+  const toEntradaCfop = (cfop: string) => {
+    if (!cfop || cfop.length < 4) return cfop;
+    const map: Record<string, string> = { '5': '1', '6': '2', '7': '3' };
+    return (map[cfop[0]] || cfop[0]) + cfop.slice(1);
+  };
+
   const vincularProdutos = (nfe: NfeParsed) => nfe.itens.map((item) => {
     const prodByCod = produtos?.find((p: any) => p.cod_fornecedor && p.cod_fornecedor === item.codigoProduto);
     const prodByNcm = !prodByCod ? produtos?.find((p: any) => p.ncm && p.ncm === item.ncm) : null;
@@ -114,7 +122,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
       produto_xml_codigo: item.codigoProduto,
       produto_xml_descricao: item.descricao,
       produto_xml_ncm: item.ncm,
-      cfop: item.cfop,
+      cfop: toEntradaCfop(item.cfop),
       unidade_medida: item.unidade,
       quantidade: item.quantidade,
       valor_unitario: item.valorUnitario,
