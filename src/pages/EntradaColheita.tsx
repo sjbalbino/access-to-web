@@ -70,6 +70,7 @@ import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrinc
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { supabase } from "@/integrations/supabase/client";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
+import { BalancaButton } from "@/components/balanca/BalancaButton";
 
 // Tipos para controle do painel de emissão
 type EmissionStep = "idle" | "validating" | "creating" | "sending" | "processing" | "success" | "error";
@@ -1198,7 +1199,10 @@ export default function EntradaColheita() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2 space-y-2">
-                      <Label>Kgs Entrada (Bruto) *</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Kgs Entrada (Bruto) *</Label>
+                        <BalancaButton onPeso={(kg) => setFormEntrada(prev => ({ ...prev, peso_bruto: Math.round(kg) }))} />
+                      </div>
                       <Input
                         type="number"
                         value={formEntrada.peso_bruto || ""}
@@ -1451,7 +1455,10 @@ export default function EntradaColheita() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Kgs Tara *</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Kgs Tara *</Label>
+                        <BalancaButton onPeso={(kg) => setFormSaida(prev => ({ ...prev, peso_tara: Math.round(kg) }))} />
+                      </div>
                       <Input
                         type="number"
                         value={formSaida.peso_tara || ""}

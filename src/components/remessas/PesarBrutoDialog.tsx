@@ -26,6 +26,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Package, Truck, FileText } from "lucide-react";
+import { BalancaButton } from "@/components/balanca/BalancaButton";
 
 interface PesarBrutoDialogProps {
   remessa: RemessaVenda | null;
@@ -191,7 +192,10 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Peso Bruto (kg) *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Peso Bruto (kg) *</Label>
+                    <BalancaButton onPeso={(kg) => setPesoBruto(Math.round(kg))} />
+                  </div>
                   <Input
                     type="number"
                     step="1"
