@@ -43,6 +43,12 @@ const firstNumber = (...values: unknown[]) => {
   return undefined;
 };
 
+const hasAnyNonZeroNumber = (...values: unknown[]) => values.some((value) => {
+  if (value === null || value === undefined || value === "") return false;
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) && numberValue !== 0;
+});
+
 function normalizeReformaTributariaPayload(notaData: Record<string, unknown>) {
   const items = Array.isArray(notaData.items) ? notaData.items : [];
 
@@ -87,7 +93,7 @@ function normalizeReformaTributariaPayload(notaData: Record<string, unknown>) {
     }
 
     const classTribIs = formatClassTrib6(item.is_classificacao_tributaria ?? item.cclass_trib_is);
-    const hasEffectiveIs = firstNumber(item.is_aliquota, item.is_valor) !== undefined && firstNumber(item.is_aliquota, item.is_valor) !== 0;
+    const hasEffectiveIs = hasAnyNonZeroNumber(item.is_aliquota, item.is_valor);
     if (!classTribIs || !hasEffectiveIs) {
       delete item.is_situacao_tributaria;
       delete item.is_classificacao_tributaria;
