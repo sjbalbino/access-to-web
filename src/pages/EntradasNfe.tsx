@@ -71,31 +71,52 @@ export default function EntradasNfe() {
   const handleGerarContraNota = async (entradaId: string, modo: 'contra' | 'devolucao') => {
     if (gerandoContraNota) return;
     setGerandoContraNota(true);
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { toast } = await import('sonner');
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
       const { data: entrada, error } = await supabase
         .from('entradas_nfe')
         .select(`
           *,
           fornecedor:fornecedor_id(id, nome, cpf_cnpj, inscricao_estadual, email, logradouro, numero, complemento, bairro, cidade, uf, cep),
+          granja:granja_id(id, tenant_id),
           itens:entradas_nfe_itens(*, produto:produto_id(id, nome, codigo, ncm, cod_fornecedor))
         `)
         .eq('id', entradaId)
         .single();
       if (error || !entrada) {
-        const { toast } = await import('sonner');
         toast.error('Erro ao carregar dados da entrada: ' + (error?.message || 'não encontrada'));
         return;
       }
-      const f: any = (entrada as any).fornecedor || {};
+      const e: any = entrada;
+      const f: any = e.fornecedor || {};
       const cpfCnpj = (f.cpf_cnpj || '').replace(/\D/g, '');
       const isDevolucao = modo === 'devolucao';
-      const data = {
-        chaveAcesso: (entrada as any).chave_acesso || '',
+      const itensSrc: any[] = e.itens || [];
+
+      const totals = itensSrc.reduce((acc, it) => {
+        acc.totalProdutos += Number(it.valor_total || 0);
+        acc.totalIcms += Number(it.valor_icms || 0);
+        acc.totalPis += Number(it.valor_pis || 0);
+        acc.totalCofins += Number(it.valor_cofins || 0);
+        return acc;
+      }, { totalProdutos: 0, totalIcms: 0, totalPis: 0, totalCofins: 0 });
+      const totalNota = totals.totalProdutos;
+
+      const notaInsert: any = {
+        tenant_id: e.granja?.tenant_id || null,
+        granja_id: e.granja_id || null,
+        status: 'rascunho',
+        operacao: 0,
+        finalidade: isDevolucao ? 4 : 1,
+        natureza_operacao: isDevolucao
+          ? 'Devolução de ' + (e.natureza_operacao || 'mercadoria')
+          : 'Contra-nota de entrada - ' + (e.natureza_operacao || 'compra'),
+        data_emissao: new Date().toISOString().slice(0, 10),
         dest_tipo: cpfCnpj.length > 11 ? '1' : '0',
         dest_cpf_cnpj: cpfCnpj,
         dest_nome: f.nome || '',
-        dest_ie: f.inscricao_estadual || '',
+        dest_ie: (f.inscricao_estadual || '').replace(/\D/g, ''),
         dest_email: f.email || '',
         dest_logradouro: f.logradouro || '',
         dest_numero: f.numero || '',
@@ -104,12 +125,29 @@ export default function EntradasNfe() {
         dest_cidade: f.cidade || '',
         dest_uf: f.uf || '',
         dest_cep: (f.cep || '').replace(/\D/g, ''),
-        natureza_operacao: isDevolucao
-          ? 'Devolução de ' + ((entrada as any).natureza_operacao || 'mercadoria')
-          : 'Contra-nota de entrada - ' + ((entrada as any).natureza_operacao || 'compra'),
-        finalidade: isDevolucao ? 4 : 1,
-        operacao: 0,
-        itens: ((entrada as any).itens || []).map((it: any) => ({
+        total_produtos: totals.totalProdutos,
+        total_nota: totalNota,
+        total_icms: totals.totalIcms,
+        total_pis: totals.totalPis,
+        total_cofins: totals.totalCofins,
+        valor_pagamento: totalNota,
+      };
+
+      const { data: novaNota, error: errNota } = await supabase
+        .from('notas_fiscais')
+        .insert(notaInsert)
+        .select()
+        .single();
+      if (errNota || !novaNota) {
+        toast.error('Erro ao criar NF-e: ' + (errNota?.message || 'desconhecido'));
+        return;
+      }
+
+      if (itensSrc.length > 0) {
+        const itensInsert = itensSrc.map((it: any, idx: number) => ({
+          nota_fiscal_id: novaNota.id,
+          numero_item: idx + 1,
+          produto_id: it.produto?.id || null,
           codigo: it.produto?.codigo || it.produto_xml_codigo || '',
           descricao: it.produto?.nome || it.produto_xml_descricao || '',
           ncm: it.produto?.ncm || it.produto_xml_ncm || '',
@@ -119,13 +157,31 @@ export default function EntradasNfe() {
           valor_unitario: Number(it.valor_unitario || 0),
           valor_total: Number(it.valor_total || 0),
           valor_desconto: Number(it.valor_desconto || 0),
-          cst_icms: it.cst_icms || '', base_icms: Number(it.base_icms || 0), aliq_icms: Number(it.aliq_icms || 0), valor_icms: Number(it.valor_icms || 0),
-          cst_pis: it.cst_pis || '', base_pis: Number(it.base_pis || 0), aliq_pis: Number(it.aliq_pis || 0), valor_pis: Number(it.valor_pis || 0),
-          cst_cofins: it.cst_cofins || '', base_cofins: Number(it.base_cofins || 0), aliq_cofins: Number(it.aliq_cofins || 0), valor_cofins: Number(it.valor_cofins || 0),
-          cst_ipi: it.cst_ipi || '', base_ipi: Number(it.base_ipi || 0), aliq_ipi: Number(it.aliq_ipi || 0), valor_ipi: Number(it.valor_ipi || 0),
-        })),
-      };
-      navigate('/notas-fiscais/nova', { state: { contraNotaData: data } });
+          origem: 0,
+          cst_icms: it.cst_icms || null, base_icms: Number(it.base_icms || 0), aliq_icms: Number(it.aliq_icms || 0), valor_icms: Number(it.valor_icms || 0),
+          cst_pis: it.cst_pis || null, base_pis: Number(it.base_pis || 0), aliq_pis: Number(it.aliq_pis || 0), valor_pis: Number(it.valor_pis || 0),
+          cst_cofins: it.cst_cofins || null, base_cofins: Number(it.base_cofins || 0), aliq_cofins: Number(it.aliq_cofins || 0), valor_cofins: Number(it.valor_cofins || 0),
+          cst_ipi: it.cst_ipi || null, base_ipi: Number(it.base_ipi || 0), aliq_ipi: Number(it.aliq_ipi || 0), valor_ipi: Number(it.valor_ipi || 0),
+        }));
+        const { error: errItens } = await supabase.from('notas_fiscais_itens').insert(itensInsert);
+        if (errItens) {
+          toast.error('NF-e criada, mas falhou ao gravar itens: ' + errItens.message);
+        }
+      }
+
+      const chave = (e.chave_acesso || '').replace(/\D/g, '');
+      if (chave.length === 44) {
+        await supabase.from('notas_fiscais_referenciadas').insert({
+          nota_fiscal_id: novaNota.id,
+          tipo: 'nfe',
+          chave_nfe: chave,
+        });
+      }
+
+      toast.success(`${isDevolucao ? 'Devolução' : 'Contra-nota'} gerada com sucesso!`);
+      navigate(`/notas-fiscais/${novaNota.id}`);
+    } catch (err: any) {
+      toast.error('Erro: ' + (err?.message || String(err)));
     } finally {
       setGerandoContraNota(false);
     }
