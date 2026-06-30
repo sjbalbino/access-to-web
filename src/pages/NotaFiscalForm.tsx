@@ -514,6 +514,8 @@ export default function NotaFiscalForm() {
           console.error("Erro ao criar nota referenciada:", err);
         }
       }
+
+      try { sessionStorage.removeItem("pendingContraNota"); } catch {}
     };
 
     createPendingItems();
