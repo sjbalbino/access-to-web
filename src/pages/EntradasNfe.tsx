@@ -66,6 +66,7 @@ export default function EntradasNfe() {
   const [estornarId, setEstornarId] = useState<string | null>(null);
   const { data: entradaEstorno } = useEntradaNfe(estornarId);
   const [contraNotaId, setContraNotaId] = useState<string | null>(null);
+  const [contraNotaModo, setContraNotaModo] = useState<'contra' | 'devolucao'>('contra');
   const { data: contraNotaEntrada } = useEntradaNfe(contraNotaId);
   const navigate = useNavigate();
 
@@ -79,6 +80,7 @@ export default function EntradasNfe() {
     if (!contraNotaId || !contraNotaEntrada) return;
     const f: any = contraNotaEntrada.fornecedor || {};
     const cpfCnpj = (f.cpf_cnpj || '').replace(/\D/g, '');
+    const isDevolucao = contraNotaModo === 'devolucao';
     const data = {
       chaveAcesso: contraNotaEntrada.chave_acesso || '',
       dest_tipo: cpfCnpj.length > 11 ? '1' : '0',
@@ -93,14 +95,18 @@ export default function EntradasNfe() {
       dest_cidade: f.cidade || '',
       dest_uf: f.uf || '',
       dest_cep: (f.cep || '').replace(/\D/g, ''),
-      natureza_operacao: 'Devolução de ' + (contraNotaEntrada.natureza_operacao || 'mercadoria'),
-      finalidade: 4,
-      operacao: 1,
+      natureza_operacao: isDevolucao
+        ? 'Devolução de ' + (contraNotaEntrada.natureza_operacao || 'mercadoria')
+        : 'Contra-nota de entrada - ' + (contraNotaEntrada.natureza_operacao || 'compra'),
+      finalidade: isDevolucao ? 4 : 1,
+      operacao: 0, // entrada (tipo NF = 0) em ambos os casos, conforme regra do produtor rural
       itens: ((contraNotaEntrada as any).itens || []).map((it: any) => ({
         codigo: it.produto?.codigo || it.produto_xml_codigo || '',
         descricao: it.produto?.nome || it.produto_xml_descricao || '',
         ncm: it.produto?.ncm || it.produto_xml_ncm || '',
-        cfop: invertCfop(it.cfop || ''),
+        // Devolução: inverte (saida->entrada já está, então mantém entrada)
+        // Contra-nota: mantém CFOP de entrada já gravado
+        cfop: it.cfop || '',
         unidade: it.unidade_medida || '',
         quantidade: Number(it.quantidade || 0),
         valor_unitario: Number(it.valor_unitario || 0),
@@ -114,7 +120,8 @@ export default function EntradasNfe() {
     };
     setContraNotaId(null);
     navigate('/notas-fiscais/nova', { state: { contraNotaData: data } });
-  }, [contraNotaId, contraNotaEntrada, navigate]);
+  }, [contraNotaId, contraNotaEntrada, contraNotaModo, navigate]);
+
 
 
 
