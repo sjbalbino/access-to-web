@@ -20,6 +20,89 @@ const getBaseUrl = (ambiente: number | null | undefined) => {
   return "https://api.focusnfe.com.br";
 };
 
+const onlyDigits = (value: unknown) => String(value ?? "").replace(/\D/g, "");
+
+const formatCst3 = (value: unknown) => {
+  const digits = onlyDigits(value);
+  return digits ? digits.padStart(3, "0") : undefined;
+};
+
+const formatClassTrib6 = (value: unknown) => {
+  const digits = onlyDigits(value);
+  return digits ? digits.padStart(6, "0") : undefined;
+};
+
+const defaultClassTribIbsCbs = (cst: string | undefined) => (cst === "000" ? "000001" : undefined);
+
+const firstNumber = (...values: unknown[]) => {
+  for (const value of values) {
+    if (value === null || value === undefined || value === "") continue;
+    const numberValue = Number(value);
+    if (Number.isFinite(numberValue)) return numberValue;
+  }
+  return undefined;
+};
+
+function normalizeReformaTributariaPayload(notaData: Record<string, unknown>) {
+  const items = Array.isArray(notaData.items) ? notaData.items : [];
+
+  items.forEach((rawItem) => {
+    const item = rawItem as Record<string, unknown>;
+
+    const cstIbsCbs = formatCst3(
+      item.ibs_cbs_situacao_tributaria ?? item.ibs_situacao_tributaria ?? item.cbs_situacao_tributaria,
+    );
+    const classTribIbsCbs =
+      formatClassTrib6(
+        item.ibs_cbs_classificacao_tributaria ?? item.cclass_trib_ibs ?? item.cclass_trib_cbs,
+      ) ?? defaultClassTribIbsCbs(cstIbsCbs);
+    const baseIbsCbs = firstNumber(item.ibs_cbs_base_calculo, item.ibs_base_calculo, item.cbs_base_calculo, item.valor_bruto);
+    const ibsAliquota = firstNumber(item.ibs_uf_aliquota, item.ibs_aliquota);
+    const ibsValor = firstNumber(item.ibs_uf_valor, item.ibs_valor);
+    const cbsAliquota = firstNumber(item.cbs_aliquota);
+    const cbsValor = firstNumber(item.cbs_valor);
+
+    delete item.ibs_situacao_tributaria;
+    delete item.ibs_base_calculo;
+    delete item.ibs_aliquota;
+    delete item.ibs_valor;
+    delete item.cclass_trib_ibs;
+    delete item.cbs_situacao_tributaria;
+    delete item.cbs_base_calculo;
+    delete item.cclass_trib_cbs;
+
+    if (cstIbsCbs && classTribIbsCbs && baseIbsCbs !== undefined) {
+      item.ibs_cbs_situacao_tributaria = cstIbsCbs;
+      item.ibs_cbs_classificacao_tributaria = classTribIbsCbs;
+      item.ibs_cbs_base_calculo = baseIbsCbs;
+      if (ibsAliquota !== undefined) item.ibs_uf_aliquota = ibsAliquota;
+      if (ibsValor !== undefined) {
+        item.ibs_uf_valor = ibsValor;
+        item.ibs_valor_total = firstNumber(item.ibs_valor_total, ibsValor);
+      }
+      item.ibs_mun_aliquota = firstNumber(item.ibs_mun_aliquota, 0);
+      item.ibs_mun_valor = firstNumber(item.ibs_mun_valor, 0);
+      if (cbsAliquota !== undefined) item.cbs_aliquota = cbsAliquota;
+      if (cbsValor !== undefined) item.cbs_valor = cbsValor;
+    }
+
+    const classTribIs = formatClassTrib6(item.is_classificacao_tributaria ?? item.cclass_trib_is);
+    const hasEffectiveIs = firstNumber(item.is_aliquota, item.is_valor) !== undefined && firstNumber(item.is_aliquota, item.is_valor) !== 0;
+    if (!classTribIs || !hasEffectiveIs) {
+      delete item.is_situacao_tributaria;
+      delete item.is_classificacao_tributaria;
+      delete item.is_base_calculo;
+      delete item.is_aliquota;
+      delete item.is_valor;
+      delete item.cclass_trib_is;
+    } else {
+      item.is_situacao_tributaria = formatCst3(item.is_situacao_tributaria);
+      item.is_classificacao_tributaria = classTribIs;
+      item.is_base_calculo = firstNumber(item.is_base_calculo, item.valor_bruto);
+    }
+  });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -141,6 +224,8 @@ serve(async (req) => {
     console.log("Gerando NOVA referência única:", ref);
     console.log("Status anterior:", existingNota?.status);
     console.log("UUID_API anterior:", existingNota?.uuid_api || "NENHUM");
+
+    normalizeReformaTributariaPayload(notaData as Record<string, unknown>);
 
     // Validar série preenchida (vazia gera Rejeição 236 - DV da chave inválido)
     // Fallback: se a nota está sem série, usa a série configurada no emitente
