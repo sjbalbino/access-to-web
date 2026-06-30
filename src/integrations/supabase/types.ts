@@ -803,6 +803,42 @@ export type Database = {
           },
         ]
       }
+      configuracoes_balanca: {
+        Row: {
+          caminho_hint: string
+          created_at: string
+          decimal: string
+          id: string
+          poll_ms: number
+          regex: string | null
+          tenant_id: string
+          unidade: string
+          updated_at: string
+        }
+        Insert: {
+          caminho_hint?: string
+          created_at?: string
+          decimal?: string
+          id?: string
+          poll_ms?: number
+          regex?: string | null
+          tenant_id: string
+          unidade?: string
+          updated_at?: string
+        }
+        Update: {
+          caminho_hint?: string
+          created_at?: string
+          decimal?: string
+          id?: string
+          poll_ms?: number
+          regex?: string | null
+          tenant_id?: string
+          unidade?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contas_bancarias: {
         Row: {
           agencia: string | null
