@@ -159,7 +159,17 @@ export default function NotaFiscalForm() {
   const { id } = useParams();
   const location = useLocation();
   const isEditing = !!id;
-  const contraNotaData = (location.state as any)?.contraNotaData as ContraNotaData | undefined;
+  const contraNotaData = (() => {
+    const fromState = (location.state as any)?.contraNotaData as ContraNotaData | undefined;
+    if (fromState) {
+      try { sessionStorage.setItem("pendingContraNota", JSON.stringify(fromState)); } catch {}
+      return fromState;
+    }
+    try {
+      const raw = sessionStorage.getItem("pendingContraNota");
+      return raw ? (JSON.parse(raw) as ContraNotaData) : undefined;
+    } catch { return undefined; }
+  })();
 
   const { notasFiscais, createNotaFiscal, updateNotaFiscal, isLoading: isLoadingNotas } = useNotasFiscais();
   const { itens, createItem, updateItem, deleteItem, isLoading: isLoadingItens } = useNotaFiscalItens(id || null);
@@ -504,6 +514,8 @@ export default function NotaFiscalForm() {
           console.error("Erro ao criar nota referenciada:", err);
         }
       }
+
+      try { sessionStorage.removeItem("pendingContraNota"); } catch {}
     };
 
     createPendingItems();
