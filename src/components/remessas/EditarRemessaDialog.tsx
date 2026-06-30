@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Package, Truck, FileText, MapPin } from "lucide-react";
 import { formatCpf, formatCpfCnpj, formatPlaca, formatCep, validateCpf } from "@/lib/formatters";
+import { BalancaButton } from "@/components/balanca/BalancaButton";
 
 interface LocalEntrega {
   local_entrega_nome?: string;
