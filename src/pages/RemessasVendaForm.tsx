@@ -57,6 +57,7 @@ import { EmitirNfeAutomaticoDialog } from "@/components/remessas/EmitirNfeAutoma
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
+import { BalancaButton } from "@/components/balanca/BalancaButton";
 
 interface FormData {
   data_remessa: string;
