@@ -278,10 +278,10 @@ export default function EntradasNfe() {
                             <Undo2 className="h-4 w-4 text-amber-600" />
                           </Button>
                         )}
-                        <Button size="icon" variant="ghost" onClick={() => { setContraNotaModo('contra'); setContraNotaId(e.id); }} title="Emitir Contra-nota de entrada (NF-e do produtor para compra de máquinas/equipamentos)">
+                        <Button size="icon" variant="ghost" disabled={gerandoContraNota} onClick={() => handleGerarContraNota(e.id, 'contra')} title="Emitir Contra-nota de entrada (NF-e do produtor para compra de máquinas/equipamentos)">
                           <FileInput className="h-4 w-4 text-emerald-600" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => { setContraNotaModo('devolucao'); setContraNotaId(e.id); }} title="Emitir NF-e de Devolução de compra">
+                        <Button size="icon" variant="ghost" disabled={gerandoContraNota} onClick={() => handleGerarContraNota(e.id, 'devolucao')} title="Emitir NF-e de Devolução de compra">
                           <FileOutput className="h-4 w-4 text-blue-600" />
                         </Button>
 
