@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Package, Truck, FileText, MapPin } from "lucide-react";
 import { formatCpf, formatCpfCnpj, formatPlaca, formatCep, validateCpf } from "@/lib/formatters";
+import { BalancaButton } from "@/components/balanca/BalancaButton";
 
 interface LocalEntrega {
   local_entrega_nome?: string;
@@ -236,7 +237,10 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Peso Bruto (kg)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Peso Bruto (kg)</Label>
+                    {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoBruto(Math.round(kg))} />}
+                  </div>
                   <Input
                     type="number"
                     step="1"
