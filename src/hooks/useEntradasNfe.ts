@@ -35,7 +35,7 @@ export function useEntradaNfe(id: string | null) {
         .from('entradas_nfe')
         .select(`
           *,
-          fornecedor:fornecedor_id(id, nome, cpf_cnpj),
+          fornecedor:fornecedor_id(id, nome, cpf_cnpj, inscricao_estadual, email, endereco, numero, complemento, bairro, cidade, uf, cep),
           granja:granja_id(id, razao_social),
           itens:entradas_nfe_itens(
             *,
