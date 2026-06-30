@@ -128,21 +128,22 @@ export interface FocusNfeItem {
   ipi_valor?: number;
   
   // Reforma Tributária (NT 2025.002) - IBS
-  ibs_situacao_tributaria?: string;
-  ibs_base_calculo?: number;
-  ibs_aliquota?: number;
-  ibs_valor?: number;
-  cclass_trib_ibs?: string;
+  ibs_cbs_situacao_tributaria?: string;
+  ibs_cbs_classificacao_tributaria?: string;
+  ibs_cbs_base_calculo?: number;
+  ibs_uf_aliquota?: number;
+  ibs_uf_valor?: number;
+  ibs_mun_aliquota?: number;
+  ibs_mun_valor?: number;
+  ibs_valor_total?: number;
   
   // Reforma Tributária (NT 2025.002) - CBS
-  cbs_situacao_tributaria?: string;
-  cbs_base_calculo?: number;
   cbs_aliquota?: number;
   cbs_valor?: number;
-  cclass_trib_cbs?: string;
   
   // Reforma Tributária (NT 2025.002) - IS
   is_situacao_tributaria?: string;
+  is_classificacao_tributaria?: string;
   is_base_calculo?: number;
   is_aliquota?: number;
   is_valor?: number;
@@ -500,6 +501,19 @@ function formatCst3Digits(cst: string | null | undefined): string | undefined {
   return cstLimpo.padStart(3, "0");
 }
 
+function formatClassTrib6Digits(classTrib: string | null | undefined): string | undefined {
+  if (!classTrib) return undefined;
+  const classTribLimpa = classTrib.replace(/\D/g, "");
+  if (!classTribLimpa) return undefined;
+  return classTribLimpa.padStart(6, "0");
+}
+
+function defaultClassTribIbsCbs(cst: string | null | undefined): string | undefined {
+  const cstFormatado = formatCst3Digits(cst);
+  if (cstFormatado === "000") return "000001";
+  return undefined;
+}
+
 function mapItemToFocusNfe(
   item: NotaFiscalItemData,
   numeroItem: number,
@@ -507,12 +521,17 @@ function mapItemToFocusNfe(
 ): FocusNfeItem {
   const cstIcms = mapCstIcms(item.cst_icms, crt ?? null);
   
-  // Verificar se tem dados de IBS preenchidos
-  const temIbs = item.cst_ibs && (item.base_ibs || item.valor_ibs);
-  // Verificar se tem dados de CBS preenchidos
-  const temCbs = item.cst_cbs && (item.base_cbs || item.valor_cbs);
-  // Verificar se tem dados de IS preenchidos
-  const temIs = item.cst_is && (item.base_is || item.valor_is);
+  const cstIbsCbs = formatCst3Digits(item.cst_ibs || item.cst_cbs);
+  const classTribIbsCbs =
+    formatClassTrib6Digits(item.cclass_trib_ibs || item.cclass_trib_cbs) ||
+    defaultClassTribIbsCbs(cstIbsCbs);
+  const baseIbsCbs = item.base_ibs || item.base_cbs || item.valor_total;
+  const temIbsCbs = !!cstIbsCbs && !!classTribIbsCbs && !!baseIbsCbs;
+
+  // IS só deve ser enviado quando houver classificação tributária e valor/alíquota efetivos.
+  // Enviar CST/base sem cClassTribIS quebra a ordem do schema da Focus/SEFAZ.
+  const classTribIs = formatClassTrib6Digits((item as NotaFiscalItemData & { cclass_trib_is?: string | null }).cclass_trib_is);
+  const temIs = !!formatCst3Digits(item.cst_is) && !!classTribIs && (!!item.aliq_is || !!item.valor_is);
   
   const focusItem: FocusNfeItem = {
     numero_item: numeroItem,
@@ -564,23 +583,22 @@ function mapItemToFocusNfe(
   };
   
   // Reforma Tributária (NT 2025.002) - IBS/CBS/IS
-  if (temIbs) {
-    focusItem.ibs_situacao_tributaria = formatCst3Digits(item.cst_ibs);
-    focusItem.cclass_trib_ibs = item.cclass_trib_ibs || undefined;
-    focusItem.ibs_base_calculo = item.base_ibs || undefined;
-    focusItem.ibs_aliquota = item.aliq_ibs || undefined;
-    focusItem.ibs_valor = item.valor_ibs || undefined;
-  }
-  if (temCbs) {
-    focusItem.cbs_situacao_tributaria = formatCst3Digits(item.cst_cbs);
-    focusItem.cclass_trib_cbs = item.cclass_trib_cbs || undefined;
-    focusItem.cbs_base_calculo = item.base_cbs || undefined;
+  if (temIbsCbs) {
+    focusItem.ibs_cbs_situacao_tributaria = cstIbsCbs;
+    focusItem.ibs_cbs_classificacao_tributaria = classTribIbsCbs;
+    focusItem.ibs_cbs_base_calculo = baseIbsCbs;
+    focusItem.ibs_uf_aliquota = item.aliq_ibs || undefined;
+    focusItem.ibs_uf_valor = item.valor_ibs || undefined;
+    focusItem.ibs_mun_aliquota = 0;
+    focusItem.ibs_mun_valor = 0;
+    focusItem.ibs_valor_total = item.valor_ibs || undefined;
     focusItem.cbs_aliquota = item.aliq_cbs || undefined;
     focusItem.cbs_valor = item.valor_cbs || undefined;
   }
   if (temIs) {
     focusItem.is_situacao_tributaria = formatCst3Digits(item.cst_is);
-    focusItem.is_base_calculo = item.base_is || undefined;
+    focusItem.is_classificacao_tributaria = classTribIs;
+    focusItem.is_base_calculo = item.base_is || item.valor_total || undefined;
     focusItem.is_aliquota = item.aliq_is || undefined;
     focusItem.is_valor = item.valor_is || undefined;
   }
