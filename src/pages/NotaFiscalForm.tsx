@@ -976,6 +976,14 @@ export default function NotaFiscalForm() {
           granjaNome: inscricao.granjas?.razao_social || inscricao.granjas?.nome_fantasia || null,
         },
         emitente: emitente ? { crt: emitente.crt } : undefined,
+        transp_nome: formData.transp_nome || null,
+        transp_cpf_cnpj: formData.transp_cpf_cnpj || null,
+        transp_ie: (formData as any).transp_ie || null,
+        transp_endereco: (formData as any).transp_endereco || null,
+        transp_cidade: (formData as any).transp_cidade || null,
+        transp_uf: (formData as any).transp_uf || null,
+        veiculo_placa: formData.veiculo_placa || null,
+        veiculo_uf: (formData as any).veiculo_uf || null,
       };
 
       const itensData: NotaFiscalItemData[] = itens.map((item) => ({
