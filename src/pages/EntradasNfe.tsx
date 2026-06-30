@@ -205,10 +205,11 @@ export default function EntradasNfe() {
                           </>
                         )}
                         {e.status === 'finalizado' && (
-                          <Button size="icon" variant="ghost" onClick={() => setEstornarId(e.id)} title="Estornar e reabrir entrada">
+                          <Button size="icon" variant="ghost" disabled={estornarMutation.isPending} onClick={() => setEstornarId(e.id)} title="Estornar e reabrir entrada">
                             <Undo2 className="h-4 w-4 text-amber-600" />
                           </Button>
                         )}
+
 
                       </div>
                     </TableCell>
