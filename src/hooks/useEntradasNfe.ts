@@ -390,13 +390,27 @@ export function useFinalizarEntrada() {
           .from('produtos')
           .update({ estoque_atual: Number(prod?.estoque_atual || 0) + Number(qty || 0) })
           .eq('id', item.produto_id);
+      }
+
+      // Atualizar status
+      await supabase.from('entradas_nfe').update({ status: 'finalizado' }).eq('id', entradaId);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['entradas_nfe'] });
+      qc.invalidateQueries({ queryKey: ['entrada_nfe'] });
+      qc.invalidateQueries({ queryKey: ['estoque_produtos'] });
+      toast.success('Entrada finalizada e estoque atualizado!');
+    },
+    onError: (error: any) => {
+      toast.error('Erro ao finalizar entrada: ' + error.message);
+    },
+  });
 }
 
 export function useEstornarEntrada() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (entradaId: string) => {
-      // Buscar entrada + itens
       const { data: entrada, error } = await supabase
         .from('entradas_nfe')
         .select(`*, itens:entradas_nfe_itens(*)`)
@@ -410,7 +424,6 @@ export function useEstornarEntrada() {
 
       const itensVinculados = (entrada as any).itens?.filter((i: any) => i.produto_id && i.vinculado) || [];
 
-      // Reverter estoque por granja e agregado em produtos
       for (const item of itensVinculados) {
         const qty = Number(item.quantidade_conferida ?? item.quantidade ?? 0);
         if (qty <= 0) continue;
@@ -435,10 +448,8 @@ export function useEstornarEntrada() {
           .eq('id', item.produto_id);
       }
 
-      // Reabrir entrada
       await supabase.from('entradas_nfe').update({ status: 'pendente' }).eq('id', entradaId);
 
-      // Remover contas a pagar SEM baixas geradas por esta entrada
       const { data: cps } = await supabase
         .from('contas_pagar')
         .select('id, valor_pago')
@@ -461,18 +472,3 @@ export function useEstornarEntrada() {
   });
 }
 
-
-      // Atualizar status
-      await supabase.from('entradas_nfe').update({ status: 'finalizado' }).eq('id', entradaId);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['entradas_nfe'] });
-      qc.invalidateQueries({ queryKey: ['entrada_nfe'] });
-      qc.invalidateQueries({ queryKey: ['estoque_produtos'] });
-      toast.success('Entrada finalizada e estoque atualizado!');
-    },
-    onError: (error: any) => {
-      toast.error('Erro ao finalizar entrada: ' + error.message);
-    },
-  });
-}
