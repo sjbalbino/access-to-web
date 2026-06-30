@@ -70,6 +70,7 @@ import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrinc
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { supabase } from "@/integrations/supabase/client";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
+import { BalancaButton } from "@/components/balanca/BalancaButton";
 
 // Tipos para controle do painel de emissão
 type EmissionStep = "idle" | "validating" | "creating" | "sending" | "processing" | "success" | "error";
