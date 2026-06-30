@@ -466,16 +466,28 @@ export function useEstornarEntrada() {
       if (semBaixa.length) {
         await supabase.from('contas_pagar').delete().in('id', semBaixa);
       }
+
+      return {
+        numero: (entrada as any).numero_nfe,
+        itensRevertidos: itensVinculados.length,
+        contasRemovidas: semBaixa.length,
+      };
     },
-    onSuccess: () => {
+    onSuccess: (result: any) => {
       qc.invalidateQueries({ queryKey: ['entradas_nfe'] });
       qc.invalidateQueries({ queryKey: ['entrada_nfe'] });
       qc.invalidateQueries({ queryKey: ['estoque_produtos'] });
+      qc.invalidateQueries({ queryKey: ['produtos'] });
       qc.invalidateQueries({ queryKey: ['contas_pagar'] });
-      toast.success('Entrada estornada e reaberta para edição!');
+      const titulo = `Entrada ${result?.numero ? `Nº ${result.numero} ` : ''}estornada e reaberta`;
+      const desc = [
+        `${result?.itensRevertidos || 0} item(ns) de estoque revertido(s)`,
+        result?.contasRemovidas ? `${result.contasRemovidas} conta(s) a pagar removida(s)` : null,
+      ].filter(Boolean).join(' • ');
+      toast.success(titulo, { description: desc });
     },
     onError: (error: any) => {
-      toast.error('Erro ao estornar entrada: ' + error.message);
+      toast.error('Erro ao estornar entrada', { description: error?.message || 'Falha desconhecida ao processar o estorno.' });
     },
   });
 }
