@@ -469,7 +469,10 @@ export default function RemessasVendaForm() {
                   <Input type="date" {...register("data_remessa")} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Peso Tara (kg)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Peso Tara (kg)</Label>
+                    <BalancaButton onPeso={(kg) => setValue("peso_tara", Math.round(kg))} />
+                  </div>
                   <Input type="number" step="1" {...register("peso_tara", { valueAsNumber: true })} />
                 </div>
                 <div className="space-y-2">
