@@ -473,7 +473,10 @@ export default function RemessasVendaForm() {
                   <Input type="number" step="1" {...register("peso_tara", { valueAsNumber: true })} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Peso Bruto (kg)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Peso Bruto (kg)</Label>
+                    <BalancaButton onPeso={(kg) => setValue("peso_bruto", Math.round(kg))} />
+                  </div>
                   <Input type="number" step="1" {...register("peso_bruto", { valueAsNumber: true })} />
                 </div>
                 <div className="space-y-2">
