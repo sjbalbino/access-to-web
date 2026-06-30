@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Globe, Undo2 } from "lucide-react";
-import { useEntradasNfe, useDeleteEntradaNfe, useFinalizarEntrada, useEstornarEntrada } from "@/hooks/useEntradasNfe";
+import { useEntradasNfe, useDeleteEntradaNfe, useFinalizarEntrada, useEstornarEntrada, useEntradaNfe } from "@/hooks/useEntradasNfe";
 
 import { useGranjas } from "@/hooks/useGranjas";
 import { useSafras } from "@/hooks/useSafras";
@@ -63,6 +63,8 @@ export default function EntradasNfe() {
   const finalizarMutation = useFinalizarEntrada();
   const estornarMutation = useEstornarEntrada();
   const [estornarId, setEstornarId] = useState<string | null>(null);
+  const { data: entradaEstorno } = useEntradaNfe(estornarId);
+
 
 
   const safraOptions = (safras || []).map((s: any) => ({
@@ -243,19 +245,60 @@ export default function EntradasNfe() {
       </AlertDialog>
 
       <AlertDialog open={!!estornarId} onOpenChange={() => setEstornarId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Estornar entrada?</AlertDialogTitle>
-            <AlertDialogDescription>
-              O estoque dos itens será revertido, a entrada voltará para "Pendente" e as contas a pagar sem baixas serão removidas. Contas já pagas serão mantidas.
+            <AlertDialogTitle>
+              Estornar entrada {entradaEstorno?.numero_nfe ? `Nº ${entradaEstorno.numero_nfe}` : ''}?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  O estoque dos itens abaixo será revertido, a entrada voltará para "Pendente" e as contas a pagar sem baixas serão removidas. Contas já pagas serão mantidas.
+                </p>
+                {(() => {
+                  const itens = (entradaEstorno as any)?.itens?.filter((i: any) => i.produto_id && i.vinculado) || [];
+                  if (!entradaEstorno) return <p className="text-sm text-muted-foreground">Carregando itens...</p>;
+                  if (itens.length === 0) return <p className="text-sm text-amber-600">Nenhum item vinculado a produto será revertido.</p>;
+                  return (
+                    <div className="rounded-md border max-h-64 overflow-y-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Produto</TableHead>
+                            <TableHead className="text-right">Qtd. a reverter</TableHead>
+                            <TableHead>Lote</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {itens.map((it: any) => (
+                            <TableRow key={it.id}>
+                              <TableCell>{it.produto?.nome || it.descricao || '-'}</TableCell>
+                              <TableCell className="text-right">
+                                {formatNumber(Number(it.quantidade_conferida ?? it.quantidade ?? 0))}
+                              </TableCell>
+                              <TableCell>{it.lote || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  );
+                })()}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (estornarId) { estornarMutation.mutate(estornarId); setEstornarId(null); } }}>Estornar</AlertDialogAction>
+            <AlertDialogAction
+              disabled={!entradaEstorno || estornarMutation.isPending}
+              onClick={() => { if (estornarId) { estornarMutation.mutate(estornarId); setEstornarId(null); } }}
+            >
+              Confirmar Estorno
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </AppLayout>
   );
 }
