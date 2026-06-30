@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Globe } from "lucide-react";
-import { useEntradasNfe, useDeleteEntradaNfe, useFinalizarEntrada } from "@/hooks/useEntradasNfe";
+import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Globe, Undo2 } from "lucide-react";
+import { useEntradasNfe, useDeleteEntradaNfe, useFinalizarEntrada, useEstornarEntrada } from "@/hooks/useEntradasNfe";
+
 import { useGranjas } from "@/hooks/useGranjas";
 import { useSafras } from "@/hooks/useSafras";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
@@ -60,6 +61,9 @@ export default function EntradasNfe() {
   );
   const deleteMutation = useDeleteEntradaNfe();
   const finalizarMutation = useFinalizarEntrada();
+  const estornarMutation = useEstornarEntrada();
+  const [estornarId, setEstornarId] = useState<string | null>(null);
+
 
   const safraOptions = (safras || []).map((s: any) => ({
     value: s.id,
@@ -195,11 +199,17 @@ export default function EntradasNfe() {
                             <Button size="icon" variant="ghost" onClick={() => finalizarMutation.mutate(e.id)} title="Finalizar e dar entrada no estoque">
                               <CheckCircle className="h-4 w-4 text-success" />
                             </Button>
-                            <Button size="icon" variant="ghost" onClick={() => setDeleteId(e.id)}>
+                            <Button size="icon" variant="ghost" onClick={() => setDeleteId(e.id)} title="Excluir">
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </>
                         )}
+                        {e.status === 'finalizado' && (
+                          <Button size="icon" variant="ghost" onClick={() => setEstornarId(e.id)} title="Estornar e reabrir entrada">
+                            <Undo2 className="h-4 w-4 text-amber-600" />
+                          </Button>
+                        )}
+
                       </div>
                     </TableCell>
                   </TableRow>
@@ -227,6 +237,21 @@ export default function EntradasNfe() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => { if (deleteId) { deleteMutation.mutate(deleteId); setDeleteId(null); } }}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!estornarId} onOpenChange={() => setEstornarId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Estornar entrada?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O estoque dos itens será revertido, a entrada voltará para "Pendente" e as contas a pagar sem baixas serão removidas. Contas já pagas serão mantidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (estornarId) { estornarMutation.mutate(estornarId); setEstornarId(null); } }}>Estornar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
