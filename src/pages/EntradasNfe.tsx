@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Globe, Undo2, FileOutput } from "lucide-react";
+import { Plus, Upload, Search, Trash2, Eye, CheckCircle, Globe, Undo2, FileOutput, FileInput } from "lucide-react";
 import { useEntradasNfe, useDeleteEntradaNfe, useFinalizarEntrada, useEstornarEntrada, useEntradaNfe } from "@/hooks/useEntradasNfe";
 
 import { useGranjas } from "@/hooks/useGranjas";
