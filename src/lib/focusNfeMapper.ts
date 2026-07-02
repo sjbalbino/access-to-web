@@ -510,8 +510,11 @@ function formatClassTrib6Digits(classTrib: string | null | undefined): string | 
 
 function defaultClassTribIbsCbs(cst: string | null | undefined): string | undefined {
   const cstFormatado = formatCst3Digits(cst);
-  if (cstFormatado === "000") return "000001";
-  return undefined;
+  if (!cstFormatado) return undefined;
+  // Fallback genérico "000001" — garante que o grupo IBS/CBS seja emitido no XML
+  // (sem cClassTrib a Focus não gera o grupo e a DANFE não destaca IBS/CBS).
+  // O ideal é cadastrar cClassTrib específico por produto (tab. NT 2025.002).
+  return "000001";
 }
 
 function mapItemToFocusNfe(
