@@ -540,10 +540,8 @@ function mapItemToFocusNfe(
     cfop: item.cfop || "5102", // Default: Venda de mercadoria adquirida
     unidade_comercial: item.unidade,
     quantidade_comercial: item.quantidade,
-    // DANFE exibe vUnCom com o mesmo número de casas enviado no XML.
-    // Arredondamos para 2 casas e recalculamos vProd = qCom * vUnCom para manter a consistência exigida pela SEFAZ.
-    valor_unitario_comercial: Number((Math.round(item.valor_unitario * 100) / 100).toFixed(2)),
-    valor_bruto: Number((Math.round(item.quantidade * (Math.round(item.valor_unitario * 100) / 100) * 100) / 100).toFixed(2)),
+    valor_unitario_comercial: item.valor_unitario,
+    valor_bruto: item.valor_total,
     
     // Tributação
     codigo_ncm: item.ncm?.replace(/\D/g, "") || "00000000",
