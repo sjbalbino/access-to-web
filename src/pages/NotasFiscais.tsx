@@ -126,6 +126,13 @@ export default function NotasFiscais() {
   const { canEdit } = useAuth();
   const focusNfe = useFocusNfe();
   const { emitentes } = useEmitentesNfe();
+
+  const isEmitenteCpf = (emitenteId: string | null | undefined): boolean => {
+    if (!emitenteId) return false;
+    const em = emitentes?.find((e: any) => e.id === emitenteId);
+    const doc = (em as any)?.inscricao?.cpf_cnpj?.replace(/\D/g, "") ?? "";
+    return doc.length === 11;
+  };
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -455,7 +462,7 @@ export default function NotasFiscais() {
                             </>
                           )}
                           {(nota.status === "rascunho" || nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao") && (
-                            <Button variant="ghost" size="icon" onClick={() => { setSelectedNota(nota); setAlsoInutilizar(["erro_autorizacao","rejeitada","rejeitado"].includes(nota.status) && !!nota.numero); setIsDeleteDialogOpen(true); }} title="Excluir">
+                            <Button variant="ghost" size="icon" onClick={() => { setSelectedNota(nota); setAlsoInutilizar(["erro_autorizacao","rejeitada","rejeitado"].includes(nota.status) && !!nota.numero && !isEmitenteCpf(nota.emitente_id)); setIsDeleteDialogOpen(true); }} title="Excluir">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
@@ -493,7 +500,7 @@ export default function NotasFiscais() {
               </AlertDialogDescription>
             </AlertDialogHeader>
 
-            {selectedNota && !!selectedNota.numero && ["erro_autorizacao", "rejeitada", "rejeitado"].includes(selectedNota.status) && (
+            {selectedNota && !!selectedNota.numero && !isEmitenteCpf(selectedNota.emitente_id) && ["erro_autorizacao", "rejeitada", "rejeitado"].includes(selectedNota.status) && (
               <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
                 <div className="flex items-start gap-2">
                   <Checkbox
