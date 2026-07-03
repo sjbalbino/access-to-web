@@ -261,7 +261,15 @@ export default function NotasFiscais() {
         numeroFinal: selectedNota.numero,
         justificativa: inutJustificativa.trim(),
       });
-      if (!res?.success) return; // aborta exclusão se inutilização falhar
+      if (!res?.success) {
+        const err = String(res?.error || "");
+        const isCpfCase = /Pessoa F[íi]sica \(CPF\)|não é permitida para emitente/i.test(err);
+        if (isCpfCase) {
+          toast.info("Emitente é Pessoa Física (CPF) — inutilização não se aplica. Prosseguindo com a exclusão.");
+        } else {
+          return; // aborta exclusão se inutilização falhar por outro motivo
+        }
+      }
     }
     await deleteNotaFiscal.mutateAsync(selectedNota.id);
     setIsDeleteDialogOpen(false);
