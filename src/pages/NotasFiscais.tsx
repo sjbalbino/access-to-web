@@ -30,7 +30,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban, RefreshCw, Send, AlertCircle } from "lucide-react";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeDialog";
@@ -79,6 +79,7 @@ const getStatusBadgeVariant = (status: string | null) => {
       return "outline";
     case "rejeitado":
     case "rejeitada":
+    case "erro_autorizacao":
     case "cancelado":
     case "cancelada":
       return "destructive";
@@ -99,6 +100,8 @@ const getStatusLabel = (status: string | null) => {
     case "rejeitado":
     case "rejeitada":
       return "Rejeitada";
+    case "erro_autorizacao":
+      return "Erro Autorização";
     case "cancelado":
     case "cancelada":
       return "Cancelada";
@@ -134,6 +137,20 @@ export default function NotasFiscais() {
   const [justificativa, setJustificativa] = useState("");
   const [correcao, setCorrecao] = useState("");
   const [inutForm, setInutForm] = useState({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
+  const [motivoDialog, setMotivoDialog] = useState<{ open: boolean; titulo: string; mensagem: string }>({ open: false, titulo: "", mensagem: "" });
+
+  const handleConsultarRejeicao = async (nota: any) => {
+    const ref = nota.uuid_api || `nfe_${nota.id}`;
+    const result = await focusNfe.consultarNfe(ref, nota.id);
+    const d = (result.data || {}) as Record<string, any>;
+    const msg = d.mensagem_sefaz || d.motivo_status || d.erros?.[0]?.mensagem || result.error || "Sem detalhes retornados pela SEFAZ.";
+    const codigo = d.codigo_status ? ` (código ${d.codigo_status})` : "";
+    setMotivoDialog({
+      open: true,
+      titulo: `NF-e nº ${nota.numero} — ${d.status || nota.status}${codigo}`,
+      mensagem: String(msg),
+    });
+  };
 
   const handleContraNotaSelect = (data: ContraNotaData) => {
     navigate("/notas-fiscais/nova", { state: { contraNotaData: data } });
@@ -321,7 +338,17 @@ export default function NotasFiscais() {
                               </Button>
                             </>
                           )}
-                          {nota.status === "rascunho" && (
+                          {(nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao" || nota.status === "processando") && (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => handleConsultarRejeicao(nota)} title="Consultar motivo da rejeição" disabled={focusNfe.isLoading}>
+                                <AlertCircle className="h-4 w-4 text-destructive" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Corrigir e reenviar">
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {(nota.status === "rascunho" || nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao") && (
                             <Button variant="ghost" size="icon" onClick={() => { setSelectedNota(nota); setIsDeleteDialogOpen(true); }} title="Excluir">
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -537,6 +564,25 @@ export default function NotasFiscais() {
               >
                 Inutilizar
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Motivo da Rejeição */}
+        <Dialog open={motivoDialog.open} onOpenChange={(open) => setMotivoDialog((prev) => ({ ...prev, open }))}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                {motivoDialog.titulo}
+              </DialogTitle>
+              <DialogDescription>Detalhes retornados pela SEFAZ / Focus NFe</DialogDescription>
+            </DialogHeader>
+            <div className="rounded-md bg-muted p-4 text-sm whitespace-pre-wrap break-words">
+              {motivoDialog.mensagem}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setMotivoDialog({ open: false, titulo: "", mensagem: "" })}>Fechar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
