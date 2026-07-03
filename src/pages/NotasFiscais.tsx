@@ -397,23 +397,59 @@ export default function NotasFiscais() {
         {/* Dialog de Confirmação de Exclusão */}
         <AlertDialog
           open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
+          onOpenChange={(o) => {
+            setIsDeleteDialogOpen(o);
+            if (!o) { setAlsoInutilizar(false); setInutJustificativa(""); }
+          }}
         >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja excluir este rascunho de NF-e? Esta ação não
-                pode ser desfeita.
+                Tem certeza que deseja excluir esta NF-e? Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
+
+            {selectedNota && ["erro_autorizacao", "rejeitada", "rejeitado"].includes(selectedNota.status) && (
+              <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="also-inut"
+                    checked={alsoInutilizar}
+                    onCheckedChange={(v) => setAlsoInutilizar(Boolean(v))}
+                  />
+                  <div className="space-y-1">
+                    <Label htmlFor="also-inut" className="cursor-pointer">
+                      Também inutilizar o número {selectedNota.numero} (série {selectedNota.serie ?? 1}) na SEFAZ
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Recomendado quando a rejeição foi definitiva (com protocolo). Evita gap de numeração em auditoria fiscal.
+                    </p>
+                  </div>
+                </div>
+                {alsoInutilizar && (
+                  <div className="space-y-1">
+                    <Label htmlFor="inut-just" className="text-xs">Justificativa (mín. 15 caracteres)</Label>
+                    <Textarea
+                      id="inut-just"
+                      value={inutJustificativa}
+                      onChange={(e) => setInutJustificativa(e.target.value)}
+                      placeholder="Ex: NF-e rejeitada pela SEFAZ, inutilização da numeração"
+                      rows={2}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
+                disabled={focusNfe.isLoading || deleteNotaFiscal.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Excluir
+                {alsoInutilizar ? "Inutilizar e Excluir" : "Excluir"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
