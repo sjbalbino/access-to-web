@@ -500,7 +500,7 @@ export default function NotasFiscais() {
               </AlertDialogDescription>
             </AlertDialogHeader>
 
-            {selectedNota && !!selectedNota.numero && ["erro_autorizacao", "rejeitada", "rejeitado"].includes(selectedNota.status) && (
+            {selectedNota && !!selectedNota.numero && !isEmitenteCpf(selectedNota.emitente_id) && ["erro_autorizacao", "rejeitada", "rejeitado"].includes(selectedNota.status) && (
               <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
                 <div className="flex items-start gap-2">
                   <Checkbox
