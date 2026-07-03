@@ -126,6 +126,13 @@ export default function NotasFiscais() {
   const { canEdit } = useAuth();
   const focusNfe = useFocusNfe();
   const { emitentes } = useEmitentesNfe();
+
+  const isEmitenteCpf = (emitenteId: string | null | undefined): boolean => {
+    if (!emitenteId) return false;
+    const em = emitentes?.find((e: any) => e.id === emitenteId);
+    const doc = (em as any)?.inscricao?.cpf_cnpj?.replace(/\D/g, "") ?? "";
+    return doc.length === 11;
+  };
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
