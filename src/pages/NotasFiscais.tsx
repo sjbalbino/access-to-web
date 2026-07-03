@@ -170,11 +170,31 @@ export default function NotasFiscais() {
   });
 
   const handleDelete = async () => {
-    if (selectedNota) {
-      await deleteNotaFiscal.mutateAsync(selectedNota.id);
-      setIsDeleteDialogOpen(false);
-      setSelectedNota(null);
+    if (!selectedNota) return;
+    const isErro = ["erro_autorizacao", "rejeitada", "rejeitado"].includes(selectedNota.status);
+    if (isErro && alsoInutilizar) {
+      if (inutJustificativa.trim().length < 15) {
+        toast.error("Justificativa da inutilização deve ter no mínimo 15 caracteres");
+        return;
+      }
+      if (!selectedNota.emitente_id) {
+        toast.error("Emitente não identificado na NF-e — não é possível inutilizar");
+        return;
+      }
+      const res = await focusNfe.inutilizarNumeracao({
+        emitenteId: selectedNota.emitente_id,
+        serie: selectedNota.serie ?? 1,
+        numeroInicial: selectedNota.numero,
+        numeroFinal: selectedNota.numero,
+        justificativa: inutJustificativa.trim(),
+      });
+      if (!res?.success) return; // aborta exclusão se inutilização falhar
     }
+    await deleteNotaFiscal.mutateAsync(selectedNota.id);
+    setIsDeleteDialogOpen(false);
+    setSelectedNota(null);
+    setAlsoInutilizar(false);
+    setInutJustificativa("");
   };
 
   const handleCancelar = async () => {
