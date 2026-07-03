@@ -137,6 +137,20 @@ export default function NotasFiscais() {
   const [justificativa, setJustificativa] = useState("");
   const [correcao, setCorrecao] = useState("");
   const [inutForm, setInutForm] = useState({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
+  const [motivoDialog, setMotivoDialog] = useState<{ open: boolean; titulo: string; mensagem: string }>({ open: false, titulo: "", mensagem: "" });
+
+  const handleConsultarRejeicao = async (nota: any) => {
+    const ref = nota.uuid_api || `nfe_${nota.id}`;
+    const result = await focusNfe.consultarNfe(ref, nota.id);
+    const d = (result.data || {}) as Record<string, any>;
+    const msg = d.mensagem_sefaz || d.motivo_status || d.erros?.[0]?.mensagem || result.error || "Sem detalhes retornados pela SEFAZ.";
+    const codigo = d.codigo_status ? ` (código ${d.codigo_status})` : "";
+    setMotivoDialog({
+      open: true,
+      titulo: `NF-e nº ${nota.numero} — ${d.status || nota.status}${codigo}`,
+      mensagem: String(msg),
+    });
+  };
 
   const handleContraNotaSelect = (data: ContraNotaData) => {
     navigate("/notas-fiscais/nova", { state: { contraNotaData: data } });
