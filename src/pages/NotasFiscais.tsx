@@ -400,6 +400,9 @@ export default function NotasFiscais() {
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Visualizar/Editar">
                             <Eye className="h-4 w-4" />
                           </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDuplicar(nota)} title="Duplicar NF-e (nova cópia como rascunho)">
+                            <Copy className="h-4 w-4" />
+                          </Button>
                           {(nota.status === "autorizado" || nota.status === "autorizada") && (
                             <>
                               <Button variant="ghost" size="icon" onClick={() => handleDownload(nota, "danfe")} title="Download DANFE">
