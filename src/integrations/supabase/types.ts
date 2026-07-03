@@ -5701,6 +5701,10 @@ export type Database = {
       }
       recalc_conta_pagar: { Args: { _conta_id: string }; Returns: undefined }
       recalc_conta_receber: { Args: { _conta_id: string }; Returns: undefined }
+      recalc_nota_fiscal_totais: {
+        Args: { _nota_id: string }
+        Returns: undefined
+      }
       recalcular_rateios_granja: {
         Args: {
           p_data_fim: string
