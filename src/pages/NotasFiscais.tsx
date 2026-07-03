@@ -31,7 +31,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban, RefreshCw, Send, AlertCircle } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban, RefreshCw, Send, AlertCircle, Copy } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeDialog";
@@ -153,6 +154,63 @@ export default function NotasFiscais() {
       titulo: `NF-e nº ${nota.numero} — ${d.status || nota.status}${codigo}`,
       mensagem: String(msg),
     });
+  };
+
+  const handleDuplicar = async (nota: any) => {
+    try {
+      // Busca completa da NF-e original
+      const { data: original, error: errNota } = await supabase
+        .from("notas_fiscais")
+        .select("*")
+        .eq("id", nota.id)
+        .single();
+      if (errNota || !original) throw errNota || new Error("NF-e não encontrada");
+
+      const { data: itens, error: errItens } = await supabase
+        .from("notas_fiscais_itens")
+        .select("*")
+        .eq("nota_fiscal_id", nota.id);
+      if (errItens) throw errItens;
+
+      // Remove campos fiscais / de identidade que não devem ser copiados
+      const BLACKLIST = new Set([
+        "id", "created_at", "updated_at",
+        "numero", "chave_acesso", "protocolo_autorizacao", "uuid_api",
+        "status", "xml_url", "danfe_url", "data_autorizacao",
+        "motivo_status", "mensagem_sefaz", "codigo_status",
+        "data_cancelamento", "justificativa_cancelamento", "protocolo_cancelamento",
+        "remessa_id", "contrato_id", "compra_cereais_id",
+      ]);
+      const novaNota: Record<string, any> = {};
+      for (const [k, v] of Object.entries(original)) {
+        if (!BLACKLIST.has(k)) novaNota[k] = v;
+      }
+      novaNota.status = "rascunho";
+      novaNota.data_emissao = new Date().toISOString().split("T")[0];
+      novaNota.natureza_operacao = `${original.natureza_operacao || ""} (cópia)`.trim();
+
+      const { data: created, error: errCreate } = await supabase
+        .from("notas_fiscais")
+        .insert(novaNota as any)
+        .select()
+        .single();
+      if (errCreate || !created) throw errCreate || new Error("Falha ao criar cópia");
+
+      // Copia itens (sem id, created_at, e apontando para nova nota)
+      if (itens && itens.length > 0) {
+        const novosItens = itens.map((it: any) => {
+          const { id: _i, created_at: _c, updated_at: _u, ...rest } = it;
+          return { ...rest, nota_fiscal_id: created.id };
+        });
+        const { error: errIns } = await supabase.from("notas_fiscais_itens").insert(novosItens);
+        if (errIns) throw errIns;
+      }
+
+      toast.success("NF-e duplicada como rascunho. Ajuste e emita.");
+      navigate(`/notas-fiscais/${created.id}`);
+    } catch (e: any) {
+      toast.error("Erro ao duplicar NF-e", { description: e?.message });
+    }
   };
 
   const handleContraNotaSelect = (data: ContraNotaData) => {
@@ -341,6 +399,9 @@ export default function NotasFiscais() {
                         <div className="flex gap-1">
                           <Button variant="ghost" size="icon" onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Visualizar/Editar">
                             <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDuplicar(nota)} title="Duplicar NF-e (nova cópia como rascunho)">
+                            <Copy className="h-4 w-4" />
                           </Button>
                           {(nota.status === "autorizado" || nota.status === "autorizada") && (
                             <>
