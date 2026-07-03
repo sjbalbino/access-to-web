@@ -338,7 +338,17 @@ export default function NotasFiscais() {
                               </Button>
                             </>
                           )}
-                          {nota.status === "rascunho" && (
+                          {(nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao" || nota.status === "processando") && (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => handleConsultarRejeicao(nota)} title="Consultar motivo da rejeição" disabled={focusNfe.isLoading}>
+                                <AlertCircle className="h-4 w-4 text-destructive" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Corrigir e reenviar">
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {(nota.status === "rascunho" || nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao") && (
                             <Button variant="ghost" size="icon" onClick={() => { setSelectedNota(nota); setIsDeleteDialogOpen(true); }} title="Excluir">
                               <Trash2 className="h-4 w-4" />
                             </Button>
