@@ -496,6 +496,14 @@ export default function NotasFiscais() {
               </AlertDialogDescription>
             </AlertDialogHeader>
 
+            {selectedNota && (
+              <div className="rounded-md border bg-muted/30 p-3 text-sm space-y-1">
+                <div><span className="text-muted-foreground">Nº:</span> <span className="font-medium">{selectedNota.numero || "—"}{selectedNota.serie ? ` / Série ${selectedNota.serie}` : ""}</span></div>
+                <div><span className="text-muted-foreground">Destinatário:</span> <span className="font-medium">{selectedNota.dest_nome || "—"}</span></div>
+                <div><span className="text-muted-foreground">Valor:</span> <span className="font-medium">{formatCurrency(selectedNota.total_nota)}</span></div>
+              </div>
+            )}
+
             {selectedNota && !!selectedNota.numero && !isEmitenteCpf(selectedNota.emitente_id) && ["erro_autorizacao", "rejeitada", "rejeitado"].includes(selectedNota.status) && (
               <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
                 <div className="flex items-start gap-2">
