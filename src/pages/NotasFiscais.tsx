@@ -447,7 +447,7 @@ export default function NotasFiscais() {
                             </>
                           )}
                           {(nota.status === "rascunho" || nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao") && (
-                            <Button variant="ghost" size="icon" onClick={() => { setSelectedNota(nota); setIsDeleteDialogOpen(true); }} title="Excluir">
+                            <Button variant="ghost" size="icon" onClick={() => { setSelectedNota(nota); setAlsoInutilizar(["erro_autorizacao","rejeitada","rejeitado"].includes(nota.status) && !!nota.numero); setIsDeleteDialogOpen(true); }} title="Excluir">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
@@ -485,7 +485,7 @@ export default function NotasFiscais() {
               </AlertDialogDescription>
             </AlertDialogHeader>
 
-            {selectedNota && ["erro_autorizacao", "rejeitada", "rejeitado"].includes(selectedNota.status) && (
+            {selectedNota && !!selectedNota.numero && ["erro_autorizacao", "rejeitada", "rejeitado"].includes(selectedNota.status) && (
               <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
                 <div className="flex items-start gap-2">
                   <Checkbox
