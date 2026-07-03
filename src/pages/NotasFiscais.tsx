@@ -79,6 +79,7 @@ const getStatusBadgeVariant = (status: string | null) => {
       return "outline";
     case "rejeitado":
     case "rejeitada":
+    case "erro_autorizacao":
     case "cancelado":
     case "cancelada":
       return "destructive";
@@ -99,6 +100,8 @@ const getStatusLabel = (status: string | null) => {
     case "rejeitado":
     case "rejeitada":
       return "Rejeitada";
+    case "erro_autorizacao":
+      return "Erro Autorização";
     case "cancelado":
     case "cancelada":
       return "Cancelada";
