@@ -128,6 +128,8 @@ export default function NotasFiscais() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [alsoInutilizar, setAlsoInutilizar] = useState(false);
+  const [inutJustificativa, setInutJustificativa] = useState("");
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isCartaCorrecaoDialogOpen, setIsCartaCorrecaoDialogOpen] = useState(false);
   const [isContraNotaDialogOpen, setIsContraNotaDialogOpen] = useState(false);
