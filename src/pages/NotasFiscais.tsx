@@ -206,6 +206,20 @@ export default function NotasFiscais() {
         if (errIns) throw errIns;
       }
 
+      // Copia duplicatas de cobrança
+      const { data: dups } = await supabase
+        .from("notas_fiscais_duplicatas")
+        .select("*")
+        .eq("nota_fiscal_id", nota.id);
+      if (dups && dups.length > 0) {
+        const novasDups = dups.map((d: any) => {
+          const { id: _i, created_at: _c, updated_at: _u, ...rest } = d;
+          return { ...rest, nota_fiscal_id: created.id };
+        });
+        const { error: errDup } = await supabase.from("notas_fiscais_duplicatas").insert(novasDups);
+        if (errDup) throw errDup;
+      }
+
       toast.success("NF-e duplicada como rascunho. Ajuste e emita.");
       navigate(`/notas-fiscais/${created.id}`);
     } catch (e: any) {
