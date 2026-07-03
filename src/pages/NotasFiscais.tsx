@@ -191,7 +191,7 @@ export default function NotasFiscais() {
 
       const { data: created, error: errCreate } = await supabase
         .from("notas_fiscais")
-        .insert(novaNota)
+        .insert(novaNota as any)
         .select()
         .single();
       if (errCreate || !created) throw errCreate || new Error("Falha ao criar cópia");
