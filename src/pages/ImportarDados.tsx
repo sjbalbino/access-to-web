@@ -308,31 +308,14 @@ export default function ImportarDados() {
     setShowConfirmDialog(false);
     setConfirmText('');
     setCleaning(true);
-    setCleanProgress(0);
-    setCleanStep('Iniciando limpeza...');
+    setCleanProgress(10);
+    setCleanStep('Limpando dados no servidor...');
 
     try {
-      for (let i = 0; i < CLEANUP_STEPS.length; i++) {
-        const step = CLEANUP_STEPS[i];
-        setCleanStep(step.label);
-        setCleanProgress(Math.round(((i) / CLEANUP_STEPS.length) * 100));
-
-        for (const table of step.tables) {
-          const isGlobalTable = ['cfops', 'ncm', 'ibge_municipios'].includes(table);
-          
-          let query = supabase.from(table as any).delete();
-          
-          if (!isGlobalTable) {
-            query = query.eq('tenant_id', selectedTenantId);
-          }
-          
-          const { error } = await query.neq('id', '00000000-0000-0000-0000-000000000000');
-
-          if (error) {
-            console.warn(`Erro ao limpar ${table}:`, error.message);
-          }
-        }
-      }
+      const { data, error } = await supabase.rpc('cleanup_tenant_data' as any, {
+        _tenant_id: selectedTenantId,
+      });
+      if (error) throw error;
 
       setCleanProgress(100);
       setCleanStep('Concluído!');
@@ -345,6 +328,7 @@ export default function ImportarDados() {
       setCleaning(false);
     }
   };
+
 
   return (
     <AppLayout>
