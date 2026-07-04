@@ -180,8 +180,16 @@ export default function ImportarDados() {
   const [cleanStep, setCleanStep] = useState('');
 
   const { data: tenants, isLoading: isLoadingTenants } = useTenants();
+  const { profile } = useAuth();
   const queryClient = useQueryClient();
   const statusCheckSeq = useRef(0);
+
+  // Auto-seleciona a empresa do usuário logado ao carregar
+  useEffect(() => {
+    if (!selectedTenantId && profile?.tenant_id) {
+      setSelectedTenantId(profile.tenant_id);
+    }
+  }, [profile?.tenant_id, selectedTenantId]);
 
   const sortedConfigs = [...tableConfigs].sort((a, b) => a.order - b.order);
 
