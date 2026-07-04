@@ -426,10 +426,11 @@ export default function ImportarDados() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-destructive">⚠️ Limpar Base de Dados</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação irá <strong>remover permanentemente</strong> todos os dados do sistema, incluindo:
-              granjas, produtores, lavouras, silos, colheitas, notas fiscais, contratos, e todos os demais registros.
+              Esta ação irá <strong>remover permanentemente</strong> todos os dados operacionais
+              {selectedTenant && <> da empresa <strong>{selectedTenant.razao_social}</strong></>}, incluindo:
+              granjas, produtores, lavouras, silos, colheitas, notas fiscais, contratos, e todos os demais registros vinculados a esta empresa.
               <br /><br />
-              <strong>Apenas as Empresas Contratantes (tenants) serão mantidas.</strong>
+              <strong>O cadastro da Empresa Contratante (tenant) será mantido, assim como os dados das demais empresas cadastradas no sistema.</strong>
               <br /><br />
               Esta ação <strong>NÃO pode ser desfeita</strong>.
             </AlertDialogDescription>
