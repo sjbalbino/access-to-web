@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent } from '@/components/ui/card';
@@ -55,8 +55,119 @@ const CLEANUP_STEPS = [
   { label: 'Granjas', tables: ['granjas'] },
 ];
 
+const IMPORT_STATUS_PAGE_SIZE = 1000;
+const IN_FILTER_CHUNK_SIZE = 300;
+
+const TENANT_SCOPED_IMPORT_TABLES = new Set([
+  'contas_pagar', 'contas_receber', 'contas_pagar_baixas', 'contas_receber_baixas',
+  'granjas', 'produtos', 'grupos_produtos', 'placas', 'transportadoras', 'locais_entrega', 'safras',
+  'lavouras', 'silos', 'controle_lavouras', 'plantios', 'aplicacoes', 'chuvas', 'floracoes',
+  'insetos', 'plantas_invasoras', 'analises_solo', 'pivos', 'dre_contas', 'tabela_umidades',
+  'plano_contas_gerencial', 'culturas', 'unidades_medida', 'sub_centros_custo',
+  'contratos_venda', 'remessas_venda', 'clientes_fornecedores', 'entradas_nfe_itens',
+  'contas_bancarias',
+]);
+
+const GRANJA_SCOPED_IMPORT_TABLES = new Set([
+  'produtores',
+  'inscricoes_produtor',
+  'compras_cereais',
+  'devolucoes_deposito',
+  'entradas_nfe',
+  'notas_deposito_emitidas',
+]);
+const CONTROLE_LAVOURA_SCOPED_IMPORT_TABLES = new Set(['colheitas']);
+
+async function fetchTenantScopedIds(tableName: string, tenantId: string): Promise<string[]> {
+  const ids: string[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await (supabase
+      .from(tableName as any)
+      .select('id') as any)
+      .eq('tenant_id', tenantId)
+      .range(from, from + IMPORT_STATUS_PAGE_SIZE - 1);
+
+    if (error) throw error;
+    const page = (data || []) as Array<{ id: string }>;
+    ids.push(...page.map((row) => row.id));
+
+    if (page.length < IMPORT_STATUS_PAGE_SIZE) break;
+    from += IMPORT_STATUS_PAGE_SIZE;
+  }
+
+  return ids;
+}
+
+async function countRowsByTenant(tableName: string, tenantId: string, configKey?: string): Promise<number> {
+  let query = (supabase
+    .from(tableName as any)
+    .select('id', { count: 'exact', head: true }) as any)
+    .eq('tenant_id', tenantId);
+
+  if (configKey === 'clientes_ie') {
+    query = query.not('inscricao_estadual', 'is', null).neq('inscricao_estadual', '');
+  }
+
+  const { count, error } = await query;
+  if (error) throw error;
+  return count ?? 0;
+}
+
+async function countRowsByForeignIds(
+  tableName: string,
+  foreignColumn: string,
+  ids: string[],
+  configKey?: string
+): Promise<number> {
+  if (ids.length === 0) return 0;
+
+  let total = 0;
+  for (let i = 0; i < ids.length; i += IN_FILTER_CHUNK_SIZE) {
+    const chunk = ids.slice(i, i + IN_FILTER_CHUNK_SIZE);
+    let query = (supabase
+      .from(tableName as any)
+      .select('id', { count: 'exact', head: true }) as any)
+      .in(foreignColumn, chunk);
+
+    if (configKey === 'contra_notas_recebidas') {
+      query = query.eq('eh_contra_nota', true);
+    }
+
+    const { count, error } = await query;
+
+    if (error) throw error;
+    total += count ?? 0;
+  }
+
+  return total;
+}
+
+async function countImportedRowsForConfig(
+  config: TableConfig,
+  tenantId: string,
+  granjaIds: string[],
+  controleLavouraIds: string[]
+): Promise<number> {
+  if (GRANJA_SCOPED_IMPORT_TABLES.has(config.tableName)) {
+    return countRowsByForeignIds(config.tableName, 'granja_id', granjaIds, config.key);
+  }
+
+  if (CONTROLE_LAVOURA_SCOPED_IMPORT_TABLES.has(config.tableName)) {
+    return countRowsByForeignIds(config.tableName, 'controle_lavoura_id', controleLavouraIds);
+  }
+
+  if (TENANT_SCOPED_IMPORT_TABLES.has(config.tableName)) {
+    return countRowsByTenant(config.tableName, tenantId, config.key);
+  }
+
+  return 0;
+}
+
 export default function ImportarDados() {
   const [statuses, setStatuses] = useState<Record<string, { status: TableStatus; count: number }>>({});
+  const [checkingStatuses, setCheckingStatuses] = useState(false);
   const [activeConfig, setActiveConfig] = useState<TableConfig | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState<string>('');
@@ -69,56 +180,62 @@ export default function ImportarDados() {
 
   const { data: tenants, isLoading: isLoadingTenants } = useTenants();
   const queryClient = useQueryClient();
+  const statusCheckSeq = useRef(0);
 
   const sortedConfigs = [...tableConfigs].sort((a, b) => a.order - b.order);
 
   // Check existing records in DB to auto-detect imported tables
   const checkExistingRecords = useCallback(async () => {
-    if (!selectedTenantId) { setStatuses({}); return; }
-    const newStatuses: Record<string, { status: TableStatus; count: number }> = {};
-    const tablesWithGranjaId = new Set(['produtores', 'inscricoes_produtor']);
+    const tenantId = selectedTenantId;
+    const checkId = statusCheckSeq.current + 1;
+    statusCheckSeq.current = checkId;
 
-    for (const config of tableConfigs) {
-      try {
-        let count: number | null = 0;
-        let error: { message: string } | null = null;
-
-        if (tablesWithGranjaId.has(config.tableName)) {
-          const { data: granjas } = await supabase
-            .from('granjas')
-            .select('id')
-            .eq('tenant_id', selectedTenantId);
-          
-          if (granjas && granjas.length > 0) {
-            const granjaIds = granjas.map(g => g.id);
-
-            const subQuery = await supabase
-              .from(config.tableName as any)
-              .select('*', { count: 'exact', head: true })
-              .in('granja_id', granjaIds);
-
-            count = subQuery.count;
-            error = subQuery.error;
-          }
-        } else {
-          const query = supabase
-            .from(config.tableName as any)
-            .select('*', { count: 'exact', head: true });
-
-          const result = await query.eq('tenant_id', selectedTenantId);
-          count = result.count;
-          error = result.error;
-        }
-
-        if (!error && count !== null && count > 0) {
-          newStatuses[config.key] = { status: 'importada', count };
-        }
-      } catch {
-        // ignore
-      }
+    if (!tenantId) {
+      setStatuses({});
+      setCheckingStatuses(false);
+      return;
     }
 
-    setStatuses(newStatuses);
+    setStatuses({});
+    setCheckingStatuses(true);
+
+    try {
+      const [granjaIds, controleLavouraIds] = await Promise.all([
+        fetchTenantScopedIds('granjas', tenantId),
+        fetchTenantScopedIds('controle_lavouras', tenantId),
+      ]);
+
+      const statusEntries = await Promise.all(
+        tableConfigs.map(async (config) => {
+          try {
+            const count = await countImportedRowsForConfig(config, tenantId, granjaIds, controleLavouraIds);
+            if (count <= 0) return null;
+            return [config.key, { status: 'importada' as TableStatus, count }] as const;
+          } catch (error: any) {
+            console.warn(`Erro ao verificar importação de ${config.tableName}:`, error.message);
+            return null;
+          }
+        })
+      );
+
+      if (statusCheckSeq.current !== checkId) return;
+
+      const newStatuses = statusEntries.reduce<Record<string, { status: TableStatus; count: number }>>((acc, entry) => {
+        if (entry) acc[entry[0]] = entry[1];
+        return acc;
+      }, {});
+
+      setStatuses(newStatuses);
+    } catch (error: any) {
+      if (statusCheckSeq.current === checkId) {
+        setStatuses({});
+        toast.error(`Erro ao verificar progresso da importação: ${error.message}`);
+      }
+    } finally {
+      if (statusCheckSeq.current === checkId) {
+        setCheckingStatuses(false);
+      }
+    }
   }, [selectedTenantId]);
 
   useEffect(() => {
@@ -127,6 +244,7 @@ export default function ImportarDados() {
 
   const handleImportComplete = (key: string, count: number) => {
     setStatuses(prev => ({ ...prev, [key]: { status: 'importada', count } }));
+    void checkExistingRecords();
   };
 
   const getStatusInfo = (key: string) => {
@@ -138,9 +256,12 @@ export default function ImportarDados() {
   const importedCount = Object.values(statuses).filter(s => s.status === 'importada').length;
   const totalTables = sortedConfigs.length;
   const overallProgress = totalTables > 0 ? Math.round((importedCount / totalTables) * 100) : 0;
+  const importedConfigs = sortedConfigs.filter(config => getStatusInfo(config.key).status === 'importada');
+  const pendingConfigs = sortedConfigs.filter(config => getStatusInfo(config.key).status !== 'importada');
 
   const canImport = (config: TableConfig) => {
     if (!selectedTenantId) return false;
+    if (checkingStatuses) return false;
     if (!config.dependsOn || config.dependsOn.length === 0) return true;
     return config.dependsOn.every(dep => statuses[dep]?.status === 'importada');
   };
@@ -266,9 +387,57 @@ export default function ImportarDados() {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium">Progresso geral</span>
-            <span className="text-sm text-muted-foreground">{importedCount} de {totalTables} tabelas</span>
+            <span className="text-sm text-muted-foreground">
+              {checkingStatuses ? 'Verificando tabelas...' : `${importedCount} de ${totalTables} tabelas (${overallProgress}%)`}
+            </span>
           </div>
-          <Progress value={overallProgress} />
+          <Progress value={checkingStatuses ? 0 : overallProgress} />
+          {selectedTenantId && (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-md border border-border p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">Tabelas já importadas</span>
+                  <Badge variant="outline" className="border-primary text-primary">{importedConfigs.length}</Badge>
+                </div>
+                <div className="max-h-24 overflow-y-auto">
+                  {checkingStatuses ? (
+                    <span className="text-xs text-muted-foreground">Verificando...</span>
+                  ) : importedConfigs.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {importedConfigs.map(config => (
+                        <Badge key={config.key} variant="outline" className="border-primary text-primary">
+                          {config.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Nenhuma tabela importada para esta empresa.</span>
+                  )}
+                </div>
+              </div>
+              <div className="rounded-md border border-border p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">Faltam importar</span>
+                  <Badge variant="outline" className="text-muted-foreground">{pendingConfigs.length}</Badge>
+                </div>
+                <div className="max-h-24 overflow-y-auto">
+                  {checkingStatuses ? (
+                    <span className="text-xs text-muted-foreground">Verificando...</span>
+                  ) : pendingConfigs.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {pendingConfigs.map(config => (
+                        <Badge key={config.key} variant="outline" className="text-muted-foreground">
+                          {config.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Todas as tabelas foram importadas.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
