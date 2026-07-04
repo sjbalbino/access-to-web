@@ -74,7 +74,7 @@ export default function ImportarDados() {
 
   // Check existing records in DB to auto-detect imported tables
   const checkExistingRecords = useCallback(async () => {
-    if (!selectedTenantId) return;
+    if (!selectedTenantId) { setStatuses({}); return; }
     const newStatuses: Record<string, { status: TableStatus; count: number }> = {};
     const tablesWithGranjaId = new Set(['produtores', 'inscricoes_produtor']);
 
