@@ -64,12 +64,18 @@ const TENANT_SCOPED_IMPORT_TABLES = new Set([
   'lavouras', 'silos', 'controle_lavouras', 'plantios', 'aplicacoes', 'chuvas', 'floracoes',
   'insetos', 'plantas_invasoras', 'analises_solo', 'pivos', 'dre_contas', 'tabela_umidades',
   'plano_contas_gerencial', 'culturas', 'unidades_medida', 'sub_centros_custo',
-  'contratos_venda', 'remessas_venda', 'clientes_fornecedores', 'compras_cereais',
-  'devolucoes_deposito', 'entradas_nfe', 'entradas_nfe_itens', 'notas_deposito_emitidas',
+  'contratos_venda', 'remessas_venda', 'clientes_fornecedores', 'entradas_nfe_itens',
   'contas_bancarias',
 ]);
 
-const GRANJA_SCOPED_IMPORT_TABLES = new Set(['produtores', 'inscricoes_produtor']);
+const GRANJA_SCOPED_IMPORT_TABLES = new Set([
+  'produtores',
+  'inscricoes_produtor',
+  'compras_cereais',
+  'devolucoes_deposito',
+  'entradas_nfe',
+  'notas_deposito_emitidas',
+]);
 const CONTROLE_LAVOURA_SCOPED_IMPORT_TABLES = new Set(['colheitas']);
 
 async function fetchTenantScopedIds(tableName: string, tenantId: string): Promise<string[]> {
@@ -109,16 +115,27 @@ async function countRowsByTenant(tableName: string, tenantId: string, configKey?
   return count ?? 0;
 }
 
-async function countRowsByForeignIds(tableName: string, foreignColumn: string, ids: string[]): Promise<number> {
+async function countRowsByForeignIds(
+  tableName: string,
+  foreignColumn: string,
+  ids: string[],
+  configKey?: string
+): Promise<number> {
   if (ids.length === 0) return 0;
 
   let total = 0;
   for (let i = 0; i < ids.length; i += IN_FILTER_CHUNK_SIZE) {
     const chunk = ids.slice(i, i + IN_FILTER_CHUNK_SIZE);
-    const { count, error } = await (supabase
+    let query = (supabase
       .from(tableName as any)
       .select('id', { count: 'exact', head: true }) as any)
       .in(foreignColumn, chunk);
+
+    if (configKey === 'contra_notas_recebidas') {
+      query = query.eq('eh_contra_nota', true);
+    }
+
+    const { count, error } = await query;
 
     if (error) throw error;
     total += count ?? 0;
@@ -134,7 +151,7 @@ async function countImportedRowsForConfig(
   controleLavouraIds: string[]
 ): Promise<number> {
   if (GRANJA_SCOPED_IMPORT_TABLES.has(config.tableName)) {
-    return countRowsByForeignIds(config.tableName, 'granja_id', granjaIds);
+    return countRowsByForeignIds(config.tableName, 'granja_id', granjaIds, config.key);
   }
 
   if (CONTROLE_LAVOURA_SCOPED_IMPORT_TABLES.has(config.tableName)) {
