@@ -118,13 +118,11 @@ export default function ImportarDados() {
       }
     }
 
-    setStatuses(prev => ({ ...prev, ...newStatuses }));
+    setStatuses(newStatuses);
   }, [selectedTenantId]);
 
   useEffect(() => {
-    if (selectedTenantId) {
-      checkExistingRecords();
-    }
+    checkExistingRecords();
   }, [selectedTenantId, checkExistingRecords]);
 
   const handleImportComplete = (key: string, count: number) => {
