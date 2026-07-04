@@ -1,0 +1,1 @@
+ALTER FUNCTION public.cleanup_tenant_data(uuid) SET statement_timeout = '600s';
