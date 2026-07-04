@@ -5651,6 +5651,7 @@ export type Database = {
         Returns: number
       }
       can_edit: { Args: { _user_id: string }; Returns: boolean }
+      cleanup_tenant_data: { Args: { _tenant_id: string }; Returns: Json }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
