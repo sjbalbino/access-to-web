@@ -12,6 +12,7 @@ import * as XLSX from 'xlsx';
 import { tableConfigs, TableConfig } from '@/lib/importacaoConfig';
 import { ImportacaoDialog } from '@/components/importacao/ImportacaoDialog';
 import { useTenants } from '@/hooks/useTenants';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
