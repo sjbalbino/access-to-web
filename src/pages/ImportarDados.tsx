@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Database, Upload, CheckCircle2, Clock, AlertTriangle, Building, Trash2, Loader2, Download } from 'lucide-react';
+import { Database as DatabaseIcon, Upload, CheckCircle2, Clock, AlertTriangle, Building, Trash2, Loader2, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { tableConfigs, TableConfig } from '@/lib/importacaoConfig';
 import { ImportacaoDialog } from '@/components/importacao/ImportacaoDialog';
@@ -29,6 +29,29 @@ import {
 import { Input } from '@/components/ui/input';
 
 type TableStatus = 'pendente' | 'importada' | 'erro';
+type ImportTableName = string;
+type ImportQueryError = { message: string };
+type ImportQueryResponse<Row> = { data: Row[] | null; count: number | null; error: ImportQueryError | null };
+
+interface ImportQueryBuilder<Row> extends PromiseLike<ImportQueryResponse<Row>> {
+  eq(column: string, value: string | boolean): ImportQueryBuilder<Row>;
+  neq(column: string, value: string): ImportQueryBuilder<Row>;
+  not(column: string, operator: string, value: null): ImportQueryBuilder<Row>;
+  in(column: string, values: string[]): ImportQueryBuilder<Row>;
+  range(from: number, to: number): ImportQueryBuilder<Row>;
+}
+
+interface ImportStatusClient {
+  from(tableName: ImportTableName): {
+    select<Row extends { id: string }>(columns: string, options?: { count?: 'exact'; head?: boolean }): ImportQueryBuilder<Row>;
+  };
+}
+
+const importStatusClient = supabase as unknown as ImportStatusClient;
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 const CLEANUP_STEPS = [
   { label: 'Baixas Contas a Pagar/Receber', tables: ['contas_pagar_baixas', 'contas_receber_baixas'] },
@@ -79,14 +102,14 @@ const GRANJA_SCOPED_IMPORT_TABLES = new Set([
 ]);
 const CONTROLE_LAVOURA_SCOPED_IMPORT_TABLES = new Set(['colheitas']);
 
-async function fetchTenantScopedIds(tableName: string, tenantId: string): Promise<string[]> {
+async function fetchTenantScopedIds(tableName: ImportTableName, tenantId: string): Promise<string[]> {
   const ids: string[] = [];
   let from = 0;
 
   while (true) {
-    const { data, error } = await (supabase
-      .from(tableName as any)
-      .select('id') as any)
+    const { data, error } = await importStatusClient
+      .from(tableName)
+      .select<{ id: string }>('id')
       .eq('tenant_id', tenantId)
       .range(from, from + IMPORT_STATUS_PAGE_SIZE - 1);
 
@@ -101,10 +124,10 @@ async function fetchTenantScopedIds(tableName: string, tenantId: string): Promis
   return ids;
 }
 
-async function countRowsByTenant(tableName: string, tenantId: string, configKey?: string): Promise<number> {
-  let query = (supabase
-    .from(tableName as any)
-    .select('id', { count: 'exact', head: true }) as any)
+async function countRowsByTenant(tableName: ImportTableName, tenantId: string, configKey?: string): Promise<number> {
+  let query = importStatusClient
+    .from(tableName)
+    .select<{ id: string }>('id', { count: 'exact', head: true })
     .eq('tenant_id', tenantId);
 
   if (configKey === 'clientes_ie') {
@@ -117,7 +140,7 @@ async function countRowsByTenant(tableName: string, tenantId: string, configKey?
 }
 
 async function countRowsByForeignIds(
-  tableName: string,
+  tableName: ImportTableName,
   foreignColumn: string,
   ids: string[],
   configKey?: string
@@ -127,9 +150,9 @@ async function countRowsByForeignIds(
   let total = 0;
   for (let i = 0; i < ids.length; i += IN_FILTER_CHUNK_SIZE) {
     const chunk = ids.slice(i, i + IN_FILTER_CHUNK_SIZE);
-    let query = (supabase
-      .from(tableName as any)
-      .select('id', { count: 'exact', head: true }) as any)
+    let query = importStatusClient
+      .from(tableName)
+      .select<{ id: string }>('id', { count: 'exact', head: true })
       .in(foreignColumn, chunk);
 
     if (configKey === 'contra_notas_recebidas') {
@@ -157,6 +180,10 @@ async function countImportedRowsForConfig(
 
   if (CONTROLE_LAVOURA_SCOPED_IMPORT_TABLES.has(config.tableName)) {
     return countRowsByForeignIds(config.tableName, 'controle_lavoura_id', controleLavouraIds);
+  }
+
+  if (config.tableName === 'transferencias_deposito') {
+    return countRowsByForeignIds(config.tableName, 'granja_origem_id', granjaIds, config.key);
   }
 
   if (TENANT_SCOPED_IMPORT_TABLES.has(config.tableName)) {
@@ -220,8 +247,8 @@ export default function ImportarDados() {
             const count = await countImportedRowsForConfig(config, tenantId, granjaIds, controleLavouraIds);
             if (count <= 0) return null;
             return [config.key, { status: 'importada' as TableStatus, count }] as const;
-          } catch (error: any) {
-            console.warn(`Erro ao verificar importação de ${config.tableName}:`, error.message);
+          } catch (error: unknown) {
+            console.warn(`Erro ao verificar importação de ${config.tableName}:`, getErrorMessage(error));
             return null;
           }
         })
@@ -235,10 +262,10 @@ export default function ImportarDados() {
       }, {});
 
       setStatuses(newStatuses);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (statusCheckSeq.current === checkId) {
         setStatuses({});
-        toast.error(`Erro ao verificar progresso da importação: ${error.message}`);
+        toast.error(`Erro ao verificar progresso da importação: ${getErrorMessage(error)}`);
       }
     } finally {
       if (statusCheckSeq.current === checkId) {
@@ -312,7 +339,7 @@ export default function ImportarDados() {
     setCleanStep('Limpando dados no servidor...');
 
     try {
-      const { data, error } = await supabase.rpc('cleanup_tenant_data' as any, {
+      const { error } = await supabase.rpc('cleanup_tenant_data', {
         _tenant_id: selectedTenantId,
       });
       if (error) throw error;
@@ -322,8 +349,8 @@ export default function ImportarDados() {
       setStatuses({});
       queryClient.invalidateQueries();
       toast.success('Base de dados limpa com sucesso! Apenas as empresas contratantes foram mantidas.');
-    } catch (err: any) {
-      toast.error(`Erro na limpeza: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Erro na limpeza: ${getErrorMessage(err)}`);
     } finally {
       setCleaning(false);
     }
@@ -335,7 +362,7 @@ export default function ImportarDados() {
       <PageHeader
         title="Importar Dados"
         description="Importe dados do sistema legado (Access) via planilhas Excel"
-        icon={<Database className="h-6 w-6" />}
+        icon={<DatabaseIcon className="h-6 w-6" />}
       />
 
       {/* Tenant selector */}
