@@ -362,7 +362,7 @@ export default function ImportarDados() {
       <PageHeader
         title="Importar Dados"
         description="Importe dados do sistema legado (Access) via planilhas Excel"
-        icon={<Database className="h-6 w-6" />}
+        icon={<DatabaseIcon className="h-6 w-6" />}
       />
 
       {/* Tenant selector */}
