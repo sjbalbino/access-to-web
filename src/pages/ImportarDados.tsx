@@ -7,14 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Database, Upload, CheckCircle2, Clock, AlertTriangle, Building, Trash2, Loader2, Download } from 'lucide-react';
+import { Database as DatabaseIcon, Upload, CheckCircle2, Clock, AlertTriangle, Building, Trash2, Loader2, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { tableConfigs, TableConfig } from '@/lib/importacaoConfig';
 import { ImportacaoDialog } from '@/components/importacao/ImportacaoDialog';
 import { useTenants } from '@/hooks/useTenants';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -30,7 +29,25 @@ import {
 import { Input } from '@/components/ui/input';
 
 type TableStatus = 'pendente' | 'importada' | 'erro';
-type PublicTableName = keyof Database['public']['Tables'];
+type ImportTableName = string;
+type ImportQueryError = { message: string };
+type ImportQueryResponse<Row> = { data: Row[] | null; count: number | null; error: ImportQueryError | null };
+
+interface ImportQueryBuilder<Row> extends PromiseLike<ImportQueryResponse<Row>> {
+  eq(column: string, value: string | boolean): ImportQueryBuilder<Row>;
+  neq(column: string, value: string): ImportQueryBuilder<Row>;
+  not(column: string, operator: string, value: null): ImportQueryBuilder<Row>;
+  in(column: string, values: string[]): ImportQueryBuilder<Row>;
+  range(from: number, to: number): ImportQueryBuilder<Row>;
+}
+
+interface ImportStatusClient {
+  from(tableName: ImportTableName): {
+    select<Row extends { id: string }>(columns: string, options?: { count?: 'exact'; head?: boolean }): ImportQueryBuilder<Row>;
+  };
+}
+
+const importStatusClient = supabase as unknown as ImportStatusClient;
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -85,14 +102,14 @@ const GRANJA_SCOPED_IMPORT_TABLES = new Set([
 ]);
 const CONTROLE_LAVOURA_SCOPED_IMPORT_TABLES = new Set(['colheitas']);
 
-async function fetchTenantScopedIds(tableName: PublicTableName, tenantId: string): Promise<string[]> {
+async function fetchTenantScopedIds(tableName: ImportTableName, tenantId: string): Promise<string[]> {
   const ids: string[] = [];
   let from = 0;
 
   while (true) {
-    const { data, error } = await supabase
+    const { data, error } = await importStatusClient
       .from(tableName)
-      .select('id')
+      .select<{ id: string }>('id')
       .eq('tenant_id', tenantId)
       .range(from, from + IMPORT_STATUS_PAGE_SIZE - 1);
 
@@ -107,10 +124,10 @@ async function fetchTenantScopedIds(tableName: PublicTableName, tenantId: string
   return ids;
 }
 
-async function countRowsByTenant(tableName: PublicTableName, tenantId: string, configKey?: string): Promise<number> {
-  let query = supabase
+async function countRowsByTenant(tableName: ImportTableName, tenantId: string, configKey?: string): Promise<number> {
+  let query = importStatusClient
     .from(tableName)
-    .select('id', { count: 'exact', head: true })
+    .select<{ id: string }>('id', { count: 'exact', head: true })
     .eq('tenant_id', tenantId);
 
   if (configKey === 'clientes_ie') {
@@ -123,7 +140,7 @@ async function countRowsByTenant(tableName: PublicTableName, tenantId: string, c
 }
 
 async function countRowsByForeignIds(
-  tableName: PublicTableName,
+  tableName: ImportTableName,
   foreignColumn: string,
   ids: string[],
   configKey?: string
@@ -133,9 +150,9 @@ async function countRowsByForeignIds(
   let total = 0;
   for (let i = 0; i < ids.length; i += IN_FILTER_CHUNK_SIZE) {
     const chunk = ids.slice(i, i + IN_FILTER_CHUNK_SIZE);
-    let query = supabase
+    let query = importStatusClient
       .from(tableName)
-      .select('id', { count: 'exact', head: true })
+      .select<{ id: string }>('id', { count: 'exact', head: true })
       .in(foreignColumn, chunk);
 
     if (configKey === 'contra_notas_recebidas') {
@@ -158,19 +175,19 @@ async function countImportedRowsForConfig(
   controleLavouraIds: string[]
 ): Promise<number> {
   if (GRANJA_SCOPED_IMPORT_TABLES.has(config.tableName)) {
-    return countRowsByForeignIds(config.tableName as PublicTableName, 'granja_id', granjaIds, config.key);
+    return countRowsByForeignIds(config.tableName, 'granja_id', granjaIds, config.key);
   }
 
   if (CONTROLE_LAVOURA_SCOPED_IMPORT_TABLES.has(config.tableName)) {
-    return countRowsByForeignIds(config.tableName as PublicTableName, 'controle_lavoura_id', controleLavouraIds);
+    return countRowsByForeignIds(config.tableName, 'controle_lavoura_id', controleLavouraIds);
   }
 
   if (config.tableName === 'transferencias_deposito') {
-    return countRowsByForeignIds(config.tableName as PublicTableName, 'granja_origem_id', granjaIds, config.key);
+    return countRowsByForeignIds(config.tableName, 'granja_origem_id', granjaIds, config.key);
   }
 
   if (TENANT_SCOPED_IMPORT_TABLES.has(config.tableName)) {
-    return countRowsByTenant(config.tableName as PublicTableName, tenantId, config.key);
+    return countRowsByTenant(config.tableName, tenantId, config.key);
   }
 
   return 0;
