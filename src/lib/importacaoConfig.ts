@@ -1126,7 +1126,7 @@ const TENANT_SCOPED_LOOKUP_TABLES = new Set([
   'granjas','produtos','grupos_produtos','placas','transportadoras','locais_entrega','safras',
   'lavouras','silos','controle_lavouras','clientes_fornecedores','contas_bancarias',
   'dre_contas','tabela_umidades','plano_contas_gerencial','culturas','unidades_medida','sub_centros_custo',
-  'contratos_venda','remessas_venda','contas_pagar', 'contas_receber', 'compras_cereais'
+  'contratos_venda','remessas_venda','contas_pagar', 'contas_receber'
 ]);
 
 // Resolve references: lookup legacy codes to UUIDs
