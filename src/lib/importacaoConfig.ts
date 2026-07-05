@@ -605,6 +605,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'umidade', dbName: 'umidade', transform: toNumber },
       { accessName: 'impureza', dbName: 'impureza', transform: toNumber },
       { accessName: 'ph', dbName: 'ph', transform: toNumber },
+      { accessName: 'ph_entrada', dbName: 'ph_entrada', transform: toNumber, sourceColumnAliases: ['ph_entrada', 'PH_ENTRADA', 'ph de entrada', 'PH DE ENTRADA', 'phentrada'] },
       { accessName: 'kg_umidade', dbName: 'kg_umidade', transform: toNumber },
       { accessName: 'kg_impureza', dbName: 'kg_impureza', transform: toNumber },
       { accessName: 'kg_desconto_total', dbName: 'kg_desconto_total', transform: toNumber },
