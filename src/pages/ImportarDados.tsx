@@ -247,8 +247,8 @@ export default function ImportarDados() {
             const count = await countImportedRowsForConfig(config, tenantId, granjaIds, controleLavouraIds);
             if (count <= 0) return null;
             return [config.key, { status: 'importada' as TableStatus, count }] as const;
-          } catch (error: any) {
-            console.warn(`Erro ao verificar importação de ${config.tableName}:`, error.message);
+          } catch (error: unknown) {
+            console.warn(`Erro ao verificar importação de ${config.tableName}:`, getErrorMessage(error));
             return null;
           }
         })
@@ -262,10 +262,10 @@ export default function ImportarDados() {
       }, {});
 
       setStatuses(newStatuses);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (statusCheckSeq.current === checkId) {
         setStatuses({});
-        toast.error(`Erro ao verificar progresso da importação: ${error.message}`);
+        toast.error(`Erro ao verificar progresso da importação: ${getErrorMessage(error)}`);
       }
     } finally {
       if (statusCheckSeq.current === checkId) {
@@ -339,7 +339,7 @@ export default function ImportarDados() {
     setCleanStep('Limpando dados no servidor...');
 
     try {
-      const { data, error } = await supabase.rpc('cleanup_tenant_data' as any, {
+      const { error } = await supabase.rpc('cleanup_tenant_data', {
         _tenant_id: selectedTenantId,
       });
       if (error) throw error;
@@ -349,8 +349,8 @@ export default function ImportarDados() {
       setStatuses({});
       queryClient.invalidateQueries();
       toast.success('Base de dados limpa com sucesso! Apenas as empresas contratantes foram mantidas.');
-    } catch (err: any) {
-      toast.error(`Erro na limpeza: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(`Erro na limpeza: ${getErrorMessage(err)}`);
     } finally {
       setCleaning(false);
     }
