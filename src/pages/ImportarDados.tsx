@@ -159,6 +159,10 @@ async function countImportedRowsForConfig(
     return countRowsByForeignIds(config.tableName, 'controle_lavoura_id', controleLavouraIds);
   }
 
+  if (config.tableName === 'transferencias_deposito') {
+    return countRowsByForeignIds(config.tableName, 'granja_origem_id', granjaIds, config.key);
+  }
+
   if (TENANT_SCOPED_IMPORT_TABLES.has(config.tableName)) {
     return countRowsByTenant(config.tableName, tenantId, config.key);
   }
