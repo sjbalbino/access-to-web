@@ -875,7 +875,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         'plantios','aplicacoes','chuvas','floracoes','insetos','plantas_invasoras','analises_solo','pivos',
         'dre_contas','tabela_umidades','plano_contas_gerencial',
         'culturas','unidades_medida','sub_centros_custo',
-        'contratos_venda','remessas_venda','clientes_fornecedores','compras_cereais'
+        'contratos_venda','remessas_venda','clientes_fornecedores'
       ]);
       const REQUIRES_GRANJA = new Set(['contratos_venda', 'inscricoes_produtor', 'produtores', 'controle_lavouras']);
       const validationErrors: string[] = [];
