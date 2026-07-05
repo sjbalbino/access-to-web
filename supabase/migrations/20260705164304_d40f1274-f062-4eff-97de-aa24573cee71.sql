@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS transferencias_deposito_codigo_uniq ON public.transferencias_deposito(codigo);
