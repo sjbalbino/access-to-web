@@ -466,6 +466,7 @@ export type Database = {
           peso_bruto: number | null
           peso_tara: number | null
           ph: number | null
+          ph_entrada: number | null
           placa_id: string | null
           producao_kg: number | null
           producao_liquida_kg: number | null
@@ -507,6 +508,7 @@ export type Database = {
           peso_bruto?: number | null
           peso_tara?: number | null
           ph?: number | null
+          ph_entrada?: number | null
           placa_id?: string | null
           producao_kg?: number | null
           producao_liquida_kg?: number | null
@@ -548,6 +550,7 @@ export type Database = {
           peso_bruto?: number | null
           peso_tara?: number | null
           ph?: number | null
+          ph_entrada?: number | null
           placa_id?: string | null
           producao_kg?: number | null
           producao_liquida_kg?: number | null

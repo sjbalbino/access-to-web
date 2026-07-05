@@ -1,0 +1,1 @@
+ALTER TABLE public.colheitas ADD COLUMN IF NOT EXISTS ph_entrada numeric;
