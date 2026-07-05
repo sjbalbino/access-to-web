@@ -730,8 +730,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           'lavouras','silos','controle_lavouras','plantios','aplicacoes','chuvas','floracoes',
           'insetos','plantas_invasoras','analises_solo','pivos','dre_contas','tabela_umidades',
           'plano_contas_gerencial','culturas','unidades_medida','sub_centros_custo',
-          'contratos_venda','remessas_venda','clientes_fornecedores','compras_cereais',
-          'devolucoes_deposito','entradas_nfe','entradas_nfe_itens','notas_deposito_emitidas'
+          'contratos_venda','remessas_venda','clientes_fornecedores'
         ]);
 
         const resolveTargetIds = async (table: string): Promise<string[] | null> => {
