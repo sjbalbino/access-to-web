@@ -36,7 +36,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
-import { formatCpf, formatPlaca, unformatDocument, validateCnpj, validateCpf } from "@/lib/formatters";
+import { formatCpf, formatCpfCnpj, formatPlaca, unformatDocument, validateCnpj, validateCpf } from "@/lib/formatters";
 import { toast } from "sonner";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
@@ -85,11 +85,12 @@ export default function Transportadoras() {
     t.cidade?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleCnpjBlur = async (cnpj: string) => {
-    const cleanCnpj = cnpj.replace(/\D/g, "");
-    if (cleanCnpj.length !== 14) return;
-    
-    const data = await fetchCnpj(cnpj);
+  const handleCnpjBlur = async (valor: string) => {
+    const cleanDoc = valor.replace(/\D/g, "");
+    // Somente CNPJ tem consulta pública
+    if (cleanDoc.length !== 14) return;
+
+    const data = await fetchCnpj(valor);
     if (data) {
       setFormData((prev) => ({
         ...prev,
@@ -172,10 +173,21 @@ export default function Transportadoras() {
   const handleSave = async () => {
     if (!formData.nome.trim()) return;
 
-    // Validar CNPJ se informado
+    // Validar CPF/CNPJ se informado
     if (formData.cpf_cnpj && formData.cpf_cnpj.length > 0) {
-      if (!validateCnpj(formData.cpf_cnpj)) {
-        toast.error("CNPJ inválido!");
+      const clean = formData.cpf_cnpj.replace(/\D/g, "");
+      if (clean.length === 11) {
+        if (!validateCpf(clean)) {
+          toast.error("CPF inválido!");
+          return;
+        }
+      } else if (clean.length === 14) {
+        if (!validateCnpj(clean)) {
+          toast.error("CNPJ inválido!");
+          return;
+        }
+      } else {
+        toast.error("CPF/CNPJ inválido!");
         return;
       }
     }
@@ -275,7 +287,7 @@ export default function Transportadoras() {
                     {dadosPaginados.map((transportadora) => (
                       <TableRow key={transportadora.id}>
                         <TableCell className="font-medium max-w-[200px] truncate">{transportadora.nome}</TableCell>
-                        <TableCell className="font-mono text-sm hidden sm:table-cell">{transportadora.cpf_cnpj || "-"}</TableCell>
+                        <TableCell className="font-mono text-sm hidden sm:table-cell">{formatCpfCnpj(transportadora.cpf_cnpj) || "-"}</TableCell>
                         <TableCell className="hidden md:table-cell">{transportadora.cidade && transportadora.uf ? `${transportadora.cidade}/${transportadora.uf}` : "-"}</TableCell>
                         <TableCell className="font-mono hidden md:table-cell">{transportadora.placa_padrao || "-"}</TableCell>
                         <TableCell className="hidden sm:table-cell">
@@ -311,17 +323,17 @@ export default function Transportadoras() {
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* CNPJ primeiro */}
+            {/* CPF/CNPJ primeiro */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cpf_cnpj">CNPJ</Label>
+                <Label htmlFor="cpf_cnpj">CPF/CNPJ</Label>
                 <div className="relative">
                   <Input
                     id="cpf_cnpj"
-                    value={formData.cpf_cnpj ? formatCnpj(formData.cpf_cnpj) : ""}
-                    onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value.replace(/\D/g, "") })}
+                    value={formatCpfCnpj(formData.cpf_cnpj)}
+                    onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value.replace(/\D/g, "").slice(0, 14) })}
                     onBlur={(e) => handleCnpjBlur(e.target.value)}
-                    placeholder="00.000.000/0000-00"
+                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
                     maxLength={18}
                   />
                   {cnpjLoading && (
