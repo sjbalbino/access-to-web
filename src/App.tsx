@@ -119,6 +119,7 @@ const App = () => (
               <Route path="/selecionar-empresa" element={<ProtectedRoute><SelecionarEmpresa /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </ErrorBoundary>
           </TabsProvider>
         </AuthProvider>
       </BrowserRouter>
