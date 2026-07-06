@@ -68,21 +68,23 @@ serve(async (req) => {
     const finalTenantId = isSuperAdmin ? (body.tenant_id ?? null) : (callerProfile?.tenant_id ?? null);
 
     // Atualizar profile
+    console.log("[approve-user] updating profile", body.user_id, "tenant=", finalTenantId);
     const { error: profErr } = await admin
       .from("profiles")
       .update({ tenant_id: finalTenantId, ativo: body.ativo ?? true })
       .eq("id", body.user_id);
-    if (profErr) throw profErr;
+    if (profErr) { console.error("[approve-user] profErr", profErr); throw new Error(`profiles.update: ${profErr.message}`); }
 
     // Upsert user_roles
-    const { data: existing } = await admin
+    const { data: existing, error: selErr } = await admin
       .from("user_roles").select("user_id").eq("user_id", body.user_id).maybeSingle();
+    if (selErr) { console.error("[approve-user] selErr", selErr); throw new Error(`user_roles.select: ${selErr.message}`); }
     if (existing) {
       const { error } = await admin.from("user_roles").update({ role: body.role }).eq("user_id", body.user_id);
-      if (error) throw error;
+      if (error) { console.error("[approve-user] updRoleErr", error); throw new Error(`user_roles.update: ${error.message}`); }
     } else {
       const { error } = await admin.from("user_roles").insert({ user_id: body.user_id, role: body.role });
-      if (error) throw error;
+      if (error) { console.error("[approve-user] insRoleErr", error); throw new Error(`user_roles.insert: ${error.message}`); }
     }
 
     // Buscar dados para o e-mail
