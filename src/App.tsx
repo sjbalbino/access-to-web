@@ -66,6 +66,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <TabsProvider>
+            <ErrorBoundary>
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
