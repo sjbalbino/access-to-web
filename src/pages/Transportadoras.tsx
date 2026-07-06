@@ -287,7 +287,7 @@ export default function Transportadoras() {
                     {dadosPaginados.map((transportadora) => (
                       <TableRow key={transportadora.id}>
                         <TableCell className="font-medium max-w-[200px] truncate">{transportadora.nome}</TableCell>
-                        <TableCell className="font-mono text-sm hidden sm:table-cell">{transportadora.cpf_cnpj || "-"}</TableCell>
+                        <TableCell className="font-mono text-sm hidden sm:table-cell">{formatCpfCnpj(transportadora.cpf_cnpj) || "-"}</TableCell>
                         <TableCell className="hidden md:table-cell">{transportadora.cidade && transportadora.uf ? `${transportadora.cidade}/${transportadora.uf}` : "-"}</TableCell>
                         <TableCell className="font-mono hidden md:table-cell">{transportadora.placa_padrao || "-"}</TableCell>
                         <TableCell className="hidden sm:table-cell">
