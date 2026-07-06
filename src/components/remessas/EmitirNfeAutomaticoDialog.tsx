@@ -210,6 +210,15 @@ export function EmitirNfeAutomaticoDialog({
       const localEntrega = contrato.local_entrega_nome || remessa.local_entrega_nome;
       if (localEntrega) {
         let localEntregaStr = `Local de Entrega: ${localEntrega}`;
+        const cnpjCpfLE = contrato.local_entrega_cnpj_cpf || remessa.local_entrega_cnpj_cpf;
+        const ieLE = contrato.local_entrega_ie || remessa.local_entrega_ie;
+        if (cnpjCpfLE) localEntregaStr += ` - CNPJ/CPF: ${cnpjCpfLE}`;
+        if (ieLE) localEntregaStr += ` - IE: ${ieLE}`;
+        const logradouroLE = contrato.local_entrega_logradouro || remessa.local_entrega_logradouro;
+        const numeroLE = contrato.local_entrega_numero || remessa.local_entrega_numero;
+        const bairroLE = contrato.local_entrega_bairro || remessa.local_entrega_bairro;
+        const enderecoParts = [logradouroLE, numeroLE, bairroLE].filter(Boolean).join(", ");
+        if (enderecoParts) localEntregaStr += ` - ${enderecoParts}`;
         const cidadeUf = [contrato.local_entrega_cidade || remessa.local_entrega_cidade, contrato.local_entrega_uf || remessa.local_entrega_uf].filter(Boolean).join("/");
         if (cidadeUf) localEntregaStr += ` - ${cidadeUf}`;
         infoComplementarParts.push(localEntregaStr);
