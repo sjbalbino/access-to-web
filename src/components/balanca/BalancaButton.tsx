@@ -45,6 +45,7 @@ export function BalancaButton({ onPeso, size = "sm" }: Props) {
         <PopoverTrigger asChild>
           <Button
             type="button"
+            tabIndex={-1}
             variant={variant}
             size={size}
             className="gap-2"
