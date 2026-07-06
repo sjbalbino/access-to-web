@@ -1,46 +1,30 @@
-## Problema
-
-1. **DANFE não exibe corretamente Transportador / CNPJ-CPF** — hoje o código coloca o nome do motorista em `transp_nome` apenas como fallback (sem CPF), então o motorista aparece como "transportador" sem documento.
-2. **Motorista + CPF do motorista** não aparecem em lugar nenhum quando há transportadora cadastrada (a DANFE oficial não tem campo próprio para motorista → precisa ir nas Informações Complementares).
-3. **Ao incluir/editar a remessa, o usuário não vê prévia** das Informações Complementares que serão gravadas na NFe.
-
 ## O que fazer
 
-### 1. Preencher os campos oficiais de Transportador da DANFE
-Em `src/components/remessas/EmitirNfeAutomaticoDialog.tsx`, alterar a montagem do `notaFiscalData`:
+### 1. Permitir CPF ou CNPJ no cadastro de Transportadora
+Em `src/pages/Transportadoras.tsx`, transformar o campo hoje rotulado "CNPJ" em **"CPF/CNPJ"** com detecção automática pelo número de dígitos:
 
-- **Se houver transportadora cadastrada:** usar os dados dela (`transp_nome`, `transp_cpf_cnpj`, `transp_ie`, endereço, cidade, uf) como já hoje.
-- **Se NÃO houver transportadora, mas houver motorista informado na remessa:** preencher os campos oficiais da DANFE com os dados do motorista:
-  - `transp_nome` = `remessa.motorista`
-  - `transp_cpf_cnpj` = `remessa.motorista_cpf` (limpo, 11 dígitos → o mapper já detecta CPF vs CNPJ e envia `transportador_cpf`).
-  - demais campos (IE, endereço, cidade, uf) ficam `null`.
-- **Se não houver nenhum dos dois:** deixar tudo `null`.
+- Label muda para `CPF/CNPJ`.
+- Formatação dinâmica: usa `formatCpf` quando ≤ 11 dígitos, `formatCnpj` quando > 11 (via helper `formatCpfCnpj` já existente em `src/lib/formatters.ts`).
+- Placeholder: `000.000.000-00 ou 00.000.000/0000-00`, `maxLength=18`.
+- `onBlur`: apenas dispara `fetchCnpj` quando o valor limpo tiver 14 dígitos (CPF não tem lookup público).
+- Validação em `handleSave`: se 11 dígitos → `validateCpf`; se 14 → `validateCnpj`; qualquer outro tamanho preenchido → erro "CPF/CNPJ inválido".
+- Coluna da lista continua exibindo o valor formatado (`formatCpfCnpj`).
 
-### 2. Sempre adicionar Motorista + CPF nas Informações Complementares (redundância útil)
-Quando `remessa.motorista` estiver preenchido, adicionar linha `Motorista: <nome> - CPF: <cpf>` nas Informações Complementares. Isso garante que, mesmo quando o transportador for a empresa, o motorista físico apareça na DANFE.
+Nenhuma mudança de schema é necessária — a coluna `cpf_cnpj` já é livre.
 
-Também adicionar `Placa: <placa>/<uf>` para reforçar a rastreabilidade.
+### 2. Atualizar cadastros antigos sem motorista/CPF padrão
+Executar um `UPDATE` único para preencher, nas transportadoras que **não têm** motorista padrão nem CPF do motorista padrão, esses campos com o nome/razão social e CPF/CNPJ da própria transportadora. Isso garante que, ao selecionar essas transportadoras numa remessa, o motorista e documento sejam preenchidos automaticamente (mesmo comportamento que hoje só acontece com quem preencheu o padrão).
 
-### 3. Prévia das Informações Complementares no dialog da remessa
-Em `src/components/remessas/EditarRemessaDialog.tsx`:
-- Extrair a lógica de montagem do texto de Informações Complementares para uma função utilitária compartilhada em novo arquivo `src/lib/infoComplementarRemessa.ts`.
-- Usar essa mesma função no `EmitirNfeAutomaticoDialog` para eliminar duplicação.
-- Adicionar um Card "Informações Complementares (NFe)" no `EditarRemessaDialog` com um `<Textarea readOnly>` que se recalcula em tempo real conforme o usuário altera transportadora, motorista, CPF, placa etc.
+Regras:
+- Só atualiza quando `motorista_padrao IS NULL AND motorista_cpf_padrao IS NULL`.
+- `motorista_padrao = nome`.
+- `motorista_cpf_padrao = cpf_cnpj` (apenas se `cpf_cnpj` não for nulo).
 
 ## Detalhes técnicos
-
-- Função utilitária:
-  ```ts
-  buildInfoComplementarRemessa({
-    contrato, remessa, transportadora, localEntrega
-  }): string
-  ```
-- No `EditarRemessaDialog`, receber `contrato` via prop e a lista de transportadoras via `useTransportadoras` (já usado) para resolver o nome pelo `transportadoraId` selecionado, refletindo o estado atual do formulário na prévia.
-- `RemessasVendaForm.tsx`: passar `contrato` como prop ao `EditarRemessaDialog`.
-- Nenhum ajuste no `focusNfeMapper.ts` — o mapper já envia `transportador_nome/cpf/cnpj/ie/endereco/municipio/uf` corretamente.
+- Reuso de `formatCpfCnpj`, `validateCpf`, `validateCnpj` já disponíveis em `@/lib/formatters`.
+- `useCnpjLookup` roda somente para CNPJs de 14 dígitos — evita chamada indevida quando for CPF.
+- Update de dados executado via ferramenta de insert (não migração), pois é atualização de dados, não schema.
 
 ## Arquivos afetados
-- criar `src/lib/infoComplementarRemessa.ts`
-- editar `src/components/remessas/EmitirNfeAutomaticoDialog.tsx`
-- editar `src/components/remessas/EditarRemessaDialog.tsx`
-- editar `src/pages/RemessasVendaForm.tsx`
+- editar `src/pages/Transportadoras.tsx`
+- 1 comando UPDATE em `public.transportadoras`
