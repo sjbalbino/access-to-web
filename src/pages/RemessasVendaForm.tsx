@@ -36,6 +36,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban } from "lucide-react";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
+import { buildInfoComplementarRemessa } from "@/lib/infoComplementarRemessa";
 import {
   useRemessasVenda,
   useCreateRemessaVenda,
