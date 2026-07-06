@@ -307,6 +307,15 @@ export function EmitirNfeAutomaticoDialog({
       setStatus({ step: "creating_item", message: "Adicionando item à nota...", progress: 45, notaFiscalId: notaFiscal.id });
 
       // 3. Criar o item da nota fiscal
+      // Converter quantidade e valor unitário conforme a unidade do produto.
+      // Preços/kg são armazenados em KG; se a unidade for TONELADA, converter.
+      const unidadeSigla = (produto.unidades_medida?.sigla || produto.unidades_medida?.codigo || "KG").toString().toUpperCase();
+      const unidadeDescricao = (produto.unidades_medida?.descricao || "").toString().toUpperCase();
+      const isTonelada = unidadeSigla === "TON" || unidadeSigla === "T" || unidadeDescricao.includes("TONELADA");
+      const quantidadeItem = isTonelada ? kgNota / 1000 : kgNota;
+      const precoKg = contrato.preco_kg || 0;
+      const valorUnitarioItem = isTonelada ? precoKg * 1000 : precoKg;
+
       const itemData = {
         nota_fiscal_id: notaFiscal.id,
         numero_item: 1,
@@ -315,9 +324,9 @@ export function EmitirNfeAutomaticoDialog({
         descricao: produto.nome,
         ncm: produto.ncm || "10019100", // NCM padrão para trigo
         cfop: cfop.codigo,
-        unidade: produto.unidades_medida?.sigla || produto.unidades_medida?.codigo || "KG",
-        quantidade: kgNota,
-        valor_unitario: contrato.preco_kg || 0,
+        unidade: unidadeSigla,
+        quantidade: quantidadeItem,
+        valor_unitario: valorUnitarioItem,
         valor_total: valorTotal,
         valor_desconto: 0,
         origem: 0, // Nacional
