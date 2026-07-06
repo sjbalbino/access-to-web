@@ -126,16 +126,16 @@ export function EmitirNfeAutomaticoDialog({
       }
 
       // Buscar CFOP: Exportação (5501/6501) > Remessa Depósito (5905/6905) > Venda (5101/6101)
-      const ufDestino = remessa.local_entrega_uf || contrato.local_entrega_uf || comprador.uf;
+      const ufDestino = remessa.local_entrega_uf || contratoData.local_entrega_uf || comprador.uf;
       const ufEmitente = inscricao.uf;
       
       let cfopCodigo = ufDestino === ufEmitente ? "5101" : "6101";
       let naturezaOperacao = "VENDA DE PRODUÇÃO DO ESTABELECIMENTO";
 
-      if (contrato.exportacao) {
+      if (contratoData.exportacao) {
         cfopCodigo = ufDestino === ufEmitente ? "5501" : "6501";
         naturezaOperacao = "REMESSA COM FIM ESPECIFICO DE EXPORTACAO";
-      } else if (contrato.remessa_deposito) {
+      } else if (contratoData.remessa_deposito) {
         // Se for Remessa para Depósito
         cfopCodigo = ufDestino === ufEmitente ? "5905" : "6905";
         naturezaOperacao = "REMESSA PARA DEPOSITO";
