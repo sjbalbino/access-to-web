@@ -769,6 +769,43 @@ export default function NotasFiscais() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Dialog de Visualização da DANFE */}
+        <Dialog open={danfePreview.open} onOpenChange={(open) => { if (!open) closeDanfePreview(); }}>
+          <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-4">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileSearch className="h-5 w-5 text-primary" />
+                {danfePreview.titulo}
+              </DialogTitle>
+              <DialogDescription>Pré-visualização da DANFE em PDF</DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 min-h-0 rounded-md border bg-muted overflow-hidden">
+              {danfePreview.loading || !danfePreview.url ? (
+                <div className="flex items-center justify-center h-full">
+                  <Spinner />
+                </div>
+              ) : (
+                <iframe
+                  src={danfePreview.url}
+                  title="DANFE"
+                  className="w-full h-full"
+                />
+              )}
+            </div>
+            <DialogFooter className="gap-2">
+              {danfePreview.url && (
+                <Button variant="outline" asChild>
+                  <a href={danfePreview.url} download={`${danfePreview.titulo}.pdf`}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar
+                  </a>
+                </Button>
+              )}
+              <Button variant="outline" onClick={closeDanfePreview}>Fechar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
