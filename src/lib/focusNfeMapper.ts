@@ -144,6 +144,8 @@ export interface FocusNfeItem {
   
   // Reforma Tributária (NT 2025.002) - CBS
   cbs_aliquota?: number;
+  cbs_percentual_reducao_aliquota?: number;
+  cbs_aliquota_efetiva?: number;
   cbs_valor?: number;
   
   // Reforma Tributária (NT 2025.002) - IS
@@ -522,6 +524,27 @@ function defaultClassTribIbsCbs(cst: string | null | undefined): string | undefi
   return "000001";
 }
 
+function getPercentualReducaoIbsCbs(classTrib: string | undefined): number | undefined {
+  switch (classTrib) {
+    // Produtos rurais/agro mais usados no sistema SisAgro
+    case "200014": // Hortícolas, frutas e ovos — redução a zero
+      return 100;
+    case "200036": // Produtos agropecuários in natura
+    case "200038": // Insumos agropecuários e aquícolas
+      return 60;
+    default:
+      return undefined;
+  }
+}
+
+function calcularAliquotaEfetiva(aliquota: number, percentualReducao: number): number {
+  return Number((aliquota * (1 - percentualReducao / 100)).toFixed(4));
+}
+
+function calcularValorTributo(base: number, aliquotaEfetiva: number): number {
+  return Number(((base * aliquotaEfetiva) / 100).toFixed(2));
+}
+
 function mapItemToFocusNfe(
   item: NotaFiscalItemData,
   numeroItem: number,
@@ -599,23 +622,33 @@ function mapItemToFocusNfe(
   // Reforma Tributária (NT 2025.002) - IBS/CBS/IS
   if (temIbsCbs) {
     const aliqIbsUf = item.aliq_ibs || 0;
-    // CST 200 (Redução de Alíquota) e demais CSTs de redução exigem SEMPRE o grupo
-    // pRedAliq + pAliqEfet, mesmo quando não há redução real (percentual = 0).
-    // Enviamos pRedAliq=0 e pAliqEfet = aliq nominal para satisfazer o schema.
+    const aliqCbs = item.aliq_cbs || 0;
+    const percentualReducao = getPercentualReducaoIbsCbs(classTribIbsCbs);
+    const aliqEfetivaIbsUf = percentualReducao !== undefined
+      ? calcularAliquotaEfetiva(aliqIbsUf, percentualReducao)
+      : aliqIbsUf;
+    const aliqEfetivaCbs = percentualReducao !== undefined
+      ? calcularAliquotaEfetiva(aliqCbs, percentualReducao)
+      : aliqCbs;
+    const valorIbsUf = calcularValorTributo(baseIbsCbs, aliqEfetivaIbsUf);
+    const valorCbs = calcularValorTributo(baseIbsCbs, aliqEfetivaCbs);
+
     focusItem.ibs_cbs_situacao_tributaria = cstIbsCbs;
     focusItem.ibs_cbs_classificacao_tributaria = classTribIbsCbs;
     focusItem.ibs_cbs_base_calculo = baseIbsCbs;
     focusItem.ibs_uf_aliquota = aliqIbsUf;
-    focusItem.ibs_uf_percentual_reducao_aliquota = 0;
-    focusItem.ibs_uf_aliquota_efetiva = aliqIbsUf;
-    focusItem.ibs_uf_valor = item.valor_ibs || 0;
+    focusItem.ibs_uf_percentual_reducao_aliquota = percentualReducao;
+    focusItem.ibs_uf_aliquota_efetiva = percentualReducao !== undefined ? aliqEfetivaIbsUf : undefined;
+    focusItem.ibs_uf_valor = valorIbsUf;
     focusItem.ibs_mun_aliquota = 0;
-    focusItem.ibs_mun_percentual_reducao_aliquota = 0;
-    focusItem.ibs_mun_aliquota_efetiva = 0;
+    focusItem.ibs_mun_percentual_reducao_aliquota = percentualReducao;
+    focusItem.ibs_mun_aliquota_efetiva = percentualReducao !== undefined ? 0 : undefined;
     focusItem.ibs_mun_valor = 0;
-    focusItem.ibs_valor_total = item.valor_ibs || 0;
-    focusItem.cbs_aliquota = item.aliq_cbs || 0;
-    focusItem.cbs_valor = item.valor_cbs || 0;
+    focusItem.ibs_valor_total = valorIbsUf;
+    focusItem.cbs_aliquota = aliqCbs;
+    focusItem.cbs_percentual_reducao_aliquota = percentualReducao;
+    focusItem.cbs_aliquota_efetiva = percentualReducao !== undefined ? aliqEfetivaCbs : undefined;
+    focusItem.cbs_valor = valorCbs;
   }
   if (temIs) {
     focusItem.is_situacao_tributaria = formatCst3Digits(item.cst_is);
