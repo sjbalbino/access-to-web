@@ -26,9 +26,11 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Package, Truck, FileText, MapPin } from "lucide-react";
+import { Package, Truck, FileText, MapPin, Info } from "lucide-react";
 import { formatCpf, formatCpfCnpj, formatPlaca, formatCep, validateCpf } from "@/lib/formatters";
 import { BalancaButton } from "@/components/balanca/BalancaButton";
+import { buildInfoComplementarRemessa } from "@/lib/infoComplementarRemessa";
+import type { ContratoVenda } from "@/hooks/useContratosVenda";
 
 interface LocalEntrega {
   local_entrega_nome?: string;
@@ -48,10 +50,11 @@ interface EditarRemessaDialogProps {
   precoKg: number;
   exigePh?: boolean;
   localEntrega?: LocalEntrega;
+  contrato?: ContratoVenda | null;
   onClose: () => void;
 }
 
-export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEntrega, onClose }: EditarRemessaDialogProps) {
+export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEntrega, contrato, onClose }: EditarRemessaDialogProps) {
   const { data: silos } = useSilos();
   const { transportadoras } = useTransportadoras();
   const updateRemessa = useUpdateRemessaVenda();
@@ -145,6 +148,32 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
     if (pesoTara > 0) return "carregando";
     return "carregando";
   };
+
+  // Prévia das Informações Complementares que serão gravadas na NFe (reativa ao form)
+  const transportadoraSelecionada = transportadoraId
+    ? transportadoras?.find((t) => t.id === transportadoraId)
+    : null;
+
+  const infoComplementarPreview = buildInfoComplementarRemessa({
+    contrato: contrato ?? null,
+    remessa: remessa
+      ? {
+          ...remessa,
+          motorista: motorista || null,
+          motorista_cpf: motoristaCpf || null,
+          placa: placa || null,
+          uf_placa: ufPlaca || null,
+        }
+      : null,
+    transportadora: transportadoraSelecionada
+      ? {
+          nome: transportadoraSelecionada.nome,
+          cpf_cnpj: transportadoraSelecionada.cpf_cnpj,
+          inscricao_estadual: transportadoraSelecionada.inscricao_estadual,
+        }
+      : null,
+    localEntrega,
+  });
 
   const handleSalvar = async () => {
     if (!remessa || isReadOnly) return;
@@ -572,6 +601,28 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
               </div>
             </CardContent>
           </Card>
+
+          {/* Card: Prévia das Informações Complementares que irão na NFe */}
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Informações Complementares (prévia do que vai sair na NFe)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={infoComplementarPreview}
+                readOnly
+                rows={5}
+                className="bg-muted font-mono text-xs"
+                tabIndex={-1}
+                placeholder="Sem informações complementares..."
+              />
+            </CardContent>
+          </Card>
+
+
 
           {/* Card 4: Observações */}
           <Card className="border-muted-foreground/20 bg-muted/30">
