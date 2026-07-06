@@ -159,11 +159,20 @@ export default function NotasFiscais() {
         body: { ref, tipo: "danfe", notaFiscalId: nota.id },
       });
       if (error) throw new Error(error.message);
-      if (data && typeof data === "object" && "error" in data) {
+      if (data && typeof data === "object" && "error" in data && !(data instanceof Blob) && !(data instanceof ArrayBuffer)) {
         throw new Error((data as any).error);
       }
       const blob = data instanceof Blob ? data : new Blob([data as ArrayBuffer], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
+      // Converter para data URL base64 (evita bloqueio de blob: em iframes cross-origin)
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+      const url = base64.startsWith("data:application/pdf")
+        ? base64
+        : base64.replace(/^data:[^;]+/, "data:application/pdf");
       setDanfePreview((prev) => ({ ...prev, url, loading: false }));
     } catch (e: any) {
       toast.error("Erro ao carregar DANFE", { description: e?.message });
@@ -172,7 +181,6 @@ export default function NotasFiscais() {
   };
 
   const closeDanfePreview = () => {
-    if (danfePreview.url) window.URL.revokeObjectURL(danfePreview.url);
     setDanfePreview({ open: false, url: null, titulo: "", loading: false });
   };
 
@@ -786,11 +794,23 @@ export default function NotasFiscais() {
                   <Spinner />
                 </div>
               ) : (
-                <iframe
-                  src={danfePreview.url}
-                  title="DANFE"
+                <object
+                  data={danfePreview.url}
+                  type="application/pdf"
                   className="w-full h-full"
-                />
+                  aria-label="DANFE"
+                >
+                  <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Seu navegador bloqueou a visualização do PDF. Abra em uma nova aba ou baixe o arquivo.
+                    </p>
+                    <Button asChild size="sm">
+                      <a href={danfePreview.url} target="_blank" rel="noopener noreferrer">
+                        Abrir em nova aba
+                      </a>
+                    </Button>
+                  </div>
+                </object>
               )}
             </div>
             <DialogFooter className="gap-2">
