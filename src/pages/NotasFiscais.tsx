@@ -149,6 +149,32 @@ export default function NotasFiscais() {
   const [correcao, setCorrecao] = useState("");
   const [inutForm, setInutForm] = useState({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
   const [motivoDialog, setMotivoDialog] = useState<{ open: boolean; titulo: string; mensagem: string }>({ open: false, titulo: "", mensagem: "" });
+  const [danfePreview, setDanfePreview] = useState<{ open: boolean; url: string | null; titulo: string; loading: boolean }>({ open: false, url: null, titulo: "", loading: false });
+
+  const handleVisualizarDanfe = async (nota: any) => {
+    const ref = nota.uuid_api || `nfe_${nota.id}`;
+    setDanfePreview({ open: true, url: null, titulo: `DANFE - NF-e nº ${nota.numero || ""}`, loading: true });
+    try {
+      const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
+        body: { ref, tipo: "danfe", notaFiscalId: nota.id },
+      });
+      if (error) throw new Error(error.message);
+      if (data && typeof data === "object" && "error" in data) {
+        throw new Error((data as any).error);
+      }
+      const blob = data instanceof Blob ? data : new Blob([data as ArrayBuffer], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      setDanfePreview((prev) => ({ ...prev, url, loading: false }));
+    } catch (e: any) {
+      toast.error("Erro ao carregar DANFE", { description: e?.message });
+      setDanfePreview({ open: false, url: null, titulo: "", loading: false });
+    }
+  };
+
+  const closeDanfePreview = () => {
+    if (danfePreview.url) window.URL.revokeObjectURL(danfePreview.url);
+    setDanfePreview({ open: false, url: null, titulo: "", loading: false });
+  };
 
   const handleConsultarRejeicao = async (nota: any) => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
