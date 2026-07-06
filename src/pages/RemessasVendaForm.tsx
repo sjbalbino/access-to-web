@@ -1011,6 +1011,7 @@ export default function RemessasVendaForm() {
         remessa={remessaEditar}
         precoKg={contrato?.preco_kg || 0}
         exigePh={exigePh}
+        contrato={contrato}
         localEntrega={{
           local_entrega_nome: contrato?.local_entrega_nome || "",
           local_entrega_cnpj_cpf: contrato?.local_entrega_cnpj_cpf || "",
