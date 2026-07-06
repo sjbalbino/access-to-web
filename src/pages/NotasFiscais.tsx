@@ -794,11 +794,23 @@ export default function NotasFiscais() {
                   <Spinner />
                 </div>
               ) : (
-                <iframe
-                  src={danfePreview.url}
-                  title="DANFE"
+                <object
+                  data={danfePreview.url}
+                  type="application/pdf"
                   className="w-full h-full"
-                />
+                  aria-label="DANFE"
+                >
+                  <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Seu navegador bloqueou a visualização do PDF. Abra em uma nova aba ou baixe o arquivo.
+                    </p>
+                    <Button asChild size="sm">
+                      <a href={danfePreview.url} target="_blank" rel="noopener noreferrer">
+                        Abrir em nova aba
+                      </a>
+                    </Button>
+                  </div>
+                </object>
               )}
             </div>
             <DialogFooter className="gap-2">
