@@ -133,8 +133,12 @@ export interface FocusNfeItem {
   ibs_cbs_classificacao_tributaria?: string;
   ibs_cbs_base_calculo?: number;
   ibs_uf_aliquota?: number;
+  ibs_uf_percentual_reducao_aliquota?: number;
+  ibs_uf_aliquota_efetiva?: number;
   ibs_uf_valor?: number;
   ibs_mun_aliquota?: number;
+  ibs_mun_percentual_reducao_aliquota?: number;
+  ibs_mun_aliquota_efetiva?: number;
   ibs_mun_valor?: number;
   ibs_valor_total?: number;
   
