@@ -71,6 +71,18 @@ export function EmitirNfeAutomaticoDialog({
       // 1. Buscar dados completos necessários para a NFe
       setStatus({ step: "loading_data", message: "Buscando dados do contrato e remessa...", progress: 15 });
 
+      // Refetch do contrato para garantir dados atualizados (modalidade_frete etc.)
+      const { data: contratoAtual, error: contratoErr } = await supabase
+        .from("contratos_venda")
+        .select("*")
+        .eq("id", contrato.id)
+        .single();
+      if (contratoErr || !contratoAtual) {
+        throw new Error("Contrato não encontrado");
+      }
+      // Mesclar dados atuais preservando joins do prop
+      const contratoData = { ...contrato, ...contratoAtual };
+
       // Buscar inscrição do produtor com dados completos
       const { data: inscricao, error: inscricaoError } = await supabase
         .from("inscricoes_produtor")
