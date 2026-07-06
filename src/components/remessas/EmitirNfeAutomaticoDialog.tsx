@@ -17,6 +17,7 @@ import { useFocusNfe } from "@/hooks/useFocusNfe";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { RemessaVenda, useUpdateRemessaVenda } from "@/hooks/useRemessasVenda";
 import { ContratoVenda } from "@/hooks/useContratosVenda";
+import { buildInfoComplementarRemessa } from "@/lib/infoComplementarRemessa";
 
 interface EmitirNfeAutomaticoDialogProps {
   remessa: RemessaVenda | null;
