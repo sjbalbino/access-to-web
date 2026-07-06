@@ -71,6 +71,18 @@ export function EmitirNfeAutomaticoDialog({
       // 1. Buscar dados completos necessários para a NFe
       setStatus({ step: "loading_data", message: "Buscando dados do contrato e remessa...", progress: 15 });
 
+      // Refetch do contrato para garantir dados atualizados (modalidade_frete etc.)
+      const { data: contratoAtual, error: contratoErr } = await supabase
+        .from("contratos_venda")
+        .select("*")
+        .eq("id", contrato.id)
+        .single();
+      if (contratoErr || !contratoAtual) {
+        throw new Error("Contrato não encontrado");
+      }
+      // Mesclar dados atuais preservando joins do prop
+      const contratoData = { ...contrato, ...contratoAtual };
+
       // Buscar inscrição do produtor com dados completos
       const { data: inscricao, error: inscricaoError } = await supabase
         .from("inscricoes_produtor")
@@ -114,16 +126,16 @@ export function EmitirNfeAutomaticoDialog({
       }
 
       // Buscar CFOP: Exportação (5501/6501) > Remessa Depósito (5905/6905) > Venda (5101/6101)
-      const ufDestino = remessa.local_entrega_uf || contrato.local_entrega_uf || comprador.uf;
+      const ufDestino = remessa.local_entrega_uf || contratoData.local_entrega_uf || comprador.uf;
       const ufEmitente = inscricao.uf;
       
       let cfopCodigo = ufDestino === ufEmitente ? "5101" : "6101";
       let naturezaOperacao = "VENDA DE PRODUÇÃO DO ESTABELECIMENTO";
 
-      if (contrato.exportacao) {
+      if (contratoData.exportacao) {
         cfopCodigo = ufDestino === ufEmitente ? "5501" : "6501";
         naturezaOperacao = "REMESSA COM FIM ESPECIFICO DE EXPORTACAO";
-      } else if (contrato.remessa_deposito) {
+      } else if (contratoData.remessa_deposito) {
         // Se for Remessa para Depósito
         cfopCodigo = ufDestino === ufEmitente ? "5905" : "6905";
         naturezaOperacao = "REMESSA PARA DEPOSITO";
@@ -259,7 +271,7 @@ export function EmitirNfeAutomaticoDialog({
         dest_cep: cleanDigits(comprador.cep, 8),
         ind_consumidor_final: 0,
         ind_presenca: 9, // Não se aplica
-        modalidade_frete: contrato.modalidade_frete ?? 9,
+        modalidade_frete: contratoData.modalidade_frete ?? 9,
         forma_pagamento: 1, // A prazo
         tipo_pagamento: "90", // Sem pagamento
         info_complementar: infoComplementar,
