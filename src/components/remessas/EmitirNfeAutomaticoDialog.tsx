@@ -271,7 +271,7 @@ export function EmitirNfeAutomaticoDialog({
         dest_cep: cleanDigits(comprador.cep, 8),
         ind_consumidor_final: 0,
         ind_presenca: 9, // Não se aplica
-        modalidade_frete: contrato.modalidade_frete ?? 9,
+        modalidade_frete: contratoData.modalidade_frete ?? 9,
         forma_pagamento: 1, // A prazo
         tipo_pagamento: "90", // Sem pagamento
         info_complementar: infoComplementar,
