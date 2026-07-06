@@ -122,7 +122,7 @@ export function EmitirNfeAutomaticoDialog({
 
       if (contrato.exportacao) {
         cfopCodigo = ufDestino === ufEmitente ? "5501" : "6501";
-        naturezaOperacao = "REMESSA DE PRODUÇÃO DO ESTABELECIMENTO COM FIM ESPECÍFICO DE EXPORTAÇÃO";
+        naturezaOperacao = "REMESSA COM FIM ESPECIFICO DE EXPORTACAO";
       } else if (contrato.remessa_deposito) {
         // Se for Remessa para Depósito
         cfopCodigo = ufDestino === ufEmitente ? "5905" : "6905";
