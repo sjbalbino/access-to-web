@@ -465,17 +465,17 @@ export function mapNotaToFocusNfe(
     // Transporte
     modalidade_frete: nota.modalidade_frete ?? 9, // Default: Sem Frete
     
-    // Transporte Detalhado
-    transp_nome: nota.transp_nome || undefined,
-    ...(nota.transp_cpf_cnpj?.replace(/\D/g, "").length === 11 
-      ? { transp_cpf: nota.transp_cpf_cnpj.replace(/\D/g, "") }
+    // Transporte Detalhado (chaves conforme API Focus NFe)
+    transportador_nome: nota.transp_nome || undefined,
+    ...(nota.transp_cpf_cnpj?.replace(/\D/g, "").length === 11
+      ? { transportador_cpf: nota.transp_cpf_cnpj.replace(/\D/g, "") }
       : nota.transp_cpf_cnpj?.replace(/\D/g, "").length === 14
-        ? { transp_cnpj: nota.transp_cpf_cnpj.replace(/\D/g, "") }
+        ? { transportador_cnpj: nota.transp_cpf_cnpj.replace(/\D/g, "") }
         : {}),
-    transp_ie: nota.transp_ie?.replace(/\D/g, "") || undefined,
-    transp_logradouro: nota.transp_endereco || undefined,
-    transp_municipio: nota.transp_cidade || undefined,
-    transp_uf: nota.transp_uf || undefined,
+    transportador_inscricao_estadual: nota.transp_ie?.replace(/\D/g, "") || undefined,
+    transportador_endereco: nota.transp_endereco || undefined,
+    transportador_municipio: nota.transp_cidade || undefined,
+    transportador_uf: nota.transp_uf || undefined,
     veiculo_placa: nota.veiculo_placa || undefined,
     veiculo_uf: nota.veiculo_uf || undefined,
     
