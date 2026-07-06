@@ -36,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeDialog";
+import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
@@ -149,11 +150,14 @@ export default function NotasFiscais() {
   const [correcao, setCorrecao] = useState("");
   const [inutForm, setInutForm] = useState({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
   const [motivoDialog, setMotivoDialog] = useState<{ open: boolean; titulo: string; mensagem: string }>({ open: false, titulo: "", mensagem: "" });
-  const [danfePreview, setDanfePreview] = useState<{ open: boolean; url: string | null; titulo: string; loading: boolean }>({ open: false, url: null, titulo: "", loading: false });
+  const [danfePreview, setDanfePreview] = useState<{ open: boolean; downloadUrl: string | null; pdfData: Uint8Array | null; titulo: string; loading: boolean }>({ open: false, downloadUrl: null, pdfData: null, titulo: "", loading: false });
 
   const handleVisualizarDanfe = async (nota: any) => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
-    setDanfePreview({ open: true, url: null, titulo: `DANFE - NF-e nº ${nota.numero || ""}`, loading: true });
+    setDanfePreview((prev) => {
+      if (prev.downloadUrl) window.URL.revokeObjectURL(prev.downloadUrl);
+      return { open: true, downloadUrl: null, pdfData: null, titulo: `DANFE - NF-e nº ${nota.numero || ""}`, loading: true };
+    });
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
         body: { ref, tipo: "danfe", notaFiscalId: nota.id },
@@ -163,25 +167,21 @@ export default function NotasFiscais() {
         throw new Error((data as any).error);
       }
       const blob = data instanceof Blob ? data : new Blob([data as ArrayBuffer], { type: "application/pdf" });
-      // Converter para data URL base64 (evita bloqueio de blob: em iframes cross-origin)
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(blob);
-      });
-      const url = base64.startsWith("data:application/pdf")
-        ? base64
-        : base64.replace(/^data:[^;]+/, "data:application/pdf");
-      setDanfePreview((prev) => ({ ...prev, url, loading: false }));
+      const buffer = await blob.arrayBuffer();
+      const pdfData = new Uint8Array(buffer);
+      const downloadUrl = window.URL.createObjectURL(blob);
+      setDanfePreview((prev) => ({ ...prev, downloadUrl, pdfData, loading: false }));
     } catch (e: any) {
       toast.error("Erro ao carregar DANFE", { description: e?.message });
-      setDanfePreview({ open: false, url: null, titulo: "", loading: false });
+      setDanfePreview({ open: false, downloadUrl: null, pdfData: null, titulo: "", loading: false });
     }
   };
 
   const closeDanfePreview = () => {
-    setDanfePreview({ open: false, url: null, titulo: "", loading: false });
+    setDanfePreview((prev) => {
+      if (prev.downloadUrl) window.URL.revokeObjectURL(prev.downloadUrl);
+      return { open: false, downloadUrl: null, pdfData: null, titulo: "", loading: false };
+    });
   };
 
   const handleConsultarRejeicao = async (nota: any) => {
@@ -789,34 +789,18 @@ export default function NotasFiscais() {
               <DialogDescription>Pré-visualização da DANFE em PDF</DialogDescription>
             </DialogHeader>
             <div className="flex-1 min-h-0 rounded-md border bg-muted overflow-hidden">
-              {danfePreview.loading || !danfePreview.url ? (
+              {danfePreview.loading || !danfePreview.pdfData ? (
                 <div className="flex items-center justify-center h-full">
                   <Spinner />
                 </div>
               ) : (
-                <object
-                  data={danfePreview.url}
-                  type="application/pdf"
-                  className="w-full h-full"
-                  aria-label="DANFE"
-                >
-                  <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Seu navegador bloqueou a visualização do PDF. Abra em uma nova aba ou baixe o arquivo.
-                    </p>
-                    <Button asChild size="sm">
-                      <a href={danfePreview.url} target="_blank" rel="noopener noreferrer">
-                        Abrir em nova aba
-                      </a>
-                    </Button>
-                  </div>
-                </object>
+                <DanfePdfViewer pdfData={danfePreview.pdfData} />
               )}
             </div>
             <DialogFooter className="gap-2">
-              {danfePreview.url && (
+              {danfePreview.downloadUrl && (
                 <Button variant="outline" asChild>
-                  <a href={danfePreview.url} download={`${danfePreview.titulo}.pdf`}>
+                  <a href={danfePreview.downloadUrl} download={`${danfePreview.titulo}.pdf`}>
                     <Download className="h-4 w-4 mr-2" />
                     Baixar
                   </a>
