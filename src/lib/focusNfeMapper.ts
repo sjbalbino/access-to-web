@@ -77,14 +77,14 @@ export interface FocusNfeNota {
   // Informações adicionais
   informacoes_adicionais_contribuinte?: string;
   informacoes_adicionais_fisco?: string;
-  // Transporte (nomes conforme API Focus NFe)
-  transportador_nome?: string;
-  transportador_cnpj?: string;
-  transportador_cpf?: string;
-  transportador_inscricao_estadual?: string;
-  transportador_endereco?: string;
-  transportador_municipio?: string;
-  transportador_uf?: string;
+  // Transporte (nomes conforme API Focus NFe / XML NF-e)
+  nome_transportador?: string;
+  cnpj_transportador?: string;
+  cpf_transportador?: string;
+  inscricao_estadual_transportador?: string;
+  endereco_transportador?: string;
+  municipio_transportador?: string;
+  uf_transportador?: string;
   veiculo_placa?: string;
   veiculo_uf?: string;
 
@@ -481,17 +481,17 @@ export function mapNotaToFocusNfe(
     // Transporte
     modalidade_frete: nota.modalidade_frete ?? 9, // Default: Sem Frete
     
-    // Transporte Detalhado (chaves conforme API Focus NFe)
-    transportador_nome: nota.transp_nome || undefined,
+    // Transporte Detalhado (chaves conforme API Focus NFe / XML NF-e)
+    nome_transportador: nota.transp_nome || undefined,
     ...(nota.transp_cpf_cnpj?.replace(/\D/g, "").length === 11
-      ? { transportador_cpf: nota.transp_cpf_cnpj.replace(/\D/g, "") }
+      ? { cpf_transportador: nota.transp_cpf_cnpj.replace(/\D/g, "") }
       : nota.transp_cpf_cnpj?.replace(/\D/g, "").length === 14
-        ? { transportador_cnpj: nota.transp_cpf_cnpj.replace(/\D/g, "") }
+        ? { cnpj_transportador: nota.transp_cpf_cnpj.replace(/\D/g, "") }
         : {}),
-    transportador_inscricao_estadual: nota.transp_ie?.replace(/\D/g, "") || undefined,
-    transportador_endereco: nota.transp_endereco || undefined,
-    transportador_municipio: nota.transp_cidade || undefined,
-    transportador_uf: nota.transp_uf || undefined,
+    inscricao_estadual_transportador: nota.transp_ie?.replace(/\D/g, "") || undefined,
+    endereco_transportador: nota.transp_endereco || undefined,
+    municipio_transportador: nota.transp_cidade || undefined,
+    uf_transportador: nota.transp_uf || undefined,
     veiculo_placa: nota.veiculo_placa || undefined,
     veiculo_uf: nota.veiculo_uf || undefined,
     
