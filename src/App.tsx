@@ -52,6 +52,7 @@ import ContasBancarias from "./pages/ContasBancarias";
 import RelatoriosIR from "./pages/RelatoriosIR";
 import ConciliacaoBancaria from "./pages/ConciliacaoBancaria";
 import NotFound from "./pages/NotFound";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 
 
@@ -65,6 +66,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <TabsProvider>
+            <ErrorBoundary>
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
@@ -117,6 +119,7 @@ const App = () => (
               <Route path="/selecionar-empresa" element={<ProtectedRoute><SelecionarEmpresa /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </ErrorBoundary>
           </TabsProvider>
         </AuthProvider>
       </BrowserRouter>
