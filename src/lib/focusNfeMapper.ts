@@ -87,6 +87,14 @@ export interface FocusNfeNota {
   transportador_uf?: string;
   veiculo_placa?: string;
   veiculo_uf?: string;
+
+  // Totais da Reforma Tributária (grupo W02) — necessários para destaque na DANFE
+  is_valor_total?: number;
+  ibs_cbs_base_calculo?: number;
+  ibs_uf_valor_total?: number;
+  ibs_mun_valor_total?: number;
+  ibs_valor_total?: number;
+  cbs_valor_total?: number;
 }
 
 
@@ -418,6 +426,8 @@ export function mapNotaToFocusNfe(
   
   // Nome do emitente: usar nome do produtor ou nome da granja
   const nomeEmitente = inscricao.produtorNome || inscricao.granjaNome || "Produtor Rural";
+  const itemsMapeados = itens.map((item, index) => mapItemToFocusNfe(item, index + 1, emitente?.crt, emitenteIsCpf));
+  const totalReformaTributaria = calcularTotaisReformaTributaria(itemsMapeados);
   
   const focusNota: FocusNfeNota = {
     natureza_operacao: nota.natureza_operacao,
@@ -489,11 +499,15 @@ export function mapNotaToFocusNfe(
     forma_pagamento: nota.forma_pagamento ?? 0,
     
     // Itens
-    items: itens.map((item, index) => mapItemToFocusNfe(item, index + 1, emitente?.crt, emitenteIsCpf)),
+    items: itemsMapeados,
     
     // Informações adicionais
     informacoes_adicionais_contribuinte: nota.info_complementar || undefined,
     informacoes_adicionais_fisco: nota.info_fisco || undefined,
+
+    // Totais da Reforma Tributária (grupo W02). Sem estes totais a API pode gerar
+    // os impostos nos itens, mas a DANFE não exibe/destaca IBS e CBS nos totais.
+    ...totalReformaTributaria,
 
   };
   
@@ -543,6 +557,43 @@ function calcularAliquotaEfetiva(aliquota: number, percentualReducao: number): n
 
 function calcularValorTributo(base: number, aliquotaEfetiva: number): number {
   return Number(((base * aliquotaEfetiva) / 100).toFixed(2));
+}
+
+function roundCurrency(value: number): number {
+  return Number(value.toFixed(2));
+}
+
+function sumOptionalNumbers(items: FocusNfeItem[], getter: (item: FocusNfeItem) => number | undefined): number {
+  return roundCurrency(
+    items.reduce((total, item) => {
+      const value = getter(item);
+      return Number.isFinite(value) ? total + Number(value) : total;
+    }, 0)
+  );
+}
+
+function calcularTotaisReformaTributaria(items: FocusNfeItem[]): Partial<FocusNfeNota> {
+  const itensComIbsCbs = items.filter((item) => !!item.ibs_cbs_situacao_tributaria);
+
+  if (itensComIbsCbs.length === 0) {
+    return {};
+  }
+
+  const baseTotal = sumOptionalNumbers(itensComIbsCbs, (item) => item.ibs_cbs_base_calculo);
+  const ibsUfTotal = sumOptionalNumbers(itensComIbsCbs, (item) => item.ibs_uf_valor);
+  const ibsMunTotal = sumOptionalNumbers(itensComIbsCbs, (item) => item.ibs_mun_valor);
+  const ibsTotal = roundCurrency(ibsUfTotal + ibsMunTotal);
+  const cbsTotal = sumOptionalNumbers(itensComIbsCbs, (item) => item.cbs_valor);
+  const isTotal = sumOptionalNumbers(items, (item) => item.is_valor);
+
+  return {
+    ...(isTotal > 0 ? { is_valor_total: isTotal } : {}),
+    ibs_cbs_base_calculo: baseTotal,
+    ibs_uf_valor_total: ibsUfTotal,
+    ibs_mun_valor_total: ibsMunTotal,
+    ibs_valor_total: ibsTotal,
+    cbs_valor_total: cbsTotal,
+  };
 }
 
 function mapItemToFocusNfe(
