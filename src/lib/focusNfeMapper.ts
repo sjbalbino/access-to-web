@@ -482,7 +482,7 @@ export function mapNotaToFocusNfe(
     forma_pagamento: nota.forma_pagamento ?? 0,
     
     // Itens
-    items: itens.map((item, index) => mapItemToFocusNfe(item, index + 1, emitente?.crt)),
+    items: itens.map((item, index) => mapItemToFocusNfe(item, index + 1, emitente?.crt, emitenteIsCpf)),
     
     // Informações adicionais
     informacoes_adicionais_contribuinte: nota.info_complementar || undefined,
