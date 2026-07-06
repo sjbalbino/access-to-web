@@ -187,6 +187,71 @@ export default function RemessasVendaForm() {
     }
   }, [transportadoraId, transportadoras, setValue]);
 
+  // Auto-montar Observações com o mesmo texto que irá para Informações Complementares da NFe
+  const watchedFormAll = watch();
+  useEffect(() => {
+    if (!contrato) return;
+    const transp = transportadoraId && transportadoras
+      ? transportadoras.find((t) => t.id === transportadoraId)
+      : null;
+    const texto = buildInfoComplementarRemessa({
+      contrato: {
+        numero: contrato.numero,
+        numero_contrato_comprador: (contrato as any).numero_contrato_comprador,
+        observacoes: contrato.observacoes,
+        local_entrega_nome: contrato.local_entrega_nome,
+        local_entrega_cnpj_cpf: contrato.local_entrega_cnpj_cpf,
+        local_entrega_ie: contrato.local_entrega_ie,
+        local_entrega_logradouro: contrato.local_entrega_logradouro,
+        local_entrega_numero: contrato.local_entrega_numero,
+        local_entrega_bairro: contrato.local_entrega_bairro,
+        local_entrega_cidade: contrato.local_entrega_cidade,
+        local_entrega_uf: contrato.local_entrega_uf,
+      },
+      remessa: {
+        codigo: proximoCodigo || null,
+        romaneio: proximoRomaneio || null,
+        motorista: watchedFormAll.motorista || null,
+        motorista_cpf: watchedFormAll.motorista_cpf || null,
+        placa: watchedFormAll.placa || null,
+        uf_placa: watchedFormAll.uf_placa || null,
+      },
+      transportadora: transp
+        ? { nome: transp.nome, cpf_cnpj: transp.cpf_cnpj, inscricao_estadual: transp.inscricao_estadual }
+        : null,
+      localEntrega: {
+        local_entrega_nome: watchedFormAll.local_entrega_nome,
+        local_entrega_cnpj_cpf: watchedFormAll.local_entrega_cnpj_cpf,
+        local_entrega_ie: watchedFormAll.local_entrega_ie,
+        local_entrega_logradouro: watchedFormAll.local_entrega_logradouro,
+        local_entrega_numero: watchedFormAll.local_entrega_numero,
+        local_entrega_bairro: watchedFormAll.local_entrega_bairro,
+        local_entrega_cidade: watchedFormAll.local_entrega_cidade,
+        local_entrega_uf: watchedFormAll.local_entrega_uf,
+      },
+    });
+    setValue("observacoes", texto);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    contrato,
+    transportadoraId,
+    transportadoras,
+    proximoCodigo,
+    proximoRomaneio,
+    watchedFormAll.motorista,
+    watchedFormAll.motorista_cpf,
+    watchedFormAll.placa,
+    watchedFormAll.uf_placa,
+    watchedFormAll.local_entrega_nome,
+    watchedFormAll.local_entrega_cnpj_cpf,
+    watchedFormAll.local_entrega_ie,
+    watchedFormAll.local_entrega_logradouro,
+    watchedFormAll.local_entrega_numero,
+    watchedFormAll.local_entrega_bairro,
+    watchedFormAll.local_entrega_cidade,
+    watchedFormAll.local_entrega_uf,
+  ]);
+
   // Calculate peso_liquido (Kgs da Remessa)
   useEffect(() => {
     const liquido = (pesoBruto || 0) - (pesoTara || 0);
