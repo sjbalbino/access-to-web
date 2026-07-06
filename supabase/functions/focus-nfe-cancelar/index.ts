@@ -191,6 +191,17 @@ serve(async (req) => {
         } else {
           console.log("compras_cereais canceladas para NFe cancelada");
         }
+
+        // 4. Cancelar remessas de venda vinculadas e desvincular a NFe (libera saldo do contrato)
+        const { error: updRemessaError } = await supabase
+          .from("remessas_venda")
+          .update({ status: "cancelada", nota_fiscal_id: null })
+          .eq("nota_fiscal_id", notaFiscalId);
+        if (updRemessaError) {
+          console.error("Erro ao cancelar remessas_venda:", updRemessaError);
+        } else {
+          console.log("remessas_venda canceladas e desvinculadas para NFe cancelada");
+        }
       }
     }
 
