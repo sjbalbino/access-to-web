@@ -456,6 +456,9 @@ export default function NotasFiscais() {
                           </Button>
                           {(nota.status === "autorizado" || nota.status === "autorizada") && (
                             <>
+                              <Button variant="ghost" size="icon" onClick={() => handleVisualizarDanfe(nota)} title="Visualizar DANFE" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950">
+                                <FileSearch className="h-4 w-4" />
+                              </Button>
                               <Button variant="ghost" size="icon" onClick={() => handleDownload(nota, "danfe")} title="Download DANFE" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950">
                                 <Download className="h-4 w-4" />
                               </Button>
