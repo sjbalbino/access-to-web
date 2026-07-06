@@ -58,7 +58,7 @@ export function DanfePdfViewer({ pdfData }: DanfePdfViewerProps) {
           context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
           container.appendChild(canvas);
 
-          await page.render({ canvasContext: context, viewport }).promise;
+          await page.render({ canvas, canvasContext: context, viewport }).promise;
         }
       } catch (error) {
         if (!cancelled) {
