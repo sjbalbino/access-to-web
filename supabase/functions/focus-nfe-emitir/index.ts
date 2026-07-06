@@ -72,13 +72,13 @@ function ensureReformaTributariaTotals(notaData: Record<string, unknown>) {
   const cbsTotal = sumNumbers(itensComIbsCbs, "cbs_valor");
   const isTotal = sumNumbers(items, "is_valor");
 
-  notaData.ibs_cbs_base_calculo = firstNumber(notaData.ibs_cbs_base_calculo, baseTotal);
-  notaData.ibs_uf_valor_total = firstNumber(notaData.ibs_uf_valor_total, ibsUfTotal);
-  notaData.ibs_mun_valor_total = firstNumber(notaData.ibs_mun_valor_total, ibsMunTotal);
-  notaData.ibs_valor_total = firstNumber(notaData.ibs_valor_total, roundCurrency(ibsUfTotal + ibsMunTotal));
-  notaData.cbs_valor_total = firstNumber(notaData.cbs_valor_total, cbsTotal);
+  notaData.ibs_cbs_base_calculo = baseTotal;
+  notaData.ibs_uf_valor_total = ibsUfTotal;
+  notaData.ibs_mun_valor_total = ibsMunTotal;
+  notaData.ibs_valor_total = roundCurrency(ibsUfTotal + ibsMunTotal);
+  notaData.cbs_valor_total = cbsTotal;
   if (isTotal > 0) {
-    notaData.is_valor_total = firstNumber(notaData.is_valor_total, isTotal);
+    notaData.is_valor_total = isTotal;
   }
 }
 
