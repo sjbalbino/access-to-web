@@ -602,6 +602,28 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
             </CardContent>
           </Card>
 
+          {/* Card: Prévia das Informações Complementares que irão na NFe */}
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Informações Complementares (prévia do que vai sair na NFe)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={infoComplementarPreview}
+                readOnly
+                rows={5}
+                className="bg-muted font-mono text-xs"
+                tabIndex={-1}
+                placeholder="Sem informações complementares..."
+              />
+            </CardContent>
+          </Card>
+
+
+
           {/* Card 4: Observações */}
           <Card className="border-muted-foreground/20 bg-muted/30">
             <CardHeader className="py-3">
