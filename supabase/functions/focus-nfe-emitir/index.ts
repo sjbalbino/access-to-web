@@ -49,6 +49,39 @@ const hasAnyNonZeroNumber = (...values: unknown[]) => values.some((value) => {
   return Number.isFinite(numberValue) && numberValue !== 0;
 });
 
+const roundCurrency = (value: number) => Number(value.toFixed(2));
+
+const sumNumbers = (items: Record<string, unknown>[], field: string) => roundCurrency(
+  items.reduce((total, item) => {
+    const value = Number(item[field]);
+    return Number.isFinite(value) ? total + value : total;
+  }, 0),
+);
+
+function ensureReformaTributariaTotals(notaData: Record<string, unknown>) {
+  const items = Array.isArray(notaData.items)
+    ? (notaData.items as Record<string, unknown>[])
+    : [];
+  const itensComIbsCbs = items.filter((item) => item.ibs_cbs_situacao_tributaria);
+
+  if (itensComIbsCbs.length === 0) return;
+
+  const baseTotal = sumNumbers(itensComIbsCbs, "ibs_cbs_base_calculo");
+  const ibsUfTotal = sumNumbers(itensComIbsCbs, "ibs_uf_valor");
+  const ibsMunTotal = sumNumbers(itensComIbsCbs, "ibs_mun_valor");
+  const cbsTotal = sumNumbers(itensComIbsCbs, "cbs_valor");
+  const isTotal = sumNumbers(items, "is_valor");
+
+  notaData.ibs_cbs_base_calculo = baseTotal;
+  notaData.ibs_uf_valor_total = ibsUfTotal;
+  notaData.ibs_mun_valor_total = ibsMunTotal;
+  notaData.ibs_valor_total = roundCurrency(ibsUfTotal + ibsMunTotal);
+  notaData.cbs_valor_total = cbsTotal;
+  if (isTotal > 0) {
+    notaData.is_valor_total = isTotal;
+  }
+}
+
 function normalizeReformaTributariaPayload(notaData: Record<string, unknown>) {
   const items = Array.isArray(notaData.items) ? notaData.items : [];
 
@@ -107,6 +140,8 @@ function normalizeReformaTributariaPayload(notaData: Record<string, unknown>) {
       item.is_base_calculo = firstNumber(item.is_base_calculo, item.valor_bruto);
     }
   });
+
+  ensureReformaTributariaTotals(notaData);
 }
 
 serve(async (req) => {
