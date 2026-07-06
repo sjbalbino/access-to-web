@@ -9,7 +9,7 @@ export const CST_IBS_CBS = [
   { value: '010', label: '010 - Tributação com alíquotas uniformes - Setor financeiro' },
   { value: '011', label: '011 - Tributação com alíquotas uniformes reduzidas em 60%' },
   { value: '012', label: '012 - Tributação com alíquotas uniformes reduzidas em 30%' },
-  { value: '200', label: '200 - Alíquota zero' },
+  { value: '200', label: '200 - Alíquota reduzida' },
   { value: '210', label: '210 - Redução de alíquota' },
   { value: '220', label: '220 - Alíquota fixa por quantidade' },
   { value: '221', label: '221 - Alíquota fixa proporcional' },
@@ -50,7 +50,7 @@ export const CST_IS = [
  */
 export function cstIbsCbsTemTributacao(cst: string | null | undefined): boolean {
   if (!cst) return false;
-  const cstsTributados = ['000', '010', '011', '012', '210', '220', '221', '222', '300', '510', '600', '700', '800'];
+  const cstsTributados = ['000', '010', '011', '012', '200', '210', '220', '221', '222', '300', '510', '515', '600', '700', '800'];
   return cstsTributados.includes(cst);
 }
 
