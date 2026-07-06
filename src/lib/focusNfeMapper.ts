@@ -77,13 +77,14 @@ export interface FocusNfeNota {
   // Informações adicionais
   informacoes_adicionais_contribuinte?: string;
   informacoes_adicionais_fisco?: string;
-  // Transporte
-  transp_nome?: string;
-  transp_cpf_cnpj?: string;
-  transp_ie?: string;
-  transp_logradouro?: string;
-  transp_municipio?: string;
-  transp_uf?: string;
+  // Transporte (nomes conforme API Focus NFe)
+  transportador_nome?: string;
+  transportador_cnpj?: string;
+  transportador_cpf?: string;
+  transportador_inscricao_estadual?: string;
+  transportador_endereco?: string;
+  transportador_municipio?: string;
+  transportador_uf?: string;
   veiculo_placa?: string;
   veiculo_uf?: string;
 }
