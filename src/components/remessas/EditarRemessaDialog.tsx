@@ -50,10 +50,11 @@ interface EditarRemessaDialogProps {
   precoKg: number;
   exigePh?: boolean;
   localEntrega?: LocalEntrega;
+  contrato?: ContratoVenda | null;
   onClose: () => void;
 }
 
-export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEntrega, onClose }: EditarRemessaDialogProps) {
+export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEntrega, contrato, onClose }: EditarRemessaDialogProps) {
   const { data: silos } = useSilos();
   const { transportadoras } = useTransportadoras();
   const updateRemessa = useUpdateRemessaVenda();
