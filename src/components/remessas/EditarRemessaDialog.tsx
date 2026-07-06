@@ -149,6 +149,32 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
     return "carregando";
   };
 
+  // Prévia das Informações Complementares que serão gravadas na NFe (reativa ao form)
+  const transportadoraSelecionada = transportadoraId
+    ? transportadoras?.find((t) => t.id === transportadoraId)
+    : null;
+
+  const infoComplementarPreview = buildInfoComplementarRemessa({
+    contrato: contrato ?? null,
+    remessa: remessa
+      ? {
+          ...remessa,
+          motorista: motorista || null,
+          motorista_cpf: motoristaCpf || null,
+          placa: placa || null,
+          uf_placa: ufPlaca || null,
+        }
+      : null,
+    transportadora: transportadoraSelecionada
+      ? {
+          nome: transportadoraSelecionada.nome,
+          cpf_cnpj: transportadoraSelecionada.cpf_cnpj,
+          inscricao_estadual: transportadoraSelecionada.inscricao_estadual,
+        }
+      : null,
+    localEntrega,
+  });
+
   const handleSalvar = async () => {
     if (!remessa || isReadOnly) return;
 
