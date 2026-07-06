@@ -36,7 +36,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
-import { formatCpf, formatPlaca, unformatDocument, validateCnpj, validateCpf } from "@/lib/formatters";
+import { formatCpf, formatCpfCnpj, formatPlaca, unformatDocument, validateCnpj, validateCpf } from "@/lib/formatters";
 import { toast } from "sonner";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
