@@ -599,24 +599,19 @@ function mapItemToFocusNfe(
   // Reforma Tributária (NT 2025.002) - IBS/CBS/IS
   if (temIbsCbs) {
     const aliqIbsUf = item.aliq_ibs || 0;
-    // Quando a alíquota efetiva é 0 (imunidade/redução total — típico para produtor rural),
-    // a SEFAZ exige o grupo de redução de alíquota (pRedAliq + pAliqEfet).
-    const precisaReducaoIbs = aliqIbsUf === 0;
-
+    // CST 200 (Redução de Alíquota) e demais CSTs de redução exigem SEMPRE o grupo
+    // pRedAliq + pAliqEfet, mesmo quando não há redução real (percentual = 0).
+    // Enviamos pRedAliq=0 e pAliqEfet = aliq nominal para satisfazer o schema.
     focusItem.ibs_cbs_situacao_tributaria = cstIbsCbs;
     focusItem.ibs_cbs_classificacao_tributaria = classTribIbsCbs;
     focusItem.ibs_cbs_base_calculo = baseIbsCbs;
     focusItem.ibs_uf_aliquota = aliqIbsUf;
-    if (precisaReducaoIbs) {
-      focusItem.ibs_uf_percentual_reducao_aliquota = 100;
-      focusItem.ibs_uf_aliquota_efetiva = 0;
-    }
+    focusItem.ibs_uf_percentual_reducao_aliquota = 0;
+    focusItem.ibs_uf_aliquota_efetiva = aliqIbsUf;
     focusItem.ibs_uf_valor = item.valor_ibs || 0;
     focusItem.ibs_mun_aliquota = 0;
-    if (precisaReducaoIbs) {
-      focusItem.ibs_mun_percentual_reducao_aliquota = 100;
-      focusItem.ibs_mun_aliquota_efetiva = 0;
-    }
+    focusItem.ibs_mun_percentual_reducao_aliquota = 0;
+    focusItem.ibs_mun_aliquota_efetiva = 0;
     focusItem.ibs_mun_valor = 0;
     focusItem.ibs_valor_total = item.valor_ibs || 0;
     focusItem.cbs_aliquota = item.aliq_cbs || 0;
