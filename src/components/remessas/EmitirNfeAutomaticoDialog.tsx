@@ -201,33 +201,31 @@ export function EmitirNfeAutomaticoDialog({
       const valorTotal = remessa.valor_nota || (remessa.kg_nota || 0) * (contrato.preco_kg || 0);
       const kgNota = remessa.kg_nota || remessa.kg_remessa || 0;
 
-      // Montar informações complementares
-      const infoComplementarParts: string[] = [];
-      infoComplementarParts.push(`Contrato de Venda nº ${contrato.numero}${contrato.numero_contrato_comprador ? ` - Contrato Comprador: ${contrato.numero_contrato_comprador}` : ""}`);
-      infoComplementarParts.push(`Romaneio: ${remessa.romaneio || remessa.codigo}`);
-      
-      // Adicionar Local de Entrega se houver
-      const localEntrega = contrato.local_entrega_nome || remessa.local_entrega_nome;
-      if (localEntrega) {
-        let localEntregaStr = `Local de Entrega: ${localEntrega}`;
-        const cnpjCpfLE = contrato.local_entrega_cnpj_cpf || remessa.local_entrega_cnpj_cpf;
-        const ieLE = contrato.local_entrega_ie || remessa.local_entrega_ie;
-        if (cnpjCpfLE) localEntregaStr += ` - CNPJ/CPF: ${cnpjCpfLE}`;
-        if (ieLE) localEntregaStr += ` - IE: ${ieLE}`;
-        const logradouroLE = contrato.local_entrega_logradouro || remessa.local_entrega_logradouro;
-        const numeroLE = contrato.local_entrega_numero || remessa.local_entrega_numero;
-        const bairroLE = contrato.local_entrega_bairro || remessa.local_entrega_bairro;
-        const enderecoParts = [logradouroLE, numeroLE, bairroLE].filter(Boolean).join(", ");
-        if (enderecoParts) localEntregaStr += ` - ${enderecoParts}`;
-        const cidadeUf = [contrato.local_entrega_cidade || remessa.local_entrega_cidade, contrato.local_entrega_uf || remessa.local_entrega_uf].filter(Boolean).join("/");
-        if (cidadeUf) localEntregaStr += ` - ${cidadeUf}`;
-        infoComplementarParts.push(localEntregaStr);
-      }
-      
-      // Adicionar Observações do contrato se houver
-      if (contrato.observacoes) {
-        infoComplementarParts.push(`Obs: ${contrato.observacoes}`);
-      }
+      // Montar informações complementares (função utilitária compartilhada com o dialog de edição)
+      const infoComplementar = buildInfoComplementarRemessa({
+        contrato,
+        remessa,
+        transportadora,
+      });
+
+      // Definir dados de transporte da DANFE:
+      // - Se houver transportadora cadastrada: usar dados dela
+      // - Se NÃO houver, mas houver motorista: usar motorista+CPF como transportador
+      // - Caso contrário: null
+      const transpNome = transportadora?.nome || remessa.motorista || null;
+      const transpDocLimpo = transportadora?.cpf_cnpj
+        ? cleanDigits(transportadora.cpf_cnpj, 14)
+        : remessa.motorista_cpf
+          ? cleanDigits(remessa.motorista_cpf, 11)
+          : null;
+      const transpIe = transportadora?.inscricao_estadual
+        ? cleanDigits(transportadora.inscricao_estadual, 14)
+        : null;
+      const transpEndereco = transportadora?.logradouro
+        ? `${transportadora.logradouro}, ${transportadora.numero || "S/N"}`
+        : null;
+      const transpCidade = transportadora?.cidade || null;
+      const transpUf = transportadora?.uf || null;
 
       const notaFiscalData = {
         emitente_id: emitente.id,
