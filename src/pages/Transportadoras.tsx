@@ -173,10 +173,21 @@ export default function Transportadoras() {
   const handleSave = async () => {
     if (!formData.nome.trim()) return;
 
-    // Validar CNPJ se informado
+    // Validar CPF/CNPJ se informado
     if (formData.cpf_cnpj && formData.cpf_cnpj.length > 0) {
-      if (!validateCnpj(formData.cpf_cnpj)) {
-        toast.error("CNPJ inválido!");
+      const clean = formData.cpf_cnpj.replace(/\D/g, "");
+      if (clean.length === 11) {
+        if (!validateCpf(clean)) {
+          toast.error("CPF inválido!");
+          return;
+        }
+      } else if (clean.length === 14) {
+        if (!validateCnpj(clean)) {
+          toast.error("CNPJ inválido!");
+          return;
+        }
+      } else {
+        toast.error("CPF/CNPJ inválido!");
         return;
       }
     }
