@@ -85,11 +85,12 @@ export default function Transportadoras() {
     t.cidade?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleCnpjBlur = async (cnpj: string) => {
-    const cleanCnpj = cnpj.replace(/\D/g, "");
-    if (cleanCnpj.length !== 14) return;
-    
-    const data = await fetchCnpj(cnpj);
+  const handleCnpjBlur = async (valor: string) => {
+    const cleanDoc = valor.replace(/\D/g, "");
+    // Somente CNPJ tem consulta pública
+    if (cleanDoc.length !== 14) return;
+
+    const data = await fetchCnpj(valor);
     if (data) {
       setFormData((prev) => ({
         ...prev,
