@@ -31,7 +31,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban, RefreshCw, Send, AlertCircle, Copy } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban, RefreshCw, Send, AlertCircle, Copy, FileSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
@@ -149,6 +149,32 @@ export default function NotasFiscais() {
   const [correcao, setCorrecao] = useState("");
   const [inutForm, setInutForm] = useState({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
   const [motivoDialog, setMotivoDialog] = useState<{ open: boolean; titulo: string; mensagem: string }>({ open: false, titulo: "", mensagem: "" });
+  const [danfePreview, setDanfePreview] = useState<{ open: boolean; url: string | null; titulo: string; loading: boolean }>({ open: false, url: null, titulo: "", loading: false });
+
+  const handleVisualizarDanfe = async (nota: any) => {
+    const ref = nota.uuid_api || `nfe_${nota.id}`;
+    setDanfePreview({ open: true, url: null, titulo: `DANFE - NF-e nº ${nota.numero || ""}`, loading: true });
+    try {
+      const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
+        body: { ref, tipo: "danfe", notaFiscalId: nota.id },
+      });
+      if (error) throw new Error(error.message);
+      if (data && typeof data === "object" && "error" in data) {
+        throw new Error((data as any).error);
+      }
+      const blob = data instanceof Blob ? data : new Blob([data as ArrayBuffer], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      setDanfePreview((prev) => ({ ...prev, url, loading: false }));
+    } catch (e: any) {
+      toast.error("Erro ao carregar DANFE", { description: e?.message });
+      setDanfePreview({ open: false, url: null, titulo: "", loading: false });
+    }
+  };
+
+  const closeDanfePreview = () => {
+    if (danfePreview.url) window.URL.revokeObjectURL(danfePreview.url);
+    setDanfePreview({ open: false, url: null, titulo: "", loading: false });
+  };
 
   const handleConsultarRejeicao = async (nota: any) => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
@@ -430,6 +456,9 @@ export default function NotasFiscais() {
                           </Button>
                           {(nota.status === "autorizado" || nota.status === "autorizada") && (
                             <>
+                              <Button variant="ghost" size="icon" onClick={() => handleVisualizarDanfe(nota)} title="Visualizar DANFE" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950">
+                                <FileSearch className="h-4 w-4" />
+                              </Button>
                               <Button variant="ghost" size="icon" onClick={() => handleDownload(nota, "danfe")} title="Download DANFE" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950">
                                 <Download className="h-4 w-4" />
                               </Button>
@@ -737,6 +766,43 @@ export default function NotasFiscais() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setMotivoDialog({ open: false, titulo: "", mensagem: "" })}>Fechar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Visualização da DANFE */}
+        <Dialog open={danfePreview.open} onOpenChange={(open) => { if (!open) closeDanfePreview(); }}>
+          <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-4">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileSearch className="h-5 w-5 text-primary" />
+                {danfePreview.titulo}
+              </DialogTitle>
+              <DialogDescription>Pré-visualização da DANFE em PDF</DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 min-h-0 rounded-md border bg-muted overflow-hidden">
+              {danfePreview.loading || !danfePreview.url ? (
+                <div className="flex items-center justify-center h-full">
+                  <Spinner />
+                </div>
+              ) : (
+                <iframe
+                  src={danfePreview.url}
+                  title="DANFE"
+                  className="w-full h-full"
+                />
+              )}
+            </div>
+            <DialogFooter className="gap-2">
+              {danfePreview.url && (
+                <Button variant="outline" asChild>
+                  <a href={danfePreview.url} download={`${danfePreview.titulo}.pdf`}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar
+                  </a>
+                </Button>
+              )}
+              <Button variant="outline" onClick={closeDanfePreview}>Fechar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
