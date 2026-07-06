@@ -52,6 +52,7 @@ import ContasBancarias from "./pages/ContasBancarias";
 import RelatoriosIR from "./pages/RelatoriosIR";
 import ConciliacaoBancaria from "./pages/ConciliacaoBancaria";
 import NotFound from "./pages/NotFound";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 
 
