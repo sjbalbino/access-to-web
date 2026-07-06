@@ -323,17 +323,17 @@ export default function Transportadoras() {
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* CNPJ primeiro */}
+            {/* CPF/CNPJ primeiro */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cpf_cnpj">CNPJ</Label>
+                <Label htmlFor="cpf_cnpj">CPF/CNPJ</Label>
                 <div className="relative">
                   <Input
                     id="cpf_cnpj"
-                    value={formData.cpf_cnpj ? formatCnpj(formData.cpf_cnpj) : ""}
-                    onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value.replace(/\D/g, "") })}
+                    value={formatCpfCnpj(formData.cpf_cnpj)}
+                    onChange={(e) => setFormData({ ...formData, cpf_cnpj: e.target.value.replace(/\D/g, "").slice(0, 14) })}
                     onBlur={(e) => handleCnpjBlur(e.target.value)}
-                    placeholder="00.000.000/0000-00"
+                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
                     maxLength={18}
                   />
                   {cnpjLoading && (
