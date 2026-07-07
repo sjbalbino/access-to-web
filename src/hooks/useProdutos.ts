@@ -43,6 +43,7 @@ export type Produto = {
   cclass_trib_ibs: string | null;
   cclass_trib_cbs: string | null;
   conta_gerencial_id?: string | null;
+  grupo_id?: string | null;
 };
 
 export type ProdutoInsert = Omit<Produto, 'id' | 'created_at' | 'updated_at'>;

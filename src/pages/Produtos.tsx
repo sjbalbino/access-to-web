@@ -209,6 +209,7 @@ export default function Produtos() {
       ativo: item.ativo,
       codigo_barras: item.codigo_barras || '',
       grupo: item.grupo || item.grupo_vinculado?.nome || null,
+      grupo_id: item.grupo_id || item.grupo_vinculado?.id || null,
       artigo_nfe: item.artigo_nfe || '',
       preco_prazo: item.preco_prazo || 0,
       estoque_maximo: item.estoque_maximo || 0,
@@ -434,8 +435,9 @@ export default function Produtos() {
                           setFormData({
                             ...formData,
                             grupo: value || null,
+                            grupo_id: grupoSel?.id ?? null,
                             conta_gerencial_id: grupoSel?.conta_gerencial_id ?? formData.conta_gerencial_id,
-                          });
+                          } as any);
                         }}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
