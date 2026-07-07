@@ -73,6 +73,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [previewPayload, setPreviewPayload] = useState<RelatorioPayload | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  useEffect(() => {
+    if (open) loadPdfBrand().catch(() => {});
+  }, [open]);
+
+
   const { data: safras } = useSafras();
   const { data: produtos } = useProdutos();
   const { data: silos } = useSilos();
