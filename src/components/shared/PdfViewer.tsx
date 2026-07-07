@@ -112,7 +112,7 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
           canvases.push(canvas);
         }
       } finally {
-        await pdf.destroy();
+        await pdf.cleanup(true);
       }
 
       return canvases;
