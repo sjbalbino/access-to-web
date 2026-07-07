@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Plus, Pencil, Trash2, AlertCircle, Search } from 'lucide-react';
 import { useColheitas, useCreateColheita, useUpdateColheita, useDeleteColheita, ColheitaInput } from '@/hooks/useColheitas';
 import { useSilos } from '@/hooks/useSilos';
+import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
 import { usePlacas } from '@/hooks/usePlacas';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { useTabelaUmidades } from '@/hooks/useTabelaUmidades';
