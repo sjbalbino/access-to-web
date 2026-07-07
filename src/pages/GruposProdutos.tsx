@@ -43,6 +43,7 @@ export default function GruposProdutos() {
     bens_benfeitorias: false,
     insumos: false,
     venda_producao: false,
+    cereais: false,
   });
 
   const filteredGrupos = grupos?.filter(g => 
