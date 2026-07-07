@@ -499,6 +499,14 @@ export default function Usuarios() {
                         Alterar
                       </Button>
                       <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSenhaUser(user)}
+                      >
+                        <KeyRound className="h-4 w-4 mr-1" />
+                        Senha
+                      </Button>
+                      <Button
                         variant={user.ativo ? "destructive" : "default"}
                         size="sm"
                         onClick={() =>
