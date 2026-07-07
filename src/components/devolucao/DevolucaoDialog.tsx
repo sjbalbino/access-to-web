@@ -48,7 +48,8 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
   // Dados de referência
   const { data: safras } = useSafras();
-  const { data: produtos } = useProdutosSementes();
+  const { data: produtosAll } = useProdutos();
+  const produtos = produtosAll?.filter((p: any) => p.ativo);
   const { data: silos } = useSilos();
   const { data: inscricoesSocio } = useInscricoesSocio();
   
