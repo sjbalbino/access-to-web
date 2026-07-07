@@ -13,9 +13,8 @@ interface Props {
 }
 
 export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
-  const objectRef = useRef<HTMLObjectElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   const pdfBlob = useMemo(() => {
     if (!payload) return null;
@@ -23,20 +22,15 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
   }, [payload]);
 
   useEffect(() => {
-    if (!pdfBlob || !payload) {
+    if (!pdfBlob) {
       setPdfUrl(null);
-      setDataUrl(null);
       return;
     }
     const url = URL.createObjectURL(pdfBlob);
     setPdfUrl(url);
-    try {
-      setDataUrl(payload.doc.output("datauristring"));
-    } catch {
-      setDataUrl(null);
-    }
     return () => URL.revokeObjectURL(url);
-  }, [pdfBlob, payload]);
+  }, [pdfBlob]);
+
 
   const handleBaixarPdf = () => {
     if (!payload || !pdfBlob) return;
@@ -59,9 +53,8 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
   };
 
   const handleImprimir = () => {
-    const obj = objectRef.current as any;
     try {
-      const win = obj?.contentWindow || obj?.contentDocument?.defaultView;
+      const win = iframeRef.current?.contentWindow;
       if (win) {
         win.focus();
         win.print();
@@ -76,6 +69,7 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
       });
     }
   };
+
 
   const handleExportarExcel = () => {
     if (!payload) return;
@@ -136,21 +130,15 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
           </div>
         </DialogHeader>
         <div className="flex-1 bg-muted/30 overflow-hidden">
-          {dataUrl || pdfUrl ? (
-            <object
-              ref={objectRef}
-              data={(dataUrl || pdfUrl) as string}
-              type="application/pdf"
-              className="w-full h-full"
-            >
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3 p-6 text-center">
-                <p>Seu navegador bloqueou a prévia do PDF.</p>
-                <Button onClick={handleBaixarPdf}>
-                  <Download className="h-4 w-4 mr-1" /> Baixar PDF
-                </Button>
-              </div>
-            </object>
+          {pdfUrl ? (
+            <iframe
+              ref={iframeRef}
+              src={pdfUrl}
+              title="Prévia do relatório"
+              className="w-full h-full border-0"
+            />
           ) : (
+
             <div className="flex items-center justify-center h-full text-muted-foreground">
               Carregando prévia…
             </div>
