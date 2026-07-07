@@ -12,6 +12,23 @@ interface Body {
   password: string;
 }
 
+function json(status: number, body: unknown) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function traduzirErro(msg: string): string {
+  const m = (msg || "").toLowerCase();
+  if (m.includes("different from the old")) return "A nova senha deve ser diferente da senha atual.";
+  if (m.includes("pwned") || m.includes("leaked") || m.includes("compromised"))
+    return "Esta senha foi encontrada em vazamentos de dados. Escolha uma senha mais segura.";
+  if (m.includes("weak") || m.includes("password should")) return "Senha fraca. Use uma senha mais forte.";
+  if (m.includes("same")) return "A nova senha deve ser diferente da senha atual.";
+  return msg || "Erro ao alterar senha.";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -19,12 +36,7 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader) return json(200, { error: "Não autorizado" });
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -39,12 +51,7 @@ serve(async (req) => {
       error: userError,
     } = await supabaseUser.auth.getUser();
 
-    if (userError || !caller) {
-      return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (userError || !caller) return json(200, { error: "Usuário não autenticado" });
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -57,10 +64,7 @@ serve(async (req) => {
       .single();
 
     if (callerRole?.role !== "admin") {
-      return new Response(
-        JSON.stringify({ error: "Apenas administradores podem alterar senhas" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return json(200, { error: "Apenas administradores podem alterar senhas" });
     }
 
     const { data: callerProfile } = await supabaseAdmin
@@ -73,21 +77,9 @@ serve(async (req) => {
 
     const { user_id, password }: Body = await req.json();
 
-    if (!user_id || !password) {
-      return new Response(
-        JSON.stringify({ error: "user_id e password são obrigatórios" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    if (!user_id || !password) return json(200, { error: "user_id e password são obrigatórios" });
+    if (password.length < 6) return json(200, { error: "A senha deve ter pelo menos 6 caracteres" });
 
-    if (password.length < 6) {
-      return new Response(
-        JSON.stringify({ error: "A senha deve ter pelo menos 6 caracteres" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // Admin regular só pode alterar senha de usuários do próprio tenant
     if (!isSuperAdmin) {
       const { data: targetProfile } = await supabaseAdmin
         .from("profiles")
@@ -96,10 +88,7 @@ serve(async (req) => {
         .single();
 
       if (!targetProfile || targetProfile.tenant_id !== callerProfile?.tenant_id) {
-        return new Response(
-          JSON.stringify({ error: "Usuário não pertence à sua empresa" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
+        return json(200, { error: "Usuário não pertence à sua empresa" });
       }
     }
 
@@ -109,21 +98,13 @@ serve(async (req) => {
     );
 
     if (updateError) {
-      return new Response(JSON.stringify({ error: updateError.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("updateUserById error:", updateError);
+      return json(200, { error: traduzirErro(updateError.message) });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json(200, { success: true });
   } catch (error) {
     console.error("admin-update-password error:", error);
-    return new Response(JSON.stringify({ error: "Erro interno do servidor" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json(200, { error: (error as Error)?.message || "Erro interno do servidor" });
   }
 });

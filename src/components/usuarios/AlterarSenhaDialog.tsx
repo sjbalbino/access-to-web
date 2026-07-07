@@ -74,7 +74,14 @@ export function AlterarSenhaDialog({
         if (data?.error) throw new Error(data.error);
       } else {
         const { error } = await supabase.auth.updateUser({ password: senha });
-        if (error) throw error;
+        if (error) {
+          const m = (error.message || "").toLowerCase();
+          if (m.includes("different from the old") || m.includes("same"))
+            throw new Error("A nova senha deve ser diferente da senha atual.");
+          if (m.includes("pwned") || m.includes("leaked") || m.includes("compromised"))
+            throw new Error("Esta senha foi encontrada em vazamentos de dados. Escolha uma senha mais segura.");
+          throw error;
+        }
       }
 
       toast({
