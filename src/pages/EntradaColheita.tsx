@@ -54,6 +54,7 @@ import { cn } from "@/lib/utils";
 
 import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
+import { useSiloPadraoId } from "@/hooks/useSiloPadrao";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useLocaisEntrega, useLocalSede } from "@/hooks/useLocaisEntrega";
 import { usePlacas, useCreatePlaca } from "@/hooks/usePlacas";
