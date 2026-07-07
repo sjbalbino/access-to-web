@@ -40,6 +40,9 @@ import {
   type ResumoLocalRow,
 } from "@/lib/relatoriosEstoque";
 
+import { captureNextRelatorio, cancelPendingCapture, setPendingSheets, type RelatorioPayload, type RelatorioSheet } from "@/lib/relatorioViewer";
+import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
+
 export type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 interface Props {
@@ -64,6 +67,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [tipoProdutorFiltro, setTipoProdutorFiltro] = useState("todos");
   const [modoBensMoveis, setModoBensMoveis] = useState("geral_discriminado");
   const [loading, setLoading] = useState(false);
+  const [previewPayload, setPreviewPayload] = useState<RelatorioPayload | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const { data: safras } = useSafras();
   const { data: produtos } = useProdutos();
@@ -106,15 +111,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const gerarRelatorio = async () => {
     if (dataInicial && dataFinal && new Date(dataInicial) > new Date(dataFinal)) {
-      toast({ 
-        title: "Período inválido", 
-        description: "A data inicial não pode ser maior que a data final.", 
-        variant: "destructive" 
+      toast({
+        title: "Período inválido",
+        description: "A data inicial não pode ser maior que a data final.",
+        variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
+    const capture = captureNextRelatorio();
     try {
       if (tipo === "extrato") await gerarExtrato();
       else if (tipo === "colheitas") await gerarColheitas();
@@ -126,7 +132,18 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       else if (tipo === "depositos_geral") await gerarDepositos();
       else if (tipo === "resumo_local") await gerarResumoLocal();
       else if (tipo === "extrato_cf") await gerarExtratoCf();
+
+      // Aguarda o payload entregue por qualquer gerador (com timeout de segurança)
+      const payload = await Promise.race([
+        capture,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 500)),
+      ]);
+      if (payload) {
+        setPreviewPayload(payload);
+        setPreviewOpen(true);
+      }
     } catch (err: any) {
+      cancelPendingCapture();
       toast({ title: "Erro ao gerar relatório", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -295,6 +312,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       "3": "Terceiros",
     };
 
+
+    setPendingSheets([{
+      name: "Saldo Disponível",
+      header: ["Produtor", "Local", "Tipo", "Depósitos (kg)", "Compras (kg)", "Vendas (kg)", "Devoluções (kg)", "Transf. Saída (kg)", "Transf. Entrada (kg)", "Notas Depósito (kg)", "Saldo (kg)"],
+      rows: rows.map(r => [r.produtor_nome, r.local_entrega, r.tipo, r.depositos_kg, r.compras_kg, r.vendas_kg, r.devolucoes_kg, r.tr_saida_kg, r.tr_entrada_kg, r.notas_deposito_kg, r.saldo_kg]),
+    }]);
+
     gerarSaldoDisponivelPdf({
       safraNome: safra?.nome || "-",
       tipoEntrega: tipoEntregaLabel[tipoProdutorFiltro] || "Todos",
@@ -336,6 +360,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       produto_nome: n.produto?.nome || null,
     }));
 
+    setPendingSheets([{
+      name: "Depósitos",
+      header: ["Data", "Produtor", "IE", "Produto", "Qtd (kg)", "NF", "Status"],
+      rows: rows.map(r => [r.data_emissao ?? "", r.produtor_nome, r.inscricao_estadual, r.produto_nome ?? "", r.quantidade_kg, r.nota_fiscal ?? "", r.status ?? ""]),
+    }]);
     gerarDepositosGeralPdf({ safraNome: safra?.nome || "-", produtoNome: produto?.nome || null, rows });
   };
 
@@ -424,6 +453,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const rows = Object.values(rowMap).sort((a, b) => a.local_entrega.localeCompare(b.local_entrega) || a.produtor_nome.localeCompare(b.produtor_nome));
     if (rows.length === 0) { toast({ title: "Sem dados" }); return; }
 
+    setPendingSheets([{
+      name: "Resumo por Local",
+      header: ["Local", "Produtor", "Depósitos (kg)", "Devoluções (kg)", "Transf. Saída (kg)", "Transf. Entrada (kg)", "Notas Depósito (kg)", "Saldo (kg)"],
+      rows: rows.map(r => [r.local_entrega, r.produtor_nome, r.depositos_kg, r.devolucoes_kg, r.tr_saida_kg, r.tr_entrada_kg, r.notas_deposito_kg, r.saldo_kg]),
+    }]);
     gerarResumoProdutoresLocalPdf({
       safraNome: safra?.nome || "-",
       produtoNome: produto?.nome || null,
@@ -489,6 +523,14 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       devolucoes: (devolucoes || []).map((d: any) => ({ data_devolucao: d.data_devolucao, quantidade_kg: d.quantidade_kg, taxa_armazenagem: d.taxa_armazenagem, kg_taxa_armazenagem: d.kg_taxa_armazenagem })),
       notasDeposito: (notasDep || []).map((n: any) => ({ data_emissao: n.data_emissao, nota_fiscal_numero: n.nota_fiscal?.numero?.toString() || null, quantidade_kg: n.quantidade_kg })),
     };
+    setPendingSheets([
+      { name: "Colheitas", header: ["Data", "Lavoura", "Peso Bruto", "Peso Tara", "Produção (kg)", "Umidade %", "Impureza %", "Desconto (kg)", "Líquido (kg)"],
+        rows: extratoData.colheitas.map(c => [c.data_colheita ?? "", c.lavoura ?? "", c.peso_bruto ?? 0, c.peso_tara ?? 0, c.producao_kg ?? 0, c.umidade ?? 0, c.impureza ?? 0, c.kg_desconto_total ?? 0, c.producao_liquida_kg ?? 0]) },
+      { name: "Transf. Recebidas", header: ["Data", "De", "Qtd (kg)"], rows: extratoData.transferenciasRecebidas.map(t => [t.data_transferencia, t.nome_outro ?? "", t.quantidade_kg]) },
+      { name: "Transf. Enviadas", header: ["Data", "Para", "Qtd (kg)"], rows: extratoData.transferenciasEnviadas.map(t => [t.data_transferencia, t.nome_outro ?? "", t.quantidade_kg]) },
+      { name: "Devoluções", header: ["Data", "Qtd (kg)", "Taxa Arm. %", "Kg Taxa"], rows: extratoData.devolucoes.map(d => [d.data_devolucao, d.quantidade_kg, d.taxa_armazenagem ?? 0, d.kg_taxa_armazenagem ?? 0]) },
+      { name: "Notas Depósito", header: ["Data", "NF", "Qtd (kg)"], rows: extratoData.notasDeposito.map(n => [n.data_emissao ?? "", n.nota_fiscal_numero ?? "", n.quantidade_kg]) },
+    ]);
     gerarExtratoProdutorPdf(extratoData);
   };
 
@@ -506,6 +548,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const prod = produtoId ? produtos?.find(p => p.id === produtoId) : null;
     const filtros = [`Safra: ${safra?.nome || "-"}`, prod ? `Produto: ${prod.nome}` : null].filter(Boolean).join(" | ");
     const mapped: RelColheita[] = data.map((c: any) => ({ data_colheita: c.data_colheita, produtor_nome: c.inscricao_produtor?.produtores?.nome || null, lavoura_nome: c.controle_lavoura?.lavouras?.nome || null, placa: c.placas?.placa || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg, total_sacos: c.total_sacos }));
+    setPendingSheets([{
+      name: "Colheitas",
+      header: ["Data", "Produtor", "Lavoura", "Placa", "Peso Bruto", "Peso Tara", "Produção (kg)", "Umidade %", "Impureza %", "Desconto (kg)", "Líquido (kg)", "Sacos"],
+      rows: mapped.map(m => [m.data_colheita ?? "", m.produtor_nome ?? "", m.lavoura_nome ?? "", m.placa ?? "", m.peso_bruto ?? 0, m.peso_tara ?? 0, m.producao_kg ?? 0, m.umidade ?? 0, m.impureza ?? 0, m.kg_desconto_total ?? 0, m.producao_liquida_kg ?? 0, m.total_sacos ?? 0]),
+    }]);
     gerarRelatorioColheitasPdf(mapped, filtros);
   };
 
@@ -523,6 +570,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       return { numero: c.numero, data_contrato: c.data_contrato, comprador_nome: c.comprador?.nome_fantasia ? `${c.comprador.nome} (${c.comprador.nome_fantasia})` : c.comprador?.nome || null, produto_nome: c.produto?.nome || null, quantidade_kg: c.quantidade_kg, preco_kg: c.preco_kg, valor_total: c.valor_total, total_carregado_kg, saldo_kg: (c.quantidade_kg || 0) - total_carregado_kg };
     }));
     const safra = safras?.find(s => s.id === safraId);
+    setPendingSheets([{
+      name: "Vendas",
+      header: ["Nº", "Data", "Comprador", "Produto", "Qtd (kg)", "Preço/kg", "Valor Total", "Carregado (kg)", "Saldo (kg)"],
+      rows: mapped.map(m => [m.numero ?? "", m.data_contrato ?? "", m.comprador_nome ?? "", m.produto_nome ?? "", m.quantidade_kg ?? 0, m.preco_kg ?? 0, m.valor_total ?? 0, m.total_carregado_kg ?? 0, m.saldo_kg ?? 0]),
+    }]);
     gerarRelatorioVendasPdf(mapped, `Safra: ${safra?.nome || "-"}`);
   };
 
@@ -792,6 +844,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       return;
     }
 
+    setPendingSheets([{
+      name: "Extrato",
+      header: ["Tipo", "Emissão", "Vencimento", "Documento", "Parcela", "Valor Original", "Valor Pago", "Juros", "Multa", "Desconto", "Status", "Último Pagto"],
+      rows: itens.map(i => [i.tipo, i.data_emissao ?? "", i.data_vencimento ?? "", i.documento ?? "", i.parcela ?? "", i.valor_original, i.valor_pago, i.juros, i.multa, i.desconto, i.status ?? "", i.data_ult_pagamento ?? ""]),
+    }]);
     gerarExtratoCfPdf({
       cliente_nome: cli?.nome || "-",
       cliente_doc: cli?.cpf_cnpj || null,
@@ -1000,10 +1057,19 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
           <Button onClick={gerarRelatorio} disabled={loading} className="w-full">
             {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-            Gerar PDF
+            Gerar Relatório
           </Button>
         </div>
       </DialogContent>
+
+      <PreviewRelatorioDialog
+        payload={previewPayload}
+        open={previewOpen}
+        onOpenChange={(o) => {
+          setPreviewOpen(o);
+          if (!o) setPreviewPayload(null);
+        }}
+      />
     </Dialog>
   );
 }
