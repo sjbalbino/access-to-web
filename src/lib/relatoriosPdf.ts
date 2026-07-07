@@ -414,16 +414,20 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
   doc.setFont("helvetica", "normal");
   doc.text(filtrosTexto, pageWidth / 2, 22, { align: "center" });
 
+  const sc = (kg: number | null) => formatNumber((Number(kg) || 0) / 60, 1);
   const body = contratos.map(c => [
     c.numero.toString(),
     formatDate(c.data_contrato),
     c.comprador_nome || "-",
     c.produto_nome || "-",
     formatNumber(c.quantidade_kg, 0),
+    sc(c.quantidade_kg),
     formatCurrency(c.preco_kg),
     formatCurrency(c.valor_total),
     formatNumber(c.total_carregado_kg, 0),
+    sc(c.total_carregado_kg),
     formatNumber(c.saldo_kg, 0),
+    sc(c.saldo_kg),
   ]);
 
   const totContratado = contratos.reduce((s, c) => s + (c.quantidade_kg || 0), 0);
@@ -434,10 +438,13 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
   body.push([
     "TOTAL", "", "", "",
     formatNumber(totContratado, 0),
+    sc(totContratado),
     "",
     formatCurrency(totValor),
     formatNumber(totCarregado, 0),
+    sc(totCarregado),
     formatNumber(totSaldo, 0),
+    sc(totSaldo),
   ]);
 
   autoTable(doc, {
@@ -446,23 +453,28 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
       { content: "Nº", styles: { halign: "right" } },
       { content: "Data", styles: { halign: "center" } },
       "Comprador", "Produto",
-      { content: "Qtde (kg)", styles: { halign: "right" } },
+      { content: "Qtd (kg)", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
       { content: "Preço/kg", styles: { halign: "right" } },
       { content: "Valor Total", styles: { halign: "right" } },
-      { content: "Carregado", styles: { halign: "right" } },
-      { content: "Saldo", styles: { halign: "right" } },
+      { content: "Carreg. (kg)", styles: { halign: "right" } },
+      { content: "Carreg. (sc)", styles: { halign: "right" } },
+      { content: "Saldo (kg)", styles: { halign: "right" } },
+      { content: "Saldo (sc)", styles: { halign: "right" } },
     ]],
     body,
-    styles: { fontSize: 8, cellPadding: 2 },
+    styles: { fontSize: 7, cellPadding: 1.5 },
     headStyles: { fillColor: [66, 66, 66], textColor: 255 },
     columnStyles: {
-      0: { halign: "right", cellWidth: 12 },
-      1: { halign: "center", cellWidth: 22 },
-      2: { halign: "left", cellWidth: 55 },
-      3: { halign: "left", cellWidth: 30 },
+      0: { halign: "right", cellWidth: 10 },
+      1: { halign: "center", cellWidth: 20 },
+      2: { halign: "left", cellWidth: 45 },
+      3: { halign: "left", cellWidth: 25 },
       4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" },
-      7: { halign: "right" }, 8: { halign: "right" },
+      7: { halign: "right" }, 8: { halign: "right" }, 9: { halign: "right" },
+      10: { halign: "right" }, 11: { halign: "right" },
     },
+
     didParseCell: (data) => {
       if (data.row.index === body.length - 1 && data.section === "body") {
         data.cell.styles.fontStyle = "bold";
