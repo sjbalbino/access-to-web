@@ -883,6 +883,7 @@ export default function RemessasVendaForm() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Data</TableHead>
+                      <TableHead>Hora</TableHead>
                       <TableHead>Transportadora</TableHead>
                       <TableHead>Placa</TableHead>
                       <TableHead className="text-right">Kg Remessa</TableHead>
@@ -897,7 +898,7 @@ export default function RemessasVendaForm() {
                   <TableBody>
                     {remessas?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                           Nenhuma remessa cadastrada
                         </TableCell>
                       </TableRow>
@@ -907,6 +908,7 @@ export default function RemessasVendaForm() {
                           <TableCell>
                             {r.data_remessa ? format(parseISO(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                           </TableCell>
+                          <TableCell>{r.hora_remessa ? r.hora_remessa.slice(0, 5) : "-"}</TableCell>
                           <TableCell>{r.transportadora?.nome || "-"}</TableCell>
                           <TableCell>{r.placa || "-"}</TableCell>
                           <TableCell className="text-right">{formatNumber(r.kg_remessa)}</TableCell>
