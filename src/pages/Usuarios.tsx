@@ -738,6 +738,12 @@ export default function Usuarios() {
         open={!!liberandoUser}
         onOpenChange={(o) => !o && setLiberandoUser(null)}
       />
+      <AlterarSenhaDialog
+        open={!!senhaUser}
+        onOpenChange={(o) => !o && setSenhaUser(null)}
+        targetUserId={senhaUser?.id}
+        targetUserNome={senhaUser?.nome || senhaUser?.email}
+      />
     </AppLayout>
   );
 }
