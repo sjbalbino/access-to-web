@@ -920,6 +920,7 @@ export default function VendaProducaoForm() {
                     <TableRow>
                       <TableHead>Cód</TableHead>
                       <TableHead>Data</TableHead>
+                      <TableHead>Hora</TableHead>
                       <TableHead>Placa</TableHead>
                       <TableHead className="text-right">Bruto</TableHead>
                       <TableHead className="text-right">Tara</TableHead>
@@ -937,6 +938,7 @@ export default function VendaProducaoForm() {
                         <TableCell>
                           {r.data_remessa ? format(parseISO(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                         </TableCell>
+                        <TableCell>{r.hora_remessa ? r.hora_remessa.slice(0, 5) : "-"}</TableCell>
                         <TableCell>{r.placa || "-"}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.peso_bruto)}</TableCell>
                         <TableCell className="text-right">{formatNumber(r.peso_tara)}</TableCell>
