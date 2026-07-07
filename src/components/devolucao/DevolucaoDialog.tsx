@@ -291,14 +291,9 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
               <Select isSearchable 
                 value={localEntregaId || undefined} 
                 onValueChange={setLocalEntregaId}
-                disabled={!safraId || !produtoId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={
-                    !safraId || !produtoId 
-                      ? "Selecione safra e produto primeiro..." 
-                      : "Selecione..."
-                  } />
+                  <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
                   {/* Garantir que o local atual apareça na edição */}
