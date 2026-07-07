@@ -50,24 +50,7 @@ export function useInscricaoEmitentePrincipal(granjaId: string | undefined) {
     queryKey: ['inscricao_emitente_principal', granjaId],
     queryFn: async () => {
       if (!granjaId) return null;
-      
-      // Primeiro buscar produtores do tipo sócio
-      const { data: produtoresSocios, error: errorProdutores } = await supabase
-        .from('produtores')
-        .select('id')
-        .eq('tipo_produtor', 'socio');
-      
-      if (errorProdutores) {
-        console.error('Erro ao buscar produtores sócios:', errorProdutores);
-        return null;
-      }
-      
-      const produtorIds = produtoresSocios?.map(p => p.id) || [];
-      
-      if (produtorIds.length === 0) {
-        return null;
-      }
-      
+
       const { data, error } = await supabase
         .from('inscricoes_produtor')
         .select(`
@@ -94,8 +77,9 @@ export function useInscricaoEmitentePrincipal(granjaId: string | undefined) {
           emitente:emitente_id(id, granja_id, ambiente, crt, serie_nfe, numero_atual_nfe, api_configurada, cst_icms_padrao, cst_pis_padrao, cst_cofins_padrao, cst_ipi_padrao, cst_ibs_padrao, cst_cbs_padrao, cst_is_padrao)
         `)
         .eq('granja_id', granjaId)
+        .eq('ativa', true)
         .eq('is_emitente_principal', true)
-        .in('produtor_id', produtorIds)
+        .not('emitente_id', 'is', null)
         .maybeSingle();
       
       if (error) {
