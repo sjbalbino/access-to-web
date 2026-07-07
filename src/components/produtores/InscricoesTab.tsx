@@ -387,6 +387,14 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                          <Button
                            variant="ghost"
                            size="icon"
+                           title={inscricao.is_emitente_principal ? "Emitente principal da granja (clique para desmarcar)" : "Marcar como emitente principal da granja"}
+                           onClick={() => handleToggleEmitentePrincipal(inscricao)}
+                         >
+                           <Crown className={cn("h-4 w-4", inscricao.is_emitente_principal ? "text-amber-500 fill-amber-500" : "text-muted-foreground")} />
+                         </Button>
+                         <Button
+                           variant="ghost"
+                           size="icon"
                            onClick={() => handleEdit(inscricao)}
                          >
                            <Pencil className="h-4 w-4" />
