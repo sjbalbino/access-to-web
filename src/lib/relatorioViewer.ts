@@ -34,6 +34,11 @@ export function captureNextRelatorio(sheets?: RelatorioSheet[]): Promise<Relator
   });
 }
 
+/** Define/atualiza as sheets do relatório em andamento (chamado antes/depois da captura). */
+export function setPendingSheets(sheets: RelatorioSheet[]) {
+  pendingSheets = sheets;
+}
+
 /** Cancela qualquer captura pendente (usar em caso de erro). */
 export function cancelPendingCapture() {
   pendingHandler = null;
