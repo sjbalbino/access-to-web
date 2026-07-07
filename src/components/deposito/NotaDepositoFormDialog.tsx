@@ -33,7 +33,7 @@ import { useGranjas } from "@/hooks/useGranjas";
 import { useSaldosDeposito, useInscricoesComSaldo } from "@/hooks/useSaldosDeposito";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
-import { useProdutos } from "@/hooks/useProdutos";
+import { useProdutosCereais } from "@/hooks/useProdutosCereais";
 import { useCfops } from "@/hooks/useCfops";
 import { useInscricaoEmitentePrincipal } from "@/hooks/useInscricaoEmitentePrincipal";
 import { formatNumber, formatKg, formatCpfCnpj } from "@/lib/formatters";
@@ -88,7 +88,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
-  const { data: produtos = [] } = useProdutos();
+  const { data: produtos = [] } = useProdutosCereais();
   const { cfops } = useCfops();
   const { data: todasInscricoes = [] } = useInscricoesCompletas();
   const { data: municipios = [] } = useIbgeMunicipios();

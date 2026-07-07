@@ -56,7 +56,7 @@ import {
 } from "@/hooks/useContratosVenda";
 import { useRemessasVenda } from "@/hooks/useRemessasVenda";
 import { useSafras } from "@/hooks/useSafras";
-import { useProdutos } from "@/hooks/useProdutos";
+import { useProdutosCereais } from "@/hooks/useProdutosCereais";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { useGranjas } from "@/hooks/useGranjas";
@@ -122,7 +122,7 @@ export default function VendaProducaoForm() {
   const { data: remessas } = useRemessasVenda(id);
   const { data: proximoNumero } = useProximoNumeroContrato();
   const { data: safras } = useSafras();
-  const { data: produtos } = useProdutos();
+  const { data: produtos } = useProdutosCereais();
   const { data: clientes } = useClientesFornecedores();
   const { data: inscricoes } = useAllInscricoes();
   const { data: granjas } = useGranjas();
