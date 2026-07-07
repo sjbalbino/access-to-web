@@ -249,6 +249,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     producao_liquida_kg,
     total_sacos,
     placas(placa),
+    variedade:produtos!colheitas_variedade_id_fkey(nome),
     inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
       produtores:produtor_id(nome)
     ),
