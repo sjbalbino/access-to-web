@@ -60,8 +60,17 @@ export function ComboboxFilter({
       </PopoverTrigger>
       <PopoverContent className={cn(popoverWidth, "p-0")}>
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={search}
+            onValueChange={(v) => {
+              setSearch(v);
+              requestAnimationFrame(() => {
+                listRef.current?.scrollTo({ top: 0 });
+              });
+            }}
+          />
+          <CommandList ref={listRef}>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               <CommandItem onSelect={() => { onValueChange(''); setOpen(false); }}>
