@@ -10,7 +10,7 @@ import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
 import { useSafras } from '@/hooks/useSafras';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
 import { useInscricoesComSaldo, useLocaisEntregaComColheitas } from '@/hooks/useSaldosDeposito';
-import { useProdutosSementes } from '@/hooks/useProdutosSementes';
+import { useProdutos } from '@/hooks/useProdutos';
 import { useSaldoDisponivelProdutor } from '@/hooks/useSaldoDisponivelProdutor';
 import { useCreateDevolucao, useUpdateDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
 import { toast } from 'sonner';
@@ -48,7 +48,8 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
   // Dados de referência
   const { data: safras } = useSafras();
-  const { data: produtos } = useProdutosSementes();
+  const { data: produtosAll } = useProdutos();
+  const produtos = produtosAll?.filter((p: any) => p.ativo);
   const { data: silos } = useSilos();
   const { data: inscricoesSocio } = useInscricoesSocio();
   

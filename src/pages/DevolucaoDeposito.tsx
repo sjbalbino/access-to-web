@@ -11,7 +11,7 @@ import { useDevolucoes, useDeleteDevolucao, type DevolucaoDeposito } from '@/hoo
 import { useAllInscricoes } from '@/hooks/useAllInscricoes';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
-import { useProdutosSementes } from '@/hooks/useProdutosSementes';
+import { useProdutos } from '@/hooks/useProdutos';
 import { formatNumber, formatKg } from '@/lib/formatters';
 import { format } from 'date-fns';
 import { DevolucaoDialog } from '@/components/devolucao/DevolucaoDialog';
@@ -35,7 +35,7 @@ export default function DevolucaoDeposito() {
 
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
-  const { data: produtos } = useProdutosSementes();
+  const { data: produtos } = useProdutos();
   const { data: allInscricoes } = useAllInscricoes();
   
   const produtoresUnicos = useMemo(() => {
