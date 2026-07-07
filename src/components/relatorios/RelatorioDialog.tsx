@@ -523,6 +523,14 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       devolucoes: (devolucoes || []).map((d: any) => ({ data_devolucao: d.data_devolucao, quantidade_kg: d.quantidade_kg, taxa_armazenagem: d.taxa_armazenagem, kg_taxa_armazenagem: d.kg_taxa_armazenagem })),
       notasDeposito: (notasDep || []).map((n: any) => ({ data_emissao: n.data_emissao, nota_fiscal_numero: n.nota_fiscal?.numero?.toString() || null, quantidade_kg: n.quantidade_kg })),
     };
+    setPendingSheets([
+      { name: "Colheitas", header: ["Data", "Lavoura", "Peso Bruto", "Peso Tara", "Produção (kg)", "Umidade %", "Impureza %", "Desconto (kg)", "Líquido (kg)"],
+        rows: extratoData.colheitas.map(c => [c.data_colheita ?? "", c.lavoura ?? "", c.peso_bruto ?? 0, c.peso_tara ?? 0, c.producao_kg ?? 0, c.umidade ?? 0, c.impureza ?? 0, c.kg_desconto_total ?? 0, c.producao_liquida_kg ?? 0]) },
+      { name: "Transf. Recebidas", header: ["Data", "De", "Qtd (kg)"], rows: extratoData.transferenciasRecebidas.map(t => [t.data_transferencia, t.nome_outro ?? "", t.quantidade_kg]) },
+      { name: "Transf. Enviadas", header: ["Data", "Para", "Qtd (kg)"], rows: extratoData.transferenciasEnviadas.map(t => [t.data_transferencia, t.nome_outro ?? "", t.quantidade_kg]) },
+      { name: "Devoluções", header: ["Data", "Qtd (kg)", "Taxa Arm. %", "Kg Taxa"], rows: extratoData.devolucoes.map(d => [d.data_devolucao, d.quantidade_kg, d.taxa_armazenagem ?? 0, d.kg_taxa_armazenagem ?? 0]) },
+      { name: "Notas Depósito", header: ["Data", "NF", "Qtd (kg)"], rows: extratoData.notasDeposito.map(n => [n.data_emissao ?? "", n.nota_fiscal_numero ?? "", n.quantidade_kg]) },
+    ]);
     gerarExtratoProdutorPdf(extratoData);
   };
 
