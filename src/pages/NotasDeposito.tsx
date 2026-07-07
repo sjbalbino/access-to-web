@@ -200,7 +200,7 @@ export default function NotasDeposito() {
                   <TableRow>
                     <TableHead>Data</TableHead>
                     <TableHead>NF Nº</TableHead>
-                    <TableHead>Produtor</TableHead>
+                    <TableHead>Produtor Emitente</TableHead>
                     <TableHead>Produto</TableHead>
                     <TableHead className="text-right">Quantidade</TableHead>
                     <TableHead>Status</TableHead>
@@ -231,11 +231,11 @@ export default function NotasDeposito() {
                           }
                         </TableCell>
                         <TableCell>
-                          {nota.inscricao_produtor?.produtores?.nome || 
-                           nota.inscricao_produtor?.granja || 
-                           "-"
-                          }
+                          {nota.granja?.inscricoes_produtor?.find(
+                            (i) => i.is_emitente_principal
+                          )?.produtores?.nome || "-"}
                         </TableCell>
+
                         <TableCell>{nota.produto?.nome || "-"}</TableCell>
                         <TableCell className="text-right">
                           {formatKg(nota.quantidade_kg)} kg

@@ -15,10 +15,18 @@ export interface NotaDepositoEmitida {
   created_at: string;
   // Joins
   nota_fiscal?: { numero: number | null; serie: number | null; status: string | null } | null;
-  granja?: { razao_social: string; nome_fantasia: string | null } | null;
+  granja?: {
+    razao_social: string;
+    nome_fantasia: string | null;
+    inscricoes_produtor?: Array<{
+      is_emitente_principal: boolean | null;
+      produtores?: { nome: string } | null;
+    }> | null;
+  } | null;
   inscricao_produtor?: { inscricao_estadual: string | null; cpf_cnpj: string | null; granja: string | null; produtores?: { nome: string } | null } | null;
   safra?: { nome: string } | null;
   produto?: { nome: string } | null;
+
 }
 
 export type NotaDepositoInput = Omit<NotaDepositoEmitida, 'id' | 'created_at' | 'status' | 'nota_fiscal' | 'granja' | 'inscricao_produtor' | 'safra' | 'produto'> & { status?: string | null };
@@ -37,10 +45,11 @@ export function useNotasDepositoEmitidas(filters?: {
         .select(`
           *,
           nota_fiscal:notas_fiscais(numero, serie, status),
-          granja:granjas(razao_social, nome_fantasia),
+          granja:granjas(razao_social, nome_fantasia, inscricoes_produtor(is_emitente_principal, produtores(nome))),
           inscricao_produtor:inscricoes_produtor(inscricao_estadual, cpf_cnpj, granja, produtores(nome)),
           safra:safras(nome),
           produto:produtos(nome)
+
         `)
         .order('created_at', { ascending: false });
 
