@@ -544,18 +544,28 @@ export default function RemessasVendaForm() {
                   <Input type="date" {...register("data_remessa")} />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Peso Tara (kg)</Label>
+                  <Label>Peso Tara (kg)</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      {...register("peso_tara", { valueAsNumber: true })}
+                    />
                     <BalancaButton onPeso={(kg) => setValue("peso_tara", Math.round(kg))} />
                   </div>
-                  <Input type="number" step="1" {...register("peso_tara", { valueAsNumber: true })} />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Peso Bruto (kg)</Label>
+                  <Label>Peso Bruto (kg)</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      {...register("peso_bruto", { valueAsNumber: true })}
+                    />
                     <BalancaButton onPeso={(kg) => setValue("peso_bruto", Math.round(kg))} />
                   </div>
-                  <Input type="number" step="1" {...register("peso_bruto", { valueAsNumber: true })} />
                 </div>
                 <div className="space-y-2">
                   <Label>Peso Líquido</Label>
