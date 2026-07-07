@@ -434,8 +434,9 @@ export default function Produtos() {
                           setFormData({
                             ...formData,
                             grupo: value || null,
+                            grupo_id: grupoSel?.id ?? null,
                             conta_gerencial_id: grupoSel?.conta_gerencial_id ?? formData.conta_gerencial_id,
-                          });
+                          } as any);
                         }}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                           <SelectContent>
