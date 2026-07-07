@@ -113,14 +113,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     };
 
     const carregarProdutoresComMovimento = async () => {
-      const [colheitasRes, transferenciasRes, devolucoesRes, notasDepositoRes] = await Promise.all([
+      const [colheitasRes, transferenciasRes, devolucoesRes, notasDepositoRes, comprasRes, contratosRes] = await Promise.all([
         supabase.from("colheitas").select("inscricao_produtor_id").eq("safra_id", safraId),
         supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id").eq("safra_id", safraId),
         supabase.from("devolucoes_deposito").select("inscricao_produtor_id").eq("safra_id", safraId).neq("status", "cancelada"),
         supabase.from("notas_deposito_emitidas").select("inscricao_produtor_id").eq("safra_id", safraId),
+        supabase.from("compras_cereais").select("inscricao_vendedor_id, inscricao_comprador_id").eq("safra_id", safraId),
+        supabase.from("contratos_venda").select("inscricao_produtor_id").eq("safra_id", safraId),
       ]);
 
-      const erro = colheitasRes.error || transferenciasRes.error || devolucoesRes.error || notasDepositoRes.error;
+      const erro = colheitasRes.error || transferenciasRes.error || devolucoesRes.error || notasDepositoRes.error || comprasRes.error || contratosRes.error;
       if (erro) throw erro;
 
       const ids = new Set<string>();
@@ -131,6 +133,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       });
       (devolucoesRes.data || []).forEach((row) => adicionarId(ids, row.inscricao_produtor_id));
       (notasDepositoRes.data || []).forEach((row) => adicionarId(ids, row.inscricao_produtor_id));
+      (comprasRes.data || []).forEach((row) => {
+        adicionarId(ids, row.inscricao_vendedor_id);
+        adicionarId(ids, row.inscricao_comprador_id);
+      });
+      (contratosRes.data || []).forEach((row) => adicionarId(ids, row.inscricao_produtor_id));
 
       if (ativo) {
         setInscricaoIdsComMovimento(ids);
