@@ -222,6 +222,16 @@ export default function GruposProdutos() {
                               Venda da Produção
                             </Label>
                           </div>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="cereais"
+                              checked={formData.cereais ?? false}
+                              onCheckedChange={(checked) => setFormData({ ...formData, cereais: !!checked })}
+                            />
+                            <Label htmlFor="cereais" className="text-sm font-normal cursor-pointer">
+                              Cereais (Venda de Grãos)
+                            </Label>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
