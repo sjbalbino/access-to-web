@@ -1,15 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import "@/lib/pdfjsPolyfills";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
-import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Download, FileSpreadsheet, Loader2, Printer, X } from "lucide-react";
+import { AlertCircle, Download, FileSpreadsheet, Printer, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { RelatorioPayload } from "@/lib/relatorioViewer";
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 interface Props {
   payload: RelatorioPayload | null;
@@ -18,77 +13,32 @@ interface Props {
 }
 
 export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
-  const renderTokenRef = useRef(0);
-  const [containerElement, setContainerElement] = useState<HTMLDivElement | null>(null);
-  const [isRendering, setIsRendering] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const pdfBlob = useMemo(() => {
     if (!payload) return null;
-    return payload.doc.output("blob");
+    try {
+      return payload.doc.output("blob");
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Erro ao gerar PDF.");
+      return null;
+    }
   }, [payload]);
 
-  const pdfData = useMemo(() => {
-    if (!payload) return null;
-    return new Uint8Array(payload.doc.output("arraybuffer"));
-  }, [payload]);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open || !pdfData || !containerElement) return;
+    if (!pdfBlob) {
+      setPdfUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(pdfBlob);
+    setPdfUrl(url);
+    setErrorMessage(null);
+    return () => URL.revokeObjectURL(url);
+  }, [pdfBlob]);
 
-    const token = renderTokenRef.current + 1;
-    renderTokenRef.current = token;
-    let cancelled = false;
 
-    const renderPdf = async () => {
-      setIsRendering(true);
-      setErrorMessage(null);
-
-      containerElement.replaceChildren();
-
-      try {
-        const pdf = await pdfjsLib.getDocument({ data: pdfData.slice() }).promise;
-
-        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-          if (cancelled || renderTokenRef.current !== token) return;
-
-          const page = await pdf.getPage(pageNumber);
-          const baseViewport = page.getViewport({ scale: 1 });
-          const availableWidth = Math.max(containerElement.clientWidth - 32, 320);
-          const scale = Math.min(availableWidth / baseViewport.width, 1.6);
-          const viewport = page.getViewport({ scale });
-
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
-          if (!context) throw new Error("Não foi possível inicializar a renderização do PDF.");
-
-          const pixelRatio = window.devicePixelRatio || 1;
-          canvas.width = Math.floor(viewport.width * pixelRatio);
-          canvas.height = Math.floor(viewport.height * pixelRatio);
-          canvas.style.width = `${Math.floor(viewport.width)}px`;
-          canvas.style.height = `${Math.floor(viewport.height)}px`;
-          canvas.className = "mx-auto mb-4 rounded-sm bg-background shadow-sm";
-
-          context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-          containerElement.appendChild(canvas);
-
-          await page.render({ canvas, canvasContext: context, viewport }).promise;
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setErrorMessage(error instanceof Error ? error.message : "Erro desconhecido ao renderizar PDF.");
-        }
-      } finally {
-        if (!cancelled && renderTokenRef.current === token) setIsRendering(false);
-      }
-    };
-
-    void renderPdf();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, pdfData, containerElement]);
 
 
   const handleBaixarPdf = () => {
