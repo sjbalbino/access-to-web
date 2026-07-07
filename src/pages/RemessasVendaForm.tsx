@@ -883,6 +883,7 @@ export default function RemessasVendaForm() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Data</TableHead>
+                      <TableHead>Hora</TableHead>
                       <TableHead>Transportadora</TableHead>
                       <TableHead>Placa</TableHead>
                       <TableHead className="text-right">Kg Remessa</TableHead>
