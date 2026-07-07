@@ -13,6 +13,7 @@ export type Silo = {
   localizacao: string | null;
   observacoes: string | null;
   ativo: boolean | null;
+  is_padrao: boolean | null;
   created_at: string;
   updated_at: string;
 };
