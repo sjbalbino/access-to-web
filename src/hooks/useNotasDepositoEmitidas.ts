@@ -45,10 +45,11 @@ export function useNotasDepositoEmitidas(filters?: {
         .select(`
           *,
           nota_fiscal:notas_fiscais(numero, serie, status),
-          granja:granjas(razao_social, nome_fantasia),
+          granja:granjas(razao_social, nome_fantasia, inscricoes_produtor(is_emitente_principal, produtores(nome))),
           inscricao_produtor:inscricoes_produtor(inscricao_estadual, cpf_cnpj, granja, produtores(nome)),
           safra:safras(nome),
           produto:produtos(nome)
+
         `)
         .order('created_at', { ascending: false });
 
