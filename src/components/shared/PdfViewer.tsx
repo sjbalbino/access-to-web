@@ -19,29 +19,6 @@ function waitForNextPaint(): Promise<void> {
   });
 }
 
-function hasVisibleInk(canvas: HTMLCanvasElement): boolean {
-  const context = canvas.getContext("2d");
-  if (!context || canvas.width === 0 || canvas.height === 0) return false;
-
-  const imageData = context.getImageData(0, 0, canvas.width, canvas.height).data;
-  const step = Math.max(4, Math.floor(imageData.length / 8000 / 4) * 4);
-  let visiblePixels = 0;
-
-  for (let index = 0; index < imageData.length; index += step) {
-    const red = imageData[index];
-    const green = imageData[index + 1];
-    const blue = imageData[index + 2];
-    const alpha = imageData[index + 3];
-
-    if (alpha > 0 && (red < 245 || green < 245 || blue < 245)) {
-      visiblePixels += 1;
-      if (visiblePixels > 8) return true;
-    }
-  }
-
-  return false;
-}
-
 export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderComplete }: PdfViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const renderTokenRef = useRef(0);
@@ -130,15 +107,10 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
       try {
         await waitForNextPaint();
 
-        let canvases = await renderPages(false);
-        const hasInk = canvases.some(hasVisibleInk);
+        const canvases = await renderPages(false);
 
-        if (!hasInk && canvases.length > 0) {
-          canvases = await renderPages(true);
-        }
-
-        if (!canvases.some(hasVisibleInk)) {
-          throw new Error("O PDF foi gerado, mas a página renderizada não possui conteúdo visível.");
+        if (canvases.length === 0) {
+          throw new Error("O PDF foi gerado, mas nenhuma página foi renderizada.");
         }
 
         const fragment = document.createDocumentFragment();
