@@ -320,12 +320,18 @@ export function MobileNav() {
                 </Badge>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="h-4 w-4 text-destructive" />
-            </Button>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" onClick={() => { setOpen(false); setSenhaOpen(true); }} title="Alterar minha senha">
+                <KeyRound className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={signOut}>
+                <LogOut className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
           </div>
         </div>
       </SheetContent>
+      <AlterarSenhaDialog open={senhaOpen} onOpenChange={setSenhaOpen} />
     </Sheet>
   );
 }
