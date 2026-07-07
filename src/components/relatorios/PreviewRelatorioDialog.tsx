@@ -13,8 +13,9 @@ interface Props {
 }
 
 export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const objectRef = useRef<HTMLObjectElement>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   const pdfBlob = useMemo(() => {
     if (!payload) return null;
@@ -22,14 +23,20 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
   }, [payload]);
 
   useEffect(() => {
-    if (!pdfBlob) {
+    if (!pdfBlob || !payload) {
       setPdfUrl(null);
+      setDataUrl(null);
       return;
     }
     const url = URL.createObjectURL(pdfBlob);
     setPdfUrl(url);
+    try {
+      setDataUrl(payload.doc.output("datauristring"));
+    } catch {
+      setDataUrl(null);
+    }
     return () => URL.revokeObjectURL(url);
-  }, [pdfBlob]);
+  }, [pdfBlob, payload]);
 
   const handleBaixarPdf = () => {
     if (!payload || !pdfBlob) return;
