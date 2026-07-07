@@ -414,9 +414,9 @@ export default function Produtores() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label>Tipo</Label>
+                    <Label>Tipo de Produtor</Label>
                     <Select isSearchable value={formData.tipo_produtor || "produtor"} onValueChange={(v) => setFormData({ ...formData, tipo_produtor: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione o tipo..." /></SelectTrigger>
                       <SelectContent>
                         {TIPOS_PRODUTOR.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                       </SelectContent>
