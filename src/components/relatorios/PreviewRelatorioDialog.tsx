@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, FileSpreadsheet, Printer, X } from "lucide-react";
+import { AlertCircle, Download, FileSpreadsheet, Loader2, Printer, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { RelatorioPayload } from "@/lib/relatorioViewer";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 interface Props {
   payload: RelatorioPayload | null;
@@ -13,23 +17,79 @@ interface Props {
 }
 
 export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const renderTokenRef = useRef(0);
+  const [isRendering, setIsRendering] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const pdfBlob = useMemo(() => {
     if (!payload) return null;
     return payload.doc.output("blob");
   }, [payload]);
 
+  const pdfData = useMemo(() => {
+    if (!payload) return null;
+    return new Uint8Array(payload.doc.output("arraybuffer"));
+  }, [payload]);
+
   useEffect(() => {
-    if (!pdfBlob) {
-      setPdfUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(pdfBlob);
-    setPdfUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [pdfBlob]);
+    if (!open || !pdfData || !containerRef.current) return;
+
+    const token = renderTokenRef.current + 1;
+    renderTokenRef.current = token;
+    let cancelled = false;
+
+    const renderPdf = async () => {
+      setIsRendering(true);
+      setErrorMessage(null);
+
+      const container = containerRef.current;
+      if (!container) return;
+      container.replaceChildren();
+
+      try {
+        const pdf = await pdfjsLib.getDocument({ data: pdfData.slice() }).promise;
+
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+          if (cancelled || renderTokenRef.current !== token) return;
+
+          const page = await pdf.getPage(pageNumber);
+          const baseViewport = page.getViewport({ scale: 1 });
+          const availableWidth = Math.max(container.clientWidth - 32, 320);
+          const scale = Math.min(availableWidth / baseViewport.width, 1.6);
+          const viewport = page.getViewport({ scale });
+
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          if (!context) throw new Error("Não foi possível inicializar a renderização do PDF.");
+
+          const pixelRatio = window.devicePixelRatio || 1;
+          canvas.width = Math.floor(viewport.width * pixelRatio);
+          canvas.height = Math.floor(viewport.height * pixelRatio);
+          canvas.style.width = `${Math.floor(viewport.width)}px`;
+          canvas.style.height = `${Math.floor(viewport.height)}px`;
+          canvas.className = "mx-auto mb-4 rounded-sm bg-background shadow-sm";
+
+          context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+          container.appendChild(canvas);
+
+          await page.render({ canvas, canvasContext: context, viewport }).promise;
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(error instanceof Error ? error.message : "Erro desconhecido ao renderizar PDF.");
+        }
+      } finally {
+        if (!cancelled && renderTokenRef.current === token) setIsRendering(false);
+      }
+    };
+
+    void renderPdf();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, pdfData]);
 
 
   const handleBaixarPdf = () => {
@@ -53,14 +113,26 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
   };
 
   const handleImprimir = () => {
+    if (!pdfBlob) return;
     try {
-      const win = iframeRef.current?.contentWindow;
-      if (win) {
-        win.focus();
-        win.print();
-        return;
-      }
-      throw new Error("no window");
+      const url = URL.createObjectURL(pdfBlob);
+      const frame = document.createElement("iframe");
+      frame.style.position = "fixed";
+      frame.style.right = "0";
+      frame.style.bottom = "0";
+      frame.style.width = "0";
+      frame.style.height = "0";
+      frame.style.border = "0";
+      frame.src = url;
+      frame.onload = () => {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+        setTimeout(() => {
+          document.body.removeChild(frame);
+          URL.revokeObjectURL(url);
+        }, 1000);
+      };
+      document.body.appendChild(frame);
     } catch {
       toast({
         title: "Não foi possível imprimir",
@@ -129,19 +201,20 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
             </Button>
           </div>
         </DialogHeader>
-        <div className="flex-1 bg-muted/30 overflow-hidden">
-          {pdfUrl ? (
-            <iframe
-              ref={iframeRef}
-              src={pdfUrl}
-              title="Prévia do relatório"
-              className="w-full h-full border-0"
-            />
-          ) : (
-
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              Carregando prévia…
+        <div className="relative flex-1 overflow-auto bg-muted/30 p-4">
+          {isRendering && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
+          )}
+          {errorMessage ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+              <p>Não foi possível renderizar a prévia do relatório.</p>
+              <p className="max-w-md break-words text-xs">{errorMessage}</p>
+            </div>
+          ) : (
+            <div ref={containerRef} className="min-h-full" aria-label="Prévia do relatório renderizada" />
           )}
         </div>
       </DialogContent>
