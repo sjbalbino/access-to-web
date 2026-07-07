@@ -2,6 +2,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { desenharCabecalhoBrand, desenharRodapeBrand } from "./pdfBrand";
+import { entregarRelatorio } from "./relatorioViewer";
 
 const formatCurrency = (value: number | null | undefined): string => {
   if (value === null || value === undefined) return "-";
@@ -22,24 +24,6 @@ const formatDate = (dateStr: string | null | undefined): string => {
     return dateStr;
   }
 };
-
-function addFooter(doc: jsPDF) {
-  const pageCount = doc.getNumberOfPages();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      `Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })} - Página ${i} de ${pageCount}`,
-      pageWidth / 2,
-      doc.internal.pageSize.getHeight() - 10,
-      { align: "center" }
-    );
-  }
-}
-
-import { entregarRelatorio } from "./relatorioViewer";
 
 function downloadPdf(doc: jsPDF, filename: string) {
   entregarRelatorio(doc, filename);
@@ -94,7 +78,7 @@ export interface ExtratoData {
 export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   const doc = new jsPDF({ orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
-  let yPos = 15;
+  let yPos = desenharCabecalhoBrand(doc);
 
   // Título
   doc.setFontSize(14);
@@ -258,7 +242,7 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   // Check if need new page
   if (yPos > doc.internal.pageSize.getHeight() - 50) {
     doc.addPage();
-    yPos = 15;
+    yPos = desenharCabecalhoBrand(doc);
   }
 
   doc.setFont("helvetica", "bold");
@@ -292,7 +276,7 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     },
   });
 
-  addFooter(doc);
+  desenharRodapeBrand(doc);
   downloadPdf(doc, `extrato_produtor_${data.produtorNome.replace(/\s/g, "_")}.pdf`);
 }
 
@@ -316,13 +300,14 @@ export interface RelColheita {
 export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosTexto: string): void {
   const doc = new jsPDF({ orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("RELATÓRIO DE COLHEITAS", pageWidth / 2, 15, { align: "center" });
+  doc.text("RELATÓRIO DE COLHEITAS", pageWidth / 2, 34, { align: "center" });
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(filtrosTexto, pageWidth / 2, 22, { align: "center" });
+  doc.text(filtrosTexto, pageWidth / 2, 40, { align: "center" });
 
   const body = colheitas.map(c => [
     formatDate(c.data_colheita),
@@ -352,7 +337,7 @@ export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosText
   ]);
 
   autoTable(doc, {
-    startY: 27,
+    startY: 44,
     head: [[
       { content: "Data", styles: { halign: "center" } },
       "Produtor", "Lavoura", "Placa",
@@ -385,7 +370,7 @@ export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosText
     },
   });
 
-  addFooter(doc);
+  desenharRodapeBrand(doc);
   downloadPdf(doc, "relatorio_colheitas.pdf");
 }
 
@@ -406,13 +391,14 @@ export interface RelContratoVenda {
 export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTexto: string): void {
   const doc = new jsPDF({ orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("RELATÓRIO DE VENDAS", pageWidth / 2, 15, { align: "center" });
+  doc.text("RELATÓRIO DE VENDAS", pageWidth / 2, 34, { align: "center" });
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(filtrosTexto, pageWidth / 2, 22, { align: "center" });
+  doc.text(filtrosTexto, pageWidth / 2, 40, { align: "center" });
 
   const sc = (kg: number | null) => formatNumber((Number(kg) || 0) / 60, 1);
   const body = contratos.map(c => [
@@ -448,7 +434,7 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
   ]);
 
   autoTable(doc, {
-    startY: 27,
+    startY: 44,
     head: [[
       { content: "Nº", styles: { halign: "right" } },
       { content: "Data", styles: { halign: "center" } },
@@ -483,6 +469,6 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
     },
   });
 
-  addFooter(doc);
+  desenharRodapeBrand(doc);
   downloadPdf(doc, "relatorio_vendas.pdf");
 }

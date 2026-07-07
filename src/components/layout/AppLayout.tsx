@@ -1,16 +1,20 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { MobileNav } from "./MobileNav";
 import { TabBar } from "./TabBar";
 import { TenantBadge } from "./TenantBadge";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Wheat } from "lucide-react";
+import { loadPdfBrand } from "@/lib/pdfBrand";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  useEffect(() => {
+    loadPdfBrand().catch(() => {});
+  }, []);
   return (
     <TooltipProvider>
       <div className="flex min-h-screen w-full bg-background">

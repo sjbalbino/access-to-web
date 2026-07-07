@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { entregarRelatorio } from './relatorioViewer';
+import { desenharCabecalhoBrand, desenharRodapeBrand } from './pdfBrand';
 
 // =============================================
 // Demonstrativo Gerencial (Receitas/Despesas)
@@ -20,10 +21,11 @@ export interface DemonstrativoGerencialData {
 
 export function gerarDemonstrativoGerencialPdf(data: DemonstrativoGerencialData) {
   const doc = new jsPDF('landscape');
+  desenharCabecalhoBrand(doc);
   doc.setFontSize(16);
-  doc.text('Demonstrativo Gerencial', 14, 15);
+  doc.text('Demonstrativo Gerencial', 14, 35);
   doc.setFontSize(10);
-  doc.text(`Período: ${data.periodo} | Tipo: ${data.tipo === 'ambos' ? 'Receitas e Despesas' : data.tipo === 'receita' ? 'Receitas' : 'Despesas'}`, 14, 22);
+  doc.text(`Período: ${data.periodo} | Tipo: ${data.tipo === 'ambos' ? 'Receitas e Despesas' : data.tipo === 'receita' ? 'Receitas' : 'Despesas'}`, 14, 42);
 
   // Group by centro
   const grupos: Record<string, { centro_codigo: string; centro_descricao: string; centro_tipo: string; itens: { sub_codigo: string; sub_descricao: string; valor: number }[] }> = {};
@@ -63,12 +65,14 @@ export function gerarDemonstrativoGerencialPdf(data: DemonstrativoGerencialData)
   ]);
 
   autoTable(doc, {
-    startY: 28,
+    startY: 48,
     head: [['Centro', 'Código', 'Sub-Centro', { content: 'Valor (R$)', styles: { halign: 'right' } }, { content: '% Grupo', styles: { halign: 'right' } }]],
     body: rows,
     styles: { fontSize: 8 },
     headStyles: { fillColor: [60, 60, 60] },
   });
+
+  desenharRodapeBrand(doc);
 
   entregarRelatorio(doc, 'demonstrativo-gerencial.pdf');
 }
@@ -90,10 +94,11 @@ export interface DreReportData {
 
 export function gerarDrePdf(data: DreReportData) {
   const doc = new jsPDF();
+  desenharCabecalhoBrand(doc);
   doc.setFontSize(16);
   doc.text('Demonstrativo de Resultado do Exercício (DRE)', 14, 15);
   doc.setFontSize(10);
-  doc.text(`Período: ${data.periodo}`, 14, 22);
+  doc.text(`Período: ${data.periodo}`, 14, 42);
 
   const totalPeriodo = data.contas.reduce((s, c) => s + c.valor_periodo, 0);
 
@@ -112,7 +117,7 @@ export function gerarDrePdf(data: DreReportData) {
   });
 
   autoTable(doc, {
-    startY: 28,
+    startY: 48,
     head: [['Código', 'Descrição', { content: 'Saldo Anterior', styles: { halign: 'right' } }, { content: 'Valor Período', styles: { halign: 'right' } }, { content: '%', styles: { halign: 'right' } }, { content: 'Saldo Atual', styles: { halign: 'right' } }]],
     body: rows,
     styles: { fontSize: 8 },
@@ -121,6 +126,7 @@ export function gerarDrePdf(data: DreReportData) {
   });
 
   // Save the PDF instead of opening a window to avoid browser blockers
+  desenharRodapeBrand(doc);
   entregarRelatorio(doc, `dre_${data.periodo.replace(/\s+/g, '_')}.pdf`);
 }
 
@@ -138,10 +144,11 @@ export interface BensMoveisDespesa {
 
 export function gerarBensMoveisPdf(despesas: BensMoveisDespesa[], periodo: string, modoRelatorio: string) {
   const doc = new jsPDF('landscape');
+  desenharCabecalhoBrand(doc);
   doc.setFontSize(16);
   doc.text('Despesas com Bens Móveis (Máquinas e Implementos)', 14, 15);
   doc.setFontSize(10);
-  doc.text(`Período: ${periodo} | Modo: ${modoRelatorio}`, 14, 22);
+  doc.text(`Período: ${periodo} | Modo: ${modoRelatorio}`, 14, 42);
 
   if (modoRelatorio === 'geral_totais') {
     // Group by grupo
@@ -161,7 +168,7 @@ export function gerarBensMoveisPdf(despesas: BensMoveisDespesa[], periodo: strin
       { content: '100%', styles: { fontStyle: 'bold' as const, halign: 'right' as const } },
     ]);
     autoTable(doc, {
-      startY: 28,
+      startY: 48,
       head: [['Grupo', { content: 'Total (R$)', styles: { halign: 'right' } }, { content: '%', styles: { halign: 'right' } }]],
       body: rows,
       styles: { fontSize: 9 },
@@ -183,13 +190,15 @@ export function gerarBensMoveisPdf(despesas: BensMoveisDespesa[], periodo: strin
       { content: fmtCurr(total), styles: { fontStyle: 'bold' as const, halign: 'right' as const } },
     ]);
     autoTable(doc, {
-      startY: 28,
+      startY: 48,
       head: [[{ content: 'Data', styles: { halign: 'center' } }, 'Grupo', 'Produto', 'Descrição', 'Documento', { content: 'Valor (R$)', styles: { halign: 'right' } }]],
       body: rows,
       styles: { fontSize: 8 },
       headStyles: { fillColor: [60, 60, 60] },
     });
   }
+
+  desenharRodapeBrand(doc);
 
   entregarRelatorio(doc, 'despesas-bens-moveis.pdf');
 }
@@ -222,16 +231,17 @@ export interface ExtratoCfData {
 
 export function gerarExtratoCfPdf(data: ExtratoCfData) {
   const doc = new jsPDF('landscape');
+  desenharCabecalhoBrand(doc);
   const pageWidth = doc.internal.pageSize.getWidth();
 
   doc.setFontSize(16);
-  doc.text('Extrato de Contas por Cliente/Fornecedor', pageWidth / 2, 15, { align: 'center' });
+  doc.text('Extrato de Contas por Cliente/Fornecedor', pageWidth / 2, 35, { align: 'center' });
   doc.setFontSize(10);
-  doc.text(`${data.cliente_nome}${data.cliente_doc ? ' — ' + data.cliente_doc : ''}`, 14, 22);
+  doc.text(`${data.cliente_nome}${data.cliente_doc ? ' — ' + data.cliente_doc : ''}`, 14, 42);
   const tipoLabel = data.tipoFiltro === 'ambos' ? 'A Receber e A Pagar' : data.tipoFiltro === 'receber' ? 'A Receber' : 'A Pagar';
-  doc.text(`Período: ${data.periodo} | Tipo: ${tipoLabel}`, 14, 28);
+  doc.text(`Período: ${data.periodo} | Tipo: ${tipoLabel}`, 14, 48);
 
-  let cursorY = 34;
+  let cursorY = 54;
 
   const buildSection = (titulo: string, itens: ExtratoCfItem[]) => {
     if (itens.length === 0) return;
@@ -304,6 +314,8 @@ export function gerarExtratoCfPdf(data: ExtratoCfData) {
     doc.text(`Saldo Líquido (Receber - Pagar): R$ ${fmtCurr(totRec - totPag)}`, 14, cursorY);
   }
 
+  desenharRodapeBrand(doc);
+
   entregarRelatorio(doc, `extrato-${data.cliente_nome.replace(/\s+/g, '_')}.pdf`);
 }
 
@@ -341,24 +353,25 @@ export interface AuditoriaRateioLog {
 
 export function gerarRelatorioAuditoriaRateioPdf(log: AuditoriaRateioLog) {
   const doc = new jsPDF();
+  desenharCabecalhoBrand(doc);
   const pageWidth = doc.internal.pageSize.getWidth();
 
   // Cabeçalho
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('Relatório de Auditoria: Recálculo de Rateio', pageWidth / 2, 15, { align: 'center' });
+  doc.text('Relatório de Auditoria: Recálculo de Rateio', pageWidth / 2, 35, { align: 'center' });
   
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`ID do Log: ${log.id}`, 14, 25);
+  doc.text(`ID do Log: ${log.id}`, 14, 45);
   doc.text(`Data/Hora da Ação: ${new Date(log.created_at).toLocaleString('pt-BR')}`, 14, 30);
-  doc.text(`Usuário Responsável: ${log.usuario_nome}`, 14, 35);
-  doc.text(`Granja: ${log.granja_nome}`, 14, 40);
+  doc.text(`Usuário Responsável: ${log.usuario_nome}`, 14, 55);
+  doc.text(`Granja: ${log.granja_nome}`, 14, 60);
   doc.text(`Período Processado: ${formatDateBr(log.data_inicial)} até ${formatDateBr(log.data_final)}`, 14, 45);
   doc.text(`Status Atual: ${log.status.toUpperCase()}`, 14, 50);
 
   if (log.observacoes) {
-    doc.text(`Observações: ${log.observacoes}`, 14, 55);
+    doc.text(`Observações: ${log.observacoes}`, 14, 75);
   }
 
   let cursorY = 65;
@@ -405,5 +418,6 @@ export function gerarRelatorioAuditoriaRateioPdf(log: AuditoriaRateioLog) {
   }
 
   const fileName = `auditoria-rateio-${log.id.substring(0, 8)}.pdf`;
+  desenharRodapeBrand(doc);
   entregarRelatorio(doc, fileName);
 }

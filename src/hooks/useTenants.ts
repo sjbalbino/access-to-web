@@ -18,6 +18,7 @@ export interface Tenant {
   cep: string | null;
   telefone: string | null;
   email: string | null;
+  logo_url: string | null;
   ativo: boolean | null;
   created_at: string;
   updated_at: string;
