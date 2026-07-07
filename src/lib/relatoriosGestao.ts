@@ -69,7 +69,7 @@ export function gerarDemonstrativoGerencialPdf(data: DemonstrativoGerencialData)
     headStyles: { fillColor: [60, 60, 60] },
   });
 
-  doc.save('demonstrativo-gerencial.pdf');
+  entregarRelatorio(doc, 'demonstrativo-gerencial.pdf');
 }
 
 // =============================================
@@ -120,7 +120,7 @@ export function gerarDrePdf(data: DreReportData) {
   });
 
   // Save the PDF instead of opening a window to avoid browser blockers
-  doc.save(`dre_${data.periodo.replace(/\s+/g, '_')}.pdf`);
+  entregarRelatorio(doc, `dre_${data.periodo.replace(/\s+/g, '_')}.pdf`);
 }
 
 // =============================================
@@ -190,7 +190,7 @@ export function gerarBensMoveisPdf(despesas: BensMoveisDespesa[], periodo: strin
     });
   }
 
-  doc.save('despesas-bens-moveis.pdf');
+  entregarRelatorio(doc, 'despesas-bens-moveis.pdf');
 }
 
 // =============================================
@@ -303,7 +303,7 @@ export function gerarExtratoCfPdf(data: ExtratoCfData) {
     doc.text(`Saldo Líquido (Receber - Pagar): R$ ${fmtCurr(totRec - totPag)}`, 14, cursorY);
   }
 
-  doc.save(`extrato-${data.cliente_nome.replace(/\s+/g, '_')}.pdf`);
+  entregarRelatorio(doc, `extrato-${data.cliente_nome.replace(/\s+/g, '_')}.pdf`);
 }
 
 function statusLabel(s: string): string {
@@ -404,5 +404,5 @@ export function gerarRelatorioAuditoriaRateioPdf(log: AuditoriaRateioLog) {
   }
 
   const fileName = `auditoria-rateio-${log.id.substring(0, 8)}.pdf`;
-  doc.save(fileName);
+  entregarRelatorio(doc, fileName);
 }
