@@ -42,6 +42,13 @@ export type Produto = {
   cst_is: string | null;
   cclass_trib_ibs: string | null;
   cclass_trib_cbs: string | null;
+  aliquota_pis?: number | null;
+  aliquota_cofins?: number | null;
+  aliquota_icms?: number | null;
+  aliquota_ipi?: number | null;
+  aliquota_ibs?: number | null;
+  aliquota_cbs?: number | null;
+  aliquota_is?: number | null;
   conta_gerencial_id?: string | null;
   grupo_id?: string | null;
 };
