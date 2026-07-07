@@ -54,11 +54,9 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
   const { data: silos } = useSilos();
   const { data: inscricoesSocio } = useInscricoesSocio();
   
-  // Locais de entrega que têm colheitas para a safra/produto selecionado
-  const { data: locaisEntregaComColheitas } = useLocaisEntregaComColheitas({ 
-    safraId, 
-    produtoId 
-  });
+  // Locais de entrega ativos (todos)
+  const { data: todosLocais } = useLocaisEntrega();
+  const locaisEntregaComColheitas = todosLocais?.filter((l: any) => l.ativo !== false) as any;
   
   // Inscrições com saldo - filtrado por safra, produto e local de entrega
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
