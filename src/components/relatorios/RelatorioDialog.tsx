@@ -570,6 +570,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       return { numero: c.numero, data_contrato: c.data_contrato, comprador_nome: c.comprador?.nome_fantasia ? `${c.comprador.nome} (${c.comprador.nome_fantasia})` : c.comprador?.nome || null, produto_nome: c.produto?.nome || null, quantidade_kg: c.quantidade_kg, preco_kg: c.preco_kg, valor_total: c.valor_total, total_carregado_kg, saldo_kg: (c.quantidade_kg || 0) - total_carregado_kg };
     }));
     const safra = safras?.find(s => s.id === safraId);
+    setPendingSheets([{
+      name: "Vendas",
+      header: ["Nº", "Data", "Comprador", "Produto", "Qtd (kg)", "Preço/kg", "Valor Total", "Carregado (kg)", "Saldo (kg)"],
+      rows: mapped.map(m => [m.numero ?? "", m.data_contrato ?? "", m.comprador_nome ?? "", m.produto_nome ?? "", m.quantidade_kg ?? 0, m.preco_kg ?? 0, m.valor_total ?? 0, m.total_carregado_kg ?? 0, m.saldo_kg ?? 0]),
+    }]);
     gerarRelatorioVendasPdf(mapped, `Safra: ${safra?.nome || "-"}`);
   };
 
