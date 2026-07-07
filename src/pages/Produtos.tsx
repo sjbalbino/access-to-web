@@ -610,6 +610,10 @@ export default function Produtos() {
                         </Select>
                       </div>
                       <div className="space-y-2">
+                        <Label>Alíquota PIS (%)</Label>
+                        <Input type="number" step="0.0001" value={formData.aliquota_pis ?? ''} onChange={(e) => setFormData({ ...formData, aliquota_pis: e.target.value === '' ? null : parseFloat(e.target.value) })} />
+                      </div>
+                      <div className="space-y-2">
                         <Label>CST COFINS</Label>
                         <Select isSearchable value={formData.cst_cofins || ''} onValueChange={(value) => setFormData({ ...formData, cst_cofins: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
@@ -619,6 +623,10 @@ export default function Produtos() {
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Alíquota COFINS (%)</Label>
+                        <Input type="number" step="0.0001" value={formData.aliquota_cofins ?? ''} onChange={(e) => setFormData({ ...formData, aliquota_cofins: e.target.value === '' ? null : parseFloat(e.target.value) })} />
                       </div>
                       <div className="space-y-2">
                         <Label>CST ICMS</Label>
@@ -632,6 +640,10 @@ export default function Produtos() {
                         </Select>
                       </div>
                       <div className="space-y-2">
+                        <Label>Alíquota ICMS (%)</Label>
+                        <Input type="number" step="0.0001" value={formData.aliquota_icms ?? ''} onChange={(e) => setFormData({ ...formData, aliquota_icms: e.target.value === '' ? null : parseFloat(e.target.value) })} />
+                      </div>
+                      <div className="space-y-2">
                         <Label>CST IPI</Label>
                         <Select isSearchable value={formData.cst_ipi || ''} onValueChange={(value) => setFormData({ ...formData, cst_ipi: value || null })}>
                           <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
@@ -641,6 +653,10 @@ export default function Produtos() {
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Alíquota IPI (%)</Label>
+                        <Input type="number" step="0.0001" value={formData.aliquota_ipi ?? ''} onChange={(e) => setFormData({ ...formData, aliquota_ipi: e.target.value === '' ? null : parseFloat(e.target.value) })} />
                       </div>
                     </div>
                     <div className="space-y-2">
