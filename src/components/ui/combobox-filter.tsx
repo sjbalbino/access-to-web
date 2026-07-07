@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,8 @@ export function ComboboxFilter({
   disabled = false,
 }: ComboboxFilterProps) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const listRef = useRef<HTMLDivElement>(null);
 
   const selectedLabel = value
     ? options.find(o => o.value === value)?.label || placeholder
@@ -58,8 +60,17 @@ export function ComboboxFilter({
       </PopoverTrigger>
       <PopoverContent className={cn(popoverWidth, "p-0")}>
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={search}
+            onValueChange={(v) => {
+              setSearch(v);
+              requestAnimationFrame(() => {
+                listRef.current?.scrollTo({ top: 0 });
+              });
+            }}
+          />
+          <CommandList ref={listRef}>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               <CommandItem onSelect={() => { onValueChange(''); setOpen(false); }}>
