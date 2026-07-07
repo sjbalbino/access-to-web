@@ -594,7 +594,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
       cpfCnpj: null, inscricaoEstadual: inscricao?.inscricao_estadual || null,
       safraNome: safra?.nome || "-", produtoNome: produto?.nome || null,
-      colheitas: (colheitas || []).map((c: any) => ({ data_colheita: c.data_colheita, lavoura: c.controle_lavoura?.lavouras?.nome || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg })),
+      colheitas: (colheitas || []).map((c: any) => ({ data_colheita: c.data_colheita, lavoura: c.controle_lavoura?.lavouras?.nome || null, variedade: c.variedade?.nome || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg })),
       transferenciasRecebidas: (trRec || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_origem?.produtores?.nome || t.inscricao_origem?.granja || null, quantidade_kg: t.quantidade_kg })),
       transferenciasEnviadas: (trEnv || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_destino?.produtores?.nome || t.inscricao_destino?.granja || null, quantidade_kg: t.quantidade_kg })),
       devolucoes: (devolucoes || []).map((d: any) => ({ data_devolucao: d.data_devolucao, quantidade_kg: d.quantidade_kg, taxa_armazenagem: d.taxa_armazenagem, kg_taxa_armazenagem: d.kg_taxa_armazenagem })),
