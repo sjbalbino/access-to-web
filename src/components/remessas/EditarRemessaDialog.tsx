@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { Package, Truck, FileText, MapPin, Info } from "lucide-react";
 import { formatCpf, formatCpfCnpj, formatPlaca, formatCep, validateCpf } from "@/lib/formatters";
 import { BalancaButton } from "@/components/balanca/BalancaButton";
+import { validarPesos } from "@/lib/validacaoPesos";
 import { buildInfoComplementarRemessa } from "@/lib/infoComplementarRemessa";
 import type { ContratoVenda } from "@/hooks/useContratosVenda";
 
@@ -180,6 +181,12 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
 
     if (!siloId) {
       toast.error("Silo é obrigatório!");
+      return;
+    }
+
+    const erroPesos = validarPesos({ pesoTara, pesoBruto });
+    if (erroPesos) {
+      toast.error(erroPesos);
       return;
     }
 

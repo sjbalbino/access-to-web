@@ -28,6 +28,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Package, Truck, FileText } from "lucide-react";
 import { BalancaButton } from "@/components/balanca/BalancaButton";
+import { validarPesos } from "@/lib/validacaoPesos";
 
 interface PesarBrutoDialogProps {
   remessa: RemessaVenda | null;
@@ -131,8 +132,9 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
       return;
     }
 
-    if (pesoBruto <= pesoTara) {
-      toast.error("Peso bruto deve ser maior que o peso da tara!");
+    const erroPesos = validarPesos({ pesoTara, pesoBruto });
+    if (erroPesos) {
+      toast.error(erroPesos);
       return;
     }
 
