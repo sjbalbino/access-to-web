@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Download, FileSpreadsheet, Printer, X } from "lucide-react";
+import { Download, FileSpreadsheet, Printer, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import type { RelatorioPayload } from "@/lib/relatorioViewer";
-import { PdfViewer } from "@/components/shared/PdfViewer";
+import type { RelatorioPayload, RelatorioSheet } from "@/lib/relatorioViewer";
 
 interface Props {
   payload: RelatorioPayload | null;
@@ -13,21 +11,70 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+function formatPreviewValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "-";
+  if (typeof value === "number") {
+    return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(value);
+  }
+  return value;
+}
 
-  const pdfData = useMemo(() => {
-    if (!payload || !open) return null;
-    try {
-      // Usamos arraybuffer em vez de blob para evitar bloqueios de iframe
-      // e permitir renderização direta via pdf.js no Canvas
-      return new Uint8Array(payload.doc.output("arraybuffer"));
-    } catch (err) {
-      console.error("Erro ao gerar arraybuffer do PDF:", err);
-      setErrorMessage(err instanceof Error ? err.message : "Erro ao gerar PDF.");
-      return null;
-    }
-  }, [payload, open]);
+function isNumericColumn(header: string): boolean {
+  return /kg|saca|qtd|quantidade|peso|valor|total|saldo|taxa|%|r\$/i.test(header);
+}
+
+interface ReportSheetPreviewProps {
+  sheet: RelatorioSheet;
+}
+
+function ReportSheetPreview({ sheet }: ReportSheetPreviewProps) {
+  return (
+    <section className="space-y-3">
+      <h3 className="text-sm font-semibold text-foreground">{sheet.name}</h3>
+      <div className="overflow-x-auto rounded-md border bg-background">
+        <table className="w-full min-w-max border-collapse text-xs">
+          <thead className="bg-muted">
+            <tr>
+              {sheet.header.map((header) => (
+                <th
+                  key={header}
+                  className="border-b px-3 py-2 text-left font-semibold text-foreground"
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sheet.rows.length > 0 ? (
+              sheet.rows.map((row, rowIndex) => (
+                <tr key={`${sheet.name}-${rowIndex}`} className="even:bg-muted/40">
+                  {sheet.header.map((header, columnIndex) => (
+                    <td
+                      key={`${sheet.name}-${rowIndex}-${header}`}
+                      className={isNumericColumn(header) ? "border-b px-3 py-2 text-right" : "border-b px-3 py-2 text-left"}
+                    >
+                      {formatPreviewValue(row[columnIndex])}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td className="px-3 py-4 text-center text-muted-foreground" colSpan={sheet.header.length}>
+                  Sem movimentações nesta seção.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
+  const sheets = payload?.sheets ?? [];
 
   const handleBaixarPdf = () => {
     if (!payload) return;
@@ -133,23 +180,25 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
           </div>
         </DialogHeader>
         
-        <div className="relative flex-1 overflow-hidden bg-muted/30">
-          {errorMessage ? (
-            <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
-              <AlertCircle className="h-6 w-6 text-destructive" />
-              <p>Não foi possível gerar a prévia do relatório.</p>
-              <p className="max-w-md break-words text-xs">{errorMessage}</p>
+        <div className="relative flex-1 overflow-auto bg-muted/30 p-6">
+          <div className="mx-auto min-h-full max-w-5xl rounded-md border bg-card p-6 shadow-sm">
+            <div className="mb-6 border-b pb-4">
+              <h2 className="text-lg font-semibold text-foreground">{payload?.filename?.replace(/\.pdf$/i, "") ?? "Relatório"}</h2>
+              <p className="text-xs text-muted-foreground">Prévia em tela dos dados que serão exportados no PDF.</p>
             </div>
-          ) : pdfData ? (
-            <PdfViewer 
-              pdfData={pdfData} 
-              errorMessage="Não foi possível renderizar a prévia do relatório."
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              Carregando prévia...
-            </div>
-          )}
+
+            {sheets.length > 0 ? (
+              <div className="space-y-8">
+                {sheets.map((sheet) => (
+                  <ReportSheetPreview key={sheet.name} sheet={sheet} />
+                ))}
+              </div>
+            ) : (
+              <div className="flex min-h-80 items-center justify-center text-center text-sm text-muted-foreground">
+                Este relatório não possui dados tabulares para prévia em tela. Use Baixar PDF para visualizar o arquivo completo.
+              </div>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
