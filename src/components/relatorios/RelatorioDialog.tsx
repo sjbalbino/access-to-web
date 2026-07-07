@@ -67,6 +67,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [tipoProdutorFiltro, setTipoProdutorFiltro] = useState("todos");
   const [modoBensMoveis, setModoBensMoveis] = useState("geral_discriminado");
   const [loading, setLoading] = useState(false);
+  const [previewPayload, setPreviewPayload] = useState<RelatorioPayload | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const { data: safras } = useSafras();
   const { data: produtos } = useProdutos();
