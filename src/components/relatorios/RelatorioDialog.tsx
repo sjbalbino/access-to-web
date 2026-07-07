@@ -360,6 +360,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       produto_nome: n.produto?.nome || null,
     }));
 
+    setPendingSheets([{
+      name: "Depósitos",
+      header: ["Data", "Produtor", "IE", "Produto", "Qtd (kg)", "NF", "Status"],
+      rows: rows.map(r => [r.data_emissao ?? "", r.produtor_nome, r.inscricao_estadual, r.produto_nome ?? "", r.quantidade_kg, r.nota_fiscal ?? "", r.status ?? ""]),
+    }]);
     gerarDepositosGeralPdf({ safraNome: safra?.nome || "-", produtoNome: produto?.nome || null, rows });
   };
 
