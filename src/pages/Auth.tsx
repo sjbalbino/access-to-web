@@ -191,6 +191,35 @@ export default function Auth() {
     setSignupConfirmPassword("");
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = forgotEmail.trim();
+    const emailCheck = z.string().email().safeParse(email);
+    if (!emailCheck.success) {
+      toast({ title: "Email inválido", description: "Informe um email válido.", variant: "destructive" });
+      return;
+    }
+
+    setForgotLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setForgotLoading(false);
+
+    if (error) {
+      toast({ title: "Erro ao enviar email", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({
+      title: "Email enviado",
+      description: "Se este email estiver cadastrado, você receberá as instruções em instantes.",
+    });
+    setForgotOpen(false);
+  };
+
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
