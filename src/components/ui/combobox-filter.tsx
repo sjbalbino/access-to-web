@@ -37,6 +37,8 @@ export function ComboboxFilter({
   disabled = false,
 }: ComboboxFilterProps) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const listRef = useRef<HTMLDivElement>(null);
 
   const selectedLabel = value
     ? options.find(o => o.value === value)?.label || placeholder
