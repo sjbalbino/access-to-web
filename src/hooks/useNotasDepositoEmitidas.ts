@@ -15,10 +15,18 @@ export interface NotaDepositoEmitida {
   created_at: string;
   // Joins
   nota_fiscal?: { numero: number | null; serie: number | null; status: string | null } | null;
-  granja?: { razao_social: string; nome_fantasia: string | null } | null;
+  granja?: {
+    razao_social: string;
+    nome_fantasia: string | null;
+    inscricoes_produtor?: Array<{
+      is_emitente_principal: boolean | null;
+      produtores?: { nome: string } | null;
+    }> | null;
+  } | null;
   inscricao_produtor?: { inscricao_estadual: string | null; cpf_cnpj: string | null; granja: string | null; produtores?: { nome: string } | null } | null;
   safra?: { nome: string } | null;
   produto?: { nome: string } | null;
+
 }
 
 export type NotaDepositoInput = Omit<NotaDepositoEmitida, 'id' | 'created_at' | 'status' | 'nota_fiscal' | 'granja' | 'inscricao_produtor' | 'safra' | 'produto'> & { status?: string | null };
