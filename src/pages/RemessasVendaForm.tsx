@@ -48,6 +48,7 @@ import {
   RemessaVenda,
 } from "@/hooks/useRemessasVenda";
 import { useSilos } from "@/hooks/useSilos";
+import { useSiloPadraoId } from "@/hooks/useSiloPadrao";
 import { useTransportadoras } from "@/hooks/useTransportadoras";
 import { Spinner } from "@/components/ui/spinner";
 import { format, parseISO } from "date-fns";
@@ -112,6 +113,7 @@ export default function RemessasVendaForm() {
   const { data: proximoRomaneio } = useProximoRomaneio();
   const { data: totais } = useTotaisContrato(id);
   const { data: silos } = useSilos();
+  const siloPadraoId = useSiloPadraoId((contrato as any)?.granja_id || null);
   const { transportadoras } = useTransportadoras();
 
   const createRemessa = useCreateRemessaVenda();
@@ -166,6 +168,13 @@ export default function RemessasVendaForm() {
       setValue("local_entrega_cep", contrato.local_entrega_cep || "");
     }
   }, [contrato, setValue]);
+
+  // Auto-preencher silo padrão em nova remessa
+  useEffect(() => {
+    if (siloPadraoId && !watch("silo_id")) {
+      setValue("silo_id", siloPadraoId);
+    }
+  }, [siloPadraoId, setValue]);
 
   // Preencher balanceiro com nome do usuário logado
   useEffect(() => {
