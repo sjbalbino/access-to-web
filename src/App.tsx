@@ -70,6 +70,7 @@ const App = () => (
             <ErrorBoundary>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/granjas" element={<ProtectedRoute><Granjas /></ProtectedRoute>} />
