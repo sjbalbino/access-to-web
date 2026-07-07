@@ -113,6 +113,9 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   if (data.produtoNome) doc.text(`Produto: ${data.produtoNome}`, 14, yPos);
   yPos += 8;
 
+  const PESO_SACA = 60;
+  const toSacas = (kg: number | null | undefined) => formatNumber((Number(kg) || 0) / PESO_SACA, 1);
+
   // COLHEITAS
   if (data.colheitas.length > 0) {
     doc.setFont("helvetica", "bold");
@@ -127,6 +130,7 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       c.impureza != null ? formatNumber(c.impureza, 1) + "%" : "-",
       formatNumber(c.kg_desconto_total, 0),
       formatNumber(c.producao_liquida_kg, 0),
+      toSacas(c.producao_liquida_kg),
     ]);
     autoTable(doc, {
       startY: yPos + 2,
@@ -139,16 +143,17 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
         { content: "Umid.", styles: { halign: "right" } },
         { content: "Imp.", styles: { halign: "right" } },
         { content: "Desc.", styles: { halign: "right" } },
-        { content: "Prod.Líq.", styles: { halign: "right" } },
+        { content: "Prod.Líq.(kg)", styles: { halign: "right" } },
+        { content: "Sacas", styles: { halign: "right" } },
       ]],
       body: colheitasBody,
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
       columnStyles: {
         0: { halign: "center", cellWidth: 20 },
-        1: { halign: "left", cellWidth: 35 },
+        1: { halign: "left", cellWidth: 32 },
         2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" },
-        5: { halign: "right" }, 6: { halign: "right" }, 7: { halign: "right" }, 8: { halign: "right" },
+        5: { halign: "right" }, 6: { halign: "right" }, 7: { halign: "right" }, 8: { halign: "right" }, 9: { halign: "right" },
       },
     });
     yPos = (doc as any).lastAutoTable.finalY + 5;
@@ -163,12 +168,13 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       head: [[
         { content: "Data", styles: { halign: "center" } },
         "Origem",
-        { content: "Quantidade (kg)", styles: { halign: "right" } },
+        { content: "Qtd (kg)", styles: { halign: "right" } },
+        { content: "Sacas", styles: { halign: "right" } },
       ]],
-      body: data.transferenciasRecebidas.map(t => [formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0)]),
+      body: data.transferenciasRecebidas.map(t => [formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0), toSacas(t.quantidade_kg)]),
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
-      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "left" }, 2: { halign: "right", cellWidth: 30 } },
+      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "left" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "right", cellWidth: 24 } },
     });
     yPos = (doc as any).lastAutoTable.finalY + 5;
   }
@@ -182,12 +188,13 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       head: [[
         { content: "Data", styles: { halign: "center" } },
         "Destino",
-        { content: "Quantidade (kg)", styles: { halign: "right" } },
+        { content: "Qtd (kg)", styles: { halign: "right" } },
+        { content: "Sacas", styles: { halign: "right" } },
       ]],
-      body: data.transferenciasEnviadas.map(t => [formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0)]),
+      body: data.transferenciasEnviadas.map(t => [formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0), toSacas(t.quantidade_kg)]),
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
-      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "left" }, 2: { halign: "right", cellWidth: 30 } },
+      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "left" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "right", cellWidth: 24 } },
     });
     yPos = (doc as any).lastAutoTable.finalY + 5;
   }
@@ -200,19 +207,23 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       startY: yPos + 2,
       head: [[
         { content: "Data", styles: { halign: "center" } },
-        { content: "Quantidade (kg)", styles: { halign: "right" } },
+        { content: "Qtd (kg)", styles: { halign: "right" } },
+        { content: "Sacas", styles: { halign: "right" } },
         { content: "Taxa Armaz. (%)", styles: { halign: "right" } },
         { content: "Kg Taxa", styles: { halign: "right" } },
+        { content: "Sacas Taxa", styles: { halign: "right" } },
       ]],
       body: data.devolucoes.map(d => [
         formatDate(d.data_devolucao),
         formatNumber(d.quantidade_kg, 0),
+        toSacas(d.quantidade_kg),
         d.taxa_armazenagem != null ? formatNumber(d.taxa_armazenagem, 2) + "%" : "-",
         formatNumber(d.kg_taxa_armazenagem, 0),
+        toSacas(d.kg_taxa_armazenagem),
       ]),
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
-      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" } },
+      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" } },
     });
     yPos = (doc as any).lastAutoTable.finalY + 5;
   }
@@ -226,17 +237,17 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       head: [[
         { content: "Data", styles: { halign: "center" } },
         "Nota Fiscal",
-        { content: "Quantidade (kg)", styles: { halign: "right" } },
+        { content: "Qtd (kg)", styles: { halign: "right" } },
+        { content: "Sacas", styles: { halign: "right" } },
       ]],
-      body: data.notasDeposito.map(n => [formatDate(n.data_emissao), n.nota_fiscal_numero || "-", formatNumber(n.quantidade_kg, 0)]),
+      body: data.notasDeposito.map(n => [formatDate(n.data_emissao), n.nota_fiscal_numero || "-", formatNumber(n.quantidade_kg, 0), toSacas(n.quantidade_kg)]),
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
-      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "left" }, 2: { halign: "right", cellWidth: 30 } },
+      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "left" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "right", cellWidth: 24 } },
     });
     yPos = (doc as any).lastAutoTable.finalY + 5;
   }
 
-  // RESUMO FINAL
   const totalColheitas = data.colheitas.reduce((s, c) => s + (c.producao_liquida_kg || 0), 0);
   const totalRecebidas = data.transferenciasRecebidas.reduce((s, t) => s + t.quantidade_kg, 0);
   const totalEnviadas = data.transferenciasEnviadas.reduce((s, t) => s + t.quantidade_kg, 0);
