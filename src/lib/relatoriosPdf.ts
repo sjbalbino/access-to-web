@@ -39,16 +39,10 @@ function addFooter(doc: jsPDF) {
   }
 }
 
+import { entregarRelatorio } from "./relatorioViewer";
+
 function downloadPdf(doc: jsPDF, filename: string) {
-  const pdfBlob = doc.output("blob");
-  const pdfUrl = URL.createObjectURL(pdfBlob);
-  const link = document.createElement("a");
-  link.href = pdfUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
+  entregarRelatorio(doc, filename);
 }
 
 // ==================== EXTRATO DO PRODUTOR ====================
