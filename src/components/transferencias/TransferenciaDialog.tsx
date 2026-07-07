@@ -79,6 +79,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
       setTipo(transferencia.tipo || "");
     } else {
       resetForm();
+    }
   }, [transferencia, open]);
 
   const siloPadraoId = useSiloPadraoId();
