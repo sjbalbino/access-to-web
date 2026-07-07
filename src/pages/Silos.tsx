@@ -73,6 +73,7 @@ export default function Silos() {
       localizacao: '',
       observacoes: '',
       ativo: true,
+      is_padrao: false,
     });
     setEditingItem(null);
   };
@@ -100,6 +101,7 @@ export default function Silos() {
       localizacao: item.localizacao || '',
       observacoes: item.observacoes || '',
       ativo: item.ativo,
+      is_padrao: item.is_padrao ?? false,
     });
     setIsDialogOpen(true);
   };
