@@ -78,6 +78,14 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
   const isEditing = !!devolucao;
 
+  const siloPadraoId = useSiloPadraoId();
+  useEffect(() => {
+    if (open && !isEditing && !siloId && siloPadraoId) {
+      setSiloId(siloPadraoId);
+    }
+  }, [open, isEditing, siloId, siloPadraoId]);
+
+
   // Inicializar valores quando abre o dialog
   useEffect(() => {
     if (devolucao) {
