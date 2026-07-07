@@ -4564,6 +4564,13 @@ export type Database = {
       }
       produtos: {
         Row: {
+          aliquota_cbs: number | null
+          aliquota_cofins: number | null
+          aliquota_ibs: number | null
+          aliquota_icms: number | null
+          aliquota_ipi: number | null
+          aliquota_is: number | null
+          aliquota_pis: number | null
           artigo_nfe: string | null
           ativo: boolean | null
           cclass_trib_cbs: string | null
@@ -4606,6 +4613,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          aliquota_cbs?: number | null
+          aliquota_cofins?: number | null
+          aliquota_ibs?: number | null
+          aliquota_icms?: number | null
+          aliquota_ipi?: number | null
+          aliquota_is?: number | null
+          aliquota_pis?: number | null
           artigo_nfe?: string | null
           ativo?: boolean | null
           cclass_trib_cbs?: string | null
@@ -4648,6 +4662,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          aliquota_cbs?: number | null
+          aliquota_cofins?: number | null
+          aliquota_ibs?: number | null
+          aliquota_icms?: number | null
+          aliquota_ipi?: number | null
+          aliquota_is?: number | null
+          aliquota_pis?: number | null
           artigo_nfe?: string | null
           ativo?: boolean | null
           cclass_trib_cbs?: string | null

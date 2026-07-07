@@ -1,0 +1,9 @@
+
+ALTER TABLE public.produtos
+  ADD COLUMN IF NOT EXISTS aliquota_pis NUMERIC(7,4),
+  ADD COLUMN IF NOT EXISTS aliquota_cofins NUMERIC(7,4),
+  ADD COLUMN IF NOT EXISTS aliquota_icms NUMERIC(7,4),
+  ADD COLUMN IF NOT EXISTS aliquota_ipi NUMERIC(7,4),
+  ADD COLUMN IF NOT EXISTS aliquota_ibs NUMERIC(7,4),
+  ADD COLUMN IF NOT EXISTS aliquota_cbs NUMERIC(7,4),
+  ADD COLUMN IF NOT EXISTS aliquota_is NUMERIC(7,4);
