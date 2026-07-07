@@ -91,7 +91,8 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
   const inscricoesSocio = useMemo(() => {
     const sociosComNfe = (inscricoesSocioAll || []).filter((i: any) => {
       const tipoProdutor = normalizarTexto(i.produtores?.tipo_produtor);
-      return i.ativa !== false && tipoProdutor === 'socio' && !!i.emitente_id;
+      const ehSocioOperacional = tipoProdutor === 'socio' || i.is_emitente_principal === true;
+      return i.ativa !== false && ehSocioOperacional && !!i.emitente_id;
     });
 
     if (!granjaContextoId) return sociosComNfe;
