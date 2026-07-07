@@ -177,6 +177,10 @@ export default function EntradaColheita() {
   // Queries
   const { data: safras = [] } = useSafras();
   const { data: silos = [] } = useSilos();
+  const siloPadraoId = useSiloPadraoId();
+  useEffect(() => {
+    if (!siloId && siloPadraoId) setSiloId(siloPadraoId);
+  }, [siloId, siloPadraoId]);
   const { data: inscricoes = [] } = useInscricoesCompletas();
   const { data: locaisEntrega = [] } = useLocaisEntrega();
   const { data: localSede } = useLocalSede();
