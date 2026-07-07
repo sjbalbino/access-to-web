@@ -267,14 +267,16 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   yPos += 6;
   doc.setFontSize(9);
 
+  const fmtKgSc = (kg: number) => `${formatNumber(kg, 0)} kg  (${formatNumber(kg / 60, 1)} sc)`;
   const resumoData = [
-    ["Total Colheitas", formatNumber(totalColheitas, 0) + " kg"],
-    ["(+) Transf. Recebidas", formatNumber(totalRecebidas, 0) + " kg"],
-    ["(-) Transf. Enviadas", formatNumber(totalEnviadas, 0) + " kg"],
-    ["(-) Devoluções", formatNumber(totalDevolucoes, 0) + " kg"],
-    ["(-) Kg Taxa Armazenagem", formatNumber(totalKgTaxa, 0) + " kg"],
-    ["= SALDO", formatNumber(saldo, 0) + " kg"],
+    ["Total Colheitas", fmtKgSc(totalColheitas)],
+    ["(+) Transf. Recebidas", fmtKgSc(totalRecebidas)],
+    ["(-) Transf. Enviadas", fmtKgSc(totalEnviadas)],
+    ["(-) Devoluções", fmtKgSc(totalDevolucoes)],
+    ["(-) Kg Taxa Armazenagem", fmtKgSc(totalKgTaxa)],
+    ["= SALDO", fmtKgSc(saldo)],
   ];
+
 
   autoTable(doc, {
     startY: yPos,
