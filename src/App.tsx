@@ -14,6 +14,7 @@ import Produtores from "./pages/Produtores";
 import Lavouras from "./pages/Lavouras";
 import ControleLavoura from "./pages/ControleLavoura";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Unsubscribe from "./pages/Unsubscribe";
 import Usuarios from "./pages/Usuarios";
 import Tenants from "./pages/Tenants";
@@ -69,6 +70,7 @@ const App = () => (
             <ErrorBoundary>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/granjas" element={<ProtectedRoute><Granjas /></ProtectedRoute>} />
