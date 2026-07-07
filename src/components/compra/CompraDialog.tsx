@@ -172,6 +172,11 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
     }
   }, [compra, open]);
 
+  const siloPadraoId = useSiloPadraoId(granjaId || null);
+  useEffect(() => {
+    if (open && !compra && !siloId && siloPadraoId) setSiloId(siloPadraoId);
+  }, [open, compra, siloId, siloPadraoId]);
+
   useEffect(() => {
     setValorTotal(quantidadeKg * valorUnitarioKg);
   }, [quantidadeKg, valorUnitarioKg]);
