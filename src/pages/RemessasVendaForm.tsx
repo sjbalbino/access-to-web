@@ -908,6 +908,7 @@ export default function RemessasVendaForm() {
                           <TableCell>
                             {r.data_remessa ? format(parseISO(r.data_remessa), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                           </TableCell>
+                          <TableCell>{r.hora_remessa ? r.hora_remessa.slice(0, 5) : "-"}</TableCell>
                           <TableCell>{r.transportadora?.nome || "-"}</TableCell>
                           <TableCell>{r.placa || "-"}</TableCell>
                           <TableCell className="text-right">{formatNumber(r.kg_remessa)}</TableCell>
