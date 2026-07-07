@@ -588,6 +588,11 @@ export function AppSidebar() {
                 <DropdownMenuSeparator />
               </>
             )}
+            <DropdownMenuItem onClick={() => setSenhaOpen(true)}>
+              <KeyRound className="mr-2 h-4 w-4" />
+              Alterar minha senha
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut} className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Sair
@@ -595,6 +600,7 @@ export function AppSidebar() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <AlterarSenhaDialog open={senhaOpen} onOpenChange={setSenhaOpen} />
     </aside>
   );
 }
