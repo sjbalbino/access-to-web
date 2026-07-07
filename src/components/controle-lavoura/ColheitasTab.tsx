@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Plus, Pencil, Trash2, AlertCircle, Search } from 'lucide-react';
 import { useColheitas, useCreateColheita, useUpdateColheita, useDeleteColheita, ColheitaInput } from '@/hooks/useColheitas';
 import { useSilos } from '@/hooks/useSilos';
+import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
 import { usePlacas } from '@/hooks/usePlacas';
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { useTabelaUmidades } from '@/hooks/useTabelaUmidades';
@@ -77,6 +78,13 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ColheitaInput>(emptyColheita);
+
+  const siloPadraoId = useSiloPadraoId();
+  useEffect(() => {
+    if (isDialogOpen && !editingId && !formData.silo_id && siloPadraoId) {
+      setFormData((prev) => ({ ...prev, silo_id: siloPadraoId }));
+    }
+  }, [isDialogOpen, editingId, formData.silo_id, siloPadraoId]);
 
   // Filtros e paginação (hooks devem ficar antes de early returns)
   const [searchTerm, setSearchTerm] = useState('');

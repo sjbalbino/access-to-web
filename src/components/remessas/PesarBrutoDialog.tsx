@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSilos } from "@/hooks/useSilos";
+import { useSiloPadraoId } from "@/hooks/useSiloPadrao";
 import { useTransportadoras } from "@/hooks/useTransportadoras";
 import {
   RemessaVenda,
@@ -81,6 +82,11 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
       setObservacoes(remessa.observacoes || "");
     }
   }, [remessa, user]);
+
+  const siloPadraoId = useSiloPadraoId();
+  useEffect(() => {
+    if (remessa && !remessa.silo_id && !siloId && siloPadraoId) setSiloId(siloPadraoId);
+  }, [remessa, siloId, siloPadraoId]);
 
   // Atualizar kgNota quando kgRemessa mudar
   useEffect(() => {

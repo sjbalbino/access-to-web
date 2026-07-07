@@ -47,6 +47,7 @@ export default function Silos() {
     localizacao: '',
     observacoes: '',
     ativo: true,
+    is_padrao: false,
   });
 
   const resumo = useMemo(() => {
@@ -72,6 +73,7 @@ export default function Silos() {
       localizacao: '',
       observacoes: '',
       ativo: true,
+      is_padrao: false,
     });
     setEditingItem(null);
   };
@@ -99,6 +101,7 @@ export default function Silos() {
       localizacao: item.localizacao || '',
       observacoes: item.observacoes || '',
       ativo: item.ativo,
+      is_padrao: item.is_padrao ?? false,
     });
     setIsDialogOpen(true);
   };
@@ -281,9 +284,15 @@ export default function Silos() {
                       <Textarea value={formData.observacoes || ''} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Switch checked={formData.ativo ?? true} onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })} />
-                      <Label>Ativo</Label>
+                    <div className="flex flex-wrap items-center gap-6">
+                      <div className="flex items-center gap-2">
+                        <Switch checked={formData.ativo ?? true} onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })} />
+                        <Label>Ativo</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch checked={formData.is_padrao ?? false} onCheckedChange={(checked) => setFormData({ ...formData, is_padrao: checked })} />
+                        <Label>Silo Padrão (auto-seleção nos formulários)</Label>
+                      </div>
                     </div>
 
                     <div className="flex justify-end gap-2">
@@ -315,7 +324,12 @@ export default function Silos() {
                 {dadosPaginados?.map((item: any) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-mono">{item.codigo || '-'}</TableCell>
-                    <TableCell className="font-medium">{item.nome}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {item.nome}
+                        {item.is_padrao && <Badge className="bg-primary">Padrão</Badge>}
+                      </div>
+                    </TableCell>
                     <TableCell className="hidden sm:table-cell">{getTipoBadge(item.tipo)}</TableCell>
                     <TableCell className="hidden md:table-cell">{item.granja?.razao_social || '-'}</TableCell>
                     <TableCell className="text-right hidden sm:table-cell">{formatNumber(item.capacidade_kg)}</TableCell>

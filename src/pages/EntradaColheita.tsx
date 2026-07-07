@@ -54,6 +54,7 @@ import { cn } from "@/lib/utils";
 
 import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
+import { useSiloPadraoId } from "@/hooks/useSiloPadrao";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useLocaisEntrega, useLocalSede } from "@/hooks/useLocaisEntrega";
 import { usePlacas, useCreatePlaca } from "@/hooks/usePlacas";
@@ -176,6 +177,10 @@ export default function EntradaColheita() {
   // Queries
   const { data: safras = [] } = useSafras();
   const { data: silos = [] } = useSilos();
+  const siloPadraoId = useSiloPadraoId();
+  useEffect(() => {
+    if (!siloId && siloPadraoId) setSiloId(siloPadraoId);
+  }, [siloId, siloPadraoId]);
   const { data: inscricoes = [] } = useInscricoesCompletas();
   const { data: locaisEntrega = [] } = useLocaisEntrega();
   const { data: localSede } = useLocalSede();
