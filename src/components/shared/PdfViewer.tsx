@@ -13,37 +13,84 @@ export interface PdfViewerProps {
   onRenderComplete?: () => void;
 }
 
+function waitForNextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
+
+function hasVisibleInk(canvas: HTMLCanvasElement): boolean {
+  const context = canvas.getContext("2d");
+  if (!context || canvas.width === 0 || canvas.height === 0) return false;
+
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const step = Math.max(4, Math.floor(imageData.length / 8000 / 4) * 4);
+  let visiblePixels = 0;
+
+  for (let index = 0; index < imageData.length; index += step) {
+    const red = imageData[index];
+    const green = imageData[index + 1];
+    const blue = imageData[index + 2];
+    const alpha = imageData[index + 3];
+
+    if (alpha > 0 && (red < 245 || green < 245 || blue < 245)) {
+      visiblePixels += 1;
+      if (visiblePixels > 8) return true;
+    }
+  }
+
+  return false;
+}
+
 export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderComplete }: PdfViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const renderTokenRef = useRef(0);
+  const [containerWidth, setContainerWidth] = useState(0);
   const [isRendering, setIsRendering] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!pdfData || !containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateWidth = () => setContainerWidth(Math.floor(container.clientWidth));
+    updateWidth();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateWidth);
+      return () => window.removeEventListener("resize", updateWidth);
+    }
+
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!pdfData || !containerRef.current || containerWidth <= 0) return;
 
     const token = renderTokenRef.current + 1;
     renderTokenRef.current = token;
     let cancelled = false;
 
-    const renderPdf = async () => {
-      setIsRendering(true);
-      setErrorMessage(null);
-
+    const renderPages = async (disableFontFace: boolean): Promise<HTMLCanvasElement[]> => {
       const container = containerRef.current;
-      if (!container) return;
+      if (!container) return [];
 
-      container.replaceChildren();
+      const pdf = await pdfjsLib.getDocument({
+        data: pdfData.slice(),
+        disableFontFace,
+      }).promise;
+
+      const canvases: HTMLCanvasElement[] = [];
 
       try {
-        const pdf = await pdfjsLib.getDocument({ data: pdfData.slice() }).promise;
-
         for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-          if (cancelled || renderTokenRef.current !== token) return;
+          if (cancelled || renderTokenRef.current !== token) return [];
 
           const page = await pdf.getPage(pageNumber);
           const baseViewport = page.getViewport({ scale: 1 });
-          // Adjust width based on container, but keep a reasonable minimum
           const availableWidth = Math.max(container.clientWidth - 32, 320);
           const scale = Math.min(availableWidth / baseViewport.width, 2.0);
           const viewport = page.getViewport({ scale });
@@ -60,10 +107,43 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
           canvas.className = "mx-auto mb-4 rounded-sm bg-background shadow-md border border-border block";
 
           context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-          container.appendChild(canvas);
 
           await page.render({ canvas, canvasContext: context, viewport }).promise;
+          canvases.push(canvas);
         }
+      } finally {
+        await pdf.destroy();
+      }
+
+      return canvases;
+    };
+
+    const renderPdf = async () => {
+      setIsRendering(true);
+      setErrorMessage(null);
+
+      const container = containerRef.current;
+      if (!container) return;
+
+      container.replaceChildren();
+
+      try {
+        await waitForNextPaint();
+
+        let canvases = await renderPages(false);
+        const hasInk = canvases.some(hasVisibleInk);
+
+        if (!hasInk && canvases.length > 0) {
+          canvases = await renderPages(true);
+        }
+
+        if (!canvases.some(hasVisibleInk)) {
+          throw new Error("O PDF foi gerado, mas a página renderizada não possui conteúdo visível.");
+        }
+
+        const fragment = document.createDocumentFragment();
+        canvases.forEach((canvas) => fragment.appendChild(canvas));
+        container.replaceChildren(fragment);
         
         if (!cancelled && renderTokenRef.current === token) {
           onRenderComplete?.();
@@ -86,13 +166,15 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
     return () => {
       cancelled = true;
     };
-  }, [pdfData, onRenderComplete]);
+  }, [pdfData, containerWidth, onRenderComplete]);
+
+  const showLoading = isRendering || (!!pdfData && containerWidth <= 0 && !errorMessage);
 
   return (
     <div className="relative h-full w-full overflow-auto bg-muted/40 p-4">
-      {isRendering && (
-        <div className="sticky top-0 left-0 right-0 z-10 flex h-0 items-center justify-center">
-           <div className="mt-20 bg-background/80 p-4 rounded-full shadow-lg">
+      {showLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70">
+           <div className="rounded-full bg-background/90 p-4 shadow-lg">
              <Spinner />
            </div>
         </div>
