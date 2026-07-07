@@ -208,7 +208,7 @@ export default function Produtos() {
       fornecedor_id: item.fornecedor_id,
       ativo: item.ativo,
       codigo_barras: item.codigo_barras || '',
-      grupo: item.grupo || null,
+      grupo: item.grupo || item.grupo_vinculado?.nome || null,
       artigo_nfe: item.artigo_nfe || '',
       preco_prazo: item.preco_prazo || 0,
       estoque_maximo: item.estoque_maximo || 0,
