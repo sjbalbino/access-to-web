@@ -59,12 +59,15 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
   };
 
   const handleImprimir = () => {
-    // Usa o iframe do preview — evita popups (não é bloqueado pelo Chrome).
-    const iframe = iframeRef.current;
-    if (!iframe) return;
+    const obj = objectRef.current as any;
     try {
-      iframe.focus();
-      iframe.contentWindow?.print();
+      const win = obj?.contentWindow || obj?.contentDocument?.defaultView;
+      if (win) {
+        win.focus();
+        win.print();
+        return;
+      }
+      throw new Error("no window");
     } catch {
       toast({
         title: "Não foi possível imprimir",
