@@ -148,6 +148,7 @@ const roleLabels: Record<string, string> = {
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [senhaOpen, setSenhaOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
