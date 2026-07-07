@@ -312,12 +312,6 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       "3": "Terceiros",
     };
 
-    const tipoEntregaLabel: Record<string, string> = {
-      "todos": "Todos",
-      "1": "Parceria",
-      "2": "Arrendamento",
-      "3": "Terceiros",
-    };
 
     setPendingSheets([{
       name: "Saldo Disponível",
