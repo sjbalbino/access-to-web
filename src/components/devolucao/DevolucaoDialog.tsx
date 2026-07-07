@@ -9,7 +9,8 @@ import { useSilos } from '@/hooks/useSilos';
 import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
 import { useSafras } from '@/hooks/useSafras';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
-import { useInscricoesComSaldo, useLocaisEntregaComColheitas } from '@/hooks/useSaldosDeposito';
+import { useInscricoesComSaldo } from '@/hooks/useSaldosDeposito';
+import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
 import { useProdutos } from '@/hooks/useProdutos';
 import { useSaldoDisponivelProdutor } from '@/hooks/useSaldoDisponivelProdutor';
 import { useCreateDevolucao, useUpdateDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
@@ -53,11 +54,9 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
   const { data: silos } = useSilos();
   const { data: inscricoesSocio } = useInscricoesSocio();
   
-  // Locais de entrega que têm colheitas para a safra/produto selecionado
-  const { data: locaisEntregaComColheitas } = useLocaisEntregaComColheitas({ 
-    safraId, 
-    produtoId 
-  });
+  // Locais de entrega ativos (todos)
+  const { data: todosLocais } = useLocaisEntrega();
+  const locaisEntregaComColheitas = todosLocais?.filter((l: any) => l.ativo !== false) as any;
   
   // Inscrições com saldo - filtrado por safra, produto e local de entrega
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
@@ -85,6 +84,15 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       setSiloId(siloPadraoId);
     }
   }, [open, isEditing, siloId, siloPadraoId]);
+
+  // Padrão: emitente-sócio principal
+  useEffect(() => {
+    if (open && !isEditing && !inscricaoEmitenteId && inscricoesSocio?.length) {
+      const principal = inscricoesSocio.find((i: any) => i.is_emitente_principal);
+      if (principal) setInscricaoEmitenteId(principal.id);
+    }
+  }, [open, isEditing, inscricaoEmitenteId, inscricoesSocio]);
+
 
 
   // Inicializar valores quando abre o dialog
@@ -283,14 +291,9 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
               <Select isSearchable 
                 value={localEntregaId || undefined} 
                 onValueChange={setLocalEntregaId}
-                disabled={!safraId || !produtoId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={
-                    !safraId || !produtoId 
-                      ? "Selecione safra e produto primeiro..." 
-                      : "Selecione..."
-                  } />
+                  <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
                   {/* Garantir que o local atual apareça na edição */}
