@@ -39,6 +39,8 @@ import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useUsuariosPendentes, type UsuarioPendente } from "@/hooks/useUsuariosPendentes";
 import { LiberarUsuarioDialog } from "@/components/usuarios/LiberarUsuarioDialog";
+import { AlterarSenhaDialog } from "@/components/usuarios/AlterarSenhaDialog";
+import { KeyRound } from "lucide-react";
 
 
 type AppRole = "admin" | "operador" | "visualizador" | "gerente";
@@ -99,6 +101,7 @@ export default function Usuarios() {
   // Pendentes
   const { data: pendentes } = useUsuariosPendentes();
   const [liberandoUser, setLiberandoUser] = useState<UsuarioPendente | null>(null);
+  const [senhaUser, setSenhaUser] = useState<UserWithRole | null>(null);
 
   // Fetch users with roles
 
@@ -496,6 +499,14 @@ export default function Usuarios() {
                         Alterar
                       </Button>
                       <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSenhaUser(user)}
+                      >
+                        <KeyRound className="h-4 w-4 mr-1" />
+                        Senha
+                      </Button>
+                      <Button
                         variant={user.ativo ? "destructive" : "default"}
                         size="sm"
                         onClick={() =>
@@ -726,6 +737,12 @@ export default function Usuarios() {
         usuario={liberandoUser}
         open={!!liberandoUser}
         onOpenChange={(o) => !o && setLiberandoUser(null)}
+      />
+      <AlterarSenhaDialog
+        open={!!senhaUser}
+        onOpenChange={(o) => !o && setSenhaUser(null)}
+        targetUserId={senhaUser?.id}
+        targetUserNome={senhaUser?.nome || senhaUser?.email}
       />
     </AppLayout>
   );

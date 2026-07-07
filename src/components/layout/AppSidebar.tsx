@@ -33,6 +33,7 @@ import {
   Repeat,
   Landmark,
   CheckCircle2,
+  KeyRound,
   LucideIcon,
 } from "lucide-react";
 
@@ -55,6 +56,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AlterarSenhaDialog } from "@/components/usuarios/AlterarSenhaDialog";
 
 interface MenuItem {
   title: string;
@@ -146,6 +148,7 @@ const roleLabels: Record<string, string> = {
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [senhaOpen, setSenhaOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
@@ -585,6 +588,11 @@ export function AppSidebar() {
                 <DropdownMenuSeparator />
               </>
             )}
+            <DropdownMenuItem onClick={() => setSenhaOpen(true)}>
+              <KeyRound className="mr-2 h-4 w-4" />
+              Alterar minha senha
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut} className="text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Sair
@@ -592,6 +600,7 @@ export function AppSidebar() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <AlterarSenhaDialog open={senhaOpen} onOpenChange={setSenhaOpen} />
     </aside>
   );
 }

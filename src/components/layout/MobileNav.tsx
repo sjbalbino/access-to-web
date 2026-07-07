@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Wheat,
   LogOut,
+  KeyRound,
   User,
   Shield,
   Package,
@@ -45,6 +46,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useState } from "react";
+import { AlterarSenhaDialog } from "@/components/usuarios/AlterarSenhaDialog";
 
 interface MenuItem {
   title: string;
@@ -131,6 +133,7 @@ const roleLabels: Record<string, string> = {
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const [senhaOpen, setSenhaOpen] = useState(false);
   const location = useLocation();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
   const { openTab } = useTabs();
@@ -317,12 +320,18 @@ export function MobileNav() {
                 </Badge>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={signOut}>
-              <LogOut className="h-4 w-4 text-destructive" />
-            </Button>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" onClick={() => { setOpen(false); setSenhaOpen(true); }} title="Alterar minha senha">
+                <KeyRound className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={signOut}>
+                <LogOut className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
           </div>
         </div>
       </SheetContent>
+      <AlterarSenhaDialog open={senhaOpen} onOpenChange={setSenhaOpen} />
     </Sheet>
   );
 }
