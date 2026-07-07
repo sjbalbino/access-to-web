@@ -604,10 +604,10 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const sc = (kg: number) => Math.round((kg || 0) / PS);
     const sum = (arr: any[], key: string) => arr.reduce((s, x) => s + (Number(x[key]) || 0), 0);
 
-    const colheitasRows = extratoData.colheitas.map(c => [c.data_colheita ?? "", c.lavoura ?? "", c.peso_bruto ?? 0, c.peso_tara ?? 0, c.producao_kg ?? 0, c.umidade ?? 0, c.impureza ?? 0, c.kg_desconto_total ?? 0, c.producao_liquida_kg ?? 0, sc(Number(c.producao_liquida_kg) || 0)]);
+    const colheitasRows = extratoData.colheitas.map(c => [c.data_colheita ?? "", c.lavoura ?? "", c.variedade ?? "", c.peso_bruto ?? 0, c.peso_tara ?? 0, c.producao_kg ?? 0, c.umidade ?? 0, c.impureza ?? 0, c.kg_desconto_total ?? 0, c.producao_liquida_kg ?? 0, sc(Number(c.producao_liquida_kg) || 0)]);
     if (colheitasRows.length) {
       const totLiq = sum(extratoData.colheitas, "producao_liquida_kg");
-      colheitasRows.push(["TOTAL", "", sum(extratoData.colheitas, "peso_bruto"), sum(extratoData.colheitas, "peso_tara"), sum(extratoData.colheitas, "producao_kg"), "", "", sum(extratoData.colheitas, "kg_desconto_total"), totLiq, sc(totLiq)]);
+      colheitasRows.push(["TOTAL", "", "", sum(extratoData.colheitas, "peso_bruto"), sum(extratoData.colheitas, "peso_tara"), sum(extratoData.colheitas, "producao_kg"), "", "", sum(extratoData.colheitas, "kg_desconto_total"), totLiq, sc(totLiq)]);
     }
 
     const trRecRows = extratoData.transferenciasRecebidas.map(t => [t.data_transferencia, t.nome_outro ?? "", t.quantidade_kg, sc(Number(t.quantidade_kg) || 0)]);
