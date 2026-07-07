@@ -81,6 +81,7 @@ export default function GruposProdutos() {
       bens_benfeitorias: item.bens_benfeitorias ?? false,
       insumos: item.insumos ?? false,
       venda_producao: item.venda_producao ?? false,
+      cereais: item.cereais ?? false,
     });
     setIsDialogOpen(true);
   };
