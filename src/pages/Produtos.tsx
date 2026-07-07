@@ -724,6 +724,19 @@ export default function Produtos() {
                               ))}
                             </SelectContent>
                           </Select>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                        <div className="space-y-2">
+                          <Label>Alíquota IBS (%)</Label>
+                          <Input type="number" step="0.0001" value={formData.aliquota_ibs ?? ''} onChange={(e) => setFormData({ ...formData, aliquota_ibs: e.target.value === '' ? null : parseFloat(e.target.value) })} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Alíquota CBS (%)</Label>
+                          <Input type="number" step="0.0001" value={formData.aliquota_cbs ?? ''} onChange={(e) => setFormData({ ...formData, aliquota_cbs: e.target.value === '' ? null : parseFloat(e.target.value) })} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Alíquota IS (%)</Label>
+                          <Input type="number" step="0.0001" value={formData.aliquota_is ?? ''} onChange={(e) => setFormData({ ...formData, aliquota_is: e.target.value === '' ? null : parseFloat(e.target.value) })} />
                         </div>
                       </div>
                     </div>
