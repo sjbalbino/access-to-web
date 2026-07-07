@@ -114,11 +114,6 @@ export default function RemessasVendaForm() {
   const { data: totais } = useTotaisContrato(id);
   const { data: silos } = useSilos();
   const siloPadraoId = useSiloPadraoId((contrato as any)?.granja_id || null);
-  useEffect(() => {
-    if (siloPadraoId && !watch("silo_id")) {
-      setValue("silo_id", siloPadraoId);
-    }
-  }, [siloPadraoId]);
   const { transportadoras } = useTransportadoras();
 
   const createRemessa = useCreateRemessaVenda();
