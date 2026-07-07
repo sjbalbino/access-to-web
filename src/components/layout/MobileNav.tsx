@@ -76,6 +76,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Produtores", icon: Users, path: "/produtores", color: "text-accent" },
       { title: "Lavouras", icon: Map, path: "/lavouras", color: "text-chart-5" },
       { title: "Controle Lavoura", icon: Wheat, path: "/controle-lavoura", color: "text-lime-600" },
+      { title: "Relatórios Produção", icon: BarChart3, path: "/relatorios/producao", color: "text-purple-600" },
     ],
   },
   {
@@ -89,6 +90,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Devolução Depósito", icon: ArrowRightLeft, path: "/devolucao-deposito", color: "text-orange-600" },
       { title: "Compra Cereais", icon: Wheat, path: "/compra-cereais", color: "text-yellow-600" },
       { title: "Entradas NF-e", icon: PackageIcon, path: "/entradas-nfe", color: "text-teal-600" },
+      { title: "Relatórios Comercial", icon: BarChart3, path: "/relatorios/comercial", color: "text-purple-600" },
     ],
   },
   {
@@ -99,7 +101,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Lançamentos", icon: DollarSign, path: "/lancamentos-financeiros", color: "text-emerald-600" },
       { title: "Contas Bancárias", icon: Landmark, path: "/contas-bancarias", color: "text-emerald-600" },
       { title: "Estrutura DRE", icon: GitBranch, path: "/dre-estrutura", color: "text-blue-600" },
-      { title: "Relatórios", icon: BarChart3, path: "/relatorios", color: "text-purple-600" },
+      { title: "Relatórios Financeiros", icon: BarChart3, path: "/relatorios/financeiro", color: "text-purple-600" },
       { title: "Relatórios IR (Sócios)", icon: FileText, path: "/relatorios-ir", color: "text-amber-600" },
     ],
   },
