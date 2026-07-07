@@ -41,6 +41,7 @@ import {
 } from "@/lib/relatoriosEstoque";
 
 import { captureNextRelatorio, cancelPendingCapture, setPendingSheets, type RelatorioPayload, type RelatorioSheet } from "@/lib/relatorioViewer";
+import { loadPdfBrand } from "@/lib/pdfBrand";
 import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
 
 export type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
