@@ -87,6 +87,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Lavouras", icon: Map, path: "/lavouras", color: "text-chart-5" },
       { title: "Controle Lavoura", icon: Wheat, path: "/controle-lavoura", color: "text-lime-600" },
       { title: "Entrada Colheita", icon: Truck, path: "/entrada-colheita", color: "text-orange-500" },
+      { title: "Relatórios Produção", icon: BarChart3, path: "/relatorios/producao", color: "text-purple-600" },
     ],
   },
   {
