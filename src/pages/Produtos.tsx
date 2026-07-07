@@ -724,6 +724,7 @@ export default function Produtos() {
                               ))}
                             </SelectContent>
                           </Select>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                         <div className="space-y-2">
