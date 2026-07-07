@@ -5105,6 +5105,7 @@ export type Database = {
           created_at: string
           granja_id: string | null
           id: string
+          is_padrao: boolean
           localizacao: string | null
           nome: string
           observacoes: string | null
@@ -5120,6 +5121,7 @@ export type Database = {
           created_at?: string
           granja_id?: string | null
           id?: string
+          is_padrao?: boolean
           localizacao?: string | null
           nome: string
           observacoes?: string | null
@@ -5135,6 +5137,7 @@ export type Database = {
           created_at?: string
           granja_id?: string | null
           id?: string
+          is_padrao?: boolean
           localizacao?: string | null
           nome?: string
           observacoes?: string | null
