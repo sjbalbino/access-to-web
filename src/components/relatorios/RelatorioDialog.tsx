@@ -849,7 +849,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const isGestao = tipo === "demonstrativo_gerencial" || tipo === "dre" || tipo === "bens_moveis";
   const isEstoque = tipo === "saldo_disponivel" || tipo === "depositos_geral" || tipo === "resumo_local";
   const needsSafra = !isGestao && tipo !== "extrato_cf";
-  const needsProduto = tipo === "extrato" || tipo === "colheitas" || tipo === "depositos_geral" || tipo === "resumo_local";
+  const needsProduto = tipo === "colheitas" || tipo === "depositos_geral" || tipo === "resumo_local";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
