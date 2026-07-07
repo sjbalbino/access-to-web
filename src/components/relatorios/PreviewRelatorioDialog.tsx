@@ -17,8 +17,8 @@ interface Props {
 }
 
 export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const renderTokenRef = useRef(0);
+  const [containerElement, setContainerElement] = useState<HTMLDivElement | null>(null);
   const [isRendering, setIsRendering] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -33,7 +33,7 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
   }, [payload]);
 
   useEffect(() => {
-    if (!open || !pdfData || !containerRef.current) return;
+    if (!open || !pdfData || !containerElement) return;
 
     const token = renderTokenRef.current + 1;
     renderTokenRef.current = token;
@@ -43,9 +43,7 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
       setIsRendering(true);
       setErrorMessage(null);
 
-      const container = containerRef.current;
-      if (!container) return;
-      container.replaceChildren();
+      containerElement.replaceChildren();
 
       try {
         const pdf = await pdfjsLib.getDocument({ data: pdfData.slice() }).promise;
@@ -55,7 +53,7 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
 
           const page = await pdf.getPage(pageNumber);
           const baseViewport = page.getViewport({ scale: 1 });
-          const availableWidth = Math.max(container.clientWidth - 32, 320);
+          const availableWidth = Math.max(containerElement.clientWidth - 32, 320);
           const scale = Math.min(availableWidth / baseViewport.width, 1.6);
           const viewport = page.getViewport({ scale });
 
@@ -71,7 +69,7 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
           canvas.className = "mx-auto mb-4 rounded-sm bg-background shadow-sm";
 
           context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-          container.appendChild(canvas);
+          containerElement.appendChild(canvas);
 
           await page.render({ canvas, canvasContext: context, viewport }).promise;
         }
@@ -89,7 +87,7 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [open, pdfData]);
+  }, [open, pdfData, containerElement]);
 
 
   const handleBaixarPdf = () => {
@@ -214,7 +212,7 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
               <p className="max-w-md break-words text-xs">{errorMessage}</p>
             </div>
           ) : (
-            <div ref={containerRef} className="min-h-full" aria-label="Prévia do relatório renderizada" />
+            <div ref={setContainerElement} className="min-h-full" aria-label="Prévia do relatório renderizada" />
           )}
         </div>
       </DialogContent>
