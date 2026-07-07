@@ -1057,10 +1057,19 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
           <Button onClick={gerarRelatorio} disabled={loading} className="w-full">
             {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
-            Gerar PDF
+            Gerar Relatório
           </Button>
         </div>
       </DialogContent>
+
+      <PreviewRelatorioDialog
+        payload={previewPayload}
+        open={previewOpen}
+        onOpenChange={(o) => {
+          setPreviewOpen(o);
+          if (!o) setPreviewPayload(null);
+        }}
+      />
     </Dialog>
   );
 }
