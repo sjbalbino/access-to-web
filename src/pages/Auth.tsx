@@ -256,15 +256,24 @@ export default function Auth() {
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2 pt-2">
-                  <Checkbox 
-                    id="remember-me" 
-                    checked={rememberMe} 
-                    onCheckedChange={(checked) => setRememberMe(checked === true)} 
-                  />
-                  <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
-                    Lembrar-me neste dispositivo
-                  </Label>
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="remember-me" 
+                      checked={rememberMe} 
+                      onCheckedChange={(checked) => setRememberMe(checked === true)} 
+                    />
+                    <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
+                      Lembrar-me
+                    </Label>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setForgotEmail(loginEmail); setForgotOpen(true); }}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Esqueci minha senha
+                  </button>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Entrando..." : "Entrar"}
