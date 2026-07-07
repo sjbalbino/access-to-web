@@ -198,18 +198,18 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Peso Bruto (kg) *</Label>
+                  <Label>Peso Bruto (kg) *</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      value={pesoBruto || ""}
+                      onChange={(e) => setPesoBruto(Number(e.target.value))}
+                      className="w-28 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      autoFocus
+                    />
                     <BalancaButton onPeso={(kg) => setPesoBruto(Math.round(kg))} />
                   </div>
-                  <Input
-                    type="number"
-                    step="1"
-                    value={pesoBruto || ""}
-                    onChange={(e) => setPesoBruto(Number(e.target.value))}
-                    className="text-right"
-                    autoFocus
-                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Preço/Kg</Label>
