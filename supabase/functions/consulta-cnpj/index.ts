@@ -48,35 +48,68 @@ function formatTelefone(ddd: string | null | undefined, numero: string | null | 
   return numClean;
 }
 
-async function fetchPublicaCnpjWs(cnpj: string): Promise<CnpjResultado | null> {
+async function fetchCnpjaOpen(cnpj: string): Promise<CnpjResultado | null> {
   try {
-    const resp = await fetch(`https://publica.cnpj.ws/cnpj/${cnpj}`);
+    const resp = await fetch(`https://open.cnpja.com/office/${cnpj}`);
     if (!resp.ok) return null;
     const d = await resp.json();
-    const est = d.estabelecimento || {};
-    const tipoLog = est.tipo_logradouro ? `${est.tipo_logradouro} ` : '';
+    const addr = d.address || {};
+    const phone = Array.isArray(d.phones) && d.phones[0] ? d.phones[0] : null;
+    const email = Array.isArray(d.emails) && d.emails[0]?.address ? d.emails[0].address : '';
     return {
       cnpj: formatCnpj(cnpj),
-      razao_social: d.razao_social || '',
-      nome_fantasia: est.nome_fantasia || '',
-      logradouro: `${tipoLog}${est.logradouro || ''}`.trim(),
-      numero: est.numero || '',
-      complemento: est.complemento || '',
-      bairro: est.bairro || '',
-      cidade: est.cidade?.nome || '',
-      uf: est.estado?.sigla || '',
-      cep: formatCep(est.cep),
-      telefone: formatTelefone(est.ddd1, est.telefone1),
-      email: est.email || '',
-      situacao_cadastral: est.situacao_cadastral || '',
-      data_situacao_cadastral: est.data_situacao_cadastral || '',
-      natureza_juridica: d.natureza_juridica?.descricao || '',
-      porte: d.porte?.descricao || '',
-      capital_social: Number(d.capital_social) || 0,
-      atividade_principal: est.atividade_principal?.descricao || '',
+      razao_social: d.company?.name || '',
+      nome_fantasia: d.alias || '',
+      logradouro: addr.street || '',
+      numero: addr.number || '',
+      complemento: addr.details || '',
+      bairro: addr.district || '',
+      cidade: addr.city || '',
+      uf: addr.state || '',
+      cep: formatCep(addr.zip),
+      telefone: phone ? formatTelefone(phone.area, phone.number) : '',
+      email,
+      situacao_cadastral: d.status?.text || '',
+      data_situacao_cadastral: d.statusDate || '',
+      natureza_juridica: d.company?.nature?.text || '',
+      porte: d.company?.size?.text || '',
+      capital_social: Number(d.company?.equity) || 0,
+      atividade_principal: d.mainActivity?.text || '',
     };
   } catch (e) {
-    console.error('publica.cnpj.ws falhou:', e);
+    console.error('CNPJa Open falhou:', e);
+    return null;
+  }
+}
+
+async function fetchReceitaWs(cnpj: string): Promise<CnpjResultado | null> {
+  try {
+    const resp = await fetch(`https://receitaws.com.br/v1/cnpj/${cnpj}`);
+    if (!resp.ok) return null;
+    const d = await resp.json();
+    if (d.status === 'ERROR') return null;
+    return {
+      cnpj: formatCnpj(cnpj),
+      razao_social: d.nome || '',
+      nome_fantasia: d.fantasia || '',
+      logradouro: d.logradouro || '',
+      numero: d.numero || '',
+      complemento: d.complemento || '',
+      bairro: d.bairro || '',
+      cidade: d.municipio || '',
+      uf: d.uf || '',
+      cep: formatCep(d.cep),
+      telefone: d.telefone || '',
+      email: d.email || '',
+      situacao_cadastral: d.situacao || '',
+      data_situacao_cadastral: d.data_situacao || '',
+      natureza_juridica: d.natureza_juridica || '',
+      porte: d.porte || '',
+      capital_social: Number(d.capital_social) || 0,
+      atividade_principal: d.atividade_principal?.[0]?.text || '',
+    };
+  } catch (e) {
+    console.error('ReceitaWS falhou:', e);
     return null;
   }
 }
@@ -160,13 +193,18 @@ serve(async (req) => {
 
     console.log(`Consultando CNPJ: ${cnpjLimpo}`);
 
-    // Tenta fonte primária (publica.cnpj.ws — dados mais frescos da Receita)
-    const primario = await fetchPublicaCnpjWs(cnpjLimpo);
-    const secundario = await fetchBrasilApi(cnpjLimpo);
+    // Consulta múltiplas fontes em paralelo e escolhe a mais completa.
+    // CNPJa Open e ReceitaWS costumam ter dados mais atualizados que BrasilAPI.
+    const [cnpja, receitaws, brasil] = await Promise.all([
+      fetchCnpjaOpen(cnpjLimpo),
+      fetchReceitaWs(cnpjLimpo),
+      fetchBrasilApi(cnpjLimpo),
+    ]);
 
-    const resultado = primario && secundario
-      ? (isMaisCompleto(primario, secundario) ? primario : secundario)
-      : (primario || secundario);
+    const candidatos = [cnpja, receitaws, brasil].filter((c): c is CnpjResultado => c !== null);
+    const resultado = candidatos.length
+      ? candidatos.reduce((melhor, atual) => (isMaisCompleto(atual, melhor) ? atual : melhor))
+      : null;
 
     if (!resultado) {
       return new Response(
