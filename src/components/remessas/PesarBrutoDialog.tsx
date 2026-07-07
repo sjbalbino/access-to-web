@@ -28,6 +28,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Package, Truck, FileText } from "lucide-react";
 import { BalancaButton } from "@/components/balanca/BalancaButton";
+import { validarPesos } from "@/lib/validacaoPesos";
 
 interface PesarBrutoDialogProps {
   remessa: RemessaVenda | null;
