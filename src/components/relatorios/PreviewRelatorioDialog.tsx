@@ -130,21 +130,15 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
           </div>
         </DialogHeader>
         <div className="flex-1 bg-muted/30 overflow-hidden">
-          {dataUrl || pdfUrl ? (
-            <object
-              ref={objectRef}
-              data={(dataUrl || pdfUrl) as string}
-              type="application/pdf"
-              className="w-full h-full"
-            >
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3 p-6 text-center">
-                <p>Seu navegador bloqueou a prévia do PDF.</p>
-                <Button onClick={handleBaixarPdf}>
-                  <Download className="h-4 w-4 mr-1" /> Baixar PDF
-                </Button>
-              </div>
-            </object>
+          {pdfUrl ? (
+            <iframe
+              ref={iframeRef}
+              src={pdfUrl}
+              title="Prévia do relatório"
+              className="w-full h-full border-0"
+            />
           ) : (
+
             <div className="flex items-center justify-center h-full text-muted-foreground">
               Carregando prévia…
             </div>
