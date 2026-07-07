@@ -34,6 +34,7 @@ function downloadPdf(doc: jsPDF, filename: string) {
 export interface ExtratoColheita {
   data_colheita: string | null;
   lavoura?: string | null;
+  variedade?: string | null;
   peso_bruto: number | null;
   peso_tara: number | null;
   producao_kg: number | null;
