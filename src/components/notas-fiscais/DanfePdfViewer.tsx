@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import "@/lib/pdfjsPolyfills";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url";
 import { AlertCircle } from "lucide-react";
