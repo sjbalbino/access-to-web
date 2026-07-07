@@ -453,6 +453,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const rows = Object.values(rowMap).sort((a, b) => a.local_entrega.localeCompare(b.local_entrega) || a.produtor_nome.localeCompare(b.produtor_nome));
     if (rows.length === 0) { toast({ title: "Sem dados" }); return; }
 
+    setPendingSheets([{
+      name: "Resumo por Local",
+      header: ["Local", "Produtor", "Depósitos (kg)", "Devoluções (kg)", "Transf. Saída (kg)", "Transf. Entrada (kg)", "Notas Depósito (kg)", "Saldo (kg)"],
+      rows: rows.map(r => [r.local_entrega, r.produtor_nome, r.depositos_kg, r.devolucoes_kg, r.tr_saida_kg, r.tr_entrada_kg, r.notas_deposito_kg, r.saldo_kg]),
+    }]);
     gerarResumoProdutoresLocalPdf({
       safraNome: safra?.nome || "-",
       produtoNome: produto?.nome || null,
