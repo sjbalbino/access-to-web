@@ -111,15 +111,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const gerarRelatorio = async () => {
     if (dataInicial && dataFinal && new Date(dataInicial) > new Date(dataFinal)) {
-      toast({ 
-        title: "Período inválido", 
-        description: "A data inicial não pode ser maior que a data final.", 
-        variant: "destructive" 
+      toast({
+        title: "Período inválido",
+        description: "A data inicial não pode ser maior que a data final.",
+        variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
+    const capture = captureNextRelatorio();
     try {
       if (tipo === "extrato") await gerarExtrato();
       else if (tipo === "colheitas") await gerarColheitas();
@@ -131,7 +132,18 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       else if (tipo === "depositos_geral") await gerarDepositos();
       else if (tipo === "resumo_local") await gerarResumoLocal();
       else if (tipo === "extrato_cf") await gerarExtratoCf();
+
+      // Aguarda o payload entregue por qualquer gerador (com timeout de segurança)
+      const payload = await Promise.race([
+        capture,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 500)),
+      ]);
+      if (payload) {
+        setPreviewPayload(payload);
+        setPreviewOpen(true);
+      }
     } catch (err: any) {
+      cancelPendingCapture();
       toast({ title: "Erro ao gerar relatório", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
