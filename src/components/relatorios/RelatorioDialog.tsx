@@ -548,6 +548,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const prod = produtoId ? produtos?.find(p => p.id === produtoId) : null;
     const filtros = [`Safra: ${safra?.nome || "-"}`, prod ? `Produto: ${prod.nome}` : null].filter(Boolean).join(" | ");
     const mapped: RelColheita[] = data.map((c: any) => ({ data_colheita: c.data_colheita, produtor_nome: c.inscricao_produtor?.produtores?.nome || null, lavoura_nome: c.controle_lavoura?.lavouras?.nome || null, placa: c.placas?.placa || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg, total_sacos: c.total_sacos }));
+    setPendingSheets([{
+      name: "Colheitas",
+      header: ["Data", "Produtor", "Lavoura", "Placa", "Peso Bruto", "Peso Tara", "Produção (kg)", "Umidade %", "Impureza %", "Desconto (kg)", "Líquido (kg)", "Sacos"],
+      rows: mapped.map(m => [m.data_colheita ?? "", m.produtor_nome ?? "", m.lavoura_nome ?? "", m.placa ?? "", m.peso_bruto ?? 0, m.peso_tara ?? 0, m.producao_kg ?? 0, m.umidade ?? 0, m.impureza ?? 0, m.kg_desconto_total ?? 0, m.producao_liquida_kg ?? 0, m.total_sacos ?? 0]),
+    }]);
     gerarRelatorioColheitasPdf(mapped, filtros);
   };
 
