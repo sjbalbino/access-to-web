@@ -79,7 +79,8 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
       setTipo(transferencia.tipo || "");
     } else {
       resetForm();
-    }
+  }, [transferencia, open]);
+
   const siloPadraoId = useSiloPadraoId();
   useEffect(() => {
     if (open && !isEditing && !siloId && siloPadraoId) setSiloId(siloPadraoId);
