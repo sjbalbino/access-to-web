@@ -169,6 +169,13 @@ export default function RemessasVendaForm() {
     }
   }, [contrato, setValue]);
 
+  // Auto-preencher silo padrão em nova remessa
+  useEffect(() => {
+    if (siloPadraoId && !watch("silo_id")) {
+      setValue("silo_id", siloPadraoId);
+    }
+  }, [siloPadraoId, setValue]);
+
   // Preencher balanceiro com nome do usuário logado
   useEffect(() => {
     if (profile?.nome) {
