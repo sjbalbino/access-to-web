@@ -200,7 +200,7 @@ export default function NotasDeposito() {
                   <TableRow>
                     <TableHead>Data</TableHead>
                     <TableHead>NF Nº</TableHead>
-                    <TableHead>Produtor</TableHead>
+                    <TableHead>Produtor Emitente</TableHead>
                     <TableHead>Produto</TableHead>
                     <TableHead className="text-right">Quantidade</TableHead>
                     <TableHead>Status</TableHead>
