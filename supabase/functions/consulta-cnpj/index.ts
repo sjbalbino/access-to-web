@@ -193,13 +193,18 @@ serve(async (req) => {
 
     console.log(`Consultando CNPJ: ${cnpjLimpo}`);
 
-    // Tenta fonte primária (publica.cnpj.ws — dados mais frescos da Receita)
-    const primario = await fetchPublicaCnpjWs(cnpjLimpo);
-    const secundario = await fetchBrasilApi(cnpjLimpo);
+    // Consulta múltiplas fontes em paralelo e escolhe a mais completa.
+    // CNPJa Open e ReceitaWS costumam ter dados mais atualizados que BrasilAPI.
+    const [cnpja, receitaws, brasil] = await Promise.all([
+      fetchCnpjaOpen(cnpjLimpo),
+      fetchReceitaWs(cnpjLimpo),
+      fetchBrasilApi(cnpjLimpo),
+    ]);
 
-    const resultado = primario && secundario
-      ? (isMaisCompleto(primario, secundario) ? primario : secundario)
-      : (primario || secundario);
+    const candidatos = [cnpja, receitaws, brasil].filter((c): c is CnpjResultado => c !== null);
+    const resultado = candidatos.length
+      ? candidatos.reduce((melhor, atual) => (isMaisCompleto(atual, melhor) ? atual : melhor))
+      : null;
 
     if (!resultado) {
       return new Response(
