@@ -46,6 +46,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useState } from "react";
+import { AlterarSenhaDialog } from "@/components/usuarios/AlterarSenhaDialog";
 
 interface MenuItem {
   title: string;
