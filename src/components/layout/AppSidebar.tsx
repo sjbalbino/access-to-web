@@ -49,7 +49,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTenants } from "@/hooks/useTenants";
 import { Badge } from "@/components/ui/badge";
 import {
-import { AlterarSenhaDialog } from "@/components/usuarios/AlterarSenhaDialog";
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -57,6 +56,7 @@ import { AlterarSenhaDialog } from "@/components/usuarios/AlterarSenhaDialog";
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AlterarSenhaDialog } from "@/components/usuarios/AlterarSenhaDialog";
 
 interface MenuItem {
   title: string;
