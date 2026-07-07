@@ -120,6 +120,34 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
   const isEditing = !!devolucao;
 
+  // Inicializar/limpar valores antes dos efeitos de preenchimento automático.
+  // Assim, os defaults carregados abaixo não são apagados pelo reset do modo novo.
+  useEffect(() => {
+    if (devolucao) {
+      // Modo edição - carregar dados da devolução
+      setSafraId(devolucao.safra_id || '');
+      setProdutoId(devolucao.produto_id || '');
+      setLocalEntregaId(devolucao.local_entrega_id || '');
+      setDataDevolucao(devolucao.data_devolucao || new Date().toISOString().split('T')[0]);
+      setSiloId(devolucao.silo_id || '');
+      setInscricaoEmitenteId(devolucao.inscricao_emitente_id || '');
+      setInscricaoProdutorId(devolucao.inscricao_produtor_id || '');
+      setQuantidadeKg(devolucao.quantidade_kg || 0);
+      setValorUnitario(devolucao.valor_unitario || 0);
+      setValorTotal(devolucao.valor_total || 0);
+      setTaxaArmazenagem(devolucao.taxa_armazenagem || 0);
+      setKgTaxaArmazenagem(devolucao.kg_taxa_armazenagem || 0);
+      setInscricaoRecebeTaxaId(devolucao.inscricao_recebe_taxa_id || '');
+      setNfeReferenciada(devolucao.nfe_referenciada || '');
+      setObservacao(devolucao.observacao || '');
+    } else {
+      // Modo novo - usar defaults dos filtros se disponível
+      resetForm();
+      if (defaultSafraId) setSafraId(defaultSafraId);
+      if (defaultProdutoId) setProdutoId(defaultProdutoId);
+    }
+  }, [devolucao, open, defaultSafraId, defaultProdutoId]);
+
   const siloPadraoId = useSiloPadraoId(granjaContextoId);
   const { data: inscricaoEmitentePrincipal } = useInscricaoEmitentePrincipal(granjaContextoId || undefined);
 
@@ -164,36 +192,6 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
       setInscricaoRecebeTaxaId(inscricaoEmitenteId);
     }
   }, [open, isEditing, inscricaoEmitenteId]);
-
-
-
-  // Inicializar valores quando abre o dialog
-  useEffect(() => {
-    if (devolucao) {
-      // Modo edição - carregar dados da devolução
-      setSafraId(devolucao.safra_id || '');
-      setProdutoId(devolucao.produto_id || '');
-      setLocalEntregaId(devolucao.local_entrega_id || '');
-      setDataDevolucao(devolucao.data_devolucao || new Date().toISOString().split('T')[0]);
-      setSiloId(devolucao.silo_id || '');
-      setInscricaoEmitenteId(devolucao.inscricao_emitente_id || '');
-      setInscricaoProdutorId(devolucao.inscricao_produtor_id || '');
-      setQuantidadeKg(devolucao.quantidade_kg || 0);
-      setValorUnitario(devolucao.valor_unitario || 0);
-      setValorTotal(devolucao.valor_total || 0);
-      setTaxaArmazenagem(devolucao.taxa_armazenagem || 0);
-      setKgTaxaArmazenagem(devolucao.kg_taxa_armazenagem || 0);
-      setInscricaoRecebeTaxaId(devolucao.inscricao_recebe_taxa_id || '');
-      setNfeReferenciada(devolucao.nfe_referenciada || '');
-      setObservacao(devolucao.observacao || '');
-    } else {
-      // Modo novo - usar defaults dos filtros se disponível
-      resetForm();
-      if (defaultSafraId) setSafraId(defaultSafraId);
-      if (defaultProdutoId) setProdutoId(defaultProdutoId);
-    }
-  }, [devolucao, open, defaultSafraId, defaultProdutoId]);
-
   // Calcular valor total
   useEffect(() => {
     setValorTotal(quantidadeKg * valorUnitario);
