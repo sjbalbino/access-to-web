@@ -133,6 +133,7 @@ const roleLabels: Record<string, string> = {
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const [senhaOpen, setSenhaOpen] = useState(false);
   const location = useLocation();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
   const { openTab } = useTabs();
