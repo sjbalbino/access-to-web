@@ -47,6 +47,7 @@ export default function Silos() {
     localizacao: '',
     observacoes: '',
     ativo: true,
+    is_padrao: false,
   });
 
   const resumo = useMemo(() => {
