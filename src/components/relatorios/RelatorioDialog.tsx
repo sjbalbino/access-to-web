@@ -852,6 +852,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const needsProduto = tipo === "colheitas" || tipo === "depositos_geral" || tipo === "resumo_local";
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -1049,15 +1050,17 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           </Button>
         </div>
       </DialogContent>
-
-      <PreviewRelatorioDialog
-        payload={previewPayload}
-        open={previewOpen}
-        onOpenChange={(o) => {
-          setPreviewOpen(o);
-          if (!o) setPreviewPayload(null);
-        }}
-      />
     </Dialog>
+
+    <PreviewRelatorioDialog
+      payload={previewPayload}
+      open={previewOpen}
+      onOpenChange={(o) => {
+        setPreviewOpen(o);
+        if (!o) setPreviewPayload(null);
+      }}
+    />
+    </>
   );
 }
+
