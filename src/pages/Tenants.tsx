@@ -34,7 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { Building, Plus, Pencil, Trash2, Search, Crown, Loader2 } from "lucide-react";
+import { Building, Plus, Pencil, Trash2, Search, Crown, Loader2, Upload, X } from "lucide-react";
 import {
   useTenants,
   useCreateTenant,
@@ -47,6 +47,8 @@ import { useCepLookup } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { invalidatePdfBrand } from "@/lib/pdfBrand";
+import { toast } from "@/hooks/use-toast";
 
 const emptyTenant: TenantInput = {
   codigo: "",
@@ -63,6 +65,7 @@ const emptyTenant: TenantInput = {
   cep: "",
   telefone: "",
   email: "",
+  logo_url: null,
   ativo: true,
 };
 
@@ -111,6 +114,7 @@ export default function Tenants() {
       cep: tenant.cep || "",
       telefone: tenant.telefone || "",
       email: tenant.email || "",
+      logo_url: tenant.logo_url ?? null,
       ativo: tenant.ativo ?? true,
     });
     setIsDialogOpen(true);
@@ -124,10 +128,47 @@ export default function Tenants() {
     } else {
       await createMutation.mutateAsync(formData);
     }
-
+    invalidatePdfBrand();
     setIsDialogOpen(false);
     resetForm();
   };
+
+  const handleLogoUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Formato inválido", description: "Envie um arquivo PNG ou JPG.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 512 * 1024) {
+      toast({ title: "Arquivo grande", description: "O logo deve ter no máximo 512 KB.", variant: "destructive" });
+      return;
+    }
+    // Redimensiona para no máximo 300px de largura mantendo proporção
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 300;
+          const scale = Math.min(1, maxW / img.width);
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject(new Error("Canvas indisponível"));
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL(file.type.includes("png") ? "image/png" : "image/jpeg", 0.9));
+        };
+        img.onerror = reject;
+        img.src = reader.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    setFormData((prev) => ({ ...prev, logo_url: dataUrl }));
+  };
+
 
   const handleDelete = async () => {
     if (tenantToDelete) {
@@ -300,7 +341,51 @@ export default function Tenants() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              {/* CNPJ primeiro */}
+              {/* Logotipo */}
+              <div className="col-span-2 flex items-center gap-4 rounded-md border p-3">
+                <div className="h-16 w-24 flex items-center justify-center bg-muted rounded overflow-hidden">
+                  {formData.logo_url ? (
+                    <img src={formData.logo_url} alt="Logo" className="max-h-full max-w-full object-contain" />
+                  ) : (
+                    <Building className="h-6 w-6 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 space-y-1">
+                  <Label className="text-sm">Logotipo (aparece no cabeçalho dos relatórios)</Label>
+                  <p className="text-xs text-muted-foreground">PNG ou JPG, máx. 512 KB. Redimensionado para 300px.</p>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" size="sm" asChild>
+                      <label className="cursor-pointer">
+                        <Upload className="h-4 w-4 mr-1" />
+                        {formData.logo_url ? "Trocar" : "Enviar"}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleLogoUpload(f);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </Button>
+                    {formData.logo_url && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFormData((p) => ({ ...p, logo_url: null }))}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Remover
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+
               <div>
                 <Label htmlFor="cnpj">CNPJ</Label>
                 <div className="relative">

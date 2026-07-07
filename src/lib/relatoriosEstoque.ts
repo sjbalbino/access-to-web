@@ -2,29 +2,13 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { desenharCabecalhoBrand, desenharRodapeBrand } from "./pdfBrand";
+import { entregarRelatorio } from "./relatorioViewer";
 
 const formatNumber = (value: number | null | undefined, decimals = 0): string => {
   if (value === null || value === undefined) return "0";
   return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
 };
-
-function addFooter(doc: jsPDF) {
-  const pageCount = doc.getNumberOfPages();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      `Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })} - Página ${i} de ${pageCount}`,
-      pageWidth / 2,
-      doc.internal.pageSize.getHeight() - 10,
-      { align: "center" }
-    );
-  }
-}
-
-import { entregarRelatorio } from "./relatorioViewer";
 
 function downloadPdf(doc: jsPDF, filename: string) {
   entregarRelatorio(doc, filename);
@@ -56,7 +40,7 @@ export interface SaldoDisponivelData {
 export function gerarSaldoDisponivelPdf(data: SaldoDisponivelData): void {
   const doc = new jsPDF({ orientation: "landscape", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
-  let yPos = 12;
+  let yPos = desenharCabecalhoBrand(doc);
 
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
@@ -159,7 +143,7 @@ export function gerarSaldoDisponivelPdf(data: SaldoDisponivelData): void {
     },
   });
 
-  addFooter(doc);
+  desenharRodapeBrand(doc);
   downloadPdf(doc, `saldo_disponivel_${data.safraNome.replace(/\s/g, "_")}.pdf`);
 }
 
@@ -184,14 +168,15 @@ export interface DepositosGeralData {
 export function gerarDepositosGeralPdf(data: DepositosGeralData): void {
   const doc = new jsPDF({ orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("RELATÓRIO DE NOTAS DE DEPÓSITO", pageWidth / 2, 15, { align: "center" });
+  doc.text("RELATÓRIO DE NOTAS DE DEPÓSITO", pageWidth / 2, 34, { align: "center" });
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   const filtro = `Safra: ${data.safraNome}${data.produtoNome ? ` | Produto: ${data.produtoNome}` : ''}`;
-  doc.text(filtro, pageWidth / 2, 22, { align: "center" });
+  doc.text(filtro, pageWidth / 2, 40, { align: "center" });
 
   const formatDate = (d: string | null) => {
     if (!d) return "-";
@@ -214,7 +199,7 @@ export function gerarDepositosGeralPdf(data: DepositosGeralData): void {
   body.push(["TOTAL", "", "", "", formatNumber(totalKg, 0), sc(totalKg), "", ""]);
 
   autoTable(doc, {
-    startY: 27,
+    startY: 44,
     head: [[
       "Produtor", "IE", "Produto",
       { content: "Data", styles: { halign: "center" } },
@@ -245,7 +230,7 @@ export function gerarDepositosGeralPdf(data: DepositosGeralData): void {
     },
   });
 
-  addFooter(doc);
+  desenharRodapeBrand(doc);
   downloadPdf(doc, "relatorio_depositos.pdf");
 }
 
@@ -272,14 +257,15 @@ export interface ResumoLocalData {
 export function gerarResumoProdutoresLocalPdf(data: ResumoLocalData): void {
   const doc = new jsPDF({ orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("RESUMO PRODUTORES POR LOCAL DE ENTREGA", pageWidth / 2, 15, { align: "center" });
+  doc.text("RESUMO PRODUTORES POR LOCAL DE ENTREGA", pageWidth / 2, 34, { align: "center" });
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   const filtro = `Safra: ${data.safraNome}${data.produtoNome ? ` | Produto: ${data.produtoNome}` : ''}`;
-  doc.text(filtro, pageWidth / 2, 22, { align: "center" });
+  doc.text(filtro, pageWidth / 2, 40, { align: "center" });
 
   const ps = data.pesoSaco || 60;
   const toSacos = (kg: number) => Math.round(kg / ps);
@@ -292,13 +278,13 @@ export function gerarResumoProdutoresLocalPdf(data: ResumoLocalData): void {
     locais[key].push(r);
   });
 
-  let yPos = 27;
+  let yPos = 44;
 
   Object.entries(locais).sort(([a], [b]) => a.localeCompare(b)).forEach(([local, rows]) => {
     // Check page break
     if (yPos > doc.internal.pageSize.getHeight() - 40) {
       doc.addPage();
-      yPos = 15;
+      yPos = desenharCabecalhoBrand(doc);
     }
 
     doc.setFont("helvetica", "bold");
@@ -374,6 +360,6 @@ export function gerarResumoProdutoresLocalPdf(data: ResumoLocalData): void {
     yPos = (doc as any).lastAutoTable.finalY + 8;
   });
 
-  addFooter(doc);
+  desenharRodapeBrand(doc);
   downloadPdf(doc, `resumo_produtores_local_${data.safraNome.replace(/\s/g, "_")}.pdf`);
 }

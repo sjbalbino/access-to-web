@@ -1,6 +1,8 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format, parseISO } from 'date-fns';
+import { desenharCabecalhoBrand, desenharRodapeBrand } from './pdfBrand';
+import { entregarRelatorio } from './relatorioViewer';
 
 const fmtBRL = (v: number) =>
   (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -35,10 +37,11 @@ interface Filtros {
 /** Demonstrativo Gerencial por Sócio: agrupa receitas e despesas por sócio e conta DRE. */
 export function gerarDemonstrativoSocioPdf(movs: RateioMovimento[], filtros: Filtros) {
   const doc = new jsPDF('landscape');
+  desenharCabecalhoBrand(doc);
   const pageW = doc.internal.pageSize.getWidth();
 
   doc.setFontSize(14);
-  doc.text('Demonstrativo Gerencial por Sócio', pageW / 2, 14, { align: 'center' });
+  doc.text('Demonstrativo Gerencial por Sócio', pageW / 2, 34, { align: 'center' });
 
   doc.setFontSize(9);
   const subtitle = [
@@ -46,7 +49,7 @@ export function gerarDemonstrativoSocioPdf(movs: RateioMovimento[], filtros: Fil
     filtros.dataInicial ? `De: ${fmtDate(filtros.dataInicial)}` : '',
     filtros.dataFinal ? `Até: ${fmtDate(filtros.dataFinal)}` : '',
   ].filter(Boolean).join('  |  ');
-  doc.text(subtitle, pageW / 2, 20, { align: 'center' });
+  doc.text(subtitle, pageW / 2, 40, { align: 'center' });
 
   // Agrupa por sócio
   const porSocio = new Map<string, RateioMovimento[]>();
@@ -123,12 +126,14 @@ export function gerarDemonstrativoSocioPdf(movs: RateioMovimento[], filtros: Fil
   doc.setFont('helvetica', 'bold');
   doc.text(`TOTAL GERAL — Receitas: ${fmtBRL(totalGeralR)}  |  Despesas: ${fmtBRL(totalGeralD)}  |  Resultado: ${fmtBRL(totalGeralR - totalGeralD)}`, 14, y + 4);
 
-  doc.save(`demonstrativo-socios-${new Date().toISOString().slice(0, 10)}.pdf`);
+  desenharRodapeBrand(doc);
+  entregarRelatorio(doc, `demonstrativo-socios-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
 /** Livro Caixa do Produtor Rural por sócio (regime de caixa: apenas baixas + lançamentos). */
 export function gerarLivroCaixaPdf(movs: RateioMovimento[], filtros: Filtros) {
   const doc = new jsPDF();
+  desenharCabecalhoBrand(doc);
   const pageW = doc.internal.pageSize.getWidth();
 
   const porSocio = new Map<string, RateioMovimento[]>();
@@ -146,17 +151,17 @@ export function gerarLivroCaixaPdf(movs: RateioMovimento[], filtros: Filtros) {
 
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text('Livro Caixa do Produtor Rural', pageW / 2, 14, { align: 'center' });
+    doc.text('Livro Caixa do Produtor Rural', pageW / 2, 34, { align: 'center' });
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Sócio: ${socio.socio_nome}`, 14, 22);
-    if (socio.socio_cpf_cnpj) doc.text(`CPF/CNPJ: ${socio.socio_cpf_cnpj}`, 14, 27);
+    doc.text(`Sócio: ${socio.socio_nome}`, 14, 42);
+    if (socio.socio_cpf_cnpj) doc.text(`CPF/CNPJ: ${socio.socio_cpf_cnpj}`, 14, 47);
     const sub = [
       filtros.granjaNome ? `Granja: ${filtros.granjaNome}` : '',
       filtros.dataInicial ? `De: ${fmtDate(filtros.dataInicial)}` : '',
       filtros.dataFinal ? `Até: ${fmtDate(filtros.dataFinal)}` : '',
     ].filter(Boolean).join('  |  ');
-    if (sub) doc.text(sub, 14, 32);
+    if (sub) doc.text(sub, 14, 52);
 
     let saldo = 0;
     const rows = lista
@@ -180,7 +185,7 @@ export function gerarLivroCaixaPdf(movs: RateioMovimento[], filtros: Filtros) {
     rows.push(['', 'TOTAL DO PERÍODO', '', fmtBRL(totE), fmtBRL(totS), fmtBRL(totE - totS)]);
 
     autoTable(doc, {
-      startY: 38,
+      startY: 58,
       head: [['Data', 'Histórico', 'Nº Doc.', 'Entradas', 'Saídas', 'Saldo']],
       body: rows,
       styles: { fontSize: 8 },
@@ -201,5 +206,6 @@ export function gerarLivroCaixaPdf(movs: RateioMovimento[], filtros: Filtros) {
     });
   });
 
-  doc.save(`livro-caixa-${new Date().toISOString().slice(0, 10)}.pdf`);
+  desenharRodapeBrand(doc);
+  entregarRelatorio(doc, `livro-caixa-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
