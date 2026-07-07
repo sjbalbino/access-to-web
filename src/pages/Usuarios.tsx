@@ -101,6 +101,7 @@ export default function Usuarios() {
   // Pendentes
   const { data: pendentes } = useUsuariosPendentes();
   const [liberandoUser, setLiberandoUser] = useState<UsuarioPendente | null>(null);
+  const [senhaUser, setSenhaUser] = useState<UserWithRole | null>(null);
 
   // Fetch users with roles
 
