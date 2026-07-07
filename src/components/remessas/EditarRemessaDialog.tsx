@@ -255,32 +255,32 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Peso Tara (kg)</Label>
+                  <Label>Peso Tara (kg)</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      value={pesoTara || ""}
+                      onChange={(e) => setPesoTara(Number(e.target.value))}
+                      className="w-28 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      disabled={isReadOnly}
+                    />
                     {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoTara(Math.round(kg))} />}
                   </div>
-                  <Input
-                    type="number"
-                    step="1"
-                    value={pesoTara || ""}
-                    onChange={(e) => setPesoTara(Number(e.target.value))}
-                    className="text-right"
-                    disabled={isReadOnly}
-                  />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Peso Bruto (kg)</Label>
+                  <Label>Peso Bruto (kg)</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      value={pesoBruto || ""}
+                      onChange={(e) => setPesoBruto(Number(e.target.value))}
+                      className="w-28 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      disabled={isReadOnly}
+                    />
                     {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoBruto(Math.round(kg))} />}
                   </div>
-                  <Input
-                    type="number"
-                    step="1"
-                    value={pesoBruto || ""}
-                    onChange={(e) => setPesoBruto(Number(e.target.value))}
-                    className="text-right"
-                    disabled={isReadOnly}
-                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Preço/Kg</Label>
