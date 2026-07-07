@@ -80,7 +80,11 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
     } else {
       resetForm();
     }
-  }, [transferencia, open]);
+  const siloPadraoId = useSiloPadraoId();
+  useEffect(() => {
+    if (open && !isEditing && !siloId && siloPadraoId) setSiloId(siloPadraoId);
+  }, [open, isEditing, siloId, siloPadraoId]);
+
 
   const resetForm = () => {
     setDataTransferencia(new Date());
