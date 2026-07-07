@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, Download, FileSpreadsheet, Printer, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { RelatorioPayload } from "@/lib/relatorioViewer";
+import { PdfViewer } from "@/components/shared/PdfViewer";
 
 interface Props {
   payload: RelatorioPayload | null;
@@ -15,56 +16,38 @@ interface Props {
 export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const pdfBlob = useMemo(() => {
-    if (!payload) return null;
+  const pdfData = useMemo(() => {
+    if (!payload || !open) return null;
     try {
-      return payload.doc.output("blob");
+      // Usamos arraybuffer em vez de blob para evitar bloqueios de iframe
+      // e permitir renderização direta via pdf.js no Canvas
+      return new Uint8Array(payload.doc.output("arraybuffer"));
     } catch (err) {
+      console.error("Erro ao gerar arraybuffer do PDF:", err);
       setErrorMessage(err instanceof Error ? err.message : "Erro ao gerar PDF.");
       return null;
     }
-  }, [payload]);
-
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!pdfBlob) {
-      setPdfUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(pdfBlob);
-    setPdfUrl(url);
-    setErrorMessage(null);
-    return () => URL.revokeObjectURL(url);
-  }, [pdfBlob]);
-
-
-
+  }, [payload, open]);
 
   const handleBaixarPdf = () => {
-    if (!payload || !pdfBlob) return;
+    if (!payload) return;
     try {
-      const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = payload.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      payload.doc.save(payload.filename);
     } catch (err) {
       toast({
         title: "Erro ao baixar",
-        description: "Se o download foi bloqueado, permita downloads deste site nas configurações do Chrome.",
+        description: "Não foi possível gerar o arquivo para download.",
         variant: "destructive",
       });
     }
   };
 
   const handleImprimir = () => {
-    if (!pdfBlob) return;
+    if (!payload) return;
     try {
-      const url = URL.createObjectURL(pdfBlob);
+      // Para impressão, ainda precisamos de um blob temporário
+      const blob = payload.doc.output("blob");
+      const url = URL.createObjectURL(blob);
       const frame = document.createElement("iframe");
       frame.style.position = "fixed";
       frame.style.right = "0";
@@ -90,7 +73,6 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
       });
     }
   };
-
 
   const handleExportarExcel = () => {
     if (!payload) return;
@@ -150,23 +132,25 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
             </Button>
           </div>
         </DialogHeader>
-        <div className="relative flex-1 overflow-auto bg-muted/30">
+        
+        <div className="relative flex-1 overflow-hidden bg-muted/30">
           {errorMessage ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
               <AlertCircle className="h-6 w-6 text-destructive" />
-              <p>Não foi possível renderizar a prévia do relatório.</p>
+              <p>Não foi possível gerar a prévia do relatório.</p>
               <p className="max-w-md break-words text-xs">{errorMessage}</p>
             </div>
-          ) : pdfUrl ? (
-            <iframe
-              key={pdfUrl}
-              src={pdfUrl}
-              title="Prévia do relatório"
-              className="w-full h-full border-0"
+          ) : pdfData ? (
+            <PdfViewer 
+              pdfData={pdfData} 
+              errorMessage="Não foi possível renderizar a prévia do relatório."
             />
-          ) : null}
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              Carregando prévia...
+            </div>
+          )}
         </div>
-
       </DialogContent>
     </Dialog>
   );
