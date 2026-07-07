@@ -49,6 +49,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTenants } from "@/hooks/useTenants";
 import { Badge } from "@/components/ui/badge";
 import {
+import { AlterarSenhaDialog } from "@/components/usuarios/AlterarSenhaDialog";
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
