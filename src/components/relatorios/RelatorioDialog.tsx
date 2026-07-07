@@ -249,6 +249,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     producao_liquida_kg,
     total_sacos,
     placas(placa),
+    variedade:produtos!colheitas_variedade_id_fkey(nome),
     inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
       produtores:produtor_id(nome)
     ),
@@ -593,7 +594,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
       cpfCnpj: null, inscricaoEstadual: inscricao?.inscricao_estadual || null,
       safraNome: safra?.nome || "-", produtoNome: produto?.nome || null,
-      colheitas: (colheitas || []).map((c: any) => ({ data_colheita: c.data_colheita, lavoura: c.controle_lavoura?.lavouras?.nome || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg })),
+      colheitas: (colheitas || []).map((c: any) => ({ data_colheita: c.data_colheita, lavoura: c.controle_lavoura?.lavouras?.nome || null, variedade: c.variedade?.nome || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg })),
       transferenciasRecebidas: (trRec || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_origem?.produtores?.nome || t.inscricao_origem?.granja || null, quantidade_kg: t.quantidade_kg })),
       transferenciasEnviadas: (trEnv || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_destino?.produtores?.nome || t.inscricao_destino?.granja || null, quantidade_kg: t.quantidade_kg })),
       devolucoes: (devolucoes || []).map((d: any) => ({ data_devolucao: d.data_devolucao, quantidade_kg: d.quantidade_kg, taxa_armazenagem: d.taxa_armazenagem, kg_taxa_armazenagem: d.kg_taxa_armazenagem })),
@@ -603,10 +604,10 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const sc = (kg: number) => Math.round((kg || 0) / PS);
     const sum = (arr: any[], key: string) => arr.reduce((s, x) => s + (Number(x[key]) || 0), 0);
 
-    const colheitasRows = extratoData.colheitas.map(c => [c.data_colheita ?? "", c.lavoura ?? "", c.peso_bruto ?? 0, c.peso_tara ?? 0, c.producao_kg ?? 0, c.umidade ?? 0, c.impureza ?? 0, c.kg_desconto_total ?? 0, c.producao_liquida_kg ?? 0, sc(Number(c.producao_liquida_kg) || 0)]);
+    const colheitasRows = extratoData.colheitas.map(c => [c.data_colheita ?? "", c.lavoura ?? "", c.variedade ?? "", c.peso_bruto ?? 0, c.peso_tara ?? 0, c.producao_kg ?? 0, c.umidade ?? 0, c.impureza ?? 0, c.kg_desconto_total ?? 0, c.producao_liquida_kg ?? 0, sc(Number(c.producao_liquida_kg) || 0)]);
     if (colheitasRows.length) {
       const totLiq = sum(extratoData.colheitas, "producao_liquida_kg");
-      colheitasRows.push(["TOTAL", "", sum(extratoData.colheitas, "peso_bruto"), sum(extratoData.colheitas, "peso_tara"), sum(extratoData.colheitas, "producao_kg"), "", "", sum(extratoData.colheitas, "kg_desconto_total"), totLiq, sc(totLiq)]);
+      colheitasRows.push(["TOTAL", "", "", sum(extratoData.colheitas, "peso_bruto"), sum(extratoData.colheitas, "peso_tara"), sum(extratoData.colheitas, "producao_kg"), "", "", sum(extratoData.colheitas, "kg_desconto_total"), totLiq, sc(totLiq)]);
     }
 
     const trRecRows = extratoData.transferenciasRecebidas.map(t => [t.data_transferencia, t.nome_outro ?? "", t.quantidade_kg, sc(Number(t.quantidade_kg) || 0)]);
@@ -641,7 +642,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const saldo = totalColheitas + totalTrRec - totalTrEnv - totalDev - totalKgTaxa;
 
     setPendingSheets([
-      { name: "Colheitas", header: ["Data", "Lavoura", "Peso Bruto", "Peso Tara", "Produção (kg)", "Umidade %", "Impureza %", "Desconto (kg)", "Líquido (kg)", "Sacas"], rows: colheitasRows },
+      { name: "Colheitas", header: ["Data", "Lavoura", "Variedade", "Peso Bruto", "Peso Tara", "Produção (kg)", "Umidade %", "Impureza %", "Desconto (kg)", "Líquido (kg)", "Sacas"], rows: colheitasRows },
       { name: "Transf. Recebidas", header: ["Data", "De", "Qtd (kg)", "Sacas"], rows: trRecRows },
       { name: "Transf. Enviadas", header: ["Data", "Para", "Qtd (kg)", "Sacas"], rows: trEnvRows },
       { name: "Devoluções", header: ["Data", "Qtd (kg)", "Sacas", "Taxa Arm. %", "Kg Taxa"], rows: devRows },

@@ -34,6 +34,7 @@ function downloadPdf(doc: jsPDF, filename: string) {
 export interface ExtratoColheita {
   data_colheita: string | null;
   lavoura?: string | null;
+  variedade?: string | null;
   peso_bruto: number | null;
   peso_tara: number | null;
   producao_kg: number | null;
@@ -107,6 +108,7 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     const colheitasBody = data.colheitas.map(c => [
       formatDate(c.data_colheita),
       c.lavoura || "-",
+      c.variedade || "-",
       formatNumber(c.peso_bruto, 0),
       formatNumber(c.peso_tara, 0),
       formatNumber(c.producao_kg, 0),
@@ -121,6 +123,7 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       head: [[
         { content: "Data", styles: { halign: "center" } },
         "Lavoura",
+        "Variedade",
         { content: "P.Bruto", styles: { halign: "right" } },
         { content: "Tara", styles: { halign: "right" } },
         { content: "Líquido", styles: { halign: "right" } },
@@ -135,9 +138,10 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
       columnStyles: {
         0: { halign: "center", cellWidth: 20 },
-        1: { halign: "left", cellWidth: 32 },
-        2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" },
-        5: { halign: "right" }, 6: { halign: "right" }, 7: { halign: "right" }, 8: { halign: "right" }, 9: { halign: "right" },
+        1: { halign: "left", cellWidth: 28 },
+        2: { halign: "left", cellWidth: 28 },
+        3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" },
+        6: { halign: "right" }, 7: { halign: "right" }, 8: { halign: "right" }, 9: { halign: "right" }, 10: { halign: "right" },
       },
     });
     yPos = (doc as any).lastAutoTable.finalY + 5;
