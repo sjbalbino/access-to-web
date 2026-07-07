@@ -67,6 +67,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [tipoProdutorFiltro, setTipoProdutorFiltro] = useState("todos");
   const [modoBensMoveis, setModoBensMoveis] = useState("geral_discriminado");
   const [loading, setLoading] = useState(false);
+  const [loadingProdutoresSafra, setLoadingProdutoresSafra] = useState(false);
+  const [inscricaoIdsComMovimento, setInscricaoIdsComMovimento] = useState<Set<string>>(new Set());
   const [previewPayload, setPreviewPayload] = useState<RelatorioPayload | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -96,6 +98,81 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const compradores = clientes?.filter(c => c.tipo === "cliente" || c.tipo === "ambos") || [];
 
+  useEffect(() => {
+    if (tipo !== "extrato" || !safraId) {
+      setInscricaoIdsComMovimento(new Set());
+      if (tipo === "extrato") setInscricaoId("");
+      return;
+    }
+
+    let ativo = true;
+    setLoadingProdutoresSafra(true);
+
+    const adicionarId = (ids: Set<string>, id: string | null | undefined) => {
+      if (id) ids.add(id);
+    };
+
+    const carregarProdutoresComMovimento = async () => {
+      const [colheitasRes, transferenciasRes, devolucoesRes, notasDepositoRes, comprasRes, contratosRes] = await Promise.all([
+        supabase.from("colheitas").select("inscricao_produtor_id").eq("safra_id", safraId),
+        supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id").eq("safra_id", safraId),
+        supabase.from("devolucoes_deposito").select("inscricao_produtor_id").eq("safra_id", safraId).neq("status", "cancelada"),
+        supabase.from("notas_deposito_emitidas").select("inscricao_produtor_id").eq("safra_id", safraId),
+        supabase.from("compras_cereais").select("inscricao_vendedor_id, inscricao_comprador_id").eq("safra_id", safraId),
+        supabase.from("contratos_venda").select("inscricao_produtor_id").eq("safra_id", safraId),
+      ]);
+
+      const erro = colheitasRes.error || transferenciasRes.error || devolucoesRes.error || notasDepositoRes.error || comprasRes.error || contratosRes.error;
+      if (erro) throw erro;
+
+      const ids = new Set<string>();
+      (colheitasRes.data || []).forEach((row) => adicionarId(ids, row.inscricao_produtor_id));
+      (transferenciasRes.data || []).forEach((row) => {
+        adicionarId(ids, row.inscricao_origem_id);
+        adicionarId(ids, row.inscricao_destino_id);
+      });
+      (devolucoesRes.data || []).forEach((row) => adicionarId(ids, row.inscricao_produtor_id));
+      (notasDepositoRes.data || []).forEach((row) => adicionarId(ids, row.inscricao_produtor_id));
+      (comprasRes.data || []).forEach((row) => {
+        adicionarId(ids, row.inscricao_vendedor_id);
+        adicionarId(ids, row.inscricao_comprador_id);
+      });
+      (contratosRes.data || []).forEach((row) => adicionarId(ids, row.inscricao_produtor_id));
+
+      if (ativo) {
+        setInscricaoIdsComMovimento(ids);
+        setInscricaoId((atual) => (atual && ids.has(atual) ? atual : ""));
+      }
+    };
+
+    carregarProdutoresComMovimento()
+      .catch((err: Error) => {
+        if (!ativo) return;
+        setInscricaoIdsComMovimento(new Set());
+        setInscricaoId("");
+        toast({
+          title: "Erro ao carregar produtores",
+          description: err.message,
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        if (ativo) setLoadingProdutoresSafra(false);
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, [tipo, safraId]);
+
+  const produtoresExtratoOptions = (inscricoes || [])
+    .filter((inscricao) => inscricaoIdsComMovimento.has(inscricao.id))
+    .map((inscricao) => ({
+      value: inscricao.id,
+      label: `${inscricao.produtores?.nome || inscricao.inscricao_estadual || "Sem nome"} - IE: ${inscricao.inscricao_estadual || "-"}`,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+
   const titulos: Record<TipoRelatorio, string> = {
     extrato: "Extrato do Produtor",
     colheitas: "Relatório de Colheitas",
@@ -120,6 +197,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     }
 
     setLoading(true);
+    setPreviewOpen(false);
+    setPreviewPayload(null);
     const capture = captureNextRelatorio();
     try {
       if (tipo === "extrato") await gerarExtrato();
@@ -140,7 +219,10 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       ]);
       if (payload) {
         setPreviewPayload(payload);
+        onOpenChange(false);
         setPreviewOpen(true);
+      } else {
+        cancelPendingCapture();
       }
     } catch (err: any) {
       cancelPendingCapture();
@@ -902,11 +984,12 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
               <ComboboxFilter
                 value={inscricaoId}
                 onValueChange={setInscricaoId}
-                options={inscricoes?.map(i => ({ value: i.id, label: `${i.produtores?.nome || i.inscricao_estadual || "Sem nome"} - IE: ${i.inscricao_estadual || "-"}` })) || []}
-                placeholder="Selecione o produtor"
+                options={produtoresExtratoOptions}
+                placeholder={safraId ? "Selecione o produtor" : "Selecione a safra primeiro"}
                 searchPlaceholder="Buscar produtor..."
-                emptyText="Nenhum produtor encontrado."
+                emptyText={safraId ? "Nenhum produtor com movimentação nesta safra." : "Selecione a safra primeiro."}
                 popoverWidth="w-[400px]"
+                disabled={!safraId || loadingProdutoresSafra}
               />
             </div>
           )}
