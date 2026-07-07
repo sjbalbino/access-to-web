@@ -83,6 +83,11 @@ export function PesarBrutoDialog({ remessa, precoKg, exigePh = true, onClose }: 
     }
   }, [remessa, user]);
 
+  const siloPadraoId = useSiloPadraoId();
+  useEffect(() => {
+    if (remessa && !remessa.silo_id && !siloId && siloPadraoId) setSiloId(siloPadraoId);
+  }, [remessa, siloId, siloPadraoId]);
+
   // Atualizar kgNota quando kgRemessa mudar
   useEffect(() => {
     if (kgRemessa > 0) {
