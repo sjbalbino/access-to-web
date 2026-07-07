@@ -150,22 +150,23 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
             </Button>
           </div>
         </DialogHeader>
-        <div className="relative flex-1 overflow-auto bg-muted/30 p-4">
-          {isRendering && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          )}
+        <div className="relative flex-1 overflow-auto bg-muted/30">
           {errorMessage ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
               <AlertCircle className="h-6 w-6 text-destructive" />
               <p>Não foi possível renderizar a prévia do relatório.</p>
               <p className="max-w-md break-words text-xs">{errorMessage}</p>
             </div>
-          ) : (
-            <div ref={setContainerElement} className="min-h-full" aria-label="Prévia do relatório renderizada" />
-          )}
+          ) : pdfUrl ? (
+            <iframe
+              key={pdfUrl}
+              src={pdfUrl}
+              title="Prévia do relatório"
+              className="w-full h-full border-0"
+            />
+          ) : null}
         </div>
+
       </DialogContent>
     </Dialog>
   );
