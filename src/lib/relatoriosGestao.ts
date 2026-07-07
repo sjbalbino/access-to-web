@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { entregarRelatorio } from './relatorioViewer';
 
 // =============================================
 // Demonstrativo Gerencial (Receitas/Despesas)
