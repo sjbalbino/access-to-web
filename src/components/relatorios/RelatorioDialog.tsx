@@ -844,6 +844,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       return;
     }
 
+    setPendingSheets([{
+      name: "Extrato",
+      header: ["Tipo", "Emissão", "Vencimento", "Documento", "Parcela", "Valor Original", "Valor Pago", "Juros", "Multa", "Desconto", "Status", "Último Pagto"],
+      rows: itens.map(i => [i.tipo, i.data_emissao ?? "", i.data_vencimento ?? "", i.documento ?? "", i.parcela ?? "", i.valor_original, i.valor_pago, i.juros, i.multa, i.desconto, i.status ?? "", i.data_ult_pagamento ?? ""]),
+    }]);
     gerarExtratoCfPdf({
       cliente_nome: cli?.nome || "-",
       cliente_doc: cli?.cpf_cnpj || null,
