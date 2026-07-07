@@ -84,16 +84,20 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
   const siloPadraoId = useSiloPadraoId();
   useEffect(() => {
-    if (open && !isEditing && !siloId && siloPadraoId) {
-      setSiloId(siloPadraoId);
+    if (open && !isEditing && !siloId) {
+      const fallback = siloPadraoId || (silos?.find((s: any) => s.ativo !== false)?.id ?? null);
+      if (fallback) setSiloId(fallback);
     }
-  }, [open, isEditing, siloId, siloPadraoId]);
+  }, [open, isEditing, siloId, siloPadraoId, silos]);
 
-  // Padrão: emitente-sócio principal
+  // Padrão: emitente-sócio principal (e replica no sócio que recebe armazenagem)
   useEffect(() => {
     if (open && !isEditing && !inscricaoEmitenteId && inscricoesSocio?.length) {
-      const principal = inscricoesSocio.find((i: any) => i.is_emitente_principal);
-      if (principal) setInscricaoEmitenteId(principal.id);
+      const principal = inscricoesSocio.find((i: any) => i.is_emitente_principal) || inscricoesSocio[0];
+      if (principal) {
+        setInscricaoEmitenteId(principal.id);
+        setInscricaoRecebeTaxaId((prev) => prev || principal.id);
+      }
     }
   }, [open, isEditing, inscricaoEmitenteId, inscricoesSocio]);
 
