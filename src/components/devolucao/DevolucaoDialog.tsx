@@ -10,7 +10,7 @@ import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
 import { useSafras } from '@/hooks/useSafras';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
 import { useInscricoesComSaldo, useLocaisEntregaComColheitas } from '@/hooks/useSaldosDeposito';
-import { useProdutosSementes } from '@/hooks/useProdutosSementes';
+import { useProdutos } from '@/hooks/useProdutos';
 import { useSaldoDisponivelProdutor } from '@/hooks/useSaldoDisponivelProdutor';
 import { useCreateDevolucao, useUpdateDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
 import { toast } from 'sonner';
