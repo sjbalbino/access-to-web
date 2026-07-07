@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Wheat,
   LogOut,
+  KeyRound,
   User,
   Shield,
   Package,
