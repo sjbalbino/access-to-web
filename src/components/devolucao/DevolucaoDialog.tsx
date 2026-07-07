@@ -85,6 +85,15 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     }
   }, [open, isEditing, siloId, siloPadraoId]);
 
+  // Padrão: emitente-sócio principal
+  useEffect(() => {
+    if (open && !isEditing && !inscricaoEmitenteId && inscricoesSocio?.length) {
+      const principal = inscricoesSocio.find((i: any) => i.is_emitente_principal);
+      if (principal) setInscricaoEmitenteId(principal.id);
+    }
+  }, [open, isEditing, inscricaoEmitenteId, inscricoesSocio]);
+
+
 
   // Inicializar valores quando abre o dialog
   useEffect(() => {
