@@ -198,25 +198,28 @@ export function gerarDepositosGeralPdf(data: DepositosGeralData): void {
     try { return format(new Date(d.split("T")[0] + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR }); } catch { return d; }
   };
 
+  const sc = (kg: number) => formatNumber(kg / 60, 1);
   const body = data.rows.map(r => [
     r.produtor_nome,
     r.inscricao_estadual,
     r.produto_nome || "-",
     formatDate(r.data_emissao),
     formatNumber(r.quantidade_kg, 0),
+    sc(r.quantidade_kg),
     r.nota_fiscal || "-",
     r.status || "-",
   ]);
 
   const totalKg = data.rows.reduce((s, r) => s + r.quantidade_kg, 0);
-  body.push(["TOTAL", "", "", "", formatNumber(totalKg, 0), "", ""]);
+  body.push(["TOTAL", "", "", "", formatNumber(totalKg, 0), sc(totalKg), "", ""]);
 
   autoTable(doc, {
     startY: 27,
     head: [[
       "Produtor", "IE", "Produto",
       { content: "Data", styles: { halign: "center" } },
-      { content: "Qtde (kg)", styles: { halign: "right" } },
+      { content: "Qtd (kg)", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
       "Nota Fiscal",
       "Status",
     ]],
@@ -228,10 +231,12 @@ export function gerarDepositosGeralPdf(data: DepositosGeralData): void {
       1: { halign: "left", cellWidth: 30 },
       2: { halign: "left", cellWidth: 30 },
       3: { halign: "center", cellWidth: 22 },
-      4: { halign: "right", cellWidth: 25 },
-      5: { halign: "left", cellWidth: 25 },
-      6: { halign: "left", cellWidth: 22 },
+      4: { halign: "right", cellWidth: 22 },
+      5: { halign: "right", cellWidth: 20 },
+      6: { halign: "left", cellWidth: 25 },
+      7: { halign: "left", cellWidth: 22 },
     },
+
     didParseCell: (data) => {
       if (data.row.index === body.length - 1 && data.section === "body") {
         data.cell.styles.fontStyle = "bold";
