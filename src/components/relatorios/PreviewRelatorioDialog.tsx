@@ -1,30 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import * as pdfjsLib from "pdfjs-dist";
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url";
+import "@/lib/pdfjsPolyfills";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Download, FileSpreadsheet, Loader2, Printer, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { RelatorioPayload } from "@/lib/relatorioViewer";
-
-if (!(Map.prototype as any).getOrInsertComputed) {
-  Object.defineProperty(Map.prototype, "getOrInsertComputed", {
-    value: function getOrInsertComputed<K, V>(this: Map<K, V>, key: K, callback: (key: K) => V) {
-      if (!this.has(key)) this.set(key, callback(key));
-      return this.get(key);
-    },
-  });
-}
-
-if (!(Map.prototype as any).getOrInsert) {
-  Object.defineProperty(Map.prototype, "getOrInsert", {
-    value: function getOrInsert<K, V>(this: Map<K, V>, key: K, value: V) {
-      if (!this.has(key)) this.set(key, value);
-      return this.get(key);
-    },
-  });
-}
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
