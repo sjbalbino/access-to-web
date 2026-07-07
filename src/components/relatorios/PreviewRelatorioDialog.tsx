@@ -87,7 +87,7 @@ function ReportSheetPreview({ sheet }: ReportSheetPreviewProps) {
 }
 
 export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
-  const sheets = payload?.sheets ?? [];
+  const sheets = (payload?.sheets ?? []).filter((s) => s.rows.length > 0);
 
   const handleBaixarPdf = () => {
     if (!payload) return;
