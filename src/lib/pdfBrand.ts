@@ -12,7 +12,7 @@ export interface PdfBrand {
 }
 
 export const SISTEMA_NOME = "AgroGestão – Sistema de Gerenciamento Agropecuário";
-export const DESENVOLVEDORA = "Desenvolvido por UniNFe Sistemas";
+export const DESENVOLVEDORA = "Dygitus Informática - Desenvolvimento de Sistemas - Cel: (55) 99141-1755";
 
 let cachedBrand: PdfBrand | null = null;
 let inflight: Promise<PdfBrand> | null = null;
