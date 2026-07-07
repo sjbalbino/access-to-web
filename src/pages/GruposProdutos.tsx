@@ -54,7 +54,7 @@ export default function GruposProdutos() {
   const subCentrosAtivos = subCentros?.filter((c: any) => c.ativo) ?? [];
 
   const resetForm = () => {
-    setFormData({ nome: '', descricao: '', ativo: true, conta_gerencial_id: null, codigo_dre: null, maquinas_implementos: false, bens_benfeitorias: false, insumos: false, venda_producao: false });
+    setFormData({ nome: '', descricao: '', ativo: true, conta_gerencial_id: null, codigo_dre: null, maquinas_implementos: false, bens_benfeitorias: false, insumos: false, venda_producao: false, cereais: false });
     setEditingItem(null);
   };
 
