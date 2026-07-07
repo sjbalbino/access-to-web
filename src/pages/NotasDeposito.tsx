@@ -231,11 +231,11 @@ export default function NotasDeposito() {
                           }
                         </TableCell>
                         <TableCell>
-                          {nota.inscricao_produtor?.produtores?.nome || 
-                           nota.inscricao_produtor?.granja || 
-                           "-"
-                          }
+                          {nota.granja?.inscricoes_produtor?.find(
+                            (i) => i.is_emitente_principal
+                          )?.produtores?.nome || "-"}
                         </TableCell>
+
                         <TableCell>{nota.produto?.nome || "-"}</TableCell>
                         <TableCell className="text-right">
                           {formatKg(nota.quantidade_kg)} kg
