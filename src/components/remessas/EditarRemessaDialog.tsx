@@ -184,6 +184,12 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       return;
     }
 
+    const erroPesos = validarPesos({ pesoTara, pesoBruto });
+    if (erroPesos) {
+      toast.error(erroPesos);
+      return;
+    }
+
     // Validar CPF do motorista se informado
     const cpfLimpo = motoristaCpf?.replace(/\D/g, "") || "";
     if (cpfLimpo.length > 0 && !validateCpf(cpfLimpo)) {
