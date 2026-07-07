@@ -289,6 +289,7 @@ export default function GruposProdutos() {
                           {grupo.venda_producao && <Badge variant="outline" className="text-xs">Venda</Badge>}
                           {grupo.maquinas_implementos && <Badge variant="outline" className="text-xs">Máquinas</Badge>}
                           {grupo.bens_benfeitorias && <Badge variant="outline" className="text-xs">Bens</Badge>}
+                          {grupo.cereais && <Badge variant="outline" className="text-xs">Cereais</Badge>}
                         </div>
                       </TableCell>
                       <TableCell>
