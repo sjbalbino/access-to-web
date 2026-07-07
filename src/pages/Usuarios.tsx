@@ -39,6 +39,8 @@ import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useUsuariosPendentes, type UsuarioPendente } from "@/hooks/useUsuariosPendentes";
 import { LiberarUsuarioDialog } from "@/components/usuarios/LiberarUsuarioDialog";
+import { AlterarSenhaDialog } from "@/components/usuarios/AlterarSenhaDialog";
+import { KeyRound } from "lucide-react";
 
 
 type AppRole = "admin" | "operador" | "visualizador" | "gerente";
