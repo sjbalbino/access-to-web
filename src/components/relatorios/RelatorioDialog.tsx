@@ -631,8 +631,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const totalTrRec = sum(extratoData.transferenciasRecebidas, "quantidade_kg");
     const totalTrEnv = sum(extratoData.transferenciasEnviadas, "quantidade_kg");
     const totalDev = sum(extratoData.devolucoes, "quantidade_kg");
-    const totalND = sum(extratoData.notasDeposito, "quantidade_kg");
-    const saldo = totalColheitas + totalTrRec - totalTrEnv - totalDev - totalND;
+    const totalKgTaxa = sum(extratoData.devolucoes, "kg_taxa_armazenagem");
+    const saldo = totalColheitas + totalTrRec - totalTrEnv - totalDev - totalKgTaxa;
 
     setPendingSheets([
       { name: "Colheitas", header: ["Data", "Lavoura", "Peso Bruto", "Peso Tara", "Produção (kg)", "Umidade %", "Impureza %", "Desconto (kg)", "Líquido (kg)", "Sacas"], rows: colheitasRows },
@@ -641,11 +641,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       { name: "Devoluções", header: ["Data", "Qtd (kg)", "Sacas", "Taxa Arm. %", "Kg Taxa"], rows: devRows },
       { name: "Notas Depósito", header: ["Data", "NF", "Qtd (kg)", "Sacas"], rows: ndRows },
       { name: "Resumo Final", header: ["Descrição", "Kg", "Sacas"], rows: [
-        ["Colheitas (líquido)", totalColheitas, sc(totalColheitas)],
-        ["Transf. Recebidas", totalTrRec, sc(totalTrRec)],
-        ["Transf. Enviadas", -totalTrEnv, -sc(totalTrEnv)],
-        ["Devoluções", -totalDev, -sc(totalDev)],
-        ["Notas Depósito", -totalND, -sc(totalND)],
+        ["Total Colheitas", totalColheitas, sc(totalColheitas)],
+        ["(+) Transf. Recebidas", totalTrRec, sc(totalTrRec)],
+        ["(-) Transf. Enviadas", totalTrEnv, sc(totalTrEnv)],
+        ["(-) Devoluções", totalDev, sc(totalDev)],
+        ["(-) Kg Taxa Armazenagem", totalKgTaxa, sc(totalKgTaxa)],
         ["SALDO", saldo, sc(saldo)],
       ] },
     ]);
