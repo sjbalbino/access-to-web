@@ -35,7 +35,7 @@ export default function DevolucaoDeposito() {
 
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
-  const { data: produtos } = useProdutosSementes();
+  const { data: produtos } = useProdutos();
   const { data: allInscricoes } = useAllInscricoes();
   
   const produtoresUnicos = useMemo(() => {
