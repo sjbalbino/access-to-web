@@ -593,13 +593,61 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       devolucoes: (devolucoes || []).map((d: any) => ({ data_devolucao: d.data_devolucao, quantidade_kg: d.quantidade_kg, taxa_armazenagem: d.taxa_armazenagem, kg_taxa_armazenagem: d.kg_taxa_armazenagem })),
       notasDeposito: (notasDep || []).map((n: any) => ({ data_emissao: n.data_emissao, nota_fiscal_numero: n.nota_fiscal?.numero?.toString() || null, quantidade_kg: n.quantidade_kg })),
     };
+    const PS = 60;
+    const sc = (kg: number) => Math.round((kg || 0) / PS);
+    const sum = (arr: any[], key: string) => arr.reduce((s, x) => s + (Number(x[key]) || 0), 0);
+
+    const colheitasRows = extratoData.colheitas.map(c => [c.data_colheita ?? "", c.lavoura ?? "", c.peso_bruto ?? 0, c.peso_tara ?? 0, c.producao_kg ?? 0, c.umidade ?? 0, c.impureza ?? 0, c.kg_desconto_total ?? 0, c.producao_liquida_kg ?? 0, sc(Number(c.producao_liquida_kg) || 0)]);
+    if (colheitasRows.length) {
+      const totLiq = sum(extratoData.colheitas, "producao_liquida_kg");
+      colheitasRows.push(["TOTAL", "", sum(extratoData.colheitas, "peso_bruto"), sum(extratoData.colheitas, "peso_tara"), sum(extratoData.colheitas, "producao_kg"), "", "", sum(extratoData.colheitas, "kg_desconto_total"), totLiq, sc(totLiq)]);
+    }
+
+    const trRecRows = extratoData.transferenciasRecebidas.map(t => [t.data_transferencia, t.nome_outro ?? "", t.quantidade_kg, sc(Number(t.quantidade_kg) || 0)]);
+    if (trRecRows.length) {
+      const tot = sum(extratoData.transferenciasRecebidas, "quantidade_kg");
+      trRecRows.push(["TOTAL", "", tot, sc(tot)]);
+    }
+
+    const trEnvRows = extratoData.transferenciasEnviadas.map(t => [t.data_transferencia, t.nome_outro ?? "", t.quantidade_kg, sc(Number(t.quantidade_kg) || 0)]);
+    if (trEnvRows.length) {
+      const tot = sum(extratoData.transferenciasEnviadas, "quantidade_kg");
+      trEnvRows.push(["TOTAL", "", tot, sc(tot)]);
+    }
+
+    const devRows = extratoData.devolucoes.map(d => [d.data_devolucao, d.quantidade_kg, sc(Number(d.quantidade_kg) || 0), d.taxa_armazenagem ?? 0, d.kg_taxa_armazenagem ?? 0]);
+    if (devRows.length) {
+      const tot = sum(extratoData.devolucoes, "quantidade_kg");
+      devRows.push(["TOTAL", tot, sc(tot), "", sum(extratoData.devolucoes, "kg_taxa_armazenagem")]);
+    }
+
+    const ndRows = extratoData.notasDeposito.map(n => [n.data_emissao ?? "", n.nota_fiscal_numero ?? "", n.quantidade_kg, sc(Number(n.quantidade_kg) || 0)]);
+    if (ndRows.length) {
+      const tot = sum(extratoData.notasDeposito, "quantidade_kg");
+      ndRows.push(["TOTAL", "", tot, sc(tot)]);
+    }
+
+    const totalColheitas = sum(extratoData.colheitas, "producao_liquida_kg");
+    const totalTrRec = sum(extratoData.transferenciasRecebidas, "quantidade_kg");
+    const totalTrEnv = sum(extratoData.transferenciasEnviadas, "quantidade_kg");
+    const totalDev = sum(extratoData.devolucoes, "quantidade_kg");
+    const totalND = sum(extratoData.notasDeposito, "quantidade_kg");
+    const saldo = totalColheitas + totalTrRec - totalTrEnv - totalDev - totalND;
+
     setPendingSheets([
-      { name: "Colheitas", header: ["Data", "Lavoura", "Peso Bruto", "Peso Tara", "Produção (kg)", "Umidade %", "Impureza %", "Desconto (kg)", "Líquido (kg)"],
-        rows: extratoData.colheitas.map(c => [c.data_colheita ?? "", c.lavoura ?? "", c.peso_bruto ?? 0, c.peso_tara ?? 0, c.producao_kg ?? 0, c.umidade ?? 0, c.impureza ?? 0, c.kg_desconto_total ?? 0, c.producao_liquida_kg ?? 0]) },
-      { name: "Transf. Recebidas", header: ["Data", "De", "Qtd (kg)"], rows: extratoData.transferenciasRecebidas.map(t => [t.data_transferencia, t.nome_outro ?? "", t.quantidade_kg]) },
-      { name: "Transf. Enviadas", header: ["Data", "Para", "Qtd (kg)"], rows: extratoData.transferenciasEnviadas.map(t => [t.data_transferencia, t.nome_outro ?? "", t.quantidade_kg]) },
-      { name: "Devoluções", header: ["Data", "Qtd (kg)", "Taxa Arm. %", "Kg Taxa"], rows: extratoData.devolucoes.map(d => [d.data_devolucao, d.quantidade_kg, d.taxa_armazenagem ?? 0, d.kg_taxa_armazenagem ?? 0]) },
-      { name: "Notas Depósito", header: ["Data", "NF", "Qtd (kg)"], rows: extratoData.notasDeposito.map(n => [n.data_emissao ?? "", n.nota_fiscal_numero ?? "", n.quantidade_kg]) },
+      { name: "Colheitas", header: ["Data", "Lavoura", "Peso Bruto", "Peso Tara", "Produção (kg)", "Umidade %", "Impureza %", "Desconto (kg)", "Líquido (kg)", "Sacas"], rows: colheitasRows },
+      { name: "Transf. Recebidas", header: ["Data", "De", "Qtd (kg)", "Sacas"], rows: trRecRows },
+      { name: "Transf. Enviadas", header: ["Data", "Para", "Qtd (kg)", "Sacas"], rows: trEnvRows },
+      { name: "Devoluções", header: ["Data", "Qtd (kg)", "Sacas", "Taxa Arm. %", "Kg Taxa"], rows: devRows },
+      { name: "Notas Depósito", header: ["Data", "NF", "Qtd (kg)", "Sacas"], rows: ndRows },
+      { name: "Resumo Final", header: ["Descrição", "Kg", "Sacas"], rows: [
+        ["Colheitas (líquido)", totalColheitas, sc(totalColheitas)],
+        ["Transf. Recebidas", totalTrRec, sc(totalTrRec)],
+        ["Transf. Enviadas", -totalTrEnv, -sc(totalTrEnv)],
+        ["Devoluções", -totalDev, -sc(totalDev)],
+        ["Notas Depósito", -totalND, -sc(totalND)],
+        ["SALDO", saldo, sc(saldo)],
+      ] },
     ]);
     gerarExtratoProdutorPdf(extratoData);
   };

@@ -11,16 +11,26 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-function formatPreviewValue(value: string | number | null | undefined): string {
+const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/;
+
+function formatPreviewValue(value: string | number | null | undefined, header?: string): string {
   if (value === null || value === undefined || value === "") return "-";
+  if (typeof value === "string") {
+    const m = value.match(ISO_DATE_RE);
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  }
   if (typeof value === "number") {
-    return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(value);
+    const isInteger = header ? /\bkg\b|saca|sacos|qtd|quantidade/i.test(header) : false;
+    return new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: isInteger ? 0 : 2,
+    }).format(value);
   }
   return value;
 }
 
 function isNumericColumn(header: string): boolean {
-  return /kg|saca|qtd|quantidade|peso|valor|total|saldo|taxa|%|r\$/i.test(header);
+  return /kg|saca|sacos|qtd|quantidade|peso|valor|total|saldo|taxa|%|r\$|preço|preco/i.test(header);
 }
 
 interface ReportSheetPreviewProps {
@@ -47,18 +57,25 @@ function ReportSheetPreview({ sheet }: ReportSheetPreviewProps) {
           </thead>
           <tbody>
             {sheet.rows.length > 0 ? (
-              sheet.rows.map((row, rowIndex) => (
-                <tr key={`${sheet.name}-${rowIndex}`} className="even:bg-muted/40">
-                  {sheet.header.map((header, columnIndex) => (
-                    <td
-                      key={`${sheet.name}-${rowIndex}-${header}`}
-                      className={isNumericColumn(header) ? "border-b px-3 py-2 text-right" : "border-b px-3 py-2 text-left"}
-                    >
-                      {formatPreviewValue(row[columnIndex])}
-                    </td>
-                  ))}
-                </tr>
-              ))
+              sheet.rows.map((row, rowIndex) => {
+                const firstCell = row[0];
+                const isTotalRow = typeof firstCell === "string" && /^(total|subtotal|resumo)/i.test(firstCell.trim());
+                return (
+                  <tr
+                    key={`${sheet.name}-${rowIndex}`}
+                    className={isTotalRow ? "bg-muted font-semibold" : "even:bg-muted/40"}
+                  >
+                    {sheet.header.map((header, columnIndex) => (
+                      <td
+                        key={`${sheet.name}-${rowIndex}-${header}`}
+                        className={isNumericColumn(header) ? "border-b px-3 py-2 text-right" : "border-b px-3 py-2 text-left"}
+                      >
+                        {formatPreviewValue(row[columnIndex], header)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td className="px-3 py-4 text-center text-muted-foreground" colSpan={sheet.header.length}>
