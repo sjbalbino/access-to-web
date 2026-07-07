@@ -15,7 +15,7 @@ import { ptBR } from "date-fns/locale";
 import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useSiloPadraoId } from "@/hooks/useSiloPadrao";
-import { useProdutos } from "@/hooks/useProdutos";
+import { useProdutosCereais } from "@/hooks/useProdutosCereais";
 import { useAllInscricoes, InscricaoComProdutor } from "@/hooks/useAllInscricoes";
 import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useSaldoProdutor } from "@/hooks/useSaldoProdutor";
@@ -49,7 +49,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
 
   const { data: safras = [] } = useSafras();
   const { data: silos = [] } = useSilos();
-  const { data: produtos = [] } = useProdutos();
+  const { data: produtos = [] } = useProdutosCereais();
   const { data: todasInscricoes = [] } = useAllInscricoes();
   const { data: locaisEntrega = [] } = useLocaisEntrega();
 

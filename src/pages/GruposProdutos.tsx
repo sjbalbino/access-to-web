@@ -43,6 +43,7 @@ export default function GruposProdutos() {
     bens_benfeitorias: false,
     insumos: false,
     venda_producao: false,
+    cereais: false,
   });
 
   const filteredGrupos = grupos?.filter(g => 
@@ -53,7 +54,7 @@ export default function GruposProdutos() {
   const subCentrosAtivos = subCentros?.filter((c: any) => c.ativo) ?? [];
 
   const resetForm = () => {
-    setFormData({ nome: '', descricao: '', ativo: true, conta_gerencial_id: null, codigo_dre: null, maquinas_implementos: false, bens_benfeitorias: false, insumos: false, venda_producao: false });
+    setFormData({ nome: '', descricao: '', ativo: true, conta_gerencial_id: null, codigo_dre: null, maquinas_implementos: false, bens_benfeitorias: false, insumos: false, venda_producao: false, cereais: false });
     setEditingItem(null);
   };
 
@@ -80,6 +81,7 @@ export default function GruposProdutos() {
       bens_benfeitorias: item.bens_benfeitorias ?? false,
       insumos: item.insumos ?? false,
       venda_producao: item.venda_producao ?? false,
+      cereais: item.cereais ?? false,
     });
     setIsDialogOpen(true);
   };
@@ -220,6 +222,16 @@ export default function GruposProdutos() {
                               Venda da Produção
                             </Label>
                           </div>
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="cereais"
+                              checked={formData.cereais ?? false}
+                              onCheckedChange={(checked) => setFormData({ ...formData, cereais: !!checked })}
+                            />
+                            <Label htmlFor="cereais" className="text-sm font-normal cursor-pointer">
+                              Cereais (Venda de Grãos)
+                            </Label>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -277,6 +289,7 @@ export default function GruposProdutos() {
                           {grupo.venda_producao && <Badge variant="outline" className="text-xs">Venda</Badge>}
                           {grupo.maquinas_implementos && <Badge variant="outline" className="text-xs">Máquinas</Badge>}
                           {grupo.bens_benfeitorias && <Badge variant="outline" className="text-xs">Bens</Badge>}
+                          {grupo.cereais && <Badge variant="outline" className="text-xs">Cereais</Badge>}
                         </div>
                       </TableCell>
                       <TableCell>

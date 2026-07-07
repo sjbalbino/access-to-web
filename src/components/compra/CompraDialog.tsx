@@ -15,7 +15,7 @@ import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
 import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
 import { useInscricoesComSaldo } from '@/hooks/useSaldosDeposito';
-import { useProdutosSementes } from '@/hooks/useProdutosSementes';
+import { useProdutosCereais } from '@/hooks/useProdutosCereais';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
 import { useCfops } from '@/hooks/useCfops';
@@ -79,7 +79,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
-  const { data: produtos } = useProdutosSementes();
+  const { data: produtos } = useProdutosCereais();
   const { data: silos } = useSilos();
   const { data: locaisEntrega } = useLocaisEntrega();
   const { data: inscricoesSocio } = useInscricoesSocio();

@@ -1,0 +1,1 @@
+ALTER TABLE public.grupos_produtos ADD COLUMN IF NOT EXISTS cereais BOOLEAN NOT NULL DEFAULT false;

@@ -13,6 +13,7 @@ export interface GrupoProduto {
   bens_benfeitorias: boolean | null;
   insumos: boolean | null;
   venda_producao: boolean | null;
+  cereais: boolean | null;
   created_at: string;
   updated_at: string;
   sub_centros_custo?: {
