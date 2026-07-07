@@ -48,6 +48,7 @@ import {
   RemessaVenda,
 } from "@/hooks/useRemessasVenda";
 import { useSilos } from "@/hooks/useSilos";
+import { useSiloPadraoId } from "@/hooks/useSiloPadrao";
 import { useTransportadoras } from "@/hooks/useTransportadoras";
 import { Spinner } from "@/components/ui/spinner";
 import { format, parseISO } from "date-fns";
