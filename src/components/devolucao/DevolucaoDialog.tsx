@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSilos } from '@/hooks/useSilos';
 import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
 import { useSafras } from '@/hooks/useSafras';
+import { useGranjas } from '@/hooks/useGranjas';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
+import { useInscricaoEmitentePrincipal } from '@/hooks/useInscricaoEmitentePrincipal';
 import { useInscricoesComSaldo } from '@/hooks/useSaldosDeposito';
 import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
 import { useProdutos } from '@/hooks/useProdutos';
@@ -47,20 +49,56 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
   const [nfeReferenciada, setNfeReferenciada] = useState('');
   const [observacao, setObservacao] = useState('');
 
+  const defaultGranjaId = defaultFiltros?.granjaId || '';
+  const defaultSafraId = defaultFiltros?.safraId || '';
+  const defaultProdutoId = defaultFiltros?.produtoId || '';
+
   // Dados de referência
   const { data: safras } = useSafras();
   const { data: produtosAll } = useProdutos();
   const produtos = produtosAll?.filter((p: any) => p.ativo);
+  const { data: granjas } = useGranjas();
   const { data: silos } = useSilos();
   const { data: inscricoesSocioAll } = useInscricoesSocio();
-  // Apenas sócios com emitente NFe vinculado
-  const inscricoesSocio = inscricoesSocioAll?.filter(
-    (i: any) => i.produtores?.tipo_produtor === 'socio' && i.emitente_id
-  );
+  const normalizarTexto = (valor?: string | null) =>
+    (valor || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   
   // Locais de entrega ativos (todos)
   const { data: todosLocais } = useLocaisEntrega();
-  const locaisEntregaComColheitas = todosLocais?.filter((l: any) => l.ativo !== false) as any;
+  const locaisEntregaComColheitas = useMemo(
+    () => (todosLocais || []).filter((l: any) => l.ativo !== false),
+    [todosLocais]
+  ) as any;
+
+  const localSelecionado = locaisEntregaComColheitas?.find((l: any) => l.id === localEntregaId);
+
+  const granjaBaseId = useMemo(() => {
+    if (defaultGranjaId) return defaultGranjaId;
+
+    const granjasAtivas = (granjas || []).filter((g: any) => g.ativa !== false);
+    const granjaPrincipal = granjasAtivas.find((g: any) => g.is_principal === true);
+
+    return granjaPrincipal?.id || granjasAtivas[0]?.id || null;
+  }, [defaultGranjaId, granjas]);
+
+  const granjaContextoId = localSelecionado?.granja_id || granjaBaseId || null;
+
+  // Apenas sócios ativos com emitente NF-e vinculado, priorizando a granja em contexto.
+  const inscricoesSocio = useMemo(() => {
+    const sociosComNfe = (inscricoesSocioAll || []).filter((i: any) => {
+      const tipoProdutor = normalizarTexto(i.produtores?.tipo_produtor);
+      return i.ativa !== false && tipoProdutor === 'socio' && !!i.emitente_id;
+    });
+
+    if (!granjaContextoId) return sociosComNfe;
+
+    const sociosDaGranja = sociosComNfe.filter((i: any) => i.granja_id === granjaContextoId);
+    return sociosDaGranja.length > 0 ? sociosDaGranja : sociosComNfe;
+  }, [inscricoesSocioAll, granjaContextoId]);
   
   // Inscrições com saldo - filtrado por safra, produto e local de entrega
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
@@ -82,24 +120,50 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
   const isEditing = !!devolucao;
 
-  const siloPadraoId = useSiloPadraoId();
+  const siloPadraoId = useSiloPadraoId(granjaContextoId);
+  const { data: inscricaoEmitentePrincipal } = useInscricaoEmitentePrincipal(granjaContextoId || undefined);
+
+  useEffect(() => {
+    if (!open || isEditing || localEntregaId || !locaisEntregaComColheitas?.length) return;
+
+    const localPadrao =
+      locaisEntregaComColheitas.find((l: any) => granjaBaseId && l.granja_id === granjaBaseId && l.is_sede === true) ||
+      locaisEntregaComColheitas.find((l: any) => granjaBaseId && l.granja_id === granjaBaseId) ||
+      locaisEntregaComColheitas.find((l: any) => l.is_sede === true) ||
+      locaisEntregaComColheitas[0];
+
+    if (localPadrao?.id) setLocalEntregaId(localPadrao.id);
+  }, [open, isEditing, localEntregaId, locaisEntregaComColheitas, granjaBaseId]);
+
   useEffect(() => {
     if (open && !isEditing && !siloId) {
-      const fallback = siloPadraoId || (silos?.find((s: any) => s.ativo !== false)?.id ?? null);
+      const fallback =
+        siloPadraoId ||
+        (silos?.find((s: any) => s.ativo !== false && granjaContextoId && s.granja_id === granjaContextoId)?.id ?? null) ||
+        (silos?.find((s: any) => s.ativo !== false)?.id ?? null);
       if (fallback) setSiloId(fallback);
     }
-  }, [open, isEditing, siloId, siloPadraoId, silos]);
+  }, [open, isEditing, siloId, siloPadraoId, silos, granjaContextoId]);
 
   // Padrão: emitente-sócio principal (e replica no sócio que recebe armazenagem)
   useEffect(() => {
     if (open && !isEditing && !inscricaoEmitenteId && inscricoesSocio?.length) {
-      const principal = inscricoesSocio.find((i: any) => i.is_emitente_principal) || inscricoesSocio[0];
+      const principal =
+        inscricoesSocio.find((i: any) => i.id === inscricaoEmitentePrincipal?.id) ||
+        inscricoesSocio.find((i: any) => i.is_emitente_principal) ||
+        inscricoesSocio[0];
       if (principal) {
         setInscricaoEmitenteId(principal.id);
-        setInscricaoRecebeTaxaId((prev) => prev || principal.id);
+        setInscricaoRecebeTaxaId(principal.id);
       }
     }
-  }, [open, isEditing, inscricaoEmitenteId, inscricoesSocio]);
+  }, [open, isEditing, inscricaoEmitenteId, inscricoesSocio, inscricaoEmitentePrincipal]);
+
+  useEffect(() => {
+    if (open && !isEditing && inscricaoEmitenteId) {
+      setInscricaoRecebeTaxaId(inscricaoEmitenteId);
+    }
+  }, [open, isEditing, inscricaoEmitenteId]);
 
 
 
@@ -125,12 +189,10 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     } else {
       // Modo novo - usar defaults dos filtros se disponível
       resetForm();
-      if (defaultFiltros) {
-        if (defaultFiltros.safraId) setSafraId(defaultFiltros.safraId);
-        if (defaultFiltros.produtoId) setProdutoId(defaultFiltros.produtoId);
-      }
+      if (defaultSafraId) setSafraId(defaultSafraId);
+      if (defaultProdutoId) setProdutoId(defaultProdutoId);
     }
-  }, [devolucao, open, defaultFiltros]);
+  }, [devolucao, open, defaultSafraId, defaultProdutoId]);
 
   // Calcular valor total
   useEffect(() => {
@@ -176,8 +238,10 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     }
   }, [localEntregaId, isEditing]);
 
-  // Buscar granja_id do local de entrega selecionado
-  const localSelecionado = locaisEntregaComColheitas?.find(l => l.id === localEntregaId);
+  const handleEmitenteChange = (value: string) => {
+    setInscricaoEmitenteId(value);
+    setInscricaoRecebeTaxaId(value);
+  };
 
   const handleSubmit = async () => {
     if (!safraId || !produtoId) {
@@ -331,7 +395,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="space-y-2">
             <Label>Silo</Label>
-            <Select isSearchable value={siloId} onValueChange={setSiloId}>
+            <Select isSearchable value={siloId || undefined} onValueChange={setSiloId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
@@ -347,7 +411,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
           <div className="space-y-2">
             <Label>Emitente (Sócio) *</Label>
-            <Select isSearchable value={inscricaoEmitenteId} onValueChange={setInscricaoEmitenteId}>
+            <Select isSearchable value={inscricaoEmitenteId || undefined} onValueChange={handleEmitenteChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o emitente..." />
               </SelectTrigger>
