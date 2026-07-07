@@ -79,6 +79,13 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ColheitaInput>(emptyColheita);
 
+  const siloPadraoId = useSiloPadraoId();
+  useEffect(() => {
+    if (isDialogOpen && !editingId && !formData.silo_id && siloPadraoId) {
+      setFormData((prev) => ({ ...prev, silo_id: siloPadraoId }));
+    }
+  }, [isDialogOpen, editingId, formData.silo_id, siloPadraoId]);
+
   // Filtros e paginação (hooks devem ficar antes de early returns)
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
