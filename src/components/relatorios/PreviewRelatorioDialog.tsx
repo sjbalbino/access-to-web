@@ -53,9 +53,8 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
   };
 
   const handleImprimir = () => {
-    const obj = objectRef.current as any;
     try {
-      const win = obj?.contentWindow || obj?.contentDocument?.defaultView;
+      const win = iframeRef.current?.contentWindow;
       if (win) {
         win.focus();
         win.print();
@@ -70,6 +69,7 @@ export function PreviewRelatorioDialog({ payload, open, onOpenChange }: Props) {
       });
     }
   };
+
 
   const handleExportarExcel = () => {
     if (!payload) return;
