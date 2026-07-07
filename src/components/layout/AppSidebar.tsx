@@ -33,6 +33,7 @@ import {
   Repeat,
   Landmark,
   CheckCircle2,
+  KeyRound,
   LucideIcon,
 } from "lucide-react";
 
