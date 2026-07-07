@@ -206,5 +206,6 @@ export function gerarLivroCaixaPdf(movs: RateioMovimento[], filtros: Filtros) {
     });
   });
 
-  doc.save(`livro-caixa-${new Date().toISOString().slice(0, 10)}.pdf`);
+  desenharRodapeBrand(doc);
+  entregarRelatorio(doc, `livro-caixa-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
