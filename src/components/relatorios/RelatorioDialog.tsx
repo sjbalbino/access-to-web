@@ -474,44 +474,32 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     }
     const inscricao = inscricoes?.find(i => i.id === inscricaoId);
     const safra = safras?.find(s => s.id === safraId);
-    const produto = produtoId ? produtos?.find(p => p.id === produtoId) : null;
+    const produto = null;
 
-    let colheitasQuery = supabase
+    const colheitasQuery = supabase
       .from("colheitas")
       .select(colheitasSelect)
       .eq("inscricao_produtor_id", inscricaoId)
       .eq("safra_id", safraId);
-    if (produtoId) colheitasQuery = colheitasQuery.eq("variedade_id", produtoId);
-    if (dataInicial) colheitasQuery = colheitasQuery.gte("data_colheita", dataInicial);
-    if (dataFinal) colheitasQuery = colheitasQuery.lte("data_colheita", dataFinal);
     const { data: colheitas, error: colheitasError } = await colheitasQuery.order("data_colheita");
     if (colheitasError) throw colheitasError;
 
-    let trRecQuery = supabase.from("transferencias_deposito").select("data_transferencia, quantidade_kg, inscricao_origem:inscricoes_produtor!transferencias_deposito_inscricao_origem_id_fkey(granja, produtores(nome))")
+    const trRecQuery = supabase.from("transferencias_deposito").select("data_transferencia, quantidade_kg, inscricao_origem:inscricoes_produtor!transferencias_deposito_inscricao_origem_id_fkey(granja, produtores(nome))")
       .eq("inscricao_destino_id", inscricaoId).eq("safra_id", safraId);
-    if (produtoId) trRecQuery = trRecQuery.eq("produto_id", produtoId);
-    if (dataInicial) trRecQuery = trRecQuery.gte("data_transferencia", dataInicial);
-    if (dataFinal) trRecQuery = trRecQuery.lte("data_transferencia", dataFinal);
     const { data: trRec } = await trRecQuery.order("data_transferencia");
 
-    let trEnvQuery = supabase.from("transferencias_deposito").select("data_transferencia, quantidade_kg, inscricao_destino:inscricoes_produtor!transferencias_deposito_inscricao_destino_id_fkey(granja, produtores(nome))")
+    const trEnvQuery = supabase.from("transferencias_deposito").select("data_transferencia, quantidade_kg, inscricao_destino:inscricoes_produtor!transferencias_deposito_inscricao_destino_id_fkey(granja, produtores(nome))")
       .eq("inscricao_origem_id", inscricaoId).eq("safra_id", safraId);
-    if (produtoId) trEnvQuery = trEnvQuery.eq("produto_id", produtoId);
-    if (dataInicial) trEnvQuery = trEnvQuery.gte("data_transferencia", dataInicial);
-    if (dataFinal) trEnvQuery = trEnvQuery.lte("data_transferencia", dataFinal);
     const { data: trEnv } = await trEnvQuery.order("data_transferencia");
 
-    let devQuery = supabase.from("devolucoes_deposito").select("data_devolucao, quantidade_kg, taxa_armazenagem, kg_taxa_armazenagem")
+    const devQuery = supabase.from("devolucoes_deposito").select("data_devolucao, quantidade_kg, taxa_armazenagem, kg_taxa_armazenagem")
       .eq("inscricao_produtor_id", inscricaoId).eq("safra_id", safraId);
-    if (produtoId) devQuery = devQuery.eq("produto_id", produtoId);
-    if (dataInicial) devQuery = devQuery.gte("data_devolucao", dataInicial);
-    if (dataFinal) devQuery = devQuery.lte("data_devolucao", dataFinal);
     const { data: devolucoes } = await devQuery.order("data_devolucao");
 
-    let ndQuery = supabase.from("notas_deposito_emitidas").select("data_emissao, quantidade_kg, nota_fiscal:notas_fiscais(numero)")
+    const ndQuery = supabase.from("notas_deposito_emitidas").select("data_emissao, quantidade_kg, nota_fiscal:notas_fiscais(numero)")
       .eq("inscricao_produtor_id", inscricaoId).eq("safra_id", safraId);
-    if (produtoId) ndQuery = ndQuery.eq("produto_id", produtoId);
     const { data: notasDep } = await ndQuery.order("data_emissao");
+
 
     const extratoData: ExtratoData = {
       produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
