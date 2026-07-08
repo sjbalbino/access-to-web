@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatCpf, formatCpfCnpj, formatPlaca, formatCep, validateCpf } from "@/lib/formatters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -279,10 +280,16 @@ export default function RemessasVendaForm() {
     setSacosNota(kgRemessa > 0 ? kgRemessa / 60 : 0);
 
     const preco = contrato?.preco_kg || 0;
-    // Valor Remessa = Valor Nota (sem descontos)
+    // Preenche valor inicial (usuário pode editar depois)
     setValorRemessa(kgRemessa * preco);
-    setValorNota(kgRemessa * preco);
   }, [kgRemessa, contrato?.preco_kg]);
+
+  // Preço/Kg efetivo (derivado do Valor da Remessa informado)
+  const effectivePrecoKg = kgRemessa > 0 ? valorRemessa / kgRemessa : (contrato?.preco_kg || 0);
+  // Valor Nota acompanha (sem descontos)
+  useEffect(() => {
+    setValorNota(kgNota * effectivePrecoKg);
+  }, [kgNota, effectivePrecoKg]);
 
   // Determinar status baseado nos pesos
   const determinarStatus = (pesoTara: number, pesoBruto: number) => {
@@ -331,7 +338,7 @@ export default function RemessasVendaForm() {
       sacos: sacosNota,
       sacos_remessa: sacosRemessa,
       sacos_nota: sacosNota,
-      preco_kg: contrato?.preco_kg || 0,
+      preco_kg: effectivePrecoKg,
       valor_remessa: valorRemessa,
       valor_nota: valorNota,
       transportadora_id: data.transportadora_id || null,
@@ -623,25 +630,25 @@ export default function RemessasVendaForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Preço do Kg</Label>
-                  <Input 
-                    type="text" 
-                    value={formatCurrency(contrato?.preco_kg)} 
-                    readOnly 
-                    tabIndex={-1}
-                    className="bg-muted text-right" 
+                  <Label>Valor da Remessa</Label>
+                  <CurrencyInput
+                    value={valorRemessa}
+                    onChange={(v) => setValorRemessa(v)}
+                    decimals={2}
+                    className="font-bold text-right"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Valor da Remessa</Label>
-                  <Input 
-                    type="text" 
-                    value={formatCurrency(valorRemessa)} 
-                    readOnly 
+                  <Label>Preço do Kg</Label>
+                  <Input
+                    type="text"
+                    value={formatCurrency(effectivePrecoKg)}
+                    readOnly
                     tabIndex={-1}
-                    className="bg-muted font-bold text-right" 
+                    className="bg-muted text-right"
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label>Valor da Nota</Label>
                   <Input 

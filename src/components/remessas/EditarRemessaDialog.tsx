@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -78,13 +79,15 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
   const [placa, setPlaca] = useState("");
   const [ufPlaca, setUfPlaca] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [valorRemessa, setValorRemessa] = useState(0);
 
   // Valores calculados
   const kgRemessa = pesoBruto > pesoTara ? pesoBruto - pesoTara : 0;
   const sacosRemessa = kgRemessa / 60;
   const sacosNota = kgNota / 60;
-  const valorRemessa = kgRemessa * precoKg;
-  const valorNota = kgNota * precoKg;
+  // Preço/Kg efetivo derivado do Valor da Remessa informado
+  const effectivePrecoKg = kgRemessa > 0 ? valorRemessa / kgRemessa : precoKg;
+  const valorNota = kgNota * effectivePrecoKg;
 
   // Preencher valores da remessa quando abrir
   useEffect(() => {
@@ -104,6 +107,11 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       setPlaca(remessa.placa?.replace(/[^A-Za-z0-9]/g, "").toUpperCase() || "");
       setUfPlaca(remessa.uf_placa || "");
       setObservacoes(remessa.observacoes || "");
+      // Valor da Remessa: usa o salvo; se vazio, calcula do preço do contrato
+      const kgR = (remessa.peso_bruto || 0) > (remessa.peso_tara || 0)
+        ? (remessa.peso_bruto || 0) - (remessa.peso_tara || 0)
+        : 0;
+      setValorRemessa(Number(remessa.valor_remessa) > 0 ? Number(remessa.valor_remessa) : kgR * precoKg);
     }
   }, [remessa, user]);
 
@@ -221,6 +229,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       sacos: sacosNota,
       sacos_remessa: sacosRemessa,
       sacos_nota: sacosNota,
+      preco_kg: effectivePrecoKg,
       valor_remessa: valorRemessa,
       valor_nota: valorNota,
       status,
@@ -293,7 +302,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Label>Preço/Kg</Label>
                   <Input
                     type="text"
-                    value={formatCurrency(precoKg)}
+                    value={formatCurrency(effectivePrecoKg)}
                     readOnly
                     className="bg-muted text-right"
                     tabIndex={-1}
@@ -348,7 +357,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Label className="text-xs">Preço Kg</Label>
                   <Input
                     type="text"
-                    value={formatCurrency(precoKg)}
+                    value={formatCurrency(effectivePrecoKg)}
                     readOnly
                     className="bg-muted text-right"
                     tabIndex={-1}
@@ -356,12 +365,12 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Vlr Remessa</Label>
-                  <Input
-                    type="text"
-                    value={formatCurrency(valorRemessa)}
-                    readOnly
-                    className="bg-muted text-right"
-                    tabIndex={-1}
+                  <CurrencyInput
+                    value={valorRemessa}
+                    onChange={(v) => setValorRemessa(v)}
+                    decimals={2}
+                    disabled={isReadOnly}
+                    className="font-bold text-right"
                   />
                 </div>
                 <div className="space-y-2">
