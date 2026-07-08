@@ -348,7 +348,7 @@ export function useFocusNfe() {
       a.click();
       document.body.removeChild(a);
       
-      const tipoMsg = tipo === "danfe" ? "DANFE" : "XML";
+      const tipoMsg = tipo === "danfe" ? "DANFE" : tipo === "cce_pdf" ? "PDF da CC-e" : tipo === "cce_xml" ? "XML da CC-e" : "XML";
       toast.success(`Download do ${tipoMsg} iniciado`);
 
       // Revogar URL após um delay para permitir download
