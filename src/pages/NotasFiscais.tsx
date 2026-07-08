@@ -895,16 +895,12 @@ export default function NotasFiscais() {
                   <p className="text-xs text-muted-foreground">Pré-visualização da DANFE em PDF.</p>
                 </div>
                 <div className="flex-1 min-h-[70vh]">
-                  {danfePreview.loading || !danfePreview.downloadUrl ? (
+                  {danfePreview.loading || !danfePreview.pdfData ? (
                     <div className="flex items-center justify-center h-full">
                       <Spinner />
                     </div>
                   ) : (
-                    <iframe
-                      src={danfePreview.downloadUrl}
-                      title={danfePreview.titulo}
-                      className="w-full h-full min-h-[70vh] border-0 bg-background rounded-sm"
-                    />
+                    <DanfePdfViewer pdfData={danfePreview.pdfData} />
                   )}
                 </div>
               </div>
