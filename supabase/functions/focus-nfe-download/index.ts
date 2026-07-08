@@ -49,9 +49,10 @@ serve(async (req) => {
       throw new Error("ref é obrigatório");
     }
 
-    if (!tipo || !["xml", "danfe", "xml_cancelamento"].includes(tipo)) {
-      throw new Error("tipo deve ser 'xml', 'danfe' ou 'xml_cancelamento'");
+    if (!tipo || !["xml", "danfe", "xml_cancelamento", "cce_pdf", "cce_xml"].includes(tipo)) {
+      throw new Error("tipo inválido");
     }
+
 
     // Tenant isolation
     if (notaFiscalId) {
@@ -148,7 +149,20 @@ serve(async (req) => {
         contentType = "application/xml";
         filename = `nfe_cancelamento_${ref}.xml`;
         break;
+      case "cce_pdf":
+        downloadUrl = consultaData.caminho_pdf_carta_correcao || consultaData.caminho_danfe_carta_correcao;
+        contentType = "application/pdf";
+        filename = `cce_${ref}.pdf`;
+        break;
+      case "cce_xml":
+        downloadUrl = consultaData.caminho_xml_carta_correcao;
+        contentType = "application/xml";
+        filename = `cce_${ref}.xml`;
+        break;
     }
+
+
+
 
     if (!downloadUrl) {
       throw new Error(`URL do ${tipo} não disponível. Status da nota: ${consultaData.status}`);

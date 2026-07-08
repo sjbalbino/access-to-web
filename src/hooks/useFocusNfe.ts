@@ -301,7 +301,7 @@ export function useFocusNfe() {
 
   const downloadArquivo = async (
     ref: string,
-    tipo: "xml" | "danfe" | "xml_cancelamento",
+    tipo: "xml" | "danfe" | "xml_cancelamento" | "cce_pdf" | "cce_xml",
     notaFiscalId: string
   ): Promise<void> => {
     setIsLoading(true);
@@ -322,7 +322,7 @@ export function useFocusNfe() {
 
       // Criar blob
       const blob = new Blob([data], {
-        type: tipo === "danfe" ? "application/pdf" : "application/xml",
+        type: tipo === "danfe" || tipo === "cce_pdf" ? "application/pdf" : "application/xml",
       });
 
       const url = window.URL.createObjectURL(blob);
@@ -335,15 +335,20 @@ export function useFocusNfe() {
         a.download = `danfe_${ref}.pdf`;
       } else if (tipo === "xml_cancelamento") {
         a.download = `nfe_cancelamento_${ref}.xml`;
+      } else if (tipo === "cce_pdf") {
+        a.download = `cce_${ref}.pdf`;
+      } else if (tipo === "cce_xml") {
+        a.download = `cce_${ref}.xml`;
       } else {
         a.download = `nfe_${ref}.xml`;
       }
+
       
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       
-      const tipoMsg = tipo === "danfe" ? "DANFE" : "XML";
+      const tipoMsg = tipo === "danfe" ? "DANFE" : tipo === "cce_pdf" ? "PDF da CC-e" : tipo === "cce_xml" ? "XML da CC-e" : "XML";
       toast.success(`Download do ${tipoMsg} iniciado`);
 
       // Revogar URL após um delay para permitir download

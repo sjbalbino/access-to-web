@@ -343,10 +343,11 @@ export default function NotasFiscais() {
     }
   };
 
-  const handleDownload = async (nota: any, tipo: "xml" | "danfe") => {
+  const handleDownload = async (nota: any, tipo: "xml" | "danfe" | "xml_cancelamento" | "cce_pdf" | "cce_xml") => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
     await focusNfe.downloadArquivo(ref, tipo, nota.id);
   };
+
 
   const {
     dadosPaginados,
@@ -479,6 +480,17 @@ export default function NotasFiscais() {
                               <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950" onClick={() => { setSelectedNota(nota); setIsCartaCorrecaoDialogOpen(true); }} title="Carta de Correção">
                                 <FileEdit className="h-4 w-4" />
                               </Button>
+                              {typeof nota.info_complementar === "string" && nota.info_complementar.includes("Carta de Correção") && (
+                                <>
+                                  <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950" onClick={() => handleDownload(nota, "cce_pdf")} title="Baixar PDF da Carta de Correção">
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950" onClick={() => handleDownload(nota, "cce_xml")} title="Baixar XML da Carta de Correção">
+                                    <FileText className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
+
                               <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950" onClick={() => { setSelectedNota(nota); setIsCancelDialogOpen(true); }} title="Cancelar NF-e">
                                 <XCircle className="h-4 w-4" />
                               </Button>
