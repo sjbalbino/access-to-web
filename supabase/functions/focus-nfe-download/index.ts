@@ -159,6 +159,9 @@ serve(async (req) => {
         contentType = "application/xml";
         filename = `cce_${ref}.xml`;
         break;
+    }
+
+
 
 
     if (!downloadUrl) {
