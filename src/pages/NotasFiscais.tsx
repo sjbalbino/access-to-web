@@ -863,34 +863,41 @@ export default function NotasFiscais() {
 
         {/* Dialog de Visualização da DANFE */}
         <Dialog open={danfePreview.open} onOpenChange={(open) => { if (!open) closeDanfePreview(); }}>
-          <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-4">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
+          <DialogContent className="max-w-6xl w-[95vw] h-[92vh] flex flex-col p-0 gap-0">
+            <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
+              <DialogTitle className="text-base truncate flex items-center gap-2">
                 <FileSearch className="h-5 w-5 text-primary" />
                 {danfePreview.titulo}
               </DialogTitle>
-              <DialogDescription>Pré-visualização da DANFE em PDF</DialogDescription>
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={handleImprimirDanfe} disabled={!danfePreview.downloadUrl}>
+                  <FileText className="h-4 w-4 mr-1" /> Imprimir
+                </Button>
+                {danfePreview.downloadUrl && (
+                  <Button size="sm" asChild>
+                    <a href={danfePreview.downloadUrl} download={danfePreview.filename}>
+                      <Download className="h-4 w-4 mr-1" /> Baixar PDF
+                    </a>
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" onClick={closeDanfePreview}>
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
             </DialogHeader>
-            <div className="flex-1 min-h-0 rounded-md border bg-muted overflow-hidden">
-              {danfePreview.loading || !danfePreview.pdfData ? (
+            <div className="relative flex-1 overflow-hidden bg-muted/30">
+              {danfePreview.loading || !danfePreview.downloadUrl ? (
                 <div className="flex items-center justify-center h-full">
                   <Spinner />
                 </div>
               ) : (
-                <DanfePdfViewer pdfData={danfePreview.pdfData} />
+                <iframe
+                  src={danfePreview.downloadUrl}
+                  title={danfePreview.titulo}
+                  className="w-full h-full border-0 bg-background"
+                />
               )}
             </div>
-            <DialogFooter className="gap-2">
-              {danfePreview.downloadUrl && (
-                <Button variant="outline" asChild>
-                  <a href={danfePreview.downloadUrl} download={`${danfePreview.titulo}.pdf`}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Baixar
-                  </a>
-                </Button>
-              )}
-              <Button variant="outline" onClick={closeDanfePreview}>Fechar</Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
