@@ -99,9 +99,10 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
             Enviar NFe por Email
           </DialogTitle>
           <DialogDescription>
-            A Focus NFe enviará a <strong>DANFE (PDF)</strong> e o <strong>XML</strong> da NFe
+            A Focus NFe enviará a <strong>DANFE (PDF)</strong>, o <strong>XML</strong> e, se houver, a <strong>última Carta de Correção</strong> da NFe
             {nota?.numero ? ` nº ${nota.numero}` : ""} para os destinatários selecionados.
           </DialogDescription>
+
         </DialogHeader>
 
         <div className="space-y-4 py-2">
