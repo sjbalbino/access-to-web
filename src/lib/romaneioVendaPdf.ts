@@ -3,8 +3,14 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 
-// Formato "80 colunas" - relatório compacto de romaneio (uma remessa por página)
-// Baseado no modelo do sistema legado SisGranja (Access)
+// Romaneio para impressora térmica de 80 colunas (bobina 80mm)
+// Largura: 80mm | Área imprimível ~72mm | Fonte monoespaçada Courier
+// Altura dinâmica (calculada em duas passadas)
+
+const PAGE_W = 80;                 // mm - bobina 80mm
+const MARGIN_X = 3;                // margem lateral
+const CONTENT_W = PAGE_W - MARGIN_X * 2;
+const COLS = 42;                   // ~42 caracteres por linha em Courier 8pt
 
 const fmtNum = (v: number | null | undefined, dec = 0) => {
   if (v === null || v === undefined || isNaN(Number(v))) return "0";
@@ -31,6 +37,22 @@ const fmtDateHora = (d: string | null | undefined, hora: string | null | undefin
   return h ? `${data} ${h}` : data;
 };
 
+// Formata "Label: valor" em uma linha; se estourar, quebra
+const kv = (label: string, value: string): string[] => {
+  const line = `${label} ${value}`;
+  if (line.length <= COLS) return [line];
+  // quebra: label na 1ª linha, valor recuado
+  const pad = " ".repeat(Math.min(label.length + 1, 4));
+  const out = [label];
+  let v = value;
+  while (v.length > 0) {
+    const chunk = v.slice(0, COLS - pad.length);
+    out.push(pad + chunk);
+    v = v.slice(chunk.length);
+  }
+  return out;
+};
+
 interface RomaneioContrato {
   id: string;
   numero: number | string;
@@ -54,7 +76,6 @@ export async function gerarRomaneioVendaPdf(
   contrato: RomaneioContrato,
   remessa: any
 ): Promise<void> {
-  // Busca dados completos de vendedor (inscrição) e comprador
   const [inscricaoRes, compradorRes] = await Promise.all([
     contrato.inscricao_produtor_id
       ? supabase
@@ -74,134 +95,61 @@ export async function gerarRomaneioVendaPdf(
   const inscricao: any = inscricaoRes.data;
   const comprador: any = compradorRes.data;
 
-  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-  doc.setFont("courier", "normal");
+  // Monta todas as linhas primeiro (para calcular altura)
+  const lines: Array<{ text: string; bold?: boolean; center?: boolean; sep?: boolean }> = [];
+  const add = (text = "", opts: { bold?: boolean; center?: boolean } = {}) =>
+    lines.push({ text, ...opts });
+  const sep = () => lines.push({ text: "-".repeat(COLS), sep: true });
+  const addKv = (l: string, v: string) => kv(l, v || "-").forEach((t) => add(t));
 
-  const pageW = doc.internal.pageSize.getWidth();
-  const marginX = 12;
-  const contentW = pageW - marginX * 2;
-  let y = 14;
+  add("ROMANEIO SAIDA DE PRODUTOS", { bold: true, center: true });
+  add(`ROMANEIO Nº: ${remessa.romaneio ?? remessa.codigo ?? "-"}`, { center: true });
+  sep();
 
-  // Cabeçalho
-  doc.setFont("courier", "bold");
-  doc.setFontSize(12);
-  doc.text("ROMANEIO SAIDA DE PRODUTOS", pageW / 2, y, { align: "center" });
-  y += 5;
-  doc.setFontSize(10);
-  doc.text(`ROMANEIO Nº: ${remessa.romaneio ?? remessa.codigo ?? "-"}`, pageW / 2, y, {
-    align: "center",
-  });
-  y += 6;
+  addKv("DATA:", fmtDateHora(remessa.data_remessa, remessa.hora_remessa));
+  addKv("Safra:", String(contrato.safra?.nome || "-"));
+  addKv("Produto:", String(contrato.produto?.nome || "-"));
+  addKv("Tipo:", String(contrato.tipo_venda || "-").toUpperCase());
+  addKv("Silo Armaz:", String(remessa.silo?.nome || "-"));
+  addKv("CONTRATO:", String(contrato.numero));
+  sep();
 
-  // Bloco informações gerais
-  doc.setFont("courier", "normal");
-  doc.setFontSize(9);
-  const boxTop = y;
-  const rowH = 4.5;
-  const drawBox = (h: number) => {
-    doc.rect(marginX, boxTop, contentW, h);
-  };
-
-  const label = (t: string, x: number, yy: number) => {
-    doc.setFont("courier", "bold");
-    doc.text(t, x, yy);
-    doc.setFont("courier", "normal");
-  };
-
-  // Linha 1: Data + Safra
-  label("DATA:", marginX + 2, y + 3.5);
-  doc.text(fmtDateHora(remessa.data_remessa, remessa.hora_remessa), marginX + 18, y + 3.5);
-  label("Safra:", marginX + 90, y + 3.5);
-  doc.text(String(contrato.safra?.nome || "-"), marginX + 105, y + 3.5);
-  y += rowH;
-  // Linha 2: Produto
-  label("Produto:", marginX + 2, y + 3.5);
-  doc.text(String(contrato.produto?.nome || "-"), marginX + 22, y + 3.5);
-  y += rowH;
-  // Linha 3: Tipo + Silo
-  label("Tipo:", marginX + 2, y + 3.5);
-  doc.text(String(contrato.tipo_venda || "-").toUpperCase(), marginX + 18, y + 3.5);
-  label("Silo Armaz:", marginX + 90, y + 3.5);
-  doc.text(String(remessa.silo?.nome || "-"), marginX + 115, y + 3.5);
-  y += rowH;
-  // Linha 4: Contrato
-  label("CONTRATO:", marginX + 2, y + 3.5);
-  doc.text(String(contrato.numero), marginX + 28, y + 3.5);
-  y += rowH + 1;
-  drawBox(y - boxTop);
-  y += 2;
-
-  // Função para blocos com título
-  const bloco = (titulo: string, linhas: Array<[string, string, string?, string?]>) => {
-    // Título centralizado com barra
-    doc.setFont("courier", "bold");
-    doc.setFontSize(9);
-    const tw = doc.getTextWidth(titulo);
-    doc.text(titulo, pageW / 2, y + 3.2, { align: "center" });
-    // linha
-    y += 4.5;
-    const bTop = y;
-    doc.setFont("courier", "normal");
-    linhas.forEach(([l1, v1, l2, v2]) => {
-      label(l1, marginX + 2, y + 3.5);
-      doc.text(v1 || "-", marginX + 22, y + 3.5);
-      if (l2) {
-        label(l2, marginX + 90, y + 3.5);
-        doc.text(v2 || "-", marginX + 112, y + 3.5);
-      }
-      y += rowH;
-    });
-    doc.rect(marginX, bTop, contentW, y - bTop);
-    y += 1;
-  };
-
-  // VENDEDOR
+  add("VENDEDOR", { bold: true, center: true });
   const vendedorNome =
     inscricao?.produtor?.nome || inscricao?.granja || inscricao?.nome || "-";
-  bloco("VENDEDOR", [
-    ["Nome:", vendedorNome],
-    [
-      "Endereço:",
-      `${inscricao?.logradouro || ""}${inscricao?.numero ? ", " + inscricao.numero : ""}`,
-    ],
-    ["Bairro:", inscricao?.bairro || "-"],
-    [
-      "Cidade:",
-      `${inscricao?.cidade || "-"}${inscricao?.uf ? "/" + inscricao.uf : ""}`,
-      "CEP:",
-      inscricao?.cep || "-",
-    ],
-    [
-      "CPF/CNPJ:",
-      inscricao?.cpf_cnpj || "-",
-      "I.E.:",
-      inscricao?.inscricao_estadual || "-",
-    ],
-  ]);
+  addKv("Nome:", vendedorNome);
+  addKv(
+    "End.:",
+    `${inscricao?.logradouro || ""}${inscricao?.numero ? ", " + inscricao.numero : ""}`.trim() ||
+      "-"
+  );
+  if (inscricao?.bairro) addKv("Bairro:", inscricao.bairro);
+  addKv(
+    "Cidade:",
+    `${inscricao?.cidade || "-"}${inscricao?.uf ? "/" + inscricao.uf : ""}`
+  );
+  if (inscricao?.cep) addKv("CEP:", inscricao.cep);
+  addKv("CPF/CNPJ:", inscricao?.cpf_cnpj || "-");
+  addKv("I.E.:", inscricao?.inscricao_estadual || "-");
+  sep();
 
-  // COMPRADOR
-  bloco("COMPRADOR", [
-    ["Nome:", comprador?.nome || "-"],
-    [
-      "Endereço:",
-      `${comprador?.logradouro || ""}${comprador?.numero ? ", " + comprador.numero : ""}`,
-    ],
-    ["Bairro:", comprador?.bairro || "-"],
-    [
-      "Cidade:",
-      `${comprador?.cidade || "-"}${comprador?.uf ? "/" + comprador.uf : ""}`,
-      "CEP:",
-      comprador?.cep || "-",
-    ],
-    [
-      "CPF/CNPJ:",
-      comprador?.cpf_cnpj || "-",
-      "I.E.:",
-      comprador?.inscricao_estadual || "-",
-    ],
-  ]);
+  add("COMPRADOR", { bold: true, center: true });
+  addKv("Nome:", comprador?.nome || "-");
+  addKv(
+    "End.:",
+    `${comprador?.logradouro || ""}${comprador?.numero ? ", " + comprador.numero : ""}`.trim() ||
+      "-"
+  );
+  if (comprador?.bairro) addKv("Bairro:", comprador.bairro);
+  addKv(
+    "Cidade:",
+    `${comprador?.cidade || "-"}${comprador?.uf ? "/" + comprador.uf : ""}`
+  );
+  if (comprador?.cep) addKv("CEP:", comprador.cep);
+  addKv("CPF/CNPJ:", comprador?.cpf_cnpj || "-");
+  addKv("I.E.:", comprador?.inscricao_estadual || "-");
+  sep();
 
-  // LOCAL DE ENTREGA
   const le = {
     nome: remessa.local_entrega_nome || contrato.local_entrega_nome,
     log: remessa.local_entrega_logradouro || contrato.local_entrega_logradouro,
@@ -213,126 +161,102 @@ export async function gerarRomaneioVendaPdf(
     cnpj: remessa.local_entrega_cnpj_cpf || contrato.local_entrega_cnpj_cpf,
     ie: remessa.local_entrega_ie || contrato.local_entrega_ie,
   };
-  bloco("LOCAL DE ENTREGA", [
-    ["Local:", le.nome || "-"],
-    ["Endereço:", `${le.log || ""}${le.num ? ", " + le.num : ""}`],
-    [
-      "Cidade:",
-      `${le.cidade || "-"}${le.uf ? "/" + le.uf : ""}`,
-      "CEP:",
-      le.cep || "-",
-    ],
-    ["CPF/CNPJ:", le.cnpj || "-", "I.E.:", le.ie || "-"],
-  ]);
+  add("LOCAL DE ENTREGA", { bold: true, center: true });
+  addKv("Local:", le.nome || "-");
+  addKv(
+    "End.:",
+    `${le.log || ""}${le.num ? ", " + le.num : ""}`.trim() || "-"
+  );
+  addKv("Cidade:", `${le.cidade || "-"}${le.uf ? "/" + le.uf : ""}`);
+  if (le.cep) addKv("CEP:", le.cep);
+  addKv("CPF/CNPJ:", le.cnpj || "-");
+  addKv("I.E.:", le.ie || "-");
+  sep();
 
-  // PESAGEM
-  doc.setFont("courier", "bold");
-  doc.text("PESAGEM", pageW / 2, y + 3.2, { align: "center" });
-  y += 4.5;
-  const pTop = y;
-  doc.setFont("courier", "normal");
+  add("PESAGEM", { bold: true, center: true });
   const pesoBruto = Number(remessa.peso_bruto || 0);
   const pesoTara = Number(remessa.peso_tara || 0);
   const pesoLiq = pesoBruto - pesoTara;
-  const linhasPes: Array<[string, string]> = [
-    ["BRUTO:", `${fmtNum(pesoBruto)} Kgs.`],
-    ["TARA:", `${fmtNum(pesoTara)} Kgs.`],
-    ["LIQUIDO:", `${fmtNum(pesoLiq)} Kgs.`],
-  ];
-  linhasPes.forEach(([l, v]) => {
-    label(l, marginX + 2, y + 3.5);
-    doc.text(v, marginX + 30, y + 3.5);
-    y += rowH;
-  });
-  doc.rect(marginX, pTop, contentW, y - pTop);
-  y += 1;
+  addKv("BRUTO:", `${fmtNum(pesoBruto)} Kgs.`);
+  addKv("TARA:", `${fmtNum(pesoTara)} Kgs.`);
+  addKv("LIQUIDO:", `${fmtNum(pesoLiq)} Kgs.`);
+  sep();
 
-  // DESCONTOS
-  doc.setFont("courier", "bold");
-  doc.text("DESCONTOS", pageW / 2, y + 3.2, { align: "center" });
-  y += 4.5;
-  const dTop = y;
-  doc.setFont("courier", "normal");
+  add("DESCONTOS", { bold: true, center: true });
   const kgDescUmid = Number(remessa.kg_desconto_umidade || 0);
   const kgDescImp = Number(remessa.kg_desconto_impureza || 0);
   const totalDesc = kgDescUmid + kgDescImp;
-  const linhasDesc: Array<[string, string, string]> = [
-    ["Umidade:", `${fmtNum(kgDescUmid)} Kgs.`, `${fmtNum(remessa.umidade, 1)} %`],
-    ["Impureza:", `${fmtNum(kgDescImp)} Kgs.`, `${fmtNum(remessa.impureza, 1)} %`],
-    ["Avariados:", "0 Kgs.", ""],
-    ["Outros:", "0 Kgs.", ""],
-  ];
-  linhasDesc.forEach(([l, v, p]) => {
-    label(l, marginX + 2, y + 3.5);
-    doc.text(v, marginX + 30, y + 3.5);
-    if (p) doc.text(p, marginX + 60, y + 3.5);
-    y += rowH;
-  });
-  label("Total Desc:", marginX + 2, y + 3.5);
-  doc.text(`${fmtNum(totalDesc)} Kgs.`, marginX + 30, y + 3.5);
-  y += rowH;
-  label("LIQUIDO:", marginX + 2, y + 3.5);
-  doc.text(`${fmtNum(remessa.kg_remessa)} Kgs.`, marginX + 30, y + 3.5);
-  label("SACOS:", marginX + 90, y + 3.5);
-  doc.text(fmtNum(remessa.sacos_remessa || remessa.sacos), marginX + 112, y + 3.5);
-  y += rowH;
-  doc.rect(marginX, dTop, contentW, y - dTop);
-  y += 1;
+  addKv("Umidade:", `${fmtNum(kgDescUmid)} Kgs. (${fmtNum(remessa.umidade, 1)}%)`);
+  addKv("Impureza:", `${fmtNum(kgDescImp)} Kgs. (${fmtNum(remessa.impureza, 1)}%)`);
+  addKv("Avariados:", "0 Kgs.");
+  addKv("Outros:", "0 Kgs.");
+  addKv("Total Desc:", `${fmtNum(totalDesc)} Kgs.`);
+  addKv("LIQUIDO:", `${fmtNum(remessa.kg_remessa)} Kgs.`);
+  addKv("SACOS:", fmtNum(remessa.sacos_remessa || remessa.sacos));
+  sep();
 
-  // TRANSPORTADOR
   const t = remessa.transportadora;
-  bloco("TRANSPORTADOR", [
-    ["Nome:", t?.nome || "-"],
-    ["End.:", t?.logradouro || "-"],
-    ["Cidade:", t?.cidade || "-"],
-    ["CPF/CNPJ:", t?.cpf_cnpj || "-", "I.E.:", t?.inscricao_estadual || "-"],
-    [
-      "Placa:",
-      `${remessa.placa || "-"}${remessa.uf_placa ? "  UF: " + remessa.uf_placa : ""}`,
-    ],
-  ]);
+  add("TRANSPORTADOR", { bold: true, center: true });
+  addKv("Nome:", t?.nome || "-");
+  if (t?.logradouro) addKv("End.:", t.logradouro);
+  if (t?.cidade) addKv("Cidade:", t.cidade);
+  addKv("CPF/CNPJ:", t?.cpf_cnpj || "-");
+  if (t?.inscricao_estadual) addKv("I.E.:", t.inscricao_estadual);
+  addKv(
+    "Placa:",
+    `${remessa.placa || "-"}${remessa.uf_placa ? " " + remessa.uf_placa : ""}`
+  );
+  addKv("MOTORISTA:", String(remessa.motorista || "-"));
+  if (remessa.motorista_cpf) addKv("CPF Mot.:", remessa.motorista_cpf);
+  sep();
 
-  // Obs / Motorista
-  y += 2;
-  label("Obs:", marginX + 2, y + 3.5);
-  y += rowH;
-  const obs = String(remessa.observacoes || "");
-  const obsBoxTop = y;
-  if (obs) {
-    const lines = doc.splitTextToSize(obs, contentW - 6);
-    doc.text(lines, marginX + 3, y + 3.5);
-    y += Math.max(rowH, lines.length * rowH);
-  } else {
-    y += rowH * 2;
+  if (remessa.observacoes) {
+    add("OBS:", { bold: true });
+    const obs = String(remessa.observacoes);
+    for (let i = 0; i < obs.length; i += COLS) add(obs.slice(i, i + COLS));
+    sep();
   }
-  doc.rect(marginX, obsBoxTop, contentW, y - obsBoxTop);
-
-  y += 3;
-  label("MOTORISTA:", marginX + 2, y + 3.5);
-  doc.text(String(remessa.motorista || "-"), marginX + 30, y + 3.5);
-  if (remessa.motorista_cpf) {
-    doc.text(`CPF: ${remessa.motorista_cpf}`, marginX + 110, y + 3.5);
-  }
-  y += rowH + 8;
 
   // Assinaturas
-  doc.line(marginX + 10, y, marginX + 80, y);
-  doc.line(pageW - marginX - 80, y, pageW - marginX - 10, y);
-  y += 4;
-  doc.text(String(t?.nome || "Transportador"), marginX + 45, y, { align: "center" });
-  doc.text("Recebedor", pageW - marginX - 45, y, { align: "center" });
-  y += 4;
-  doc.setFontSize(8);
-  doc.text("Transportador", marginX + 45, y, { align: "center" });
-
-  // Rodapé
-  doc.setFontSize(7);
-  doc.text(
-    `Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
-    pageW / 2,
-    doc.internal.pageSize.getHeight() - 8,
-    { align: "center" }
+  add("");
+  add("");
+  add("_".repeat(COLS - 4), { center: true });
+  add(String(t?.nome || "Transportador"), { center: true });
+  add("");
+  add("_".repeat(COLS - 4), { center: true });
+  add("Recebedor", { center: true });
+  add("");
+  add(
+    `Emitido: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`,
+    { center: true }
   );
+
+  // Renderização
+  const lineH = 3.4;      // mm entre linhas
+  const topPad = 4;
+  const bottomPad = 6;
+  const pageH = topPad + lines.length * lineH + bottomPad;
+
+  const doc = new jsPDF({
+    unit: "mm",
+    format: [PAGE_W, pageH],
+    orientation: "portrait",
+  });
+  doc.setFont("courier", "normal");
+  doc.setFontSize(8);
+
+  let y = topPad;
+  for (const l of lines) {
+    if (l.bold) doc.setFont("courier", "bold");
+    else doc.setFont("courier", "normal");
+
+    if (l.center) {
+      doc.text(l.text, PAGE_W / 2, y, { align: "center" });
+    } else {
+      doc.text(l.text, MARGIN_X, y);
+    }
+    y += lineH;
+  }
 
   const blob = doc.output("blob");
   const url = URL.createObjectURL(blob);
