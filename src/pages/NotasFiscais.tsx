@@ -331,17 +331,23 @@ export default function NotasFiscais() {
     }
   };
 
+  const [cceResult, setCceResult] = useState<{ open: boolean; nota: any; data: any } | null>(null);
+
   const handleCartaCorrecao = async () => {
     if (selectedNota && correcao.length >= 15) {
       const ref = selectedNota.uuid_api || `nfe_${selectedNota.id}`;
-      await focusNfe.emitirCartaCorrecao(ref, selectedNota.id, correcao);
+      const res = await focusNfe.emitirCartaCorrecao(ref, selectedNota.id, correcao);
       setIsCartaCorrecaoDialogOpen(false);
+      if (res?.success) {
+        setCceResult({ open: true, nota: selectedNota, data: (res as any).data ?? res });
+      }
       setSelectedNota(null);
       setCorrecao("");
     } else {
       toast.error("Correção deve ter no mínimo 15 caracteres");
     }
   };
+
 
   const handleDownload = async (nota: any, tipo: "xml" | "danfe" | "xml_cancelamento" | "cce_pdf" | "cce_xml") => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
