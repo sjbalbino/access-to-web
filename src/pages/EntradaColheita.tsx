@@ -305,25 +305,35 @@ export default function EntradaColheita() {
     return inscricaoSelecionada.produtores?.tipo_produtor || "todos";
   }, [inscricaoSelecionada]);
 
-  // Filtrar lavouras automaticamente pelo tipo de produtor selecionado
+  // Lista de lavouras disponíveis para a safra:
+  // - Inclui TODAS as lavouras ativas (mesmo sem controle_lavoura criado ainda)
+  // - Mescla dados de ha_plantado quando já existe controle
+  // - Ordena alfabeticamente pelo nome
   const lavourasFiltradasPorTipo = useMemo(() => {
-    if (tipoProdutor === "todos") {
-      return controleLavouras;
-    }
-    
-    if (tipoProdutor === "produtor") {
-      // Produtor externo: mostrar apenas lavouras com recebe_terceiros = true
-      return controleLavouras.filter(cl => {
-        const lavoura = lavouras.find(l => l.id === cl.lavoura_id);
-        return lavoura?.recebe_terceiros === true;
-      });
-    }
-    
-    // Sócio: mostrar lavouras que NÃO são de terceiros
-    return controleLavouras.filter(cl => {
-      const lavoura = lavouras.find(l => l.id === cl.lavoura_id);
-      return lavoura?.recebe_terceiros !== true;
+    const lavourasAtivas = lavouras.filter((l: any) => l.ativa !== false);
+
+    // Se produtor externo estiver selecionado, restringe às lavouras que recebem terceiros
+    const filtradasPorTipo = tipoProdutor === "produtor"
+      ? lavourasAtivas.filter((l: any) => l.recebe_terceiros === true)
+      : lavourasAtivas;
+
+    const items = filtradasPorTipo.map((l: any) => {
+      const controle = controleLavouras.find(cl => cl.lavoura_id === l.id);
+      return {
+        id: controle?.id || `lav-${l.id}`,
+        lavoura_id: l.id,
+        ha_plantado: controle?.ha_plantado ?? null,
+        lavouras: {
+          id: l.id,
+          nome: l.nome,
+          total_hectares: l.total_hectares,
+        },
+      };
     });
+
+    return items.sort((a, b) =>
+      (a.lavouras?.nome || "").localeCompare(b.lavouras?.nome || "", "pt-BR")
+    );
   }, [controleLavouras, lavouras, tipoProdutor]);
 
   // Obter controle_lavoura_id para a lavoura selecionada
@@ -331,6 +341,7 @@ export default function EntradaColheita() {
     controleLavouras.find(cl => cl.lavoura_id === selectedLavouraId),
     [controleLavouras, selectedLavouraId]
   );
+
 
   // Calcular descontos automáticos
   const calculos = useMemo(() => {
