@@ -279,10 +279,16 @@ export default function RemessasVendaForm() {
     setSacosNota(kgRemessa > 0 ? kgRemessa / 60 : 0);
 
     const preco = contrato?.preco_kg || 0;
-    // Valor Remessa = Valor Nota (sem descontos)
+    // Preenche valor inicial (usuário pode editar depois)
     setValorRemessa(kgRemessa * preco);
-    setValorNota(kgRemessa * preco);
   }, [kgRemessa, contrato?.preco_kg]);
+
+  // Preço/Kg efetivo (derivado do Valor da Remessa informado)
+  const effectivePrecoKg = kgRemessa > 0 ? valorRemessa / kgRemessa : (contrato?.preco_kg || 0);
+  // Valor Nota acompanha (sem descontos)
+  useEffect(() => {
+    setValorNota(kgNota * effectivePrecoKg);
+  }, [kgNota, effectivePrecoKg]);
 
   // Determinar status baseado nos pesos
   const determinarStatus = (pesoTara: number, pesoBruto: number) => {
