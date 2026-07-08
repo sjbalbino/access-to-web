@@ -79,13 +79,15 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
   const [placa, setPlaca] = useState("");
   const [ufPlaca, setUfPlaca] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [valorRemessa, setValorRemessa] = useState(0);
 
   // Valores calculados
   const kgRemessa = pesoBruto > pesoTara ? pesoBruto - pesoTara : 0;
   const sacosRemessa = kgRemessa / 60;
   const sacosNota = kgNota / 60;
-  const valorRemessa = kgRemessa * precoKg;
-  const valorNota = kgNota * precoKg;
+  // Preço/Kg efetivo derivado do Valor da Remessa informado
+  const effectivePrecoKg = kgRemessa > 0 ? valorRemessa / kgRemessa : precoKg;
+  const valorNota = kgNota * effectivePrecoKg;
 
   // Preencher valores da remessa quando abrir
   useEffect(() => {
