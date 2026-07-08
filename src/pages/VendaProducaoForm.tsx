@@ -607,7 +607,14 @@ export default function VendaProducaoForm() {
                 <Label>Quantidade (kg)</Label>
                 <QuantityInput
                   value={watch("quantidade_kg")}
-                  onChange={(v) => setValue("quantidade_kg", v)}
+                  onChange={(v) => {
+                    setValue("quantidade_kg", v);
+                    const produtoSel = produtos?.find(p => p.id === watch("produto_id"));
+                    const peso = Number(produtoSel?.peso_saco) || 0;
+                    if (v && peso > 0) {
+                      setValue("quantidade_sacos", Number((v / peso).toFixed(3)));
+                    }
+                  }}
                   decimals={3}
                 />
               </div>
@@ -619,6 +626,7 @@ export default function VendaProducaoForm() {
                   decimals={3}
                 />
               </div>
+
               <div className="space-y-2">
                 <Label>Preço/kg (R$)</Label>
                 <CurrencyInput
