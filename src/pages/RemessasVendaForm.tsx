@@ -948,6 +948,14 @@ export default function RemessasVendaForm() {
                           </TableCell>
                           <TableCell>
                             <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => gerarRomaneioVendaPdf(contrato as any, r)}
+                                title="Imprimir Romaneio (80 col)"
+                              >
+                                <Printer className="h-4 w-4 text-muted-foreground" />
+                              </Button>
                               {/* Botão Editar para qualquer status sem NFe emitida */}
                               {r.status !== "carregado_nfe" && !r.nota_fiscal_id && (
                                 <Button
