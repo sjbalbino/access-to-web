@@ -49,9 +49,10 @@ serve(async (req) => {
       throw new Error("ref é obrigatório");
     }
 
-    if (!tipo || !["xml", "danfe", "xml_cancelamento"].includes(tipo)) {
-      throw new Error("tipo deve ser 'xml', 'danfe' ou 'xml_cancelamento'");
+    if (!tipo || !["xml", "danfe", "xml_cancelamento", "cce_pdf", "cce_xml"].includes(tipo)) {
+      throw new Error("tipo inválido");
     }
+
 
     // Tenant isolation
     if (notaFiscalId) {
