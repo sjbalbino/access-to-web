@@ -343,10 +343,11 @@ export default function NotasFiscais() {
     }
   };
 
-  const handleDownload = async (nota: any, tipo: "xml" | "danfe") => {
+  const handleDownload = async (nota: any, tipo: "xml" | "danfe" | "xml_cancelamento" | "cce_pdf" | "cce_xml") => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
     await focusNfe.downloadArquivo(ref, tipo, nota.id);
   };
+
 
   const {
     dadosPaginados,
