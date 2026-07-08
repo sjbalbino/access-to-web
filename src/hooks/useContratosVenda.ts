@@ -84,6 +84,7 @@ export function useContratosVenda(filtros?: ContratoVendaFiltros) {
             produtor:produtores(id, nome)
           )
         `)
+        .order("data_contrato", { ascending: false })
         .order("numero", { ascending: false });
 
       if (filtros?.safra_id) {
