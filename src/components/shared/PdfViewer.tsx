@@ -20,17 +20,25 @@ function waitForNextPaint(): Promise<void> {
 }
 
 export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderComplete }: PdfViewerProps) {
+  const viewportRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const renderTokenRef = useRef(0);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [viewportWidth, setViewportWidth] = useState(0);
   const [isRendering, setIsRendering] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const viewport = viewportRef.current;
+    if (!viewport) return;
 
-    const updateWidth = () => setContainerWidth(Math.floor(container.clientWidth));
+    const updateWidth = () => {
+      const nextWidth = Math.floor(viewport.clientWidth);
+      setViewportWidth((currentWidth) => {
+        if (nextWidth <= 0) return currentWidth;
+        if (currentWidth > 0 && Math.abs(nextWidth - currentWidth) < 24) return currentWidth;
+        return nextWidth;
+      });
+    };
     updateWidth();
 
     if (typeof ResizeObserver === "undefined") {
@@ -39,13 +47,13 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
     }
 
     const observer = new ResizeObserver(updateWidth);
-    observer.observe(container);
+    observer.observe(viewport);
 
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
-    if (!pdfData || !containerRef.current || containerWidth <= 0) return;
+    if (!pdfData || !containerRef.current || viewportWidth <= 0) return;
 
     const token = renderTokenRef.current + 1;
     renderTokenRef.current = token;
@@ -68,7 +76,7 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
 
           const page = await pdf.getPage(pageNumber);
           const baseViewport = page.getViewport({ scale: 1 });
-          const availableWidth = Math.max(container.clientWidth - 32, 320);
+          const availableWidth = Math.max(viewportWidth - 32, 320);
           const scale = Math.min(availableWidth / baseViewport.width, 2.0);
           const viewport = page.getViewport({ scale });
 
@@ -96,13 +104,11 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
     };
 
     const renderPdf = async () => {
-      setIsRendering(true);
-      setErrorMessage(null);
-
       const container = containerRef.current;
       if (!container) return;
 
-      container.replaceChildren();
+      setIsRendering(!container.hasChildNodes());
+      setErrorMessage(null);
 
       try {
         await waitForNextPaint();
@@ -138,12 +144,12 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
     return () => {
       cancelled = true;
     };
-  }, [pdfData, containerWidth, onRenderComplete]);
+  }, [pdfData, viewportWidth, onRenderComplete]);
 
-  const showLoading = isRendering || (!!pdfData && containerWidth <= 0 && !errorMessage);
+  const showLoading = isRendering || (!!pdfData && viewportWidth <= 0 && !errorMessage);
 
   return (
-    <div className="relative h-full w-full overflow-auto bg-muted/40 p-4">
+    <div ref={viewportRef} className="relative h-full w-full overflow-auto bg-muted/40 p-4">
       {showLoading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70">
            <div className="rounded-full bg-background/90 p-4 shadow-lg">
