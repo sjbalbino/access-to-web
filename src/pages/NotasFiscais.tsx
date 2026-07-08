@@ -888,22 +888,14 @@ export default function NotasFiscais() {
                 </Button>
               </div>
             </DialogHeader>
-            <div className="relative flex-1 overflow-auto bg-muted/30 p-6">
-              <div className="mx-auto min-h-full max-w-5xl rounded-md border bg-card p-6 shadow-sm flex flex-col">
-                <div className="mb-4 border-b pb-3">
-                  <h2 className="text-lg font-semibold text-foreground">{danfePreview.titulo}</h2>
-                  <p className="text-xs text-muted-foreground">Pré-visualização da DANFE em PDF.</p>
+            <div className="flex-1 min-h-0 overflow-hidden bg-muted/30">
+              {danfePreview.loading || !danfePreview.pdfData ? (
+                <div className="flex items-center justify-center h-full">
+                  <Spinner />
                 </div>
-                <div className="flex-1 min-h-[70vh]">
-                  {danfePreview.loading || !danfePreview.pdfData ? (
-                    <div className="flex items-center justify-center h-full">
-                      <Spinner />
-                    </div>
-                  ) : (
-                    <DanfePdfViewer pdfData={danfePreview.pdfData} />
-                  )}
-                </div>
-              </div>
+              ) : (
+                <DanfePdfViewer pdfData={danfePreview.pdfData} />
+              )}
             </div>
           </DialogContent>
         </Dialog>
