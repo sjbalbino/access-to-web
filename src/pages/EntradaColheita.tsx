@@ -291,6 +291,18 @@ export default function EntradaColheita() {
     );
   }, [inscricoes, produtorSearch]);
 
+  // Inscrição selecionada para dados fiscais e regras de contra-nota.
+  // Não deve filtrar a lista de lavouras.
+  const inscricaoSelecionada = useMemo(() => 
+    inscricoes.find(i => i.id === inscricaoId),
+    [inscricoes, inscricaoId]
+  );
+
+  const tipoProdutor = useMemo(() => {
+    if (!inscricaoSelecionada) return "todos";
+    return inscricaoSelecionada.produtores?.tipo_produtor || "todos";
+  }, [inscricaoSelecionada]);
+
   // Lista de lavouras disponíveis para a safra selecionada:
   // - Usa somente os registros cadastrados no controle da safra atual
   // - Não depende do produtor selecionado
@@ -1119,11 +1131,6 @@ export default function EntradaColheita() {
                     <CardTitle className="text-base flex items-center gap-2">
                       <Package className="h-4 w-4" />
                       Lista de Lavouras
-                      {tipoProdutor !== "todos" && (
-                        <Badge variant="secondary" className="ml-2">
-                          {tipoProdutor === "socio" ? "Sócios" : "Produtor Externo"}
-                        </Badge>
-                      )}
                     </CardTitle>
                   </div>
                 </CardHeader>
