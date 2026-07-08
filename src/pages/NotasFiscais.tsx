@@ -151,14 +151,14 @@ export default function NotasFiscais() {
   const [correcao, setCorrecao] = useState("");
   const [inutForm, setInutForm] = useState({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
   const [motivoDialog, setMotivoDialog] = useState<{ open: boolean; titulo: string; mensagem: string }>({ open: false, titulo: "", mensagem: "" });
-  const [danfePreview, setDanfePreview] = useState<{ open: boolean; downloadUrl: string | null; filename: string; titulo: string; loading: boolean }>({ open: false, downloadUrl: null, filename: "danfe.pdf", titulo: "", loading: false });
+  const [danfePreview, setDanfePreview] = useState<{ open: boolean; downloadUrl: string | null; pdfData: Uint8Array | null; filename: string; titulo: string; loading: boolean }>({ open: false, downloadUrl: null, pdfData: null, filename: "danfe.pdf", titulo: "", loading: false });
 
   const handleVisualizarDanfe = async (nota: any) => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
     const filename = `DANFE-${nota.numero || ref}.pdf`;
     setDanfePreview((prev) => {
       if (prev.downloadUrl) window.URL.revokeObjectURL(prev.downloadUrl);
-      return { open: true, downloadUrl: null, filename, titulo: `DANFE - NF-e nº ${nota.numero || ""}`, loading: true };
+      return { open: true, downloadUrl: null, pdfData: null, filename, titulo: `DANFE - NF-e nº ${nota.numero || ""}`, loading: true };
     });
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
@@ -169,11 +169,13 @@ export default function NotasFiscais() {
         throw new Error((data as any).error);
       }
       const blob = data instanceof Blob ? data : new Blob([data as ArrayBuffer], { type: "application/pdf" });
+      const buffer = await blob.arrayBuffer();
+      const pdfData = new Uint8Array(buffer);
       const downloadUrl = window.URL.createObjectURL(blob);
-      setDanfePreview((prev) => ({ ...prev, downloadUrl, loading: false }));
+      setDanfePreview((prev) => ({ ...prev, downloadUrl, pdfData, loading: false }));
     } catch (e: any) {
       toast.error("Erro ao carregar DANFE", { description: e?.message });
-      setDanfePreview({ open: false, downloadUrl: null, filename: "danfe.pdf", titulo: "", loading: false });
+      setDanfePreview({ open: false, downloadUrl: null, pdfData: null, filename: "danfe.pdf", titulo: "", loading: false });
     }
   };
 
