@@ -598,6 +598,28 @@ function calcularTotaisReformaTributaria(items: FocusNfeItem[]): Partial<FocusNf
   };
 }
 
+function formatBRL(value: number): string {
+  return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function montarInfoReformaTributaria(totais: Partial<FocusNfeNota>): string | undefined {
+  const partes: string[] = [];
+  if (totais.ibs_cbs_base_calculo && totais.ibs_cbs_base_calculo > 0) {
+    partes.push(`Base IBS/CBS: R$ ${formatBRL(totais.ibs_cbs_base_calculo)}`);
+  }
+  if (totais.ibs_valor_total && totais.ibs_valor_total > 0) {
+    partes.push(`IBS: R$ ${formatBRL(totais.ibs_valor_total)}`);
+  }
+  if (totais.cbs_valor_total && totais.cbs_valor_total > 0) {
+    partes.push(`CBS: R$ ${formatBRL(totais.cbs_valor_total)}`);
+  }
+  if (totais.is_valor_total && totais.is_valor_total > 0) {
+    partes.push(`IS: R$ ${formatBRL(totais.is_valor_total)}`);
+  }
+  if (partes.length === 0) return undefined;
+  return `Tributos Reforma Tributária 2026 — ${partes.join("; ")}.`;
+}
+
 function mapItemToFocusNfe(
   item: NotaFiscalItemData,
   numeroItem: number,
