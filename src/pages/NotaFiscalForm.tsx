@@ -1838,7 +1838,8 @@ export default function NotaFiscalForm() {
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
-              <Table>
+              <div className="overflow-x-auto">
+              <Table className="min-w-[980px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12">#</TableHead>
@@ -1848,6 +1849,10 @@ export default function NotaFiscalForm() {
                     <TableHead className="text-right w-20">Qtd.</TableHead>
                     <TableHead className="text-right w-28">Vlr Unit.</TableHead>
                     <TableHead className="text-right w-28">Total</TableHead>
+                    <TableHead className="w-20">CST IBS</TableHead>
+                    <TableHead className="text-right w-28">IBS</TableHead>
+                    <TableHead className="w-20">CST CBS</TableHead>
+                    <TableHead className="text-right w-28">CBS</TableHead>
                     {!isReadOnly && <TableHead className="w-20">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -1861,6 +1866,10 @@ export default function NotaFiscalForm() {
                       <TableCell className="text-right">{formatBrazilianQuantity(item.quantidade, 3)}</TableCell>
                       <TableCell className="text-right">{formatCurrency(item.valor_unitario)}</TableCell>
                       <TableCell className="text-right font-medium">{formatCurrency(item.valor_total)}</TableCell>
+                      <TableCell className="font-mono text-xs">{item.cst_ibs || "-"}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.valor_ibs || 0)}</TableCell>
+                      <TableCell className="font-mono text-xs">{item.cst_cbs || "-"}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(item.valor_cbs || 0)}</TableCell>
                       {!isReadOnly && (
                         <TableCell>
                           <div className="flex gap-1">
@@ -1885,7 +1894,7 @@ export default function NotaFiscalForm() {
                   ))}
                   {itens.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
+                      <TableCell colSpan={isReadOnly ? 11 : 12} className="text-center py-4 text-muted-foreground">
                         Nenhum item adicionado
                       </TableCell>
                     </TableRow>
@@ -1901,10 +1910,19 @@ export default function NotaFiscalForm() {
                         {formatCurrency(totals.totalProdutos)}
                       </TableCell>
                       <TableCell />
+                      <TableCell className="text-right font-bold">
+                        {formatCurrency(totals.totalIbs)}
+                      </TableCell>
+                      <TableCell />
+                      <TableCell className="text-right font-bold">
+                        {formatCurrency(totals.totalCbs)}
+                      </TableCell>
+                      {!isReadOnly && <TableCell />}
                     </TableRow>
                   </TableFooter>
                 )}
               </Table>
+              </div>
             </div>
           )}
         </CardContent>
@@ -1916,7 +1934,7 @@ export default function NotaFiscalForm() {
           <CardTitle className="text-base">Totais</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Total Produtos</p>
               <p className="text-lg font-semibold">{formatCurrency(totals.totalProdutos)}</p>
@@ -1928,6 +1946,14 @@ export default function NotaFiscalForm() {
             <div>
               <p className="text-sm text-muted-foreground">Total ICMS</p>
               <p className="text-lg font-semibold">{formatCurrency(totals.totalIcms)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total IBS</p>
+              <p className="text-lg font-semibold">{formatCurrency(totals.totalIbs)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total CBS</p>
+              <p className="text-lg font-semibold">{formatCurrency(totals.totalCbs)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Nota</p>
