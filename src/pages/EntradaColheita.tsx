@@ -305,15 +305,17 @@ export default function EntradaColheita() {
 
   // Lista de lavouras disponíveis para a safra selecionada:
   // - Usa somente os registros cadastrados no controle da safra atual
-  // - Não depende do produtor selecionado
+  // - Se o produtor for externo ("produtor"), mostra apenas lavouras com recebe_terceiros = true
+  // - Sócio ou sem seleção: mostra todas
   // - Ordena alfabeticamente pelo nome da lavoura
   const lavourasFiltradasPorTipo = useMemo(() => {
     return [...controleLavouras]
       .filter(cl => cl.lavoura_id && cl.lavouras)
+      .filter(cl => tipoProdutor === "produtor" ? cl.lavouras?.recebe_terceiros === true : true)
       .sort((a, b) =>
-      (a.lavouras?.nome || "").localeCompare(b.lavouras?.nome || "", "pt-BR")
-    );
-  }, [controleLavouras]);
+        (a.lavouras?.nome || "").localeCompare(b.lavouras?.nome || "", "pt-BR")
+      );
+  }, [controleLavouras, tipoProdutor]);
 
   // Obter controle_lavoura_id para a lavoura selecionada
   const controleLavouraSelecionado = useMemo(() => 
