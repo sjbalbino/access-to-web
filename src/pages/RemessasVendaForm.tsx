@@ -630,25 +630,25 @@ export default function RemessasVendaForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Preço do Kg</Label>
-                  <Input 
-                    type="text" 
-                    value={formatCurrency(contrato?.preco_kg)} 
-                    readOnly 
-                    tabIndex={-1}
-                    className="bg-muted text-right" 
+                  <Label>Valor da Remessa</Label>
+                  <CurrencyInput
+                    value={valorRemessa}
+                    onChange={(v) => setValorRemessa(v)}
+                    decimals={2}
+                    className="font-bold text-right"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Valor da Remessa</Label>
-                  <Input 
-                    type="text" 
-                    value={formatCurrency(valorRemessa)} 
-                    readOnly 
+                  <Label>Preço do Kg</Label>
+                  <Input
+                    type="text"
+                    value={formatCurrency(effectivePrecoKg)}
+                    readOnly
                     tabIndex={-1}
-                    className="bg-muted font-bold text-right" 
+                    className="bg-muted text-right"
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label>Valor da Nota</Label>
                   <Input 
