@@ -331,17 +331,23 @@ export default function NotasFiscais() {
     }
   };
 
+  const [cceResult, setCceResult] = useState<{ open: boolean; nota: any; data: any } | null>(null);
+
   const handleCartaCorrecao = async () => {
     if (selectedNota && correcao.length >= 15) {
       const ref = selectedNota.uuid_api || `nfe_${selectedNota.id}`;
-      await focusNfe.emitirCartaCorrecao(ref, selectedNota.id, correcao);
+      const res = await focusNfe.emitirCartaCorrecao(ref, selectedNota.id, correcao);
       setIsCartaCorrecaoDialogOpen(false);
+      if (res?.success) {
+        setCceResult({ open: true, nota: selectedNota, data: (res as any).data ?? res });
+      }
       setSelectedNota(null);
       setCorrecao("");
     } else {
       toast.error("Correção deve ter no mínimo 15 caracteres");
     }
   };
+
 
   const handleDownload = async (nota: any, tipo: "xml" | "danfe" | "xml_cancelamento" | "cce_pdf" | "cce_xml") => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
@@ -677,7 +683,55 @@ export default function NotasFiscais() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        {/* Dialog de Contra-Nota */}
+
+        {/* Dialog de Retorno SEFAZ da CC-e */}
+        <Dialog open={!!cceResult?.open} onOpenChange={(o) => setCceResult(o ? cceResult : null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Retorno SEFAZ - Carta de Correção</DialogTitle>
+              <DialogDescription>
+                NF-e nº {cceResult?.nota?.numero ?? "-"} · Série {cceResult?.nota?.serie ?? "-"}
+              </DialogDescription>
+            </DialogHeader>
+            {cceResult?.data && (
+              <div className="space-y-2 text-sm">
+                <div className="grid grid-cols-[160px_1fr] gap-2">
+                  <span className="text-muted-foreground">Status:</span>
+                  <span className="font-medium">{cceResult.data.status ?? "-"}</span>
+                  <span className="text-muted-foreground">Nº Sequência CC-e:</span>
+                  <span className="font-medium">{cceResult.data.numero_carta_correcao ?? cceResult.data.sequencia_evento ?? "-"}</span>
+                  <span className="text-muted-foreground">Protocolo:</span>
+                  <span className="font-mono">{cceResult.data.numero_protocolo ?? cceResult.data.protocolo ?? "-"}</span>
+                  <span className="text-muted-foreground">Data do Evento:</span>
+                  <span>{cceResult.data.data_evento ? new Date(cceResult.data.data_evento).toLocaleString("pt-BR") : "-"}</span>
+                  <span className="text-muted-foreground">Mensagem SEFAZ:</span>
+                  <span>{cceResult.data.mensagem_sefaz ?? cceResult.data.motivo ?? "-"}</span>
+                  <span className="text-muted-foreground">Ambiente:</span>
+                  <span>{cceResult.data.ambiente ?? "-"}</span>
+                </div>
+                <div className="pt-2 border-t">
+                  <p className="text-xs text-muted-foreground mb-2">Texto da correção enviado:</p>
+                  <p className="text-sm p-2 bg-muted rounded whitespace-pre-wrap">{cceResult.data.correcao ?? "-"}</p>
+                </div>
+              </div>
+            )}
+            <DialogFooter className="gap-2">
+              {cceResult?.nota && (
+                <>
+                  <Button variant="outline" onClick={() => handleDownload(cceResult.nota, "cce_pdf")}>
+                    <Download className="h-4 w-4 mr-2" /> PDF CC-e
+                  </Button>
+                  <Button variant="outline" onClick={() => handleDownload(cceResult.nota, "cce_xml")}>
+                    <FileText className="h-4 w-4 mr-2" /> XML CC-e
+                  </Button>
+                </>
+              )}
+              <Button onClick={() => setCceResult(null)}>Fechar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+
         <ContraNotaDialog
           open={isContraNotaDialogOpen}
           onOpenChange={setIsContraNotaDialogOpen}
