@@ -34,7 +34,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban, Printer } from "lucide-react";
+import { gerarRomaneioVendaPdf } from "@/lib/romaneioVendaPdf";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
 import { buildInfoComplementarRemessa } from "@/lib/infoComplementarRemessa";
 import {
