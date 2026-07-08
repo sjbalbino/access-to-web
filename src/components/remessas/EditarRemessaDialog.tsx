@@ -302,7 +302,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Label>Preço/Kg</Label>
                   <Input
                     type="text"
-                    value={formatCurrency(precoKg)}
+                    value={formatCurrency(effectivePrecoKg)}
                     readOnly
                     className="bg-muted text-right"
                     tabIndex={-1}
