@@ -107,6 +107,11 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       setPlaca(remessa.placa?.replace(/[^A-Za-z0-9]/g, "").toUpperCase() || "");
       setUfPlaca(remessa.uf_placa || "");
       setObservacoes(remessa.observacoes || "");
+      // Valor da Remessa: usa o salvo; se vazio, calcula do preço do contrato
+      const kgR = (remessa.peso_bruto || 0) > (remessa.peso_tara || 0)
+        ? (remessa.peso_bruto || 0) - (remessa.peso_tara || 0)
+        : 0;
+      setValorRemessa(Number(remessa.valor_remessa) > 0 ? Number(remessa.valor_remessa) : kgR * precoKg);
     }
   }, [remessa, user]);
 
