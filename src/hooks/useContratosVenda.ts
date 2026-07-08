@@ -188,18 +188,20 @@ export function useProximoNumeroContrato(safraId?: string) {
     queryFn: async () => {
       let query = supabase
         .from("contratos_venda")
-        .select("numero")
-        .order("numero", { ascending: false })
-        .limit(1);
+        .select("numero");
 
       if (safraId) {
         query = query.eq("safra_id", safraId);
       }
 
       const { data } = await query;
-      const lastNumero = parseInt(data?.[0]?.numero || "0", 10);
-      return String(isNaN(lastNumero) ? 1 : lastNumero + 1);
+      const maxNumero = (data || []).reduce((max, row) => {
+        const n = parseInt(String(row.numero), 10);
+        return !isNaN(n) && n > max ? n : max;
+      }, 0);
+      return String(maxNumero + 1);
     },
+
   });
 }
 
