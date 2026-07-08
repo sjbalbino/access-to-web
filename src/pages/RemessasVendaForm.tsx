@@ -337,7 +337,7 @@ export default function RemessasVendaForm() {
       sacos: sacosNota,
       sacos_remessa: sacosRemessa,
       sacos_nota: sacosNota,
-      preco_kg: contrato?.preco_kg || 0,
+      preco_kg: effectivePrecoKg,
       valor_remessa: valorRemessa,
       valor_nota: valorNota,
       transportadora_id: data.transportadora_id || null,
