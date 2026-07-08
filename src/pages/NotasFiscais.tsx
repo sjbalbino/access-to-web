@@ -182,7 +182,7 @@ export default function NotasFiscais() {
   const closeDanfePreview = () => {
     setDanfePreview((prev) => {
       if (prev.downloadUrl) window.URL.revokeObjectURL(prev.downloadUrl);
-      return { open: false, downloadUrl: null, filename: "danfe.pdf", titulo: "", loading: false };
+      return { open: false, downloadUrl: null, pdfData: null, filename: "danfe.pdf", titulo: "", loading: false };
     });
   };
 
