@@ -31,6 +31,9 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
     const viewport = viewportRef.current;
     if (!viewport) return;
 
+    let rafId = 0;
+    let cancelled = false;
+
     const updateWidth = () => {
       const nextWidth = Math.floor(viewport.clientWidth);
       setViewportWidth((currentWidth) => {
@@ -38,18 +41,28 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
         if (currentWidth > 0 && Math.abs(nextWidth - currentWidth) < 24) return currentWidth;
         return nextWidth;
       });
+      // Keep polling until we get a real width (Dialog open animation can start at 0)
+      if (nextWidth <= 0 && !cancelled) {
+        rafId = requestAnimationFrame(updateWidth);
+      }
     };
     updateWidth();
 
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateWidth);
-      return () => window.removeEventListener("resize", updateWidth);
+    const onResize = () => updateWidth();
+    window.addEventListener("resize", onResize);
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(updateWidth);
+      observer.observe(viewport);
     }
 
-    const observer = new ResizeObserver(updateWidth);
-    observer.observe(viewport);
-
-    return () => observer.disconnect();
+    return () => {
+      cancelled = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", onResize);
+      observer?.disconnect();
+    };
   }, []);
 
   useEffect(() => {
