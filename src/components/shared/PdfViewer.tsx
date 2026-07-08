@@ -1,11 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import "@/lib/pdfjsPolyfills";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 import { AlertCircle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+type PdfJsLib = typeof import("pdfjs-dist/legacy/build/pdf.mjs");
+
+let pdfJsPromise: Promise<PdfJsLib> | null = null;
+
+async function loadPdfJs(): Promise<PdfJsLib> {
+  if (!pdfJsPromise) {
+    pdfJsPromise = import("pdfjs-dist/legacy/build/pdf.mjs").then((pdfjsLib) => {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+      return pdfjsLib;
+    });
+  }
+
+  return pdfJsPromise;
+}
 
 export interface PdfViewerProps {
   pdfData: Uint8Array | null;
@@ -75,6 +87,8 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
     const renderPages = async (disableFontFace: boolean): Promise<HTMLCanvasElement[]> => {
       const container = containerRef.current;
       if (!container) return [];
+
+      const pdfjsLib = await loadPdfJs();
 
       const pdf = await pdfjsLib.getDocument({
         data: pdfData.slice(),
