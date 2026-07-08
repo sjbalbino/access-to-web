@@ -504,7 +504,7 @@ export function mapNotaToFocusNfe(
     items: itemsMapeados,
     
     // Informações adicionais
-    informacoes_adicionais_contribuinte: nota.info_complementar || undefined,
+    informacoes_adicionais_contribuinte: [nota.info_complementar, infoReformaTributaria].filter(Boolean).join(" | ") || undefined,
     informacoes_adicionais_fisco: nota.info_fisco || undefined,
 
     // Totais da Reforma Tributária (grupo W02). Sem estes totais a API pode gerar
