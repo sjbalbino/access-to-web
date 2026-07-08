@@ -428,6 +428,8 @@ export function mapNotaToFocusNfe(
   const nomeEmitente = inscricao.produtorNome || inscricao.granjaNome || "Produtor Rural";
   const itemsMapeados = itens.map((item, index) => mapItemToFocusNfe(item, index + 1, emitente?.crt, emitenteIsCpf));
   const totalReformaTributaria = calcularTotaisReformaTributaria(itemsMapeados);
+  const infoReformaTributaria = montarInfoReformaTributaria(totalReformaTributaria);
+
   
   const focusNota: FocusNfeNota = {
     natureza_operacao: nota.natureza_operacao,
