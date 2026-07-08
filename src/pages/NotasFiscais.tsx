@@ -36,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeDialog";
+import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
 
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useAuth } from "@/contexts/AuthContext";
