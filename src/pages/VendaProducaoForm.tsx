@@ -242,11 +242,13 @@ export default function VendaProducaoForm() {
   // Calculate if contract is closed (saldo <= 0)
   const isContratoFechado = contrato && (contrato.saldo_kg || 0) <= 0;
 
-  // Auto-calculate valor_total
+  // Auto-calculate preco_kg from valor_total / quantidade_kg
   useEffect(() => {
-    const total = (quantidadeKg || 0) * (precoKg || 0);
-    setValue("valor_total", total > 0 ? total : null);
-  }, [quantidadeKg, precoKg, setValue]);
+    const qtd = quantidadeKg || 0;
+    const total = valorTotal || 0;
+    const preco = qtd > 0 && total > 0 ? total / qtd : null;
+    setValue("preco_kg", preco);
+  }, [quantidadeKg, valorTotal, setValue]);
 
   // Auto-calculate valor_comissao
   useEffect(() => {
