@@ -885,18 +885,26 @@ export default function NotasFiscais() {
                 </Button>
               </div>
             </DialogHeader>
-            <div className="relative flex-1 overflow-hidden bg-muted/30">
-              {danfePreview.loading || !danfePreview.downloadUrl ? (
-                <div className="flex items-center justify-center h-full">
-                  <Spinner />
+            <div className="relative flex-1 overflow-auto bg-muted/30 p-6">
+              <div className="mx-auto min-h-full max-w-5xl rounded-md border bg-card p-6 shadow-sm flex flex-col">
+                <div className="mb-4 border-b pb-3">
+                  <h2 className="text-lg font-semibold text-foreground">{danfePreview.titulo}</h2>
+                  <p className="text-xs text-muted-foreground">Pré-visualização da DANFE em PDF.</p>
                 </div>
-              ) : (
-                <iframe
-                  src={danfePreview.downloadUrl}
-                  title={danfePreview.titulo}
-                  className="w-full h-full border-0 bg-background"
-                />
-              )}
+                <div className="flex-1 min-h-[70vh]">
+                  {danfePreview.loading || !danfePreview.downloadUrl ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Spinner />
+                    </div>
+                  ) : (
+                    <iframe
+                      src={danfePreview.downloadUrl}
+                      title={danfePreview.titulo}
+                      className="w-full h-full min-h-[70vh] border-0 bg-background rounded-sm"
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
