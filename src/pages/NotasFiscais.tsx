@@ -36,7 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeDialog";
-import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
+
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
@@ -150,13 +150,14 @@ export default function NotasFiscais() {
   const [correcao, setCorrecao] = useState("");
   const [inutForm, setInutForm] = useState({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
   const [motivoDialog, setMotivoDialog] = useState<{ open: boolean; titulo: string; mensagem: string }>({ open: false, titulo: "", mensagem: "" });
-  const [danfePreview, setDanfePreview] = useState<{ open: boolean; downloadUrl: string | null; pdfData: Uint8Array | null; titulo: string; loading: boolean }>({ open: false, downloadUrl: null, pdfData: null, titulo: "", loading: false });
+  const [danfePreview, setDanfePreview] = useState<{ open: boolean; downloadUrl: string | null; filename: string; titulo: string; loading: boolean }>({ open: false, downloadUrl: null, filename: "danfe.pdf", titulo: "", loading: false });
 
   const handleVisualizarDanfe = async (nota: any) => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
+    const filename = `DANFE-${nota.numero || ref}.pdf`;
     setDanfePreview((prev) => {
       if (prev.downloadUrl) window.URL.revokeObjectURL(prev.downloadUrl);
-      return { open: true, downloadUrl: null, pdfData: null, titulo: `DANFE - NF-e nº ${nota.numero || ""}`, loading: true };
+      return { open: true, downloadUrl: null, filename, titulo: `DANFE - NF-e nº ${nota.numero || ""}`, loading: true };
     });
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
@@ -167,21 +168,37 @@ export default function NotasFiscais() {
         throw new Error((data as any).error);
       }
       const blob = data instanceof Blob ? data : new Blob([data as ArrayBuffer], { type: "application/pdf" });
-      const buffer = await blob.arrayBuffer();
-      const pdfData = new Uint8Array(buffer);
       const downloadUrl = window.URL.createObjectURL(blob);
-      setDanfePreview((prev) => ({ ...prev, downloadUrl, pdfData, loading: false }));
+      setDanfePreview((prev) => ({ ...prev, downloadUrl, loading: false }));
     } catch (e: any) {
       toast.error("Erro ao carregar DANFE", { description: e?.message });
-      setDanfePreview({ open: false, downloadUrl: null, pdfData: null, titulo: "", loading: false });
+      setDanfePreview({ open: false, downloadUrl: null, filename: "danfe.pdf", titulo: "", loading: false });
     }
   };
 
   const closeDanfePreview = () => {
     setDanfePreview((prev) => {
       if (prev.downloadUrl) window.URL.revokeObjectURL(prev.downloadUrl);
-      return { open: false, downloadUrl: null, pdfData: null, titulo: "", loading: false };
+      return { open: false, downloadUrl: null, filename: "danfe.pdf", titulo: "", loading: false };
     });
+  };
+
+  const handleImprimirDanfe = () => {
+    if (!danfePreview.downloadUrl) return;
+    const frame = document.createElement("iframe");
+    frame.style.position = "fixed";
+    frame.style.right = "0";
+    frame.style.bottom = "0";
+    frame.style.width = "0";
+    frame.style.height = "0";
+    frame.style.border = "0";
+    frame.src = danfePreview.downloadUrl;
+    frame.onload = () => {
+      frame.contentWindow?.focus();
+      frame.contentWindow?.print();
+      setTimeout(() => { document.body.removeChild(frame); }, 1000);
+    };
+    document.body.appendChild(frame);
   };
 
   const handleConsultarRejeicao = async (nota: any) => {
@@ -846,34 +863,41 @@ export default function NotasFiscais() {
 
         {/* Dialog de Visualização da DANFE */}
         <Dialog open={danfePreview.open} onOpenChange={(open) => { if (!open) closeDanfePreview(); }}>
-          <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-4">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
+          <DialogContent className="max-w-6xl w-[95vw] h-[92vh] flex flex-col p-0 gap-0">
+            <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
+              <DialogTitle className="text-base truncate flex items-center gap-2">
                 <FileSearch className="h-5 w-5 text-primary" />
                 {danfePreview.titulo}
               </DialogTitle>
-              <DialogDescription>Pré-visualização da DANFE em PDF</DialogDescription>
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={handleImprimirDanfe} disabled={!danfePreview.downloadUrl}>
+                  <FileText className="h-4 w-4 mr-1" /> Imprimir
+                </Button>
+                {danfePreview.downloadUrl && (
+                  <Button size="sm" asChild>
+                    <a href={danfePreview.downloadUrl} download={danfePreview.filename}>
+                      <Download className="h-4 w-4 mr-1" /> Baixar PDF
+                    </a>
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" onClick={closeDanfePreview}>
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
             </DialogHeader>
-            <div className="flex-1 min-h-0 rounded-md border bg-muted overflow-hidden">
-              {danfePreview.loading || !danfePreview.pdfData ? (
+            <div className="relative flex-1 overflow-hidden bg-muted/30">
+              {danfePreview.loading || !danfePreview.downloadUrl ? (
                 <div className="flex items-center justify-center h-full">
                   <Spinner />
                 </div>
               ) : (
-                <DanfePdfViewer pdfData={danfePreview.pdfData} />
+                <iframe
+                  src={danfePreview.downloadUrl}
+                  title={danfePreview.titulo}
+                  className="w-full h-full border-0 bg-background"
+                />
               )}
             </div>
-            <DialogFooter className="gap-2">
-              {danfePreview.downloadUrl && (
-                <Button variant="outline" asChild>
-                  <a href={danfePreview.downloadUrl} download={`${danfePreview.titulo}.pdf`}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Baixar
-                  </a>
-                </Button>
-              )}
-              <Button variant="outline" onClick={closeDanfePreview}>Fechar</Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
