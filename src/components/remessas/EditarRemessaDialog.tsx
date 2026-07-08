@@ -229,6 +229,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       sacos: sacosNota,
       sacos_remessa: sacosRemessa,
       sacos_nota: sacosNota,
+      preco_kg: effectivePrecoKg,
       valor_remessa: valorRemessa,
       valor_nota: valorNota,
       status,
