@@ -19,6 +19,7 @@ export interface ControleLavoura {
     codigo: number;
     total_hectares: number | null;
     granja_id: string | null;
+    recebe_terceiros?: boolean | null;
     granjas?: {
       id: string;
       razao_social: string;
