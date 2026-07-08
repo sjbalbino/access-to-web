@@ -34,7 +34,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban, Printer } from "lucide-react";
+import { gerarRomaneioVendaPdf } from "@/lib/romaneioVendaPdf";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
 import { buildInfoComplementarRemessa } from "@/lib/infoComplementarRemessa";
 import {
@@ -947,6 +948,14 @@ export default function RemessasVendaForm() {
                           </TableCell>
                           <TableCell>
                             <div className="flex justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => gerarRomaneioVendaPdf(contrato as any, r)}
+                                title="Imprimir Romaneio (80 col)"
+                              >
+                                <Printer className="h-4 w-4 text-muted-foreground" />
+                              </Button>
                               {/* Botão Editar para qualquer status sem NFe emitida */}
                               {r.status !== "carregado_nfe" && !r.nota_fiscal_id && (
                                 <Button
