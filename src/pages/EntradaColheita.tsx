@@ -63,7 +63,6 @@ import { useProdutosSementes } from "@/hooks/useProdutosSementes";
 import { useControleLavouras, useCreateControleLavoura } from "@/hooks/useControleLavouras";
 import { useTabelaUmidades } from "@/hooks/useTabelaUmidades";
 import { useColheitasPendentes, useCreateColheitaEntrada, useUpdateColheitaSaida } from "@/hooks/useColheitasEntrada";
-import { useLavouras } from "@/hooks/useLavouras";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCfops } from "@/hooks/useCfops";
 import { useCreateNotaDepositoEmitida } from "@/hooks/useNotasDepositoEmitidas";
@@ -189,7 +188,6 @@ export default function EntradaColheita() {
   const { data: tabelaUmidades = [] } = useTabelaUmidades();
   const { data: controleLavouras = [] } = useControleLavouras(safraId || null);
   const { data: cargasPendentes = [], isLoading: loadingPendentes } = useColheitasPendentes(safraId || null);
-  const { data: lavouras = [] } = useLavouras();
   const { cfops = [] } = useCfops();
   
   // Buscar inscrição emitente principal da granja (sócio com is_emitente_principal = true)
@@ -293,48 +291,17 @@ export default function EntradaColheita() {
     );
   }, [inscricoes, produtorSearch]);
 
-  // Inscricao selecionada
-  const inscricaoSelecionada = useMemo(() => 
-    inscricoes.find(i => i.id === inscricaoId),
-    [inscricoes, inscricaoId]
-  );
-
-  // Determinar tipo do produtor selecionado (usa valor direto do banco: "produtor" ou "socio")
-  const tipoProdutor = useMemo(() => {
-    if (!inscricaoSelecionada) return "todos";
-    return inscricaoSelecionada.produtores?.tipo_produtor || "todos";
-  }, [inscricaoSelecionada]);
-
-  // Lista de lavouras disponíveis para a safra:
-  // - Inclui TODAS as lavouras ativas (mesmo sem controle_lavoura criado ainda)
-  // - Mescla dados de ha_plantado quando já existe controle
-  // - Ordena alfabeticamente pelo nome
+  // Lista de lavouras disponíveis para a safra selecionada:
+  // - Usa somente os registros cadastrados no controle da safra atual
+  // - Não depende do produtor selecionado
+  // - Ordena alfabeticamente pelo nome da lavoura
   const lavourasFiltradasPorTipo = useMemo(() => {
-    const lavourasAtivas = lavouras.filter((l: any) => l.ativa !== false);
-
-    // Se produtor externo estiver selecionado, restringe às lavouras que recebem terceiros
-    const filtradasPorTipo = tipoProdutor === "produtor"
-      ? lavourasAtivas.filter((l: any) => l.recebe_terceiros === true)
-      : lavourasAtivas;
-
-    const items = filtradasPorTipo.map((l: any) => {
-      const controle = controleLavouras.find(cl => cl.lavoura_id === l.id);
-      return {
-        id: controle?.id || `lav-${l.id}`,
-        lavoura_id: l.id,
-        ha_plantado: controle?.ha_plantado ?? null,
-        lavouras: {
-          id: l.id,
-          nome: l.nome,
-          total_hectares: l.total_hectares,
-        },
-      };
-    });
-
-    return items.sort((a, b) =>
+    return [...controleLavouras]
+      .filter(cl => cl.lavoura_id && cl.lavouras)
+      .sort((a, b) =>
       (a.lavouras?.nome || "").localeCompare(b.lavouras?.nome || "", "pt-BR")
     );
-  }, [controleLavouras, lavouras, tipoProdutor]);
+  }, [controleLavouras]);
 
   // Obter controle_lavoura_id para a lavoura selecionada
   const controleLavouraSelecionado = useMemo(() => 
