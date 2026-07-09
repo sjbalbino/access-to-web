@@ -378,11 +378,11 @@ export function useFocusNfe() {
     }
   };
 
-  // Polling para acompanhar status
+  // Polling para acompanhar status (até ~5 min: 60 tentativas × 5s)
   const pollStatus = async (
     ref: string,
     notaFiscalId: string,
-    maxAttempts = 20,
+    maxAttempts = 60,
     intervalMs = 5000
   ): Promise<FocusNfeResult> => {
     let attempts = 0;
@@ -396,6 +396,9 @@ export function useFocusNfe() {
       }
 
       const currentStatus = (result.data as Record<string, unknown>)?.status as string;
+
+      // Sempre invalida cache para a lista/tela refletir o status já persistido no banco
+      invalidateNfeRelatedQueries();
 
       // Status finais (incluindo erro_autorizacao)
       if (["autorizado", "autorizada", "cancelado", "cancelada", "rejeitado", "rejeitada", "erro_autorizacao"].includes(currentStatus)) {
@@ -415,11 +418,16 @@ export function useFocusNfe() {
         return poll();
       }
 
+      // Timeout: informa que segue processando na SEFAZ
+      toast.info("Autorização em processamento na SEFAZ", {
+        description: "Feche este diálogo e use o botão 'Consultar' na lista para atualizar o status.",
+      });
       return result;
     };
 
     return poll();
   };
+
 
   const enviarEmail = async (
     notaFiscalId: string,
