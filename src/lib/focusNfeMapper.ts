@@ -733,7 +733,44 @@ function mapItemToFocusNfe(
   return focusItem;
 }
 
-// Validação de dados antes do envio
+// Estrutura de problemas de IBS/CBS por item — usada para painel em UI
+export interface IbsCbsItemIssue {
+  numeroItem: number;
+  descricao: string;
+  camposFaltantes: string[];
+}
+
+export function validarIbsCbsItens(itens: NotaFiscalItemData[]): IbsCbsItemIssue[] {
+  const issues: IbsCbsItemIssue[] = [];
+  const cstsTributados = ['000', '010', '011', '012', '200', '210', '220', '221', '222', '300', '510', '515', '600', '700', '800'];
+
+  itens.forEach((item, index) => {
+    const faltantes: string[] = [];
+    const cstIbsCbs = formatCst3Digits(item.cst_ibs || item.cst_cbs);
+    const classTribIbsCbs = formatClassTrib6Digits(item.cclass_trib_ibs || item.cclass_trib_cbs) ||
+      defaultClassTribIbsCbs(cstIbsCbs);
+
+    if (!item.cst_ibs && !item.cst_cbs) faltantes.push("CST IBS/CBS");
+    if (!classTribIbsCbs) faltantes.push("cClassTrib (Classificação Tributária)");
+
+    if (cstIbsCbs && cstsTributados.includes(cstIbsCbs)) {
+      if (!item.aliq_ibs || item.aliq_ibs <= 0) faltantes.push("Alíquota IBS");
+      if (!item.aliq_cbs || item.aliq_cbs <= 0) faltantes.push("Alíquota CBS");
+    }
+
+    if (faltantes.length > 0) {
+      issues.push({
+        numeroItem: index + 1,
+        descricao: item.descricao || `Item ${index + 1}`,
+        camposFaltantes: faltantes,
+      });
+    }
+  });
+
+  return issues;
+}
+
+
 export function validateNotaForEmission(nota: NotaFiscalData, itens: NotaFiscalItemData[]): string[] {
   const errors: string[] = [];
   

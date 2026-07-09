@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { mapNotaToFocusNfe, validateNotaForEmission, type NotaFiscalData, type NotaFiscalItemData, type NotaReferenciadaData } from "@/lib/focusNfeMapper";
+import { mapNotaToFocusNfe, validateNotaForEmission, validarIbsCbsItens, type IbsCbsItemIssue, type NotaFiscalData, type NotaFiscalItemData, type NotaReferenciadaData } from "@/lib/focusNfeMapper";
 
 export interface FocusNfeResult {
   success: boolean;
@@ -15,6 +15,7 @@ export interface FocusNfeResult {
 export function useFocusNfe() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [ibsCbsIssues, setIbsCbsIssues] = useState<IbsCbsItemIssue[]>([]);
   const queryClient = useQueryClient();
 
   const invalidateNfeRelatedQueries = () => {
@@ -38,6 +39,20 @@ export function useFocusNfe() {
     setStatus("validando");
 
     try {
+      // Validação estrutural de IBS/CBS por item — abre painel visual se houver problemas
+      const issuesIbsCbs = validarIbsCbsItens(itens);
+      if (issuesIbsCbs.length > 0) {
+        setIbsCbsIssues(issuesIbsCbs);
+        toast.error("IBS/CBS incompletos", {
+          description: `${issuesIbsCbs.length} item(ns) com campos faltantes. Veja o painel de validação.`,
+        });
+        return {
+          success: false,
+          error: "IBS/CBS incompletos",
+          details: { issuesIbsCbs },
+        };
+      }
+
       // Validar dados
       const validationErrors = validateNotaForEmission(notaData, itens);
       if (validationErrors.length > 0) {
@@ -474,6 +489,8 @@ export function useFocusNfe() {
   return {
     isLoading,
     status,
+    ibsCbsIssues,
+    clearIbsCbsIssues: () => setIbsCbsIssues([]),
     emitirNfe,
     consultarNfe,
     cancelarNfe,
