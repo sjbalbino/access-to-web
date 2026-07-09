@@ -185,16 +185,27 @@ export default function RemessasVendaForm() {
     }
   }, [profile, setValue]);
 
-  // Quando selecionar transportadora, preencher placa, UF, motorista e CPF padrão
+  // Quando o usuário TROCAR a transportadora, preencher placa, UF, motorista e CPF padrão.
+  // Não sobrescreve valores quando a remessa já vem carregada com a transportadora salva.
+  const transpAnteriorRef = useRef<string | null>(null);
   useEffect(() => {
-    if (transportadoraId && transportadoras) {
-      const transp = transportadoras.find(t => t.id === transportadoraId);
-      if (transp) {
-        if (transp.placa_padrao) setValue("placa", transp.placa_padrao.replace(/[^A-Za-z0-9]/g, "").toUpperCase());
-        if (transp.uf_placa_padrao) setValue("uf_placa", transp.uf_placa_padrao);
-        if (transp.motorista_padrao) setValue("motorista", transp.motorista_padrao);
-        if (transp.motorista_cpf_padrao) setValue("motorista_cpf", formatCpf(transp.motorista_cpf_padrao));
-      }
+    if (!transportadoraId || !transportadoras) {
+      transpAnteriorRef.current = transportadoraId || null;
+      return;
+    }
+    if (transpAnteriorRef.current === null) {
+      transpAnteriorRef.current = transportadoraId;
+      return;
+    }
+    if (transpAnteriorRef.current === transportadoraId) return;
+    transpAnteriorRef.current = transportadoraId;
+
+    const transp = transportadoras.find(t => t.id === transportadoraId);
+    if (transp) {
+      if (transp.placa_padrao) setValue("placa", transp.placa_padrao.replace(/[^A-Za-z0-9]/g, "").toUpperCase());
+      if (transp.uf_placa_padrao) setValue("uf_placa", transp.uf_placa_padrao);
+      if (transp.motorista_padrao) setValue("motorista", transp.motorista_padrao);
+      if (transp.motorista_cpf_padrao) setValue("motorista_cpf", formatCpf(transp.motorista_cpf_padrao));
     }
   }, [transportadoraId, transportadoras, setValue]);
 
