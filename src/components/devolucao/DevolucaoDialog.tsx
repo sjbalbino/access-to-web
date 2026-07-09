@@ -101,11 +101,12 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     return sociosDaGranja.length > 0 ? sociosDaGranja : sociosComNfe;
   }, [inscricoesSocioAll, granjaContextoId]);
   
-  // Inscrições com saldo - filtrado por safra, produto e local de entrega
+  // Inscrições com saldo - filtrado apenas por safra e produto
+  // (não filtramos por local aqui para não esconder produtores cujo depósito
+  // foi lançado em outro local de entrega)
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
     safraId, 
     produtoId,
-    localEntregaId
   });
 
   // Saldo do produtor selecionado - agora inclui local de entrega
