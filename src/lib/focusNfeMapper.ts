@@ -784,6 +784,27 @@ export function validateNotaForEmission(nota: NotaFiscalData, itens: NotaFiscalI
     if (!item.ncm) {
       errors.push(`Item ${index + 1}: NCM é obrigatório`);
     }
+
+    // Reforma Tributária 2026 — IBS/CBS obrigatórios
+    const cstIbsCbs = formatCst3Digits(item.cst_ibs || item.cst_cbs);
+    const classTribIbsCbs = formatClassTrib6Digits(item.cclass_trib_ibs || item.cclass_trib_cbs) ||
+      defaultClassTribIbsCbs(cstIbsCbs);
+    if (!item.cst_ibs && !item.cst_cbs) {
+      errors.push(`Item ${index + 1}: CST de IBS/CBS é obrigatório (Reforma Tributária 2026). Configure no cadastro do produto ou do emitente.`);
+    }
+    if (!classTribIbsCbs) {
+      errors.push(`Item ${index + 1}: Classificação Tributária (cClassTrib) de IBS/CBS é obrigatória. Informe no cadastro do produto ou do emitente.`);
+    }
+    // Se o CST indica tributação, deve haver alíquota configurada
+    const cstsTributados = ['000', '010', '011', '012', '200', '210', '220', '221', '222', '300', '510', '515', '600', '700', '800'];
+    if (cstIbsCbs && cstsTributados.includes(cstIbsCbs)) {
+      if (!item.aliq_ibs || item.aliq_ibs <= 0) {
+        errors.push(`Item ${index + 1}: Alíquota de IBS é obrigatória para CST ${cstIbsCbs}.`);
+      }
+      if (!item.aliq_cbs || item.aliq_cbs <= 0) {
+        errors.push(`Item ${index + 1}: Alíquota de CBS é obrigatória para CST ${cstIbsCbs}.`);
+      }
+    }
   });
   
   return errors;
