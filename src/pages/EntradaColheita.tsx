@@ -60,6 +60,7 @@ import { useLocaisEntrega, useLocalSede } from "@/hooks/useLocaisEntrega";
 import { usePlacas, useCreatePlaca } from "@/hooks/usePlacas";
 import { formatPlaca, unformatPlaca } from "@/lib/formatters";
 import { useProdutosSementes } from "@/hooks/useProdutosSementes";
+import { usePlantios } from "@/hooks/usePlantios";
 import { useControleLavouras, useCreateControleLavoura } from "@/hooks/useControleLavouras";
 import { useTabelaUmidades } from "@/hooks/useTabelaUmidades";
 import { useColheitasPendentes, useCreateColheitaEntrada, useUpdateColheitaSaida } from "@/hooks/useColheitasEntrada";
