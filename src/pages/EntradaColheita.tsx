@@ -324,6 +324,19 @@ export default function EntradaColheita() {
     [controleLavouras, selectedLavouraId]
   );
 
+  // Buscar plantios do controle da lavoura selecionada para filtrar variedades
+  const { data: plantiosDaLavoura = [] } = usePlantios(controleLavouraSelecionado?.id || null);
+  const sementesFiltradas = useMemo(() => {
+    if (!controleLavouraSelecionado) return sementes;
+    const ids = new Set(
+      plantiosDaLavoura
+        .map((p: any) => p.variedade_id)
+        .filter((id): id is string => !!id)
+    );
+    if (ids.size === 0) return [];
+    return sementes.filter(s => ids.has(s.id));
+  }, [sementes, plantiosDaLavoura, controleLavouraSelecionado]);
+
 
   // Calcular descontos automáticos
   const calculos = useMemo(() => {
