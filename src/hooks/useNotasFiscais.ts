@@ -166,14 +166,19 @@ export function useNotasFiscais() {
         .select(`
           *,
           cfop:cfops(id, codigo, descricao),
-          granja:granjas(id, razao_social, nome_fantasia)
+          granja:granjas(id, razao_social, nome_fantasia),
+          emitente:emitentes_nfe!notas_fiscais_emitente_id_fkey(
+            id,
+            inscricao:inscricoes_produtor!emitentes_nfe_inscricao_produtor_id_fkey(nome, cpf_cnpj)
+          )
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as NotaFiscal[];
+      return data as unknown as NotaFiscal[];
     },
   });
+
 
   const createNotaFiscal = useMutation({
     mutationFn: async (nota: NotaFiscalInsert) => {
