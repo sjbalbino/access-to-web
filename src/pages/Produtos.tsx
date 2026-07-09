@@ -122,6 +122,9 @@ export default function Produtos() {
     cst_is: null,
     cclass_trib_ibs: null,
     cclass_trib_cbs: null,
+    aliquota_ibs: 0,
+    aliquota_cbs: 0,
+    aliquota_is: 0,
     conta_gerencial_id: null,
   });
 
@@ -161,6 +164,9 @@ export default function Produtos() {
       cst_is: null,
       cclass_trib_ibs: null,
       cclass_trib_cbs: null,
+      aliquota_ibs: 0,
+      aliquota_cbs: 0,
+      aliquota_is: 0,
       conta_gerencial_id: null,
     });
     setEditingItem(null);
@@ -230,6 +236,9 @@ export default function Produtos() {
       cst_is: item.cst_is || null,
       cclass_trib_ibs: item.cclass_trib_ibs || null,
       cclass_trib_cbs: item.cclass_trib_cbs || null,
+      aliquota_ibs: item.aliquota_ibs ?? 0,
+      aliquota_cbs: item.aliquota_cbs ?? 0,
+      aliquota_is: item.aliquota_is ?? 0,
       conta_gerencial_id: item.conta_gerencial_id || null,
     });
     setIsDialogOpen(true);
@@ -729,15 +738,15 @@ export default function Produtos() {
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                         <div className="space-y-2">
                           <Label>Alíquota IBS (%)</Label>
-                          <Input type="number" step="0.0001" value={formData.aliquota_ibs ?? ''} onChange={(e) => setFormData({ ...formData, aliquota_ibs: e.target.value === '' ? null : parseFloat(e.target.value) })} />
+                          <CurrencyInput decimals={4} prefix="" value={formData.aliquota_ibs ?? null} onChange={(value) => setFormData({ ...formData, aliquota_ibs: value })} />
                         </div>
                         <div className="space-y-2">
                           <Label>Alíquota CBS (%)</Label>
-                          <Input type="number" step="0.0001" value={formData.aliquota_cbs ?? ''} onChange={(e) => setFormData({ ...formData, aliquota_cbs: e.target.value === '' ? null : parseFloat(e.target.value) })} />
+                          <CurrencyInput decimals={4} prefix="" value={formData.aliquota_cbs ?? null} onChange={(value) => setFormData({ ...formData, aliquota_cbs: value })} />
                         </div>
                         <div className="space-y-2">
                           <Label>Alíquota IS (%)</Label>
-                          <Input type="number" step="0.0001" value={formData.aliquota_is ?? ''} onChange={(e) => setFormData({ ...formData, aliquota_is: e.target.value === '' ? null : parseFloat(e.target.value) })} />
+                          <CurrencyInput decimals={4} prefix="" value={formData.aliquota_is ?? null} onChange={(value) => setFormData({ ...formData, aliquota_is: value })} />
                         </div>
                       </div>
                     </div>
