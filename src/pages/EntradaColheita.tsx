@@ -60,6 +60,7 @@ import { useLocaisEntrega, useLocalSede } from "@/hooks/useLocaisEntrega";
 import { usePlacas, useCreatePlaca } from "@/hooks/usePlacas";
 import { formatPlaca, unformatPlaca } from "@/lib/formatters";
 import { useProdutosSementes } from "@/hooks/useProdutosSementes";
+import { usePlantios } from "@/hooks/usePlantios";
 import { useControleLavouras, useCreateControleLavoura } from "@/hooks/useControleLavouras";
 import { useTabelaUmidades } from "@/hooks/useTabelaUmidades";
 import { useColheitasPendentes, useCreateColheitaEntrada, useUpdateColheitaSaida } from "@/hooks/useColheitasEntrada";
@@ -322,6 +323,19 @@ export default function EntradaColheita() {
     controleLavouras.find(cl => cl.lavoura_id === selectedLavouraId),
     [controleLavouras, selectedLavouraId]
   );
+
+  // Buscar plantios do controle da lavoura selecionada para filtrar variedades
+  const { data: plantiosDaLavoura = [] } = usePlantios(controleLavouraSelecionado?.id || null);
+  const sementesFiltradas = useMemo(() => {
+    if (!controleLavouraSelecionado) return sementes;
+    const ids = new Set(
+      plantiosDaLavoura
+        .map((p: any) => p.variedade_id)
+        .filter((id): id is string => !!id)
+    );
+    if (ids.size === 0) return [];
+    return sementes.filter(s => ids.has(s.id));
+  }, [sementes, plantiosDaLavoura, controleLavouraSelecionado]);
 
 
   // Calcular descontos automáticos
@@ -1337,7 +1351,7 @@ export default function EntradaColheita() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="_none">Nenhuma</SelectItem>
-                          {sementes.map(s => (
+                          {sementesFiltradas.map(s => (
                             <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                           ))}
                         </SelectContent>
