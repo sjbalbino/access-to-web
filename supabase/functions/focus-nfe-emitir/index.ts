@@ -197,6 +197,7 @@ serve(async (req) => {
         uuid_api, 
         status, 
         motivo_status,
+        numero,
         emitente_id,
         emitentes_nfe!notas_fiscais_emitente_id_fkey(id, ambiente, numero_atual_nfe, serie_nfe, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao))
       `)
