@@ -122,17 +122,29 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
     }
   }, [kgRemessa]);
 
-  // Preencher dados da transportadora ao selecionar (sempre sobrescreve)
+  // Preencher dados da transportadora ao selecionar — apenas quando o usuário
+  // troca a transportadora manualmente (não sobrescreve valores já digitados
+  // na remessa carregada, evitando substituir o motorista informado pelo padrão).
+  const transpAnteriorRef = useRef<string | null>(null);
   useEffect(() => {
-    if (transportadoraId && transportadoras) {
-      const transp = transportadoras.find(t => t.id === transportadoraId);
-      if (transp) {
-        // Sempre preenche com os dados da transportadora selecionada
-        if (transp.placa_padrao) setPlaca(transp.placa_padrao.replace(/[^A-Za-z0-9]/g, "").toUpperCase());
-        if (transp.uf_placa_padrao) setUfPlaca(transp.uf_placa_padrao);
-        if (transp.motorista_padrao) setMotorista(transp.motorista_padrao);
-        if (transp.motorista_cpf_padrao) setMotoristaCpf(formatCpf(transp.motorista_cpf_padrao));
-      }
+    if (!transportadoraId || !transportadoras) {
+      transpAnteriorRef.current = transportadoraId || null;
+      return;
+    }
+    // Primeira execução após abrir o dialog: apenas registra, não sobrescreve.
+    if (transpAnteriorRef.current === null) {
+      transpAnteriorRef.current = transportadoraId;
+      return;
+    }
+    if (transpAnteriorRef.current === transportadoraId) return;
+    transpAnteriorRef.current = transportadoraId;
+
+    const transp = transportadoras.find(t => t.id === transportadoraId);
+    if (transp) {
+      if (transp.placa_padrao) setPlaca(transp.placa_padrao.replace(/[^A-Za-z0-9]/g, "").toUpperCase());
+      if (transp.uf_placa_padrao) setUfPlaca(transp.uf_placa_padrao);
+      if (transp.motorista_padrao) setMotorista(transp.motorista_padrao);
+      if (transp.motorista_cpf_padrao) setMotoristaCpf(formatCpf(transp.motorista_cpf_padrao));
     }
   }, [transportadoraId, transportadoras]);
 
