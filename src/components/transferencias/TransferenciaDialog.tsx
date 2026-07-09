@@ -16,6 +16,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useSiloPadraoId } from "@/hooks/useSiloPadrao";
 import { useProdutosCereais } from "@/hooks/useProdutosCereais";
+import { useProdutos } from "@/hooks/useProdutos";
 import { useAllInscricoes, InscricaoComProdutor } from "@/hooks/useAllInscricoes";
 import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useSaldoProdutor } from "@/hooks/useSaldoProdutor";
