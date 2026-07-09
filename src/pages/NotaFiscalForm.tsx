@@ -3805,6 +3805,12 @@ export default function NotaFiscalForm() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <ValidacaoIbsCbsDialog
+          open={focusNfe.ibsCbsIssues.length > 0}
+          onOpenChange={(open) => { if (!open) focusNfe.clearIbsCbsIssues(); }}
+          issues={focusNfe.ibsCbsIssues}
+        />
       </div>
     </AppLayout>
   );
