@@ -125,12 +125,18 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
     return label || ie || "Sem nome";
   };
 
-  const filteredInscricoesOrigem = todasInscricoes.filter((i) => {
+  const inscricoesOrdenadas = [...todasInscricoes].sort((a, b) => {
+    const na = (a.produtores?.nome || a.nome || a.inscricao_estadual || "").toLowerCase();
+    const nb = (b.produtores?.nome || b.nome || b.inscricao_estadual || "").toLowerCase();
+    return na.localeCompare(nb, "pt-BR");
+  });
+
+  const filteredInscricoesOrigem = inscricoesOrdenadas.filter((i) => {
     const label = getInscricaoLabel(i).toLowerCase();
     return label.includes(origemSearch.toLowerCase());
   });
 
-  const filteredInscricoesDestino = todasInscricoes.filter((i) => {
+  const filteredInscricoesDestino = inscricoesOrdenadas.filter((i) => {
     const label = getInscricaoLabel(i).toLowerCase();
     return label.includes(destinoSearch.toLowerCase());
   });
@@ -320,7 +326,8 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[400px] p-0" align="start">
-                  <Command>
+                  <Command shouldFilter={false}>
+
                     <CommandInput 
                       placeholder="Buscar por nome do produtor..." 
                       value={origemSearch}
@@ -402,7 +409,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[400px] p-0" align="start">
-                  <Command>
+                  <Command shouldFilter={false}>
                     <CommandInput 
                       placeholder="Buscar por nome do produtor..." 
                       value={destinoSearch}
