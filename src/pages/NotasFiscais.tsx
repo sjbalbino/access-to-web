@@ -468,12 +468,19 @@ export default function NotasFiscais() {
                   <TableRow key={nota.id}>
                     <TableCell className="font-mono">{nota.numero || "-"}</TableCell>
                     <TableCell className="font-mono hidden md:table-cell">{nota.serie || "-"}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm">
+                      <div className="truncate max-w-[180px]" title={nota.emitente?.inscricao?.nome || "-"}>
+                        {nota.emitente?.inscricao?.nome || "-"}
+                      </div>
+                      <div className="text-xs text-muted-foreground font-mono">{formatCpfCnpj(nota.emitente?.inscricao?.cpf_cnpj || "") || "-"}</div>
+                    </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium truncate max-w-[150px]">{nota.dest_nome || "-"}</div>
                         <div className="text-xs text-muted-foreground font-mono hidden sm:block">{formatCpfCnpj(nota.dest_cpf_cnpj) || "-"}</div>
                       </div>
                     </TableCell>
+
                     <TableCell className="truncate max-w-[150px] hidden lg:table-cell">{nota.natureza_operacao}</TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {nota.data_emissao ? format(new Date(nota.data_emissao.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "-"}
