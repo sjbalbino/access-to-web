@@ -60,6 +60,11 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
       // Allow only digits, comma, and dot
       const sanitized = rawValue.replace(/[^\d.,]/g, "");
       setDisplayValue(sanitized);
+      // Propagate parsed value immediately so state stays in sync even if
+      // the user clicks a submit button before the input blurs.
+      const parsed = parseBrazilianNumber(sanitized);
+      valueRef.current = parsed;
+      onChange(parsed);
     };
 
     const handleBlur = () => {
