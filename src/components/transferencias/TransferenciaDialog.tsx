@@ -16,6 +16,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useSiloPadraoId } from "@/hooks/useSiloPadrao";
 import { useProdutosCereais } from "@/hooks/useProdutosCereais";
+import { useProdutos } from "@/hooks/useProdutos";
 import { useAllInscricoes, InscricaoComProdutor } from "@/hooks/useAllInscricoes";
 import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useSaldoProdutor } from "@/hooks/useSaldoProdutor";
@@ -49,7 +50,16 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
 
   const { data: safras = [] } = useSafras();
   const { data: silos = [] } = useSilos();
-  const { data: produtos = [] } = useProdutosCereais();
+  const { data: produtosCereais = [] } = useProdutosCereais();
+  const { data: todosProdutos = [] } = useProdutos();
+  // Injeta o produto salvo (caso não seja mais "cereal") para exibir corretamente na edição
+  const produtos = (() => {
+    if (produtoId && !produtosCereais.some((p: any) => p.id === produtoId)) {
+      const salvo = todosProdutos.find((p: any) => p.id === produtoId);
+      if (salvo) return [salvo, ...produtosCereais];
+    }
+    return produtosCereais;
+  })();
   const { data: todasInscricoes = [] } = useAllInscricoes();
   const { data: locaisEntrega = [] } = useLocaisEntrega();
 
