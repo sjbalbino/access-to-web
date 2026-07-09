@@ -326,7 +326,8 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[400px] p-0" align="start">
-                  <Command>
+                  <Command shouldFilter={false}>
+
                     <CommandInput 
                       placeholder="Buscar por nome do produtor..." 
                       value={origemSearch}
