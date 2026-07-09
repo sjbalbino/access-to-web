@@ -33,18 +33,11 @@ export async function resolveSaldoProdutoIds(produtoId: string) {
   const legacyPrefix = getLegacySaldoPrefix(produto.nome);
   if (!legacyPrefix) return [produtoId];
 
-  let candidatosQuery = supabase
+  const { data: candidatos, error: candidatosError } = await supabase
     .from('produtos')
     .select('id, nome')
-    .eq('ativo', true);
-
-  if (produto.grupo_id) {
-    candidatosQuery = candidatosQuery.eq('grupo_id', produto.grupo_id);
-  } else if (produto.grupo) {
-    candidatosQuery = candidatosQuery.eq('grupo', produto.grupo);
-  }
-
-  const { data: candidatos, error: candidatosError } = await candidatosQuery.order('nome');
+    .eq('ativo', true)
+    .order('nome');
 
   if (candidatosError) throw candidatosError;
 
