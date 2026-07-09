@@ -39,6 +39,20 @@ export function useFocusNfe() {
     setStatus("validando");
 
     try {
+      // Validação estrutural de IBS/CBS por item — abre painel visual se houver problemas
+      const issuesIbsCbs = validarIbsCbsItens(itens);
+      if (issuesIbsCbs.length > 0) {
+        setIbsCbsIssues(issuesIbsCbs);
+        toast.error("IBS/CBS incompletos", {
+          description: `${issuesIbsCbs.length} item(ns) com campos faltantes. Veja o painel de validação.`,
+        });
+        return {
+          success: false,
+          error: "IBS/CBS incompletos",
+          details: { issuesIbsCbs },
+        };
+      }
+
       // Validar dados
       const validationErrors = validateNotaForEmission(notaData, itens);
       if (validationErrors.length > 0) {
