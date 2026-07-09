@@ -15,6 +15,7 @@ export interface FocusNfeResult {
 export function useFocusNfe() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [ibsCbsIssues, setIbsCbsIssues] = useState<IbsCbsItemIssue[]>([]);
   const queryClient = useQueryClient();
 
   const invalidateNfeRelatedQueries = () => {
