@@ -91,7 +91,15 @@ export interface NotaFiscal {
     razao_social: string;
     nome_fantasia: string | null;
   };
+  emitente?: {
+    id: string;
+    inscricao?: {
+      nome: string | null;
+      cpf_cnpj: string | null;
+    } | null;
+  } | null;
 }
+
 
 export interface NotaFiscalItem {
   id: string;
