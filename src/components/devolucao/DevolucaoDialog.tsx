@@ -430,12 +430,12 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
             <Select isSearchable 
               value={inscricaoProdutorId || undefined} 
               onValueChange={setInscricaoProdutorId}
-              disabled={!safraId || !produtoId || !localEntregaId}
+              disabled={!safraId || !produtoId}
             >
               <SelectTrigger>
                 <SelectValue placeholder={
-                  !safraId || !produtoId || !localEntregaId
-                    ? "Selecione safra, produto e local primeiro..." 
+                  !safraId || !produtoId
+                    ? "Selecione safra e produto primeiro..." 
                     : "Selecione o produtor..."
                 } />
               </SelectTrigger>
