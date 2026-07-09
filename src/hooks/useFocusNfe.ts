@@ -489,6 +489,8 @@ export function useFocusNfe() {
   return {
     isLoading,
     status,
+    ibsCbsIssues,
+    clearIbsCbsIssues: () => setIbsCbsIssues([]),
     emitirNfe,
     consultarNfe,
     cancelarNfe,
