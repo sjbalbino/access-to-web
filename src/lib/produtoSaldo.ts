@@ -23,7 +23,7 @@ function getLegacySaldoPrefix(nome: string | null | undefined) {
 export async function resolveSaldoProdutoIds(produtoId: string) {
   const { data: produto, error: produtoError } = await supabase
     .from('produtos')
-    .select('id, nome, grupo, grupo_id, ativo')
+    .select('id, nome, ativo')
     .eq('id', produtoId)
     .maybeSingle();
 
