@@ -23,7 +23,7 @@ function getLegacySaldoPrefix(nome: string | null | undefined) {
 export async function resolveSaldoProdutoIds(produtoId: string) {
   const { data: produto, error: produtoError } = await supabase
     .from('produtos')
-    .select('id, nome, grupo, grupo_id, ativo')
+    .select('id, nome, ativo')
     .eq('id', produtoId)
     .maybeSingle();
 
@@ -33,18 +33,11 @@ export async function resolveSaldoProdutoIds(produtoId: string) {
   const legacyPrefix = getLegacySaldoPrefix(produto.nome);
   if (!legacyPrefix) return [produtoId];
 
-  let candidatosQuery = supabase
+  const { data: candidatos, error: candidatosError } = await supabase
     .from('produtos')
     .select('id, nome')
-    .eq('ativo', true);
-
-  if (produto.grupo_id) {
-    candidatosQuery = candidatosQuery.eq('grupo_id', produto.grupo_id);
-  } else if (produto.grupo) {
-    candidatosQuery = candidatosQuery.eq('grupo', produto.grupo);
-  }
-
-  const { data: candidatos, error: candidatosError } = await candidatosQuery.order('nome');
+    .eq('ativo', true)
+    .order('nome');
 
   if (candidatosError) throw candidatosError;
 
