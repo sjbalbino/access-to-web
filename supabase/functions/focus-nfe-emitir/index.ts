@@ -289,8 +289,9 @@ serve(async (req) => {
       }
     }
 
-    // Forçar número sequencial a partir de emitentes_nfe.numero_atual_nfe + 1
-    // numero_atual_nfe = 0 é válido (emitente novo → próxima NFe será nº 1)
+    // Numeração: respeita o número já reservado na nota (evita pular sequência
+    // quando o frontend já incrementou numero_atual_nfe antes de chamar emitir).
+    // Se a nota não tem número, usa numero_atual_nfe + 1.
     const numeroAtual = Number(emitenteData?.numero_atual_nfe ?? 0);
     if (Number.isNaN(numeroAtual) || numeroAtual < 0) {
       return new Response(
@@ -301,9 +302,10 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    const proximoNumero = numeroAtual + 1;
+    const numeroReservado = Number((existingNota as { numero?: number | null }).numero ?? 0);
+    const proximoNumero = numeroReservado > 0 ? numeroReservado : numeroAtual + 1;
     (notaData as Record<string, unknown>).numero = proximoNumero;
-    console.log(`Forçando número da NFe: ${proximoNumero} (numero_atual_nfe=${numeroAtual}, serie=${serieNota})`);
+    console.log(`Número da NFe: ${proximoNumero} (reservado=${numeroReservado}, numero_atual_nfe=${numeroAtual}, serie=${serieNota})`);
 
 
     console.log("Emitindo NF-e:", notaFiscalId);
