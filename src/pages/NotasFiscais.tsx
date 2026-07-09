@@ -453,6 +453,7 @@ export default function NotasFiscais() {
                 <TableRow>
                   <TableHead className="w-20">Número</TableHead>
                   <TableHead className="hidden md:table-cell w-20">Série</TableHead>
+                  <TableHead className="hidden lg:table-cell">Emitente</TableHead>
                   <TableHead>Destinatário</TableHead>
                   <TableHead className="hidden lg:table-cell">Natureza Op.</TableHead>
                   <TableHead className="hidden sm:table-cell">Data Emissão</TableHead>
@@ -460,6 +461,7 @@ export default function NotasFiscais() {
                   <TableHead>Status</TableHead>
                   {canEdit && <TableHead className="sticky right-0 bg-background">Ações</TableHead>}
                 </TableRow>
+
               </TableHeader>
               <TableBody>
                 {dadosPaginados.map((nota) => (
