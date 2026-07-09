@@ -101,11 +101,12 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     return sociosDaGranja.length > 0 ? sociosDaGranja : sociosComNfe;
   }, [inscricoesSocioAll, granjaContextoId]);
   
-  // Inscrições com saldo - filtrado por safra, produto e local de entrega
+  // Inscrições com saldo - filtrado apenas por safra e produto
+  // (não filtramos por local aqui para não esconder produtores cujo depósito
+  // foi lançado em outro local de entrega)
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
     safraId, 
     produtoId,
-    localEntregaId
   });
 
   // Saldo do produtor selecionado - agora inclui local de entrega
@@ -429,12 +430,12 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
             <Select isSearchable 
               value={inscricaoProdutorId || undefined} 
               onValueChange={setInscricaoProdutorId}
-              disabled={!safraId || !produtoId || !localEntregaId}
+              disabled={!safraId || !produtoId}
             >
               <SelectTrigger>
                 <SelectValue placeholder={
-                  !safraId || !produtoId || !localEntregaId
-                    ? "Selecione safra, produto e local primeiro..." 
+                  !safraId || !produtoId
+                    ? "Selecione safra e produto primeiro..." 
                     : "Selecione o produtor..."
                 } />
               </SelectTrigger>
