@@ -1351,7 +1351,7 @@ export default function EntradaColheita() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="_none">Nenhuma</SelectItem>
-                          {sementes.map(s => (
+                          {sementesFiltradas.map(s => (
                             <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                           ))}
                         </SelectContent>
