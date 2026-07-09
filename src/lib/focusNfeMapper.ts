@@ -628,22 +628,19 @@ function mapItemToFocusNfe(
 ): FocusNfeItem {
   const cstIcms = mapCstIcms(item.cst_icms, crt ?? null);
   
-  // Emitente CPF (produtor rural pessoa física) NÃO é contribuinte de IBS/CBS/IS
-  // em 2026 — enviar o grupo causa Rejeição 1021 "Grupo IBS/CBS informado indevidamente".
-  const cstIbsCbs = emitenteIsCpf ? undefined : formatCst3Digits(item.cst_ibs || item.cst_cbs);
-  const classTribIbsCbs = emitenteIsCpf
-    ? undefined
-    : (formatClassTrib6Digits(item.cclass_trib_ibs || item.cclass_trib_cbs) ||
-       defaultClassTribIbsCbs(cstIbsCbs));
+  // Reforma Tributária 2026: IBS/CBS/IS enviados também para emitente CPF (produtor rural
+  // no regime regular). Se o produtor for isento/simplificado, o CST/cClassTrib configurados
+  // no emitente devem refletir isso (ex.: CST 400 - Isenção).
+  const cstIbsCbs = formatCst3Digits(item.cst_ibs || item.cst_cbs);
+  const classTribIbsCbs = formatClassTrib6Digits(item.cclass_trib_ibs || item.cclass_trib_cbs) ||
+     defaultClassTribIbsCbs(cstIbsCbs);
   const baseIbsCbs = item.base_ibs || item.base_cbs || item.valor_total;
-  const temIbsCbs = !emitenteIsCpf && !!cstIbsCbs && !!classTribIbsCbs && !!baseIbsCbs;
+  const temIbsCbs = !!cstIbsCbs && !!classTribIbsCbs && !!baseIbsCbs;
 
   // IS só deve ser enviado quando houver classificação tributária e valor/alíquota efetivos.
   // Enviar CST/base sem cClassTribIS quebra a ordem do schema da Focus/SEFAZ.
-  const classTribIs = emitenteIsCpf
-    ? undefined
-    : formatClassTrib6Digits((item as NotaFiscalItemData & { cclass_trib_is?: string | null }).cclass_trib_is);
-  const temIs = !emitenteIsCpf && !!formatCst3Digits(item.cst_is) && !!classTribIs && (!!item.aliq_is || !!item.valor_is);
+  const classTribIs = formatClassTrib6Digits((item as NotaFiscalItemData & { cclass_trib_is?: string | null }).cclass_trib_is);
+  const temIs = !!formatCst3Digits(item.cst_is) && !!classTribIs && (!!item.aliq_is || !!item.valor_is);
   
   const focusItem: FocusNfeItem = {
     numero_item: numeroItem,
