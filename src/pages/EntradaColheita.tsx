@@ -192,6 +192,23 @@ export default function EntradaColheita() {
   const { data: controleLavouras = [] } = useControleLavouras(safraId || null);
   const { data: cargasPendentes = [], isLoading: loadingPendentes } = useColheitasPendentes(safraId || null);
   const { cfops = [] } = useCfops();
+
+  // Todas as cargas da safra (independente de status) — para reimpressão do ticket
+  const { data: todasCargas = [] } = useQuery({
+    queryKey: ["colheitas-todas-safra", safraId],
+    queryFn: async () => {
+      if (!safraId) return [] as any[];
+      const { data, error } = await supabase
+        .from("colheitas")
+        .select("id, codigo, data_colheita, peso_bruto, peso_tara, controle_lavoura_id, placas(placa)")
+        .eq("safra_id", safraId)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!safraId,
+  });
   
   // Buscar inscrição emitente principal da granja (sócio com is_emitente_principal = true)
   const { data: inscricaoPrincipal } = useInscricaoEmitentePrincipal(localSede?.granja_id || undefined);
