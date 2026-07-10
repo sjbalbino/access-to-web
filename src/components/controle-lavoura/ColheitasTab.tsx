@@ -244,7 +244,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   // Reset page when filters change
   useEffect(() => { setCurrentPage(1); }, [searchTerm, filterDateFrom, filterDateTo]);
 
-  const colCount = (canEdit ? 1 : 0) + (informarPh ? 19 : 18);
+  const colCount = 1 + (informarPh ? 19 : 18); // sempre 1 coluna (Ações/Ticket)
 
   if (!controleLavouraId) {
     return (
