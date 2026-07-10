@@ -82,6 +82,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
   const { data: produtos } = useProdutosCereais();
   const { data: silos } = useSilos();
   const { data: locaisEntrega } = useLocaisEntrega();
+  const { data: localSede } = useLocalSede();
   const { data: inscricoesSocio } = useInscricoesSocio();
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
     safraId, 
