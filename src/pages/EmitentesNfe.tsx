@@ -296,7 +296,7 @@ export default function EmitentesNfe() {
     } else {
       resetForm();
       setNomeFantasia("");
-      setNomeInscricao("");
+      
     }
     setIsDialogOpen(true);
   };
