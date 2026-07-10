@@ -446,7 +446,9 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                     {devolucao.inscricao_produtor.produtores?.nome} - IE: {devolucao.inscricao_produtor.inscricao_estadual}
                   </SelectItem>
                 )}
-                {inscricoesComSaldo?.map(i => (
+                {[...(inscricoesComSaldo || [])]
+                  .sort((a, b) => (a.produtor_nome || '').localeCompare(b.produtor_nome || '', 'pt-BR'))
+                  .map(i => (
                   <SelectItem key={i.id} value={i.id}>
                     {i.produtor_nome} - IE: {i.inscricao_estadual} (Saldo: {formatKg(i.saldo_disponivel)} kg)
                   </SelectItem>
