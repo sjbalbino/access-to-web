@@ -763,10 +763,10 @@ export default function RemessasVendaForm() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      title="Cadastrar transportadora"
-                      onClick={() => window.open("/transportadoras", "_blank")}
+                      title={transportadoraId ? "Editar transportadora selecionada" : "Cadastrar nova transportadora"}
+                      onClick={() => setTransportadoraDialogOpen(true)}
                     >
-                      <Plus className="h-4 w-4" />
+                      {transportadoraId ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
