@@ -190,13 +190,18 @@ export default function RemessasVendaForm() {
   // Quando o usuário TROCAR a transportadora, preencher placa, UF, motorista e CPF padrão.
   // Não sobrescreve valores quando a remessa já vem carregada com a transportadora salva.
   const transpAnteriorRef = useRef<string | null>(null);
+  const transpInicializadoRef = useRef(false);
   useEffect(() => {
-    if (!transportadoraId || !transportadoras) {
+    if (!transportadoras) return;
+    // Na primeira execução: se já veio uma transportadora salva (modo edição),
+    // apenas registra o id atual sem sobrescrever os campos.
+    if (!transpInicializadoRef.current) {
+      transpInicializadoRef.current = true;
       transpAnteriorRef.current = transportadoraId || null;
-      return;
+      if (transportadoraId) return;
     }
-    if (transpAnteriorRef.current === null) {
-      transpAnteriorRef.current = transportadoraId;
+    if (!transportadoraId) {
+      transpAnteriorRef.current = null;
       return;
     }
     if (transpAnteriorRef.current === transportadoraId) return;
@@ -210,6 +215,7 @@ export default function RemessasVendaForm() {
       if (transp.motorista_cpf_padrao) setValue("motorista_cpf", formatCpf(transp.motorista_cpf_padrao));
     }
   }, [transportadoraId, transportadoras, setValue]);
+
 
   // Auto-selecionar transportadora recém cadastrada.
   // Guarda os IDs conhecidos no primeiro carregamento; quando a lista aumentar
