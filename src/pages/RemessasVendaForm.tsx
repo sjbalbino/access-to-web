@@ -222,11 +222,12 @@ export default function RemessasVendaForm() {
   // (após cadastrar em outra aba), seleciona automaticamente a nova.
   const knownTranspIdsRef = useRef<Set<string> | null>(null);
   useEffect(() => {
-    if (!transportadoras) return;
+    if (!transportadoras || isLoadingTransportadoras) return;
     if (knownTranspIdsRef.current === null) {
       knownTranspIdsRef.current = new Set(transportadoras.map((t) => t.id));
       return;
     }
+
     const known = knownTranspIdsRef.current;
     const novas = transportadoras.filter((t) => !known.has(t.id));
     if (novas.length > 0) {
