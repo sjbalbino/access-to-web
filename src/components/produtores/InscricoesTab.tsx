@@ -364,6 +364,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
            <Table>
              <TableHeader>
                 <TableRow>
+                  <TableHead className="whitespace-nowrap">Nome Fantasia</TableHead>
                   <TableHead className="whitespace-nowrap">Nome</TableHead>
                   <TableHead className="whitespace-nowrap">Tipo Contrato</TableHead>
                   <TableHead className="whitespace-nowrap">Inscrição Estadual</TableHead>
@@ -375,6 +376,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               <TableBody>
                 {inscricoes.map((inscricao) => (
                   <TableRow key={inscricao.id}>
+                    <TableCell className="whitespace-nowrap font-medium">{inscricao.nome_fantasia || "-"}</TableCell>
                     <TableCell className="whitespace-nowrap">{inscricao.nome || "-"}</TableCell>
                     <TableCell className="whitespace-nowrap">
                       {TIPOS_CONTRATO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
