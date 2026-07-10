@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface InscricaoSocio {
   id: string;
   produtor_id: string | null;
+  nome_fantasia: string | null;
   inscricao_estadual: string | null;
   cpf_cnpj: string | null;
   tipo: string | null;
@@ -47,6 +48,7 @@ export function useInscricoesSocio() {
         .select(`
           id,
           produtor_id,
+          nome_fantasia,
           inscricao_estadual,
           cpf_cnpj,
           tipo,

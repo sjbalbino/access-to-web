@@ -5,6 +5,7 @@ export interface InscricaoComProdutor {
   id: string;
   produtor_id: string | null;
   nome: string | null;
+  nome_fantasia: string | null;
   inscricao_estadual: string | null;
   tipo: string | null;
   ativa: boolean | null;
@@ -30,6 +31,7 @@ export function useAllInscricoes() {
           id,
           produtor_id,
           nome,
+          nome_fantasia,
           inscricao_estadual,
           tipo,
           ativa,
