@@ -19,6 +19,7 @@ import { useCreateDevolucao, useUpdateDevolucao, type DevolucaoDeposito } from '
 import { toast } from 'sonner';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { formatNumber, formatKg } from '@/lib/formatters';
+import { labelInscricao } from '@/lib/inscricaoLabel';
 
 interface DevolucaoDialogProps {
   open: boolean;
@@ -542,7 +543,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
               <SelectContent>
                 {inscricoesSocio?.map(i => (
                   <SelectItem key={i.id} value={i.id}>
-                    {i.produtores?.nome} - IE: {i.inscricao_estadual}
+                    {labelInscricao(i)}
                   </SelectItem>
                 ))}
               </SelectContent>
