@@ -555,6 +555,18 @@ export default function EmitentesNfe() {
                       </p>
                     )}
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nome_fantasia">Nome Fantasia (identificação do emitente)</Label>
+                    <Input
+                      id="nome_fantasia"
+                      value={nomeFantasia}
+                      onChange={(e) => setNomeFantasia(e.target.value)}
+                      placeholder="Ex.: Fazenda Boa Vista, Filial Matriz, IE Principal..."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Aparece nos selects em todo o sistema para facilitar a identificação desta inscrição.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
