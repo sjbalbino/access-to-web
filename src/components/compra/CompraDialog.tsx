@@ -942,7 +942,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
                     <SelectValue placeholder={!granjaId || !safraId ? "Selecione Granja e Safra primeiro" : "Selecione o vendedor..."} />
                   </SelectTrigger>
                   <SelectContent>
-                    {inscricoesComSaldo?.map(i => (
+                    {vendedoresOptions.map(i => (
                       <SelectItem key={i.id} value={i.id}>
                         {i.produtor_nome} - IE: {i.inscricao_estadual} ({i.total_depositado?.toLocaleString('pt-BR')} kg)
                       </SelectItem>
