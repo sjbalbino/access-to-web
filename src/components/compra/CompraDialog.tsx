@@ -30,6 +30,7 @@ import { toast as toastHook } from '@/hooks/use-toast';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { labelInscricao } from '@/lib/inscricaoLabel';
 import type { NotaFiscalData, NotaFiscalItemData } from '@/lib/focusNfeMapper';
 import { Plus, Trash2, Loader2, CheckCircle2, XCircle, Check, Send } from 'lucide-react';
 
