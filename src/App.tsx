@@ -54,6 +54,7 @@ import RelatoriosIR from "./pages/RelatoriosIR";
 import ConciliacaoBancaria from "./pages/ConciliacaoBancaria";
 import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { TicketDepositoPreview } from "@/components/shared/TicketDepositoPreview";
 
 
 
@@ -64,6 +65,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <TicketDepositoPreview />
       <BrowserRouter>
         <AuthProvider>
           <TabsProvider>
