@@ -414,18 +414,34 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   ) : (
                     paginatedColheitas.map((colheita) => (
                       <TableRow key={colheita.id}>
-                        {canEdit && (
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => handleEdit(colheita)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDelete(colheita.id)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        )}
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Imprimir ticket de depósito"
+                              onClick={async () => {
+                                try {
+                                  await gerarTicketDepositoPdf(colheita.id);
+                                } catch (e: any) {
+                                  toast.error('Erro ao gerar ticket: ' + (e?.message || e));
+                                }
+                              }}
+                            >
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                            {canEdit && (
+                              <>
+                                <Button variant="ghost" size="icon" onClick={() => handleEdit(colheita)}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleDelete(colheita.id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-sm">
                           {colheita.data_colheita ? format(parseISO(colheita.data_colheita), 'dd/MM/yy') : '-'}
                         </TableCell>
