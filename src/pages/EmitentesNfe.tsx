@@ -138,6 +138,7 @@ export default function EmitentesNfe() {
   const [showToken, setShowToken] = useState(false);
   const [showTokenHom, setShowTokenHom] = useState(false);
   const [showTokenPrincipal, setShowTokenPrincipal] = useState(false);
+  const [nomeFantasia, setNomeFantasia] = useState<string>("");
 
   const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
     setVerificandoId(emitente.id);
