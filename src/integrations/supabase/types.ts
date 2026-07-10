@@ -2913,6 +2913,7 @@ export type Database = {
           logradouro: string | null
           nome: string | null
           nome_fantasia: string | null
+          nome_inscricao: string | null
           numero: string | null
           produtor_id: string | null
           telefone: string | null
@@ -2939,6 +2940,7 @@ export type Database = {
           logradouro?: string | null
           nome?: string | null
           nome_fantasia?: string | null
+          nome_inscricao?: string | null
           numero?: string | null
           produtor_id?: string | null
           telefone?: string | null
@@ -2965,6 +2967,7 @@ export type Database = {
           logradouro?: string | null
           nome?: string | null
           nome_fantasia?: string | null
+          nome_inscricao?: string | null
           numero?: string | null
           produtor_id?: string | null
           telefone?: string | null
