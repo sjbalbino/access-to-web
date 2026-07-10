@@ -58,6 +58,7 @@ import { ptBR } from "date-fns/locale";
 import { PesarBrutoDialog } from "@/components/remessas/PesarBrutoDialog";
 import { EditarRemessaDialog } from "@/components/remessas/EditarRemessaDialog";
 import { EmitirNfeAutomaticoDialog } from "@/components/remessas/EmitirNfeAutomaticoDialog";
+import { TransportadoraFormDialog } from "@/components/transportadoras/TransportadoraFormDialog";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
@@ -101,6 +102,7 @@ export default function RemessasVendaForm() {
   const [remessaPesar, setRemessaPesar] = useState<RemessaVenda | null>(null);
   const [remessaEditar, setRemessaEditar] = useState<RemessaVenda | null>(null);
   const [remessaEmitirNfe, setRemessaEmitirNfe] = useState<RemessaVenda | null>(null);
+  const [transportadoraDialogOpen, setTransportadoraDialogOpen] = useState(false);
   const [pesoLiquido, setPesoLiquido] = useState(0);
   const [kgRemessa, setKgRemessa] = useState(0);
   const [kgNota, setKgNota] = useState(0);
@@ -761,10 +763,10 @@ export default function RemessasVendaForm() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      title="Cadastrar transportadora"
-                      onClick={() => window.open("/transportadoras", "_blank")}
+                      title={transportadoraId ? "Editar transportadora selecionada" : "Cadastrar nova transportadora"}
+                      onClick={() => setTransportadoraDialogOpen(true)}
                     >
-                      <Plus className="h-4 w-4" />
+                      {transportadoraId ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
@@ -1180,6 +1182,12 @@ export default function RemessasVendaForm() {
         contratoId={id || ""}
         onClose={() => setRemessaEmitirNfe(null)}
         onSuccess={() => setRemessaEmitirNfe(null)}
+      />
+      <TransportadoraFormDialog
+        open={transportadoraDialogOpen}
+        onOpenChange={setTransportadoraDialogOpen}
+        transportadora={transportadoraId ? transportadoras?.find((t) => t.id === transportadoraId) || null : null}
+        onSaved={(t) => setValue("transportadora_id", t.id)}
       />
     </AppLayout>
   );
