@@ -382,7 +382,8 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {canEdit ? <TableHead className="w-28">Ações</TableHead> : <TableHead className="w-12">Ticket</TableHead>}
+                    {canEdit && <TableHead className="w-28">Ações</TableHead>}
+                    {!canEdit && <TableHead className="w-14">Ticket</TableHead>}
                     <TableHead className="w-24">Data</TableHead>
                     <TableHead className="w-28">Produtor</TableHead>
                     <TableHead className="w-28">IE</TableHead>
