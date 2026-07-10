@@ -178,6 +178,36 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
     if (open && !compra && !siloId && siloPadraoId) setSiloId(siloPadraoId);
   }, [open, compra, siloId, siloPadraoId]);
 
+  // Auto-preencher local de entrega com o local sede padrão
+  useEffect(() => {
+    if (open && !compra && !localEntregaId && localSede?.id) {
+      setLocalEntregaId(localSede.id);
+    }
+  }, [open, compra, localEntregaId, localSede?.id]);
+
+  // Auto-preencher comprador com a inscrição do sócio principal da granja
+  useEffect(() => {
+    if (open && !compra && !inscricaoCompradorId && inscricaoPrincipal?.id) {
+      setInscricaoCompradorId(inscricaoPrincipal.id);
+    }
+  }, [open, compra, inscricaoCompradorId, inscricaoPrincipal?.id]);
+
+  // Compradores: apenas sócios com emitente de NFe, em ordem alfabética
+  const compradoresOptions = useMemo(() => {
+    return [...(inscricoesSocio || [])]
+      .filter(i => i.produtores?.tipo_produtor === 'socio' && !!i.emitente_id)
+      .sort((a, b) =>
+        (a.produtores?.nome || '').localeCompare(b.produtores?.nome || '', 'pt-BR')
+      );
+  }, [inscricoesSocio]);
+
+  // Vendedores com saldo em ordem alfabética
+  const vendedoresOptions = useMemo(() => {
+    return [...(inscricoesComSaldo || [])].sort((a, b) =>
+      (a.produtor_nome || '').localeCompare(b.produtor_nome || '', 'pt-BR')
+    );
+  }, [inscricoesComSaldo]);
+
   useEffect(() => {
     setValorTotal(quantidadeKg * valorUnitarioKg);
   }, [quantidadeKg, valorUnitarioKg]);
