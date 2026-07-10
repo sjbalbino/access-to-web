@@ -663,7 +663,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                       <SelectContent>
                         {inscricoesComSaldo.map((i) => (
                           <SelectItem key={i.id} value={i.id}>
-                            {i.inscricao_estadual || i.cpf_cnpj} - {i.produtor_nome || i.granja}
+                            {labelInscricao(i) || `${i.inscricao_estadual || i.cpf_cnpj} - ${i.produtor_nome || i.granja}`}
                           </SelectItem>
                         ))}
                       </SelectContent>

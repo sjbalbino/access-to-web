@@ -1446,6 +1446,7 @@ export default function NotaFiscalForm() {
                       <span className="font-medium">
                         {inscricao.is_emitente_principal && "★ "}
                         {!inscricao.emitente_id && "⚠ "}
+                        {inscricao.nome_fantasia ? `${inscricao.nome_fantasia} — ` : ""}
                         Sócio: {inscricao.produtores?.nome}
                       </span>
                       <span className="text-xs text-muted-foreground">
@@ -1624,6 +1625,7 @@ export default function NotaFiscalForm() {
               <SelectContent>
                 {inscricoesCompletas.filter((i) => i.ativa).map((inscricao) => (
                   <SelectItem key={inscricao.id} value={inscricao.id}>
+                    {inscricao.nome_fantasia ? `${inscricao.nome_fantasia} - ` : ""}
                     {inscricao.produtores?.nome || inscricao.granja} - IE: {inscricao.inscricao_estadual}
                   </SelectItem>
                 ))}
