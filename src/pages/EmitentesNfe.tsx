@@ -355,7 +355,6 @@ export default function EmitentesNfe() {
         .from("inscricoes_produtor")
         .update({
           nome_fantasia: nomeFantasia.trim() || null,
-          nome_inscricao: nomeInscricao.trim() || null,
         } as any)
         .eq("id", formData.inscricao_produtor_id);
     }
