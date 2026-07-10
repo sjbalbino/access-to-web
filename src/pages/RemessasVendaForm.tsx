@@ -209,6 +209,26 @@ export default function RemessasVendaForm() {
     }
   }, [transportadoraId, transportadoras, setValue]);
 
+  // Auto-selecionar transportadora recém cadastrada.
+  // Guarda os IDs conhecidos no primeiro carregamento; quando a lista aumentar
+  // (após cadastrar em outra aba), seleciona automaticamente a nova.
+  const knownTranspIdsRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!transportadoras) return;
+    if (knownTranspIdsRef.current === null) {
+      knownTranspIdsRef.current = new Set(transportadoras.map((t) => t.id));
+      return;
+    }
+    const known = knownTranspIdsRef.current;
+    const novas = transportadoras.filter((t) => !known.has(t.id));
+    if (novas.length > 0) {
+      const nova = novas[novas.length - 1];
+      setValue("transportadora_id", nova.id);
+      transportadoras.forEach((t) => known.add(t.id));
+    }
+  }, [transportadoras, setValue]);
+
+
   // Auto-montar Observações com o mesmo texto que irá para Informações Complementares da NFe
   const watchedFormAll = watch();
   useEffect(() => {
