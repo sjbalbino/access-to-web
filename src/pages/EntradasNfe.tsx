@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { labelInscricao } from "@/lib/inscricaoLabel";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
