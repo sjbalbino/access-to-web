@@ -350,11 +350,14 @@ export default function EmitentesNfe() {
         // toast já exibido pelo hook
       }
     }
-    // Persistir Nome Fantasia na inscrição vinculada
+    // Persistir Nome Fantasia e Nome da Inscrição na inscrição vinculada
     if (formData.inscricao_produtor_id) {
       await supabase
         .from("inscricoes_produtor")
-        .update({ nome_fantasia: nomeFantasia.trim() || null })
+        .update({
+          nome_fantasia: nomeFantasia.trim() || null,
+          nome_inscricao: nomeInscricao.trim() || null,
+        } as any)
         .eq("id", formData.inscricao_produtor_id);
     }
     handleCloseDialog();
