@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { labelInscricao } from "@/lib/inscricaoLabel";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
