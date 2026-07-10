@@ -231,7 +231,14 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         status: form.ja_pago ? 'pago' : 'aberto',
       };
       
-      const { ja_pago, num_parcelas, intervalo_dias, juros, multa, desconto, forma_pagamento, conta_bancaria_id, ...restPayload } = payload;
+      const {
+        ja_pago, num_parcelas, intervalo_dias, juros, multa, desconto, forma_pagamento, conta_bancaria_id,
+        // remove relações embutidas e campos de leitura que não são colunas
+        dre_conta, sub_centro_custo, granja, fornecedor, cliente, safra, produto, socio_produtor,
+        entrada_nfe, contrato_venda, compra_cereais, baixas,
+        tenant_id, created_at, updated_at, codigo_legado,
+        ...restPayload
+      } = payload;
       Object.keys(restPayload).forEach(k => { if (restPayload[k] === '') restPayload[k] = null; });
       
       const saved: any = await onSubmit(restPayload);
