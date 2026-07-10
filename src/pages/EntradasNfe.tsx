@@ -260,7 +260,7 @@ export default function EntradasNfe() {
 
   const inscricaoOptions = (inscricoes || []).map((i: any) => ({
     value: i.id,
-    label: `${i.nome || ''} (IE: ${i.inscricao_estadual || '-'})`.trim(),
+    label: labelInscricao(i) || `${i.nome || ''} (IE: ${i.inscricao_estadual || '-'})`.trim(),
     sublabel: i.granjas?.razao_social || '',
   }));
 

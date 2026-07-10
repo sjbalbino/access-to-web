@@ -57,7 +57,7 @@ export default function NotasDeposito() {
       .filter(i => i.ativa !== false)
       .map(i => ({
         value: i.id,
-        label: `${i.inscricao_estadual || ''} - ${i.produtores?.nome || i.nome || 'Sem nome'}`,
+        label: labelInscricao(i) || `${i.inscricao_estadual || ''} - ${i.nome || 'Sem nome'}`,
       }));
   }, [allInscricoes]);
   
