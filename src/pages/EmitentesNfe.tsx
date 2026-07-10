@@ -104,13 +104,13 @@ export default function EmitentesNfe() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscricoes_produtor")
-        .select("id, nome, cpf_cnpj, inscricao_estadual, tipo, granja_id, cidade, uf, ativa, produtor_id, produtores:produtor_id(id, nome), granjas:granja_id(id, razao_social, nome_fantasia)")
+        .select("id, nome, nome_fantasia, cpf_cnpj, inscricao_estadual, tipo, granja_id, cidade, uf, ativa, produtor_id, produtores:produtor_id(id, nome), granjas:granja_id(id, razao_social, nome_fantasia)")
         .eq("ativa", true)
         .not("cpf_cnpj", "is", null)
         .order("nome");
       if (error) throw error;
       return data as Array<{
-        id: string; nome: string | null; cpf_cnpj: string | null; inscricao_estadual: string | null;
+        id: string; nome: string | null; nome_fantasia: string | null; cpf_cnpj: string | null; inscricao_estadual: string | null;
         tipo: string | null; granja_id: string | null; cidade: string | null; uf: string | null;
         ativa: boolean | null; produtor_id: string | null;
         produtores?: { id: string; nome: string } | null;
@@ -426,7 +426,7 @@ export default function EmitentesNfe() {
                         <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block flex-shrink-0" />
                         <span>
                           {emitente.inscricao
-                            ? `${emitente.inscricao.produtores?.nome || emitente.inscricao.nome || "—"}${emitente.inscricao.inscricao_estadual ? ` • IE ${emitente.inscricao.inscricao_estadual}` : ""}`
+                            ? `${emitente.inscricao.nome_fantasia ? emitente.inscricao.nome_fantasia + " — " : ""}${emitente.inscricao.produtores?.nome || emitente.inscricao.nome || "—"}${emitente.inscricao.inscricao_estadual ? ` • IE ${emitente.inscricao.inscricao_estadual}` : ""}`
                             : <span className="text-destructive">Sem inscrição vinculada</span>}
                         </span>
                       </div>
@@ -528,10 +528,12 @@ export default function EmitentesNfe() {
                           : inscricoesDisponiveis
                         ).map((insc) => {
                           const nome = insc.produtores?.nome || insc.nome || "—";
+                          const fantasia = insc.nome_fantasia?.trim();
                           const granjaNome = insc.granjas?.nome_fantasia || insc.granjas?.razao_social || "";
+                          const principal = fantasia ? `${fantasia} — ${nome}` : nome;
                           return (
                             <SelectItem key={insc.id} value={insc.id}>
-                              {nome} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
+                              {principal} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
                             </SelectItem>
                           );
                         })}

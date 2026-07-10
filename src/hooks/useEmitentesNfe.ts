@@ -45,6 +45,7 @@ export interface EmitenteNfe {
     cpf_cnpj: string | null;
     inscricao_estadual: string | null;
     nome: string | null;
+    nome_fantasia: string | null;
     tipo: string | null;
     uf: string | null;
     cidade: string | null;
@@ -70,7 +71,7 @@ export function useEmitentesNfe() {
           *,
           granja:granjas(id, razao_social, nome_fantasia),
           inscricao:inscricoes_produtor!emitentes_nfe_inscricao_produtor_id_fkey(
-            id, cpf_cnpj, inscricao_estadual, nome, tipo, uf, cidade,
+            id, cpf_cnpj, inscricao_estadual, nome, nome_fantasia, tipo, uf, cidade,
             produtores:produtor_id(id, nome)
           )
         `)
