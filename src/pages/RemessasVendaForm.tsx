@@ -235,7 +235,7 @@ export default function RemessasVendaForm() {
       setValue("transportadora_id", nova.id);
       transportadoras.forEach((t) => known.add(t.id));
     }
-  }, [transportadoras, setValue]);
+  }, [transportadoras, isLoadingTransportadoras, setValue]);
 
 
   // Auto-montar Observações com o mesmo texto que irá para Informações Complementares da NFe
