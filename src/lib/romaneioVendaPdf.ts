@@ -173,12 +173,8 @@ export async function gerarRomaneioVendaPdf(
   if (remessa.motorista_cpf) addKv("CPF Mot.:", remessa.motorista_cpf);
   sep();
 
-  if (remessa.observacoes) {
-    add("OBS:", { bold: true });
-    const obs = String(remessa.observacoes);
-    for (let i = 0; i < obs.length; i += COLS) add(obs.slice(i, i + COLS));
-    sep();
-  }
+
+
 
 
   // Assinaturas
