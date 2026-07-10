@@ -260,6 +260,7 @@ export default function EmitentesNfe() {
   const handleOpenDialog = (emitente?: EmitenteNfe) => {
     if (emitente) {
       setSelectedEmitente(emitente);
+      setNomeFantasia((emitente as any).inscricao?.nome_fantasia || "");
       setFormData({
         inscricao_produtor_id: emitente.inscricao_produtor_id,
         granja_id: emitente.granja_id,
@@ -292,6 +293,7 @@ export default function EmitentesNfe() {
       });
     } else {
       resetForm();
+      setNomeFantasia("");
     }
     setIsDialogOpen(true);
   };
