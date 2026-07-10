@@ -8,7 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { Plus, Pencil, Trash2, AlertCircle, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle, Search, Printer } from 'lucide-react';
+import { gerarTicketDepositoPdf } from '@/lib/ticketDepositoPdf';
+import { toast } from 'sonner';
 import { useColheitas, useCreateColheita, useUpdateColheita, useDeleteColheita, ColheitaInput } from '@/hooks/useColheitas';
 import { useSilos } from '@/hooks/useSilos';
 import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
@@ -242,7 +244,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   // Reset page when filters change
   useEffect(() => { setCurrentPage(1); }, [searchTerm, filterDateFrom, filterDateTo]);
 
-  const colCount = (canEdit ? 1 : 0) + (informarPh ? 19 : 18);
+  const colCount = 1 + (informarPh ? 19 : 18); // sempre 1 coluna (Ações/Ticket)
 
   if (!controleLavouraId) {
     return (
@@ -380,7 +382,8 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {canEdit && <TableHead className="w-20">Ações</TableHead>}
+                    {canEdit && <TableHead className="w-28">Ações</TableHead>}
+                    {!canEdit && <TableHead className="w-14">Ticket</TableHead>}
                     <TableHead className="w-24">Data</TableHead>
                     <TableHead className="w-28">Produtor</TableHead>
                     <TableHead className="w-28">IE</TableHead>
@@ -411,18 +414,34 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   ) : (
                     paginatedColheitas.map((colheita) => (
                       <TableRow key={colheita.id}>
-                        {canEdit && (
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => handleEdit(colheita)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDelete(colheita.id)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        )}
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Imprimir ticket de depósito"
+                              onClick={async () => {
+                                try {
+                                  await gerarTicketDepositoPdf(colheita.id);
+                                } catch (e: any) {
+                                  toast.error('Erro ao gerar ticket: ' + (e?.message || e));
+                                }
+                              }}
+                            >
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                            {canEdit && (
+                              <>
+                                <Button variant="ghost" size="icon" onClick={() => handleEdit(colheita)}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleDelete(colheita.id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-sm">
                           {colheita.data_colheita ? format(parseISO(colheita.data_colheita), 'dd/MM/yy') : '-'}
                         </TableCell>

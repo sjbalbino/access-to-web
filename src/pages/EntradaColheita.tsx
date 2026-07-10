@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Truck, Scale, Check, Loader2, AlertCircle, Package, Search, FileText, CheckCircle2, XCircle } from "lucide-react";
+import { Truck, Scale, Check, Loader2, AlertCircle, Package, Search, FileText, CheckCircle2, XCircle, Printer } from "lucide-react";
+import { gerarTicketDepositoPdf } from "@/lib/ticketDepositoPdf";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -943,6 +944,12 @@ export default function EntradaColheita() {
       }
 
       toast.success("Saída registrada com sucesso!");
+      // Gera ticket de depósito automaticamente
+      try {
+        await gerarTicketDepositoPdf(selectedPendente);
+      } catch (e: any) {
+        console.error("Erro ao gerar ticket:", e);
+      }
       setSelectedPendente(null);
       setFormSaida(initialFormSaida);
       setFormContraNota(initialFormContraNota);
@@ -1396,18 +1403,19 @@ export default function EntradaColheita() {
                           <TableHead>Lavoura</TableHead>
                           <TableHead>Placa</TableHead>
                           <TableHead className="text-right">Bruto</TableHead>
+                          <TableHead className="w-10"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {loadingPendentes ? (
                           <TableRow>
-                            <TableCell colSpan={3} className="text-center py-8">
+                            <TableCell colSpan={4} className="text-center py-8">
                               <Loader2 className="h-5 w-5 animate-spin mx-auto" />
                             </TableCell>
                           </TableRow>
                         ) : cargasPendentes.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                               Nenhuma carga pendente
                             </TableCell>
                           </TableRow>
@@ -1432,6 +1440,23 @@ export default function EntradaColheita() {
                               </TableCell>
                               <TableCell className="text-right font-mono">
                                 {carga.peso_bruto?.toLocaleString("pt-BR")}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Imprimir ticket de depósito"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try {
+                                      await gerarTicketDepositoPdf(carga.id);
+                                    } catch (err: any) {
+                                      toast.error("Erro ao gerar ticket: " + (err?.message || err));
+                                    }
+                                  }}
+                                >
+                                  <Printer className="h-4 w-4" />
+                                </Button>
                               </TableCell>
                             </TableRow>
                           ))
