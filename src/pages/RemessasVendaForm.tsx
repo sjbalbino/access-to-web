@@ -118,7 +118,7 @@ export default function RemessasVendaForm() {
   const { data: totais } = useTotaisContrato(id);
   const { data: silos } = useSilos();
   const siloPadraoId = useSiloPadraoId((contrato as any)?.granja_id || null);
-  const { transportadoras } = useTransportadoras();
+  const { transportadoras, isLoading: isLoadingTransportadoras } = useTransportadoras();
 
   const createRemessa = useCreateRemessaVenda();
   const updateRemessa = useUpdateRemessaVenda();
