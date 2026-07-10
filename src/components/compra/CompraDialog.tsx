@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSilos } from '@/hooks/useSilos';
 import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
-import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
+import { useLocaisEntrega, useLocalSede } from '@/hooks/useLocaisEntrega';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
 import { useInscricoesComSaldo } from '@/hooks/useSaldosDeposito';
 import { useProdutosCereais } from '@/hooks/useProdutosCereais';
