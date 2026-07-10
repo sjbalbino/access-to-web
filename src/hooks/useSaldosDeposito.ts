@@ -161,6 +161,7 @@ export interface InscricaoComSaldoPorLocal {
   id: string;
   inscricao_estadual: string | null;
   cpf_cnpj: string | null;
+  nome_fantasia: string | null;
   granja: string | null;
   granja_id: string | null;
   produtor_nome: string | null;
@@ -195,6 +196,7 @@ export function useInscricoesComSaldo(filters: {
             id,
             inscricao_estadual,
             cpf_cnpj,
+            nome_fantasia,
             granja,
             granja_id,
             produtores(nome, tipo_produtor)
@@ -230,6 +232,7 @@ export function useInscricoesComSaldo(filters: {
             id: inscId,
             inscricao_estadual: c.inscricao_produtor.inscricao_estadual,
             cpf_cnpj: c.inscricao_produtor.cpf_cnpj,
+            nome_fantasia: c.inscricao_produtor.nome_fantasia || null,
             granja: c.inscricao_produtor.granja,
             granja_id: c.inscricao_produtor.granja_id,
             produtor_nome: c.inscricao_produtor.produtores?.nome || null,
