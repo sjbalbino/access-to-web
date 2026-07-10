@@ -227,18 +227,10 @@ export async function gerarTicketDepositoPdf(colheitaId: string): Promise<void> 
     y += lineH;
   }
 
-  // Abre em nova aba para visualizar/imprimir
-  const blob = doc.output("blob");
-  const url = URL.createObjectURL(blob);
-  const w = window.open(url, "_blank");
-  if (!w) {
-    // fallback: força download
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `ticket_deposito_${c.codigo || c.id}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  // Abre em preview interno (dialog) via evento global
+  const arrayBuffer = doc.output("arraybuffer");
+  const pdfData = new Uint8Array(arrayBuffer);
+  const filename = `ticket_deposito_${c.codigo || c.id}.pdf`;
+  const { openTicketDepositoPreview } = await import("@/components/shared/TicketDepositoPreview");
+  openTicketDepositoPreview({ pdfData, filename });
 }
