@@ -140,7 +140,6 @@ export default function EmitentesNfe() {
   const [showTokenHom, setShowTokenHom] = useState(false);
   const [showTokenPrincipal, setShowTokenPrincipal] = useState(false);
   const [nomeFantasia, setNomeFantasia] = useState<string>("");
-  const [nomeInscricao, setNomeInscricao] = useState<string>("");
 
   const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
     setVerificandoId(emitente.id);
@@ -263,7 +262,7 @@ export default function EmitentesNfe() {
     if (emitente) {
       setSelectedEmitente(emitente);
       setNomeFantasia((emitente as any).inscricao?.nome_fantasia || "");
-      setNomeInscricao((emitente as any).inscricao?.nome_inscricao || "");
+      
       setFormData({
         inscricao_produtor_id: emitente.inscricao_produtor_id,
         granja_id: emitente.granja_id,
@@ -297,7 +296,7 @@ export default function EmitentesNfe() {
     } else {
       resetForm();
       setNomeFantasia("");
-      setNomeInscricao("");
+      
     }
     setIsDialogOpen(true);
   };
@@ -356,7 +355,6 @@ export default function EmitentesNfe() {
         .from("inscricoes_produtor")
         .update({
           nome_fantasia: nomeFantasia.trim() || null,
-          nome_inscricao: nomeInscricao.trim() || null,
         } as any)
         .eq("id", formData.inscricao_produtor_id);
     }
@@ -544,14 +542,14 @@ export default function EmitentesNfe() {
                           ? inscricoes.filter((i) => i.id === selectedEmitente.inscricao_produtor_id || !emitentes.some((e) => e.inscricao_produtor_id === i.id))
                           : inscricoesDisponiveis
                         ).map((insc) => {
-                          const nome = insc.produtores?.nome || insc.nome || "—";
+                          const produtorNome = insc.produtores?.nome || "—";
+                          const inscNome = insc.nome?.trim();
                           const fantasia = insc.nome_fantasia?.trim();
-                          const nomeInsc = insc.nome_inscricao?.trim();
                           const granjaNome = insc.granjas?.nome_fantasia || insc.granjas?.razao_social || "";
-                          const principal = fantasia ? `${fantasia} — ${nome}` : nome;
+                          const principal = fantasia ? `${fantasia} — ${produtorNome}` : produtorNome;
                           return (
                             <SelectItem key={insc.id} value={insc.id}>
-                              {nomeInsc ? `[${nomeInsc}] ` : ""}{principal} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
+                              {principal}{inscNome ? ` — ${inscNome}` : ""} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
                             </SelectItem>
                           );
                         })}
@@ -562,18 +560,6 @@ export default function EmitentesNfe() {
                         A inscrição vinculada não pode ser alterada após a criação. Para mudar, exclua e crie um novo emitente.
                       </p>
                     )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nome_inscricao">Nome da Inscrição</Label>
-                    <Input
-                      id="nome_inscricao"
-                      value={nomeInscricao}
-                      onChange={(e) => setNomeInscricao(e.target.value)}
-                      placeholder="Ex.: IE Matriz, IE Filial Norte..."
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Nome curto para identificar rapidamente esta inscrição.
-                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="nome_fantasia">Nome Fantasia (identificação do emitente)</Label>
