@@ -102,6 +102,7 @@ export default function RemessasVendaForm() {
   const [remessaPesar, setRemessaPesar] = useState<RemessaVenda | null>(null);
   const [remessaEditar, setRemessaEditar] = useState<RemessaVenda | null>(null);
   const [remessaEmitirNfe, setRemessaEmitirNfe] = useState<RemessaVenda | null>(null);
+  const [transportadoraDialogOpen, setTransportadoraDialogOpen] = useState(false);
   const [pesoLiquido, setPesoLiquido] = useState(0);
   const [kgRemessa, setKgRemessa] = useState(0);
   const [kgNota, setKgNota] = useState(0);
