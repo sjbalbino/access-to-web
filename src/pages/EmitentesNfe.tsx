@@ -538,18 +538,17 @@ export default function EmitentesNfe() {
                         <SelectValue placeholder="Selecione a inscrição do sócio" />
                       </SelectTrigger>
                       <SelectContent>
-                        {(selectedEmitente
-                          ? inscricoes.filter((i) => i.id === selectedEmitente.inscricao_produtor_id || !emitentes.some((e) => e.inscricao_produtor_id === i.id))
-                          : inscricoesDisponiveis
-                        ).map((insc) => {
+                        {inscricoes.map((insc) => {
+                          const vinculadoEmitente = emitentes.find((e) => e.inscricao_produtor_id === insc.id);
+                          const jaVinculada = !!vinculadoEmitente && vinculadoEmitente.id !== selectedEmitente?.id;
                           const produtorNome = insc.produtores?.nome || "—";
                           const inscNome = insc.nome?.trim();
                           const fantasia = insc.nome_fantasia?.trim();
                           const granjaNome = insc.granjas?.nome_fantasia || insc.granjas?.razao_social || "";
                           const principal = fantasia ? `${fantasia} — ${produtorNome}` : produtorNome;
                           return (
-                            <SelectItem key={insc.id} value={insc.id}>
-                              {principal}{inscNome ? ` — ${inscNome}` : ""} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
+                            <SelectItem key={insc.id} value={insc.id} disabled={jaVinculada}>
+                              {principal}{inscNome ? ` — ${inscNome}` : ""} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}{jaVinculada ? " • (já vinculada)" : ""}
                             </SelectItem>
                           );
                         })}
