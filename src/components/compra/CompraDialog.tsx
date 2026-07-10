@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSilos } from '@/hooks/useSilos';
 import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
-import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
+import { useLocaisEntrega, useLocalSede } from '@/hooks/useLocaisEntrega';
 import { useInscricoesSocio } from '@/hooks/useInscricoesSocio';
 import { useInscricoesComSaldo } from '@/hooks/useSaldosDeposito';
 import { useProdutosCereais } from '@/hooks/useProdutosCereais';
@@ -82,6 +82,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
   const { data: produtos } = useProdutosCereais();
   const { data: silos } = useSilos();
   const { data: locaisEntrega } = useLocaisEntrega();
+  const { data: localSede } = useLocalSede();
   const { data: inscricoesSocio } = useInscricoesSocio();
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
     safraId, 
@@ -176,6 +177,36 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
   useEffect(() => {
     if (open && !compra && !siloId && siloPadraoId) setSiloId(siloPadraoId);
   }, [open, compra, siloId, siloPadraoId]);
+
+  // Auto-preencher local de entrega com o local sede padrão
+  useEffect(() => {
+    if (open && !compra && !localEntregaId && localSede?.id) {
+      setLocalEntregaId(localSede.id);
+    }
+  }, [open, compra, localEntregaId, localSede?.id]);
+
+  // Auto-preencher comprador com a inscrição do sócio principal da granja
+  useEffect(() => {
+    if (open && !compra && !inscricaoCompradorId && inscricaoPrincipal?.id) {
+      setInscricaoCompradorId(inscricaoPrincipal.id);
+    }
+  }, [open, compra, inscricaoCompradorId, inscricaoPrincipal?.id]);
+
+  // Compradores: apenas sócios com emitente de NFe, em ordem alfabética
+  const compradoresOptions = useMemo(() => {
+    return [...(inscricoesSocio || [])]
+      .filter(i => i.produtores?.tipo_produtor === 'socio' && !!i.emitente_id)
+      .sort((a, b) =>
+        (a.produtores?.nome || '').localeCompare(b.produtores?.nome || '', 'pt-BR')
+      );
+  }, [inscricoesSocio]);
+
+  // Vendedores com saldo em ordem alfabética
+  const vendedoresOptions = useMemo(() => {
+    return [...(inscricoesComSaldo || [])].sort((a, b) =>
+      (a.produtor_nome || '').localeCompare(b.produtor_nome || '', 'pt-BR')
+    );
+  }, [inscricoesComSaldo]);
 
   useEffect(() => {
     setValorTotal(quantidadeKg * valorUnitarioKg);
@@ -891,7 +922,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
                     <SelectValue placeholder="Selecione o comprador..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {inscricoesSocio?.map(i => (
+                    {compradoresOptions.map(i => (
                       <SelectItem key={i.id} value={i.id}>
                         {i.produtores?.nome} - IE: {i.inscricao_estadual}
                       </SelectItem>
@@ -911,7 +942,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
                     <SelectValue placeholder={!granjaId || !safraId ? "Selecione Granja e Safra primeiro" : "Selecione o vendedor..."} />
                   </SelectTrigger>
                   <SelectContent>
-                    {inscricoesComSaldo?.map(i => (
+                    {vendedoresOptions.map(i => (
                       <SelectItem key={i.id} value={i.id}>
                         {i.produtor_nome} - IE: {i.inscricao_estadual} ({i.total_depositado?.toLocaleString('pt-BR')} kg)
                       </SelectItem>
