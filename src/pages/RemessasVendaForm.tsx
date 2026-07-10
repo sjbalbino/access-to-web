@@ -118,7 +118,7 @@ export default function RemessasVendaForm() {
   const { data: totais } = useTotaisContrato(id);
   const { data: silos } = useSilos();
   const siloPadraoId = useSiloPadraoId((contrato as any)?.granja_id || null);
-  const { transportadoras } = useTransportadoras();
+  const { transportadoras, isLoading: isLoadingTransportadoras } = useTransportadoras();
 
   const createRemessa = useCreateRemessaVenda();
   const updateRemessa = useUpdateRemessaVenda();
@@ -222,11 +222,12 @@ export default function RemessasVendaForm() {
   // (após cadastrar em outra aba), seleciona automaticamente a nova.
   const knownTranspIdsRef = useRef<Set<string> | null>(null);
   useEffect(() => {
-    if (!transportadoras) return;
+    if (!transportadoras || isLoadingTransportadoras) return;
     if (knownTranspIdsRef.current === null) {
       knownTranspIdsRef.current = new Set(transportadoras.map((t) => t.id));
       return;
     }
+
     const known = knownTranspIdsRef.current;
     const novas = transportadoras.filter((t) => !known.has(t.id));
     if (novas.length > 0) {
@@ -234,7 +235,7 @@ export default function RemessasVendaForm() {
       setValue("transportadora_id", nova.id);
       transportadoras.forEach((t) => known.add(t.id));
     }
-  }, [transportadoras, setValue]);
+  }, [transportadoras, isLoadingTransportadoras, setValue]);
 
 
   // Auto-montar Observações com o mesmo texto que irá para Informações Complementares da NFe
