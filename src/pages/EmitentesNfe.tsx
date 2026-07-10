@@ -262,7 +262,7 @@ export default function EmitentesNfe() {
     if (emitente) {
       setSelectedEmitente(emitente);
       setNomeFantasia((emitente as any).inscricao?.nome_fantasia || "");
-      setNomeInscricao((emitente as any).inscricao?.nome_inscricao || "");
+      
       setFormData({
         inscricao_produtor_id: emitente.inscricao_produtor_id,
         granja_id: emitente.granja_id,
