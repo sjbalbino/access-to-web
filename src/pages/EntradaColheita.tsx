@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Truck, Scale, Check, Loader2, AlertCircle, Package, Search, FileText, CheckCircle2, XCircle } from "lucide-react";
+import { Truck, Scale, Check, Loader2, AlertCircle, Package, Search, FileText, CheckCircle2, XCircle, Printer } from "lucide-react";
+import { gerarTicketDepositoPdf } from "@/lib/ticketDepositoPdf";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/layout/AppLayout";
