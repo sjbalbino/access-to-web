@@ -564,18 +564,6 @@ export default function EmitentesNfe() {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="nome_inscricao">Nome da Inscrição</Label>
-                    <Input
-                      id="nome_inscricao"
-                      value={nomeInscricao}
-                      onChange={(e) => setNomeInscricao(e.target.value)}
-                      placeholder="Ex.: IE Matriz, IE Filial Norte..."
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Nome curto para identificar rapidamente esta inscrição.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="nome_fantasia">Nome Fantasia (identificação do emitente)</Label>
                     <Input
                       id="nome_fantasia"
