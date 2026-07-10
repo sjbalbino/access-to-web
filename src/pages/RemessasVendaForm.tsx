@@ -209,6 +209,26 @@ export default function RemessasVendaForm() {
     }
   }, [transportadoraId, transportadoras, setValue]);
 
+  // Auto-selecionar transportadora recém cadastrada.
+  // Guarda os IDs conhecidos no primeiro carregamento; quando a lista aumentar
+  // (após cadastrar em outra aba), seleciona automaticamente a nova.
+  const knownTranspIdsRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!transportadoras) return;
+    if (knownTranspIdsRef.current === null) {
+      knownTranspIdsRef.current = new Set(transportadoras.map((t) => t.id));
+      return;
+    }
+    const known = knownTranspIdsRef.current;
+    const novas = transportadoras.filter((t) => !known.has(t.id));
+    if (novas.length > 0) {
+      const nova = novas[novas.length - 1];
+      setValue("transportadora_id", nova.id);
+      transportadoras.forEach((t) => known.add(t.id));
+    }
+  }, [transportadoras, setValue]);
+
+
   // Auto-montar Observações com o mesmo texto que irá para Informações Complementares da NFe
   const watchedFormAll = watch();
   useEffect(() => {
@@ -726,17 +746,29 @@ export default function RemessasVendaForm() {
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label>Transportadora</Label>
-                  <Select isSearchable value={watch("transportadora_id")} onValueChange={(v) => setValue("transportadora_id", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {transportadoras?.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select isSearchable value={watch("transportadora_id")} onValueChange={(v) => setValue("transportadora_id", v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {transportadoras?.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      title="Cadastrar transportadora"
+                      onClick={() => window.open("/transportadoras", "_blank")}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
+
                 <div className="space-y-2">
                   <Label>Motorista</Label>
                   <Input {...register("motorista")} placeholder="Nome do motorista" />

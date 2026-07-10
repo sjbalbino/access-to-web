@@ -101,9 +101,11 @@ const menuGroups: MenuGroup[] = [
       { title: "Devolução Depósito", icon: ArrowRightLeft, path: "/devolucao-deposito", color: "text-orange-600" },
       { title: "Compra Cereais", icon: Wheat, path: "/compra-cereais", color: "text-yellow-600" },
       { title: "Entradas NF-e", icon: Package, path: "/entradas-nfe", color: "text-teal-600" },
+      { title: "Transportadoras", icon: Truck, path: "/transportadoras", color: "text-purple-500" },
       { title: "Relatórios Comercial", icon: BarChart3, path: "/relatorios/comercial", color: "text-purple-600" },
     ],
   },
+
   {
     title: "Financeiro",
     items: [
@@ -137,9 +139,9 @@ const menuGroups: MenuGroup[] = [
       { title: "NCM", icon: FileText, path: "/ncm", color: "text-slate-500" },
       { title: "CFOPs", icon: FileText, path: "/cfops", color: "text-indigo-500" },
       { title: "Emitentes NF-e", icon: Building2, path: "/emitentes-nfe", color: "text-teal-500" },
-      { title: "Transportadoras", icon: Truck, path: "/transportadoras", color: "text-purple-500" },
     ],
   },
+
 ];
 
 const roleLabels: Record<string, string> = {
