@@ -426,7 +426,7 @@ export default function EmitentesNfe() {
                         <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block flex-shrink-0" />
                         <span>
                           {emitente.inscricao
-                            ? `${emitente.inscricao.produtores?.nome || emitente.inscricao.nome || "—"}${emitente.inscricao.inscricao_estadual ? ` • IE ${emitente.inscricao.inscricao_estadual}` : ""}`
+                            ? `${emitente.inscricao.nome_fantasia ? emitente.inscricao.nome_fantasia + " — " : ""}${emitente.inscricao.produtores?.nome || emitente.inscricao.nome || "—"}${emitente.inscricao.inscricao_estadual ? ` • IE ${emitente.inscricao.inscricao_estadual}` : ""}`
                             : <span className="text-destructive">Sem inscrição vinculada</span>}
                         </span>
                       </div>
