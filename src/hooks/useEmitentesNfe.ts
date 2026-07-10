@@ -45,6 +45,7 @@ export interface EmitenteNfe {
     cpf_cnpj: string | null;
     inscricao_estadual: string | null;
     nome: string | null;
+    nome_fantasia: string | null;
     tipo: string | null;
     uf: string | null;
     cidade: string | null;
