@@ -944,6 +944,12 @@ export default function EntradaColheita() {
       }
 
       toast.success("Saída registrada com sucesso!");
+      // Gera ticket de depósito automaticamente
+      try {
+        await gerarTicketDepositoPdf(selectedPendente);
+      } catch (e: any) {
+        console.error("Erro ao gerar ticket:", e);
+      }
       setSelectedPendente(null);
       setFormSaida(initialFormSaida);
       setFormContraNota(initialFormContraNota);
