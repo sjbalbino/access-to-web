@@ -104,8 +104,9 @@ export default function EmitentesNfe() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscricoes_produtor")
-        .select("id, nome, nome_fantasia, cpf_cnpj, inscricao_estadual, tipo, granja_id, cidade, uf, ativa, produtor_id, produtores:produtor_id(id, nome), granjas:granja_id(id, razao_social, nome_fantasia)")
+        .select("id, nome, nome_fantasia, cpf_cnpj, inscricao_estadual, tipo, granja_id, cidade, uf, ativa, produtor_id, produtores:produtor_id!inner(id, nome, tipo_produtor), granjas:granja_id(id, razao_social, nome_fantasia)")
         .eq("ativa", true)
+        .eq("produtores.tipo_produtor", "socio")
         .not("cpf_cnpj", "is", null)
         .order("nome");
       if (error) throw error;
@@ -113,7 +114,7 @@ export default function EmitentesNfe() {
         id: string; nome: string | null; nome_fantasia: string | null; cpf_cnpj: string | null; inscricao_estadual: string | null;
         tipo: string | null; granja_id: string | null; cidade: string | null; uf: string | null;
         ativa: boolean | null; produtor_id: string | null;
-        produtores?: { id: string; nome: string } | null;
+        produtores?: { id: string; nome: string; tipo_produtor: string | null } | null;
         granjas?: { id: string; razao_social: string; nome_fantasia: string | null } | null;
       }>;
     },
