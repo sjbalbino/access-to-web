@@ -85,6 +85,7 @@ interface InscricoesTabProps {
 const emptyInscricao: InscricaoInput = {
   produtor_id: null,
   nome: "",
+  nome_fantasia: "",
   tipo: "",
   inscricao_estadual: "",
   cpf_cnpj: "",
@@ -196,6 +197,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
     setFormData({
       produtor_id: inscricao.produtor_id,
       nome: inscricao.nome || "",
+      nome_fantasia: inscricao.nome_fantasia || "",
       tipo: inscricao.tipo || "",
       inscricao_estadual: inscricao.inscricao_estadual || "",
       cpf_cnpj: inscricao.cpf_cnpj || "",
@@ -246,6 +248,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
         id: inscricao.id,
         produtor_id: inscricao.produtor_id,
         nome: inscricao.nome,
+        nome_fantasia: inscricao.nome_fantasia,
         tipo: inscricao.tipo,
         inscricao_estadual: inscricao.inscricao_estadual,
         cpf_cnpj: inscricao.cpf_cnpj,
