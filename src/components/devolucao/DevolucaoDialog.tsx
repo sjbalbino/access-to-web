@@ -418,7 +418,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
               <SelectContent>
                 {inscricoesSocio?.map(i => (
                   <SelectItem key={i.id} value={i.id}>
-                    {i.produtores?.nome} - IE: {i.inscricao_estadual}
+                    {labelInscricao(i)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -443,14 +443,14 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
                 {/* Garantir que o produtor atual apareça na edição */}
                 {isEditing && devolucao?.inscricao_produtor && !inscricoesComSaldo?.some(i => i.id === devolucao.inscricao_produtor_id) && (
                   <SelectItem key={devolucao.inscricao_produtor_id} value={devolucao.inscricao_produtor_id}>
-                    {devolucao.inscricao_produtor.produtores?.nome} - IE: {devolucao.inscricao_produtor.inscricao_estadual}
+                    {labelInscricao(devolucao.inscricao_produtor)}
                   </SelectItem>
                 )}
                 {[...(inscricoesComSaldo || [])]
-                  .sort((a, b) => (a.produtor_nome || '').localeCompare(b.produtor_nome || '', 'pt-BR'))
+                  .sort((a, b) => (a.nome_fantasia || a.produtor_nome || '').localeCompare(b.nome_fantasia || b.produtor_nome || '', 'pt-BR'))
                   .map(i => (
                   <SelectItem key={i.id} value={i.id}>
-                    {i.produtor_nome} - IE: {i.inscricao_estadual} (Saldo: {formatKg(i.saldo_disponivel)} kg)
+                    {labelInscricao(i)} (Saldo: {formatKg(i.saldo_disponivel)} kg)
                   </SelectItem>
                 ))}
               </SelectContent>
