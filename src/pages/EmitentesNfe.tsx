@@ -104,14 +104,14 @@ export default function EmitentesNfe() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscricoes_produtor")
-        .select("id, nome, nome_fantasia, cpf_cnpj, inscricao_estadual, tipo, granja_id, cidade, uf, ativa, produtor_id, produtores:produtor_id!inner(id, nome, tipo_produtor), granjas:granja_id(id, razao_social, nome_fantasia)")
+        .select("id, nome, nome_fantasia, nome_inscricao, cpf_cnpj, inscricao_estadual, tipo, granja_id, cidade, uf, ativa, produtor_id, produtores:produtor_id!inner(id, nome, tipo_produtor), granjas:granja_id(id, razao_social, nome_fantasia)")
         .eq("ativa", true)
         .eq("produtores.tipo_produtor", "socio")
         .not("cpf_cnpj", "is", null)
         .order("nome");
       if (error) throw error;
       return data as Array<{
-        id: string; nome: string | null; nome_fantasia: string | null; cpf_cnpj: string | null; inscricao_estadual: string | null;
+        id: string; nome: string | null; nome_fantasia: string | null; nome_inscricao: string | null; cpf_cnpj: string | null; inscricao_estadual: string | null;
         tipo: string | null; granja_id: string | null; cidade: string | null; uf: string | null;
         ativa: boolean | null; produtor_id: string | null;
         produtores?: { id: string; nome: string; tipo_produtor: string | null } | null;
@@ -546,11 +546,12 @@ export default function EmitentesNfe() {
                         ).map((insc) => {
                           const nome = insc.produtores?.nome || insc.nome || "—";
                           const fantasia = insc.nome_fantasia?.trim();
+                          const nomeInsc = insc.nome_inscricao?.trim();
                           const granjaNome = insc.granjas?.nome_fantasia || insc.granjas?.razao_social || "";
                           const principal = fantasia ? `${fantasia} — ${nome}` : nome;
                           return (
                             <SelectItem key={insc.id} value={insc.id}>
-                              {principal} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
+                              {nomeInsc ? `[${nomeInsc}] ` : ""}{principal} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
                             </SelectItem>
                           );
                         })}
