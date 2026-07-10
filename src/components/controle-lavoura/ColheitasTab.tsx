@@ -8,7 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { Plus, Pencil, Trash2, AlertCircle, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle, Search, Printer } from 'lucide-react';
+import { gerarTicketDepositoPdf } from '@/lib/ticketDepositoPdf';
+import { toast } from 'sonner';
 import { useColheitas, useCreateColheita, useUpdateColheita, useDeleteColheita, ColheitaInput } from '@/hooks/useColheitas';
 import { useSilos } from '@/hooks/useSilos';
 import { useSiloPadraoId } from '@/hooks/useSiloPadrao';
