@@ -31,7 +31,7 @@ export function TicketDepositoPreview() {
 
   const handlePrint = () => {
     if (!payload) return;
-    const blob = new Blob([payload.pdfData], { type: "application/pdf" });
+    const blob = new Blob([payload.pdfData as BlobPart], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const iframe = document.createElement("iframe");
     iframe.style.position = "fixed";
