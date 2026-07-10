@@ -1183,6 +1183,12 @@ export default function RemessasVendaForm() {
         onClose={() => setRemessaEmitirNfe(null)}
         onSuccess={() => setRemessaEmitirNfe(null)}
       />
+      <TransportadoraFormDialog
+        open={transportadoraDialogOpen}
+        onOpenChange={setTransportadoraDialogOpen}
+        transportadora={transportadoraId ? transportadoras?.find((t) => t.id === transportadoraId) || null : null}
+        onSaved={(t) => setValue("transportadora_id", t.id)}
+      />
     </AppLayout>
   );
 }
