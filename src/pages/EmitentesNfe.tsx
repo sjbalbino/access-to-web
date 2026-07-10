@@ -138,6 +138,7 @@ export default function EmitentesNfe() {
   const [showToken, setShowToken] = useState(false);
   const [showTokenHom, setShowTokenHom] = useState(false);
   const [showTokenPrincipal, setShowTokenPrincipal] = useState(false);
+  const [nomeFantasia, setNomeFantasia] = useState<string>("");
 
   const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
     setVerificandoId(emitente.id);
@@ -259,6 +260,7 @@ export default function EmitentesNfe() {
   const handleOpenDialog = (emitente?: EmitenteNfe) => {
     if (emitente) {
       setSelectedEmitente(emitente);
+      setNomeFantasia((emitente as any).inscricao?.nome_fantasia || "");
       setFormData({
         inscricao_produtor_id: emitente.inscricao_produtor_id,
         granja_id: emitente.granja_id,
@@ -291,6 +293,7 @@ export default function EmitentesNfe() {
       });
     } else {
       resetForm();
+      setNomeFantasia("");
     }
     setIsDialogOpen(true);
   };
@@ -342,6 +345,13 @@ export default function EmitentesNfe() {
       } catch {
         // toast já exibido pelo hook
       }
+    }
+    // Persistir Nome Fantasia na inscrição vinculada
+    if (formData.inscricao_produtor_id) {
+      await supabase
+        .from("inscricoes_produtor")
+        .update({ nome_fantasia: nomeFantasia.trim() || null })
+        .eq("id", formData.inscricao_produtor_id);
     }
     handleCloseDialog();
   };
@@ -544,6 +554,18 @@ export default function EmitentesNfe() {
                         A inscrição vinculada não pode ser alterada após a criação. Para mudar, exclua e crie um novo emitente.
                       </p>
                     )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nome_fantasia">Nome Fantasia (identificação do emitente)</Label>
+                    <Input
+                      id="nome_fantasia"
+                      value={nomeFantasia}
+                      onChange={(e) => setNomeFantasia(e.target.value)}
+                      placeholder="Ex.: Fazenda Boa Vista, Filial Matriz, IE Principal..."
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Aparece nos selects em todo o sistema para facilitar a identificação desta inscrição.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
