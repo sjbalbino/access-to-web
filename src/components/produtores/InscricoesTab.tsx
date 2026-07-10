@@ -458,6 +458,15 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                     placeholder="Nome da inscrição (se diferente do produtor)"
                   />
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="nome_fantasia">Nome Fantasia (identificação da inscrição)</Label>
+                  <Input
+                    id="nome_fantasia"
+                    value={formData.nome_fantasia || ""}
+                    onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
+                    placeholder="Ex.: Fazenda Boa Vista, Filial Matriz, IE Principal..."
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="tipo">Tipo de Contrato <span className="text-destructive">*</span></Label>
                   <Select isSearchable
