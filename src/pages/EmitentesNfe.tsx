@@ -528,10 +528,12 @@ export default function EmitentesNfe() {
                           : inscricoesDisponiveis
                         ).map((insc) => {
                           const nome = insc.produtores?.nome || insc.nome || "—";
+                          const fantasia = insc.nome_fantasia?.trim();
                           const granjaNome = insc.granjas?.nome_fantasia || insc.granjas?.razao_social || "";
+                          const principal = fantasia ? `${fantasia} — ${nome}` : nome;
                           return (
                             <SelectItem key={insc.id} value={insc.id}>
-                              {nome} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
+                              {principal} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}
                             </SelectItem>
                           );
                         })}
