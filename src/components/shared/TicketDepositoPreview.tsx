@@ -58,7 +58,7 @@ export function TicketDepositoPreview() {
 
   const handleDownload = () => {
     if (!payload) return;
-    const blob = new Blob([payload.pdfData], { type: "application/pdf" });
+    const blob = new Blob([payload.pdfData as BlobPart], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
