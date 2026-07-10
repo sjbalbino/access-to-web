@@ -922,7 +922,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
                     <SelectValue placeholder="Selecione o comprador..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {inscricoesSocio?.map(i => (
+                    {compradoresOptions.map(i => (
                       <SelectItem key={i.id} value={i.id}>
                         {i.produtores?.nome} - IE: {i.inscricao_estadual}
                       </SelectItem>
