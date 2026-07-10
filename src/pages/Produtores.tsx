@@ -180,6 +180,7 @@ export default function Produtores() {
         await createInscricao.mutateAsync({
           produtor_id: result.id,
           nome: formData.nome || result.nome || "",
+          nome_fantasia: "",
           tipo: "",
           inscricao_estadual: "",
           cpf_cnpj: formData.cpf_cnpj || "",

@@ -6,6 +6,7 @@ export interface InscricaoProdutor {
   id: string;
   produtor_id: string | null;
   nome: string | null;
+  nome_fantasia: string | null;
   tipo: string | null;
   inscricao_estadual: string | null;
   cpf_cnpj: string | null;

@@ -2912,6 +2912,7 @@ export type Database = {
           is_emitente_principal: boolean | null
           logradouro: string | null
           nome: string | null
+          nome_fantasia: string | null
           numero: string | null
           produtor_id: string | null
           telefone: string | null
@@ -2937,6 +2938,7 @@ export type Database = {
           is_emitente_principal?: boolean | null
           logradouro?: string | null
           nome?: string | null
+          nome_fantasia?: string | null
           numero?: string | null
           produtor_id?: string | null
           telefone?: string | null
@@ -2962,6 +2964,7 @@ export type Database = {
           is_emitente_principal?: boolean | null
           logradouro?: string | null
           nome?: string | null
+          nome_fantasia?: string | null
           numero?: string | null
           produtor_id?: string | null
           telefone?: string | null

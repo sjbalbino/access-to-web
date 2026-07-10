@@ -5,6 +5,7 @@ export interface InscricaoCompleta {
   id: string;
   produtor_id: string | null;
   nome: string | null;
+  nome_fantasia: string | null;
   inscricao_estadual: string | null;
   cpf_cnpj: string | null;
   tipo: string | null;
@@ -43,6 +44,7 @@ export function useInscricoesCompletas() {
           id,
           produtor_id,
           nome,
+          nome_fantasia,
           inscricao_estadual,
           cpf_cnpj,
           tipo,

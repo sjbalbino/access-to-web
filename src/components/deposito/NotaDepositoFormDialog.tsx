@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { labelInscricao } from "@/lib/inscricaoLabel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -663,7 +664,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                       <SelectContent>
                         {inscricoesComSaldo.map((i) => (
                           <SelectItem key={i.id} value={i.id}>
-                            {i.inscricao_estadual || i.cpf_cnpj} - {i.produtor_nome || i.granja}
+                            {labelInscricao(i) || `${i.inscricao_estadual || i.cpf_cnpj} - ${i.produtor_nome || i.granja}`}
                           </SelectItem>
                         ))}
                       </SelectContent>

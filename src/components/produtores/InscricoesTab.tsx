@@ -85,6 +85,7 @@ interface InscricoesTabProps {
 const emptyInscricao: InscricaoInput = {
   produtor_id: null,
   nome: "",
+  nome_fantasia: "",
   tipo: "",
   inscricao_estadual: "",
   cpf_cnpj: "",
@@ -196,6 +197,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
     setFormData({
       produtor_id: inscricao.produtor_id,
       nome: inscricao.nome || "",
+      nome_fantasia: inscricao.nome_fantasia || "",
       tipo: inscricao.tipo || "",
       inscricao_estadual: inscricao.inscricao_estadual || "",
       cpf_cnpj: inscricao.cpf_cnpj || "",
@@ -246,6 +248,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
         id: inscricao.id,
         produtor_id: inscricao.produtor_id,
         nome: inscricao.nome,
+        nome_fantasia: inscricao.nome_fantasia,
         tipo: inscricao.tipo,
         inscricao_estadual: inscricao.inscricao_estadual,
         cpf_cnpj: inscricao.cpf_cnpj,
@@ -361,6 +364,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
            <Table>
              <TableHeader>
                 <TableRow>
+                  <TableHead className="whitespace-nowrap">Nome Fantasia</TableHead>
                   <TableHead className="whitespace-nowrap">Nome</TableHead>
                   <TableHead className="whitespace-nowrap">Tipo Contrato</TableHead>
                   <TableHead className="whitespace-nowrap">Inscrição Estadual</TableHead>
@@ -372,6 +376,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
               <TableBody>
                 {inscricoes.map((inscricao) => (
                   <TableRow key={inscricao.id}>
+                    <TableCell className="whitespace-nowrap font-medium">{inscricao.nome_fantasia || "-"}</TableCell>
                     <TableCell className="whitespace-nowrap">{inscricao.nome || "-"}</TableCell>
                     <TableCell className="whitespace-nowrap">
                       {TIPOS_CONTRATO.find(t => t.value === inscricao.tipo)?.label || inscricao.tipo || "-"}
@@ -453,6 +458,15 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                     value={formData.nome || ""}
                     onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                     placeholder="Nome da inscrição (se diferente do produtor)"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="nome_fantasia">Nome Fantasia (identificação da inscrição)</Label>
+                  <Input
+                    id="nome_fantasia"
+                    value={formData.nome_fantasia || ""}
+                    onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
+                    placeholder="Ex.: Fazenda Boa Vista, Filial Matriz, IE Principal..."
                   />
                 </div>
                 <div className="space-y-2">

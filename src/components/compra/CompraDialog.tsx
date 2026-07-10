@@ -30,6 +30,7 @@ import { toast as toastHook } from '@/hooks/use-toast';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { labelInscricao } from '@/lib/inscricaoLabel';
 import type { NotaFiscalData, NotaFiscalItemData } from '@/lib/focusNfeMapper';
 import { Plus, Trash2, Loader2, CheckCircle2, XCircle, Check, Send } from 'lucide-react';
 
@@ -924,7 +925,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
                   <SelectContent>
                     {compradoresOptions.map(i => (
                       <SelectItem key={i.id} value={i.id}>
-                        {i.produtores?.nome} - IE: {i.inscricao_estadual}
+                        {labelInscricao(i)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -944,7 +945,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
                   <SelectContent>
                     {vendedoresOptions.map(i => (
                       <SelectItem key={i.id} value={i.id}>
-                        {i.produtor_nome} - IE: {i.inscricao_estadual} ({i.total_depositado?.toLocaleString('pt-BR')} kg)
+                        {labelInscricao(i)} ({i.total_depositado?.toLocaleString('pt-BR')} kg)
                       </SelectItem>
                     ))}
                   </SelectContent>

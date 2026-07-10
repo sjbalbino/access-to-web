@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { labelInscricao } from "@/lib/inscricaoLabel";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -57,7 +58,7 @@ export default function NotasDeposito() {
       .filter(i => i.ativa !== false)
       .map(i => ({
         value: i.id,
-        label: `${i.inscricao_estadual || ''} - ${i.produtores?.nome || i.nome || 'Sem nome'}`,
+        label: labelInscricao(i) || `${i.inscricao_estadual || ''} - ${i.nome || 'Sem nome'}`,
       }));
   }, [allInscricoes]);
   

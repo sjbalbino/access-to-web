@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { labelInscricao } from "@/lib/inscricaoLabel";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -260,7 +261,7 @@ export default function EntradasNfe() {
 
   const inscricaoOptions = (inscricoes || []).map((i: any) => ({
     value: i.id,
-    label: `${i.nome || ''} (IE: ${i.inscricao_estadual || '-'})`.trim(),
+    label: labelInscricao(i) || `${i.nome || ''} (IE: ${i.inscricao_estadual || '-'})`.trim(),
     sublabel: i.granjas?.razao_social || '',
   }));
 
