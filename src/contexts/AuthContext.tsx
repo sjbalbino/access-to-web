@@ -95,20 +95,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth event:", event, "Session:", !!session);
-        
+
         if (!isMounted) return;
 
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Defer Supabase calls with setTimeout to avoid deadlock
-        if (session?.user) {
+        // Só re-buscar dados em eventos de autenticação real.
+        // TOKEN_REFRESHED / USER_UPDATED disparam periodicamente e não devem
+        // re-executar a checagem de role (que pode falhar transitoriamente e
+        // acabar deslogando o usuário, deixando a tela em branco).
+        if (event === "SIGNED_IN" && session?.user) {
           setTimeout(() => {
             if (isMounted) {
               fetchUserData(session.user.id);
             }
           }, 0);
-        } else {
+        } else if (event === "SIGNED_OUT") {
           setProfile(null);
           setRole(null);
           setIsSuperAdmin(false);
