@@ -114,7 +114,7 @@ export default function EmitentesNfe() {
         id: string; nome: string | null; nome_fantasia: string | null; cpf_cnpj: string | null; inscricao_estadual: string | null;
         tipo: string | null; granja_id: string | null; cidade: string | null; uf: string | null;
         ativa: boolean | null; produtor_id: string | null;
-        produtores?: { id: string; nome: string } | null;
+        produtores?: { id: string; nome: string; tipo_produtor: string | null } | null;
         granjas?: { id: string; razao_social: string; nome_fantasia: string | null } | null;
       }>;
     },
