@@ -133,45 +133,8 @@ export async function gerarRomaneioVendaPdf(
   addKv("I.E.:", inscricao?.inscricao_estadual || "-");
   sep();
 
-  add("COMPRADOR", { bold: true, center: true });
-  addKv("Nome:", comprador?.nome || "-");
-  addKv(
-    "End.:",
-    `${comprador?.logradouro || ""}${comprador?.numero ? ", " + comprador.numero : ""}`.trim() ||
-      "-"
-  );
-  if (comprador?.bairro) addKv("Bairro:", comprador.bairro);
-  addKv(
-    "Cidade:",
-    `${comprador?.cidade || "-"}${comprador?.uf ? "/" + comprador.uf : ""}`
-  );
-  if (comprador?.cep) addKv("CEP:", comprador.cep);
-  addKv("CPF/CNPJ:", comprador?.cpf_cnpj || "-");
-  addKv("I.E.:", comprador?.inscricao_estadual || "-");
-  sep();
 
-  const le = {
-    nome: remessa.local_entrega_nome || contrato.local_entrega_nome,
-    log: remessa.local_entrega_logradouro || contrato.local_entrega_logradouro,
-    num: remessa.local_entrega_numero || contrato.local_entrega_numero,
-    bairro: remessa.local_entrega_bairro || contrato.local_entrega_bairro,
-    cidade: remessa.local_entrega_cidade || contrato.local_entrega_cidade,
-    uf: remessa.local_entrega_uf || contrato.local_entrega_uf,
-    cep: remessa.local_entrega_cep || contrato.local_entrega_cep,
-    cnpj: remessa.local_entrega_cnpj_cpf || contrato.local_entrega_cnpj_cpf,
-    ie: remessa.local_entrega_ie || contrato.local_entrega_ie,
-  };
-  add("LOCAL DE ENTREGA", { bold: true, center: true });
-  addKv("Local:", le.nome || "-");
-  addKv(
-    "End.:",
-    `${le.log || ""}${le.num ? ", " + le.num : ""}`.trim() || "-"
-  );
-  addKv("Cidade:", `${le.cidade || "-"}${le.uf ? "/" + le.uf : ""}`);
-  if (le.cep) addKv("CEP:", le.cep);
-  addKv("CPF/CNPJ:", le.cnpj || "-");
-  addKv("I.E.:", le.ie || "-");
-  sep();
+
 
   add("PESAGEM", { bold: true, center: true });
   const pesoBruto = Number(remessa.peso_bruto || 0);
