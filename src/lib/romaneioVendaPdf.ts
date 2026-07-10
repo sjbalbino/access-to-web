@@ -180,6 +180,7 @@ export async function gerarRomaneioVendaPdf(
     sep();
   }
 
+
   // Assinaturas
   add("");
   add("");
