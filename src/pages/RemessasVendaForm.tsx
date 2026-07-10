@@ -58,6 +58,7 @@ import { ptBR } from "date-fns/locale";
 import { PesarBrutoDialog } from "@/components/remessas/PesarBrutoDialog";
 import { EditarRemessaDialog } from "@/components/remessas/EditarRemessaDialog";
 import { EmitirNfeAutomaticoDialog } from "@/components/remessas/EmitirNfeAutomaticoDialog";
+import { TransportadoraFormDialog } from "@/components/transportadoras/TransportadoraFormDialog";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
