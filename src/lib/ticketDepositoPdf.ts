@@ -191,21 +191,22 @@ export async function gerarTicketDepositoPdf(colheitaId: string): Promise<void> 
 
   // Balanceiro
   add(`Balanceiro: ${balanceiro || "-"}`);
-  add("");
 
   // Assinatura
   add("_".repeat(COLS - 4), { center: true });
   add("Recebedor", { center: true });
-  add("");
   add(
     `Emitido: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`,
     { center: true }
   );
 
+  // Remove linhas vazias finais para não gerar espaço em branco
+  while (lines.length && lines[lines.length - 1].text.trim() === "") lines.pop();
+
   // Renderiza
   const lineH = 3.4;
-  const topPad = 4;
-  const bottomPad = 6;
+  const topPad = 3;
+  const bottomPad = 2;
   const pageH = topPad + lines.length * lineH + bottomPad;
 
   const doc = new jsPDF({
