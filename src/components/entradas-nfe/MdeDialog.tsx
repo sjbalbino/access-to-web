@@ -90,6 +90,51 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [filtroDataIni, setFiltroDataIni] = useState("");
   const [filtroDataFim, setFiltroDataFim] = useState("");
 
+  const [danfePreview, setDanfePreview] = useState<{ open: boolean; loading: boolean; pdfData: Uint8Array | null; downloadUrl: string | null; filename: string; titulo: string; chave: string }>({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "" });
+
+  const handleVisualizarDanfe = async (nfe: NfeRecebida) => {
+    const filename = `DANFE-${nfe.numero || nfe.chave}.pdf`;
+    setDanfePreview({ open: true, loading: true, pdfData: null, downloadUrl: null, filename, titulo: `DANFE - NF-e nº ${nfe.numero || ""}`, chave: nfe.chave });
+    try {
+      const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
+        body: { action: "download_danfe", inscricaoId, chave: nfe.chave },
+      });
+      if (error) throw new Error(error.message);
+      const blob = data instanceof Blob ? data : new Blob([data as BlobPart], { type: "application/pdf" });
+      const arrayBuffer = await blob.arrayBuffer();
+      const pdfData = new Uint8Array(arrayBuffer);
+      const downloadUrl = URL.createObjectURL(blob);
+      setDanfePreview((prev) => ({ ...prev, loading: false, pdfData, downloadUrl }));
+    } catch (e: any) {
+      toast.error("Erro ao carregar DANFE", { description: e?.message });
+      setDanfePreview({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "" });
+    }
+  };
+
+  const closeDanfePreview = () => {
+    setDanfePreview((prev) => {
+      if (prev.downloadUrl) URL.revokeObjectURL(prev.downloadUrl);
+      return { open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "" };
+    });
+  };
+
+  const handleImprimirDanfePreview = () => {
+    if (!danfePreview.downloadUrl) return;
+    const frame = document.createElement("iframe");
+    frame.style.position = "fixed";
+    frame.style.right = "0";
+    frame.style.bottom = "0";
+    frame.style.width = "0";
+    frame.style.height = "0";
+    frame.style.border = "0";
+    frame.src = danfePreview.downloadUrl;
+    frame.onload = () => {
+      try { frame.contentWindow?.focus(); frame.contentWindow?.print(); } catch (err) { console.error(err); }
+    };
+    document.body.appendChild(frame);
+    setTimeout(() => { try { document.body.removeChild(frame); } catch { /* ignore */ } }, 60000);
+  };
+
   const nfesFiltradas = useMemo(() => {
     const term = filtroBusca.trim().toLowerCase();
     return nfesRecebidas.filter((n) => {
