@@ -178,24 +178,24 @@ export async function gerarRomaneioVendaPdf(
 
 
   // Assinaturas
-  add("");
-  add("");
   add("_".repeat(COLS - 4), { center: true });
   add(String(t?.nome || "Transportador"), { center: true });
-  add("");
   add("_".repeat(COLS - 4), { center: true });
   add("Recebedor", { center: true });
-  add("");
   add(
     `Emitido: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`,
     { center: true }
   );
 
+  // Remove linhas em branco no final
+  while (lines.length && lines[lines.length - 1].text.trim() === "") lines.pop();
+
   // Renderização
   const lineH = 3.4;      // mm entre linhas
-  const topPad = 4;
-  const bottomPad = 6;
+  const topPad = 3;
+  const bottomPad = 2;
   const pageH = topPad + lines.length * lineH + bottomPad;
+
 
   const doc = new jsPDF({
     unit: "mm",
