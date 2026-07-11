@@ -715,10 +715,14 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
           </div>
         </DialogHeader>
         <div className="flex-1 min-h-0 overflow-hidden bg-muted/30">
-          {danfePreview.loading || !danfePreview.pdfData ? (
+          {danfePreview.loading || !danfePreview.downloadUrl ? (
             <div className="flex items-center justify-center h-full"><Spinner /></div>
           ) : (
-            <DanfePdfViewer pdfData={danfePreview.pdfData} />
+            <iframe
+              src={danfePreview.downloadUrl}
+              title={danfePreview.titulo}
+              className="w-full h-full border-0 bg-white"
+            />
           )}
         </div>
       </DialogContent>
