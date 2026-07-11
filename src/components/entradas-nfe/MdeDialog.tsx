@@ -687,6 +687,42 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    <Dialog open={danfePreview.open} onOpenChange={(o) => { if (!o) closeDanfePreview(); }}>
+      <DialogContent className="max-w-6xl w-[95vw] h-[92vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
+          <DialogTitle className="text-base truncate flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            {danfePreview.titulo}
+          </DialogTitle>
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="outline" onClick={handleImprimirDanfePreview} disabled={!danfePreview.downloadUrl}>
+              <Printer className="h-4 w-4 mr-1" /> Imprimir
+            </Button>
+            {danfePreview.downloadUrl && (
+              <Button size="sm" asChild>
+                <a href={danfePreview.downloadUrl} download={danfePreview.filename}>
+                  <Download className="h-4 w-4 mr-1" /> PDF
+                </a>
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={() => danfePreview.chave && downloadXml(inscricaoId, danfePreview.chave)} disabled={!danfePreview.chave || isLoading}>
+              <FileCode className="h-4 w-4 mr-1" /> XML
+            </Button>
+            <Button size="sm" variant="ghost" onClick={closeDanfePreview}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogHeader>
+        <div className="flex-1 min-h-0 overflow-hidden bg-muted/30">
+          {danfePreview.loading || !danfePreview.pdfData ? (
+            <div className="flex items-center justify-center h-full"><Spinner /></div>
+          ) : (
+            <DanfePdfViewer pdfData={danfePreview.pdfData} />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
