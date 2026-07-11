@@ -15,13 +15,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe } from "lucide-react";
+import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe, Eye, Printer, FileCode } from "lucide-react";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useMde, type NfeRecebida } from "@/hooks/useMde";
 import { formatNumber } from "@/lib/formatters";
 import { parseNfeXml } from "@/lib/nfeXmlParser";
 import { useCreateEntradaNfe } from "@/hooks/useEntradasNfe";
 import { supabase } from "@/integrations/supabase/client";
+import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 interface MdeDialogProps {
   open: boolean;
@@ -86,6 +89,51 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [filtroManifest, setFiltroManifest] = useState<string>("all");
   const [filtroDataIni, setFiltroDataIni] = useState("");
   const [filtroDataFim, setFiltroDataFim] = useState("");
+
+  const [danfePreview, setDanfePreview] = useState<{ open: boolean; loading: boolean; pdfData: Uint8Array | null; downloadUrl: string | null; filename: string; titulo: string; chave: string }>({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "" });
+
+  const handleVisualizarDanfe = async (nfe: NfeRecebida) => {
+    const filename = `DANFE-${nfe.numero || nfe.chave}.pdf`;
+    setDanfePreview({ open: true, loading: true, pdfData: null, downloadUrl: null, filename, titulo: `DANFE - NF-e nº ${nfe.numero || ""}`, chave: nfe.chave });
+    try {
+      const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
+        body: { action: "download_danfe", inscricaoId, chave: nfe.chave },
+      });
+      if (error) throw new Error(error.message);
+      const blob = data instanceof Blob ? data : new Blob([data as BlobPart], { type: "application/pdf" });
+      const arrayBuffer = await blob.arrayBuffer();
+      const pdfData = new Uint8Array(arrayBuffer);
+      const downloadUrl = URL.createObjectURL(blob);
+      setDanfePreview((prev) => ({ ...prev, loading: false, pdfData, downloadUrl }));
+    } catch (e: any) {
+      toast.error("Erro ao carregar DANFE", { description: e?.message });
+      setDanfePreview({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "" });
+    }
+  };
+
+  const closeDanfePreview = () => {
+    setDanfePreview((prev) => {
+      if (prev.downloadUrl) URL.revokeObjectURL(prev.downloadUrl);
+      return { open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "" };
+    });
+  };
+
+  const handleImprimirDanfePreview = () => {
+    if (!danfePreview.downloadUrl) return;
+    const frame = document.createElement("iframe");
+    frame.style.position = "fixed";
+    frame.style.right = "0";
+    frame.style.bottom = "0";
+    frame.style.width = "0";
+    frame.style.height = "0";
+    frame.style.border = "0";
+    frame.src = danfePreview.downloadUrl;
+    frame.onload = () => {
+      try { frame.contentWindow?.focus(); frame.contentWindow?.print(); } catch (err) { console.error(err); }
+    };
+    document.body.appendChild(frame);
+    setTimeout(() => { try { document.body.removeChild(frame); } catch { /* ignore */ } }, 60000);
+  };
 
   const nfesFiltradas = useMemo(() => {
     const term = filtroBusca.trim().toLowerCase();
@@ -587,6 +635,17 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         <Button
                           size="icon"
                           variant="ghost"
+                          className="h-9 w-9 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50"
+                          title="Visualizar DANFe"
+                          disabled={isLoading}
+                          onClick={() => handleVisualizarDanfe(nfe)}
+                        >
+                          <Eye className="h-5 w-5" />
+                        </Button>
+
+                        <Button
+                          size="icon"
+                          variant="ghost"
                           className="h-9 w-9 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
                           title="Baixar DANFe"
                           disabled={isLoading}
@@ -628,6 +687,42 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    <Dialog open={danfePreview.open} onOpenChange={(o) => { if (!o) closeDanfePreview(); }}>
+      <DialogContent className="max-w-6xl w-[95vw] h-[92vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
+          <DialogTitle className="text-base truncate flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            {danfePreview.titulo}
+          </DialogTitle>
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="outline" onClick={handleImprimirDanfePreview} disabled={!danfePreview.downloadUrl}>
+              <Printer className="h-4 w-4 mr-1" /> Imprimir
+            </Button>
+            {danfePreview.downloadUrl && (
+              <Button size="sm" asChild>
+                <a href={danfePreview.downloadUrl} download={danfePreview.filename}>
+                  <Download className="h-4 w-4 mr-1" /> PDF
+                </a>
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={() => danfePreview.chave && downloadXml(inscricaoId, danfePreview.chave)} disabled={!danfePreview.chave || isLoading}>
+              <FileCode className="h-4 w-4 mr-1" /> XML
+            </Button>
+            <Button size="sm" variant="ghost" onClick={closeDanfePreview}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogHeader>
+        <div className="flex-1 min-h-0 overflow-hidden bg-muted/30">
+          {danfePreview.loading || !danfePreview.pdfData ? (
+            <div className="flex items-center justify-center h-full"><Spinner /></div>
+          ) : (
+            <DanfePdfViewer pdfData={danfePreview.pdfData} />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
