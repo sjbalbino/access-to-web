@@ -105,16 +105,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // TOKEN_REFRESHED / USER_UPDATED disparam periodicamente e não devem
         // re-executar a checagem de role (que pode falhar transitoriamente e
         // acabar deslogando o usuário, deixando a tela em branco).
-        if (event === "SIGNED_IN" && session?.user) {
+        if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
           setTimeout(() => {
             if (isMounted) {
-              fetchUserData(session.user.id);
+              fetchUserData(session.user.id).finally(() => {
+                if (isMounted) setIsLoading(false);
+              });
             }
           }, 0);
+        } else if (event === "INITIAL_SESSION" && !session) {
+          setIsLoading(false);
         } else if (event === "SIGNED_OUT") {
           setProfile(null);
           setRole(null);
           setIsSuperAdmin(false);
+          setIsLoading(false);
         }
       }
     );
