@@ -236,12 +236,81 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     yPos = (doc as any).lastAutoTable.finalY + 5;
   }
 
+  // RESUMO POR VARIEDADE (agrupamento das colheitas)
+  if (data.colheitas.length > 0) {
+    const porVariedade = new Map<string, { producao: number; liquida: number; qtd: number }>();
+    data.colheitas.forEach((c) => {
+      const key = c.variedade || "-";
+      const acc = porVariedade.get(key) || { producao: 0, liquida: 0, qtd: 0 };
+      acc.producao += c.producao_kg || 0;
+      acc.liquida += c.producao_liquida_kg || 0;
+      acc.qtd += 1;
+      porVariedade.set(key, acc);
+    });
+
+    if (yPos > doc.internal.pageSize.getHeight() - 40) {
+      doc.addPage();
+      yPos = desenharCabecalhoBrand(doc);
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("RESUMO POR VARIEDADE", 14, yPos);
+    const variedadesBody = Array.from(porVariedade.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([variedade, v]) => [
+        variedade,
+        String(v.qtd),
+        formatNumber(v.producao, 0),
+        formatNumber(v.liquida, 0),
+        toSacas(v.liquida),
+      ]);
+    const totalVarProducao = Array.from(porVariedade.values()).reduce((s, v) => s + v.producao, 0);
+    const totalVarLiquida = Array.from(porVariedade.values()).reduce((s, v) => s + v.liquida, 0);
+    const totalVarQtd = Array.from(porVariedade.values()).reduce((s, v) => s + v.qtd, 0);
+    variedadesBody.push([
+      "TOTAL",
+      String(totalVarQtd),
+      formatNumber(totalVarProducao, 0),
+      formatNumber(totalVarLiquida, 0),
+      toSacas(totalVarLiquida),
+    ]);
+    autoTable(doc, {
+      startY: yPos + 2,
+      head: [[
+        "Variedade",
+        { content: "Colheitas", styles: { halign: "right" } },
+        { content: "Prod. Bruta (kg)", styles: { halign: "right" } },
+        { content: "Prod. Líquida (kg)", styles: { halign: "right" } },
+        { content: "Sacas", styles: { halign: "right" } },
+      ]],
+      body: variedadesBody,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [66, 66, 66], textColor: 255 },
+      columnStyles: {
+        0: { halign: "left" },
+        1: { halign: "right", cellWidth: 25 },
+        2: { halign: "right", cellWidth: 35 },
+        3: { halign: "right", cellWidth: 40 },
+        4: { halign: "right", cellWidth: 25 },
+      },
+      didParseCell: (d) => {
+        if (d.row.index === variedadesBody.length - 1) {
+          d.cell.styles.fontStyle = "bold";
+          d.cell.styles.fillColor = [240, 240, 240];
+        }
+      },
+    });
+    yPos = (doc as any).lastAutoTable.finalY + 5;
+  }
+
   const totalColheitas = data.colheitas.reduce((s, c) => s + (c.producao_liquida_kg || 0), 0);
   const totalRecebidas = data.transferenciasRecebidas.reduce((s, t) => s + t.quantidade_kg, 0);
   const totalEnviadas = data.transferenciasEnviadas.reduce((s, t) => s + t.quantidade_kg, 0);
   const totalDevolucoes = data.devolucoes.reduce((s, d) => s + d.quantidade_kg, 0);
   const totalKgTaxa = data.devolucoes.reduce((s, d) => s + (d.kg_taxa_armazenagem || 0), 0);
   const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalKgTaxa;
+
 
   // Check if need new page
   if (yPos > doc.internal.pageSize.getHeight() - 50) {
