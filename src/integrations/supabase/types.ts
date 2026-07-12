@@ -2899,6 +2899,7 @@ export type Database = {
           bairro: string | null
           cep: string | null
           cidade: string | null
+          codigo: string | null
           complemento: string | null
           conta_bancaria: string | null
           cpf_cnpj: string | null
@@ -2926,6 +2927,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
+          codigo?: string | null
           complemento?: string | null
           conta_bancaria?: string | null
           cpf_cnpj?: string | null
@@ -2953,6 +2955,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
+          codigo?: string | null
           complemento?: string | null
           conta_bancaria?: string | null
           cpf_cnpj?: string | null
