@@ -641,12 +641,32 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const totalKgTaxa = sum(extratoData.devolucoes, "kg_taxa_armazenagem");
     const saldo = totalColheitas + totalTrRec - totalTrEnv - totalDev - totalKgTaxa;
 
+    const porVariedade = new Map<string, { qtd: number; producao: number; liquida: number }>();
+    extratoData.colheitas.forEach((c) => {
+      const key = c.variedade || "-";
+      const acc = porVariedade.get(key) || { qtd: 0, producao: 0, liquida: 0 };
+      acc.qtd += 1;
+      acc.producao += Number(c.producao_kg) || 0;
+      acc.liquida += Number(c.producao_liquida_kg) || 0;
+      porVariedade.set(key, acc);
+    });
+    const variedadeRows: any[] = Array.from(porVariedade.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([variedade, v]) => [variedade, v.qtd, v.producao, v.liquida, sc(v.liquida)]);
+    if (variedadeRows.length) {
+      const tQ = variedadeRows.reduce((s, r) => s + (Number(r[1]) || 0), 0);
+      const tP = variedadeRows.reduce((s, r) => s + (Number(r[2]) || 0), 0);
+      const tL = variedadeRows.reduce((s, r) => s + (Number(r[3]) || 0), 0);
+      variedadeRows.push(["TOTAL", tQ, tP, tL, sc(tL)]);
+    }
+
     setPendingSheets([
       { name: "Colheitas", header: ["Data", "Lavoura", "Variedade", "Peso Bruto", "Peso Tara", "Produção (kg)", "Umidade %", "Impureza %", "Desconto (kg)", "Líquido (kg)", "Sacas"], rows: colheitasRows },
       { name: "Transf. Recebidas", header: ["Data", "De", "Qtd (kg)", "Sacas"], rows: trRecRows },
       { name: "Transf. Enviadas", header: ["Data", "Para", "Qtd (kg)", "Sacas"], rows: trEnvRows },
       { name: "Devoluções", header: ["Data", "Qtd (kg)", "Sacas", "Taxa Arm. %", "Kg Taxa"], rows: devRows },
       { name: "Notas Depósito", header: ["Data", "NF", "Qtd (kg)", "Sacas"], rows: ndRows },
+      { name: "Resumo por Variedade", header: ["Variedade", "Colheitas", "Prod. Bruta (kg)", "Prod. Líquida (kg)", "Sacas"], rows: variedadeRows },
       { name: "Resumo Final", header: ["Descrição", "Kg", "Sacas"], rows: [
         ["Total Colheitas", totalColheitas, sc(totalColheitas)],
         ["(+) Transf. Recebidas", totalTrRec, sc(totalTrRec)],
@@ -656,6 +676,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         ["SALDO", saldo, sc(saldo)],
       ] },
     ]);
+
     gerarExtratoProdutorPdf(extratoData);
   };
 
