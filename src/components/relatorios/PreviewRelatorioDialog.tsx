@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, Printer, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import type { RelatorioPayload, RelatorioSheet } from "@/lib/relatorioViewer";
+import { PdfViewer } from "@/components/shared/PdfViewer";
+import type { RelatorioPayload } from "@/lib/relatorioViewer";
 
 interface Props {
   payload: RelatorioPayload | null;
