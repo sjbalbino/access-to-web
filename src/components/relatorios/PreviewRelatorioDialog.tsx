@@ -13,89 +13,28 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/;
-
-function formatPreviewValue(value: string | number | null | undefined, header?: string): string {
-  if (value === null || value === undefined || value === "") return "-";
-  if (typeof value === "string") {
-    const m = value.match(ISO_DATE_RE);
-    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-  }
-  if (typeof value === "number") {
-    const isInteger = header ? /\bkg\b|saca|sacos|qtd|quantidade/i.test(header) : false;
-    return new Intl.NumberFormat("pt-BR", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: isInteger ? 0 : 2,
-    }).format(value);
-  }
-  return value;
-}
-
-function isNumericColumn(header: string): boolean {
-  return /kg|saca|sacos|qtd|quantidade|peso|valor|total|saldo|taxa|%|r\$|preço|preco/i.test(header);
-}
-
-interface ReportSheetPreviewProps {
-  sheet: RelatorioSheet;
-}
-
-function ReportSheetPreview({ sheet }: ReportSheetPreviewProps) {
-  return (
-    <section className="space-y-3">
-      <h3 className="text-sm font-semibold text-foreground">{sheet.name}</h3>
-      <div className="overflow-x-auto rounded-md border bg-background">
-        <table className="w-full min-w-max border-collapse text-xs">
-          <thead className="bg-muted">
-            <tr>
-              {sheet.header.map((header) => (
-                <th
-                  key={header}
-                  className={
-                    isNumericColumn(header)
-                      ? "border-b px-3 py-2 text-right font-semibold text-foreground"
-                      : "border-b px-3 py-2 text-left font-semibold text-foreground"
-                  }
-                >
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sheet.rows.map((row, rowIndex) => {
-              const firstCell = row[0];
-              const isTotalRow = typeof firstCell === "string" && /^(total|subtotal|resumo|saldo)/i.test(firstCell.trim());
-              return (
-                <tr
-                  key={`${sheet.name}-${rowIndex}`}
-                  className={isTotalRow ? "bg-muted font-semibold" : "even:bg-muted/40"}
-                >
-                  {sheet.header.map((header, columnIndex) => (
-                    <td
-                      key={`${sheet.name}-${rowIndex}-${header}`}
-                      className={isNumericColumn(header) ? "border-b px-3 py-2 text-right" : "border-b px-3 py-2 text-left"}
-                    >
-                      {formatPreviewValue(row[columnIndex], header)}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
 export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
-  const sheets = (payload?.sheets ?? []).filter((s) => s.rows.length > 0);
+  const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
+
+  useEffect(() => {
+    if (!open || !payload) {
+      setPdfData(null);
+      return;
+    }
+    try {
+      const buf = payload.doc.output("arraybuffer");
+      setPdfData(new Uint8Array(buf));
+    } catch (err) {
+      console.error("Erro ao gerar PDF para preview:", err);
+      setPdfData(null);
+    }
+  }, [open, payload]);
 
   const handleBaixarPdf = () => {
     if (!payload) return;
     try {
       payload.doc.save(payload.filename);
-    } catch (err) {
+    } catch {
       toast({
         title: "Erro ao baixar",
         description: "Não foi possível gerar o arquivo para download.",
@@ -107,7 +46,6 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
   const handleImprimir = () => {
     if (!payload) return;
     try {
-      // Para impressão, ainda precisamos de um blob temporário
       const blob = payload.doc.output("blob");
       const url = URL.createObjectURL(blob);
       const frame = document.createElement("iframe");
@@ -194,26 +132,9 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
             </Button>
           </div>
         </DialogHeader>
-        
-        <div className="relative flex-1 overflow-auto bg-muted/30 p-6">
-          <div className="mx-auto min-h-full max-w-5xl rounded-md border bg-card p-6 shadow-sm">
-            <div className="mb-6 border-b pb-4">
-              <h2 className="text-lg font-semibold text-foreground">{payload?.filename?.replace(/\.pdf$/i, "") ?? "Relatório"}</h2>
-              <p className="text-xs text-muted-foreground">Prévia em tela dos dados que serão exportados no PDF.</p>
-            </div>
 
-            {sheets.length > 0 ? (
-              <div className="space-y-8">
-                {sheets.map((sheet) => (
-                  <ReportSheetPreview key={sheet.name} sheet={sheet} />
-                ))}
-              </div>
-            ) : (
-              <div className="flex min-h-80 items-center justify-center text-center text-sm text-muted-foreground">
-                Este relatório não possui dados tabulares para prévia em tela. Use Baixar PDF para visualizar o arquivo completo.
-              </div>
-            )}
-          </div>
+        <div className="flex-1 min-h-0">
+          <PdfViewer pdfData={pdfData} errorMessage="Não foi possível renderizar o relatório." />
         </div>
       </DialogContent>
     </Dialog>
