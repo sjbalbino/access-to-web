@@ -1278,8 +1278,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 onValueChange={setProdutorId}
                 options={(produtoresList || [])
                   .filter(p => p.ativo !== false)
-                  .map(p => ({ value: p.id, label: `${p.nome}${p.cpf_cnpj ? ` - ${p.cpf_cnpj}` : ''}` }))
-                  .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"))}
+                  .slice()
+                  .sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR", { sensitivity: "base" }))
+                  .map(p => ({ value: p.id, label: `${p.nome}${p.cpf_cnpj ? ` - ${p.cpf_cnpj}` : ''}` }))}
                 placeholder="Selecione o produtor"
                 searchPlaceholder="Buscar produtor..."
                 emptyText="Nenhum produtor encontrado."
