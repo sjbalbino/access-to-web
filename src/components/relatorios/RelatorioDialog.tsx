@@ -11,6 +11,7 @@ import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
+import { useProdutores } from "@/hooks/useProdutores";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { FileDown, Loader2 } from "lucide-react";
