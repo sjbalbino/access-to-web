@@ -683,10 +683,20 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             continue;
           }
 
-          // Build update payload
+          // Build update payload — only include fields that have a value,
+          // so blank cells don't overwrite existing data.
           const updatePayload: Record<string, any> = {};
           for (const uc of updateColumns) {
-            updatePayload[uc.dbColumn] = row[uc.sourceColumn] ?? null;
+            const v = row[uc.sourceColumn];
+            if (v !== undefined && v !== null && v !== '') {
+              updatePayload[uc.dbColumn] = v;
+            }
+          }
+
+          if (Object.keys(updatePayload).length === 0) {
+            // Nothing to update for this row — skip silently.
+            setProgress(Math.round(((i + 1) / transformedData.length) * 100));
+            continue;
           }
 
           const { error: updateErr } = await (supabase
@@ -703,6 +713,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           setProgress(Math.round(((i + 1) / transformedData.length) * 100));
           setImportedCount(imported);
         }
+
 
         setImportErrors(errors);
 
