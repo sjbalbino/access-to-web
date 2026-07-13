@@ -58,6 +58,7 @@ interface Props {
 export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [safraId, setSafraId] = useState("");
   const [inscricaoId, setInscricaoId] = useState("");
+  const [produtorId, setProdutorId] = useState("");
   const [produtoId, setProdutoId] = useState("");
   const [siloId, setSiloId] = useState("");
   const [compradorId, setCompradorId] = useState("");
