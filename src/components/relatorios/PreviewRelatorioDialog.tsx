@@ -138,8 +138,18 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
           </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0">
-          <PdfViewer pdfData={pdfData} errorMessage="Não foi possível renderizar o relatório." />
+        <div className="flex-1 min-h-0 bg-muted/30">
+          {pdfUrl ? (
+            <iframe
+              src={pdfUrl}
+              title="Prévia do relatório"
+              className="h-full w-full border-0"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              Gerando prévia...
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
