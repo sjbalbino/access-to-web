@@ -1,37 +1,41 @@
 ## Objetivo
 
-Alterar o **modelo de importação de colheitas** (`modelo_colheitas.xlsx`, gerado dinamicamente pelo sistema) acrescentando duas colunas — `inscricao_codigo` e `inscricao_nome` — e ajustar o importador para usá-las como forma robusta de identificar a inscrição correta, permitindo corrigir as 640 colheitas com IE genérica (`000/111`) num novo import.
+Gerar um arquivo Excel (`Colheitas_Corrigir_IEs_Genericas.xlsx`) com as **640 colheitas** vinculadas às inscrições genéricas `000.000.000-0` (366 linhas) e `111.111.111-1` (274 linhas), pronto para você preencher `inscricao_codigo` / `inscricao_nome` e reimportar em modo update.
 
-## Mudanças (apenas em `src/lib/importacaoConfig.ts`)
+## Contagem confirmada no banco
 
-Na configuração `colheitas`:
+| IE atual | Colheitas |
+|---|---|
+| 000.000.000-0 | 366 |
+| 111.111.111-1 | 274 |
+| **Total** | **640** |
 
-1. **Substituir o resolver atual** de `inscricao_produtor_id`:
-   - Hoje: `sourceColumn: 'inscricao_codigo'` com aliases (`inscricao_ie`, etc.) → busca em `inscricoes_produtor.codigo`.
-   - Novo: resolver **composto** —
-     - `sourceColumn: 'inscricao_codigo'` → busca por `inscricoes_produtor.codigo` (chave primária de identificação).
-     - `compositeSourceColumn: 'inscricao_nome'` → usado como conferência/desambiguação contra `nome` ou `produtores.nome`.
-   - Mantém `optional: true` para não travar linhas sem inscrição.
+## Conteúdo da planilha
 
-2. **Ativar `updateMode`** na config de colheitas:
-   - `lookupColumn: 'codigo'` (colheita.codigo)
-   - `sourceColumn: 'COL_CODIGO'`
-   - `updateColumns: [{ sourceColumn: 'inscricao_codigo', dbColumn: 'inscricao_produtor_id' }]` (resolvido via referência)
+**Aba `Colheitas` (640 linhas)** — colunas na ordem:
 
-   Assim, ao reimportar a planilha em modo update, o sistema atualiza **apenas** o vínculo da inscrição das colheitas já existentes, sem alterar peso, data, silo, etc. Linhas com `inscricao_codigo` em branco não sofrem alteração.
+1. `COL_CODIGO` — código da colheita (chave do updateMode)
+2. `data_colheita` (DD/MM/YYYY)
+3. `safra`
+4. `lavoura` (controle de lavoura)
+5. `silo`
+6. `producao_kg`
+7. `producao_liquida_kg`
+8. `romaneio`
+9. `motorista`
+10. `inscricao_ie_atual` — IE genérica atual (000/111) — só para conferência
+11. `produtor_atual` — nome do produtor hoje vinculado — pista para descobrir a IE correta
+12. **`inscricao_codigo`** — VAZIO, você preenche com o código único da IE correta
+13. **`inscricao_nome`** — VAZIO, opcional para conferência
 
-## Efeitos automáticos
+**Aba `_INSCRICOES_REFERENCIA`** — dump de todas as inscrições ativas com `codigo`, `nome`, `inscricao_estadual`, `cpf_cnpj`, `produtor` — para você localizar o `inscricao_codigo` certo por busca.
 
-- `handleDownloadTemplate` em `ImportarDados.tsx` já monta os headers a partir de `config.columns` + `config.references` (incluindo `compositeSourceColumn`). Ou seja, ao adicionar o resolver composto, o botão "Baixar modelo" das colheitas passará a incluir as duas novas colunas automaticamente — sem mexer no `ImportarDados.tsx`.
-- Nenhuma migration necessária. Nenhuma coluna nova no banco.
+## Fluxo
 
-## Fluxo de uso
-
-1. Você baixa o novo `modelo_colheitas.xlsx` (já com as 2 colunas).
-2. Regenera sua planilha completa de colheitas com `inscricao_codigo` e `inscricao_nome` preenchidos **apenas nas 640 linhas** com IE 000/111 (as demais podem ficar em branco, pois já estão corretas no banco).
-3. Importa em **modo update** — só as 640 colheitas com `inscricao_codigo` preenchido têm seu `inscricao_produtor_id` atualizado.
-4. Auditoria: `SELECT count(*)` das colheitas ainda em 000/111 deve cair para (quase) zero.
+1. Você recebe o arquivo em `/mnt/documents/`.
+2. Preenche `inscricao_codigo` nas 640 linhas (usando a aba de referência).
+3. Importa em **Colheitas → Importar** — o `updateMode` já configurado atualiza somente `inscricao_produtor_id` das linhas com código preenchido, sem tocar em peso, data ou silo.
 
 ## O que aprovar
 
-Aprovar libera as duas alterações em `importacaoConfig.ts` (resolver composto + updateMode).
+Aprovar libera a geração do arquivo Excel a partir das queries já validadas (nenhuma alteração de código).
