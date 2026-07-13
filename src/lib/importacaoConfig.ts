@@ -912,8 +912,8 @@ export const tableConfigs: TableConfig[] = [
       }},
     ],
     references: [
-      { dbColumn: 'inscricao_comprador_id', sourceColumn: 'inscricao_comprador_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_comprador_nome', compositeColumns: ['nome'], required: true },
-      { dbColumn: 'inscricao_vendedor_id', sourceColumn: 'inscricao_vendedor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_vendedor_nome', compositeColumns: ['nome'], required: true },
+      { dbColumn: 'inscricao_comprador_id', sourceColumn: 'inscricao_comprador_codigo', sourceColumnAliases: ['inscricao_comprador_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
+      { dbColumn: 'inscricao_vendedor_id', sourceColumn: 'inscricao_vendedor_codigo', sourceColumnAliases: ['inscricao_vendedor_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
