@@ -6,12 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import {
   BarChart3, FileText, Wheat, ShoppingCart, PieChart, TrendingUp,
-  Truck, Package, MapPin, Warehouse, Users, LucideIcon,
+  Truck, Package, MapPin, Warehouse, Users, ClipboardList, LucideIcon,
 } from "lucide-react";
 import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
 
 type TipoRelatorio =
-  | "extrato" | "colheitas" | "vendas"
+  | "extrato" | "resumo_produtor" | "colheitas" | "vendas"
   | "demonstrativo_gerencial" | "dre" | "bens_moveis"
   | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
