@@ -855,9 +855,9 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'DevEmitida', dbName: '_dev_emitida_ignore', transform: () => undefined },
     ],
     references: [
-      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'], required: true },
-      { dbColumn: 'inscricao_emitente_id', sourceColumn: 'inscricao_emitente_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_emitente_nome', compositeColumns: ['nome'], required: true },
-      { dbColumn: 'inscricao_recebe_taxa_id', sourceColumn: 'inscricao_recebe_taxa_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_recebe_taxa_nome', compositeColumns: ['nome'] },
+      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_codigo', sourceColumnAliases: ['inscricao_produtor_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
+      { dbColumn: 'inscricao_emitente_id', sourceColumn: 'inscricao_emitente_codigo', sourceColumnAliases: ['inscricao_emitente_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
+      { dbColumn: 'inscricao_recebe_taxa_id', sourceColumn: 'inscricao_recebe_taxa_codigo', sourceColumnAliases: ['inscricao_recebe_taxa_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
