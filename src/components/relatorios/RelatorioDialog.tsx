@@ -86,6 +86,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const { data: produtos } = useProdutos();
   const { data: silos } = useSilos();
   const { data: inscricoes } = useAllInscricoes();
+  const { data: produtoresList } = useProdutores();
   const { data: clientes } = useClientesFornecedores();
   const { data: granjas } = useGranjas();
   const { data: locaisEntrega } = useLocaisEntrega();
