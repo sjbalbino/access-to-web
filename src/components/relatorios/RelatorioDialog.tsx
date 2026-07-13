@@ -178,11 +178,18 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const produtoresExtratoOptions = (inscricoes || [])
     .filter((inscricao) => inscricaoIdsComMovimento.has(inscricao.id))
+    .slice()
+    .sort((a, b) => {
+      const nomeA = (a.produtores?.nome || a.inscricao_estadual || "").toLocaleLowerCase("pt-BR");
+      const nomeB = (b.produtores?.nome || b.inscricao_estadual || "").toLocaleLowerCase("pt-BR");
+      const cmp = nomeA.localeCompare(nomeB, "pt-BR", { sensitivity: "base" });
+      if (cmp !== 0) return cmp;
+      return (a.inscricao_estadual || "").localeCompare(b.inscricao_estadual || "", "pt-BR");
+    })
     .map((inscricao) => ({
       value: inscricao.id,
       label: `${inscricao.produtores?.nome || inscricao.inscricao_estadual || "Sem nome"} - IE: ${inscricao.inscricao_estadual || "-"}`,
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+    }));
 
   const titulos: Record<TipoRelatorio, string> = {
     extrato: "Extrato do Produtor",
@@ -1271,8 +1278,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 onValueChange={setProdutorId}
                 options={(produtoresList || [])
                   .filter(p => p.ativo !== false)
-                  .map(p => ({ value: p.id, label: `${p.nome}${p.cpf_cnpj ? ` - ${p.cpf_cnpj}` : ''}` }))
-                  .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"))}
+                  .slice()
+                  .sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR", { sensitivity: "base" }))
+                  .map(p => ({ value: p.id, label: `${p.nome}${p.cpf_cnpj ? ` - ${p.cpf_cnpj}` : ''}` }))}
                 placeholder="Selecione o produtor"
                 searchPlaceholder="Buscar produtor..."
                 emptyText="Nenhum produtor encontrado."
