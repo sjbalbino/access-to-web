@@ -1,23 +1,31 @@
-## Plano de correção
+## Objetivo
 
-O erro continua porque o backend já tem índice único parcial em `(granja_id, codigo) WHERE codigo IS NOT NULL`, mas o reimport está usando `onConflict: 'granja_id,codigo'`. Para esse tipo de índice parcial, o upsert direto não consegue encontrar uma constraint/exclusion constraint compatível e retorna exatamente: `there is no unique or exclusion constraint matching the ON CONFLICT specification`.
+Exportar em CSV as 631 inscrições de produtor que ainda estão sem `codigo` (INSCCODIGO), para o usuário complementar em planilha e reimportar.
 
-## O que vou ajustar
+## O que vou fazer (em modo build)
 
-1. Remover `inscricoes_produtor` da lista de tabelas que usam upsert automático por `onConflict`.
-2. Implementar um fluxo específico para `Inscrições Produtor` quando “Atualizar existentes + inserir novos” estiver ligado:
-   - separar registros com `granja_id + codigo` preenchidos;
-   - buscar no banco as inscrições existentes por `granja_id` e `codigo`;
-   - atualizar os existentes por `id`;
-   - inserir os novos registros sem apagar nada já importado.
-3. Manter o índice único parcial existente para prevenir duplicidades novas, sem exigir que todos os registros antigos tenham código.
-4. Preservar compatibilidade com `INSCCODIGO` e aliases já configurados.
-5. Validar no código que o importador não usa mais `onConflict: 'granja_id,codigo'` para `inscricoes_produtor`.
+1. Rodar uma consulta na tabela `inscricoes_produtor` filtrando `codigo IS NULL`, trazendo os campos úteis para identificação:
+   - `inscricao_id` (id da inscrição no banco)
+   - `inscricao_estadual`
+   - `cpf_cnpj`
+   - `nome` e `nome_fantasia`
+   - `produtor_nome` (via join em `produtores`)
+   - `granja` (razão social, via join em `granjas`)
+   - `cidade`, `uf`
+   - `tipo`, `ativa`
 
-## Resultado esperado
+2. Ordenar por granja → produtor → inscrição estadual para facilitar o preenchimento manual.
 
-Ao reimportar as Inscrições Produtor com `INSCCODIGO` e a opção “Atualizar existentes + inserir novos”, o sistema deve atualizar os cadastros existentes e inserir apenas os novos, sem apagar os lançamentos posteriores e sem cair no erro de `ON CONFLICT`.
+3. Exportar via `COPY ... TO STDOUT WITH CSV HEADER` para `/mnt/documents/inscricoes_sem_codigo.csv`.
 
-## Observação técnica
+4. Entregar o arquivo com uma tag `<presentation-artifact>` para download imediato.
 
-Não será feita alteração destrutiva nos dados. A correção será no fluxo do importador para contornar a limitação do upsert com índice único parcial.
+## Como usar depois
+
+- Abrir o CSV, preencher a coluna `INSCCODIGO` (ou adicionar uma nova coluna com esse nome) para cada linha.
+- Reimportar via **Importar Dados → Inscrições Produtor** com a opção "Atualizar existentes + inserir novos" ligada.
+- O sistema fará o match pela chave `granja_id + codigo` e atualizará os cadastros existentes.
+
+## Observação
+
+Nenhuma alteração em código ou banco é necessária — é apenas uma exportação de leitura.
