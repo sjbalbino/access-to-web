@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, Printer, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { PdfViewer } from "@/components/shared/PdfViewer";
 import type { RelatorioPayload } from "@/lib/relatorioViewer";
 
 interface Props {
@@ -14,21 +13,27 @@ interface Props {
 }
 
 export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
-  const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !payload) {
-      setPdfData(null);
+      setPdfUrl(null);
       return;
     }
+    let url: string | null = null;
     try {
-      const buf = payload.doc.output("arraybuffer");
-      setPdfData(new Uint8Array(buf));
+      const blob = payload.doc.output("blob");
+      url = URL.createObjectURL(blob);
+      setPdfUrl(url);
     } catch (err) {
       console.error("Erro ao gerar PDF para preview:", err);
-      setPdfData(null);
+      setPdfUrl(null);
     }
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
   }, [open, payload]);
+
 
   const handleBaixarPdf = () => {
     if (!payload) return;
@@ -133,8 +138,18 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
           </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0">
-          <PdfViewer pdfData={pdfData} errorMessage="Não foi possível renderizar o relatório." />
+        <div className="flex-1 min-h-0 bg-muted/30">
+          {pdfUrl ? (
+            <iframe
+              src={pdfUrl}
+              title="Prévia do relatório"
+              className="h-full w-full border-0"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              Gerando prévia...
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
