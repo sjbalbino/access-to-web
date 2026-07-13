@@ -11,6 +11,7 @@ import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
+import { useProdutores } from "@/hooks/useProdutores";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { FileDown, Loader2 } from "lucide-react";
@@ -18,9 +19,11 @@ import {
   gerarExtratoProdutorPdf,
   gerarRelatorioColheitasPdf,
   gerarRelatorioVendasPdf,
+  gerarResumoProdutorPdf,
   type ExtratoData,
   type RelColheita,
   type RelContratoVenda,
+  type ResumoProdutorRow,
 } from "@/lib/relatoriosPdf";
 import {
   gerarDemonstrativoGerencialPdf,
@@ -44,7 +47,7 @@ import { captureNextRelatorio, cancelPendingCapture, setPendingSheets, type Rela
 import { loadPdfBrand } from "@/lib/pdfBrand";
 import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
 
-export type TipoRelatorio = "extrato" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+export type TipoRelatorio = "extrato" | "resumo_produtor" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 interface Props {
   tipo: TipoRelatorio;
@@ -55,6 +58,7 @@ interface Props {
 export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [safraId, setSafraId] = useState("");
   const [inscricaoId, setInscricaoId] = useState("");
+  const [produtorId, setProdutorId] = useState("");
   const [produtoId, setProdutoId] = useState("");
   const [siloId, setSiloId] = useState("");
   const [compradorId, setCompradorId] = useState("");
@@ -82,6 +86,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const { data: produtos } = useProdutos();
   const { data: silos } = useSilos();
   const { data: inscricoes } = useAllInscricoes();
+  const { data: produtoresList } = useProdutores();
   const { data: clientes } = useClientesFornecedores();
   const { data: granjas } = useGranjas();
   const { data: locaisEntrega } = useLocaisEntrega();
@@ -181,6 +186,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const titulos: Record<TipoRelatorio, string> = {
     extrato: "Extrato do Produtor",
+    resumo_produtor: "Resumo do Produtor",
     colheitas: "Relatório de Colheitas",
     vendas: "Relatório de Vendas",
     demonstrativo_gerencial: "Demonstrativo Gerencial",
@@ -208,6 +214,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const capture = captureNextRelatorio();
     try {
       if (tipo === "extrato") await gerarExtrato();
+      else if (tipo === "resumo_produtor") await gerarResumoProdutor();
       else if (tipo === "colheitas") await gerarColheitas();
       else if (tipo === "vendas") await gerarVendas();
       else if (tipo === "demonstrativo_gerencial") await gerarDemonstrativo();
@@ -551,6 +558,191 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       safraNome: safra?.nome || "-",
       produtoNome: produto?.nome || null,
       pesoSaco: 60,
+      rows,
+    });
+  };
+
+  // ========== RESUMO DO PRODUTOR ==========
+  const gerarResumoProdutor = async () => {
+    if (!produtorId) {
+      toast({ title: "Filtro obrigatório", description: "Selecione o produtor.", variant: "destructive" });
+      return;
+    }
+    const produtor = produtoresList?.find(p => p.id === produtorId);
+    if (!produtor) { toast({ title: "Produtor não encontrado", variant: "destructive" }); return; }
+
+    // Inscrições do produtor
+    const { data: inscricoesProdutor, error: incErr } = await supabase
+      .from("inscricoes_produtor")
+      .select("id, inscricao_estadual, granja, produtores:produtor_id(nome)")
+      .eq("produtor_id", produtorId);
+    if (incErr) throw incErr;
+    if (!inscricoesProdutor || inscricoesProdutor.length === 0) {
+      toast({ title: "Sem dados", description: "Produtor sem inscrições." });
+      return;
+    }
+    const inscIds = inscricoesProdutor.map(i => i.id);
+    const inscMap = new Map(inscricoesProdutor.map(i => [i.id, i]));
+
+    // Safras + cultura
+    const { data: safrasAll } = await supabase
+      .from("safras")
+      .select("id, nome, cultura:cultura_id(nome, peso_saco_industria, peso_saco_semente)");
+    const safraMap = new Map<string, { nome: string; cultura: string; psInd: number; psSem: number }>();
+    (safrasAll || []).forEach((s: any) => {
+      safraMap.set(s.id, {
+        nome: s.nome,
+        cultura: s.cultura?.nome || "-",
+        psInd: Number(s.cultura?.peso_saco_industria) || 60,
+        psSem: Number(s.cultura?.peso_saco_semente) || 60,
+      });
+    });
+
+    const safraFilter = (col: string) => safraId ? [col, safraId] as const : null;
+
+    // Colheitas (para depósitos, tipo, local entrega)
+    let qCol = supabase.from("colheitas")
+      .select("inscricao_produtor_id, safra_id, producao_liquida_kg, tipo_colheita, local_entrega_terceiro_id, locais_entrega:local_entrega_terceiro_id(nome)")
+      .in("inscricao_produtor_id", inscIds);
+    if (safraId) qCol = qCol.eq("safra_id", safraId);
+    const { data: colheitas } = await qCol;
+
+    // Transferências
+    let qTrOr = supabase.from("transferencias_deposito")
+      .select("inscricao_origem_id, safra_id, quantidade_kg")
+      .in("inscricao_origem_id", inscIds);
+    if (safraId) qTrOr = qTrOr.eq("safra_id", safraId);
+    let qTrDe = supabase.from("transferencias_deposito")
+      .select("inscricao_destino_id, safra_id, quantidade_kg")
+      .in("inscricao_destino_id", inscIds);
+    if (safraId) qTrDe = qTrDe.eq("safra_id", safraId);
+    const [trOrRes, trDeRes] = await Promise.all([qTrOr, qTrDe]);
+
+    // Devoluções
+    let qDev = supabase.from("devolucoes_deposito")
+      .select("inscricao_produtor_id, safra_id, quantidade_kg")
+      .in("inscricao_produtor_id", inscIds).neq("status", "cancelada");
+    if (safraId) qDev = qDev.eq("safra_id", safraId);
+    let qDevTx = supabase.from("devolucoes_deposito")
+      .select("inscricao_recebe_taxa_id, safra_id, kg_taxa_armazenagem")
+      .in("inscricao_recebe_taxa_id", inscIds).neq("status", "cancelada");
+    if (safraId) qDevTx = qDevTx.eq("safra_id", safraId);
+    const [devRes, devTxRes] = await Promise.all([qDev, qDevTx]);
+
+    // Compras
+    let qCompra = supabase.from("compras_cereais")
+      .select("inscricao_comprador_id, safra_id, quantidade_kg")
+      .in("inscricao_comprador_id", inscIds);
+    if (safraId) qCompra = qCompra.eq("safra_id", safraId);
+    const { data: compras } = await qCompra;
+
+    // Vendas via contratos + remessas
+    let qContr = supabase.from("contratos_venda")
+      .select("id, inscricao_produtor_id, safra_id")
+      .in("inscricao_produtor_id", inscIds);
+    if (safraId) qContr = qContr.eq("safra_id", safraId);
+    const { data: contratos } = await qContr;
+    const contratoInfo = new Map<string, { insc: string; safra: string }>();
+    (contratos || []).forEach(c => contratoInfo.set(c.id, { insc: c.inscricao_produtor_id!, safra: c.safra_id! }));
+    let remessas: any[] = [];
+    if (contratos && contratos.length) {
+      const { data: rems } = await supabase.from("remessas_venda")
+        .select("contrato_venda_id, kg_remessa")
+        .in("contrato_venda_id", contratos.map(c => c.id))
+        .neq("status", "cancelada");
+      remessas = rems || [];
+    }
+
+    // Aggregation: key = safra_id | inscricao_id | local
+    type Acc = { safra: string; cultura: string; psInd: number; psSem: number; insc: string; local: string; nome: string; ie: string; tipo: "INDUST" | "SEMENT"; depositos: number; compras: number; vendas: number; devolucao: number; tr_saida: number; tr_entrada: number; ent_armaz: number };
+    const rowMap = new Map<string, Acc>();
+    const getRow = (safraKey: string, inscKey: string, local: string): Acc | null => {
+      const s = safraMap.get(safraKey);
+      const insc = inscMap.get(inscKey) as any;
+      if (!s || !insc) return null;
+      const key = `${safraKey}::${inscKey}::${local}`;
+      let r = rowMap.get(key);
+      if (!r) {
+        r = {
+          safra: s.nome, cultura: s.cultura, psInd: s.psInd, psSem: s.psSem,
+          insc: inscKey, local, nome: insc.produtores?.nome || produtor.nome, ie: insc.inscricao_estadual || "-",
+          tipo: "INDUST",
+          depositos: 0, compras: 0, vendas: 0, devolucao: 0, tr_saida: 0, tr_entrada: 0, ent_armaz: 0,
+        };
+        rowMap.set(key, r);
+      }
+      return r;
+    };
+
+    (colheitas || []).forEach((c: any) => {
+      if (!c.safra_id || !c.inscricao_produtor_id) return;
+      const local = c.locais_entrega?.nome || "Sede";
+      const r = getRow(c.safra_id, c.inscricao_produtor_id, local);
+      if (!r) return;
+      r.depositos += Number(c.producao_liquida_kg) || 0;
+      if (c.tipo_colheita === "semente") r.tipo = "SEMENT";
+    });
+
+    (trOrRes.data || []).forEach((t: any) => {
+      if (!t.safra_id) return;
+      const r = getRow(t.safra_id, t.inscricao_origem_id, "Sede");
+      if (r) r.tr_saida += Number(t.quantidade_kg) || 0;
+    });
+    (trDeRes.data || []).forEach((t: any) => {
+      if (!t.safra_id) return;
+      const r = getRow(t.safra_id, t.inscricao_destino_id, "Sede");
+      if (r) r.tr_entrada += Number(t.quantidade_kg) || 0;
+    });
+    (devRes.data || []).forEach((d: any) => {
+      if (!d.safra_id) return;
+      const r = getRow(d.safra_id, d.inscricao_produtor_id, "Sede");
+      if (r) r.devolucao += Number(d.quantidade_kg) || 0;
+    });
+    (devTxRes.data || []).forEach((d: any) => {
+      if (!d.safra_id || !d.inscricao_recebe_taxa_id) return;
+      const r = getRow(d.safra_id, d.inscricao_recebe_taxa_id, "Sede");
+      if (r) r.ent_armaz += Number(d.kg_taxa_armazenagem) || 0;
+    });
+    (compras || []).forEach((c: any) => {
+      if (!c.safra_id) return;
+      const r = getRow(c.safra_id, c.inscricao_comprador_id, "Sede");
+      if (r) r.compras += Number(c.quantidade_kg) || 0;
+    });
+    (remessas || []).forEach((rm: any) => {
+      const info = contratoInfo.get(rm.contrato_venda_id);
+      if (!info) return;
+      const r = getRow(info.safra, info.insc, "Sede");
+      if (r) r.vendas += Number(rm.kg_remessa) || 0;
+    });
+
+    const rows: ResumoProdutorRow[] = Array.from(rowMap.values()).map(r => {
+      const dep = Math.round(r.depositos), com = Math.round(r.compras), ven = Math.round(r.vendas),
+        dev = Math.round(r.devolucao), trS = Math.round(r.tr_saida), trE = Math.round(r.tr_entrada),
+        entA = Math.round(r.ent_armaz);
+      const saldo = dep + com - ven - dev - trS + trE - entA;
+      return {
+        local_entrega: r.local, cultura: r.cultura, safra: r.safra,
+        inscricao_estadual: r.ie, nome: r.nome, tipo: r.tipo,
+        depositos_kg: dep, compras_kg: com, vendas_kg: ven, devolucao_kg: dev,
+        tr_saida_kg: trS, tr_entrada_kg: trE, ent_armaz_kg: entA, saldo_kg: saldo,
+        peso_saca: r.tipo === "SEMENT" ? r.psSem : r.psInd,
+      };
+    });
+
+    if (rows.length === 0) { toast({ title: "Sem dados", description: "Nenhuma movimentação encontrada." }); return; }
+
+    const safraNome = safraId ? (safras?.find(s => s.id === safraId)?.nome || "-") : "Todas";
+
+    setPendingSheets([{
+      name: "Resumo do Produtor",
+      header: ["Local", "Cultura", "Safra", "Inscrição", "Nome", "Tipo", "Depósitos", "Compras", "Vendas", "Devolução", "Tra.Saída", "Tra.Entrada", "Ent.Armaz.", "Saldo", "Sacos"],
+      rows: rows.map(r => [r.local_entrega, r.cultura, r.safra, r.inscricao_estadual, r.nome, r.tipo, r.depositos_kg, r.compras_kg, r.vendas_kg, r.devolucao_kg, r.tr_saida_kg, r.tr_entrada_kg, r.ent_armaz_kg, r.saldo_kg, Math.round(r.saldo_kg / (r.peso_saca || 60))]),
+    }]);
+
+    gerarResumoProdutorPdf({
+      produtorNome: produtor.nome,
+      cpfCnpj: produtor.cpf_cnpj || null,
+      safraNome,
       rows,
     });
   };
@@ -1070,6 +1262,25 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
+          {/* Produtor - resumo_produtor */}
+          {tipo === "resumo_produtor" && (
+            <div>
+              <Label>Produtor *</Label>
+              <ComboboxFilter
+                value={produtorId}
+                onValueChange={setProdutorId}
+                options={(produtoresList || [])
+                  .filter(p => p.ativo !== false)
+                  .map(p => ({ value: p.id, label: `${p.nome}${p.cpf_cnpj ? ` - ${p.cpf_cnpj}` : ''}` }))
+                  .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"))}
+                placeholder="Selecione o produtor"
+                searchPlaceholder="Buscar produtor..."
+                emptyText="Nenhum produtor encontrado."
+                popoverWidth="w-[400px]"
+              />
+            </div>
+          )}
+
           {/* Cliente/Fornecedor - extrato_cf */}
           {tipo === "extrato_cf" && (
             <>
@@ -1196,7 +1407,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
           {/* Período */}
-          {!isEstoque && tipo !== "extrato" && (
+          {!isEstoque && tipo !== "extrato" && tipo !== "resumo_produtor" && (
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Data Inicial {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} /></div>
               <div><Label>Data Final {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataFinal} onChange={e => setDataFinal(e.target.value)} /></div>

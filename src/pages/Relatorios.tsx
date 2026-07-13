@@ -6,12 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import {
   BarChart3, FileText, Wheat, ShoppingCart, PieChart, TrendingUp,
-  Truck, Package, MapPin, Warehouse, Users, LucideIcon,
+  Truck, Package, MapPin, Warehouse, Users, ClipboardList, LucideIcon,
 } from "lucide-react";
 import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
 
 type TipoRelatorio =
-  | "extrato" | "colheitas" | "vendas"
+  | "extrato" | "resumo_produtor" | "colheitas" | "vendas"
   | "demonstrativo_gerencial" | "dre" | "bens_moveis"
   | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
@@ -42,6 +42,9 @@ const GRUPOS: Grupo[] = [
       { tipo: "extrato", titulo: "Extrato do Produtor", descricao: "Movimentação completa por produtor",
         detalhe: "Colheitas, transferências, devoluções, notas de depósito e saldo final.",
         icon: FileText, iconBg: "bg-primary/10", iconColor: "text-primary", primario: true },
+      { tipo: "resumo_produtor", titulo: "Resumo do Produtor", descricao: "Resumo geral por local, cultura e safra",
+        detalhe: "Uma linha por inscrição com depósitos, compras, vendas, devoluções, transferências e saldo.",
+        icon: ClipboardList, iconBg: "bg-primary/10", iconColor: "text-primary", primario: true },
       { tipo: "colheitas", titulo: "Relatório de Colheitas", descricao: "Listagem detalhada de colheitas",
         detalhe: "Dados de pesagem, umidade, impureza, descontos e produção líquida.",
         icon: Wheat, iconBg: "bg-success/10", iconColor: "text-success" },

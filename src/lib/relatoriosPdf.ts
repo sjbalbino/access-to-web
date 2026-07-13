@@ -589,3 +589,182 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
   desenharRodapeBrand(doc);
   downloadPdf(doc, "relatorio_vendas.pdf");
 }
+
+// ==================== RESUMO DO PRODUTOR ====================
+
+export interface ResumoProdutorRow {
+  local_entrega: string;
+  cultura: string;
+  safra: string;
+  inscricao_estadual: string;
+  nome: string;
+  tipo: string; // INDUST / SEMENT
+  depositos_kg: number;
+  compras_kg: number;
+  vendas_kg: number;
+  devolucao_kg: number;
+  tr_saida_kg: number;
+  tr_entrada_kg: number;
+  ent_armaz_kg: number;
+  saldo_kg: number;
+  peso_saca: number;
+}
+
+export interface ResumoProdutorData {
+  produtorNome: string;
+  cpfCnpj: string | null;
+  safraNome: string;
+  rows: ResumoProdutorRow[];
+}
+
+export function gerarResumoProdutorPdf(data: ResumoProdutorData): void {
+  const doc = new jsPDF({ orientation: "landscape" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let yPos = desenharCabecalhoBrand(doc);
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("RESUMO DO PRODUTOR", pageWidth / 2, yPos, { align: "center" });
+  yPos += 7;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Produtor: ${data.produtorNome}`, 14, yPos);
+  if (data.cpfCnpj) doc.text(`CPF/CNPJ: ${data.cpfCnpj}`, pageWidth / 2, yPos);
+  yPos += 5;
+  doc.text(`Safra: ${data.safraNome}`, 14, yPos);
+  yPos += 6;
+
+  const head = [[
+    "Inscrição", "Nome", "Tipo",
+    { content: "Depósitos", styles: { halign: "right" as const } },
+    { content: "Compras", styles: { halign: "right" as const } },
+    { content: "Vendas", styles: { halign: "right" as const } },
+    { content: "Devolução", styles: { halign: "right" as const } },
+    { content: "Tra.Saída", styles: { halign: "right" as const } },
+    { content: "Tra.Entrada", styles: { halign: "right" as const } },
+    { content: "Ent.Armaz.", styles: { halign: "right" as const } },
+    { content: "Saldo", styles: { halign: "right" as const } },
+    { content: "Sacos", styles: { halign: "right" as const } },
+  ]];
+
+  const rows = [...data.rows].sort((a, b) =>
+    a.local_entrega.localeCompare(b.local_entrega, "pt-BR") ||
+    a.cultura.localeCompare(b.cultura, "pt-BR") ||
+    a.safra.localeCompare(b.safra, "pt-BR") ||
+    a.nome.localeCompare(b.nome, "pt-BR")
+  );
+
+  const body: any[] = [];
+  const groupHeaderIdx = new Set<number>();
+  const subtotalIdx = new Set<number>();
+
+  const num = (n: number) => formatNumber(Math.round(n || 0), 0);
+  const sacos = (kg: number, ps: number) => formatNumber(Math.round((kg || 0) / (ps || 60)), 0);
+
+  const emptyRow = (label: string) => [{ content: label, colSpan: 12, styles: { fillColor: [220, 230, 220] as any, fontStyle: "bold" as const, halign: "left" as const } }];
+
+  function blankAcc() {
+    return { depositos: 0, compras: 0, vendas: 0, devolucao: 0, tr_saida: 0, tr_entrada: 0, ent_armaz: 0, saldo: 0, ps: 60 };
+  }
+
+  let currentLocal = ""; let currentCultura = ""; let currentSafra = "";
+  let sumSafra = blankAcc(); let sumCultura = blankAcc(); let sumLocal = blankAcc(); let sumGeral = blankAcc();
+
+  const pushSubtotal = (label: string, s: ReturnType<typeof blankAcc>) => {
+    body.push([
+      { content: label, colSpan: 3, styles: { fontStyle: "bold" as const, halign: "right" as const } },
+      num(s.depositos), num(s.compras), num(s.vendas), num(s.devolucao),
+      num(s.tr_saida), num(s.tr_entrada), num(s.ent_armaz), num(s.saldo),
+      sacos(s.saldo, s.ps),
+    ]);
+    subtotalIdx.add(body.length - 1);
+  };
+
+  const flushSafra = () => {
+    if (currentSafra) pushSubtotal(`Total Safra ${currentSafra} →`, sumSafra);
+    sumSafra = blankAcc();
+  };
+  const flushCultura = () => {
+    flushSafra();
+    if (currentCultura) pushSubtotal(`Total Cultura ${currentCultura} →`, sumCultura);
+    sumCultura = blankAcc();
+  };
+  const flushLocal = () => {
+    flushCultura();
+    if (currentLocal) pushSubtotal(`Total Local ${currentLocal} →`, sumLocal);
+    sumLocal = blankAcc();
+  };
+
+  const addTo = (acc: ReturnType<typeof blankAcc>, r: ResumoProdutorRow) => {
+    acc.depositos += r.depositos_kg || 0;
+    acc.compras += r.compras_kg || 0;
+    acc.vendas += r.vendas_kg || 0;
+    acc.devolucao += r.devolucao_kg || 0;
+    acc.tr_saida += r.tr_saida_kg || 0;
+    acc.tr_entrada += r.tr_entrada_kg || 0;
+    acc.ent_armaz += r.ent_armaz_kg || 0;
+    acc.saldo += r.saldo_kg || 0;
+    acc.ps = r.peso_saca || 60;
+  };
+
+  rows.forEach((r) => {
+    if (r.local_entrega !== currentLocal) {
+      flushLocal();
+      currentLocal = r.local_entrega; currentCultura = ""; currentSafra = "";
+      body.push(emptyRow(`Local Entrega: ${r.local_entrega}`));
+      groupHeaderIdx.add(body.length - 1);
+    }
+    if (r.cultura !== currentCultura) {
+      flushCultura();
+      currentCultura = r.cultura; currentSafra = "";
+      body.push(emptyRow(`Cultura: ${r.cultura}`));
+      groupHeaderIdx.add(body.length - 1);
+    }
+    if (r.safra !== currentSafra) {
+      flushSafra();
+      currentSafra = r.safra;
+      body.push(emptyRow(`Safra: ${r.safra}`));
+      groupHeaderIdx.add(body.length - 1);
+    }
+    body.push([
+      r.inscricao_estadual, r.nome, r.tipo,
+      num(r.depositos_kg), num(r.compras_kg), num(r.vendas_kg), num(r.devolucao_kg),
+      num(r.tr_saida_kg), num(r.tr_entrada_kg), num(r.ent_armaz_kg), num(r.saldo_kg),
+      sacos(r.saldo_kg, r.peso_saca),
+    ]);
+    addTo(sumSafra, r); addTo(sumCultura, r); addTo(sumLocal, r); addTo(sumGeral, r);
+  });
+  flushLocal();
+  pushSubtotal("TOTAL GERAL →", sumGeral);
+  const totalGeralIdx = body.length - 1;
+
+  autoTable(doc, {
+    startY: yPos,
+    head,
+    body,
+    styles: { fontSize: 7, cellPadding: 1.2 },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255 },
+    columnStyles: {
+      0: { halign: "left", cellWidth: 28 },
+      1: { halign: "left", cellWidth: 55 },
+      2: { halign: "left", cellWidth: 18 },
+      3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" },
+      6: { halign: "right" }, 7: { halign: "right" }, 8: { halign: "right" },
+      9: { halign: "right" }, 10: { halign: "right" }, 11: { halign: "right" },
+    },
+    didParseCell: (d) => {
+      if (d.section !== "body") return;
+      if (subtotalIdx.has(d.row.index)) {
+        d.cell.styles.fillColor = [240, 240, 240];
+        d.cell.styles.fontStyle = "bold";
+      }
+      if (d.row.index === totalGeralIdx) {
+        d.cell.styles.fillColor = [200, 200, 200];
+      }
+    },
+  });
+
+  desenharRodapeBrand(doc);
+  downloadPdf(doc, `resumo_produtor_${data.produtorNome.replace(/\s/g, "_")}.pdf`);
+}
