@@ -137,6 +137,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     grupos_produtos: 'tenant_id,nome',
     controle_lavouras: 'granja_id,lavoura_id,safra_id',
     transferencias_deposito: 'codigo',
+    inscricoes_produtor: 'granja_id,codigo',
   };
   const upsertConflict = UPSERT_KEYS[config.tableName];
   const upsertSupported = !!upsertConflict && !config.updateMode;
