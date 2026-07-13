@@ -137,10 +137,13 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     grupos_produtos: 'tenant_id,nome',
     controle_lavouras: 'granja_id,lavoura_id,safra_id',
     transferencias_deposito: 'codigo',
+  };
+  const CUSTOM_SYNC_KEYS: Record<string, string> = {
     inscricoes_produtor: 'granja_id,codigo',
   };
   const upsertConflict = UPSERT_KEYS[config.tableName];
-  const upsertSupported = !!upsertConflict && !config.updateMode;
+  const syncConflictLabel = upsertConflict ?? CUSTOM_SYNC_KEYS[config.tableName];
+  const upsertSupported = !!syncConflictLabel && !config.updateMode;
 
   const normalize = (s: string) =>
     s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -981,6 +984,121 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         }
       }
 
+      if (config.tableName === 'inscricoes_produtor' && upsertMode) {
+        const syncErrors: string[] = [...errors];
+        const normalizedRows = finalRows.map((row, idx) => ({
+          row,
+          line: idx + 1,
+          granjaId: String(row.granja_id ?? '').trim(),
+          codigo: String(row.codigo ?? '').trim(),
+        }));
+        const rowsWithKey = normalizedRows.filter(item => {
+          if (item.granjaId && item.codigo) return true;
+          syncErrors.push(`Linha ${item.line}: granja_id e codigo são obrigatórios para atualizar existentes.`);
+          return false;
+        });
+
+        const granjaIds = Array.from(new Set(rowsWithKey.map(item => item.granjaId)));
+        const codigos = Array.from(new Set(rowsWithKey.map(item => item.codigo)));
+        const existingByKey = new Map<string, string>();
+
+        for (let i = 0; i < granjaIds.length; i += 100) {
+          const granjaSlice = granjaIds.slice(i, i + 100);
+          for (let j = 0; j < codigos.length; j += 500) {
+            const codigoSlice = codigos.slice(j, j + 500);
+            const { data, error } = await supabase
+              .from('inscricoes_produtor')
+              .select('id, granja_id, codigo')
+              .in('granja_id', granjaSlice)
+              .in('codigo', codigoSlice);
+
+            if (error) {
+              throw new Error(`Erro ao buscar inscrições existentes: ${error.message}`);
+            }
+
+            (data || []).forEach((item: any) => {
+              const key = `${String(item.granja_id).trim()}|${String(item.codigo).trim()}`;
+              if (!existingByKey.has(key)) existingByKey.set(key, item.id);
+            });
+          }
+        }
+
+        const rowsToUpdate: Array<{ row: Record<string, any>; line: number; id: string }> = [];
+        const rowsToInsert: Record<string, any>[] = [];
+
+        rowsWithKey.forEach(item => {
+          const existingId = existingByKey.get(`${item.granjaId}|${item.codigo}`);
+          if (existingId) {
+            rowsToUpdate.push({ row: item.row, line: item.line, id: existingId });
+          } else {
+            rowsToInsert.push(item.row);
+          }
+        });
+
+        const totalToProcess = Math.max(rowsToUpdate.length + rowsToInsert.length, 1);
+        let processed = 0;
+
+        for (const item of rowsToUpdate) {
+          const payload = Object.fromEntries(
+            Object.entries(item.row).filter(([key, value]) => key !== 'id' && value !== undefined)
+          );
+          const { error } = await supabase
+            .from('inscricoes_produtor')
+            .update(payload as any)
+            .eq('id', item.id);
+
+          if (error) {
+            syncErrors.push(`Linha ${item.line}: Erro ao atualizar: ${error.message}`);
+          } else {
+            imported++;
+          }
+
+          processed++;
+          setProgress(Math.round((processed / totalToProcess) * 100));
+          setImportedCount(imported);
+        }
+
+        for (let i = 0; i < rowsToInsert.length; i += 100) {
+          const batch = rowsToInsert.slice(i, i + 100);
+          const { error } = await supabase.from('inscricoes_produtor').insert(batch as any);
+
+          if (error) {
+            for (let j = 0; j < batch.length; j++) {
+              const { error: rowErr } = await supabase.from('inscricoes_produtor').insert(batch[j] as any);
+              if (rowErr) {
+                syncErrors.push(`Linha nova ${i + j + 1}: ${rowErr.message}`);
+              } else {
+                imported++;
+              }
+              processed++;
+              setProgress(Math.round((processed / totalToProcess) * 100));
+              setImportedCount(imported);
+            }
+          } else {
+            imported += batch.length;
+            processed += batch.length;
+            setProgress(Math.round((processed / totalToProcess) * 100));
+            setImportedCount(imported);
+          }
+        }
+
+        setImportErrors(syncErrors);
+
+        if (syncErrors.length === 0) {
+          toast.success(`${imported} registros sincronizados com sucesso!`);
+        } else {
+          toast.warning(`Sincronização parcial: ${imported} processados, ${syncErrors.length} erros`);
+        }
+
+        await queryClient.invalidateQueries({ queryKey: [config.key] });
+        await queryClient.invalidateQueries({ queryKey: [config.tableName] });
+        if (imported > 0) {
+          onImportComplete?.(imported);
+        }
+        setStatus('done');
+        return;
+      }
+
       for (let i = 0; i < finalRows.length; i += batchSize) {
         const batch = finalRows.slice(i, i + batchSize);
         const { error } = useUpsert
@@ -1289,7 +1407,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                       Atualizar existentes + inserir novos (não zerar a base)
                     </Label>
                     <p className="text-xs text-muted-foreground">
-                      Registros já existentes serão atualizados pela chave <code className="font-mono">{upsertConflict}</code>; novos serão inseridos.
+                      Registros já existentes serão atualizados pela chave <code className="font-mono">{syncConflictLabel}</code>; novos serão inseridos.
                     </p>
                   </div>
                 </div>
