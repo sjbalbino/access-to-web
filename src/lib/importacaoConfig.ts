@@ -438,6 +438,7 @@ export const tableConfigs: TableConfig[] = [
     order: 9,
     dependsOn: ['produtores', 'granjas'],
     columns: [
+      { accessName: 'INSCCODIGO', dbName: 'codigo', transform: toStr, sourceColumnAliases: ['insccodigo', 'inscricao_codigo', 'codigo_inscricao', 'cod_inscricao', 'codigo'] },
       { accessName: 'nome', dbName: 'nome', transform: toStr },
       { accessName: 'cpf_cnpj', dbName: 'cpf_cnpj', transform: toStr },
       { accessName: 'inscricao_estadual', dbName: 'inscricao_estadual', transform: toStr },
