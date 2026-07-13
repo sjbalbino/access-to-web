@@ -1,14 +1,26 @@
-O campo `tipo_produtor` já está presente no formulário de produtores (`src/pages/Produtores.tsx`), porém com a label genérica **"Tipo"**. Isso pode causar dificuldade para localizá-lo.
+## Problema
 
-## Alteração proposta
+O upsert de `inscricoes_produtor` falha com:
+> there is no unique or exclusion constraint matching the ON CONFLICT specification
 
-No formulário de cadastro/edição de produtores:
-- Alterar a label do campo de **"Tipo"** para **"Tipo de Produtor"**.
-- Adicionar um `placeholder` no `SelectTrigger` para indicar a ação esperada (ex.: "Selecione o tipo...").
-- Manter as opções atuais: **Produtor** e **Sócio**.
+O `ImportacaoDialog` faz `onConflict: 'granja_id,codigo'`, mas essa combinação **não tem UNIQUE constraint** no banco — a migration anterior criou a coluna `codigo` mas não o índice único.
 
-## Arquivo envolvido
-- `src/pages/Produtores.tsx` (linhas 417–423)
+## Correção (uma única migration)
 
-## Resultado esperado
-O campo ficará identificado como **"Tipo de Produtor"** no topo do formulário, facilitando a localização e deixando claro que é por meio dele que o registro é classificado como Produtor ou Sócio.
+1. **Limpar duplicatas existentes** de `codigo` dentro do mesmo `granja_id` (manter o registro mais antigo, zerar `codigo` dos demais) — necessário porque o índice único falha se já houver duplicatas.
+2. **Criar índice único parcial**:
+   ```sql
+   CREATE UNIQUE INDEX inscricoes_produtor_granja_codigo_uniq
+   ON public.inscricoes_produtor (granja_id, codigo)
+   WHERE codigo IS NOT NULL;
+   ```
+   Parcial (`WHERE codigo IS NOT NULL`) para não bloquear inscrições sem código legado.
+
+## Após aprovar a migration
+
+Reimportar a planilha de Inscrições Produtor com a coluna `INSCCODIGO` — o upsert então funcionará e todas as demais tabelas (colheitas, remessas, etc.) poderão ser reimportadas usando o código sequencial correto.
+
+## Não altera
+
+- Nenhum código de aplicação.
+- Nenhum dado além do `codigo` de eventuais duplicatas (que hoje já estão inconsistentes).
