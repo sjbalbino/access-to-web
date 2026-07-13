@@ -660,7 +660,7 @@ export const tableConfigs: TableConfig[] = [
     ],
     references: [
       { dbColumn: '_granja_id', sourceColumn: '_granja_codigo_raw', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', optional: true },
-      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', optional: true },
+      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_codigo', sourceColumnAliases: ['insccodigo', 'inscricao_ie', 'inscricao_estadual'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', optional: true },
       { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
       { dbColumn: 'variedade_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
       { dbColumn: 'placa_id', sourceColumn: 'placa', lookupTable: 'placas', lookupColumn: 'placa', lookupLabel: 'placa', optional: true },
