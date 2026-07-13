@@ -1,31 +1,49 @@
+## Diagnóstico
+
+- Total de inscrições no banco: **1.217**
+- AGROPECUARIA GRINGS: **1.176** → 586 com `codigo` (originais do Access) + **590 sem `codigo`** (duplicatas)
+- O sistema de fato duplicou durante uma importação anterior, quando o índice único `(granja_id, codigo)` ainda não protegia os registros sem código.
+- As 586 originais estão íntegras e únicas. As 590 sem código são cópias redundantes de IEs que já existem com código.
+
 ## Objetivo
 
-Exportar em CSV as 631 inscrições de produtor que ainda estão sem `codigo` (INSCCODIGO), para o usuário complementar em planilha e reimportar.
+Remover as duplicatas com segurança, deixando a GRINGS com as 586 originais, sem afetar movimentações (FKs) que porventura estejam apontando para linhas duplicadas.
 
-## O que vou fazer (em modo build)
+## Passos
 
-1. Rodar uma consulta na tabela `inscricoes_produtor` filtrando `codigo IS NULL`, trazendo os campos úteis para identificação:
-   - `inscricao_id` (id da inscrição no banco)
-   - `inscricao_estadual`
-   - `cpf_cnpj`
-   - `nome` e `nome_fantasia`
-   - `produtor_nome` (via join em `produtores`)
-   - `granja` (razão social, via join em `granjas`)
-   - `cidade`, `uf`
-   - `tipo`, `ativa`
+1. **Baixar o CSV atual** (`inscricoes_sem_codigo.csv`) — já está disponível no chat como artifact. Vou reemitir o card de download nesta rodada para garantir o acesso.
 
-2. Ordenar por granja → produtor → inscrição estadual para facilitar o preenchimento manual.
+2. **Auditoria de vínculos** (somente leitura): para cada uma das 590 inscrições sem código da GRINGS, verificar se há registros dependentes apontando para o `id` delas em:
+   - `notas_fiscais`, `notas_fiscais_itens`
+   - `remessas_venda`, `contratos_venda`
+   - `contas_pagar`, `contas_receber`
+   - `notas_deposito_emitidas`, `devolucoes_deposito`, `transferencias_deposito`
+   - `emitentes_nfe` (via `emitente_id`)
+   - Rateios e saldos
+   
+   Gerar um relatório CSV `duplicatas_inscricoes_grings.csv` com colunas: `id_duplicata`, `inscricao_estadual`, `cpf_cnpj`, `produtor`, `tem_movimentacao`, `qtd_vinculos_por_tabela`.
 
-3. Exportar via `COPY ... TO STDOUT WITH CSV HEADER` para `/mnt/documents/inscricoes_sem_codigo.csv`.
+3. **Classificação automática** de cada duplicata:
+   - **Segura para excluir**: sem nenhum vínculo em movimentação. Excluir direto.
+   - **Precisa remapear**: tem vínculos. Antes de excluir, redirecionar os FKs para a inscrição "canônica" (a que tem `codigo` e mesmo `inscricao_estadual` + `cpf_cnpj` dentro da GRINGS).
+   - **Ambígua**: não há canônica correspondente (IE genérica `111.111.111-1`, `000.000.000-0` etc.). Ficam para revisão manual — não são excluídas automaticamente.
 
-4. Entregar o arquivo com uma tag `<presentation-artifact>` para download imediato.
+4. **Apresentar o relatório** para você aprovar antes de qualquer exclusão. Nenhuma linha é apagada sem confirmação explícita.
 
-## Como usar depois
+5. **Após aprovação**, executar migration com:
+   - `UPDATE` de FKs das linhas "precisa remapear" para o `id` canônico
+   - `DELETE` das linhas "segura para excluir" e das já remapeadas
+   - Deixar intocadas as "ambíguas" para você decidir caso a caso
 
-- Abrir o CSV, preencher a coluna `INSCCODIGO` (ou adicionar uma nova coluna com esse nome) para cada linha.
-- Reimportar via **Importar Dados → Inscrições Produtor** com a opção "Atualizar existentes + inserir novos" ligada.
-- O sistema fará o match pela chave `granja_id + codigo` e atualizará os cadastros existentes.
+6. **Auditoria pós-limpeza**: reexecutar a contagem por granja para confirmar que a GRINGS voltou a ter 586 inscrições, e regenerar o CSV de "sem código" (que deve ficar quase vazio ou só com as ambíguas).
 
-## Observação
+## Detalhes técnicos
 
-Nenhuma alteração em código ou banco é necessária — é apenas uma exportação de leitura.
+- Chave de deduplicação dentro da GRINGS: `(granja_id, inscricao_estadual, cpf_cnpj)`. Onde houver múltiplas linhas com essa mesma tripla, a que possui `codigo NOT NULL` é a canônica.
+- Todas as leituras de auditoria usam `psql` (read-only). Todas as escritas passam por `supabase--migration` com sua aprovação.
+- O índice único atual continua protegendo contra futuras duplicações de linhas com código; após a limpeza, faz sentido também adicionar índice único parcial em `(granja_id, inscricao_estadual, cpf_cnpj) WHERE codigo IS NULL` para bloquear reincidência, mas isso é opcional — decidimos depois.
+
+## O que você precisa decidir agora
+
+- **Aprovar este plano** para eu rodar a auditoria detalhada e gerar o relatório de duplicatas (passos 1–3), ainda sem apagar nada.
+- Só depois de você revisar esse relatório é que executo qualquer exclusão.
