@@ -214,6 +214,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const capture = captureNextRelatorio();
     try {
       if (tipo === "extrato") await gerarExtrato();
+      else if (tipo === "resumo_produtor") await gerarResumoProdutor();
       else if (tipo === "colheitas") await gerarColheitas();
       else if (tipo === "vendas") await gerarVendas();
       else if (tipo === "demonstrativo_gerencial") await gerarDemonstrativo();
