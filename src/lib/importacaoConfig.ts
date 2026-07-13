@@ -878,7 +878,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'status', dbName: 'status', transform: () => 'autorizado' },
     ],
     references: [
-      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_ie', lookupTable: 'inscricoes_produtor', lookupColumn: 'inscricao_estadual', compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'] },
+      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_codigo', sourceColumnAliases: ['inscricao_produtor_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
