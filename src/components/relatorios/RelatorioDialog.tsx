@@ -18,9 +18,11 @@ import {
   gerarExtratoProdutorPdf,
   gerarRelatorioColheitasPdf,
   gerarRelatorioVendasPdf,
+  gerarResumoProdutorPdf,
   type ExtratoData,
   type RelColheita,
   type RelContratoVenda,
+  type ResumoProdutorRow,
 } from "@/lib/relatoriosPdf";
 import {
   gerarDemonstrativoGerencialPdf,
