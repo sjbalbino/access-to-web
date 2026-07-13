@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, Printer, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { PdfViewer } from "@/components/shared/PdfViewer";
 import type { RelatorioPayload } from "@/lib/relatorioViewer";
 
 interface Props {
@@ -14,21 +13,27 @@ interface Props {
 }
 
 export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
-  const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !payload) {
-      setPdfData(null);
+      setPdfUrl(null);
       return;
     }
+    let url: string | null = null;
     try {
-      const buf = payload.doc.output("arraybuffer");
-      setPdfData(new Uint8Array(buf));
+      const blob = payload.doc.output("blob");
+      url = URL.createObjectURL(blob);
+      setPdfUrl(url);
     } catch (err) {
       console.error("Erro ao gerar PDF para preview:", err);
-      setPdfData(null);
+      setPdfUrl(null);
     }
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
   }, [open, payload]);
+
 
   const handleBaixarPdf = () => {
     if (!payload) return;
