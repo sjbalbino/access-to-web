@@ -1262,6 +1262,25 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
+          {/* Produtor - resumo_produtor */}
+          {tipo === "resumo_produtor" && (
+            <div>
+              <Label>Produtor *</Label>
+              <ComboboxFilter
+                value={produtorId}
+                onValueChange={setProdutorId}
+                options={(produtoresList || [])
+                  .filter(p => p.ativo !== false)
+                  .map(p => ({ value: p.id, label: `${p.nome}${p.cpf_cnpj ? ` - ${p.cpf_cnpj}` : ''}` }))
+                  .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"))}
+                placeholder="Selecione o produtor"
+                searchPlaceholder="Buscar produtor..."
+                emptyText="Nenhum produtor encontrado."
+                popoverWidth="w-[400px]"
+              />
+            </div>
+          )}
+
           {/* Cliente/Fornecedor - extrato_cf */}
           {tipo === "extrato_cf" && (
             <>
