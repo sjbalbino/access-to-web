@@ -163,3 +163,31 @@
     @apply inline-flex items-center justify-center rounded-xl p-3 shadow-md;
   }
 }
+
+@layer components {
+  .pdf-text-layer {
+    color-scheme: only light;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    line-height: 1;
+    letter-spacing: normal;
+    word-spacing: normal;
+    text-align: initial;
+    transform-origin: 0 0;
+    pointer-events: none;
+    z-index: 1;
+    --min-font-size: 1;
+    --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+    --min-font-size-inv: calc(1 / var(--min-font-size));
+  }
+
+  .pdf-text-layer :is(span, br) {
+    color: CanvasText;
+    position: absolute;
+    white-space: pre;
+    transform-origin: 0% 0%;
+    font-size: calc(var(--text-scale-factor) * var(--font-height));
+    transform: rotate(var(--rotate, 0deg)) scaleX(var(--scale-x, 1)) scale(var(--min-font-size-inv));
+  }
+}
