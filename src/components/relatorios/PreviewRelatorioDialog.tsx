@@ -14,7 +14,6 @@ interface Props {
 }
 
 interface PreviewPdfState {
-  url: string;
   data: Uint8Array;
 }
 
@@ -27,22 +26,14 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
       return;
     }
 
-    let objectUrl: string | null = null;
-
     try {
       const arrayBuffer = payload.doc.output("arraybuffer");
       const data = new Uint8Array(arrayBuffer);
-      const blob = new Blob([data as BlobPart], { type: "application/pdf" });
-      objectUrl = URL.createObjectURL(blob);
-      setPreviewPdf({ url: objectUrl, data });
+      setPreviewPdf({ data });
     } catch (err) {
       console.error("Erro ao gerar PDF para preview:", err);
       setPreviewPdf(null);
     }
-
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
   }, [open, payload]);
 
   const handleBaixarPdf = () => {
@@ -155,18 +146,11 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
 
         <div className="flex-1 min-h-0 bg-muted/30">
           {previewPdf ? (
-            <object
-              key={previewPdf.url}
-              data={`${previewPdf.url}#view=FitH`}
-              type="application/pdf"
-              className="h-full w-full"
-              aria-label="Prévia do relatório em PDF"
-            >
-              <PdfViewer
-                pdfData={previewPdf.data}
-                errorMessage="Não foi possível renderizar a prévia do relatório."
-              />
-            </object>
+            <PdfViewer
+              pdfData={previewPdf.data}
+              errorMessage="Não foi possível renderizar a prévia do relatório."
+              forceVisibleTextLayer
+            />
           ) : (
             <PdfViewer
               pdfData={null}

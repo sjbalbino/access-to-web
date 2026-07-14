@@ -24,6 +24,11 @@ export interface PdfViewerProps {
   pdfData: Uint8Array | null;
   errorMessage?: string;
   onRenderComplete?: () => void;
+  forceVisibleTextLayer?: boolean;
+}
+
+interface RenderedPage {
+  element: HTMLDivElement;
 }
 
 function waitForNextPaint(): Promise<void> {
@@ -32,7 +37,7 @@ function waitForNextPaint(): Promise<void> {
   });
 }
 
-export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderComplete }: PdfViewerProps) {
+export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderComplete, forceVisibleTextLayer = false }: PdfViewerProps) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const renderTokenRef = useRef(0);
@@ -85,7 +90,7 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
     renderTokenRef.current = token;
     let cancelled = false;
 
-    const renderPages = async (disableFontFace: boolean): Promise<HTMLCanvasElement[]> => {
+    const renderPages = async (disableFontFace: boolean): Promise<RenderedPage[]> => {
       const container = containerRef.current;
       if (!container) return [];
 
@@ -98,7 +103,7 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
         useSystemFonts: true,
       }).promise;
 
-      const canvases: HTMLCanvasElement[] = [];
+      const renderedPages: RenderedPage[] = [];
 
       try {
         for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
@@ -114,23 +119,52 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
           const context = canvas.getContext("2d");
           if (!context) throw new Error("Não foi possível inicializar a renderização do PDF.");
 
+          const pageWrapper = document.createElement("div");
+          pageWrapper.className = "relative mx-auto mb-4 rounded-sm bg-background shadow-md border border-border overflow-hidden";
+          pageWrapper.style.width = `${Math.floor(viewport.width)}px`;
+          pageWrapper.style.height = `${Math.floor(viewport.height)}px`;
+          pageWrapper.style.setProperty("--total-scale-factor", String(scale));
+
           const pixelRatio = window.devicePixelRatio || 1;
           canvas.width = Math.floor(viewport.width * pixelRatio);
           canvas.height = Math.floor(viewport.height * pixelRatio);
           canvas.style.width = `${Math.floor(viewport.width)}px`;
           canvas.style.height = `${Math.floor(viewport.height)}px`;
-          canvas.className = "mx-auto mb-4 rounded-sm bg-background shadow-md border border-border block";
+          canvas.className = "absolute inset-0 block bg-background";
 
           context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
           await page.render({ canvas, canvasContext: context, viewport }).promise;
-          canvases.push(canvas);
+
+          const textLayer = document.createElement("div");
+          textLayer.className = forceVisibleTextLayer ? "pdf-text-layer pdf-text-layer-visible" : "pdf-text-layer";
+          textLayer.style.width = `${Math.floor(viewport.width)}px`;
+          textLayer.style.height = `${Math.floor(viewport.height)}px`;
+
+          pageWrapper.append(canvas, textLayer);
+
+          try {
+            const textContent = await page.getTextContent({
+              includeMarkedContent: true,
+              disableNormalization: true,
+            });
+            const textLayerRenderer = new pdfjsLib.TextLayer({
+              textContentSource: textContent,
+              container: textLayer,
+              viewport,
+            });
+            await textLayerRenderer.render();
+          } catch (textLayerError) {
+            console.warn("Falha ao renderizar camada de texto do PDF; mantendo canvas.", textLayerError);
+          }
+
+          renderedPages.push({ element: pageWrapper });
         }
       } finally {
         await pdf.cleanup(true);
       }
 
-      return canvases;
+      return renderedPages;
     };
 
     const renderPdf = async () => {
@@ -143,22 +177,22 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
       try {
         await waitForNextPaint();
 
-        let canvases: HTMLCanvasElement[] = [];
+        let renderedPages: RenderedPage[] = [];
 
         try {
-          canvases = await renderPages(false);
+          renderedPages = await renderPages(false);
         } catch (fontError) {
           if (cancelled || renderTokenRef.current !== token) return;
           console.warn("Falha ao renderizar PDF com fontes do navegador; tentando renderização interna.", fontError);
-          canvases = await renderPages(true);
+          renderedPages = await renderPages(true);
         }
 
-        if (canvases.length === 0) {
+        if (renderedPages.length === 0) {
           throw new Error("O PDF foi gerado, mas nenhuma página foi renderizada.");
         }
 
         const fragment = document.createDocumentFragment();
-        canvases.forEach((canvas) => fragment.appendChild(canvas));
+        renderedPages.forEach((page) => fragment.appendChild(page.element));
         container.replaceChildren(fragment);
         
         if (!cancelled && renderTokenRef.current === token) {
@@ -182,7 +216,7 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
     return () => {
       cancelled = true;
     };
-  }, [pdfData, viewportWidth, onRenderComplete]);
+  }, [pdfData, viewportWidth, onRenderComplete, forceVisibleTextLayer]);
 
   const showLoading = isRendering || (!!pdfData && viewportWidth <= 0 && !errorMessage);
 
