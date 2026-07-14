@@ -178,6 +178,8 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
     aliqIs: 0,
     baseIs: 0,
     valorIs: 0,
+    cclassTribIbs: null,
+    cclassTribCbs: null,
     origem: input.origemProduto || 0,
   };
   
