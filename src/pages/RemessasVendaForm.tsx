@@ -629,7 +629,7 @@ export default function RemessasVendaForm() {
                   <Label>Peso Líquido</Label>
                   <Input 
                     type="text" 
-                    value={formatNumber(pesoLiquido)} 
+                    value={formatNumber(pesoLiquido, 3)} 
                     readOnly 
                     tabIndex={-1}
                     className="bg-muted font-bold text-right" 
