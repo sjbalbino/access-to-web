@@ -301,7 +301,8 @@ export default function NotasFiscais() {
       nota.chave_acesso?.includes(searchTerm) ||
       String(nota.numero).includes(searchTerm);
     const matchesStatus = statusFilter === "todos" || nota.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesEmitente = emitenteFilter === "todos" || nota.emitente_id === emitenteFilter;
+    return matchesSearch && matchesStatus && matchesEmitente;
   });
 
   const handleDelete = async () => {
