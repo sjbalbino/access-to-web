@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, Printer, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -13,24 +13,38 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+interface PreviewPdfState {
+  url: string;
+  data: Uint8Array;
+}
+
 export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
-  const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
+  const [previewPdf, setPreviewPdf] = useState<PreviewPdfState | null>(null);
 
   useEffect(() => {
     if (!open || !payload) {
-      setPdfData(null);
+      setPreviewPdf(null);
       return;
     }
 
+    let objectUrl: string | null = null;
+
     try {
       const arrayBuffer = payload.doc.output("arraybuffer");
-      setPdfData(new Uint8Array(arrayBuffer));
+      const data = new Uint8Array(arrayBuffer);
+      const blob = new Blob([data as BlobPart], { type: "application/pdf" });
+      objectUrl = URL.createObjectURL(blob);
+      setPreviewPdf({ url: objectUrl, data });
     } catch (err) {
       console.error("Erro ao gerar PDF para preview:", err);
-      setPdfData(null);
+      setPreviewPdf(null);
     }
-  }, [open, payload]);
 
+    return () => {
+      setPreviewPdf(null);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [open, payload]);
 
   const handleBaixarPdf = () => {
     if (!payload) return;
@@ -110,9 +124,14 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl w-[95vw] h-[92vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
-          <DialogTitle className="text-base truncate">
-            Prévia: {payload?.filename ?? "Relatório"}
-          </DialogTitle>
+          <div className="min-w-0">
+            <DialogTitle className="text-base truncate">
+              Prévia: {payload?.filename ?? "Relatório"}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Visualização do relatório em PDF com opções para imprimir, exportar para Excel e baixar o arquivo.
+            </DialogDescription>
+          </div>
           <div className="flex gap-2 flex-wrap">
             <Button size="sm" variant="outline" onClick={handleImprimir}>
               <Printer className="h-4 w-4 mr-1" /> Imprimir
@@ -136,10 +155,25 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
         </DialogHeader>
 
         <div className="flex-1 min-h-0 bg-muted/30">
-          <PdfViewer
-            pdfData={pdfData}
-            errorMessage="Não foi possível renderizar a prévia do relatório."
-          />
+          {previewPdf ? (
+            <object
+              key={previewPdf.url}
+              data={`${previewPdf.url}#view=FitH`}
+              type="application/pdf"
+              className="h-full w-full"
+              aria-label="Prévia do relatório em PDF"
+            >
+              <PdfViewer
+                pdfData={previewPdf.data}
+                errorMessage="Não foi possível renderizar a prévia do relatório."
+              />
+            </object>
+          ) : (
+            <PdfViewer
+              pdfData={null}
+              errorMessage="Não foi possível renderizar a prévia do relatório."
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>
