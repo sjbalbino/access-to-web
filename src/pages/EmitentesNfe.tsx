@@ -54,6 +54,8 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { formatCpfCnpj, formatInscricaoEstadual } from "@/lib/formatters";
+
 
 const AMBIENTES = [
   { value: 1, label: "Produção" },
@@ -437,16 +439,38 @@ export default function EmitentesNfe() {
                 {dadosPaginados.map((emitente) => (
                   <TableRow key={emitente.id}>
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block flex-shrink-0" />
-                        <span>
-                          {emitente.inscricao
-                            ? `${emitente.inscricao.nome_fantasia ? emitente.inscricao.nome_fantasia + " — " : ""}${emitente.inscricao.produtores?.nome || emitente.inscricao.nome || "—"}${emitente.inscricao.inscricao_estadual ? ` • IE ${emitente.inscricao.inscricao_estadual}` : ""}`
-                            : <span className="text-destructive">Sem inscrição vinculada</span>}
-                        </span>
+                      <div className="flex items-start gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground hidden sm:block flex-shrink-0 mt-1" />
+                        <div className="flex flex-col min-w-0">
+                          {emitente.inscricao ? (
+                            <>
+                              <span className="truncate">
+                                {emitente.inscricao.nome_fantasia
+                                  ? emitente.inscricao.nome_fantasia
+                                  : emitente.inscricao.produtores?.nome || emitente.inscricao.nome || "—"}
+                              </span>
+                              <span className="text-xs text-muted-foreground truncate">
+                                {[
+                                  emitente.inscricao.nome_fantasia
+                                    ? (emitente.inscricao.produtores?.nome || emitente.inscricao.nome || null)
+                                    : null,
+                                  emitente.inscricao.inscricao_estadual
+                                    ? `IE: ${formatInscricaoEstadual(emitente.inscricao.inscricao_estadual)}`
+                                    : null,
+                                  emitente.inscricao.cpf_cnpj
+                                    ? formatCpfCnpj(emitente.inscricao.cpf_cnpj)
+                                    : null,
+                                ].filter(Boolean).join(" • ")}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-destructive">Sem inscrição vinculada</span>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">{emitente.inscricao?.cpf_cnpj || "-"}</TableCell>
+                    <TableCell className="hidden md:table-cell">{emitente.inscricao?.cpf_cnpj ? formatCpfCnpj(emitente.inscricao.cpf_cnpj) : "-"}</TableCell>
+
                     <TableCell className="hidden lg:table-cell">
                       {emitente.granja
                         ? emitente.granja.nome_fantasia || emitente.granja.razao_social
