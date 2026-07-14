@@ -1,23 +1,24 @@
-Plano para resolver o preview em branco do PDF:
+## Objetivo
 
-1. Ajustar o visualizador interno de PDF
-   - Trocar a estratégia de renderização atual baseada em PDF.js/canvas por uma prévia via URL local segura quando o PDF já foi gerado pelo jsPDF.
-   - Manter o fallback com PDF.js apenas se a prévia nativa falhar, para não quebrar tickets/DANFE que já usam o componente compartilhado.
+No select **"Emitente para emissão de NFP-e"** (aba Inscrições do Produtor) hoje todas as opções aparecem como `AGROPECUARIA GRINGS (Produção)`, sem forma de distinguir. Vou incluir o **nome fantasia da inscrição vinculada**, a **IE** e o **CPF/CNPJ** para o usuário identificar qual emitente selecionar.
 
-2. Corrigir o fluxo do diálogo de relatórios
-   - Em `PreviewRelatorioDialog`, gerar e armazenar um `Blob`/URL do PDF enquanto o diálogo estiver aberto.
-   - Exibir o PDF por `<object>`/`iframe` dentro do diálogo com fallback visual claro, evitando popup e evitando o bloqueio do Chrome.
-   - Revogar a URL ao fechar o diálogo para não vazar memória.
+## Alteração
 
-3. Manter ações existentes
-   - Preservar `Imprimir`, `Excel` e `Baixar PDF`.
-   - Se a visualização ainda não carregar, o usuário continuará conseguindo baixar o PDF normalmente.
+**`src/components/produtores/InscricoesTab.tsx`** (linhas 675-680)
 
-4. Corrigir aviso de acessibilidade do diálogo
-   - Adicionar descrição acessível (`DialogDescription`) ao conteúdo do preview para remover o warning do Radix.
+Trocar o rótulo do `<SelectItem>` para compor:
 
-5. Validar no navegador
-   - Abrir `/relatorios/producao`, acionar o preview e verificar se a página mostra texto/tabela do PDF em vez de canvas branco.
-   - Conferir console para garantir que não há erro novo de PDF/renderização.
+```
+{granja.nome_fantasia || razao_social}
+ — {inscricao.nome_fantasia || inscricao.produtores?.nome}
+ — IE: {inscricao.inscricao_estadual || '—'}
+ — {formatCpfCnpj(inscricao.cpf_cnpj)}
+ (Produção|Homologação)
+```
 
-Detalhe técnico: o print mostra que o PDF.js criou o canvas e desenhou ao menos linhas/bordas, mas não renderizou o conteúdo textual. Como o bloqueio original era de popup/abrir nova aba, não há necessidade de forçar todo relatório a passar pelo canvas do PDF.js; uma URL local de `Blob` dentro do próprio diálogo evita popup e usa o renderizador nativo do Chrome no contexto correto.
+Exemplo final:
+`AGROPECUARIA GRINGS — MARCIO GRINGS (Sítio X) — IE: 123456789 — 000.000.000-00 (Produção)`
+
+Também aplicar o mesmo padrão no bloco de detalhes abaixo (linhas 687-701), acrescentando IE, CPF/CNPJ e nome fantasia da inscrição vinculada para reforço visual após a seleção.
+
+Nenhuma mudança em hook, banco ou lógica — apenas apresentação. O campo `inscricao` já vem populado em `useEmitentesNfe` com `inscricao_estadual`, `cpf_cnpj`, `nome_fantasia` e `produtores.nome`.
