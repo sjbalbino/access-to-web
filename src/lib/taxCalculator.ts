@@ -82,7 +82,11 @@ export interface TaxCalculatorOutput {
   aliqIs: number;
   baseIs: number;
   valorIs: number;
-  
+
+  // Classificação Tributária (cClassTrib - NT 2025.002)
+  cclassTribIbs: string | null;
+  cclassTribCbs: string | null;
+
   // Origem do produto
   origem: number;
 }
