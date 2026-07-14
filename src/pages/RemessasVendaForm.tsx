@@ -109,6 +109,7 @@ export default function RemessasVendaForm() {
   const [sacosRemessa, setSacosRemessa] = useState(0);
   const [sacosNota, setSacosNota] = useState(0);
   const [valorRemessa, setValorRemessa] = useState(0);
+  const [precoKgInput, setPrecoKgInput] = useState(0);
   const [valorNota, setValorNota] = useState(0);
 
   const { data: contrato, isLoading: loadingContrato } = useContratoVenda(id);
