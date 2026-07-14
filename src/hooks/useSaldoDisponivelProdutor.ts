@@ -151,7 +151,9 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         0
       ));
 
-      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalKgTaxaArmazenagem - totalNotasDeposito;
+      // Kg de Taxa de Armazenagem é crédito exclusivo do sócio recebedor da taxa, não debita do produtor.
+      // Notas de Depósito emitidas também não entram no saldo disponível para devolução.
+      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes;
 
       return {
         saldo,
