@@ -759,7 +759,100 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         return;
       }
 
-      // STANDARD INSERT MODE
+      // MANUAL UPSERT MODE (for tables with updateMode where user chose "insert + update")
+      // For each row: try to find by lookupColumn; if exists → update ALL mapped cols; else → insert.
+      if (runManualUpsert && config.updateMode) {
+        const { lookupColumn, sourceColumn } = config.updateMode;
+        const errors: string[] = [];
+
+        // Filter out rows with transform/reference errors
+        const cleanRows = transformedData.filter((_, idx) => !invalidLineNumbers.has(idx + 1));
+
+        // Strip auxiliary/unknown columns (same logic as standard insert path)
+        const validDbColumns = new Set(config.columns.map(c => c.dbName));
+        if (config.references) {
+          config.references.forEach(r => validDbColumns.add(r.dbColumn));
+        }
+        validDbColumns.add('safra_id');
+        validDbColumns.add('controle_lavoura_id');
+        validDbColumns.add('tenant_id');
+
+        const stripAux = (row: Record<string, any>) => {
+          const out: Record<string, any> = {};
+          for (const [k, v] of Object.entries(row)) {
+            if (k.startsWith('_')) continue;
+            if (!validDbColumns.has(k)) continue;
+            out[k] = v;
+          }
+          return out;
+        };
+
+        for (let i = 0; i < cleanRows.length; i++) {
+          const row = cleanRows[i];
+          const lookupValue = row[sourceColumn];
+          const payload = stripAux(row);
+
+          try {
+            if (lookupValue) {
+              const { data: existing } = await (supabase
+                .from(config.tableName as any)
+                .select('id') as any)
+                .eq(lookupColumn, lookupValue)
+                .limit(1);
+
+              if (existing && existing.length > 0) {
+                const { error: updErr } = await (supabase
+                  .from(config.tableName as any)
+                  .update(payload as any) as any)
+                  .eq('id', (existing[0] as any).id);
+                if (updErr) {
+                  errors.push(`Linha ${i + 1} (update): ${updErr.message}`);
+                } else {
+                  imported++;
+                }
+              } else {
+                const { error: insErr } = await supabase
+                  .from(config.tableName as any)
+                  .insert(payload as any);
+                if (insErr) {
+                  errors.push(`Linha ${i + 1} (insert): ${insErr.message}`);
+                } else {
+                  imported++;
+                }
+              }
+            } else {
+              // no lookup value → insert as new
+              const { error: insErr } = await supabase
+                .from(config.tableName as any)
+                .insert(payload as any);
+              if (insErr) {
+                errors.push(`Linha ${i + 1} (insert): ${insErr.message}`);
+              } else {
+                imported++;
+              }
+            }
+          } catch (err: any) {
+            errors.push(`Linha ${i + 1}: ${err.message || err}`);
+          }
+
+          setProgress(Math.round(((i + 1) / cleanRows.length) * 100));
+          setImportedCount(imported);
+        }
+
+        setImportErrors(errors);
+        if (errors.length === 0) {
+          toast.success(`${imported} registros sincronizados com sucesso!`);
+        } else {
+          toast.warning(`Sincronização parcial: ${imported} processados, ${errors.length} erros`);
+        }
+        await queryClient.invalidateQueries({ queryKey: [config.key] });
+        await queryClient.invalidateQueries({ queryKey: [config.tableName] });
+        if (imported > 0) onImportComplete?.(imported);
+        setStatus('done');
+        return;
+      }
+
+      // STANDARD INSERT MODE (also handles runInsertOnly for updateMode configs)
       // Clear existing if requested — escopado por tenant, filhos primeiro, em lotes
       if (clearExisting) {
         const CHILD_TABLES: Record<string, string[]> = {
