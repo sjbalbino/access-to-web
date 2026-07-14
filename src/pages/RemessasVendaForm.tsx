@@ -643,7 +643,7 @@ export default function RemessasVendaForm() {
                   <Label>Kgs da Remessa</Label>
                   <Input 
                     type="text" 
-                    value={formatNumber(kgRemessa)} 
+                    value={formatNumber(kgRemessa, 3)} 
                     readOnly 
                     tabIndex={-1}
                     className="bg-muted font-bold text-right" 
