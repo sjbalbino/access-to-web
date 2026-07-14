@@ -1321,7 +1321,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const totalErrors = transformErrors.length + referenceErrors.length;
   const invalidLineNumbers = extractErroredLineNumbers([...transformErrors, ...referenceErrors]);
   const validRowCount = transformedData.filter((_, idx) => !invalidLineNumbers.has(idx + 1)).length;
-  const importTargetCount = config.updateMode ? transformedData.length : validRowCount;
+  const importTargetCount = config.updateMode
+    ? (updateModeChoice === 'update' ? transformedData.length : validRowCount)
+    : validRowCount;
   const previewColumns = config.columns.slice(0, 6);
 
   return (
