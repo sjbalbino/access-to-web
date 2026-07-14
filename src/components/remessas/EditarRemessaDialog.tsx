@@ -119,8 +119,6 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
     setValorRemessa(kgRemessa * effectivePrecoKg);
   }, [kgRemessa, effectivePrecoKg]);
 
-  // (placeholder para manter estrutura de useEffects abaixo)
-  useEffect(() => {
 
   // Atualizar kgNota quando kgRemessa mudar (se ainda não foi editado manualmente)
   useEffect(() => {
