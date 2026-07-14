@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, Printer, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { RelatorioPayload } from "@/lib/relatorioViewer";
+import { PdfViewer } from "@/components/shared/PdfViewer";
 
 interface Props {
   payload: RelatorioPayload | null;
@@ -13,25 +14,21 @@ interface Props {
 }
 
 export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
 
   useEffect(() => {
     if (!open || !payload) {
-      setPdfUrl(null);
+      setPdfData(null);
       return;
     }
-    let url: string | null = null;
+
     try {
-      const blob = payload.doc.output("blob");
-      url = URL.createObjectURL(blob);
-      setPdfUrl(url);
+      const arrayBuffer = payload.doc.output("arraybuffer");
+      setPdfData(new Uint8Array(arrayBuffer));
     } catch (err) {
       console.error("Erro ao gerar PDF para preview:", err);
-      setPdfUrl(null);
+      setPdfData(null);
     }
-    return () => {
-      if (url) URL.revokeObjectURL(url);
-    };
   }, [open, payload]);
 
 
@@ -139,17 +136,10 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
         </DialogHeader>
 
         <div className="flex-1 min-h-0 bg-muted/30">
-          {pdfUrl ? (
-            <iframe
-              src={pdfUrl}
-              title="Prévia do relatório"
-              className="h-full w-full border-0"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              Gerando prévia...
-            </div>
-          )}
+          <PdfViewer
+            pdfData={pdfData}
+            errorMessage="Não foi possível renderizar a prévia do relatório."
+          />
         </div>
       </DialogContent>
     </Dialog>
