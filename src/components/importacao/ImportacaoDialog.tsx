@@ -1526,6 +1526,26 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
 
             <div className="space-y-2">
+              {config.updateMode && (
+                <div className="rounded-md border p-3 space-y-2">
+                  <Label className="text-sm font-semibold">Modo de importação</Label>
+                  <Select value={updateModeChoice} onValueChange={(v: any) => setUpdateModeChoice(v)}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="update">Atualizar existentes (apenas colunas configuradas)</SelectItem>
+                      <SelectItem value="upsert">Inserir novos + atualizar existentes (todas as colunas)</SelectItem>
+                      <SelectItem value="insert">Somente inserir novos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {updateModeChoice === 'update' && 'Somente registros já existentes serão atualizados nas colunas mapeadas em updateMode. Nenhum registro novo será criado.'}
+                    {updateModeChoice === 'upsert' && 'Para cada linha: se o código existir, atualiza todas as colunas mapeadas; se não existir, insere um novo registro.'}
+                    {updateModeChoice === 'insert' && 'Insere todas as linhas como novos registros. Duplicados podem falhar.'}
+                  </p>
+                </div>
+              )}
               {upsertSupported && (
                 <div className="flex items-start gap-2">
                   <Switch
