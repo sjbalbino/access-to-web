@@ -630,22 +630,21 @@ export default function VendaProducaoForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>Valor Total (R$)</Label>
-                <CurrencyInput
-                  value={watch("valor_total")}
-                  onChange={(v) => setValue("valor_total", v)}
-                  decimals={2}
-                  className="font-bold"
-                />
-              </div>
-              <div className="space-y-2">
                 <Label>Preço/kg (R$)</Label>
                 <CurrencyInput
                   value={watch("preco_kg")}
                   onChange={(v) => setValue("preco_kg", v)}
                   decimals={10}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Valor Total (R$)</Label>
+                <CurrencyInput
+                  value={watch("valor_total")}
+                  onChange={(v) => setValue("valor_total", v)}
+                  decimals={2}
                   disabled
-                  className="bg-muted"
+                  className="font-bold bg-muted"
                 />
               </div>
             </div>
