@@ -1,52 +1,50 @@
 
 ## Diagnóstico
 
-Verifiquei o banco: **11.084 de 12.023 colheitas (92%) estão com `local_entrega_terceiro_id` NULL**. É exatamente por isso que o `useInscricoesComSaldo` está errando o agrupamento (colheitas sem local vs. transferências/devoluções com local) e ocultando o Saulo da lista de devolução.
+O código de Classificação Tributária IBS/CBS (`cClassTrib`, tabela NT 2025.002) **existe** no cadastro do produto (`produtos.cclass_trib_ibs` e `cclass_trib_cbs`), mas nunca é copiado para o item da NF-e no momento do auto-cálculo. Resultado: o item entra sem `cclass_trib_ibs/cbs`, o `focusNfeMapper` acaba caindo no fallback `defaultClassTribIbsCbs(cst)` ou reclama que o campo está faltando.
 
-O mapeamento de importação **já existe** em `src/lib/importacaoConfig.ts` (linha 667):
+Cadeia atual:
 
-```ts
-{ dbColumn: 'local_entrega_terceiro_id',
-  sourceColumn: 'col_localentrega',
-  lookupTable: 'locais_entrega',
-  lookupColumn: 'codigo',
-  lookupLabel: 'nome',
-  optional: true }
-```
+- `src/pages/NotaFiscalForm.tsx` (linhas 1311-1321) passa `produtoCclassTribIbs` e `produtoCclassTribCbs` para `calculateTaxes`.
+- `src/lib/taxCalculator.ts` **aceita** esses campos no `TaxCalculatorInput` (linhas 41-42) mas **não os devolve** no `TaxCalculatorOutput` (linhas 49-88).
+- `handleCalculateTaxes` (linhas 1325-1340) grava só `cst_*` e `aliq_*` no `itemFormData`; `cclass_trib_ibs/cbs` continua vazio.
 
-Ou seja, na importação inicial o campo é lido — quando as colheitas ficaram NULL foi porque a coluna estava vazia na planilha original ou o código não batia com `locais_entrega.codigo` naquele momento (por exemplo, os locais só foram cadastrados depois).
-
-O problema: o `updateMode` das colheitas (linha 669-673) hoje só atualiza `inscricao_produtor_id`. Uma reimportação **não** atualiza `local_entrega_terceiro_id`, então o usuário não tem como corrigir em massa.
+Adicionalmente:
+- O `emitentes_nfe` **não tem** colunas `cclass_trib_ibs/cbs` — a mensagem de erro do `focusNfeMapper.ts:833` que diz "Informe no cadastro do produto ou do emitente" está enganosa.
+- Não há fallback no emitente por design: o cClassTrib depende de NCM/CST específico do produto, não do emitente. Manter só no produto.
 
 ## Plano de correção
 
-**Arquivo único:** `src/lib/importacaoConfig.ts`, bloco `key: 'colheitas'`, propriedade `updateMode.updateColumns` (linha 672).
+**Escopo:** dois arquivos, sem migração de banco.
 
-Adicionar `local_entrega_terceiro_id` à lista de colunas atualizáveis:
+### 1) `src/lib/taxCalculator.ts`
+- Adicionar `cclassTribIbs: string | null` e `cclassTribCbs: string | null` ao `TaxCalculatorOutput`.
+- Preencher no retorno:
+  - Se `cstIbsCbsTemTributacao(cstIbs)` (ou seja, o CST usa cClassTrib), devolver `input.produtoCclassTribIbs` (ou `null` quando ausente).
+  - Mesma lógica para CBS com `input.produtoCclassTribCbs`.
+  - Quando o CFOP não tem incidência de IBS/CBS ou o CST é de não-tributação, devolver `null` (não faz sentido enviar cClassTrib).
 
-```ts
-updateMode: {
-  lookupColumn: 'codigo',
-  sourceColumn: 'codigo',
-  updateColumns: [
-    { sourceColumn: 'inscricao_produtor_id', dbColumn: 'inscricao_produtor_id' },
-    { sourceColumn: 'local_entrega_terceiro_id', dbColumn: 'local_entrega_terceiro_id' },
-  ],
-},
-```
+### 2) `src/pages/NotaFiscalForm.tsx`
+- Em `handleCalculateTaxes` (linhas 1325-1340), incluir no `setItemFormData`:
+  ```ts
+  cclass_trib_ibs: result.cclassTribIbs || "",
+  cclass_trib_cbs: result.cclassTribCbs || "",
+  ```
+- Assim, sempre que o usuário selecionar um produto novo (ou trocar), o auto-cálculo (useEffect linhas 1347-1362) já grava o cClassTrib do produto no item.
+- Comportamento preservado: quando o usuário edita manualmente esses campos, o `impostosEditadosManualmente = true` continua bloqueando o auto-cálculo (linha 1349), então a edição manual não é sobrescrita.
 
-Como o `ImportacaoDialog` (linha 686-694) só inclui no payload de UPDATE campos com valor preenchido, a alteração é segura: linhas cuja `col_localentrega` estiver vazia ou não bater com nenhum código de `locais_entrega` **não** vão sobrescrever colheitas existentes — só as linhas com match válido serão atualizadas.
+### 3) `src/lib/focusNfeMapper.ts` — mensagem de erro
+- Trocar a mensagem da linha 833 de _"Informe no cadastro do produto ou do emitente"_ para _"Informe o Código de Classificação Tributária no cadastro do produto."_, refletindo o comportamento real.
 
-## Como o usuário vai usar
+## Verificação
 
-1. Abrir **Importar Dados → Colheitas** e ativar o modo "Atualizar".
-2. Subir a mesma planilha original (com `col_codigo` + `col_localentrega` preenchidos).
-3. O sistema busca cada colheita pelo `codigo`, resolve `col_localentrega` em `locais_entrega.codigo` e grava o `local_entrega_terceiro_id`.
-4. Linhas cujo código do local não bater aparecem no relatório de erros para o usuário cadastrar o local ou corrigir a planilha, mas o restante é atualizado normalmente.
-
-Após a reimportação, o hook `useInscricoesComSaldo` volta a fechar com o extrato (colheitas, transferências e devoluções passam a compartilhar o mesmo `local_entrega_id`), e o Saulo aparece na lista de "Nova Devolução de Depósito" com o saldo real.
+1. Abrir uma NF-e em rascunho, adicionar um item de um produto que tem `cclass_trib_ibs` cadastrado.
+2. Confirmar que os campos "Cód. Class. IBS" e "Cód. Class. CBS" no dialog do item aparecem preenchidos automaticamente.
+3. Emitir a NF-e e conferir no payload/XML gerado pela Focus que `IBSCBS.cClassTrib` bate com o cadastrado.
+4. Testar com produto sem cClassTrib cadastrado e CFOP com incidência IBS/CBS → a validação existente do `focusNfeMapper` deve barrar antes do envio, agora com a mensagem correta.
 
 ## Fora de escopo
 
-- Não altero o hook `useInscricoesComSaldo` neste plano — assim que os dados forem regularizados via reimportação, o cálculo original passa a bater com o extrato. Se você preferir, posso abrir um segundo plano para tornar o hook resiliente a `local_entrega_id` divergentes (agrupar por inscrição em vez de inscrição+local).
-- Não altero a UI de importação nem a estrutura da planilha.
+- Não adiciono coluna `cclass_trib_*` no `emitentes_nfe` — o campo é próprio do produto/NCM, não do emitente.
+- Não altero o fallback `defaultClassTribIbsCbs` (continua sendo rede de segurança para produtos legados).
+- Não altero contra-nota, itens de entrada de NF-e nem outros formulários — apenas o fluxo de emissão de NF-e.
