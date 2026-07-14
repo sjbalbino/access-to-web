@@ -54,6 +54,8 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { formatCpfCnpj, formatInscricaoEstadual } from "@/lib/formatters";
+
 
 const AMBIENTES = [
   { value: 1, label: "Produção" },
