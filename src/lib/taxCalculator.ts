@@ -263,7 +263,11 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
       resultado.aliqIbs = input.aliqIbsPadrao;
       resultado.valorIbs = Number(((resultado.baseIbs * resultado.aliqIbs) / 100).toFixed(2));
     }
-    
+    // cClassTrib IBS — só faz sentido quando o CST usa classificação tributária
+    if (cstIbsCbsTemTributacao(resultado.cstIbs)) {
+      resultado.cclassTribIbs = input.produtoCclassTribIbs || null;
+    }
+
     // CBS - prioridade: produto > CFOP > padrão
     resultado.cstCbs = input.produtoCstCbs || input.cstCbsPadrao || "000";
     // Só calcula se CST indica tributação
@@ -272,7 +276,10 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
       resultado.aliqCbs = input.aliqCbsPadrao;
       resultado.valorCbs = Number(((resultado.baseCbs * resultado.aliqCbs) / 100).toFixed(2));
     }
-    
+    if (cstIbsCbsTemTributacao(resultado.cstCbs)) {
+      resultado.cclassTribCbs = input.produtoCclassTribCbs || null;
+    }
+
     // IS - prioridade: produto > CFOP > padrão
     resultado.cstIs = input.produtoCstIs || input.cstIsPadrao || "000";
     // Só calcula se CST indica tributação
