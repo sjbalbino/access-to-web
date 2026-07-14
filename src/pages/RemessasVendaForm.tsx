@@ -604,11 +604,12 @@ export default function RemessasVendaForm() {
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
-                      inputMode="numeric"
+                      step="0.001"
+                      inputMode="decimal"
                       className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       {...register("peso_tara", { valueAsNumber: true })}
                     />
-                    <BalancaButton onPeso={(kg) => setValue("peso_tara", Math.round(kg))} />
+                    <BalancaButton onPeso={(kg) => setValue("peso_tara", kg)} />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -616,11 +617,12 @@ export default function RemessasVendaForm() {
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
-                      inputMode="numeric"
+                      step="0.001"
+                      inputMode="decimal"
                       className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       {...register("peso_bruto", { valueAsNumber: true })}
                     />
-                    <BalancaButton onPeso={(kg) => setValue("peso_bruto", Math.round(kg))} />
+                    <BalancaButton onPeso={(kg) => setValue("peso_bruto", kg)} />
                   </div>
                 </div>
                 <div className="space-y-2">
