@@ -1,24 +1,43 @@
-## Objetivo
+# Corrigir emitente exibido nas notas de depósito
 
-No select **"Emitente para emissão de NFP-e"** (aba Inscrições do Produtor) hoje todas as opções aparecem como `AGROPECUARIA GRINGS (Produção)`, sem forma de distinguir. Vou incluir o **nome fantasia da inscrição vinculada**, a **IE** e o **CPF/CNPJ** para o usuário identificar qual emitente selecionar.
+## Causa raiz
 
-## Alteração
+Em `src/components/deposito/NotaDepositoFormDialog.tsx`, ao criar a `notas_fiscais` (linha 329), o campo `inscricao_produtor_id` — que, no modelo do sistema, identifica a **inscrição do sócio emitente** da NF-e — está sendo preenchido com `inscricaoId` (a inscrição do **depositante**, dono do saldo).
 
-**`src/components/produtores/InscricoesTab.tsx`** (linhas 675-680)
+Resultado: a NF-e vai corretamente para a SEFAZ com o emitente Marcio Grings (`emitente_id` está certo), mas a tela de Notas Fiscais lê `inscricao_produtor_id` como "Inscrição do Sócio (Emitente)" e mostra o Saulo, exibindo o alerta "Esta inscrição não tem Emitente NF-e vinculado".
 
-Trocar o rótulo do `<SelectItem>` para compor:
+O depositante continua correto porque já está gravado nos campos `dest_*`.
 
-```
-{granja.nome_fantasia || razao_social}
- — {inscricao.nome_fantasia || inscricao.produtores?.nome}
- — IE: {inscricao.inscricao_estadual || '—'}
- — {formatCpfCnpj(inscricao.cpf_cnpj)}
- (Produção|Homologação)
-```
+## Alterações
 
-Exemplo final:
-`AGROPECUARIA GRINGS — MARCIO GRINGS (Sítio X) — IE: 123456789 — 000.000.000-00 (Produção)`
+### 1. `src/components/deposito/NotaDepositoFormDialog.tsx`
 
-Também aplicar o mesmo padrão no bloco de detalhes abaixo (linhas 687-701), acrescentando IE, CPF/CNPJ e nome fantasia da inscrição vinculada para reforço visual após a seleção.
+- Linha 329: trocar
+  `inscricao_produtor_id: inscricaoId,`
+  por
+  `inscricao_produtor_id: inscricaoPrincipal.id,`
 
-Nenhuma mudança em hook, banco ou lógica — apenas apresentação. O campo `inscricao` já vem populado em `useEmitentesNfe` com `inscricao_estadual`, `cpf_cnpj`, `nome_fantasia` e `produtores.nome`.
+  (`inscricaoPrincipal` já está disponível na linha 120 via `useInscricaoEmitentePrincipal(granjaId)` e é a inscrição do sócio emitente principal da granja — o Marcio no caso.)
+
+- Nenhuma outra alteração: `emitente_id`, `dest_*`, itens, `notas_deposito_emitidas` (que tem seu próprio `inscricao_produtor_id` = depositante) permanecem como estão.
+
+### 2. Migração de dados (corrigir notas já criadas)
+
+Atualizar `notas_fiscais` das notas de depósito existentes para que `inscricao_produtor_id` aponte para a inscrição vinculada ao `emitente_id` (a inscrição do sócio emitente), somente quando:
+
+- `cfop_id` corresponde ao CFOP 1905, **e**
+- `emitente_id` está preenchido, **e**
+- o atual `inscricao_produtor_id` é diferente da `inscricoes_produtor.id` referenciada pelo `emitentes_nfe.inscricao_produtor_id`.
+
+Isso corrige a nota #28 (e qualquer outra gerada pelo mesmo fluxo) sem tocar em notas de outros módulos.
+
+## Verificação
+
+- Abrir a nota #28: a aba Emitente deve mostrar "MARCIO GRINGS — IE …" sem o alerta amarelo.
+- Emitir uma nova nota de depósito e conferir na tela de Notas Fiscais.
+- `dest_*` continua exibindo o Saulo como destinatário/depositante.
+
+## Fora de escopo
+
+- Nenhuma mudança na emissão via Focus NFe (já estava correta).
+- Nenhuma mudança no cálculo de saldos, `notas_deposito_emitidas` ou telas de depósito.
