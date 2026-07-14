@@ -138,6 +138,7 @@ export default function NotasFiscais() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [emitenteFilter, setEmitenteFilter] = useState("todos");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [alsoInutilizar, setAlsoInutilizar] = useState(false);
   const [inutJustificativa, setInutJustificativa] = useState("");
@@ -300,7 +301,8 @@ export default function NotasFiscais() {
       nota.chave_acesso?.includes(searchTerm) ||
       String(nota.numero).includes(searchTerm);
     const matchesStatus = statusFilter === "todos" || nota.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesEmitente = emitenteFilter === "todos" || nota.emitente_id === emitenteFilter;
+    return matchesSearch && matchesStatus && matchesEmitente;
   });
 
   const handleDelete = async () => {
@@ -427,6 +429,19 @@ export default function NotasFiscais() {
               emptyText="Nenhum status encontrado."
               className="w-full sm:w-40"
             />
+            <ComboboxFilter
+              value={emitenteFilter === "todos" ? "" : emitenteFilter}
+              onValueChange={(v) => setEmitenteFilter(v || "todos")}
+              options={(emitentes || []).map((e: any) => ({
+                value: e.id,
+                label: `${e.inscricao?.nome || e.granja?.razao_social || "Sem nome"}${e.inscricao?.cpf_cnpj ? ` — ${formatCpfCnpj(e.inscricao.cpf_cnpj)}` : ""}`,
+              }))}
+              placeholder="Todos os emitentes"
+              searchPlaceholder="Buscar emitente..."
+              emptyText="Nenhum emitente encontrado."
+              className="w-full sm:w-64"
+            />
+
           </div>
           {canEdit && (
             <div className="flex gap-2 flex-wrap">
