@@ -41,7 +41,6 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
     }
 
     return () => {
-      setPreviewPdf(null);
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [open, payload]);
