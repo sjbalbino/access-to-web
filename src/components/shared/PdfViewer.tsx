@@ -24,6 +24,7 @@ export interface PdfViewerProps {
   pdfData: Uint8Array | null;
   errorMessage?: string;
   onRenderComplete?: () => void;
+  forceVisibleTextLayer?: boolean;
 }
 
 interface RenderedPage {
@@ -36,7 +37,7 @@ function waitForNextPaint(): Promise<void> {
   });
 }
 
-export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderComplete }: PdfViewerProps) {
+export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderComplete, forceVisibleTextLayer = false }: PdfViewerProps) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const renderTokenRef = useRef(0);
@@ -136,7 +137,7 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
           await page.render({ canvas, canvasContext: context, viewport }).promise;
 
           const textLayer = document.createElement("div");
-          textLayer.className = "pdf-text-layer";
+          textLayer.className = forceVisibleTextLayer ? "pdf-text-layer pdf-text-layer-visible" : "pdf-text-layer";
           textLayer.style.width = `${Math.floor(viewport.width)}px`;
           textLayer.style.height = `${Math.floor(viewport.height)}px`;
 
@@ -215,7 +216,7 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
     return () => {
       cancelled = true;
     };
-  }, [pdfData, viewportWidth, onRenderComplete]);
+  }, [pdfData, viewportWidth, onRenderComplete, forceVisibleTextLayer]);
 
   const showLoading = isRendering || (!!pdfData && viewportWidth <= 0 && !errorMessage);
 
