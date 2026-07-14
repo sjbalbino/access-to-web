@@ -335,7 +335,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Label className="text-xs">Kgs Remessa</Label>
                   <Input
                     type="text"
-                    value={formatNumber(kgRemessa)}
+                    value={formatNumber(kgRemessa, 3)}
                     readOnly
                     className="bg-muted font-bold text-right"
                     tabIndex={-1}
