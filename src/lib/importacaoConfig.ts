@@ -669,7 +669,10 @@ export const tableConfigs: TableConfig[] = [
     updateMode: {
       lookupColumn: 'codigo',
       sourceColumn: 'codigo',
-      updateColumns: [{ sourceColumn: 'inscricao_produtor_id', dbColumn: 'inscricao_produtor_id' }],
+      updateColumns: [
+        { sourceColumn: 'inscricao_produtor_id', dbColumn: 'inscricao_produtor_id' },
+        { sourceColumn: 'local_entrega_terceiro_id', dbColumn: 'local_entrega_terceiro_id' },
+      ],
     },
   },
 

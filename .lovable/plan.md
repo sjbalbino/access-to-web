@@ -1,43 +1,52 @@
-# Corrigir emitente exibido nas notas de depósito
 
-## Causa raiz
+## Diagnóstico
 
-Em `src/components/deposito/NotaDepositoFormDialog.tsx`, ao criar a `notas_fiscais` (linha 329), o campo `inscricao_produtor_id` — que, no modelo do sistema, identifica a **inscrição do sócio emitente** da NF-e — está sendo preenchido com `inscricaoId` (a inscrição do **depositante**, dono do saldo).
+Verifiquei o banco: **11.084 de 12.023 colheitas (92%) estão com `local_entrega_terceiro_id` NULL**. É exatamente por isso que o `useInscricoesComSaldo` está errando o agrupamento (colheitas sem local vs. transferências/devoluções com local) e ocultando o Saulo da lista de devolução.
 
-Resultado: a NF-e vai corretamente para a SEFAZ com o emitente Marcio Grings (`emitente_id` está certo), mas a tela de Notas Fiscais lê `inscricao_produtor_id` como "Inscrição do Sócio (Emitente)" e mostra o Saulo, exibindo o alerta "Esta inscrição não tem Emitente NF-e vinculado".
+O mapeamento de importação **já existe** em `src/lib/importacaoConfig.ts` (linha 667):
 
-O depositante continua correto porque já está gravado nos campos `dest_*`.
+```ts
+{ dbColumn: 'local_entrega_terceiro_id',
+  sourceColumn: 'col_localentrega',
+  lookupTable: 'locais_entrega',
+  lookupColumn: 'codigo',
+  lookupLabel: 'nome',
+  optional: true }
+```
 
-## Alterações
+Ou seja, na importação inicial o campo é lido — quando as colheitas ficaram NULL foi porque a coluna estava vazia na planilha original ou o código não batia com `locais_entrega.codigo` naquele momento (por exemplo, os locais só foram cadastrados depois).
 
-### 1. `src/components/deposito/NotaDepositoFormDialog.tsx`
+O problema: o `updateMode` das colheitas (linha 669-673) hoje só atualiza `inscricao_produtor_id`. Uma reimportação **não** atualiza `local_entrega_terceiro_id`, então o usuário não tem como corrigir em massa.
 
-- Linha 329: trocar
-  `inscricao_produtor_id: inscricaoId,`
-  por
-  `inscricao_produtor_id: inscricaoPrincipal.id,`
+## Plano de correção
 
-  (`inscricaoPrincipal` já está disponível na linha 120 via `useInscricaoEmitentePrincipal(granjaId)` e é a inscrição do sócio emitente principal da granja — o Marcio no caso.)
+**Arquivo único:** `src/lib/importacaoConfig.ts`, bloco `key: 'colheitas'`, propriedade `updateMode.updateColumns` (linha 672).
 
-- Nenhuma outra alteração: `emitente_id`, `dest_*`, itens, `notas_deposito_emitidas` (que tem seu próprio `inscricao_produtor_id` = depositante) permanecem como estão.
+Adicionar `local_entrega_terceiro_id` à lista de colunas atualizáveis:
 
-### 2. Migração de dados (corrigir notas já criadas)
+```ts
+updateMode: {
+  lookupColumn: 'codigo',
+  sourceColumn: 'codigo',
+  updateColumns: [
+    { sourceColumn: 'inscricao_produtor_id', dbColumn: 'inscricao_produtor_id' },
+    { sourceColumn: 'local_entrega_terceiro_id', dbColumn: 'local_entrega_terceiro_id' },
+  ],
+},
+```
 
-Atualizar `notas_fiscais` das notas de depósito existentes para que `inscricao_produtor_id` aponte para a inscrição vinculada ao `emitente_id` (a inscrição do sócio emitente), somente quando:
+Como o `ImportacaoDialog` (linha 686-694) só inclui no payload de UPDATE campos com valor preenchido, a alteração é segura: linhas cuja `col_localentrega` estiver vazia ou não bater com nenhum código de `locais_entrega` **não** vão sobrescrever colheitas existentes — só as linhas com match válido serão atualizadas.
 
-- `cfop_id` corresponde ao CFOP 1905, **e**
-- `emitente_id` está preenchido, **e**
-- o atual `inscricao_produtor_id` é diferente da `inscricoes_produtor.id` referenciada pelo `emitentes_nfe.inscricao_produtor_id`.
+## Como o usuário vai usar
 
-Isso corrige a nota #28 (e qualquer outra gerada pelo mesmo fluxo) sem tocar em notas de outros módulos.
+1. Abrir **Importar Dados → Colheitas** e ativar o modo "Atualizar".
+2. Subir a mesma planilha original (com `col_codigo` + `col_localentrega` preenchidos).
+3. O sistema busca cada colheita pelo `codigo`, resolve `col_localentrega` em `locais_entrega.codigo` e grava o `local_entrega_terceiro_id`.
+4. Linhas cujo código do local não bater aparecem no relatório de erros para o usuário cadastrar o local ou corrigir a planilha, mas o restante é atualizado normalmente.
 
-## Verificação
-
-- Abrir a nota #28: a aba Emitente deve mostrar "MARCIO GRINGS — IE …" sem o alerta amarelo.
-- Emitir uma nova nota de depósito e conferir na tela de Notas Fiscais.
-- `dest_*` continua exibindo o Saulo como destinatário/depositante.
+Após a reimportação, o hook `useInscricoesComSaldo` volta a fechar com o extrato (colheitas, transferências e devoluções passam a compartilhar o mesmo `local_entrega_id`), e o Saulo aparece na lista de "Nova Devolução de Depósito" com o saldo real.
 
 ## Fora de escopo
 
-- Nenhuma mudança na emissão via Focus NFe (já estava correta).
-- Nenhuma mudança no cálculo de saldos, `notas_deposito_emitidas` ou telas de depósito.
+- Não altero o hook `useInscricoesComSaldo` neste plano — assim que os dados forem regularizados via reimportação, o cálculo original passa a bater com o extrato. Se você preferir, posso abrir um segundo plano para tornar o hook resiliente a `local_entrega_id` divergentes (agrupar por inscrição em vez de inscrição+local).
+- Não altero a UI de importação nem a estrutura da planilha.
