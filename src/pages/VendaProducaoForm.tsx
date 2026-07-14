@@ -242,13 +242,13 @@ export default function VendaProducaoForm() {
   // Calculate if contract is closed (saldo <= 0)
   const isContratoFechado = contrato && (contrato.saldo_kg || 0) <= 0;
 
-  // Auto-calculate preco_kg from valor_total / quantidade_kg
+  // Auto-calculate valor_total from quantidade_kg * preco_kg
   useEffect(() => {
     const qtd = quantidadeKg || 0;
-    const total = valorTotal || 0;
-    const preco = qtd > 0 && total > 0 ? total / qtd : null;
-    setValue("preco_kg", preco);
-  }, [quantidadeKg, valorTotal, setValue]);
+    const preco = precoKg || 0;
+    const total = qtd > 0 && preco > 0 ? qtd * preco : null;
+    setValue("valor_total", total);
+  }, [quantidadeKg, precoKg, setValue]);
 
   // Auto-calculate valor_comissao
   useEffect(() => {
@@ -630,22 +630,21 @@ export default function VendaProducaoForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>Valor Total (R$)</Label>
-                <CurrencyInput
-                  value={watch("valor_total")}
-                  onChange={(v) => setValue("valor_total", v)}
-                  decimals={2}
-                  className="font-bold"
-                />
-              </div>
-              <div className="space-y-2">
                 <Label>Preço/kg (R$)</Label>
                 <CurrencyInput
                   value={watch("preco_kg")}
                   onChange={(v) => setValue("preco_kg", v)}
                   decimals={10}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Valor Total (R$)</Label>
+                <CurrencyInput
+                  value={watch("valor_total")}
+                  onChange={(v) => setValue("valor_total", v)}
+                  decimals={2}
                   disabled
-                  className="bg-muted"
+                  className="font-bold bg-muted"
                 />
               </div>
             </div>

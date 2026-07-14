@@ -109,6 +109,7 @@ export default function RemessasVendaForm() {
   const [sacosRemessa, setSacosRemessa] = useState(0);
   const [sacosNota, setSacosNota] = useState(0);
   const [valorRemessa, setValorRemessa] = useState(0);
+  const [precoKgInput, setPrecoKgInput] = useState(0);
   const [valorNota, setValorNota] = useState(0);
 
   const { data: contrato, isLoading: loadingContrato } = useContratoVenda(id);
@@ -318,14 +319,21 @@ export default function RemessasVendaForm() {
     // Sacos separados
     setSacosRemessa(kgRemessa > 0 ? kgRemessa / 60 : 0);
     setSacosNota(kgRemessa > 0 ? kgRemessa / 60 : 0);
+  }, [kgRemessa]);
 
-    const preco = contrato?.preco_kg || 0;
-    // Preenche valor inicial (usuário pode editar depois)
-    setValorRemessa(kgRemessa * preco);
-  }, [kgRemessa, contrato?.preco_kg]);
+  // Inicializa preço com o do contrato
+  useEffect(() => {
+    if (contrato?.preco_kg && precoKgInput === 0) {
+      setPrecoKgInput(Number(contrato.preco_kg));
+    }
+  }, [contrato?.preco_kg]);
 
-  // Preço/Kg efetivo (derivado do Valor da Remessa informado)
-  const effectivePrecoKg = kgRemessa > 0 ? valorRemessa / kgRemessa : (contrato?.preco_kg || 0);
+  // Preço/Kg efetivo é o informado pelo usuário
+  const effectivePrecoKg = precoKgInput || contrato?.preco_kg || 0;
+  // Valor da Remessa é calculado
+  useEffect(() => {
+    setValorRemessa(kgRemessa * effectivePrecoKg);
+  }, [kgRemessa, effectivePrecoKg]);
   // Valor Nota acompanha (sem descontos)
   useEffect(() => {
     setValorNota(kgNota * effectivePrecoKg);
@@ -596,11 +604,12 @@ export default function RemessasVendaForm() {
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
-                      inputMode="numeric"
+                      step="0.001"
+                      inputMode="decimal"
                       className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       {...register("peso_tara", { valueAsNumber: true })}
                     />
-                    <BalancaButton onPeso={(kg) => setValue("peso_tara", Math.round(kg))} />
+                    <BalancaButton onPeso={(kg) => setValue("peso_tara", kg)} />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -608,18 +617,19 @@ export default function RemessasVendaForm() {
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
-                      inputMode="numeric"
+                      step="0.001"
+                      inputMode="decimal"
                       className="w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       {...register("peso_bruto", { valueAsNumber: true })}
                     />
-                    <BalancaButton onPeso={(kg) => setValue("peso_bruto", Math.round(kg))} />
+                    <BalancaButton onPeso={(kg) => setValue("peso_bruto", kg)} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Peso Líquido</Label>
                   <Input 
                     type="text" 
-                    value={formatNumber(pesoLiquido)} 
+                    value={formatNumber(pesoLiquido, 3)} 
                     readOnly 
                     tabIndex={-1}
                     className="bg-muted font-bold text-right" 
@@ -633,7 +643,7 @@ export default function RemessasVendaForm() {
                   <Label>Kgs da Remessa</Label>
                   <Input 
                     type="text" 
-                    value={formatNumber(kgRemessa)} 
+                    value={formatNumber(kgRemessa, 3)} 
                     readOnly 
                     tabIndex={-1}
                     className="bg-muted font-bold text-right" 
@@ -653,7 +663,7 @@ export default function RemessasVendaForm() {
                   <Label>Kgs Nota</Label>
                   <Input 
                     type="text" 
-                    value={formatNumber(kgNota)} 
+                    value={formatNumber(kgNota, 3)} 
                     readOnly 
                     tabIndex={-1}
                     className="bg-muted font-bold text-success text-right" 
@@ -670,22 +680,22 @@ export default function RemessasVendaForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Valor da Remessa</Label>
+                  <Label>Preço do Kg</Label>
                   <CurrencyInput
-                    value={valorRemessa}
-                    onChange={(v) => setValorRemessa(v)}
-                    decimals={2}
-                    className="font-bold text-right"
+                    value={precoKgInput}
+                    onChange={(v) => setPrecoKgInput(v)}
+                    decimals={10}
+                    className="text-right"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Preço do Kg</Label>
+                  <Label>Valor da Remessa</Label>
                   <Input
                     type="text"
-                    value={formatCurrency(effectivePrecoKg)}
+                    value={formatCurrency(valorRemessa)}
                     readOnly
                     tabIndex={-1}
-                    className="bg-muted text-right"
+                    className="bg-muted font-bold text-right"
                   />
                 </div>
 

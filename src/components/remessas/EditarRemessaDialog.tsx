@@ -80,13 +80,14 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
   const [ufPlaca, setUfPlaca] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [valorRemessa, setValorRemessa] = useState(0);
+  const [precoKgInput, setPrecoKgInput] = useState(0);
 
   // Valores calculados
   const kgRemessa = pesoBruto > pesoTara ? pesoBruto - pesoTara : 0;
   const sacosRemessa = kgRemessa / 60;
   const sacosNota = kgNota / 60;
-  // Preço/Kg efetivo derivado do Valor da Remessa informado
-  const effectivePrecoKg = kgRemessa > 0 ? valorRemessa / kgRemessa : precoKg;
+  // Preço/Kg efetivo é o informado
+  const effectivePrecoKg = precoKgInput || precoKg;
   const valorNota = kgNota * effectivePrecoKg;
 
   // Preencher valores da remessa quando abrir
@@ -107,13 +108,17 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       setPlaca(remessa.placa?.replace(/[^A-Za-z0-9]/g, "").toUpperCase() || "");
       setUfPlaca(remessa.uf_placa || "");
       setObservacoes(remessa.observacoes || "");
-      // Valor da Remessa: usa o salvo; se vazio, calcula do preço do contrato
-      const kgR = (remessa.peso_bruto || 0) > (remessa.peso_tara || 0)
-        ? (remessa.peso_bruto || 0) - (remessa.peso_tara || 0)
-        : 0;
-      setValorRemessa(Number(remessa.valor_remessa) > 0 ? Number(remessa.valor_remessa) : kgR * precoKg);
+      // Preço do Kg: usa o salvo; se vazio, usa o do contrato
+      const savedPreco = Number(remessa.preco_kg);
+      setPrecoKgInput(savedPreco > 0 ? savedPreco : precoKg);
     }
   }, [remessa, user]);
+
+  // Valor da Remessa é calculado a partir de kgRemessa * preço
+  useEffect(() => {
+    setValorRemessa(kgRemessa * effectivePrecoKg);
+  }, [kgRemessa, effectivePrecoKg]);
+
 
   // Atualizar kgNota quando kgRemessa mudar (se ainda não foi editado manualmente)
   useEffect(() => {
@@ -287,13 +292,14 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
-                      inputMode="numeric"
+                      step="0.001"
+                      inputMode="decimal"
                       value={pesoTara || ""}
                       onChange={(e) => setPesoTara(Number(e.target.value))}
                       className="w-28 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       disabled={isReadOnly}
                     />
-                    {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoTara(Math.round(kg))} />}
+                    {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoTara(kg)} />}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -301,13 +307,14 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
-                      inputMode="numeric"
+                      step="0.001"
+                      inputMode="decimal"
                       value={pesoBruto || ""}
                       onChange={(e) => setPesoBruto(Number(e.target.value))}
                       className="w-28 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       disabled={isReadOnly}
                     />
-                    {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoBruto(Math.round(kg))} />}
+                    {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoBruto(kg)} />}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -328,7 +335,7 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Label className="text-xs">Kgs Remessa</Label>
                   <Input
                     type="text"
-                    value={formatNumber(kgRemessa)}
+                    value={formatNumber(kgRemessa, 3)}
                     readOnly
                     className="bg-muted font-bold text-right"
                     tabIndex={-1}
@@ -348,7 +355,8 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Label className="text-xs">Kgs Nota</Label>
                   <Input
                     type="number"
-                    step="1"
+                    step="0.001"
+                    inputMode="decimal"
                     value={kgNota || ""}
                     onChange={(e) => setKgNota(Number(e.target.value))}
                     className="text-right font-bold"
@@ -367,22 +375,22 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Preço Kg</Label>
-                  <Input
-                    type="text"
-                    value={formatCurrency(effectivePrecoKg)}
-                    readOnly
-                    className="bg-muted text-right"
-                    tabIndex={-1}
+                  <CurrencyInput
+                    value={precoKgInput}
+                    onChange={(v) => setPrecoKgInput(v)}
+                    decimals={10}
+                    disabled={isReadOnly}
+                    className="text-right"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Vlr Remessa</Label>
-                  <CurrencyInput
-                    value={valorRemessa}
-                    onChange={(v) => setValorRemessa(v)}
-                    decimals={2}
-                    disabled={isReadOnly}
-                    className="font-bold text-right"
+                  <Input
+                    type="text"
+                    value={formatCurrency(valorRemessa)}
+                    readOnly
+                    tabIndex={-1}
+                    className="bg-muted font-bold text-right"
                   />
                 </div>
                 <div className="space-y-2">
