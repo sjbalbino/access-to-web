@@ -429,6 +429,19 @@ export default function NotasFiscais() {
               emptyText="Nenhum status encontrado."
               className="w-full sm:w-40"
             />
+            <ComboboxFilter
+              value={emitenteFilter === "todos" ? "" : emitenteFilter}
+              onValueChange={(v) => setEmitenteFilter(v || "todos")}
+              options={(emitentes || []).map((e: any) => ({
+                value: e.id,
+                label: `${e.inscricao?.nome || e.granja?.razao_social || "Sem nome"}${e.inscricao?.cpf_cnpj ? ` — ${formatCpfCnpj(e.inscricao.cpf_cnpj)}` : ""}`,
+              }))}
+              placeholder="Todos os emitentes"
+              searchPlaceholder="Buscar emitente..."
+              emptyText="Nenhum emitente encontrado."
+              className="w-full sm:w-64"
+            />
+
           </div>
           {canEdit && (
             <div className="flex gap-2 flex-wrap">
