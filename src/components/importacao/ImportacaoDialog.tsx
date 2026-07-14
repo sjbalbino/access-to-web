@@ -353,10 +353,19 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         }
         // Composite lookup: controle_lavoura_id for colheitas and plantios (via safra_codigo)
         else if (config.key === 'colheitas' || config.key === 'plantios') {
-          // Buscar controle_lavouras pelo campo codigo para cache direto
-          const { data: controles } = await supabase
-            .from('controle_lavouras')
-            .select('id, safra_id, codigo, granja_id, lavoura_id');
+          // Buscar controle_lavouras pelo campo codigo para cache direto (paginado — Supabase corta em 1000 por padrão)
+          const controles: any[] = [];
+          const PAGE = 1000;
+          for (let from = 0; ; from += PAGE) {
+            const { data: page, error: pageErr } = await supabase
+              .from('controle_lavouras')
+              .select('id, safra_id, codigo, granja_id, lavoura_id')
+              .range(from, from + PAGE - 1);
+            if (pageErr) throw pageErr;
+            if (!page || page.length === 0) break;
+            controles.push(...page);
+            if (page.length < PAGE) break;
+          }
           
           // Cache: controle_lavouras.codigo (normalizado) + granja_id → { controle_id, safra_id }
           // Cache: controle_lavouras.codigo (normalizado) + granja_id + safra_id → { controle_id, safra_id }
