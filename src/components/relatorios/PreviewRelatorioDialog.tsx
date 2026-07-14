@@ -149,6 +149,7 @@ export function PreviewRelatorioDialog({ payload, onOpenChange, open }: Props) {
             <PdfViewer
               pdfData={previewPdf.data}
               errorMessage="Não foi possível renderizar a prévia do relatório."
+              forceVisibleTextLayer
             />
           ) : (
             <PdfViewer
