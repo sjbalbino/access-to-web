@@ -375,22 +375,22 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Preço Kg</Label>
-                  <Input
-                    type="text"
-                    value={formatCurrency(effectivePrecoKg)}
-                    readOnly
-                    className="bg-muted text-right"
-                    tabIndex={-1}
+                  <CurrencyInput
+                    value={precoKgInput}
+                    onChange={(v) => setPrecoKgInput(v)}
+                    decimals={10}
+                    disabled={isReadOnly}
+                    className="text-right"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Vlr Remessa</Label>
-                  <CurrencyInput
-                    value={valorRemessa}
-                    onChange={(v) => setValorRemessa(v)}
-                    decimals={2}
-                    disabled={isReadOnly}
-                    className="font-bold text-right"
+                  <Input
+                    type="text"
+                    value={formatCurrency(valorRemessa)}
+                    readOnly
+                    tabIndex={-1}
+                    className="bg-muted font-bold text-right"
                   />
                 </div>
                 <div className="space-y-2">
