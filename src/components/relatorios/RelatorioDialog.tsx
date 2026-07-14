@@ -616,29 +616,29 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     // Transferências
     let qTrOr = supabase.from("transferencias_deposito")
-      .select("inscricao_origem_id, safra_id, quantidade_kg")
+      .select("inscricao_origem_id, safra_id, quantidade_kg, local_saida_id, local:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome)")
       .in("inscricao_origem_id", inscIds);
     if (safraId) qTrOr = qTrOr.eq("safra_id", safraId);
     let qTrDe = supabase.from("transferencias_deposito")
-      .select("inscricao_destino_id, safra_id, quantidade_kg")
+      .select("inscricao_destino_id, safra_id, quantidade_kg, local_entrada_id, local:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome)")
       .in("inscricao_destino_id", inscIds);
     if (safraId) qTrDe = qTrDe.eq("safra_id", safraId);
     const [trOrRes, trDeRes] = await Promise.all([qTrOr, qTrDe]);
 
     // Devoluções
     let qDev = supabase.from("devolucoes_deposito")
-      .select("inscricao_produtor_id, safra_id, quantidade_kg")
+      .select("inscricao_produtor_id, safra_id, quantidade_kg, local_entrega_id, local:locais_entrega!devolucoes_deposito_local_entrega_id_fkey(nome)")
       .in("inscricao_produtor_id", inscIds).neq("status", "cancelada");
     if (safraId) qDev = qDev.eq("safra_id", safraId);
     let qDevTx = supabase.from("devolucoes_deposito")
-      .select("inscricao_recebe_taxa_id, safra_id, kg_taxa_armazenagem")
+      .select("inscricao_recebe_taxa_id, safra_id, kg_taxa_armazenagem, local_entrega_id, local:locais_entrega!devolucoes_deposito_local_entrega_id_fkey(nome)")
       .in("inscricao_recebe_taxa_id", inscIds).neq("status", "cancelada");
     if (safraId) qDevTx = qDevTx.eq("safra_id", safraId);
     const [devRes, devTxRes] = await Promise.all([qDev, qDevTx]);
 
     // Compras
     let qCompra = supabase.from("compras_cereais")
-      .select("inscricao_comprador_id, safra_id, quantidade_kg")
+      .select("inscricao_comprador_id, safra_id, quantidade_kg, local_entrega_id, local:locais_entrega!compras_cereais_local_entrega_id_fkey(nome)")
       .in("inscricao_comprador_id", inscIds);
     if (safraId) qCompra = qCompra.eq("safra_id", safraId);
     const { data: compras } = await qCompra;
@@ -681,6 +681,19 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       return r;
     };
 
+    // Fallback local por (safra, inscricao): usa o local majoritário das colheitas
+    const localFallback = new Map<string, string>();
+    (colheitas || []).forEach((c: any) => {
+      if (!c.safra_id || !c.inscricao_produtor_id) return;
+      const key = `${c.safra_id}::${c.inscricao_produtor_id}`;
+      if (!localFallback.has(key)) {
+        localFallback.set(key, c.locais_entrega?.nome || "Sede");
+      }
+    });
+    const resolveLocal = (safra: string, insc: string, movLocal: string | null | undefined): string => {
+      return movLocal || localFallback.get(`${safra}::${insc}`) || "Sede";
+    };
+
     (colheitas || []).forEach((c: any) => {
       if (!c.safra_id || !c.inscricao_produtor_id) return;
       const local = c.locais_entrega?.nome || "Sede";
@@ -692,35 +705,42 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     (trOrRes.data || []).forEach((t: any) => {
       if (!t.safra_id) return;
-      const r = getRow(t.safra_id, t.inscricao_origem_id, "Sede");
+      const local = resolveLocal(t.safra_id, t.inscricao_origem_id, t.local?.nome);
+      const r = getRow(t.safra_id, t.inscricao_origem_id, local);
       if (r) r.tr_saida += Number(t.quantidade_kg) || 0;
     });
     (trDeRes.data || []).forEach((t: any) => {
       if (!t.safra_id) return;
-      const r = getRow(t.safra_id, t.inscricao_destino_id, "Sede");
+      const local = resolveLocal(t.safra_id, t.inscricao_destino_id, t.local?.nome);
+      const r = getRow(t.safra_id, t.inscricao_destino_id, local);
       if (r) r.tr_entrada += Number(t.quantidade_kg) || 0;
     });
     (devRes.data || []).forEach((d: any) => {
       if (!d.safra_id) return;
-      const r = getRow(d.safra_id, d.inscricao_produtor_id, "Sede");
+      const local = resolveLocal(d.safra_id, d.inscricao_produtor_id, d.local?.nome);
+      const r = getRow(d.safra_id, d.inscricao_produtor_id, local);
       if (r) r.devolucao += Number(d.quantidade_kg) || 0;
     });
     (devTxRes.data || []).forEach((d: any) => {
       if (!d.safra_id || !d.inscricao_recebe_taxa_id) return;
-      const r = getRow(d.safra_id, d.inscricao_recebe_taxa_id, "Sede");
+      const local = resolveLocal(d.safra_id, d.inscricao_recebe_taxa_id, d.local?.nome);
+      const r = getRow(d.safra_id, d.inscricao_recebe_taxa_id, local);
       if (r) r.ent_armaz += Number(d.kg_taxa_armazenagem) || 0;
     });
     (compras || []).forEach((c: any) => {
       if (!c.safra_id) return;
-      const r = getRow(c.safra_id, c.inscricao_comprador_id, "Sede");
+      const local = resolveLocal(c.safra_id, c.inscricao_comprador_id, c.local?.nome);
+      const r = getRow(c.safra_id, c.inscricao_comprador_id, local);
       if (r) r.compras += Number(c.quantidade_kg) || 0;
     });
     (remessas || []).forEach((rm: any) => {
       const info = contratoInfo.get(rm.contrato_venda_id);
       if (!info) return;
-      const r = getRow(info.safra, info.insc, "Sede");
+      const local = resolveLocal(info.safra, info.insc, null);
+      const r = getRow(info.safra, info.insc, local);
       if (r) r.vendas += Number(rm.kg_remessa) || 0;
     });
+
 
     const rows: ResumoProdutorRow[] = Array.from(rowMap.values()).map(r => {
       const dep = Math.round(r.depositos), com = Math.round(r.compras), ven = Math.round(r.vendas),
