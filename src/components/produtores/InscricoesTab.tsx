@@ -672,12 +672,22 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum</SelectItem>
-                    {emitentesAtivos.map((emitente) => (
-                      <SelectItem key={emitente.id} value={emitente.id}>
-                        {emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "Emitente"}
-                        {emitente.ambiente === 1 ? " (Produção)" : " (Homologação)"}
-                      </SelectItem>
-                    ))}
+                    {emitentesAtivos.map((emitente) => {
+                      const granjaLabel = emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "Emitente";
+                      const inscNome = emitente.inscricao?.nome_fantasia || emitente.inscricao?.produtores?.nome || emitente.inscricao?.nome || null;
+                      const ie = emitente.inscricao?.inscricao_estadual ? formatInscricaoEstadual(emitente.inscricao.inscricao_estadual, emitente.inscricao.uf || undefined) : null;
+                      const doc = emitente.inscricao?.cpf_cnpj ? formatCpfCnpj(emitente.inscricao.cpf_cnpj) : null;
+                      const partes = [granjaLabel];
+                      if (inscNome) partes.push(inscNome);
+                      if (ie) partes.push(`IE: ${ie}`);
+                      if (doc) partes.push(doc);
+                      return (
+                        <SelectItem key={emitente.id} value={emitente.id}>
+                          {partes.join(" — ")}
+                          {emitente.ambiente === 1 ? " (Produção)" : " (Homologação)"}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
