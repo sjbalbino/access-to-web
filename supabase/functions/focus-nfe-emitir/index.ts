@@ -364,18 +364,36 @@ serve(async (req) => {
       const isDuplicidade = responseData.status_sefaz === "539" || 
         responseData.mensagem_sefaz?.includes("Duplicidade");
 
-      // Se for erro de duplicidade, LIMPAR uuid_api para forçar nova referência na próxima tentativa
+      // Se for erro de duplicidade (539), a SEFAZ já autorizou uma NFe com o mesmo
+      // CNPJ+série+número. Precisamos:
+      //  1) liberar o número reservado na nota (setar numero=null) para que a
+      //     próxima tentativa pegue numero_atual_nfe + 1
+      //  2) avançar numero_atual_nfe do emitente para pular o número queimado
+      //  3) limpar uuid_api/chave/protocolo para forçar nova referência
       if (isDuplicidade) {
+        const numeroQueimado = Number((existingNota as { numero?: number | null }).numero ?? 0);
+        const numeroAtualEmit = Number(emitenteData?.numero_atual_nfe ?? 0);
+        const novoNumeroAtual = Math.max(numeroAtualEmit, numeroQueimado);
+
         await supabase
           .from("notas_fiscais")
           .update({
             status: "erro_autorizacao",
-            motivo_status: responseData.mensagem_sefaz || "NFe com número duplicado. Tente novamente com outro número.",
-            uuid_api: null, // CRÍTICO: limpar para forçar nova referência
+            motivo_status: responseData.mensagem_sefaz || "NFe com número duplicado na SEFAZ. Número liberado — tente emitir novamente para receber um novo número.",
+            numero: null, // libera o número queimado
+            uuid_api: null, // força nova referência
             chave_acesso: null,
             protocolo: null,
           })
           .eq("id", notaFiscalId);
+
+        if (emitenteData?.id && novoNumeroAtual > numeroAtualEmit) {
+          await supabase
+            .from("emitentes_nfe")
+            .update({ numero_atual_nfe: novoNumeroAtual })
+            .eq("id", emitenteData.id);
+          console.log(`Numero_atual_nfe avançado de ${numeroAtualEmit} para ${novoNumeroAtual} (pulando número duplicado ${numeroQueimado})`);
+        }
       } else {
         // Atualizar nota com erro normal
         await supabase
@@ -391,7 +409,7 @@ serve(async (req) => {
         JSON.stringify({
           success: false,
           error: isDuplicidade 
-            ? "NFe com número duplicado. Altere o número da NFe e tente novamente."
+            ? "Duplicidade na SEFAZ: já existe uma NF-e autorizada com este número. O número foi liberado e o próximo será usado — clique em Emitir NF-e novamente."
             : (responseData.mensagem || "Erro ao emitir NF-e"),
           details: responseData,
           isDuplicidade,
