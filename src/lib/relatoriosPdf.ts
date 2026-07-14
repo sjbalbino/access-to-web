@@ -352,8 +352,8 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   const totalRecebidas = data.transferenciasRecebidas.reduce((s, t) => s + t.quantidade_kg, 0);
   const totalEnviadas = data.transferenciasEnviadas.reduce((s, t) => s + t.quantidade_kg, 0);
   const totalDevolucoes = data.devolucoes.reduce((s, d) => s + d.quantidade_kg, 0);
-  const totalKgTaxa = data.devolucoes.reduce((s, d) => s + (d.kg_taxa_armazenagem || 0), 0);
-  const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalKgTaxa;
+  // Kg de Taxa de Armazenagem é crédito do sócio recebedor da taxa, não sai do estoque do produtor.
+  const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes;
 
 
   // Check if need new page
@@ -374,7 +374,6 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     ["(+) Transf. Recebidas", fmtKgSc(totalRecebidas)],
     ["(-) Transf. Enviadas", fmtKgSc(totalEnviadas)],
     ["(-) Devoluções", fmtKgSc(totalDevolucoes)],
-    ["(-) Kg Taxa Armazenagem", fmtKgSc(totalKgTaxa)],
     ["= SALDO", fmtKgSc(saldo)],
   ];
 
