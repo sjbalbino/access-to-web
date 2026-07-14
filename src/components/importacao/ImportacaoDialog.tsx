@@ -107,6 +107,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [clearExisting, setClearExisting] = useState(false);
   const [upsertMode, setUpsertMode] = useState(false);
+  // When config.updateMode exists, user can pick: 'update' (default), 'upsert', 'insert'
+  const [updateModeChoice, setUpdateModeChoice] = useState<'update' | 'upsert' | 'insert'>('update');
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [progress, setProgress] = useState(0);
   const [importedCount, setImportedCount] = useState(0);
@@ -115,6 +117,17 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [subCentros, setSubCentros] = useState<{ id: string; descricao: string; centro_nome: string }[]>([]);
   const [granjas, setGranjas] = useState<{ id: string; razao_social: string }[]>([]);
   const [selectedGranjaId, setSelectedGranjaId] = useState<string>('');
+
+  // Prevent accidental reload/close while importing
+  useEffect(() => {
+    if (status !== 'importing') return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [status]);
 
   const needsGranja = config.references?.some(r => r.dbColumn === 'granja_id' || r.dbColumn === '_granja_id') && config.key !== 'granjas';
 
