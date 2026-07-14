@@ -292,13 +292,14 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
-                      inputMode="numeric"
+                      step="0.001"
+                      inputMode="decimal"
                       value={pesoTara || ""}
                       onChange={(e) => setPesoTara(Number(e.target.value))}
                       className="w-28 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       disabled={isReadOnly}
                     />
-                    {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoTara(Math.round(kg))} />}
+                    {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoTara(kg)} />}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -306,13 +307,14 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
-                      inputMode="numeric"
+                      step="0.001"
+                      inputMode="decimal"
                       value={pesoBruto || ""}
                       onChange={(e) => setPesoBruto(Number(e.target.value))}
                       className="w-28 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       disabled={isReadOnly}
                     />
-                    {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoBruto(Math.round(kg))} />}
+                    {!isReadOnly && <BalancaButton onPeso={(kg) => setPesoBruto(kg)} />}
                   </div>
                 </div>
                 <div className="space-y-2">
