@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/spinner";
 type PdfJsLib = typeof import("pdfjs-dist/legacy/build/pdf.mjs");
 
 let pdfJsPromise: Promise<PdfJsLib> | null = null;
+const STANDARD_FONT_DATA_URL = "/pdfjs/standard_fonts/";
 
 async function loadPdfJs(): Promise<PdfJsLib> {
   if (!pdfJsPromise) {
@@ -93,6 +94,8 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
       const pdf = await pdfjsLib.getDocument({
         data: pdfData.slice(),
         disableFontFace,
+        standardFontDataUrl: STANDARD_FONT_DATA_URL,
+        useSystemFonts: true,
       }).promise;
 
       const canvases: HTMLCanvasElement[] = [];
