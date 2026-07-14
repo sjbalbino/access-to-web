@@ -326,7 +326,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           data_saida_entrada: new Date().toISOString(),
           operacao: 0, // Entrada
           finalidade: 1, // Normal
-          inscricao_produtor_id: inscricaoId,
+          inscricao_produtor_id: inscricaoPrincipal.id,
           info_complementar: infoComplementar || null,
           // Destinatário (produtor)
           dest_tipo: inscricaoSelecionada?.cpf_cnpj && inscricaoSelecionada.cpf_cnpj.length > 11 ? 'juridica' : 'fisica',
