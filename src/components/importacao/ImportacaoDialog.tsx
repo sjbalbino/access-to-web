@@ -107,6 +107,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [clearExisting, setClearExisting] = useState(false);
   const [upsertMode, setUpsertMode] = useState(false);
+  // When config.updateMode exists, user can pick: 'update' (default), 'upsert', 'insert'
+  const [updateModeChoice, setUpdateModeChoice] = useState<'update' | 'upsert' | 'insert'>('update');
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [progress, setProgress] = useState(0);
   const [importedCount, setImportedCount] = useState(0);
@@ -115,6 +117,17 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const [subCentros, setSubCentros] = useState<{ id: string; descricao: string; centro_nome: string }[]>([]);
   const [granjas, setGranjas] = useState<{ id: string; razao_social: string }[]>([]);
   const [selectedGranjaId, setSelectedGranjaId] = useState<string>('');
+
+  // Prevent accidental reload/close while importing
+  useEffect(() => {
+    if (status !== 'importing') return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [status]);
 
   const needsGranja = config.references?.some(r => r.dbColumn === 'granja_id' || r.dbColumn === '_granja_id') && config.key !== 'granjas';
 
@@ -214,6 +227,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     setImportErrors([]);
     setClearExisting(false);
     setUpsertMode(false);
+    setUpdateModeChoice('update');
     setStatus('idle');
     setProgress(0);
     setImportedCount(0);
@@ -340,10 +354,19 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         }
         // Composite lookup: controle_lavoura_id for colheitas and plantios (via safra_codigo)
         else if (config.key === 'colheitas' || config.key === 'plantios') {
-          // Buscar controle_lavouras pelo campo codigo para cache direto
-          const { data: controles } = await supabase
-            .from('controle_lavouras')
-            .select('id, safra_id, codigo, granja_id, lavoura_id');
+          // Buscar controle_lavouras pelo campo codigo para cache direto (paginado — Supabase corta em 1000 por padrão)
+          const controles: any[] = [];
+          const PAGE = 1000;
+          for (let from = 0; ; from += PAGE) {
+            const { data: page, error: pageErr } = await supabase
+              .from('controle_lavouras')
+              .select('id, safra_id, codigo, granja_id, lavoura_id')
+              .range(from, from + PAGE - 1);
+            if (pageErr) throw pageErr;
+            if (!page || page.length === 0) break;
+            controles.push(...page);
+            if (page.length < PAGE) break;
+          }
           
           // Cache: controle_lavouras.codigo (normalizado) + granja_id → { controle_id, safra_id }
           // Cache: controle_lavouras.codigo (normalizado) + granja_id + safra_id → { controle_id, safra_id }
@@ -643,14 +666,19 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       return;
     }
 
+    // Determine effective mode when updateMode is configured
+    const runManualUpsert = !!config.updateMode && updateModeChoice === 'upsert';
+    const runInsertOnly = !!config.updateMode && updateModeChoice === 'insert';
+    const runUpdateOnly = !!config.updateMode && updateModeChoice === 'update';
+
     setStatus('importing');
     setProgress(0);
     setImportErrors([]);
     let imported = 0;
 
     try {
-      // UPDATE MODE: lookup by code and update fields
-      if (config.updateMode) {
+      // UPDATE-ONLY MODE: lookup by code and update just the mapped updateColumns
+      if (runUpdateOnly && config.updateMode) {
         const { lookupColumn, sourceColumn, updateColumns } = config.updateMode;
         const errors: string[] = [];
 
@@ -732,7 +760,100 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         return;
       }
 
-      // STANDARD INSERT MODE
+      // MANUAL UPSERT MODE (for tables with updateMode where user chose "insert + update")
+      // For each row: try to find by lookupColumn; if exists → update ALL mapped cols; else → insert.
+      if (runManualUpsert && config.updateMode) {
+        const { lookupColumn, sourceColumn } = config.updateMode;
+        const errors: string[] = [];
+
+        // Filter out rows with transform/reference errors
+        const cleanRows = transformedData.filter((_, idx) => !invalidLineNumbers.has(idx + 1));
+
+        // Strip auxiliary/unknown columns (same logic as standard insert path)
+        const validDbColumns = new Set(config.columns.map(c => c.dbName));
+        if (config.references) {
+          config.references.forEach(r => validDbColumns.add(r.dbColumn));
+        }
+        validDbColumns.add('safra_id');
+        validDbColumns.add('controle_lavoura_id');
+        validDbColumns.add('tenant_id');
+
+        const stripAux = (row: Record<string, any>) => {
+          const out: Record<string, any> = {};
+          for (const [k, v] of Object.entries(row)) {
+            if (k.startsWith('_')) continue;
+            if (!validDbColumns.has(k)) continue;
+            out[k] = v;
+          }
+          return out;
+        };
+
+        for (let i = 0; i < cleanRows.length; i++) {
+          const row = cleanRows[i];
+          const lookupValue = row[sourceColumn];
+          const payload = stripAux(row);
+
+          try {
+            if (lookupValue) {
+              const { data: existing } = await (supabase
+                .from(config.tableName as any)
+                .select('id') as any)
+                .eq(lookupColumn, lookupValue)
+                .limit(1);
+
+              if (existing && existing.length > 0) {
+                const { error: updErr } = await (supabase
+                  .from(config.tableName as any)
+                  .update(payload as any) as any)
+                  .eq('id', (existing[0] as any).id);
+                if (updErr) {
+                  errors.push(`Linha ${i + 1} (update): ${updErr.message}`);
+                } else {
+                  imported++;
+                }
+              } else {
+                const { error: insErr } = await supabase
+                  .from(config.tableName as any)
+                  .insert(payload as any);
+                if (insErr) {
+                  errors.push(`Linha ${i + 1} (insert): ${insErr.message}`);
+                } else {
+                  imported++;
+                }
+              }
+            } else {
+              // no lookup value → insert as new
+              const { error: insErr } = await supabase
+                .from(config.tableName as any)
+                .insert(payload as any);
+              if (insErr) {
+                errors.push(`Linha ${i + 1} (insert): ${insErr.message}`);
+              } else {
+                imported++;
+              }
+            }
+          } catch (err: any) {
+            errors.push(`Linha ${i + 1}: ${err.message || err}`);
+          }
+
+          setProgress(Math.round(((i + 1) / cleanRows.length) * 100));
+          setImportedCount(imported);
+        }
+
+        setImportErrors(errors);
+        if (errors.length === 0) {
+          toast.success(`${imported} registros sincronizados com sucesso!`);
+        } else {
+          toast.warning(`Sincronização parcial: ${imported} processados, ${errors.length} erros`);
+        }
+        await queryClient.invalidateQueries({ queryKey: [config.key] });
+        await queryClient.invalidateQueries({ queryKey: [config.tableName] });
+        if (imported > 0) onImportComplete?.(imported);
+        setStatus('done');
+        return;
+      }
+
+      // STANDARD INSERT MODE (also handles runInsertOnly for updateMode configs)
       // Clear existing if requested — escopado por tenant, filhos primeiro, em lotes
       if (clearExisting) {
         const CHILD_TABLES: Record<string, string[]> = {
@@ -1200,7 +1321,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
   const totalErrors = transformErrors.length + referenceErrors.length;
   const invalidLineNumbers = extractErroredLineNumbers([...transformErrors, ...referenceErrors]);
   const validRowCount = transformedData.filter((_, idx) => !invalidLineNumbers.has(idx + 1)).length;
-  const importTargetCount = config.updateMode ? transformedData.length : validRowCount;
+  const importTargetCount = config.updateMode
+    ? (updateModeChoice === 'update' ? transformedData.length : validRowCount)
+    : validRowCount;
   const previewColumns = config.columns.slice(0, 6);
 
   return (
@@ -1406,6 +1529,26 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
 
             <div className="space-y-2">
+              {config.updateMode && (
+                <div className="rounded-md border p-3 space-y-2">
+                  <Label className="text-sm font-semibold">Modo de importação</Label>
+                  <Select value={updateModeChoice} onValueChange={(v: any) => setUpdateModeChoice(v)}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="update">Atualizar existentes (apenas colunas configuradas)</SelectItem>
+                      <SelectItem value="upsert">Inserir novos + atualizar existentes (todas as colunas)</SelectItem>
+                      <SelectItem value="insert">Somente inserir novos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {updateModeChoice === 'update' && 'Somente registros já existentes serão atualizados nas colunas mapeadas em updateMode. Nenhum registro novo será criado.'}
+                    {updateModeChoice === 'upsert' && 'Para cada linha: se o código existir, atualiza todas as colunas mapeadas; se não existir, insere um novo registro.'}
+                    {updateModeChoice === 'insert' && 'Insere todas as linhas como novos registros. Duplicados podem falhar.'}
+                  </p>
+                </div>
+              )}
               {upsertSupported && (
                 <div className="flex items-start gap-2">
                   <Switch
@@ -1497,7 +1640,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           {status === 'previewing' && (
 
             <Button onClick={handleImport} disabled={importTargetCount === 0}>
-              {config.updateMode ? 'Atualizar' : (upsertMode ? 'Sincronizar' : 'Importar')} {importTargetCount} registros
+              {config.updateMode
+                ? (updateModeChoice === 'update' ? 'Atualizar' : updateModeChoice === 'upsert' ? 'Sincronizar' : 'Inserir')
+                : (upsertMode ? 'Sincronizar' : 'Importar')} {importTargetCount} registros
             </Button>
           )}
           {(status === 'done' || status === 'error') && (
