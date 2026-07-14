@@ -663,7 +663,7 @@ export default function RemessasVendaForm() {
                   <Label>Kgs Nota</Label>
                   <Input 
                     type="text" 
-                    value={formatNumber(kgNota)} 
+                    value={formatNumber(kgNota, 3)} 
                     readOnly 
                     tabIndex={-1}
                     className="bg-muted font-bold text-success text-right" 
