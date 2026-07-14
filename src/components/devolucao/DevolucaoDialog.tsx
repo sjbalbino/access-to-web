@@ -257,14 +257,12 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
 
     const saldoDisponivel = saldoProdutor?.saldo || 0;
     const quantidadeOriginal = devolucao?.quantidade_kg || 0;
-    const kgTaxaOriginal = devolucao?.kg_taxa_armazenagem || 0;
-    // Ao editar, adicionar de volta a quantidade e taxa original ao saldo
-    const saldoAjustado = saldoDisponivel + quantidadeOriginal + kgTaxaOriginal;
+    // Ao editar, devolver ao saldo apenas a quantidade original (a taxa de armazenagem não sai do estoque do produtor)
+    const saldoAjustado = saldoDisponivel + quantidadeOriginal;
 
-    // A quantidade + kg de taxa não pode exceder o saldo
-    const totalDevolucao = quantidadeKg + kgTaxaArmazenagem;
-    if (totalDevolucao > saldoAjustado) {
-      toast.error(`Quantidade + Taxa (${formatKg(totalDevolucao)} kg) excede o saldo disponível (${formatKg(saldoAjustado)} kg)`);
+    // Apenas a quantidade devolvida sai do estoque do produtor; a taxa é crédito do sócio recebedor
+    if (quantidadeKg > saldoAjustado) {
+      toast.error(`Quantidade (${formatKg(quantidadeKg)} kg) excede o saldo disponível (${formatKg(saldoAjustado)} kg)`);
       return;
     }
 

@@ -1,47 +1,44 @@
-## Confirmação do comportamento atual
 
-Sim, confirmado. Na configuração de importação de **Colheitas** (`src/lib/importacaoConfig.ts`, linhas 669-676) existe um `updateMode` fixo:
+## Correção da fórmula do Saldo Disponível do Produtor (Devolução)
 
-```ts
-updateMode: {
-  lookupColumn: 'codigo',
-  sourceColumn: 'codigo',
-  updateColumns: [
-    { sourceColumn: 'inscricao_produtor_id', dbColumn: 'inscricao_produtor_id' },
-    { sourceColumn: 'local_entrega_terceiro_id', dbColumn: 'local_entrega_terceiro_id' },
-  ],
-},
+Regra correta segundo o usuário:
+
+- **Kg de Taxa de Armazenagem** é um crédito exclusivo do sócio que recebe a taxa (ex.: Marcio Grings). Não deve ser debitado do produtor que está recebendo a devolução — hoje está sendo, causando dupla baixa.
+- **Notas de Depósito emitidas** não devem entrar no cálculo do saldo disponível para devolução.
+
+Nova fórmula do saldo disponível do produtor:
+
+```
+saldo = colheitas + transf.recebidas − transf.enviadas − devoluções (quantidade_kg)
 ```
 
-Como `updateMode` está presente, o `ImportacaoDialog` **desliga o insert e o upsert** (`upsertSupported = !!syncConflictLabel && !config.updateMode`) e roda somente UPDATE por `codigo`, atualizando apenas `inscricao_produtor_id` e `local_entrega_terceiro_id`. Ou seja: a "reimportação" atual **não insere colheitas novas nem atualiza pesos/umidade/etc.** — por design, só corrige vínculos de inscrição e local de entrega em colheitas já existentes.
+## Alterações
 
-Por isso a queixa anterior ("parou a importação com reload") vinha combinada com esse comportamento — mesmo se tivesse concluído, nenhum registro novo teria sido inserido.
+### 1. `src/hooks/useSaldoDisponivelProdutor.ts`
+- Remover da fórmula final as parcelas `kgTaxaArmazenagem` e `notasDeposito`.
+- Manter os campos no retorno (`kgTaxaArmazenagem`, `notasDeposito`) apenas como informação/exibição, para não quebrar componentes que os consomem.
+- Manter as queries de devoluções e notas de depósito (a coluna `kg_taxa_armazenagem` continua sendo lida só para exibição/consistência interna).
 
-## Plano ajustado
+### 2. `src/components/devolucao/DevolucaoDialog.tsx` (linhas 258-269)
+- Alterar a validação: comparar apenas `quantidadeKg` (e não `quantidadeKg + kgTaxaArmazenagem`) contra o `saldoDisponivel`, já que a taxa não sai do estoque do produtor.
+- Ao editar, somar de volta apenas `quantidadeOriginal` (remover `kgTaxaOriginal` do ajuste).
 
-Manter todas as correções de robustez do plano anterior **e** dar ao usuário controle sobre o modo:
+### 3. `src/lib/relatoriosPdf.ts` (bloco "Extrato do Produtor", linhas 351-378)
+- Remover `totalKgTaxa` da fórmula do saldo e a linha `(−) Kg Taxa Armazenagem` do bloco RESUMO.
+- Manter a coluna "Kg Taxa Armazenagem" na tabela de devoluções (informativa), mas sem afetar o saldo.
 
-### 1. `src/components/importacao/ImportacaoDialog.tsx`
-- **Toggle "Modo de importação"** para tabelas que tenham `updateMode`:
-  - `Atualizar existentes` (atual, default) — roda o `updateMode`.
-  - `Inserir novos + atualizar existentes (upsert)` — roda upsert por `codigo`.
-  - `Somente inserir novos` — insert com fallback de erro de duplicidade ignorado.
-- Ajustar `upsertSupported` para permitir upsert quando existe `updateMode` **e** o usuário optar por ele.
-- Paginar o lookup de `controle_lavouras` em páginas de 1000 (`.range()`) — mesmo pré-requisito do plano anterior.
-- Remover o fallback linha-a-linha; registrar erro do batch inteiro.
-- `select('id, <lookupColumn>')` paginado no pós-insert.
-- `window.onbeforeunload` durante a execução para evitar reload acidental.
+### 4. Consistência com `useSaldoSocio` (sem alteração)
+Já está correto: soma `kg_taxa_armazenagem` como crédito do sócio (`inscricao_emitente_id`). Nenhuma mudança necessária.
 
-### 2. `src/lib/importacaoConfig.ts`
-- Adicionar em `colheitas` uma chave `upsertConflict: 'codigo'` para habilitar o novo modo upsert quando o usuário selecionar.
-- Nenhuma alteração nas colunas mapeadas.
+## Fora do escopo
 
-### Fora do escopo
-- Backend, RLS, schema de `colheitas`, hooks de negócio (`useColheitas`, telas de detalhe).
+- Nenhuma alteração de schema, RLS, ou funções do banco.
+- Nenhuma correção de dados históricos do Saulo (os valores de `kg_taxa_armazenagem` permanecem como estão; a nova fórmula deixa de penalizá-lo).
+- Não mexer em `useSaldoProdutor` (já não considera taxa nem notas de depósito).
 
 ## Validação
-1. Selecionar Colheitas → o novo seletor de modo deve aparecer, default "Atualizar existentes" (comportamento atual preservado).
-2. Trocar para "Inserir novos + atualizar existentes" e reimportar a planilha → colheitas novas entram, existentes têm todos os campos atualizados.
-3. Tenant com >1000 controles de lavoura → todas as colheitas conseguem casar o `controle_lavoura_id`.
-4. Batch com erro → demais batches continuam; resumo final lista falhas.
-5. Recarregar durante execução → navegador alerta.
+
+1. Recarregar a tela de Devolução para o Saulo: saldo disponível deve deixar de estar negativo e passar a refletir `colheitas + recebidas − enviadas − devoluções`.
+2. Recalcular o Extrato do Produtor em PDF: o resumo deve mostrar o mesmo saldo que a tela de Devolução, sem a linha de Kg Taxa Armazenagem.
+3. Conferir o saldo do sócio Marcio Grings: continua igual (recebendo o crédito de taxa).
+4. Criar uma nova devolução dentro do saldo permitido para confirmar que a validação `quantidadeKg <= saldo` funciona; digitar taxa de armazenagem não deve mais reduzir o limite disponível.
