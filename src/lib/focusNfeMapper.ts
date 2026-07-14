@@ -830,7 +830,7 @@ export function validateNotaForEmission(nota: NotaFiscalData, itens: NotaFiscalI
       errors.push(`Item ${index + 1}: CST de IBS/CBS é obrigatório (Reforma Tributária 2026). Configure no cadastro do produto ou do emitente.`);
     }
     if (!classTribIbsCbs) {
-      errors.push(`Item ${index + 1}: Classificação Tributária (cClassTrib) de IBS/CBS é obrigatória. Informe no cadastro do produto ou do emitente.`);
+      errors.push(`Item ${index + 1}: Classificação Tributária (cClassTrib) de IBS/CBS é obrigatória. Informe o Código de Classificação Tributária no cadastro do produto.`);
     }
     // Se o CST indica tributação, deve haver alíquota configurada
     const cstsTributados = ['000', '010', '011', '012', '200', '210', '220', '221', '222', '300', '510', '515', '600', '700', '800'];

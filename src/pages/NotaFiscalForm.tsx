@@ -1336,6 +1336,8 @@ export default function NotaFiscalForm() {
       aliq_cbs: result.aliqCbs,
       cst_is: result.cstIs,
       aliq_is: result.aliqIs,
+      cclass_trib_ibs: result.cclassTribIbs || "",
+      cclass_trib_cbs: result.cclassTribCbs || "",
       origem: result.origem,
     }));
 
