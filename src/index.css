@@ -183,11 +183,15 @@
   }
 
   .pdf-text-layer :is(span, br) {
-    color: CanvasText;
+    color: transparent;
     position: absolute;
     white-space: pre;
     transform-origin: 0% 0%;
     font-size: calc(var(--text-scale-factor) * var(--font-height));
     transform: rotate(var(--rotate, 0deg)) scaleX(var(--scale-x, 1)) scale(var(--min-font-size-inv));
+  }
+
+  .pdf-text-layer-visible :is(span, br) {
+    color: CanvasText;
   }
 }
