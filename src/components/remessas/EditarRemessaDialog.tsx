@@ -355,7 +355,8 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
                   <Label className="text-xs">Kgs Nota</Label>
                   <Input
                     type="number"
-                    step="1"
+                    step="0.001"
+                    inputMode="decimal"
                     value={kgNota || ""}
                     onChange={(e) => setKgNota(Number(e.target.value))}
                     className="text-right font-bold"
