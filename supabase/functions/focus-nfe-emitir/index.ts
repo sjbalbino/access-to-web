@@ -409,7 +409,7 @@ serve(async (req) => {
         JSON.stringify({
           success: false,
           error: isDuplicidade 
-            ? "NFe com número duplicado. Altere o número da NFe e tente novamente."
+            ? "Duplicidade na SEFAZ: já existe uma NF-e autorizada com este número. O número foi liberado e o próximo será usado — clique em Emitir NF-e novamente."
             : (responseData.mensagem || "Erro ao emitir NF-e"),
           details: responseData,
           isDuplicidade,
