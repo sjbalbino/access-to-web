@@ -108,13 +108,19 @@ export function EditarRemessaDialog({ remessa, precoKg, exigePh = true, localEnt
       setPlaca(remessa.placa?.replace(/[^A-Za-z0-9]/g, "").toUpperCase() || "");
       setUfPlaca(remessa.uf_placa || "");
       setObservacoes(remessa.observacoes || "");
-      // Valor da Remessa: usa o salvo; se vazio, calcula do preço do contrato
-      const kgR = (remessa.peso_bruto || 0) > (remessa.peso_tara || 0)
-        ? (remessa.peso_bruto || 0) - (remessa.peso_tara || 0)
-        : 0;
-      setValorRemessa(Number(remessa.valor_remessa) > 0 ? Number(remessa.valor_remessa) : kgR * precoKg);
+      // Preço do Kg: usa o salvo; se vazio, usa o do contrato
+      const savedPreco = Number(remessa.preco_kg);
+      setPrecoKgInput(savedPreco > 0 ? savedPreco : precoKg);
     }
   }, [remessa, user]);
+
+  // Valor da Remessa é calculado a partir de kgRemessa * preço
+  useEffect(() => {
+    setValorRemessa(kgRemessa * effectivePrecoKg);
+  }, [kgRemessa, effectivePrecoKg]);
+
+  // (placeholder para manter estrutura de useEffects abaixo)
+  useEffect(() => {
 
   // Atualizar kgNota quando kgRemessa mudar (se ainda não foi editado manualmente)
   useEffect(() => {
