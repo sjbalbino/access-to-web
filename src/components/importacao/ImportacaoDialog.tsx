@@ -665,6 +665,12 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
       return;
     }
 
+    // Determine effective mode when updateMode is configured
+    const effectiveUpdateMode = config.updateMode && updateModeChoice !== 'insert';
+    const runManualUpsert = !!config.updateMode && updateModeChoice === 'upsert';
+    const runInsertOnly = !!config.updateMode && updateModeChoice === 'insert';
+    }
+
     setStatus('importing');
     setProgress(0);
     setImportErrors([]);
