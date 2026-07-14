@@ -143,7 +143,15 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
       try {
         await waitForNextPaint();
 
-        const canvases = await renderPages(false);
+        let canvases: HTMLCanvasElement[] = [];
+
+        try {
+          canvases = await renderPages(false);
+        } catch (fontError) {
+          if (cancelled || renderTokenRef.current !== token) return;
+          console.warn("Falha ao renderizar PDF com fontes do navegador; tentando renderização interna.", fontError);
+          canvases = await renderPages(true);
+        }
 
         if (canvases.length === 0) {
           throw new Error("O PDF foi gerado, mas nenhuma página foi renderizada.");
