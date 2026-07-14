@@ -675,7 +675,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                     {emitentesAtivos.map((emitente) => {
                       const granjaLabel = emitente.granja?.nome_fantasia || emitente.granja?.razao_social || "Emitente";
                       const inscNome = emitente.inscricao?.nome_fantasia || emitente.inscricao?.produtores?.nome || emitente.inscricao?.nome || null;
-                      const ie = emitente.inscricao?.inscricao_estadual ? formatInscricaoEstadual(emitente.inscricao.inscricao_estadual, emitente.inscricao.uf || undefined) : null;
+                      const ie = emitente.inscricao?.inscricao_estadual ? formatInscricaoEstadual(emitente.inscricao.inscricao_estadual) : null;
                       const doc = emitente.inscricao?.cpf_cnpj ? formatCpfCnpj(emitente.inscricao.cpf_cnpj) : null;
                       const partes = [granjaLabel];
                       if (inscNome) partes.push(inscNome);
