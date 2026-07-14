@@ -666,10 +666,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     }
 
     // Determine effective mode when updateMode is configured
-    const effectiveUpdateMode = config.updateMode && updateModeChoice !== 'insert';
     const runManualUpsert = !!config.updateMode && updateModeChoice === 'upsert';
     const runInsertOnly = !!config.updateMode && updateModeChoice === 'insert';
-    }
+    const runUpdateOnly = !!config.updateMode && updateModeChoice === 'update';
 
     setStatus('importing');
     setProgress(0);
@@ -677,8 +676,8 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
     let imported = 0;
 
     try {
-      // UPDATE MODE: lookup by code and update fields
-      if (config.updateMode) {
+      // UPDATE-ONLY MODE: lookup by code and update just the mapped updateColumns
+      if (runUpdateOnly && config.updateMode) {
         const { lookupColumn, sourceColumn, updateColumns } = config.updateMode;
         const errors: string[] = [];
 
