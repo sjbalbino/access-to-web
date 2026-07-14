@@ -319,14 +319,21 @@ export default function RemessasVendaForm() {
     // Sacos separados
     setSacosRemessa(kgRemessa > 0 ? kgRemessa / 60 : 0);
     setSacosNota(kgRemessa > 0 ? kgRemessa / 60 : 0);
+  }, [kgRemessa]);
 
-    const preco = contrato?.preco_kg || 0;
-    // Preenche valor inicial (usuário pode editar depois)
-    setValorRemessa(kgRemessa * preco);
-  }, [kgRemessa, contrato?.preco_kg]);
+  // Inicializa preço com o do contrato
+  useEffect(() => {
+    if (contrato?.preco_kg && precoKgInput === 0) {
+      setPrecoKgInput(Number(contrato.preco_kg));
+    }
+  }, [contrato?.preco_kg]);
 
-  // Preço/Kg efetivo (derivado do Valor da Remessa informado)
-  const effectivePrecoKg = kgRemessa > 0 ? valorRemessa / kgRemessa : (contrato?.preco_kg || 0);
+  // Preço/Kg efetivo é o informado pelo usuário
+  const effectivePrecoKg = precoKgInput || contrato?.preco_kg || 0;
+  // Valor da Remessa é calculado
+  useEffect(() => {
+    setValorRemessa(kgRemessa * effectivePrecoKg);
+  }, [kgRemessa, effectivePrecoKg]);
   // Valor Nota acompanha (sem descontos)
   useEffect(() => {
     setValorNota(kgNota * effectivePrecoKg);
