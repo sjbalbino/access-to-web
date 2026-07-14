@@ -1,44 +1,32 @@
+## Diagnóstico
 
-## Correção da fórmula do Saldo Disponível do Produtor (Devolução)
+O relatório **Resumo do Produtor** (`src/components/relatorios/RelatorioDialog.tsx`, função `gerarResumoProdutor`) agrupa as linhas pela chave `safra_id | inscricao_id | local`. Porém, apenas as **colheitas** consultam o `local_entrega_terceiro_id` real. Todos os demais movimentos (devoluções, transferências enviadas/recebidas, compras, remessas, entrada de armazenagem) usam a string `"Sede"` **hardcoded** (linhas 695, 700, 705, 710, 715, 721).
 
-Regra correta segundo o usuário:
+No caso do Saulo Wiberling Medeiros:
+- 42 colheitas → todas em **Márcio Grings** (144.090 kg)
+- 103 devoluções (133.101 kg) + 10 transferências recebidas (23.097 kg) → forçadas para **"Sede"**
 
-- **Kg de Taxa de Armazenagem** é um crédito exclusivo do sócio que recebe a taxa (ex.: Marcio Grings). Não deve ser debitado do produtor que está recebendo a devolução — hoje está sendo, causando dupla baixa.
-- **Notas de Depósito emitidas** não devem entrar no cálculo do saldo disponível para devolução.
+Resultado: o PDF cria dois blocos ("Local Entrega: Márcio Grings" com só depósitos, e "Local Entrega: Sede" com só devoluções/transferências), quando na realidade tudo pertence ao Márcio Grings.
 
-Nova fórmula do saldo disponível do produtor:
+## Correção
 
-```
-saldo = colheitas + transf.recebidas − transf.enviadas − devoluções (quantidade_kg)
-```
+Editar `src/components/relatorios/RelatorioDialog.tsx` para usar o local real de cada movimento:
 
-## Alterações
+1. **Devoluções (`qDev`)** — incluir `local_entrega_id` e `local:locais_entrega!devolucoes_deposito_local_entrega_id_fkey(nome)`. Usar `d.local?.nome || "Sede"`.
+2. **Devoluções taxa (`qDevTx`)** — mesmo esquema (`local_entrega_id` → nome).
+3. **Transferências enviadas (`qTrOr`)** — incluir `local_saida_id` e join `local:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome)`. Usar `t.local?.nome || "Sede"`.
+4. **Transferências recebidas (`qTrDe`)** — incluir `local_entrada_id` e join análogo.
+5. **Compras (`qCompra`)** — verificar se `compras_cereais` tem coluna de local; se sim, aplicar o mesmo. Caso contrário, manter "Sede" (irrelevante para Saulo, sem compras).
+6. **Remessas de venda** — normalmente não têm local de depósito (é local de entrega da venda); manter agrupamento no local do contrato/colheita. Como aproximação, usar o local majoritário das colheitas daquela (safra, inscricao) — se existir, senão "Sede".
 
-### 1. `src/hooks/useSaldoDisponivelProdutor.ts`
-- Remover da fórmula final as parcelas `kgTaxaArmazenagem` e `notasDeposito`.
-- Manter os campos no retorno (`kgTaxaArmazenagem`, `notasDeposito`) apenas como informação/exibição, para não quebrar componentes que os consomem.
-- Manter as queries de devoluções e notas de depósito (a coluna `kg_taxa_armazenagem` continua sendo lida só para exibição/consistência interna).
-
-### 2. `src/components/devolucao/DevolucaoDialog.tsx` (linhas 258-269)
-- Alterar a validação: comparar apenas `quantidadeKg` (e não `quantidadeKg + kgTaxaArmazenagem`) contra o `saldoDisponivel`, já que a taxa não sai do estoque do produtor.
-- Ao editar, somar de volta apenas `quantidadeOriginal` (remover `kgTaxaOriginal` do ajuste).
-
-### 3. `src/lib/relatoriosPdf.ts` (bloco "Extrato do Produtor", linhas 351-378)
-- Remover `totalKgTaxa` da fórmula do saldo e a linha `(−) Kg Taxa Armazenagem` do bloco RESUMO.
-- Manter a coluna "Kg Taxa Armazenagem" na tabela de devoluções (informativa), mas sem afetar o saldo.
-
-### 4. Consistência com `useSaldoSocio` (sem alteração)
-Já está correto: soma `kg_taxa_armazenagem` como crédito do sócio (`inscricao_emitente_id`). Nenhuma mudança necessária.
+Com isso, o (safra, inscricao) do Saulo terá **um único bloco** "Márcio Grings" com colheitas, devoluções e transferências somando corretamente, alinhando com o extrato individual.
 
 ## Fora do escopo
 
-- Nenhuma alteração de schema, RLS, ou funções do banco.
-- Nenhuma correção de dados históricos do Saulo (os valores de `kg_taxa_armazenagem` permanecem como estão; a nova fórmula deixa de penalizá-lo).
-- Não mexer em `useSaldoProdutor` (já não considera taxa nem notas de depósito).
+- Não altera fórmulas de saldo (já corrigidas na task anterior).
+- Não altera schema, RLS, nem outros relatórios.
+- Não mexe em `useSaldoSocio`/`useSaldoDisponivelProdutor`.
 
 ## Validação
 
-1. Recarregar a tela de Devolução para o Saulo: saldo disponível deve deixar de estar negativo e passar a refletir `colheitas + recebidas − enviadas − devoluções`.
-2. Recalcular o Extrato do Produtor em PDF: o resumo deve mostrar o mesmo saldo que a tela de Devolução, sem a linha de Kg Taxa Armazenagem.
-3. Conferir o saldo do sócio Marcio Grings: continua igual (recebendo o crédito de taxa).
-4. Criar uma nova devolução dentro do saldo permitido para confirmar que a validação `quantidadeKg <= saldo` funciona; digitar taxa de armazenagem não deve mais reduzir o limite disponível.
+Regerar o PDF Resumo do Produtor para Saulo: deve aparecer um único "Local Entrega: Márcio Grings" com colunas Depósitos, Devolução, Tra.Entrada preenchidas e Saldo batendo com o extrato.
