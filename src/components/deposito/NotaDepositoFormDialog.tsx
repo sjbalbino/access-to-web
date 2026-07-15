@@ -674,7 +674,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
               </CardContent>
             </Card>
 
-            {inscricaoId && inscricaoSelecionada && (
+            {(
               <>
                 {/* Dados do Produtor */}
                 <Card>
@@ -685,32 +685,32 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                         <Label className="text-muted-foreground text-xs">Inscrição Estadual</Label>
-                        <p className="font-medium">{inscricaoSelecionada.inscricao_estadual || "-"}</p>
+                        <p className="font-medium">{inscricaoSelecionada?.inscricao_estadual || "-"}</p>
                       </div>
                       <div>
                         <Label className="text-muted-foreground text-xs">CPF/CNPJ</Label>
-                        <p className="font-medium">{formatCpfCnpj(inscricaoSelecionada.cpf_cnpj) || "-"}</p>
+                        <p className="font-medium">{formatCpfCnpj(inscricaoSelecionada?.cpf_cnpj) || "-"}</p>
                       </div>
                       <div>
                         <Label className="text-muted-foreground text-xs">Nome</Label>
-                        <p className="font-medium">{inscricaoSelecionada.produtores?.nome || inscricaoSelecionada.granja || "-"}</p>
+                        <p className="font-medium">{inscricaoSelecionada?.produtores?.nome || inscricaoSelecionada?.granja || "-"}</p>
                       </div>
                       <div>
                         <Label className="text-muted-foreground text-xs">Cidade/UF</Label>
                         <p className="font-medium">
                           {(() => {
-                            const cidadeVal = inscricaoSelecionada.cidade;
+                            const cidadeVal = inscricaoSelecionada?.cidade;
                             if (!cidadeVal) return "-";
-                            // Se for código IBGE numérico, resolver o nome
                             const mun = municipios.find(m => m.codigo_ibge === cidadeVal);
                             const nomeCidade = mun ? mun.nome : cidadeVal;
-                            return `${nomeCidade}/${inscricaoSelecionada.uf || ""}`;
+                            return `${nomeCidade}/${inscricaoSelecionada?.uf || ""}`;
                           })()}
                         </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
+
 
                 {/* Saldos por Variedade */}
                 <Card>
