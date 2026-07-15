@@ -334,6 +334,30 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       return;
     }
 
+    // Validação de IE: rejeitar genéricas e conferir dígito verificador por UF
+    const ieRaw = (formData.inscricao_estadual || "").trim();
+    if (isIeGenerica(ieRaw)) {
+      setIeError("IE genérica não é permitida (zeros, sequências ou repetições).");
+      toast({
+        title: "Inscrição Estadual inválida",
+        description: "Não é permitido cadastrar IE genérica (zeros, sequências ou repetições).",
+        variant: "destructive",
+      });
+      return;
+    }
+    const validacao = validarIeUF(ieRaw, formData.uf || "");
+    if (!validacao.valida) {
+      setIeError(validacao.motivo ?? "IE inválida.");
+      toast({
+        title: "Inscrição Estadual inválida",
+        description: validacao.motivo ?? `A IE informada não é válida para ${formData.uf}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setIeError(null);
+
+
     if (selectedInscricao) {
       await updateInscricao.mutateAsync({ id: selectedInscricao.id, ...formData });
     } else {
