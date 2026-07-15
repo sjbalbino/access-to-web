@@ -791,8 +791,10 @@ export interface RelColheitaDiariaRow {
   romaneio: string;
   ph: number;
   ha: number;
+  controle_lavoura_id: string | null;
   tipo_colheita: string;      // industria / semente
   tipo_produtor_label: string; // Parceria / Arrendamento / Terceiros
+
 }
 
 export interface RelColheitaDiariaParams {
@@ -849,14 +851,28 @@ export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
     formatNumber(r.total_sacos, 0),
     r.romaneio || "",
     r.ph ? formatNumber(r.ph, 2) : "0,00",
-    r.ha ? formatNumber(r.ha, 2) : "0,00",
-    r.ha > 0 ? formatNumber(r.producao_liquida_kg / r.ha, 0) : "0",
+    "",
+    "",
+
   ];
 
   const sumRow = (label: string, list: RelColheitaDiariaRow[]): any[] => {
     const s = (fn: (r: RelColheitaDiariaRow) => number) => list.reduce((a, r) => a + (fn(r) || 0), 0);
     const totLiq = s(r => r.producao_liquida_kg);
-    const totHa = s(r => r.ha);
+    const totSacos = s(r => r.total_sacos);
+    // HA distinto por controle_lavoura_id (fallback: soma HA quando id é nulo)
+    const seen = new Set<string>();
+    let totHa = 0;
+    list.forEach(r => {
+      if (r.controle_lavoura_id) {
+        if (!seen.has(r.controle_lavoura_id)) {
+          seen.add(r.controle_lavoura_id);
+          totHa += r.ha || 0;
+        }
+      } else {
+        totHa += r.ha || 0;
+      }
+    });
     return [
       label,
       String(list.length),
@@ -872,13 +888,14 @@ export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
       formatNumber(s(r => r.kg_outros), 0),
       formatNumber(s(r => r.kg_desconto_total), 0),
       formatNumber(totLiq, 0),
-      formatNumber(s(r => r.total_sacos), 0),
+      formatNumber(totSacos, 0),
       "",
       "",
-      formatNumber(totHa, 2),
-      totHa > 0 ? formatNumber(totLiq / totHa, 0) : "0",
+      totHa > 0 ? formatNumber(totHa, 2) : "",
+      totHa > 0 ? formatNumber(totSacos / totHa, 2) : "",
     ];
   };
+
 
   // Agrupamento: Local -> Data
   const boldRows: number[] = [];

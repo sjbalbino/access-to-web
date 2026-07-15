@@ -955,7 +955,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       .select(`
         data_colheita, peso_bruto, peso_tara, producao_kg, kg_impureza, impureza, umidade, percentual_desconto,
         kg_umidade, percentual_avariados, kg_avariados, percentual_outros, kg_outros,
-        kg_desconto_total, producao_liquida_kg, total_sacos, romaneio, ph, tipo_colheita,
+        kg_desconto_total, producao_liquida_kg, total_sacos, romaneio, ph, tipo_colheita, controle_lavoura_id,
+
         local_entrega_terceiro_id, inscricao_produtor_id,
         variedade:produtos!colheitas_variedade_id_fkey(nome),
         inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
@@ -1015,9 +1016,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         romaneio: c.romaneio != null ? String(c.romaneio) : "",
         ph: Number(c.ph) || 0,
         ha,
+        controle_lavoura_id: c.controle_lavoura_id || null,
         tipo_colheita: c.tipo_colheita || "-",
         tipo_produtor_label: tipoLabels[c.inscricao_produtor?.tipo] || "-",
       };
+
     });
 
     const periodo = `${dataInicial ? new Date(dataInicial + "T12:00:00").toLocaleDateString("pt-BR") : "-"} a ${dataFinal ? new Date(dataFinal + "T12:00:00").toLocaleDateString("pt-BR") : "-"}`;
