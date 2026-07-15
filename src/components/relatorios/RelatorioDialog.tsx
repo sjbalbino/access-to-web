@@ -953,7 +953,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     let q = supabase
       .from("colheitas")
       .select(`
-        data_colheita, peso_bruto, kg_impureza, impureza, umidade, percentual_desconto,
+        data_colheita, peso_bruto, peso_tara, producao_kg, kg_impureza, impureza, umidade, percentual_desconto,
         kg_umidade, percentual_avariados, kg_avariados, percentual_outros, kg_outros,
         kg_desconto_total, producao_liquida_kg, total_sacos, romaneio, ph, tipo_colheita,
         local_entrega_terceiro_id, inscricao_produtor_id,
