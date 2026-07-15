@@ -21,12 +21,15 @@ import {
   gerarRelatorioVendasPdf,
   gerarResumoProdutorPdf,
   gerarColheitaDiariaPdf,
+  gerarResumoColheitaLavouraPdf,
   type ExtratoData,
   type RelColheita,
   type RelContratoVenda,
   type RelColheitaDiariaRow,
+  type RelResumoColheitaRow,
   type ResumoProdutorRow,
 } from "@/lib/relatoriosPdf";
+
 import {
   gerarDemonstrativoGerencialPdf,
   gerarDrePdf,
