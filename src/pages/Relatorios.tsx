@@ -11,9 +11,10 @@ import {
 import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
 
 type TipoRelatorio =
-  | "extrato" | "resumo_produtor" | "colheitas" | "vendas"
+  | "extrato" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "vendas"
   | "demonstrativo_gerencial" | "dre" | "bens_moveis"
   | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+
 
 type Secao = "producao" | "comercial" | "financeiro" | "todos";
 
