@@ -1083,7 +1083,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         ),
         controle_lavoura:controle_lavouras!colheitas_controle_lavoura_id_fkey(
           area_total, ha_plantado,
-          lavouras(nome, cultura:cultura_id(nome))
+          lavouras(nome)
         ),
         local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(nome)
       `)
@@ -1108,7 +1108,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const rows: RelResumoColheitaRow[] = filtradas.map((c: any) => {
       const lav = c.controle_lavoura?.lavouras?.nome || "-";
       const ha = Number(c.controle_lavoura?.ha_plantado) || Number(c.controle_lavoura?.area_total) || 0;
-      const culturaLav = c.controle_lavoura?.lavouras?.cultura?.nome || culturaNomeSafra;
+      const culturaLav = culturaNomeSafra;
       return {
         cultura_nome: culturaLav,
         local_nome: c.local_entrega?.nome || tenantSedeNome,
