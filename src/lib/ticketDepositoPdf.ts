@@ -238,6 +238,7 @@ export async function gerarTicketDepositoPdf(colheitaId: string): Promise<void> 
   const arrayBuffer = doc.output("arraybuffer");
   const pdfData = new Uint8Array(arrayBuffer);
   const filename = `ticket_deposito_${c.codigo || c.id}.pdf`;
+  const previewText = lines.map((line) => line.text).join("\n");
   const { openTicketDepositoPreview } = await import("@/components/shared/TicketDepositoPreview");
-  openTicketDepositoPreview({ pdfData, filename });
+  openTicketDepositoPreview({ pdfData, filename, previewText });
 }
