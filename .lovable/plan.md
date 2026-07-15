@@ -1,31 +1,16 @@
 ## Problema
 
-No `ticket_deposito`, as linhas de **Peso Entrada** e **Peso Saída** estão exibindo apenas o horário — os quilos ficam ocultos.
+O preview do Ticket de Depósito aparece em branco. O `PdfViewer` (pdf.js legacy) está falhando silenciosamente com o PDF customizado 80mm (erro `readableStream is not async iterable` na text layer) e o canvas não fica visível.
 
-## Causa
+## Solução
 
-Em `src/lib/ticketDepositoPdf.ts` (linhas ~152-153) a construção usa:
+Trocar o preview do ticket por um `<iframe>` nativo carregando um blob URL do PDF — usa o visualizador do próprio navegador, que lida bem com PDFs de 1 página em formato customizado. Baixar e Imprimir continuam funcionando.
 
-```ts
-row2("  Peso Entrada:", row2(fmtNum(pesoBruto), horaEntrada).slice("  Peso Entrada:".length))
-```
+## Alterações
 
-O `row2` interno posiciona o número à esquerda (col 0) e o horário à direita (col 42). O `.slice(15)` descarta os primeiros 15 caracteres — justamente onde estava o número — restando só espaços + horário. Por isso o kg some.
+**`src/components/shared/TicketDepositoPreview.tsx`**
+- Substituir `<PdfViewer pdfData=… />` por `<iframe src={blobUrl} className="h-full w-full" title="Ticket de Depósito" />`.
+- Criar `blobUrl` via `useMemo`/`useEffect` a partir de `payload.pdfData`; revogar com `URL.revokeObjectURL` no unmount e ao fechar o dialog.
+- Adicionar `<DialogDescription className="sr-only">` para remover o warning de acessibilidade dos logs.
 
-## Correção
-
-Passar a montar as linhas com 3 colunas alinhadas ao mesmo padrão do cabeçalho ("Pesagem | Kilos | Horário"), sem o truque de `slice`. Formato:
-
-```
-Pesagem                     Kilos    Horário
-  Peso Entrada:            49.780      15:00
-  Peso Saída:              17.380      15:02
-  Peso Bruto:              32.400
-```
-
-Implementação: helper de 3 colunas com larguras fixas (label esq., kilos alinhado à direita numa coluna intermediária, horário alinhado à direita no fim), aplicado nas 3 linhas de pesagem e no cabeçalho correspondente.
-
-## Escopo
-
-- Arquivo único: `src/lib/ticketDepositoPdf.ts`
-- Apenas apresentação do ticket; nenhuma lógica de cálculo alterada.
+Nenhuma outra alteração. `PdfViewer` continua sendo usado nos demais previews (DANFE, contrato, relatórios).
