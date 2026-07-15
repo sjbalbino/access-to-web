@@ -12,6 +12,7 @@ import { useGranjas } from "@/hooks/useGranjas";
 import { useCnpjLookup } from "@/hooks/useCnpjLookup";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { formatCpf, formatCpfCnpj, unformatDocument, validateCnpj, validateCpf } from "@/lib/formatters";
+import { isIeGenerica, validarIeUF } from "@/lib/inscricaoEstadualValidator";
 
 const UFS = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS",
