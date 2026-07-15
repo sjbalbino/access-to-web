@@ -244,8 +244,15 @@ export function useInscricoesComSaldo(filters: {
         }
       });
 
+      const sortByProdutor = (arr: InscricaoComSaldoPorLocal[]) =>
+        arr.sort((a, b) => {
+          const na = (a.produtor_nome || a.nome_fantasia || a.inscricao_estadual || '').toString();
+          const nb = (b.produtor_nome || b.nome_fantasia || b.inscricao_estadual || '').toString();
+          return na.localeCompare(nb, 'pt-BR', { sensitivity: 'base' });
+        });
+
       if (!filters.produtoId) {
-        return Array.from(inscricaoMap.values()).filter(i => i.total_depositado > 0);
+        return sortByProdutor(Array.from(inscricaoMap.values()).filter(i => i.total_depositado > 0));
       }
 
       const [recebidasRes, enviadasRes, devolucoesRes] = await Promise.all([
