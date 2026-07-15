@@ -163,13 +163,19 @@ export async function gerarTicketDepositoPdf(colheitaId: string): Promise<void> 
   add(linhaInsc);
   sep();
 
-  // Pesagem
-  add(row2("Pesagem", row2("Kilos", "Horário").slice("Pesagem".length + 1)), { bold: true });
+  // Pesagem — 3 colunas: label (esq), kilos (dir na col meio), horário (dir no fim)
+  const HORA_W = 7; // "HH:mm" + folga
+  const row3 = (label: string, kilos: string, hora: string): string => {
+    const rightBlock = kilos + " ".repeat(Math.max(1, HORA_W - hora.length)) + hora;
+    const space = Math.max(1, COLS - label.length - rightBlock.length);
+    return label + " ".repeat(space) + rightBlock;
+  };
+  add(row3("Pesagem", "Kilos", "Horário"), { bold: true });
   const horaEntrada = fmtHora(c.created_at);
   const horaSaida = fmtHora(c.updated_at);
-  add(row2("  Peso Entrada:", row2(fmtNum(pesoBruto), horaEntrada).slice("  Peso Entrada:".length)));
-  add(row2("  Peso Saída:", row2(fmtNum(pesoTara), horaSaida).slice("  Peso Saída:".length)));
-  add(row2("  Peso Bruto:", fmtNum(pesoLiq)));
+  add(row3("  Peso Entrada:", fmtNum(pesoBruto), horaEntrada));
+  add(row3("  Peso Saída:", fmtNum(pesoTara), horaSaida));
+  add(row3("  Peso Bruto:", fmtNum(pesoLiq), ""));
   sep();
 
   // Classificação
