@@ -1,60 +1,43 @@
-## Objetivo
-Na aba **Inscrições Estaduais** (dentro do dialog "Editar Produtor/Sócio"), exibir claramente o nome do produtor ao qual a IE pertence e impedir o cadastro de Inscrições Estaduais inválidas ou genéricas.
+## Diagnóstico
+- Banco está íntegro. Consultei o tenant Grings:
+  - `colheitas.local_entrega_terceiro_id IS NULL` → **0**
+  - `transferencias_deposito.local_saida_id IS NULL` → **0**
+  - `transferencias_deposito.local_entrada_id IS NULL` → **0**
+  - `devolucoes_deposito.local_entrega_id IS NULL` → **0**
+- Nada a atualizar no banco. Nenhuma migration.
 
-## Mudanças
+## Causa do rótulo "Sede" no PDF
+Em `src/components/relatorios/RelatorioDialog.tsx`, função `gerarResumoLocal`, os agrupadores de transferências e devoluções estão hard-coded como `"Sede"` (linhas ~527-544). A função ignora as colunas `local_saida_id`, `local_entrada_id` e `local_entrega_id`.
 
-### 1. Exibir o nome do produtor
-Arquivo: `src/components/produtores/InscricoesTab.tsx`
+## Correção (somente frontend, 1 arquivo)
+`src/components/relatorios/RelatorioDialog.tsx` — função `gerarResumoLocal`:
 
-- Adicionar um cabeçalho contextual acima da lista e dentro do dialog de nova/editar inscrição, no formato:
-  - Lista: `Inscrições Estaduais de: **{produtor.nome}** ({CPF/CNPJ formatado})`
-  - Dialog: título passa a ser `Nova Inscrição — {produtor.nome}` / `Editar Inscrição — {produtor.nome}`
-- Usa o hook já disponível `useProdutor(produtorId)`.
+1. Ampliar os `select` para trazer o nome do local:
+   ```ts
+   supabase.from("transferencias_deposito")
+     .select("inscricao_origem_id, inscricao_destino_id, quantidade_kg, local_saida_id, local_entrada_id, saida:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome), entrada:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome)")
+     .eq("safra_id", safraId)
 
-### 2. Rejeitar IEs genéricas
-Criar utilitário `src/lib/inscricaoEstadualValidator.ts` com:
+   supabase.from("devolucoes_deposito")
+     .select("inscricao_produtor_id, inscricao_recebe_taxa_id, quantidade_kg, kg_taxa_armazenagem, local_entrega_id, local:locais_entrega!devolucoes_deposito_local_entrega_id_fkey(nome)")
+     .eq("safra_id", safraId).neq("status","cancelada")
+   ```
+   (Ajustar o nome exato da FK conforme já usado em `useDevolucoes.ts`; para transferências, verificar `Database` types.)
 
-- `isIeGenerica(ie: string): boolean` — rejeita:
-  - Vazio (mas "ISENTO" é aceito somente quando o campo do formulário estiver marcado como isento — hoje o campo é livre, então "ISENTO"/"ISENTA" **não** será tratado como genérico e sim como valor legítimo aceito sem dígito verificador).
-  - Somente zeros (`000000000...`)
-  - Todos dígitos iguais (`111...`, `222...`)
-  - Sequências óbvias: `123456789`, `12345678`, `987654321`
-  - Menos de 2 dígitos após limpeza
-- `validarIeUF(ie: string, uf: string): { valida: boolean; motivo?: string }` — aplica o algoritmo oficial de dígito verificador para as 27 UFs (SP, MG, RS, PR, SC, GO, MT, MS, RJ, ES, BA, PE, CE, PA, MA, PI, RN, PB, AL, SE, TO, RO, RR, AM, AC, AP, DF).
-  - Aceita `"ISENTO"`/`"ISENTA"` como válido (contribuinte isento).
-  - Retorna `{ valida: false, motivo: "..." }` para IE com comprimento ou dígito verificador inválido.
+2. Substituir os `getRow("Sede", …)` por rótulo real:
+   - Saída de transferência → `t.saida?.nome ?? tenantSedeNome`
+   - Entrada de transferência → `t.entrada?.nome ?? tenantSedeNome`
+   - Devoluções (linhas do produtor e do recebedor de taxa) → `d.local?.nome ?? tenantSedeNome`
 
-### 3. Aplicar validação no `handleSave`
-Arquivo: `src/components/produtores/InscricoesTab.tsx` (função `handleSave`)
+3. Colheitas: manter `c.locais_entrega?.nome`, trocando apenas o fallback `"Sede"` por `tenantSedeNome`.
 
-Após validação de campos obrigatórios e antes de salvar:
+4. Definir `tenantSedeNome` no topo do componente via `useLocalSede()` (hook já existe em `src/hooks/useLocaisEntrega.ts`):
+   ```ts
+   const { data: localSede } = useLocalSede();
+   const tenantSedeNome = localSede?.nome ?? "Sede";
+   ```
 
-```ts
-const ie = formData.inscricao_estadual?.trim() || "";
-const uf = formData.uf || "";
-
-if (isIeGenerica(ie)) {
-  toast({ title: "Inscrição Estadual inválida",
-          description: "Não é permitido cadastrar IE genérica (zeros, sequências ou repetições).",
-          variant: "destructive" });
-  return;
-}
-
-const resultado = validarIeUF(ie, uf);
-if (!resultado.valida) {
-  toast({ title: "Inscrição Estadual inválida",
-          description: resultado.motivo ?? `A IE informada não é válida para ${uf}.`,
-          variant: "destructive" });
-  return;
-}
-```
-
-### 4. Feedback visual no campo IE
-No input de `inscricao_estadual`, adicionar `onBlur` que dispara a mesma validação e mostra mensagem inline abaixo do campo em vermelho quando inválida (sem bloquear digitação). Facilita ao usuário corrigir antes de clicar Salvar.
-
-## Detalhes técnicos
-
-- **Escopo restrito**: mudanças apenas em `InscricoesTab.tsx` + novo arquivo `src/lib/inscricaoEstadualValidator.ts`. Nenhuma alteração no banco, hooks de dados ou lógica de NF-e.
-- **Referência dos algoritmos**: fórmulas de módulo 11 (com pesos específicos por UF) publicadas pelas SEFAZ estaduais / SINTEGRA.
-- **"ISENTO"** permanece aceito para produtores isentos de IE.
-- Não altera IEs já cadastradas — validação roda apenas no submit de novo/editar.
+## Escopo
+- 1 arquivo alterado: `src/components/relatorios/RelatorioDialog.tsx`.
+- Sem mudanças em banco, hooks ou outros relatórios.
+- Resultado: cada linha do resumo aparece no local real cadastrado no lançamento; casos sem local caem para o nome da sede do tenant (ex.: "Márcio Grings"), nunca mais o literal "Sede".
