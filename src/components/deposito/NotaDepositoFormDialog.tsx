@@ -674,7 +674,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
               </CardContent>
             </Card>
 
-            {inscricaoId && inscricaoSelecionada && (
+            {(
               <>
                 {/* Dados do Produtor */}
                 <Card>
@@ -685,32 +685,32 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                         <Label className="text-muted-foreground text-xs">Inscrição Estadual</Label>
-                        <p className="font-medium">{inscricaoSelecionada.inscricao_estadual || "-"}</p>
+                        <p className="font-medium">{inscricaoSelecionada?.inscricao_estadual || "-"}</p>
                       </div>
                       <div>
                         <Label className="text-muted-foreground text-xs">CPF/CNPJ</Label>
-                        <p className="font-medium">{formatCpfCnpj(inscricaoSelecionada.cpf_cnpj) || "-"}</p>
+                        <p className="font-medium">{formatCpfCnpj(inscricaoSelecionada?.cpf_cnpj) || "-"}</p>
                       </div>
                       <div>
                         <Label className="text-muted-foreground text-xs">Nome</Label>
-                        <p className="font-medium">{inscricaoSelecionada.produtores?.nome || inscricaoSelecionada.granja || "-"}</p>
+                        <p className="font-medium">{inscricaoSelecionada?.produtores?.nome || inscricaoSelecionada?.granja || "-"}</p>
                       </div>
                       <div>
                         <Label className="text-muted-foreground text-xs">Cidade/UF</Label>
                         <p className="font-medium">
                           {(() => {
-                            const cidadeVal = inscricaoSelecionada.cidade;
+                            const cidadeVal = inscricaoSelecionada?.cidade;
                             if (!cidadeVal) return "-";
-                            // Se for código IBGE numérico, resolver o nome
                             const mun = municipios.find(m => m.codigo_ibge === cidadeVal);
                             const nomeCidade = mun ? mun.nome : cidadeVal;
-                            return `${nomeCidade}/${inscricaoSelecionada.uf || ""}`;
+                            return `${nomeCidade}/${inscricaoSelecionada?.uf || ""}`;
                           })()}
                         </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
+
 
                 {/* Saldos por Variedade */}
                 <Card>
@@ -779,7 +779,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-3">
                     <CardTitle className="text-base">Notas do Produtor a Referenciar</CardTitle>
-                    <Button variant="outline" size="sm" onClick={() => setShowNotaForm(true)}>
+                    <Button variant="outline" size="sm" onClick={() => setShowNotaForm(true)} disabled={!inscricaoId}>
                       <Plus className="h-4 w-4 mr-2" />
                       Adicionar Nota
                     </Button>
@@ -849,9 +849,9 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label>Variedade *</Label>
-                        <Select isSearchable value={produtoId} onValueChange={setProdutoId}>
+                        <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={!inscricaoId}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a variedade" />
+                            <SelectValue placeholder={!inscricaoId ? "Selecione a inscrição primeiro" : "Selecione a variedade"} />
                           </SelectTrigger>
                           <SelectContent>
                             {saldos.filter(s => s.saldo_a_emitir_kg > 0).map((s) => (
@@ -873,6 +873,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                           value={quantidadeKg}
                           onChange={(e) => setQuantidadeKg(e.target.value)}
                           placeholder="0,00"
+                          disabled={!inscricaoId || !produtoId}
                         />
                         {saldoProduto && (
                           <p className="text-xs text-muted-foreground">
