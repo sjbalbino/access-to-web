@@ -1,18 +1,23 @@
 import { useEffect, useState } from "react";
 import "@/lib/pdfjsPolyfills";
-import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 import { AlertCircle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 
 type PdfJsLib = typeof import("pdfjs-dist/legacy/build/pdf.mjs");
 
 let pdfJsPromise: Promise<PdfJsLib> | null = null;
-const STANDARD_FONT_DATA_URL = "/pdfjs/standard_fonts/";
 
 async function loadPdfJs(): Promise<PdfJsLib> {
   if (!pdfJsPromise) {
     pdfJsPromise = import("pdfjs-dist/legacy/build/pdf.mjs").then((pdfjsLib) => {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+      // Vite-recommended worker resolution for pdfjs-dist v4+/v6.
+      // Using ?url on .mjs occasionally returns a wrong MIME path in dev,
+      // causing getDocument() to hang silently. new URL(..., import.meta.url)
+      // is the canonical, tested approach.
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+        "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+        import.meta.url,
+      ).toString();
       return pdfjsLib;
     });
   }
@@ -50,9 +55,10 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
         const pdfjsLib = await loadPdfJs();
         const pdf = await pdfjsLib.getDocument({
           data: pdfData.slice(),
-          standardFontDataUrl: STANDARD_FONT_DATA_URL,
           useSystemFonts: true,
         }).promise;
+
+        console.log("[PdfViewer] Loaded PDF with", pdf.numPages, "page(s)");
 
         const rendered: string[] = [];
         try {
@@ -68,6 +74,7 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
             canvas.width = Math.floor(viewport.width);
             canvas.height = Math.floor(viewport.height);
 
+            // pdfjs-dist v6 requires `canvas` in RenderParameters.
             await page.render({ canvas, canvasContext: context, viewport }).promise;
 
             const dataUrl = canvas.toDataURL("image/png");
@@ -113,7 +120,7 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
 
   return (
     <div className="relative h-full w-full overflow-auto bg-muted/40 p-4">
-      {loading && images.length === 0 && (
+      {(loading || (!!pdfData && images.length === 0 && !error)) && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70">
           <div className="rounded-full bg-background/90 p-4 shadow-lg">
             <Spinner />

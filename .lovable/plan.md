@@ -1,64 +1,69 @@
-## Objetivo
+# Plano: Corrigir preview em branco do PdfViewer nos relatórios
 
-Aplicar a abordagem escolhida ("PDF renderizado como imagem via pdf.js → canvas → PNG") a **todos** os relatórios do sistema, substituindo o `PdfViewer` atual (canvas + text layer) por uma renderização mais simples e confiável.
+## Diagnóstico
 
-## Escopo (o que muda)
+A abordagem "pdf.js → canvas → PNG" que apliquei no `PdfViewer.tsx` **não é a mesma do ticket**. O `TicketDepositoPreview` na verdade **não usa pdf.js** — ele exibe `previewText` como `<pre>` texto puro. Ou seja, "funciona no ticket" porque não depende de renderização de PDF nenhuma.
 
-Todos os relatórios já passam pelo mesmo componente:
+No `PdfViewer` atual (com pdfjs-dist 6.1.200), o preview aparece em branco. Causas prováveis, em ordem de suspeita:
 
-- `PreviewRelatorioDialog` → usado por todos os relatórios de gestão, IR, estoque, romaneios, contratos, recibos.
-- `DanfePdfViewer` → visualização de DANFE em `NotasFiscais` e `MdeDialog`.
+1. **Worker do pdf.js não carrega** — `?url` em `.mjs` no Vite às vezes retorna um caminho quebrado no dev server; `getDocument().promise` fica pendente para sempre sem erro visível. O usuário só vê o dialog vazio (o spinner pode estar sob a `DialogContent` ou fora da área visível se `h-full` não propagou).
+2. **API `page.render({canvas, canvasContext, viewport})`** — em pdfjs-dist v6 o parâmetro `canvas` foi adicionado, mas o correto e mais compatível continua sendo passar apenas `canvasContext` + `viewport`. Passar ambos pode disparar warning ou falha silenciosa.
+3. **Buffer detached** — `getDocument({ data: pdfData.slice() })` cria cópia; ok. Mas se o `useEffect` re-executar (ex.: `onRenderComplete` sem `useCallback`), o `cancelled=true` interrompe antes de setar imagens. No caso atual `PreviewRelatorioDialog` não passa `onRenderComplete`, então improvável — mas dá para blindar.
+4. **`standardFontDataUrl: "/pdfjs/standard_fonts/"`** — só existem os arquivos de LICENSE em `public/pdfjs/standard_fonts/`, sem os `.pfb`/`.bcmap`. Isso não trava a renderização, mas gera warnings.
 
-Ambos são wrappers finos de `src/components/shared/PdfViewer.tsx`. **Alterando esse único arquivo, a mudança propaga para todo o sistema.**
+## Correções propostas em `src/components/shared/PdfViewer.tsx`
 
-## Alterações
+### 1. Carregar o worker com `new URL(..., import.meta.url)` (padrão Vite recomendado pelo pdfjs)
+Substituir:
+```ts
+import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
+...
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+```
+por:
+```ts
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
+```
+Isso é o padrão testado com pdfjs-dist v4+/v6 em Vite e evita o problema de MIME/resolução do `?url`.
 
-### 1. `src/components/shared/PdfViewer.tsx` (reescrever)
+### 2. Corrigir chamada `page.render`
+Trocar `page.render({ canvas, canvasContext: context, viewport })` por:
+```ts
+const renderTask = page.render({ canvasContext: context, viewport });
+await renderTask.promise;
+```
+Assinatura estável em v4/v5/v6.
 
-Substituir a lógica atual (canvas + text layer + ResizeObserver + fallback de fontes) por:
+### 3. Logs de diagnóstico temporários
+Adicionar `console.log("[PdfViewer] pages:", pdf.numPages)` e `console.error` mais explícitos para capturar falhas silenciosas de worker.
 
-1. Carregar pdf.js via `loadPdfJs()` (mantém worker atual).
-2. `getDocument({ data }).promise` → iterar de `1` a `numPages`.
-3. Para cada página:
-   - `getViewport({ scale: 2 })` (renderização nítida).
-   - Renderizar em `<canvas>` off-DOM.
-   - `canvas.toDataURL("image/png")` → armazenar em `useState<string[]>`.
-4. `pdf.cleanup(true)` no `finally`.
-5. Render:
-   ```tsx
-   <div className="h-full w-full overflow-auto bg-muted/40 p-4 space-y-4">
-     {images.map((src, i) => (
-       <img key={i} src={src} alt={`Página ${i + 1}`}
-            className="mx-auto max-w-full block shadow-md border border-border bg-background rounded-sm" />
-     ))}
-   </div>
-   ```
-6. Estados: `loading` (Spinner centralizado), `error` (AlertCircle + mensagem, mantendo prop `errorMessage`).
-7. Flag `cancelled` para evitar setState após unmount / troca de PDF.
-8. Manter a assinatura `PdfViewerProps` (`pdfData`, `errorMessage`, `onRenderComplete`) — as props `forceVisibleTextLayer` e a ref de largura deixam de ser necessárias, mas a prop é aceita e ignorada para não quebrar chamadores.
+### 4. Fallback visual imediato
+Trocar a condição do spinner para `{(loading || (!error && images.length === 0 && pdfData)) && ...}` — garante que algo apareça mesmo se o `setLoading(true)` ainda não flushou.
 
-### 2. Nenhuma outra alteração necessária
+### 5. Remover `standardFontDataUrl` se pasta não tem os arquivos
+Ou baixá-los para `public/pdfjs/standard_fonts/` via `pdfjs-dist/standard_fonts/*`. Para agora, remover a opção — pdfjs cai em fallback interno.
 
-- `PreviewRelatorioDialog.tsx` continua igual (já usa `PdfViewer`).
-- `DanfePdfViewer.tsx` continua igual.
-- `NotasFiscais.tsx`, `MdeDialog.tsx`, geradores em `src/lib/*Pdf.ts`, `relatoriosGestao.ts`, `relatoriosIR.ts`, `relatoriosEstoque.ts`, `romaneioVendaPdf.ts`, `contratoVendaPdf.ts`, `reciboPdf.ts`: **nenhuma mudança**.
-- `TicketDepositoPreview` (bobina 80mm) **não muda** — continua com `<pre>` que funcionou.
+## Validação (após aplicar em build mode)
 
-## Detalhes técnicos
+Rodar Playwright:
+1. Login → `/relatorios/producao` → clicar "Gerar Relatório" (Extrato do Produtor) → preencher filtros → gerar
+2. Screenshot do dialog. Verificar:
+   - Spinner aparece durante `loading`
+   - Imagens PNG das páginas aparecem
+   - Sem erros de worker no console
+3. Testar também um relatório multi-página (Resumo do Produtor) e a DANFE para garantir compatibilidade.
 
-- **Escala 2×**: bom equilíbrio entre nitidez e memória. Para PDFs grandes (relatórios financeiros com muitas páginas), a renderização é sequencial página a página; imagens ficam em memória enquanto o dialog está aberto.
-- **Sem text layer**: perde-se seleção/busca de texto dentro do preview, mas o botão "Baixar PDF" segue disponível para quem precisar do PDF real.
-- **Sem ResizeObserver**: as imagens usam `max-w-full` e escalam via CSS, evitando o loop de `viewportWidth` que atrasava a primeira renderização.
-- **Impressão / download**: seguem inalterados em `PreviewRelatorioDialog` — usam o `jsPDF` original (`doc.save`, `doc.output("blob")`), portanto sem perda de qualidade.
+## Alternativa (se pdf.js continuar problemático)
 
-## Validação
+Voltar ao approach `<iframe src={blobUrl}>` que é nativo do browser, com fallback de download. Mais simples, sem worker, sem canvas — mas depende do PDF viewer nativo do navegador (Chrome mostra bem, alguns embedded webviews não).
 
-1. Abrir um relatório de Gestão (DRE) → confirmar renderização como imagem.
-2. Abrir um relatório de Estoque multi-página → confirmar todas as páginas.
-3. Abrir DANFE em Notas Fiscais → confirmar renderização.
-4. Testar botões Imprimir / Baixar PDF / Excel.
-5. Confirmar que o ticket de depósito (bobina) continua funcionando.
+## Arquivos afetados
 
-## Arquivos modificados
+- `src/components/shared/PdfViewer.tsx` — reescrita do bloco de load + render
 
-- `src/components/shared/PdfViewer.tsx` (1 arquivo)
+## Nenhuma alteração em
+
+- `PreviewRelatorioDialog.tsx`, `DanfePdfViewer.tsx`, geradores de PDF, backend.
