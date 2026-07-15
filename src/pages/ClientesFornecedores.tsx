@@ -210,7 +210,9 @@ export default function ClientesFornecedores() {
           toast.error("CNPJ inválido!");
           return;
         }
+      }
     }
+
 
     // Validar Inscrição Estadual se informada (apenas para não-estrangeiro)
     const ieRaw = (formData.inscricao_estadual || '').trim();
