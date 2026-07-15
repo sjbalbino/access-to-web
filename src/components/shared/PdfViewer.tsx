@@ -120,7 +120,7 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
 
   return (
     <div className="relative h-full w-full overflow-auto bg-muted/40 p-4">
-      {loading && images.length === 0 && (
+      {(loading || (!!pdfData && images.length === 0 && !error)) && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70">
           <div className="rounded-full bg-background/90 p-4 shadow-lg">
             <Spinner />
