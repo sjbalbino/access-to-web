@@ -18,6 +18,7 @@ import { useGranjas } from '@/hooks/useGranjas';
 import { useCepLookup, formatCep } from '@/hooks/useCepLookup';
 import { useCnpjLookup, formatCnpj } from '@/hooks/useCnpjLookup';
 import { formatCpf, validateCpf, validateCnpj } from '@/lib/formatters';
+import { isIeGenerica, validarIeUF } from '@/lib/inscricaoEstadualValidator';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
