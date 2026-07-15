@@ -596,9 +596,11 @@ export default function EmitentesNfe() {
                           const fantasia = insc.nome_fantasia?.trim();
                           const granjaNome = insc.granjas?.nome_fantasia || insc.granjas?.razao_social || "";
                           const principal = fantasia ? `${fantasia} — ${produtorNome}` : produtorNome;
+                          const ieRaw = (insc.inscricao_estadual || "").trim();
+                          const ieInvalida = !!ieRaw && (isIeGenerica(ieRaw) || !validarIeUF(ieRaw, insc.uf || "").valida);
                           return (
                             <SelectItem key={insc.id} value={insc.id} disabled={jaVinculada}>
-                              {principal}{inscNome ? ` — ${inscNome}` : ""} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}{jaVinculada ? " • (já vinculada)" : ""}
+                              {principal}{inscNome ? ` — ${inscNome}` : ""} — {insc.cpf_cnpj || "sem CPF/CNPJ"}{insc.inscricao_estadual ? ` • IE ${insc.inscricao_estadual}` : ""}{granjaNome ? ` • ${granjaNome}` : ""}{jaVinculada ? " • (já vinculada)" : ""}{ieInvalida ? " • ⚠ IE inválida" : ""}
                             </SelectItem>
                           );
                         })}
