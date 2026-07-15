@@ -70,6 +70,7 @@ import { formatCpfCnpj, formatTelefone, formatInscricaoEstadual } from "@/lib/fo
 import { useProdutor } from "@/hooks/useProdutores";
 import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
 import { cn } from "@/lib/utils";
+import { isIeGenerica, validarIeUF, isIeIsento } from "@/lib/inscricaoEstadualValidator";
 
 // Tipos de contrato para a inscrição (opcional - para regras de negócio futuras)
 const TIPOS_CONTRATO = [
@@ -123,6 +124,18 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const [cidadeOpen, setCidadeOpen] = useState(false);
   const [ufCidade, setUfCidade] = useState<string>("");
   const { data: municipios } = useIbgeMunicipios(ufCidade || undefined);
+  const [ieError, setIeError] = useState<string | null>(null);
+
+  const validateIeField = (ie: string, uf: string) => {
+    const raw = (ie || "").trim();
+    if (!raw) { setIeError(null); return; }
+    if (isIeGenerica(raw)) {
+      setIeError("IE genérica não é permitida (zeros, sequências ou repetições).");
+      return;
+    }
+    const r = validarIeUF(raw, uf);
+    setIeError(r.valida ? null : (r.motivo ?? "IE inválida."));
+  };
 
   // Códigos IBGE presentes na lista (fetch focado para evitar limite de 1000 linhas)
   const codigosIbge = useMemo(() => {
@@ -170,6 +183,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
   const handleNew = () => {
     setSelectedInscricao(null);
+    setIeError(null);
     const uf = produtor?.uf || "";
     setUfCidade(uf);
     setFormData({ 
@@ -193,6 +207,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
   const handleEdit = (inscricao: InscricaoProdutor) => {
     setSelectedInscricao(inscricao);
+    setIeError(null);
     setUfCidade(inscricao.uf || "");
     setFormData({
       produtor_id: inscricao.produtor_id,
@@ -319,6 +334,30 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
       return;
     }
 
+    // Validação de IE: rejeitar genéricas e conferir dígito verificador por UF
+    const ieRaw = (formData.inscricao_estadual || "").trim();
+    if (isIeGenerica(ieRaw)) {
+      setIeError("IE genérica não é permitida (zeros, sequências ou repetições).");
+      toast({
+        title: "Inscrição Estadual inválida",
+        description: "Não é permitido cadastrar IE genérica (zeros, sequências ou repetições).",
+        variant: "destructive",
+      });
+      return;
+    }
+    const validacao = validarIeUF(ieRaw, formData.uf || "");
+    if (!validacao.valida) {
+      setIeError(validacao.motivo ?? "IE inválida.");
+      toast({
+        title: "Inscrição Estadual inválida",
+        description: validacao.motivo ?? `A IE informada não é válida para ${formData.uf}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setIeError(null);
+
+
     if (selectedInscricao) {
       await updateInscricao.mutateAsync({ id: selectedInscricao.id, ...formData });
     } else {
@@ -340,6 +379,15 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
   return (
     <div className="space-y-4">
+      {produtor && (
+        <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Produtor/Sócio: </span>
+          <span className="font-semibold">{produtor.nome}</span>
+          {produtor.cpf_cnpj && (
+            <span className="text-muted-foreground"> — {formatCpfCnpj(produtor.cpf_cnpj)}</span>
+          )}
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium flex items-center gap-2">
           <FileText className="h-4 w-4" />
@@ -441,6 +489,9 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
           <DialogHeader>
             <DialogTitle>
               {selectedInscricao ? "Editar Inscrição" : "Nova Inscrição"}
+              {produtor?.nome && (
+                <span className="ml-2 font-normal text-muted-foreground">— {produtor.nome}</span>
+              )}
             </DialogTitle>
           </DialogHeader>
           
@@ -498,10 +549,28 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   <Label htmlFor="inscricao_estadual">Inscrição Estadual <span className="text-destructive">*</span></Label>
                   <Input
                     id="inscricao_estadual"
-                    value={formatInscricaoEstadual(formData.inscricao_estadual || "")}
-                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value.replace(/\D/g, "") })}
-                    placeholder="000.000.000-0"
+                    value={
+                      isIeIsento(formData.inscricao_estadual || "")
+                        ? (formData.inscricao_estadual || "").toUpperCase()
+                        : formatInscricaoEstadual(formData.inscricao_estadual || "")
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Permite "ISENTO"/"ISENTA" (letras) — caso contrário mantém apenas dígitos
+                      const clean = /^[A-Za-z]/.test(val)
+                        ? val.replace(/[^A-Za-z]/g, "").toUpperCase().slice(0, 7)
+                        : val.replace(/\D/g, "");
+                      setFormData({ ...formData, inscricao_estadual: clean });
+                      if (ieError) setIeError(null);
+                    }}
+                    onBlur={() => validateIeField(formData.inscricao_estadual || "", formData.uf || "")}
+                    placeholder="000.000.000-0 ou ISENTO"
+                    aria-invalid={!!ieError}
+                    className={cn(ieError && "border-destructive focus-visible:ring-destructive")}
                   />
+                  {ieError && (
+                    <p className="text-xs text-destructive">{ieError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cpf_cnpj">CPF/CNPJ <span className="text-destructive">*</span></Label>
