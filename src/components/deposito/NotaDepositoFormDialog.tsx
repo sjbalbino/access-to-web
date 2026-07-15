@@ -849,9 +849,9 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label>Variedade *</Label>
-                        <Select isSearchable value={produtoId} onValueChange={setProdutoId}>
+                        <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={!inscricaoId}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a variedade" />
+                            <SelectValue placeholder={!inscricaoId ? "Selecione a inscrição primeiro" : "Selecione a variedade"} />
                           </SelectTrigger>
                           <SelectContent>
                             {saldos.filter(s => s.saldo_a_emitir_kg > 0).map((s) => (
@@ -873,6 +873,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                           value={quantidadeKg}
                           onChange={(e) => setQuantidadeKg(e.target.value)}
                           placeholder="0,00"
+                          disabled={!inscricaoId || !produtoId}
                         />
                         {saldoProduto && (
                           <p className="text-xs text-muted-foreground">
