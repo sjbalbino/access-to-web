@@ -1683,7 +1683,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
           {/* Período */}
-          {!isEstoque && tipo !== "extrato" && tipo !== "resumo_produtor" && (
+          {!isEstoque && tipo !== "extrato" && tipo !== "resumo_produtor" && tipo !== "resumo_colheita_lavoura" && (
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Data Inicial {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} /></div>
               <div><Label>Data Final {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataFinal} onChange={e => setDataFinal(e.target.value)} /></div>
