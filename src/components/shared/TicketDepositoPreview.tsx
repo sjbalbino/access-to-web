@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PdfViewer } from "@/components/shared/PdfViewer";
 import { Printer, Download } from "lucide-react";
 
 export interface TicketDepositoPreviewPayload {
@@ -18,6 +17,7 @@ export function openTicketDepositoPreview(payload: TicketDepositoPreviewPayload)
 export function TicketDepositoPreview() {
   const [payload, setPayload] = useState<TicketDepositoPreviewPayload | null>(null);
   const [open, setOpen] = useState(false);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -28,6 +28,19 @@ export function TicketDepositoPreview() {
     window.addEventListener(EVENT_NAME, handler);
     return () => window.removeEventListener(EVENT_NAME, handler);
   }, []);
+
+  useEffect(() => {
+    if (!open || !payload) {
+      return;
+    }
+    const blob = new Blob([payload.pdfData as BlobPart], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    setBlobUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+      setBlobUrl(null);
+    };
+  }, [open, payload]);
 
   const handlePrint = () => {
     if (!payload) return;
@@ -74,9 +87,22 @@ export function TicketDepositoPreview() {
       <DialogContent className="max-w-2xl h-[85vh] flex flex-col p-0 gap-0">
         <DialogHeader className="p-4 border-b">
           <DialogTitle>Ticket de Depósito</DialogTitle>
+          <DialogDescription className="sr-only">
+            Pré-visualização do ticket de depósito em PDF.
+          </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 min-h-0">
-          <PdfViewer pdfData={payload?.pdfData ?? null} errorMessage="Não foi possível renderizar o ticket." />
+        <div className="flex-1 min-h-0 bg-muted">
+          {blobUrl ? (
+            <iframe
+              src={blobUrl}
+              title="Ticket de Depósito"
+              className="h-full w-full border-0"
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-sm text-muted-foreground">
+              Carregando ticket...
+            </div>
+          )}
         </div>
         <DialogFooter className="p-4 border-t gap-2 sm:justify-end">
           <Button variant="outline" onClick={handleDownload}>
