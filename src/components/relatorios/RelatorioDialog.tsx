@@ -1083,7 +1083,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         ),
         controle_lavoura:controle_lavouras!colheitas_controle_lavoura_id_fkey(
           area_total, ha_plantado,
-          lavouras(nome, cultura:cultura_id(nome))
+          lavouras(nome)
         ),
         local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(nome)
       `)
