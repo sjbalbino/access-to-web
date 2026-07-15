@@ -767,3 +767,259 @@ export function gerarResumoProdutorPdf(data: ResumoProdutorData): void {
   desenharRodapeBrand(doc);
   downloadPdf(doc, `resumo_produtor_${data.produtorNome.replace(/\s/g, "_")}.pdf`);
 }
+
+// ==================== RELATÓRIO COLHEITA DIÁRIA ====================
+
+export interface RelColheitaDiariaRow {
+  data_colheita: string | null;
+  local_nome: string;
+  lavoura_ie: string;         // "LAVOURA / IE"
+  variedade: string;
+  peso_bruto: number;
+  perc_impureza: number;
+  kg_impureza: number;
+  perc_umidade: number;
+  perc_desconto: number;
+  kg_umidade: number;
+  perc_avariados: number;
+  kg_avariados: number;
+  perc_outros: number;
+  kg_outros: number;
+  kg_desconto_total: number;
+  producao_liquida_kg: number;
+  total_sacos: number;
+  romaneio: string;
+  ph: number;
+  ha: number;
+  tipo_colheita: string;      // industria / semente
+  tipo_produtor_label: string; // Parceria / Arrendamento / Terceiros
+}
+
+export interface RelColheitaDiariaParams {
+  safraNome: string;
+  culturaNome: string;
+  periodo: string;
+  tipoProdutorLabel: string;
+  localFiltroLabel: string;
+  rows: RelColheitaDiariaRow[];
+}
+
+export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
+  const doc = new jsPDF({ orientation: "landscape", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
+
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("RELATÓRIO RECEBIMENTO DIÁRIO", pageWidth / 2, 34, { align: "center" });
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`SAFRA: ${params.safraNome}`, 14, 41);
+  doc.text(`CULTURA: ${params.culturaNome}`, pageWidth / 2, 41, { align: "center" });
+  doc.text(`Período: ${params.periodo}`, pageWidth - 14, 41, { align: "right" });
+  doc.text(`Tipo: ${params.tipoProdutorLabel}`, 14, 46);
+  doc.text(`Local: ${params.localFiltroLabel}`, pageWidth - 14, 46, { align: "right" });
+
+  const rows = params.rows;
+  const body: any[] = [];
+
+  const numCols = 19; // qtd colunas
+  const spacerCells = (label: string, indexOfLabel = 0): any[] => {
+    const arr: any[] = new Array(numCols).fill("");
+    arr[indexOfLabel] = label;
+    return arr;
+  };
+
+  const makeRow = (r: RelColheitaDiariaRow): any[] => [
+    r.lavoura_ie,
+    r.variedade,
+    formatNumber(r.peso_bruto, 0),
+    r.perc_impureza ? formatNumber(r.perc_impureza, 2) : "",
+    r.kg_impureza ? formatNumber(r.kg_impureza, 0) : "",
+    r.perc_umidade ? formatNumber(r.perc_umidade, 2) : "",
+    r.perc_desconto ? formatNumber(r.perc_desconto, 2) : "",
+    r.kg_umidade ? formatNumber(r.kg_umidade, 0) : "",
+    r.perc_avariados ? formatNumber(r.perc_avariados, 2) : "0,00",
+    r.kg_avariados ? formatNumber(r.kg_avariados, 0) : "0",
+    r.perc_outros ? formatNumber(r.perc_outros, 2) : "0,00",
+    r.kg_outros ? formatNumber(r.kg_outros, 0) : "0",
+    formatNumber(r.kg_desconto_total, 0),
+    formatNumber(r.producao_liquida_kg, 0),
+    formatNumber(r.total_sacos, 0),
+    r.romaneio || "",
+    r.ph ? formatNumber(r.ph, 2) : "0,00",
+    r.ha ? formatNumber(r.ha, 2) : "0,00",
+    r.ha > 0 ? formatNumber(r.producao_liquida_kg / r.ha, 0) : "0",
+  ];
+
+  const sumRow = (label: string, list: RelColheitaDiariaRow[]): any[] => {
+    const s = (fn: (r: RelColheitaDiariaRow) => number) => list.reduce((a, r) => a + (fn(r) || 0), 0);
+    const totLiq = s(r => r.producao_liquida_kg);
+    const totHa = s(r => r.ha);
+    return [
+      label,
+      String(list.length),
+      formatNumber(s(r => r.peso_bruto), 0),
+      "",
+      formatNumber(s(r => r.kg_impureza), 0),
+      "",
+      "",
+      formatNumber(s(r => r.kg_umidade), 0),
+      "",
+      formatNumber(s(r => r.kg_avariados), 0),
+      "",
+      formatNumber(s(r => r.kg_outros), 0),
+      formatNumber(s(r => r.kg_desconto_total), 0),
+      formatNumber(totLiq, 0),
+      formatNumber(s(r => r.total_sacos), 0),
+      "",
+      "",
+      formatNumber(totHa, 2),
+      totHa > 0 ? formatNumber(totLiq / totHa, 0) : "0",
+    ];
+  };
+
+  // Agrupamento: Local -> Data
+  const boldRows: number[] = [];
+  const subtotalRows: number[] = [];
+  const groupHeaderRows: number[] = [];
+
+  // Ordenar por local, depois data
+  const rowsOrdenadas = [...rows].sort((a, b) => {
+    const l = a.local_nome.localeCompare(b.local_nome, "pt-BR");
+    if (l !== 0) return l;
+    return (a.data_colheita || "").localeCompare(b.data_colheita || "");
+  });
+
+  const porLocal = new Map<string, RelColheitaDiariaRow[]>();
+  rowsOrdenadas.forEach(r => {
+    if (!porLocal.has(r.local_nome)) porLocal.set(r.local_nome, []);
+    porLocal.get(r.local_nome)!.push(r);
+  });
+
+  porLocal.forEach((lista, local) => {
+    // cabeçalho do local
+    body.push(spacerCells(`Local Entrega: ${local}`));
+    groupHeaderRows.push(body.length - 1);
+
+    const porData = new Map<string, RelColheitaDiariaRow[]>();
+    lista.forEach(r => {
+      const k = r.data_colheita || "";
+      if (!porData.has(k)) porData.set(k, []);
+      porData.get(k)!.push(r);
+    });
+
+    porData.forEach((rowsDia, data) => {
+      rowsDia.forEach(r => body.push(makeRow(r)));
+      const totalRow = sumRow(`Total do Dia --> ${formatDate(data)}`, rowsDia);
+      body.push(totalRow);
+      subtotalRows.push(body.length - 1);
+    });
+
+    // total do local
+    const totalLocal = sumRow(`Loc.Entrega: ${local}`, lista);
+    body.push(totalLocal);
+    boldRows.push(body.length - 1);
+  });
+
+  // Total período
+  const totalGeral = sumRow(`TOTAL PERÍODO -->`, rowsOrdenadas);
+  body.push(totalGeral);
+  boldRows.push(body.length - 1);
+
+  autoTable(doc, {
+    startY: 51,
+    head: [[
+      "Lavoura/Produtor", "Variedade",
+      { content: "Kgs.Bruto", styles: { halign: "right" } },
+      { content: "%Imp", styles: { halign: "right" } },
+      { content: "Kgs.Imp", styles: { halign: "right" } },
+      { content: "%Um", styles: { halign: "right" } },
+      { content: "%Desc", styles: { halign: "right" } },
+      { content: "Kgs.Umid", styles: { halign: "right" } },
+      { content: "%Avar", styles: { halign: "right" } },
+      { content: "Avar.", styles: { halign: "right" } },
+      { content: "%Outr", styles: { halign: "right" } },
+      { content: "Outros", styles: { halign: "right" } },
+      { content: "Kgs.Desc", styles: { halign: "right" } },
+      { content: "Kgs.Líquido", styles: { halign: "right" } },
+      { content: "SACOS", styles: { halign: "right" } },
+      { content: "Romaneio", styles: { halign: "center" } },
+      { content: "PH", styles: { halign: "right" } },
+      { content: "HA", styles: { halign: "right" } },
+      { content: "MÉDIA", styles: { halign: "right" } },
+    ]],
+    body,
+    styles: { fontSize: 6.5, cellPadding: 1 },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255, fontSize: 7 },
+    columnStyles: {
+      0: { halign: "left", cellWidth: 34 },
+      1: { halign: "left", cellWidth: 30 },
+      2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" },
+      5: { halign: "right" }, 6: { halign: "right" }, 7: { halign: "right" },
+      8: { halign: "right" }, 9: { halign: "right" }, 10: { halign: "right" },
+      11: { halign: "right" }, 12: { halign: "right" }, 13: { halign: "right" },
+      14: { halign: "right" }, 15: { halign: "center" }, 16: { halign: "right" },
+      17: { halign: "right" }, 18: { halign: "right" },
+    },
+    didParseCell: (d) => {
+      if (d.section !== "body") return;
+      if (groupHeaderRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [220, 230, 241];
+      } else if (boldRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [200, 200, 200];
+      } else if (subtotalRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [235, 235, 235];
+      }
+    },
+  });
+
+  // Resumo por Variedade
+  let finalY = (doc as any).lastAutoTable.finalY + 6;
+  const porVariedade = new Map<string, { kg: number; sacos: number }>();
+  rowsOrdenadas.forEach(r => {
+    const cur = porVariedade.get(r.variedade) || { kg: 0, sacos: 0 };
+    cur.kg += r.producao_liquida_kg || 0;
+    cur.sacos += r.total_sacos || 0;
+    porVariedade.set(r.variedade, cur);
+  });
+  const resumoBody: any[] = Array.from(porVariedade.entries()).map(([v, t]) => [
+    v, formatNumber(t.kg, 0), formatNumber(t.sacos, 0),
+  ]);
+  const totKg = rowsOrdenadas.reduce((s, r) => s + (r.producao_liquida_kg || 0), 0);
+  const totSc = rowsOrdenadas.reduce((s, r) => s + (r.total_sacos || 0), 0);
+  resumoBody.push(["TOTAL PERÍODO", formatNumber(totKg, 0), formatNumber(totSc, 0)]);
+
+  if (finalY > doc.internal.pageSize.getHeight() - 40) {
+    doc.addPage();
+    finalY = 20;
+  }
+
+  autoTable(doc, {
+    startY: finalY,
+    head: [[{ content: "RESUMO VARIEDADE", colSpan: 3, styles: { halign: "center" } }],
+      ["Variedade",
+        { content: "Kgs.Líquido", styles: { halign: "right" } },
+        { content: "Sacos", styles: { halign: "right" } }]],
+    body: resumoBody,
+    styles: { fontSize: 8, cellPadding: 1.5 },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255 },
+    columnStyles: { 0: { halign: "left", cellWidth: 80 }, 1: { halign: "right", cellWidth: 40 }, 2: { halign: "right", cellWidth: 30 } },
+    tableWidth: 150,
+    margin: { left: pageWidth / 2 - 75 },
+    didParseCell: (d) => {
+      if (d.section === "body" && d.row.index === resumoBody.length - 1) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [200, 200, 200];
+      }
+    },
+  });
+
+  desenharRodapeBrand(doc);
+  downloadPdf(doc, "colheita_diaria.pdf");
+}
+
