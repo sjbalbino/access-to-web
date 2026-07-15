@@ -1016,9 +1016,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         romaneio: c.romaneio != null ? String(c.romaneio) : "",
         ph: Number(c.ph) || 0,
         ha,
+        controle_lavoura_id: c.controle_lavoura_id || null,
         tipo_colheita: c.tipo_colheita || "-",
         tipo_produtor_label: tipoLabels[c.inscricao_produtor?.tipo] || "-",
       };
+
     });
 
     const periodo = `${dataInicial ? new Date(dataInicial + "T12:00:00").toLocaleDateString("pt-BR") : "-"} a ${dataFinal ? new Date(dataFinal + "T12:00:00").toLocaleDateString("pt-BR") : "-"}`;
