@@ -305,7 +305,7 @@ export function useInscricoesComSaldo(filters: {
       // Elas são controle paralelo (saldo a emitir) — vide useSaldosDeposito.
 
 
-      return Array.from(inscricaoMap.values()).filter(i => i.saldo_disponivel > 0);
+      return sortByProdutor(Array.from(inscricaoMap.values()).filter(i => i.saldo_disponivel > 0));
     },
     enabled: !!filters.safraId,
   });
