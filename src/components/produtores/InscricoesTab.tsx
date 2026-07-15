@@ -489,6 +489,9 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
           <DialogHeader>
             <DialogTitle>
               {selectedInscricao ? "Editar Inscrição" : "Nova Inscrição"}
+              {produtor?.nome && (
+                <span className="ml-2 font-normal text-muted-foreground">— {produtor.nome}</span>
+              )}
             </DialogTitle>
           </DialogHeader>
           
