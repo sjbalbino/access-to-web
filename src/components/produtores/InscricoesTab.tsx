@@ -379,6 +379,15 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
   return (
     <div className="space-y-4">
+      {produtor && (
+        <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Produtor/Sócio: </span>
+          <span className="font-semibold">{produtor.nome}</span>
+          {produtor.cpf_cnpj && (
+            <span className="text-muted-foreground"> — {formatCpfCnpj(produtor.cpf_cnpj)}</span>
+          )}
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium flex items-center gap-2">
           <FileText className="h-4 w-4" />
