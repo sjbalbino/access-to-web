@@ -230,6 +230,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       if (tipo === "extrato") await gerarExtrato();
       else if (tipo === "resumo_produtor") await gerarResumoProdutor();
       else if (tipo === "colheitas") await gerarColheitas();
+      else if (tipo === "colheita_diaria") await gerarColheitaDiaria();
+
       else if (tipo === "vendas") await gerarVendas();
       else if (tipo === "demonstrativo_gerencial") await gerarDemonstrativo();
       else if (tipo === "dre") await gerarDre();
