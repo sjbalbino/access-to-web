@@ -90,6 +90,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const { data: clientes } = useClientesFornecedores();
   const { data: granjas } = useGranjas();
   const { data: locaisEntrega } = useLocaisEntrega();
+  const { data: localSede } = useLocalSede();
+  const tenantSedeNome = localSede?.nome ?? "Sede";
 
   // Efeito para definir a granja padrão
   useEffect(() => {
