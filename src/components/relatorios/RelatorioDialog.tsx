@@ -498,8 +498,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const { data: colheitas } = await colheitasQuery;
 
     const [trDepRes, devRes] = await Promise.all([
-      supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id, quantidade_kg").eq("safra_id", safraId),
-      supabase.from("devolucoes_deposito").select("inscricao_produtor_id, inscricao_recebe_taxa_id, quantidade_kg, kg_taxa_armazenagem").eq("safra_id", safraId).neq("status", "cancelada"),
+      supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id, quantidade_kg, saida:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome), entrada:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome)").eq("safra_id", safraId),
+      supabase.from("devolucoes_deposito").select("inscricao_produtor_id, inscricao_recebe_taxa_id, quantidade_kg, kg_taxa_armazenagem, local:locais_entrega!devolucoes_deposito_local_entrega_id_fkey(nome)").eq("safra_id", safraId).neq("status", "cancelada"),
     ]);
 
     // Aggregate: key = local + inscricao
@@ -521,29 +521,33 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     // Colheitas grouped by local
     (colheitas || []).forEach((c: any) => {
-      const local = c.locais_entrega?.nome || "Sede";
+      const local = c.locais_entrega?.nome || tenantSedeNome;
       getRow(local, c.inscricao_produtor_id).depositos_kg += (c.producao_liquida_kg || 0);
     });
 
     // Transferências
     (trDepRes.data || []).forEach((t: any) => {
       if (inscricaoIds.includes(t.inscricao_origem_id)) {
-        getRow("Sede", t.inscricao_origem_id).tr_saida_kg += (t.quantidade_kg || 0);
+        const local = t.saida?.nome || tenantSedeNome;
+        getRow(local, t.inscricao_origem_id).tr_saida_kg += (t.quantidade_kg || 0);
       }
       if (inscricaoIds.includes(t.inscricao_destino_id)) {
-        getRow("Sede", t.inscricao_destino_id).tr_entrada_kg += (t.quantidade_kg || 0);
+        const local = t.entrada?.nome || tenantSedeNome;
+        getRow(local, t.inscricao_destino_id).tr_entrada_kg += (t.quantidade_kg || 0);
       }
     });
 
     // Devoluções + Entr.Arm (kg_taxa_armazenagem creditado ao sócio)
     (devRes.data || []).forEach((d: any) => {
+      const local = d.local?.nome || tenantSedeNome;
       if (inscricaoIds.includes(d.inscricao_produtor_id)) {
-        getRow("Sede", d.inscricao_produtor_id).devolucoes_kg += (d.quantidade_kg || 0);
+        getRow(local, d.inscricao_produtor_id).devolucoes_kg += (d.quantidade_kg || 0);
       }
       if (d.inscricao_recebe_taxa_id && inscricaoIds.includes(d.inscricao_recebe_taxa_id)) {
-        getRow("Sede", d.inscricao_recebe_taxa_id).notas_deposito_kg += (d.kg_taxa_armazenagem || 0);
+        getRow(local, d.inscricao_recebe_taxa_id).notas_deposito_kg += (d.kg_taxa_armazenagem || 0);
       }
     });
+
 
     // Calculate saldo
     Object.values(rowMap).forEach(row => {
