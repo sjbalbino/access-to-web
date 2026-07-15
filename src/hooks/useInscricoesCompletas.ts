@@ -63,11 +63,15 @@ export function useInscricoesCompletas() {
           email,
           produtores:produtor_id(id, nome, tipo_produtor, ativo),
           granjas:granja_id(id, razao_social)
-        `)
-        .order('inscricao_estadual');
+        `);
       
       if (error) throw error;
-      return data as InscricaoCompleta[];
+      const list = (data || []) as InscricaoCompleta[];
+      return list.sort((a, b) => {
+        const na = (a.produtores?.nome || a.nome || a.nome_fantasia || a.inscricao_estadual || '').toString();
+        const nb = (b.produtores?.nome || b.nome || b.nome_fantasia || b.inscricao_estadual || '').toString();
+        return na.localeCompare(nb, 'pt-BR', { sensitivity: 'base' });
+      });
     },
   });
 }

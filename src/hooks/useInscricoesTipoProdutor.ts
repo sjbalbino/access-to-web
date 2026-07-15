@@ -80,11 +80,15 @@ export function useInscricoesTipoProdutor() {
           granjas:granja_id(id, razao_social, nome_fantasia)
         `)
         .in('produtor_id', produtorIds)
-        .eq('ativa', true)
-        .order('inscricao_estadual');
+        .eq('ativa', true);
       
       if (error) throw error;
-      return (data || []) as InscricaoTipoProdutor[];
+      const list = (data || []) as InscricaoTipoProdutor[];
+      return list.sort((a, b) => {
+        const na = (a.produtores?.nome || a.nome_fantasia || a.inscricao_estadual || '').toString();
+        const nb = (b.produtores?.nome || b.nome_fantasia || b.inscricao_estadual || '').toString();
+        return na.localeCompare(nb, 'pt-BR', { sensitivity: 'base' });
+      });
     },
   });
 }

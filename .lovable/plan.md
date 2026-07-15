@@ -1,46 +1,36 @@
-# Corrigir "Saldo disponível" para não descontar Notas de Depósito
+## Objetivo
+Ordenar todos os selects/comboboxes de Inscrição Estadual (IE) do sistema por **nome do produtor** (A→Z, pt-BR), em vez de pelo número da IE.
 
-## Regra confirmada pelo usuário
-- **Saldo disponível do produtor** (usado em devoluções, transferências etc.):
-  ```
-  saldo = totalColheitas + totalRecebidas − totalEnviadas − totalDevoluções
-  ```
-  Notas de Depósito emitidas **NÃO** entram nesse cálculo.
+## Escopo
 
-- **Saldo a emitir de Notas de Depósito** (controle paralelo, aparece apenas na tela de Emissão de Nota de Depósito):
-  ```
-  saldo_a_emitir = totalColheitas + totalRecebidas − totalNotasDeposito
-  ```
-  Já está correto em `useSaldosDeposito` — não será alterado.
+### 1. Hook central `useInscricoesCompletas` (`src/hooks/useInscricoesCompletas.ts`)
+Trocar o `.order('inscricao_estadual')` do Supabase por ordenação client-side, já que o nome do produtor vem de tabela relacionada (`produtores.nome`). Ordenar pelo nome do produtor usando `localeCompare('pt-BR')`, com fallback para `nome`/`nome_fantasia`/`inscricao_estadual` quando o produtor não estiver definido.
 
-## Causa da divergência (28.213 vs 3.592)
-Para o SAULO, o painel verde mostrou **28.213 kg** (correto) e o combobox mostrou **3.592 kg** (errado — descontou indevidamente 24.621 kg de notas de depósito emitidas).
+### 2. Hook `useAllInscricoes` (`src/hooks/useAllInscricoes.ts`)
+Verificar e aplicar a mesma ordenação por nome do produtor no retorno do hook, para que todos os selects que o consomem já recebam a lista ordenada corretamente (evita duplicar lógica em cada tela).
 
-O hook `useSaldoDisponivelProdutor` já está correto. O hook `useInscricoesComSaldo` (em `src/hooks/useSaldosDeposito.ts`), que alimenta o combobox, está subtraindo indevidamente as notas de depósito emitidas do `saldo_disponivel`.
+### 3. Hooks derivados (verificar e ajustar se necessário)
+- `useInscricoesProdutor`
+- `useInscricoesSocio`
+- `useInscricoesTipoProdutor`
+- `useInscricaoEmitentePrincipal`
 
-## Correção
+Aplicar o mesmo critério de ordenação onde a lista é usada em selects.
 
-### Arquivo único: `src/hooks/useSaldosDeposito.ts`
+### 4. Componentes com ordenação local
+Onde há `.sort()` local em cima de inscrições (ex.: `TransferenciaDialog.tsx` já usa nome do produtor — manter), padronizar todos para o mesmo critério e remover ordenações redundantes por IE. Fazer varredura em:
+- `src/components/**` e `src/pages/**` procurando por `inscricao_estadual` em contextos de `.sort` ou `SelectItem`.
 
-Dentro da função `useInscricoesComSaldo`:
-
-1. **Remover** a busca de `notas_deposito_emitidas` do `Promise.all` (item `notasRes`) e a checagem `if (notasRes.error) throw notasRes.error;`.
-2. **Remover** o bloco que filtra notas canceladas (linhas ~304–316).
-   - *Nota:* esse bloco existe hoje **só** para preparar `notasFiltradas` para a subtração do item 3. Como a subtração vai sumir, o filtro fica sem uso e é removido junto como limpeza. Nenhum cálculo depende dele.
-3. **Remover** o loop que subtrai `notasFiltradas` de `saldo_disponivel` (linhas ~318–324). Essa é a correção efetiva do bug.
-4. Manter intactas as somas de colheitas e recebidas e as subtrações de enviadas e devoluções (incluindo `kg_taxa_armazenagem`).
-
-Resultado: o `saldo_disponivel` retornado passa a ser
+## Critério de ordenação (padrão único)
 ```
-colheitas + transferências recebidas − transferências enviadas − devoluções (com taxa)
+nome_produtor = produtores?.nome || nome || nome_fantasia || inscricao_estadual || ""
+sort: nome_produtor.localeCompare(outro, 'pt-BR', { sensitivity: 'base' })
 ```
-igual ao `useSaldoDisponivelProdutor`.
 
 ## Fora de escopo
-- `useSaldosDeposito` (hook por produto, usado na Emissão de Nota de Depósito) — permanece como está.
-- `useSaldoDisponivelProdutor` — permanece como está.
-- `DevolucaoDialog` — o aviso informativo "📄 Notas Depósito emitidas" continua visível, apenas informativo.
-- Nenhuma mudança em DB/migrations.
+- Layout dos selects, rótulos exibidos (continua usando `labelInscricao` / padrão já definido em memória).
+- Regras de filtro (ativa/inativa, por tipo, etc.).
+- Nenhuma alteração de banco / RLS / migrations.
 
-## Resultado esperado
-Para o SAULO, o combobox passará a mostrar **Saldo: 28.213 kg**, batendo com o painel verde "Saldo disponível para devolução". A tela de Emissão de Nota de Depósito continua mostrando corretamente o saldo a emitir (colheitas + recebidas − notas emitidas).
+## Validação
+- Abrir Transferências, Devoluções, Notas de Depósito, Vendas, Compras — confirmar que os selects de IE aparecem em ordem alfabética por nome do produtor.
