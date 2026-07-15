@@ -11,9 +11,10 @@ import {
 import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
 
 type TipoRelatorio =
-  | "extrato" | "resumo_produtor" | "colheitas" | "vendas"
+  | "extrato" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "vendas"
   | "demonstrativo_gerencial" | "dre" | "bens_moveis"
   | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+
 
 type Secao = "producao" | "comercial" | "financeiro" | "todos";
 
@@ -48,6 +49,10 @@ const GRUPOS: Grupo[] = [
       { tipo: "colheitas", titulo: "Relatório de Colheitas", descricao: "Listagem detalhada de colheitas",
         detalhe: "Dados de pesagem, umidade, impureza, descontos e produção líquida.",
         icon: Wheat, iconBg: "bg-success/10", iconColor: "text-success" },
+      { tipo: "colheita_diaria", titulo: "Colheita Diária", descricao: "Recebimento diário por local e data",
+        detalhe: "Agrupado por Local de Entrega e Dia, com subtotais, HA, média e resumo por variedade.",
+        icon: Wheat, iconBg: "bg-success/10", iconColor: "text-success", primario: true },
+
       { tipo: "saldo_disponivel", titulo: "Saldo Disponível", descricao: "Estoque geral por produtor",
         detalhe: "Depósitos, compras, vendas, devoluções, transferências e saldo por produtor.",
         icon: Package, iconBg: "bg-emerald-500/10", iconColor: "text-emerald-600", primario: true },
