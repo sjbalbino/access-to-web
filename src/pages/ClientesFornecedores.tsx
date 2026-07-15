@@ -210,8 +210,30 @@ export default function ClientesFornecedores() {
           toast.error("CNPJ inválido!");
           return;
         }
+    }
+
+    // Validar Inscrição Estadual se informada (apenas para não-estrangeiro)
+    const ieRaw = (formData.inscricao_estadual || '').trim();
+    if (ieRaw && formData.tipo_pessoa !== 'estrangeiro') {
+      if (isIeGenerica(ieRaw)) {
+        toast.error('Inscrição Estadual inválida', {
+          description: 'Não é permitido cadastrar IE genérica (zeros, sequências ou repetições).',
+        });
+        return;
+      }
+      if (!formData.uf) {
+        toast.error('Informe a UF para validar a Inscrição Estadual.');
+        return;
+      }
+      const res = validarIeUF(ieRaw, formData.uf);
+      if (!res.valida) {
+        toast.error('Inscrição Estadual inválida', {
+          description: res.motivo ?? `A IE informada não é válida para ${formData.uf}.`,
+        });
+        return;
       }
     }
+
 
     if (editingItem) {
       await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
