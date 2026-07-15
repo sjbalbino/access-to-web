@@ -327,6 +327,31 @@ export default function EmitentesNfe() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validação uniforme de IE: rejeita genéricas e confere DV por UF na inscrição vinculada
+    const inscVinculada = inscricoes.find((i) => i.id === formData.inscricao_produtor_id);
+    if (inscVinculada) {
+      const ie = (inscVinculada.inscricao_estadual || "").trim();
+      const uf = (inscVinculada.uf || "").trim();
+      if (!ie) {
+        toast.error("Inscrição sem IE cadastrada. Cadastre a IE do sócio antes de vincular.");
+        return;
+      }
+      if (isIeGenerica(ie)) {
+        toast.error("IE genérica não é permitida", {
+          description: "A inscrição vinculada possui uma IE genérica (zeros, sequências ou repetições). Corrija o cadastro da inscrição do sócio.",
+        });
+        return;
+      }
+      const r = validarIeUF(ie, uf);
+      if (!r.valida) {
+        toast.error("Inscrição Estadual inválida", {
+          description: r.motivo ?? `A IE ${ie} não é válida para ${uf}. Corrija no cadastro da inscrição do sócio.`,
+        });
+        return;
+      }
+    }
+
     let emitenteId: string | undefined = selectedEmitente?.id;
     if (selectedEmitente) {
       await updateEmitente.mutateAsync({ id: selectedEmitente.id, ...formData });
