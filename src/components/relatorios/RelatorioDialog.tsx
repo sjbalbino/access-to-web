@@ -1399,6 +1399,23 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
+          {/* Local de Entrega - colheita_diaria */}
+          {tipo === "colheita_diaria" && (
+            <div>
+              <Label>Local de Entrega</Label>
+              <ComboboxFilter
+                value={localEntregaId}
+                onValueChange={setLocalEntregaId}
+                options={(locaisEntrega || []).map(l => ({ value: l.id, label: l.nome }))}
+                placeholder="Todos os locais"
+                searchPlaceholder="Buscar local..."
+                emptyText="Nenhum local encontrado."
+                allLabel="Todos"
+              />
+            </div>
+          )}
+
+
           {/* Inscrição/Produtor - extrato */}
           {tipo === "extrato" && (
             <div>
