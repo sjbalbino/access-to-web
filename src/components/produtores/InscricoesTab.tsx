@@ -549,10 +549,28 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                   <Label htmlFor="inscricao_estadual">Inscrição Estadual <span className="text-destructive">*</span></Label>
                   <Input
                     id="inscricao_estadual"
-                    value={formatInscricaoEstadual(formData.inscricao_estadual || "")}
-                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value.replace(/\D/g, "") })}
-                    placeholder="000.000.000-0"
+                    value={
+                      isIeIsento(formData.inscricao_estadual || "")
+                        ? (formData.inscricao_estadual || "").toUpperCase()
+                        : formatInscricaoEstadual(formData.inscricao_estadual || "")
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Permite "ISENTO"/"ISENTA" (letras) — caso contrário mantém apenas dígitos
+                      const clean = /^[A-Za-z]/.test(val)
+                        ? val.replace(/[^A-Za-z]/g, "").toUpperCase().slice(0, 7)
+                        : val.replace(/\D/g, "");
+                      setFormData({ ...formData, inscricao_estadual: clean });
+                      if (ieError) setIeError(null);
+                    }}
+                    onBlur={() => validateIeField(formData.inscricao_estadual || "", formData.uf || "")}
+                    placeholder="000.000.000-0 ou ISENTO"
+                    aria-invalid={!!ieError}
+                    className={cn(ieError && "border-destructive focus-visible:ring-destructive")}
                   />
+                  {ieError && (
+                    <p className="text-xs text-destructive">{ieError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="cpf_cnpj">CPF/CNPJ <span className="text-destructive">*</span></Label>
