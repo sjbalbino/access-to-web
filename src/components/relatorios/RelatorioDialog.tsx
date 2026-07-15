@@ -205,7 +205,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     colheitas: "Relatório de Colheitas",
     colheita_diaria: "Colheita Diária",
 
+    resumo_colheita_lavoura: "Resumo da Colheita por Lavoura",
     vendas: "Relatório de Vendas",
+
     demonstrativo_gerencial: "Demonstrativo Gerencial",
     dre: "DRE - Demonstrativo de Resultado",
     bens_moveis: "Despesas com Bens Móveis",
