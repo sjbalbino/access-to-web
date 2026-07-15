@@ -41,7 +41,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getCstIcmsOptions, CST_PIS_COFINS, CST_IPI } from "@/lib/cstTabelas";
 import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
 import { isIeGenerica, validarIeUF } from "@/lib/inscricaoEstadualValidator";
-import { formatInscricaoEstadual } from "@/lib/formatters";
 import { Spinner } from "@/components/ui/spinner";
 import {
   AlertDialog,
