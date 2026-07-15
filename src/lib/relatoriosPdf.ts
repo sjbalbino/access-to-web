@@ -1040,3 +1040,238 @@ export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
   downloadPdf(doc, "colheita_diaria.pdf");
 }
 
+// ==================== RELATÓRIO RESUMO DA COLHEITA POR LAVOURA ====================
+
+export interface RelResumoColheitaRow {
+  cultura_nome: string;
+  local_nome: string;
+  lavoura_nome: string;
+  controle_lavoura_id: string | null;
+  ha: number;
+  peso_bruto: number;
+  perc_impureza: number;
+  kg_impureza: number;
+  perc_umidade: number;
+  perc_desconto: number;
+  kg_umidade: number;
+  perc_avariados: number;
+  kg_avariados: number;
+  perc_outros: number;
+  kg_outros: number;
+  kg_desconto_total: number;
+  producao_liquida_kg: number;
+  total_sacos: number;
+}
+
+export interface RelResumoColheitaLavouraParams {
+  safraNome: string;
+  culturaNome: string;
+  tipoProdutorLabel: string;
+  rows: RelResumoColheitaRow[];
+}
+
+export function gerarResumoColheitaLavouraPdf(params: RelResumoColheitaLavouraParams): void {
+  const doc = new jsPDF({ orientation: "landscape", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
+
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("Relatório da colheita das Lavouras", pageWidth / 2, 34, { align: "center" });
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`SAFRA: ${params.safraNome}`, 14, 41);
+  doc.text(`CULTURA: ${params.culturaNome}`, pageWidth / 2, 41, { align: "center" });
+  doc.text(`Tipo Produtor: ${params.tipoProdutorLabel}`, pageWidth - 14, 41, { align: "right" });
+
+  const numCols = 17;
+  const spacerCells = (label: string): any[] => {
+    const arr: any[] = new Array(numCols).fill("");
+    arr[0] = label;
+    return arr;
+  };
+
+  const wavg = (list: RelResumoColheitaRow[], getPct: (r: RelResumoColheitaRow) => number) => {
+    const totBruto = list.reduce((a, r) => a + (r.peso_bruto || 0), 0);
+    if (totBruto <= 0) return 0;
+    const soma = list.reduce((a, r) => a + (getPct(r) || 0) * (r.peso_bruto || 0), 0);
+    return soma / totBruto;
+  };
+
+  const haDistinto = (list: RelResumoColheitaRow[]): number => {
+    const seen = new Set<string>();
+    let tot = 0;
+    list.forEach(r => {
+      if (r.controle_lavoura_id) {
+        if (!seen.has(r.controle_lavoura_id)) {
+          seen.add(r.controle_lavoura_id);
+          tot += r.ha || 0;
+        }
+      } else {
+        tot += r.ha || 0;
+      }
+    });
+    return tot;
+  };
+
+  const makeLavouraRow = (lavoura: string, list: RelResumoColheitaRow[]): any[] => {
+    const s = (fn: (r: RelResumoColheitaRow) => number) => list.reduce((a, r) => a + (fn(r) || 0), 0);
+    const totSacos = s(r => r.total_sacos);
+    const ha = haDistinto(list);
+    return [
+      lavoura,
+      String(list.length),
+      formatNumber(s(r => r.peso_bruto), 0),
+      formatNumber(wavg(list, r => r.perc_impureza), 2),
+      formatNumber(s(r => r.kg_impureza), 0),
+      formatNumber(wavg(list, r => r.perc_umidade), 2),
+      formatNumber(wavg(list, r => r.perc_desconto), 2),
+      formatNumber(s(r => r.kg_umidade), 0),
+      formatNumber(wavg(list, r => r.perc_avariados), 2),
+      formatNumber(s(r => r.kg_avariados), 0),
+      formatNumber(wavg(list, r => r.perc_outros), 2),
+      formatNumber(s(r => r.kg_outros), 0),
+      formatNumber(s(r => r.kg_desconto_total), 0),
+      formatNumber(s(r => r.producao_liquida_kg), 0),
+      formatNumber(totSacos, 0),
+      ha > 0 ? formatNumber(ha, 2) : "",
+      ha > 0 ? formatNumber(totSacos / ha, 2) : "",
+    ];
+  };
+
+  const sumRow = (label: string, list: RelResumoColheitaRow[]): any[] => {
+    const s = (fn: (r: RelResumoColheitaRow) => number) => list.reduce((a, r) => a + (fn(r) || 0), 0);
+    const totSacos = s(r => r.total_sacos);
+    const ha = haDistinto(list);
+    return [
+      label,
+      String(list.length),
+      formatNumber(s(r => r.peso_bruto), 0),
+      formatNumber(wavg(list, r => r.perc_impureza), 2),
+      formatNumber(s(r => r.kg_impureza), 0),
+      formatNumber(wavg(list, r => r.perc_umidade), 2),
+      formatNumber(wavg(list, r => r.perc_desconto), 2),
+      formatNumber(s(r => r.kg_umidade), 0),
+      formatNumber(wavg(list, r => r.perc_avariados), 2),
+      formatNumber(s(r => r.kg_avariados), 0),
+      formatNumber(wavg(list, r => r.perc_outros), 2),
+      formatNumber(s(r => r.kg_outros), 0),
+      formatNumber(s(r => r.kg_desconto_total), 0),
+      formatNumber(s(r => r.producao_liquida_kg), 0),
+      formatNumber(totSacos, 0),
+      ha > 0 ? formatNumber(ha, 2) : "",
+      ha > 0 ? formatNumber(totSacos / ha, 2) : "",
+    ];
+  };
+
+  const body: any[] = [];
+  const groupHeaderRows: number[] = [];
+  const subtotalRows: number[] = [];
+  const boldRows: number[] = [];
+
+  const porCultura = new Map<string, RelResumoColheitaRow[]>();
+  params.rows.forEach(r => {
+    const k = r.cultura_nome || "-";
+    if (!porCultura.has(k)) porCultura.set(k, []);
+    porCultura.get(k)!.push(r);
+  });
+  const culturasOrdenadas = Array.from(porCultura.keys()).sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+  culturasOrdenadas.forEach(cultura => {
+    const listaCultura = porCultura.get(cultura)!;
+    body.push(spacerCells(`CULTURA: ${cultura}`));
+    groupHeaderRows.push(body.length - 1);
+
+    const porLocal = new Map<string, RelResumoColheitaRow[]>();
+    listaCultura.forEach(r => {
+      const k = r.local_nome || "-";
+      if (!porLocal.has(k)) porLocal.set(k, []);
+      porLocal.get(k)!.push(r);
+    });
+    const locaisOrdenados = Array.from(porLocal.keys()).sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+    locaisOrdenados.forEach(local => {
+      const listaLocal = porLocal.get(local)!;
+      body.push(spacerCells(`LOCAL ENTREGA: ${local}`));
+      groupHeaderRows.push(body.length - 1);
+
+      const porLavoura = new Map<string, RelResumoColheitaRow[]>();
+      listaLocal.forEach(r => {
+        const k = r.lavoura_nome || "-";
+        if (!porLavoura.has(k)) porLavoura.set(k, []);
+        porLavoura.get(k)!.push(r);
+      });
+      const lavourasOrdenadas = Array.from(porLavoura.keys()).sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+      lavourasOrdenadas.forEach(lav => {
+        body.push(makeLavouraRow(lav, porLavoura.get(lav)!));
+      });
+
+      body.push(sumRow(local, listaLocal));
+      subtotalRows.push(body.length - 1);
+    });
+
+    body.push(sumRow(`${params.tipoProdutorLabel} ===>`, listaCultura));
+    boldRows.push(body.length - 1);
+
+    body.push(sumRow("LOCAL ENTREGA -->", listaCultura));
+    boldRows.push(body.length - 1);
+  });
+
+  body.push(sumRow("TOTAL GERAL -->", params.rows));
+  boldRows.push(body.length - 1);
+
+  autoTable(doc, {
+    startY: 48,
+    head: [[
+      "LAVOURA",
+      { content: "Qtd", styles: { halign: "right" } },
+      { content: "Kgs.Bruto", styles: { halign: "right" } },
+      { content: "%Imp.", styles: { halign: "right" } },
+      { content: "Kgs.Imp.", styles: { halign: "right" } },
+      { content: "%Umid.", styles: { halign: "right" } },
+      { content: "%Desc.", styles: { halign: "right" } },
+      { content: "Kgs.Umid.", styles: { halign: "right" } },
+      { content: "%Avar.", styles: { halign: "right" } },
+      { content: "Kgs.Avar.", styles: { halign: "right" } },
+      { content: "%Outr.", styles: { halign: "right" } },
+      { content: "Kgs.Outr.", styles: { halign: "right" } },
+      { content: "Kgs.Desc.", styles: { halign: "right" } },
+      { content: "Kgs.Liquido", styles: { halign: "right" } },
+      { content: "SACOS", styles: { halign: "right" } },
+      { content: "HA", styles: { halign: "right" } },
+      { content: "MÉDIA", styles: { halign: "right" } },
+    ]],
+    body,
+    styles: { fontSize: 7, cellPadding: 1 },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255, fontSize: 7.5 },
+    columnStyles: {
+      0: { halign: "left", cellWidth: 42 },
+      1: { halign: "right" },
+      2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" },
+      5: { halign: "right" }, 6: { halign: "right" }, 7: { halign: "right" },
+      8: { halign: "right" }, 9: { halign: "right" }, 10: { halign: "right" },
+      11: { halign: "right" }, 12: { halign: "right" }, 13: { halign: "right" },
+      14: { halign: "right" }, 15: { halign: "right" }, 16: { halign: "right" },
+    },
+    didParseCell: (d) => {
+      if (d.section !== "body") return;
+      if (groupHeaderRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [220, 230, 241];
+      } else if (boldRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [200, 200, 200];
+      } else if (subtotalRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [235, 235, 235];
+      }
+    },
+  });
+
+  desenharRodapeBrand(doc);
+  downloadPdf(doc, "resumo_colheita_lavoura.pdf");
+}
+
+

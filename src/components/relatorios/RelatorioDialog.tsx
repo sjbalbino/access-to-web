@@ -21,12 +21,15 @@ import {
   gerarRelatorioVendasPdf,
   gerarResumoProdutorPdf,
   gerarColheitaDiariaPdf,
+  gerarResumoColheitaLavouraPdf,
   type ExtratoData,
   type RelColheita,
   type RelContratoVenda,
   type RelColheitaDiariaRow,
+  type RelResumoColheitaRow,
   type ResumoProdutorRow,
 } from "@/lib/relatoriosPdf";
+
 import {
   gerarDemonstrativoGerencialPdf,
   gerarDrePdf,
@@ -49,7 +52,7 @@ import { captureNextRelatorio, cancelPendingCapture, setPendingSheets, type Rela
 import { loadPdfBrand } from "@/lib/pdfBrand";
 import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
 
-export type TipoRelatorio = "extrato" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+export type TipoRelatorio = "extrato" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "resumo_colheita_lavoura" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 
 interface Props {
@@ -202,7 +205,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     colheitas: "Relatório de Colheitas",
     colheita_diaria: "Colheita Diária",
 
+    resumo_colheita_lavoura: "Resumo da Colheita por Lavoura",
     vendas: "Relatório de Vendas",
+
     demonstrativo_gerencial: "Demonstrativo Gerencial",
     dre: "DRE - Demonstrativo de Resultado",
     bens_moveis: "Despesas com Bens Móveis",
@@ -231,6 +236,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       else if (tipo === "resumo_produtor") await gerarResumoProdutor();
       else if (tipo === "colheitas") await gerarColheitas();
       else if (tipo === "colheita_diaria") await gerarColheitaDiaria();
+      else if (tipo === "resumo_colheita_lavoura") await gerarResumoColheitaLavoura();
+
 
       else if (tipo === "vendas") await gerarVendas();
       else if (tipo === "demonstrativo_gerencial") await gerarDemonstrativo();
@@ -1050,6 +1057,100 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     });
   };
 
+  // ========== RESUMO DA COLHEITA POR LAVOURA ==========
+  const gerarResumoColheitaLavoura = async () => {
+    if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
+
+    const tipoLabels: Record<string, string> = { "1": "Particular", "2": "Arrendamento", "3": "Terceiros", "todos": "Todos" };
+
+    const { data: safraRow } = await supabase
+      .from("safras")
+      .select("id, nome, cultura:cultura_id(nome)")
+      .eq("id", safraId)
+      .maybeSingle();
+    const culturaNomeSafra = (safraRow as any)?.cultura?.nome || "-";
+    const safraNome = safraRow?.nome || "-";
+
+    const { data, error } = await supabase
+      .from("colheitas")
+      .select(`
+        peso_bruto, peso_tara, producao_kg, kg_impureza, impureza, umidade, percentual_desconto,
+        kg_umidade, percentual_avariados, kg_avariados, percentual_outros, kg_outros,
+        kg_desconto_total, producao_liquida_kg, total_sacos, controle_lavoura_id,
+        local_entrega_terceiro_id,
+        inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
+          id, tipo
+        ),
+        controle_lavoura:controle_lavouras!colheitas_controle_lavoura_id_fkey(
+          area_total, ha_plantado,
+          lavouras(nome, cultura:cultura_id(nome))
+        ),
+        local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(nome)
+      `)
+      .eq("safra_id", safraId)
+      .gt("producao_liquida_kg", 0);
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhuma colheita encontrada na safra." });
+      return;
+    }
+
+    const filtradas = tipoProdutorFiltro === "todos"
+      ? data
+      : data.filter((c: any) => c.inscricao_produtor?.tipo === tipoProdutorFiltro);
+
+    if (filtradas.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhuma colheita para o tipo de contrato selecionado." });
+      return;
+    }
+
+    const rows: RelResumoColheitaRow[] = filtradas.map((c: any) => {
+      const lav = c.controle_lavoura?.lavouras?.nome || "-";
+      const ha = Number(c.controle_lavoura?.ha_plantado) || Number(c.controle_lavoura?.area_total) || 0;
+      const culturaLav = c.controle_lavoura?.lavouras?.cultura?.nome || culturaNomeSafra;
+      return {
+        cultura_nome: culturaLav,
+        local_nome: c.local_entrega?.nome || tenantSedeNome,
+        lavoura_nome: lav,
+        controle_lavoura_id: c.controle_lavoura_id || null,
+        ha,
+        peso_bruto: Number(c.producao_kg) || Math.max(0, (Number(c.peso_bruto) || 0) - (Number(c.peso_tara) || 0)),
+        perc_impureza: Number(c.impureza) || 0,
+        kg_impureza: Number(c.kg_impureza) || 0,
+        perc_umidade: Number(c.umidade) || 0,
+        perc_desconto: Number(c.percentual_desconto) || 0,
+        kg_umidade: Number(c.kg_umidade) || 0,
+        perc_avariados: Number(c.percentual_avariados) || 0,
+        kg_avariados: Number(c.kg_avariados) || 0,
+        perc_outros: Number(c.percentual_outros) || 0,
+        kg_outros: Number(c.kg_outros) || 0,
+        kg_desconto_total: Number(c.kg_desconto_total) || 0,
+        producao_liquida_kg: Number(c.producao_liquida_kg) || 0,
+        total_sacos: Number(c.total_sacos) || 0,
+      };
+    });
+
+    setPendingSheets([{
+      name: "Resumo Colheita Lavoura",
+      header: ["Cultura", "Local", "Lavoura", "Qtd Cargas", "Kgs.Bruto", "Kgs.Imp", "Kgs.Umid", "Kgs.Avar", "Kgs.Outr", "Kgs.Desc", "Kgs.Líquido", "SACOS", "HA"],
+      rows: rows.map(r => [
+        r.cultura_nome, r.local_nome, r.lavoura_nome, 1,
+        r.peso_bruto, r.kg_impureza, r.kg_umidade, r.kg_avariados, r.kg_outros,
+        r.kg_desconto_total, r.producao_liquida_kg, r.total_sacos, r.ha,
+      ]),
+    }]);
+
+    gerarResumoColheitaLavouraPdf({
+      safraNome,
+      culturaNome: culturaNomeSafra,
+      tipoProdutorLabel: tipoLabels[tipoProdutorFiltro] || "Todos",
+      rows,
+    });
+  };
+
+
+
 
   const gerarVendas = async () => {
     if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
@@ -1385,7 +1486,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
           {/* Tipo Produtor - saldo disponível */}
-          {(tipo === "saldo_disponivel" || tipo === "colheita_diaria") && (
+          {(tipo === "saldo_disponivel" || tipo === "colheita_diaria" || tipo === "resumo_colheita_lavoura") && (
             <div>
               <Label>Tipo de Contrato</Label>
               <ComboboxFilter
@@ -1582,7 +1683,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
           {/* Período */}
-          {!isEstoque && tipo !== "extrato" && tipo !== "resumo_produtor" && (
+          {!isEstoque && tipo !== "extrato" && tipo !== "resumo_produtor" && tipo !== "resumo_colheita_lavoura" && (
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Data Inicial {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} /></div>
               <div><Label>Data Final {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataFinal} onChange={e => setDataFinal(e.target.value)} /></div>
