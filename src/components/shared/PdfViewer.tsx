@@ -1,18 +1,23 @@
 import { useEffect, useState } from "react";
 import "@/lib/pdfjsPolyfills";
-import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.mjs?url";
 import { AlertCircle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 
 type PdfJsLib = typeof import("pdfjs-dist/legacy/build/pdf.mjs");
 
 let pdfJsPromise: Promise<PdfJsLib> | null = null;
-const STANDARD_FONT_DATA_URL = "/pdfjs/standard_fonts/";
 
 async function loadPdfJs(): Promise<PdfJsLib> {
   if (!pdfJsPromise) {
     pdfJsPromise = import("pdfjs-dist/legacy/build/pdf.mjs").then((pdfjsLib) => {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+      // Vite-recommended worker resolution for pdfjs-dist v4+/v6.
+      // Using ?url on .mjs occasionally returns a wrong MIME path in dev,
+      // causing getDocument() to hang silently. new URL(..., import.meta.url)
+      // is the canonical, tested approach.
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+        "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
+        import.meta.url,
+      ).toString();
       return pdfjsLib;
     });
   }
