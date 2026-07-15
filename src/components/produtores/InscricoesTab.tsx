@@ -124,6 +124,18 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
   const [cidadeOpen, setCidadeOpen] = useState(false);
   const [ufCidade, setUfCidade] = useState<string>("");
   const { data: municipios } = useIbgeMunicipios(ufCidade || undefined);
+  const [ieError, setIeError] = useState<string | null>(null);
+
+  const validateIeField = (ie: string, uf: string) => {
+    const raw = (ie || "").trim();
+    if (!raw) { setIeError(null); return; }
+    if (isIeGenerica(raw)) {
+      setIeError("IE genérica não é permitida (zeros, sequências ou repetições).");
+      return;
+    }
+    const r = validarIeUF(raw, uf);
+    setIeError(r.valida ? null : (r.motivo ?? "IE inválida."));
+  };
 
   // Códigos IBGE presentes na lista (fetch focado para evitar limite de 1000 linhas)
   const codigosIbge = useMemo(() => {
