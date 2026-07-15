@@ -851,8 +851,9 @@ export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
     formatNumber(r.total_sacos, 0),
     r.romaneio || "",
     r.ph ? formatNumber(r.ph, 2) : "0,00",
-    r.ha ? formatNumber(r.ha, 2) : "",
     "",
+    "",
+
   ];
 
   const sumRow = (label: string, list: RelColheitaDiariaRow[]): any[] => {
