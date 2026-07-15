@@ -791,8 +791,10 @@ export interface RelColheitaDiariaRow {
   romaneio: string;
   ph: number;
   ha: number;
+  controle_lavoura_id: string | null;
   tipo_colheita: string;      // industria / semente
   tipo_produtor_label: string; // Parceria / Arrendamento / Terceiros
+
 }
 
 export interface RelColheitaDiariaParams {
