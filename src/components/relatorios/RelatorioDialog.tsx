@@ -1486,7 +1486,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
           {/* Tipo Produtor - saldo disponível */}
-          {(tipo === "saldo_disponivel" || tipo === "colheita_diaria") && (
+          {(tipo === "saldo_disponivel" || tipo === "colheita_diaria" || tipo === "resumo_colheita_lavoura") && (
             <div>
               <Label>Tipo de Contrato</Label>
               <ComboboxFilter
