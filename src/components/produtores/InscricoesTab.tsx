@@ -183,6 +183,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
   const handleNew = () => {
     setSelectedInscricao(null);
+    setIeError(null);
     const uf = produtor?.uf || "";
     setUfCidade(uf);
     setFormData({ 
