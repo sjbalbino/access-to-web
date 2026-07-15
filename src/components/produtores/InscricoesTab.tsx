@@ -70,6 +70,7 @@ import { formatCpfCnpj, formatTelefone, formatInscricaoEstadual } from "@/lib/fo
 import { useProdutor } from "@/hooks/useProdutores";
 import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
 import { cn } from "@/lib/utils";
+import { isIeGenerica, validarIeUF, isIeIsento } from "@/lib/inscricaoEstadualValidator";
 
 // Tipos de contrato para a inscrição (opcional - para regras de negócio futuras)
 const TIPOS_CONTRATO = [
