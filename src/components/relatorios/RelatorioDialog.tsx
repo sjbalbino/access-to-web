@@ -1108,7 +1108,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const rows: RelResumoColheitaRow[] = filtradas.map((c: any) => {
       const lav = c.controle_lavoura?.lavouras?.nome || "-";
       const ha = Number(c.controle_lavoura?.ha_plantado) || Number(c.controle_lavoura?.area_total) || 0;
-      const culturaLav = c.controle_lavoura?.lavouras?.cultura?.nome || culturaNomeSafra;
+      const culturaLav = culturaNomeSafra;
       return {
         cultura_nome: culturaLav,
         local_nome: c.local_entrega?.nome || tenantSedeNome,
