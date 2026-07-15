@@ -74,8 +74,8 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
             canvas.width = Math.floor(viewport.width);
             canvas.height = Math.floor(viewport.height);
 
-            // pdfjs-dist v4+/v6: stable render signature uses canvasContext + viewport.
-            await page.render({ canvasContext: context, viewport }).promise;
+            // pdfjs-dist v6 requires `canvas` in RenderParameters.
+            await page.render({ canvas, canvasContext: context, viewport }).promise;
 
             const dataUrl = canvas.toDataURL("image/png");
             rendered.push(dataUrl);
