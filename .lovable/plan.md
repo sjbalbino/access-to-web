@@ -1,46 +1,46 @@
-## Problema
+# Corrigir "Saldo disponível" para não descontar Notas de Depósito
 
-O log mostra `[PdfViewer] Loaded PDF with 2 page(s)` — ou seja, `getDocument()` funciona. Mas depois disso nenhuma imagem aparece: nenhum log de render, nenhum erro. O `page.render()` do pdfjs-dist v6.1.200 está travando/silenciando dentro do laço, então `setImages` nunca é chamado e o spinner nunca sai.
+## Regra confirmada pelo usuário
+- **Saldo disponível do produtor** (usado em devoluções, transferências etc.):
+  ```
+  saldo = totalColheitas + totalRecebidas − totalEnviadas − totalDevoluções
+  ```
+  Notas de Depósito emitidas **NÃO** entram nesse cálculo.
 
-Tentar consertar o pipeline de render do pdf.js v6 (canvas + toDataURL) é frágil — a API mudou várias vezes entre v4/v5/v6, e o dev-server do Vite adiciona problemas de worker/MIME.
+- **Saldo a emitir de Notas de Depósito** (controle paralelo, aparece apenas na tela de Emissão de Nota de Depósito):
+  ```
+  saldo_a_emitir = totalColheitas + totalRecebidas − totalNotasDeposito
+  ```
+  Já está correto em `useSaldosDeposito` — não será alterado.
 
-## Solução proposta: trocar o preview para `<iframe>` + Blob URL
+## Causa da divergência (28.213 vs 3.592)
+Para o SAULO, o painel verde mostrou **28.213 kg** (correto) e o combobox mostrou **3.592 kg** (errado — descontou indevidamente 24.621 kg de notas de depósito emitidas).
 
-O navegador tem visualizador de PDF nativo. Não precisamos do pdf.js só para *mostrar* um PDF já pronto — ele é útil quando precisamos manipular texto/anotações, o que não é o caso aqui.
+O hook `useSaldoDisponivelProdutor` já está correto. O hook `useInscricoesComSaldo` (em `src/hooks/useSaldosDeposito.ts`), que alimenta o combobox, está subtraindo indevidamente as notas de depósito emitidas do `saldo_disponivel`.
 
-### Mudanças em `src/components/shared/PdfViewer.tsx`
+## Correção
 
-1. Remover completamente a dependência de `pdfjs-dist` no componente (import, worker, loop de render, canvas, toDataURL).
-2. No `useEffect`, quando receber `pdfData: Uint8Array`:
-   - Criar `new Blob([pdfData], { type: "application/pdf" })`
-   - Gerar `URL.createObjectURL(blob)` e guardar em state
-   - No cleanup, chamar `URL.revokeObjectURL(url)` para não vazar memória
-3. Renderizar `<iframe src={blobUrl} title="Prévia do PDF" className="h-full w-full border-0 bg-background" />`
-4. Manter o spinner enquanto `blobUrl` não estiver pronto e o tratamento de `error`/`customErrorMessage`.
-5. Chamar `onRenderComplete?.()` no `onLoad` do iframe.
-6. Manter a assinatura `PdfViewerProps` (incluindo `forceVisibleTextLayer` como aceito-e-ignorado) para não quebrar quem chama.
+### Arquivo único: `src/hooks/useSaldosDeposito.ts`
 
-### Ganhos
+Dentro da função `useInscricoesComSaldo`:
 
-- Elimina a classe de bugs de worker do pdf.js no Vite dev-server.
-- Elimina o loop de render que hoje trava silenciosamente.
-- Usuário ganha zoom, busca de texto, impressão e scroll nativos do navegador.
-- Texto continua selecionável (útil para copiar valores dos relatórios).
+1. **Remover** a busca de `notas_deposito_emitidas` do `Promise.all` (item `notasRes`) e a checagem `if (notasRes.error) throw notasRes.error;`.
+2. **Remover** o bloco que filtra notas canceladas (linhas ~304–316).
+   - *Nota:* esse bloco existe hoje **só** para preparar `notasFiltradas` para a subtração do item 3. Como a subtração vai sumir, o filtro fica sem uso e é removido junto como limpeza. Nenhum cálculo depende dele.
+3. **Remover** o loop que subtrai `notasFiltradas` de `saldo_disponivel` (linhas ~318–324). Essa é a correção efetiva do bug.
+4. Manter intactas as somas de colheitas e recebidas e as subtrações de enviadas e devoluções (incluindo `kg_taxa_armazenagem`).
 
-### Riscos / trade-offs
+Resultado: o `saldo_disponivel` retornado passa a ser
+```
+colheitas + transferências recebidas − transferências enviadas − devoluções (com taxa)
+```
+igual ao `useSaldoDisponivelProdutor`.
 
-- Perde-se o controle fino sobre escala/rasterização (não precisamos hoje).
-- Alguns navegadores muito antigos não têm viewer nativo — não é o caso do público-alvo (Chrome/Edge/Firefox modernos).
-- Botões externos "Imprimir/Baixar/Excel" continuam funcionando porque operam sobre `pdfData`, não sobre o iframe.
+## Fora de escopo
+- `useSaldosDeposito` (hook por produto, usado na Emissão de Nota de Depósito) — permanece como está.
+- `useSaldoDisponivelProdutor` — permanece como está.
+- `DevolucaoDialog` — o aviso informativo "📄 Notas Depósito emitidas" continua visível, apenas informativo.
+- Nenhuma mudança em DB/migrations.
 
-### Validação após implementar
-
-1. Reproduzir "Extrato do Produtor" via Playwright e verificar screenshot mostrando conteúdo do PDF (não spinner).
-2. Testar Resumo, Colheitas e DANFE em seguida.
-3. Se OK, remover os `console.log` de diagnóstico.
-
-### Arquivo alterado
-
-- `src/components/shared/PdfViewer.tsx` (reescrita focada; ~60 linhas)
-
-Nenhuma outra tela precisa mudar — a API do componente é preservada.
+## Resultado esperado
+Para o SAULO, o combobox passará a mostrar **Saldo: 28.213 kg**, batendo com o painel verde "Saldo disponível para devolução". A tela de Emissão de Nota de Depósito continua mostrando corretamente o saldo a emitir (colheitas + recebidas − notas emitidas).

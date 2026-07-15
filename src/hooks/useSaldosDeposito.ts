@@ -248,7 +248,7 @@ export function useInscricoesComSaldo(filters: {
         return Array.from(inscricaoMap.values()).filter(i => i.total_depositado > 0);
       }
 
-      const [recebidasRes, enviadasRes, devolucoesRes, notasRes] = await Promise.all([
+      const [recebidasRes, enviadasRes, devolucoesRes] = await Promise.all([
         supabase
           .from('transferencias_deposito')
           .select('inscricao_destino_id, quantidade_kg, local_entrada_id')
@@ -268,18 +268,11 @@ export function useInscricoesComSaldo(filters: {
           .in('produto_id', produtoIds || [filters.produtoId])
           .neq('status', 'cancelada')
           .then((r) => r),
-        supabase
-          .from('notas_deposito_emitidas')
-          .select('inscricao_produtor_id, quantidade_kg, nota_fiscal_id')
-          .eq('safra_id', filters.safraId)
-          .in('produto_id', produtoIds || [filters.produtoId])
-          .then((r) => r),
       ]);
 
       if (recebidasRes.error) throw recebidasRes.error;
       if (enviadasRes.error) throw enviadasRes.error;
       if (devolucoesRes.error) throw devolucoesRes.error;
-      if (notasRes.error) throw notasRes.error;
 
       (recebidasRes.data || []).forEach((t: any) => {
         const key = `${t.inscricao_destino_id}_${t.local_entrada_id || 'sem_local'}`;
@@ -301,27 +294,9 @@ export function useInscricoesComSaldo(filters: {
         }
       });
 
-      let notasFiltradas = notasRes.data || [];
-      const notaFiscalIds = notasFiltradas.map((n: any) => n.nota_fiscal_id).filter(Boolean);
-      if (notaFiscalIds.length > 0) {
-        const { data: nfCanceladas, error: nfCanceladasError } = await supabase
-          .from('notas_fiscais')
-          .select('id')
-          .in('id', notaFiscalIds)
-          .eq('status', 'cancelada');
+      // Notas de Depósito emitidas NÃO entram no saldo disponível do produtor.
+      // Elas são controle paralelo (saldo a emitir) — vide useSaldosDeposito.
 
-        if (nfCanceladasError) throw nfCanceladasError;
-        const canceladasSet = new Set((nfCanceladas || []).map((n: any) => n.id));
-        notasFiltradas = notasFiltradas.filter((n: any) => !n.nota_fiscal_id || !canceladasSet.has(n.nota_fiscal_id));
-      }
-
-      notasFiltradas.forEach((n: any) => {
-        for (const existing of inscricaoMap.values()) {
-          if (existing.id === n.inscricao_produtor_id) {
-            existing.saldo_disponivel -= Math.round(Number(n.quantidade_kg) || 0);
-          }
-        }
-      });
 
       return Array.from(inscricaoMap.values()).filter(i => i.saldo_disponivel > 0);
     },
