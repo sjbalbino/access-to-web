@@ -96,6 +96,23 @@ export function TransportadoraFormDialog({ open, onOpenChange, transportadora, o
     if (formData.motorista_cpf_padrao && !validateCpf(formData.motorista_cpf_padrao)) {
       toast.error("CPF do motorista inválido!"); return;
     }
+    // Validar Inscrição Estadual se informada
+    const ieRaw = (formData.inscricao_estadual || "").trim();
+    if (ieRaw) {
+      if (isIeGenerica(ieRaw)) {
+        toast.error("Inscrição Estadual inválida", { description: "Não é permitido cadastrar IE genérica (zeros, sequências ou repetições)." });
+        return;
+      }
+      if (!formData.uf) {
+        toast.error("Informe a UF para validar a Inscrição Estadual.");
+        return;
+      }
+      const res = validarIeUF(ieRaw, formData.uf);
+      if (!res.valida) {
+        toast.error("Inscrição Estadual inválida", { description: res.motivo ?? `A IE informada não é válida para ${formData.uf}.` });
+        return;
+      }
+    }
     let saved: Transportadora;
     if (transportadora) {
       await updateTransportadora.mutateAsync({ id: transportadora.id, ...formData });
