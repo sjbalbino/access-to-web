@@ -779,7 +779,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-3">
                     <CardTitle className="text-base">Notas do Produtor a Referenciar</CardTitle>
-                    <Button variant="outline" size="sm" onClick={() => setShowNotaForm(true)}>
+                    <Button variant="outline" size="sm" onClick={() => setShowNotaForm(true)} disabled={!inscricaoId}>
                       <Plus className="h-4 w-4 mr-2" />
                       Adicionar Nota
                     </Button>
