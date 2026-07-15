@@ -20,9 +20,11 @@ import {
   gerarRelatorioColheitasPdf,
   gerarRelatorioVendasPdf,
   gerarResumoProdutorPdf,
+  gerarColheitaDiariaPdf,
   type ExtratoData,
   type RelColheita,
   type RelContratoVenda,
+  type RelColheitaDiariaRow,
   type ResumoProdutorRow,
 } from "@/lib/relatoriosPdf";
 import {
@@ -47,7 +49,8 @@ import { captureNextRelatorio, cancelPendingCapture, setPendingSheets, type Rela
 import { loadPdfBrand } from "@/lib/pdfBrand";
 import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
 
-export type TipoRelatorio = "extrato" | "resumo_produtor" | "colheitas" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+export type TipoRelatorio = "extrato" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+
 
 interface Props {
   tipo: TipoRelatorio;
