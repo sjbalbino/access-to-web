@@ -55,9 +55,10 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
         const pdfjsLib = await loadPdfJs();
         const pdf = await pdfjsLib.getDocument({
           data: pdfData.slice(),
-          standardFontDataUrl: STANDARD_FONT_DATA_URL,
           useSystemFonts: true,
         }).promise;
+
+        console.log("[PdfViewer] Loaded PDF with", pdf.numPages, "page(s)");
 
         const rendered: string[] = [];
         try {
@@ -73,7 +74,8 @@ export function PdfViewer({ pdfData, errorMessage: customErrorMessage, onRenderC
             canvas.width = Math.floor(viewport.width);
             canvas.height = Math.floor(viewport.height);
 
-            await page.render({ canvas, canvasContext: context, viewport }).promise;
+            // pdfjs-dist v4+/v6: stable render signature uses canvasContext + viewport.
+            await page.render({ canvasContext: context, viewport }).promise;
 
             const dataUrl = canvas.toDataURL("image/png");
             rendered.push(dataUrl);
