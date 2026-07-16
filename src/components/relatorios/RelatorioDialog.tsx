@@ -1652,7 +1652,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
               <ComboboxFilter
                 value={compradorId}
                 onValueChange={setCompradorId}
-                options={compradores.map(c => ({ value: c.id, label: c.nome + (c.nome_fantasia ? ` (${c.nome_fantasia})` : '') }))}
+                options={compradores.filter(c => !safraId || compradorIdsComContratos.has(c.id)).map(c => ({ value: c.id, label: c.nome + (c.nome_fantasia ? ` (${c.nome_fantasia})` : '') }))}
                 searchPlaceholder="Buscar comprador..."
                 emptyText="Nenhum comprador encontrado."
                 popoverWidth="w-[350px]"
