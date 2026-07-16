@@ -1064,7 +1064,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     setPendingSheets([{
       name: "Colheita Diária",
-      header: ["Data", "Local", "Lavoura/IE", "Variedade", "Kgs.Bruto", "%Imp", "Kgs.Imp", "%Um", "%Desc", "Kgs.Umid", "%Avar", "Avar", "%Outr", "Outros", "Kgs.Desc", "Kgs.Líquido", "SACOS", "Romaneio", "PH", "HA", "MÉDIA"],
+      header: ["Data", "Local", "Produtor/CPF", "Variedade", "Kgs.Bruto", "%Imp", "Kgs.Imp", "%Um", "%Desc", "Kgs.Umid", "%Avar", "Avar", "%Outr", "Outros", "Kgs.Desc", "Kgs.Líquido", "SACOS", "Romaneio", "PH", "HA", "MÉDIA"],
       rows: rows.map(r => [
         r.data_colheita ?? "", r.local_nome, r.lavoura_ie, r.variedade,
         r.peso_bruto, r.perc_impureza, r.kg_impureza, r.perc_umidade, r.perc_desconto,
