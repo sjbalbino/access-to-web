@@ -994,7 +994,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         local_entrega_terceiro_id, inscricao_produtor_id,
         variedade:produtos!colheitas_variedade_id_fkey(nome),
         inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
-          id, inscricao_estadual, tipo, produtores:produtor_id(nome, cpf_cnpj)
+          id, inscricao_estadual, tipo, cpf_cnpj, produtores:produtor_id(nome, cpf_cnpj)
         ),
         controle_lavoura:controle_lavouras!colheitas_controle_lavoura_id_fkey(
           area_total, ha_plantado, lavouras(nome)
@@ -1034,7 +1034,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     const rows: RelColheitaDiariaRow[] = filtradas.map((c: any) => {
       const nomeProdutor = c.inscricao_produtor?.produtores?.nome || "-";
-      const cpfProdutor = c.inscricao_produtor?.produtores?.cpf_cnpj || "-";
+      const cpfProdutor = c.inscricao_produtor?.produtores?.cpf_cnpj || c.inscricao_produtor?.cpf_cnpj || "-";
       const ha = Number(c.controle_lavoura?.ha_plantado) || Number(c.controle_lavoura?.area_total) || 0;
       return {
         data_colheita: c.data_colheita,
