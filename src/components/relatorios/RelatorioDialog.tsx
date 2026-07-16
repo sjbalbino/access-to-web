@@ -185,6 +185,30 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     };
   }, [tipo, safraId]);
 
+  useEffect(() => {
+    if (tipo !== "vendas" || !safraId) {
+      setCompradorIdsComContratos(new Set());
+      return;
+    }
+    let ativo = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from("contratos_venda")
+        .select("comprador_id")
+        .eq("safra_id", safraId);
+      if (!ativo) return;
+      if (error) {
+        setCompradorIdsComContratos(new Set());
+        return;
+      }
+      const ids = new Set<string>();
+      (data || []).forEach((r: any) => { if (r.comprador_id) ids.add(r.comprador_id); });
+      setCompradorIdsComContratos(ids);
+      setCompradorId((atual) => (atual && ids.has(atual) ? atual : ""));
+    })();
+    return () => { ativo = false; };
+  }, [tipo, safraId]);
+
   const produtoresExtratoOptions = (inscricoes || [])
     .filter((inscricao) => inscricaoIdsComMovimento.has(inscricao.id))
     .slice()
