@@ -1154,7 +1154,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const gerarVendas = async () => {
     if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
-    let query = supabase.from("contratos_venda").select(`id, numero, data_contrato, quantidade_kg, preco_kg, valor_total, comprador:clientes_fornecedores(nome, nome_fantasia), produto:produtos(nome)`).eq("safra_id", safraId);
+    let query = supabase.from("contratos_venda").select(`id, numero, data_contrato, quantidade_kg, preco_kg, valor_total, comprador_id, comprador:clientes_fornecedores(nome, nome_fantasia, cpf_cnpj), produto:produtos(nome)`).eq("safra_id", safraId);
     if (compradorId) query = query.eq("comprador_id", compradorId);
     if (dataInicial) query = query.gte("data_contrato", dataInicial);
     if (dataFinal) query = query.lte("data_contrato", dataFinal);
@@ -1163,8 +1163,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const mapped: RelContratoVenda[] = await Promise.all(contratos.map(async (c: any) => {
       const { data: remessas } = await supabase.from("remessas_venda").select("kg_remessa").eq("contrato_venda_id", c.id || "").neq("status", "cancelada");
       const total_carregado_kg = remessas?.reduce((s, r) => s + (Number(r.kg_remessa) || 0), 0) || 0;
-      return { numero: c.numero, data_contrato: c.data_contrato, comprador_nome: c.comprador?.nome_fantasia ? `${c.comprador.nome} (${c.comprador.nome_fantasia})` : c.comprador?.nome || null, produto_nome: c.produto?.nome || null, quantidade_kg: c.quantidade_kg, preco_kg: c.preco_kg, valor_total: c.valor_total, total_carregado_kg, saldo_kg: (c.quantidade_kg || 0) - total_carregado_kg };
+      return { numero: c.numero, data_contrato: c.data_contrato, comprador_id: c.comprador_id ?? null, comprador_nome: c.comprador?.nome_fantasia ? `${c.comprador.nome} (${c.comprador.nome_fantasia})` : c.comprador?.nome || null, comprador_cpf_cnpj: c.comprador?.cpf_cnpj || null, produto_nome: c.produto?.nome || null, quantidade_kg: c.quantidade_kg, preco_kg: c.preco_kg, valor_total: c.valor_total, total_carregado_kg, saldo_kg: (c.quantidade_kg || 0) - total_carregado_kg };
     }));
+
     const safra = safras?.find(s => s.id === safraId);
     setPendingSheets([{
       name: "Vendas",
