@@ -1026,13 +1026,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     }
 
     const rows: RelColheitaDiariaRow[] = filtradas.map((c: any) => {
-      const lav = c.controle_lavoura?.lavouras?.nome || "-";
-      const ie = c.inscricao_produtor?.inscricao_estadual || c.inscricao_produtor?.produtores?.nome || "-";
+      const nomeProdutor = c.inscricao_produtor?.produtores?.nome || "-";
+      const cpfProdutor = c.inscricao_produtor?.produtores?.cpf_cnpj || "-";
       const ha = Number(c.controle_lavoura?.ha_plantado) || Number(c.controle_lavoura?.area_total) || 0;
       return {
         data_colheita: c.data_colheita,
         local_nome: c.local_entrega?.nome || tenantSedeNome,
-        lavoura_ie: `${lav}/${ie}`,
+        lavoura_ie: `${nomeProdutor}/${cpfProdutor}`,
         variedade: c.variedade?.nome || "-",
         peso_bruto: Number(c.producao_kg) || Math.max(0, (Number(c.peso_bruto) || 0) - (Number(c.peso_tara) || 0)),
         perc_impureza: Number(c.impureza) || 0,
