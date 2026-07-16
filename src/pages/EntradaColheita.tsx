@@ -1674,19 +1674,19 @@ export default function EntradaColheita() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-base font-semibold">Líquido Final (Kg)</Label>
+                      <Label className="text-lg font-semibold">Líquido Final (Kg)</Label>
                       <Input
                         value={calculos.liquidoFinal.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
                         readOnly
-                        className="bg-primary/10 font-mono text-lg font-bold"
+                        className="bg-primary/10 font-mono text-xl font-bold"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-base font-semibold">Total Sacos</Label>
+                      <Label className="text-lg font-semibold">Total Sacos</Label>
                       <Input
                         value={calculos.totalSacos.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
                         readOnly
-                        className="bg-primary/10 font-mono text-lg font-bold"
+                        className="bg-primary/10 font-mono text-xl font-bold"
                       />
                     </div>
                   </div>
