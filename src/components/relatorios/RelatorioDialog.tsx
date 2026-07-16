@@ -80,6 +80,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [loadingProdutoresSafra, setLoadingProdutoresSafra] = useState(false);
   const [inscricaoIdsComMovimento, setInscricaoIdsComMovimento] = useState<Set<string>>(new Set());
+  const [compradorIdsComContratos, setCompradorIdsComContratos] = useState<Set<string>>(new Set());
   const [previewPayload, setPreviewPayload] = useState<RelatorioPayload | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -182,6 +183,30 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     return () => {
       ativo = false;
     };
+  }, [tipo, safraId]);
+
+  useEffect(() => {
+    if (tipo !== "vendas" || !safraId) {
+      setCompradorIdsComContratos(new Set());
+      return;
+    }
+    let ativo = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from("contratos_venda")
+        .select("comprador_id")
+        .eq("safra_id", safraId);
+      if (!ativo) return;
+      if (error) {
+        setCompradorIdsComContratos(new Set());
+        return;
+      }
+      const ids = new Set<string>();
+      (data || []).forEach((r: any) => { if (r.comprador_id) ids.add(r.comprador_id); });
+      setCompradorIdsComContratos(ids);
+      setCompradorId((atual) => (atual && ids.has(atual) ? atual : ""));
+    })();
+    return () => { ativo = false; };
   }, [tipo, safraId]);
 
   const produtoresExtratoOptions = (inscricoes || [])
@@ -1627,7 +1652,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
               <ComboboxFilter
                 value={compradorId}
                 onValueChange={setCompradorId}
-                options={compradores.map(c => ({ value: c.id, label: c.nome + (c.nome_fantasia ? ` (${c.nome_fantasia})` : '') }))}
+                options={compradores.filter(c => !safraId || compradorIdsComContratos.has(c.id)).map(c => ({ value: c.id, label: c.nome + (c.nome_fantasia ? ` (${c.nome_fantasia})` : '') }))}
                 searchPlaceholder="Buscar comprador..."
                 emptyText="Nenhum comprador encontrado."
                 popoverWidth="w-[350px]"
