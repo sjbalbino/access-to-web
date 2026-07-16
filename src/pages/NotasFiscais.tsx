@@ -294,12 +294,24 @@ export default function NotasFiscais() {
   };
 
   const filteredNotas = notasFiscais.filter((nota) => {
+    const termRaw = searchTerm.trim();
+    const term = termRaw.toLowerCase();
+    const termDigits = termRaw.replace(/\D/g, "");
+
+    const norm = (v: string | null | undefined) => (v || "").toLowerCase();
+    const digits = (v: string | null | undefined) => (v || "").replace(/\D/g, "");
+
     const matchesSearch =
-      nota.natureza_operacao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nota.dest_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nota.dest_cpf_cnpj?.includes(searchTerm) ||
-      nota.chave_acesso?.includes(searchTerm) ||
-      String(nota.numero).includes(searchTerm);
+      term === "" ||
+      norm(nota.natureza_operacao).includes(term) ||
+      norm(nota.dest_nome).includes(term) ||
+      norm(nota.chave_acesso).includes(term) ||
+      norm(String(nota.numero ?? "")).includes(term) ||
+      (termDigits !== "" && (
+        digits(nota.dest_cpf_cnpj).includes(termDigits) ||
+        digits(nota.chave_acesso).includes(termDigits) ||
+        digits(String(nota.numero ?? "")).includes(termDigits)
+      ));
     const matchesStatus = statusFilter === "todos" || nota.status === statusFilter;
     const matchesEmitente = emitenteFilter === "todos" || nota.emitente_id === emitenteFilter;
     return matchesSearch && matchesStatus && matchesEmitente;
