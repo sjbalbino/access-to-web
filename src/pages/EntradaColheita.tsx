@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Truck, Scale, Check, Loader2, AlertCircle, Package, Search, FileText, CheckCircle2, XCircle, Printer } from "lucide-react";
@@ -193,22 +192,7 @@ export default function EntradaColheita() {
   const { data: cargasPendentes = [], isLoading: loadingPendentes } = useColheitasPendentes(safraId || null);
   const { cfops = [] } = useCfops();
 
-  // Todas as cargas da safra (independente de status) — para reimpressão do ticket
-  const { data: todasCargas = [] } = useQuery({
-    queryKey: ["colheitas-todas-safra", safraId],
-    queryFn: async () => {
-      if (!safraId) return [] as any[];
-      const { data, error } = await supabase
-        .from("colheitas")
-        .select("id, codigo, data_colheita, peso_bruto, peso_tara, controle_lavoura_id, placas(placa)")
-        .eq("safra_id", safraId)
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!safraId,
-  });
+  
   
   // Buscar inscrição emitente principal da granja (sócio com is_emitente_principal = true)
   const { data: inscricaoPrincipal } = useInscricaoEmitentePrincipal(localSede?.granja_id || undefined);
@@ -1493,73 +1477,6 @@ export default function EntradaColheita() {
                 </CardContent>
               </Card>
 
-              {/* Todas as Cargas (reimpressão de ticket) */}
-              <Card className="border-l-4 border-l-slate-500 bg-slate-500/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2 text-slate-700 dark:text-slate-300">
-                    <Printer className="h-4 w-4" />
-                    Todas as Cargas da Safra
-                    {todasCargas.length > 0 && (
-                      <Badge variant="secondary">{todasCargas.length}</Badge>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="max-h-48 overflow-y-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Data</TableHead>
-                          <TableHead>Lavoura</TableHead>
-                          <TableHead>Placa</TableHead>
-                          <TableHead className="text-right">Bruto</TableHead>
-                          <TableHead className="w-10"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {todasCargas.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                              Nenhuma carga registrada
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          todasCargas.map((carga: any) => (
-                            <TableRow key={carga.id}>
-                              <TableCell className="text-sm">
-                                {carga.data_colheita ? format(new Date(carga.data_colheita + "T12:00:00"), "dd/MM/yy") : "-"}
-                              </TableCell>
-                              <TableCell className="font-medium text-sm">
-                                {controleLavouras.find(cl => cl.id === carga.controle_lavoura_id)?.lavouras?.nome || "-"}
-                              </TableCell>
-                              <TableCell className="text-sm">{carga.placas?.placa || "-"}</TableCell>
-                              <TableCell className="text-right font-mono text-sm">
-                                {carga.peso_bruto?.toLocaleString("pt-BR")}
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  title="Imprimir ticket de depósito"
-                                  onClick={async () => {
-                                    try {
-                                      await gerarTicketDepositoPdf(carga.id);
-                                    } catch (err: any) {
-                                      toast.error("Erro ao gerar ticket: " + (err?.message || err));
-                                    }
-                                  }}
-                                >
-                                  <Printer className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
 
 
               {/* Pesagem de Saída */}
