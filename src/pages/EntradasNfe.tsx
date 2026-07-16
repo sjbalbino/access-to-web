@@ -378,6 +378,26 @@ export default function EntradasNfe() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={statusVariants[e.status] || 'secondary'}>{statusLabels[e.status] || e.status}</Badge>
+                      {e.contra_nota && (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/notas-fiscais/${e.contra_nota.id}`)}
+                          className="ml-1 inline-flex items-center rounded border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-100"
+                          title="Ver contra-nota emitida"
+                        >
+                          CN nº {e.contra_nota.numero}
+                        </button>
+                      )}
+                      {e.devolucao_nota && (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/notas-fiscais/${e.devolucao_nota.id}`)}
+                          className="ml-1 inline-flex items-center rounded border border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-100"
+                          title="Ver devolução emitida"
+                        >
+                          Dev nº {e.devolucao_nota.numero}
+                        </button>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-1 justify-end">
@@ -399,11 +419,23 @@ export default function EntradasNfe() {
                             <Undo2 className="h-4 w-4 text-amber-600" />
                           </Button>
                         )}
-                        <Button size="icon" variant="ghost" disabled={gerandoContraNota} onClick={() => handleGerarContraNota(e.id, 'contra')} title="Emitir Contra-nota de entrada (NF-e do produtor para compra de máquinas/equipamentos)">
-                          <FileInput className="h-4 w-4 text-emerald-600" />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          disabled={gerandoContraNota || !!e.contra_nota}
+                          onClick={() => e.contra_nota ? navigate(`/notas-fiscais/${e.contra_nota.id}`) : handleGerarContraNota(e.id, 'contra')}
+                          title={e.contra_nota ? `Contra-nota já emitida (NF-e nº ${e.contra_nota.numero}) — clique no selo para abrir` : 'Emitir Contra-nota de entrada (NF-e do produtor para compra de máquinas/equipamentos)'}
+                        >
+                          <FileInput className={`h-4 w-4 ${e.contra_nota ? 'text-muted-foreground' : 'text-emerald-600'}`} />
                         </Button>
-                        <Button size="icon" variant="ghost" disabled={gerandoContraNota} onClick={() => handleGerarContraNota(e.id, 'devolucao')} title="Emitir NF-e de Devolução de compra">
-                          <FileOutput className="h-4 w-4 text-blue-600" />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          disabled={gerandoContraNota || !!e.devolucao_nota}
+                          onClick={() => e.devolucao_nota ? navigate(`/notas-fiscais/${e.devolucao_nota.id}`) : handleGerarContraNota(e.id, 'devolucao')}
+                          title={e.devolucao_nota ? `Devolução já emitida (NF-e nº ${e.devolucao_nota.numero})` : 'Emitir NF-e de Devolução de compra'}
+                        >
+                          <FileOutput className={`h-4 w-4 ${e.devolucao_nota ? 'text-muted-foreground' : 'text-blue-600'}`} />
                         </Button>
 
 
