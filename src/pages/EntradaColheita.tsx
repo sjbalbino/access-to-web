@@ -1185,11 +1185,11 @@ export default function EntradaColheita() {
                           </TableRow>
                         ) : (
                           lavourasFiltradasPorTipo.map(cl => (
-                            <TableRow 
+                            <TableRow
                               key={cl.id}
                               className={cn(
-                                "cursor-pointer transition-colors hover:bg-orange-500/10 hover:shadow-sm",
-                                selectedLavouraId === cl.lavoura_id && "bg-primary/10"
+                                "cursor-pointer transition-colors hover:bg-[#e94107]/10 hover:shadow-sm",
+                                selectedLavouraId === cl.lavoura_id && "bg-[#e94107]/15 shadow-sm"
                               )}
                               onClick={() => {
                                 setSelectedLavouraId(cl.lavoura_id);
