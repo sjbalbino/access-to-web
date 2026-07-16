@@ -138,6 +138,8 @@ export default function NotasFiscais() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [numeroNotaFilter, setNumeroNotaFilter] = useState("");
+  const [numeroNotaInput, setNumeroNotaInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [emitenteFilter, setEmitenteFilter] = useState("todos");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -307,7 +309,6 @@ export default function NotasFiscais() {
       norm(nota.natureza_operacao).includes(term) ||
       norm(nota.dest_nome).includes(term) ||
       norm(nota.chave_acesso).includes(term) ||
-      norm(String(nota.numero ?? "")).includes(term) ||
       norm(nota.emitente?.inscricao?.nome).includes(term) ||
       norm(nota.granja?.razao_social).includes(term) ||
       norm(nota.granja?.nome_fantasia).includes(term) ||
@@ -317,12 +318,17 @@ export default function NotasFiscais() {
       (termDigits !== "" && (
         digits(nota.dest_cpf_cnpj).includes(termDigits) ||
         digits(nota.chave_acesso).includes(termDigits) ||
-        digits(nota.emitente?.inscricao?.cpf_cnpj).includes(termDigits) ||
-        digits(String(nota.numero ?? "")).includes(termDigits)
+        digits(nota.emitente?.inscricao?.cpf_cnpj).includes(termDigits)
       ));
+
+    const numeroNotaRaw = numeroNotaFilter.trim().replace(/\D/g, "");
+    const matchesNumeroNota =
+      numeroNotaRaw === "" ||
+      digits(String(nota.numero ?? "")).includes(numeroNotaRaw);
+
     const matchesStatus = statusFilter === "todos" || nota.status === statusFilter;
     const matchesEmitente = emitenteFilter === "todos" || nota.emitente_id === emitenteFilter;
-    return matchesSearch && matchesStatus && matchesEmitente;
+    return matchesSearch && matchesNumeroNota && matchesStatus && matchesEmitente;
   });
 
   const handleDelete = async () => {
@@ -429,7 +435,7 @@ export default function NotasFiscais() {
             <div className="relative flex-1 sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por número, destinatário, chave... (Enter para buscar)"
+                placeholder="Buscar por destinatário, chave, natureza... (Enter para buscar)"
                 value={searchInput}
                 onChange={(e) => {
                   const v = e.target.value;
@@ -443,6 +449,28 @@ export default function NotasFiscais() {
                   }
                 }}
                 onBlur={() => setSearchTerm(searchInput)}
+                className="pl-9"
+              />
+            </div>
+            <div className="relative w-full sm:w-40">
+              <FileSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="Nº da nota"
+                value={numeroNotaInput}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "");
+                  setNumeroNotaInput(v);
+                  if (v === "") setNumeroNotaFilter("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setNumeroNotaFilter(numeroNotaInput);
+                  }
+                }}
+                onBlur={() => setNumeroNotaFilter(numeroNotaInput)}
                 className="pl-9"
               />
             </div>
