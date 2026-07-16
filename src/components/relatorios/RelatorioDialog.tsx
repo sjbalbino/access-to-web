@@ -1034,7 +1034,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     const rows: RelColheitaDiariaRow[] = filtradas.map((c: any) => {
       const nomeProdutor = c.inscricao_produtor?.produtores?.nome || "-";
-      const cpfProdutor = c.inscricao_produtor?.produtores?.cpf_cnpj || "-";
+      const cpfProdutor = c.inscricao_produtor?.produtores?.cpf_cnpj || c.inscricao_produtor?.cpf_cnpj || "-";
       const ha = Number(c.controle_lavoura?.ha_plantado) || Number(c.controle_lavoura?.area_total) || 0;
       return {
         data_colheita: c.data_colheita,
