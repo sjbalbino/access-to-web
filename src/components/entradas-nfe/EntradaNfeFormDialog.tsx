@@ -333,7 +333,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   };
 
   const isFinalizado = isEdit && entradaData?.status === 'finalizado';
-  const fornecedores = clientes?.filter((c: any) => c.tipo === 'fornecedor' || c.tipo === 'ambos') || [];
+  const fornecedores = clientes || [];
 
   if (!open) {
     return null;
