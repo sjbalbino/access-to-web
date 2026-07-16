@@ -1398,9 +1398,9 @@ export default function EntradaColheita() {
             {/* Coluna Direita: Cargas Pendentes e Pesagem Saída */}
             <div className="space-y-6">
               {/* Cargas Pendentes */}
-              <Card>
+              <Card className="border-l-4 border-l-amber-500 bg-amber-500/5">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-amber-700 dark:text-amber-400">
                     <Truck className="h-4 w-4" />
                     Cargas Pendentes (Aguardando Saída)
                     {cargasPendentes.length > 0 && (
