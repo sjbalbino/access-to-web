@@ -21,7 +21,52 @@ export function useEntradasNfe(granjaId?: string | null, safraId?: string | null
       if (inscricaoId) query = query.eq('inscricao_produtor_id', inscricaoId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+
+      // Detectar contra-notas/devoluções emitidas para cada entrada via chave de acesso
+      const chaves = (data || [])
+        .map((e: any) => (e.chave_acesso || '').replace(/\D/g, ''))
+        .filter((c: string) => c.length === 44);
+
+      const refsByChave: Record<string, { contra?: any; devolucao?: any }> = {};
+      if (chaves.length > 0) {
+        const { data: refs } = await supabase
+          .from('notas_fiscais_referenciadas')
+          .select('chave_nfe, nota_fiscal:notas_fiscais(id, numero, status, natureza_operacao, created_at)')
+          .in('chave_nfe', chaves);
+
+        const statusRank = (s?: string) => (s === 'autorizado' || s === 'autorizada' ? 2 : 1);
+        const classify = (nat?: string): 'contra' | 'devolucao' | null => {
+          const n = (nat || '').toLowerCase();
+          if (n.startsWith('contra-nota')) return 'contra';
+          if (n.startsWith('devolução') || n.startsWith('devolucao')) return 'devolucao';
+          return null;
+        };
+
+        (refs || []).forEach((r: any) => {
+          const nf = r.nota_fiscal;
+          if (!nf) return;
+          const tipo = classify(nf.natureza_operacao);
+          if (!tipo) return;
+          const bucket = refsByChave[r.chave_nfe] || {};
+          const candidate = { id: nf.id, numero: nf.numero, status: nf.status, tipo, createdAt: nf.created_at };
+          const current = bucket[tipo];
+          if (
+            !current ||
+            statusRank(candidate.status) > statusRank(current.status) ||
+            (statusRank(candidate.status) === statusRank(current.status) &&
+              new Date(candidate.createdAt) > new Date(current.createdAt))
+          ) {
+            bucket[tipo] = candidate;
+          }
+          refsByChave[r.chave_nfe] = bucket;
+        });
+      }
+
+      return (data || []).map((e: any) => {
+        const chave = (e.chave_acesso || '').replace(/\D/g, '');
+        const bucket = refsByChave[chave] || {};
+        return { ...e, contra_nota: bucket.contra || null, devolucao_nota: bucket.devolucao || null };
+      });
     },
   });
 }
