@@ -1550,9 +1550,9 @@ export default function EntradaColheita() {
 
 
               {/* Pesagem de Saída */}
-              <Card>
+              <Card className="border-l-4 border-l-violet-500 bg-violet-500/5">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-violet-700 dark:text-violet-400">
                     <Scale className="h-4 w-4" />
                     Pesagem de Saída
                   </CardTitle>
