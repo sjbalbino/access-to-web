@@ -1025,9 +1025,9 @@ export default function EntradaColheita() {
         </div>
 
         {/* Filtros */}
-        <Card>
+        <Card className="border-l-4 border-l-sky-500 bg-sky-500/5">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Contexto da Pesagem</CardTitle>
+            <CardTitle className="text-base text-sky-700 dark:text-sky-400">Contexto da Pesagem</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -1157,27 +1157,14 @@ export default function EntradaColheita() {
           </CardContent>
         </Card>
 
-        {!safraId && (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <AlertCircle className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="font-medium text-lg mb-1">Selecione uma Safra</h3>
-              <p className="text-sm text-muted-foreground">
-                Para iniciar o registro de colheitas, selecione uma safra no campo acima.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {safraId && (
-          <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-6">
             {/* Coluna Esquerda: Lavouras e Pesagem Entrada */}
             <div className="space-y-6">
               {/* Lista de Lavouras */}
-              <Card>
+              <Card className="border-l-4 border-l-emerald-500 bg-emerald-500/5">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="text-base flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                       <Package className="h-4 w-4" />
                       Lista de Lavouras
                     </CardTitle>
@@ -1228,9 +1215,9 @@ export default function EntradaColheita() {
               </Card>
 
               {/* Pesagem de Entrada */}
-              <Card>
+              <Card className="border-l-4 border-l-orange-500 bg-orange-500/5">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-orange-700 dark:text-orange-400">
                     <Scale className="h-4 w-4" />
                     Pesagem de Entrada
                   </CardTitle>
@@ -1411,9 +1398,9 @@ export default function EntradaColheita() {
             {/* Coluna Direita: Cargas Pendentes e Pesagem Saída */}
             <div className="space-y-6">
               {/* Cargas Pendentes */}
-              <Card>
+              <Card className="border-l-4 border-l-amber-500 bg-amber-500/5">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-amber-700 dark:text-amber-400">
                     <Truck className="h-4 w-4" />
                     Cargas Pendentes (Aguardando Saída)
                     {cargasPendentes.length > 0 && (
@@ -1494,9 +1481,9 @@ export default function EntradaColheita() {
               </Card>
 
               {/* Todas as Cargas (reimpressão de ticket) */}
-              <Card>
+              <Card className="border-l-4 border-l-slate-500 bg-slate-500/5">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-slate-700 dark:text-slate-300">
                     <Printer className="h-4 w-4" />
                     Todas as Cargas da Safra
                     {todasCargas.length > 0 && (
@@ -1563,9 +1550,9 @@ export default function EntradaColheita() {
 
 
               {/* Pesagem de Saída */}
-              <Card>
+              <Card className="border-l-4 border-l-violet-500 bg-violet-500/5">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-violet-700 dark:text-violet-400">
                     <Scale className="h-4 w-4" />
                     Pesagem de Saída
                   </CardTitle>
@@ -1820,7 +1807,7 @@ export default function EntradaColheita() {
               </Card>
             </div>
           </div>
-        )}
+
       </div>
 
       {/* Dialog de Progresso da Emissão NF-e */}
