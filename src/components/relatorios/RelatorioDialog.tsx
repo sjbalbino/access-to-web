@@ -1006,7 +1006,14 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     if (dataInicial) q = q.gte("data_colheita", dataInicial);
     if (dataFinal) q = q.lte("data_colheita", dataFinal);
-    if (localEntregaId) q = q.eq("local_entrega_terceiro_id", localEntregaId);
+    if (localEntregaId) {
+      const localSel = locaisEntrega?.find(l => l.id === localEntregaId);
+      if (localSel?.is_sede) {
+        q = q.is("local_entrega_terceiro_id", null);
+      } else {
+        q = q.eq("local_entrega_terceiro_id", localEntregaId);
+      }
+    }
 
     const { data, error } = await q.order("data_colheita");
     if (error) throw error;
