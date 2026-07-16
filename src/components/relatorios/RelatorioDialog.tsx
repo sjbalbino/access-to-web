@@ -994,7 +994,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         local_entrega_terceiro_id, inscricao_produtor_id,
         variedade:produtos!colheitas_variedade_id_fkey(nome),
         inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
-          id, inscricao_estadual, tipo, produtores:produtor_id(nome)
+          id, inscricao_estadual, tipo, produtores:produtor_id(nome, cpf_cnpj)
         ),
         controle_lavoura:controle_lavouras!colheitas_controle_lavoura_id_fkey(
           area_total, ha_plantado, lavouras(nome)
