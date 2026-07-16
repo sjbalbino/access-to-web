@@ -1029,7 +1029,7 @@ export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
   autoTable(doc, {
     startY: 51,
     head: [[
-      "Lavoura/Produtor", "Variedade",
+      "Produtor/CPF", "Variedade",
       { content: "Kgs.Bruto", styles: { halign: "right" } },
       { content: "%Imp", styles: { halign: "right" } },
       { content: "Kgs.Imp", styles: { halign: "right" } },
