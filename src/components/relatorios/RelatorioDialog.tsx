@@ -1490,13 +1490,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>{titulos[tipo]}</DialogTitle>
+      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] overflow-hidden">
+        <DialogHeader className="min-w-0">
+          <DialogTitle className="truncate">{titulos[tipo]}</DialogTitle>
           <DialogDescription>Selecione os filtros para gerar o relatório em PDF.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Safra */}
           {needsSafra && (
             <div>
