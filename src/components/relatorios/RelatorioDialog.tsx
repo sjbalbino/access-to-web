@@ -1488,7 +1488,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg overflow-hidden">
         <DialogHeader>
           <DialogTitle>{titulos[tipo]}</DialogTitle>
           <DialogDescription>Selecione os filtros para gerar o relatório em PDF.</DialogDescription>
@@ -1710,9 +1710,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
           {/* Período */}
           {!isEstoque && tipo !== "extrato" && tipo !== "resumo_produtor" && tipo !== "resumo_colheita_lavoura" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Data Inicial {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} /></div>
-              <div><Label>Data Final {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataFinal} onChange={e => setDataFinal(e.target.value)} /></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="min-w-0"><Label>Data Inicial {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} /></div>
+              <div className="min-w-0"><Label>Data Final {(isGestao || tipo === "extrato_cf") && '*'}</Label><Input type="date" value={dataFinal} onChange={e => setDataFinal(e.target.value)} /></div>
             </div>
           )}
 
