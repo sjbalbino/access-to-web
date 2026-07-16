@@ -435,7 +435,7 @@ export default function NotasFiscais() {
             <div className="relative flex-1 sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por número, destinatário, chave... (Enter para buscar)"
+                placeholder="Buscar por destinatário, chave, natureza... (Enter para buscar)"
                 value={searchInput}
                 onChange={(e) => {
                   const v = e.target.value;
@@ -449,6 +449,28 @@ export default function NotasFiscais() {
                   }
                 }}
                 onBlur={() => setSearchTerm(searchInput)}
+                className="pl-9"
+              />
+            </div>
+            <div className="relative w-full sm:w-40">
+              <FileSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="Nº da nota"
+                value={numeroNotaInput}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "");
+                  setNumeroNotaInput(v);
+                  if (v === "") setNumeroNotaFilter("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setNumeroNotaFilter(numeroNotaInput);
+                  }
+                }}
+                onBlur={() => setNumeroNotaFilter(numeroNotaInput)}
                 className="pl-9"
               />
             </div>
