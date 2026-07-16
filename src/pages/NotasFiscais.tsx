@@ -307,9 +307,16 @@ export default function NotasFiscais() {
       norm(nota.dest_nome).includes(term) ||
       norm(nota.chave_acesso).includes(term) ||
       norm(String(nota.numero ?? "")).includes(term) ||
+      norm(nota.emitente?.inscricao?.nome).includes(term) ||
+      norm(nota.granja?.razao_social).includes(term) ||
+      norm(nota.granja?.nome_fantasia).includes(term) ||
+      norm(nota.cfop?.codigo).includes(term) ||
+      norm(nota.cfop?.descricao).includes(term) ||
+      norm(nota.status).includes(term) ||
       (termDigits !== "" && (
         digits(nota.dest_cpf_cnpj).includes(termDigits) ||
         digits(nota.chave_acesso).includes(termDigits) ||
+        digits(nota.emitente?.inscricao?.cpf_cnpj).includes(termDigits) ||
         digits(String(nota.numero ?? "")).includes(termDigits)
       ));
     const matchesStatus = statusFilter === "todos" || nota.status === statusFilter;
