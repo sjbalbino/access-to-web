@@ -1481,9 +1481,9 @@ export default function EntradaColheita() {
               </Card>
 
               {/* Todas as Cargas (reimpressão de ticket) */}
-              <Card>
+              <Card className="border-l-4 border-l-slate-500 bg-slate-500/5">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-slate-700 dark:text-slate-300">
                     <Printer className="h-4 w-4" />
                     Todas as Cargas da Safra
                     {todasCargas.length > 0 && (
