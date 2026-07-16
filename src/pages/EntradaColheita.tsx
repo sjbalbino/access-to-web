@@ -289,6 +289,14 @@ export default function EntradaColheita() {
     }
   }, [localSede?.id]);
 
+  // Preencher produtor/inscrição com o emitente principal da granja
+  useEffect(() => {
+    if (inscricaoPrincipal?.id && !inscricaoId) {
+      setInscricaoId(inscricaoPrincipal.id);
+    }
+  }, [inscricaoPrincipal?.id]);
+
+
   // Buscar cultura da safra selecionada
   const safraSelecionada = useMemo(() => 
     safras.find(s => s.id === safraId), 
