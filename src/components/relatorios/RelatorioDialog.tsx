@@ -77,6 +77,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [tipoFiltro, setTipoFiltro] = useState("ambos");
   const [tipoProdutorFiltro, setTipoProdutorFiltro] = useState("todos");
   const [modoBensMoveis, setModoBensMoveis] = useState("geral_discriminado");
+  const [vendasOrientacao, setVendasOrientacao] = useState<"portrait" | "landscape">("landscape");
+  const [vendasTamanho, setVendasTamanho] = useState<"a4" | "a3" | "letter" | "legal">("a4");
   const [loading, setLoading] = useState(false);
   const [loadingProdutoresSafra, setLoadingProdutoresSafra] = useState(false);
   const [inscricaoIdsComMovimento, setInscricaoIdsComMovimento] = useState<Set<string>>(new Set());
