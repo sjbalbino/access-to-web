@@ -1197,7 +1197,12 @@ export default function EntradaColheita() {
                               }}
                             >
                               <TableCell className="font-medium">
-                                {cl.lavouras?.nome}
+                                <div className="flex items-center gap-2">
+                                  {selectedLavouraId === cl.lavoura_id && (
+                                    <Check className="h-4 w-4 text-[#e94107]" aria-label="Selecionado" />
+                                  )}
+                                  {cl.lavouras?.nome}
+                                </div>
                               </TableCell>
                               <TableCell className="text-right">
                                 {cl.ha_plantado?.toFixed(2) || cl.lavouras?.total_hectares?.toFixed(2) || "-"}
