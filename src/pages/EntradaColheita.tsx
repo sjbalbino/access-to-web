@@ -1157,27 +1157,14 @@ export default function EntradaColheita() {
           </CardContent>
         </Card>
 
-        {!safraId && (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <AlertCircle className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="font-medium text-lg mb-1">Selecione uma Safra</h3>
-              <p className="text-sm text-muted-foreground">
-                Para iniciar o registro de colheitas, selecione uma safra no campo acima.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {safraId && (
-          <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-6">
             {/* Coluna Esquerda: Lavouras e Pesagem Entrada */}
             <div className="space-y-6">
               {/* Lista de Lavouras */}
-              <Card>
+              <Card className="border-l-4 border-l-emerald-500 bg-emerald-500/5">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="text-base flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                       <Package className="h-4 w-4" />
                       Lista de Lavouras
                     </CardTitle>
