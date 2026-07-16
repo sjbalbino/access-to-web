@@ -1649,7 +1649,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
           {/* Comprador - vendas */}
           {tipo === "vendas" && (
-            <div>
+            <div className="min-w-0">
               <Label>Comprador</Label>
               <ComboboxFilter
                 value={compradorId}
@@ -1659,6 +1659,38 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 emptyText="Nenhum comprador encontrado."
                 popoverWidth="w-[350px]"
               />
+            </div>
+          )}
+
+          {/* Orientação e Tamanho da Página - vendas */}
+          {tipo === "vendas" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="min-w-0">
+                <Label>Orientação</Label>
+                <ComboboxFilter
+                  value={vendasOrientacao}
+                  onValueChange={(v) => setVendasOrientacao(v as "portrait" | "landscape")}
+                  options={[
+                    { value: "landscape", label: "Paisagem" },
+                    { value: "portrait", label: "Retrato" },
+                  ]}
+                  searchPlaceholder="Buscar..."
+                />
+              </div>
+              <div className="min-w-0">
+                <Label>Tamanho</Label>
+                <ComboboxFilter
+                  value={vendasTamanho}
+                  onValueChange={(v) => setVendasTamanho(v as "a4" | "a3" | "letter" | "legal")}
+                  options={[
+                    { value: "a4", label: "A4" },
+                    { value: "a3", label: "A3" },
+                    { value: "letter", label: "Carta (Letter)" },
+                    { value: "legal", label: "Ofício (Legal)" },
+                  ]}
+                  searchPlaceholder="Buscar..."
+                />
+              </div>
             </div>
           )}
 
