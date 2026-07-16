@@ -994,7 +994,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         local_entrega_terceiro_id, inscricao_produtor_id,
         variedade:produtos!colheitas_variedade_id_fkey(nome),
         inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
-          id, inscricao_estadual, tipo, produtores:produtor_id(nome)
+          id, inscricao_estadual, tipo, produtores:produtor_id(nome, cpf_cnpj)
         ),
         controle_lavoura:controle_lavouras!colheitas_controle_lavoura_id_fkey(
           area_total, ha_plantado, lavouras(nome)
@@ -1026,13 +1026,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     }
 
     const rows: RelColheitaDiariaRow[] = filtradas.map((c: any) => {
-      const lav = c.controle_lavoura?.lavouras?.nome || "-";
-      const ie = c.inscricao_produtor?.inscricao_estadual || c.inscricao_produtor?.produtores?.nome || "-";
+      const nomeProdutor = c.inscricao_produtor?.produtores?.nome || "-";
+      const cpfProdutor = c.inscricao_produtor?.produtores?.cpf_cnpj || "-";
       const ha = Number(c.controle_lavoura?.ha_plantado) || Number(c.controle_lavoura?.area_total) || 0;
       return {
         data_colheita: c.data_colheita,
         local_nome: c.local_entrega?.nome || tenantSedeNome,
-        lavoura_ie: `${lav}/${ie}`,
+        lavoura_ie: `${nomeProdutor}/${cpfProdutor}`,
         variedade: c.variedade?.nome || "-",
         peso_bruto: Number(c.producao_kg) || Math.max(0, (Number(c.peso_bruto) || 0) - (Number(c.peso_tara) || 0)),
         perc_impureza: Number(c.impureza) || 0,
@@ -1064,7 +1064,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     setPendingSheets([{
       name: "Colheita Diária",
-      header: ["Data", "Local", "Lavoura/IE", "Variedade", "Kgs.Bruto", "%Imp", "Kgs.Imp", "%Um", "%Desc", "Kgs.Umid", "%Avar", "Avar", "%Outr", "Outros", "Kgs.Desc", "Kgs.Líquido", "SACOS", "Romaneio", "PH", "HA", "MÉDIA"],
+      header: ["Data", "Local", "Produtor/CPF", "Variedade", "Kgs.Bruto", "%Imp", "Kgs.Imp", "%Um", "%Desc", "Kgs.Umid", "%Avar", "Avar", "%Outr", "Outros", "Kgs.Desc", "Kgs.Líquido", "SACOS", "Romaneio", "PH", "HA", "MÉDIA"],
       rows: rows.map(r => [
         r.data_colheita ?? "", r.local_nome, r.lavoura_ie, r.variedade,
         r.peso_bruto, r.perc_impureza, r.kg_impureza, r.perc_umidade, r.perc_desconto,
