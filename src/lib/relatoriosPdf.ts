@@ -506,8 +506,18 @@ export interface RelContratoVenda {
   saldo_kg: number | null;
 }
 
-export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTexto: string): void {
-  const doc = new jsPDF({ orientation: "landscape" });
+export type VendasPdfOrientation = "portrait" | "landscape";
+export type VendasPdfPageSize = "a4" | "a3" | "letter" | "legal";
+
+export function gerarRelatorioVendasPdf(
+  contratos: RelContratoVenda[],
+  filtrosTexto: string,
+  opcoes?: { orientacao?: VendasPdfOrientation; tamanho?: VendasPdfPageSize },
+): void {
+  const doc = new jsPDF({
+    orientation: opcoes?.orientacao ?? "landscape",
+    format: opcoes?.tamanho ?? "a4",
+  });
   const pageWidth = doc.internal.pageSize.getWidth();
   desenharCabecalhoBrand(doc);
 

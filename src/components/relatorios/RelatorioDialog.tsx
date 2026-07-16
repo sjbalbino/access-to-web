@@ -77,6 +77,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [tipoFiltro, setTipoFiltro] = useState("ambos");
   const [tipoProdutorFiltro, setTipoProdutorFiltro] = useState("todos");
   const [modoBensMoveis, setModoBensMoveis] = useState("geral_discriminado");
+  const [vendasOrientacao, setVendasOrientacao] = useState<"portrait" | "landscape">("landscape");
+  const [vendasTamanho, setVendasTamanho] = useState<"a4" | "a3" | "letter" | "legal">("a4");
   const [loading, setLoading] = useState(false);
   const [loadingProdutoresSafra, setLoadingProdutoresSafra] = useState(false);
   const [inscricaoIdsComMovimento, setInscricaoIdsComMovimento] = useState<Set<string>>(new Set());
@@ -1197,7 +1199,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       header: ["Nº", "Data", "Comprador", "Produto", "Qtd (kg)", "Preço/kg", "Valor Total", "Carregado (kg)", "Saldo (kg)"],
       rows: mapped.map(m => [m.numero ?? "", m.data_contrato ?? "", m.comprador_nome ?? "", m.produto_nome ?? "", m.quantidade_kg ?? 0, m.preco_kg ?? 0, m.valor_total ?? 0, m.total_carregado_kg ?? 0, m.saldo_kg ?? 0]),
     }]);
-    gerarRelatorioVendasPdf(mapped, `Safra: ${safra?.nome || "-"}`);
+    gerarRelatorioVendasPdf(mapped, `Safra: ${safra?.nome || "-"}`, { orientacao: vendasOrientacao, tamanho: vendasTamanho });
   };
 
   // ========== Management reports ==========
@@ -1488,13 +1490,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>{titulos[tipo]}</DialogTitle>
+      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] overflow-hidden">
+        <DialogHeader className="min-w-0">
+          <DialogTitle className="truncate">{titulos[tipo]}</DialogTitle>
           <DialogDescription>Selecione os filtros para gerar o relatório em PDF.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Safra */}
           {needsSafra && (
             <div>
@@ -1647,7 +1649,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
           {/* Comprador - vendas */}
           {tipo === "vendas" && (
-            <div>
+            <div className="min-w-0">
               <Label>Comprador</Label>
               <ComboboxFilter
                 value={compradorId}
@@ -1657,6 +1659,38 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 emptyText="Nenhum comprador encontrado."
                 popoverWidth="w-[350px]"
               />
+            </div>
+          )}
+
+          {/* Orientação e Tamanho da Página - vendas */}
+          {tipo === "vendas" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="min-w-0">
+                <Label>Orientação</Label>
+                <ComboboxFilter
+                  value={vendasOrientacao}
+                  onValueChange={(v) => setVendasOrientacao(v as "portrait" | "landscape")}
+                  options={[
+                    { value: "landscape", label: "Paisagem" },
+                    { value: "portrait", label: "Retrato" },
+                  ]}
+                  searchPlaceholder="Buscar..."
+                />
+              </div>
+              <div className="min-w-0">
+                <Label>Tamanho</Label>
+                <ComboboxFilter
+                  value={vendasTamanho}
+                  onValueChange={(v) => setVendasTamanho(v as "a4" | "a3" | "letter" | "legal")}
+                  options={[
+                    { value: "a4", label: "A4" },
+                    { value: "a3", label: "A3" },
+                    { value: "letter", label: "Carta (Letter)" },
+                    { value: "legal", label: "Ofício (Legal)" },
+                  ]}
+                  searchPlaceholder="Buscar..."
+                />
+              </div>
             </div>
           )}
 
