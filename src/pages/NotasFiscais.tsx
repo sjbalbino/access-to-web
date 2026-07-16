@@ -309,7 +309,6 @@ export default function NotasFiscais() {
       norm(nota.natureza_operacao).includes(term) ||
       norm(nota.dest_nome).includes(term) ||
       norm(nota.chave_acesso).includes(term) ||
-      norm(String(nota.numero ?? "")).includes(term) ||
       norm(nota.emitente?.inscricao?.nome).includes(term) ||
       norm(nota.granja?.razao_social).includes(term) ||
       norm(nota.granja?.nome_fantasia).includes(term) ||
@@ -319,12 +318,17 @@ export default function NotasFiscais() {
       (termDigits !== "" && (
         digits(nota.dest_cpf_cnpj).includes(termDigits) ||
         digits(nota.chave_acesso).includes(termDigits) ||
-        digits(nota.emitente?.inscricao?.cpf_cnpj).includes(termDigits) ||
-        digits(String(nota.numero ?? "")).includes(termDigits)
+        digits(nota.emitente?.inscricao?.cpf_cnpj).includes(termDigits)
       ));
+
+    const numeroNotaRaw = numeroNotaFilter.trim().replace(/\D/g, "");
+    const matchesNumeroNota =
+      numeroNotaRaw === "" ||
+      digits(String(nota.numero ?? "")).includes(numeroNotaRaw);
+
     const matchesStatus = statusFilter === "todos" || nota.status === statusFilter;
     const matchesEmitente = emitenteFilter === "todos" || nota.emitente_id === emitenteFilter;
-    return matchesSearch && matchesStatus && matchesEmitente;
+    return matchesSearch && matchesNumeroNota && matchesStatus && matchesEmitente;
   });
 
   const handleDelete = async () => {
