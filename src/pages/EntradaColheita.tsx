@@ -306,17 +306,30 @@ export default function EntradaColheita() {
   const culturaId = safraSelecionada?.cultura_id;
 
   // Filtrar inscrições ativas de produtores ativos com busca
+  // Ordenação: alfabética pelo nome do produtor e, em seguida, IE decrescente
   const inscricoesAtivas = useMemo(() => {
     // Apenas inscrições ativas de produtores ativos
     const ativas = inscricoes.filter(i => i.ativa && i.produtores?.ativo !== false);
-    if (!produtorSearch) return ativas;
-    
+
     const search = produtorSearch.toLowerCase();
-    return ativas.filter(i => 
-      i.produtores?.nome?.toLowerCase().includes(search) ||
-      i.cpf_cnpj?.includes(search) ||
-      i.inscricao_estadual?.toLowerCase().includes(search)
-    );
+    const filtradas = search
+      ? ativas.filter(i =>
+          i.produtores?.nome?.toLowerCase().includes(search) ||
+          i.cpf_cnpj?.includes(search) ||
+          i.inscricao_estadual?.toLowerCase().includes(search)
+        )
+      : ativas;
+
+    return filtradas.sort((a, b) => {
+      const nomeA = (a.produtores?.nome || "").toLowerCase();
+      const nomeB = (b.produtores?.nome || "").toLowerCase();
+      const comparacaoNome = nomeA.localeCompare(nomeB, "pt-BR", { sensitivity: "base" });
+      if (comparacaoNome !== 0) return comparacaoNome;
+
+      const ieA = parseInt((a.inscricao_estadual || "").replace(/\D/g, ""), 10) || 0;
+      const ieB = parseInt((b.inscricao_estadual || "").replace(/\D/g, ""), 10) || 0;
+      return ieB - ieA;
+    });
   }, [inscricoes, produtorSearch]);
 
   // Inscrição selecionada para dados fiscais e regras de contra-nota.
