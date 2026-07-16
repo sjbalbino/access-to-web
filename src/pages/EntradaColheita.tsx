@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Truck, Scale, Check, Loader2, AlertCircle, Package, Search, FileText, CheckCircle2, XCircle, Printer } from "lucide-react";
