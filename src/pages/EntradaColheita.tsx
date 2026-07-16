@@ -1188,7 +1188,7 @@ export default function EntradaColheita() {
                             <TableRow 
                               key={cl.id}
                               className={cn(
-                                "cursor-pointer transition-colors hover:bg-primary/5 hover:shadow-sm",
+                                "cursor-pointer transition-colors hover:bg-orange-500/10 hover:shadow-sm",
                                 selectedLavouraId === cl.lavoura_id && "bg-primary/10"
                               )}
                               onClick={() => {
