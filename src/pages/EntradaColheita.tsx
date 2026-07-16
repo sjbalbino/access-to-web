@@ -1439,8 +1439,8 @@ export default function EntradaColheita() {
                             <TableRow 
                               key={carga.id}
                               className={cn(
-                                "cursor-pointer transition-colors",
-                                selectedPendente === carga.id && "bg-primary/10"
+                                "cursor-pointer transition-colors hover:bg-[#e94107]/10 hover:shadow-sm",
+                                selectedPendente === carga.id && "bg-[#e94107]/15 shadow-sm"
                               )}
                               onClick={() => {
                                 setSelectedPendente(carga.id);
@@ -1448,7 +1448,12 @@ export default function EntradaColheita() {
                               }}
                             >
                               <TableCell className="font-medium">
-                                {controleLavouras.find(cl => cl.id === carga.controle_lavoura_id)?.lavouras?.nome || "-"}
+                                <div className="flex items-center gap-2">
+                                  {selectedPendente === carga.id && (
+                                    <Check className="h-4 w-4 text-[#e94107]" aria-label="Selecionado" />
+                                  )}
+                                  {controleLavouras.find(cl => cl.id === carga.controle_lavoura_id)?.lavouras?.nome || "-"}
+                                </div>
                               </TableCell>
                               <TableCell>
                                 {carga.placas?.placa || "-"}
