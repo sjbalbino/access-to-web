@@ -1488,7 +1488,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg overflow-hidden">
         <DialogHeader>
           <DialogTitle>{titulos[tipo]}</DialogTitle>
           <DialogDescription>Selecione os filtros para gerar o relatório em PDF.</DialogDescription>
