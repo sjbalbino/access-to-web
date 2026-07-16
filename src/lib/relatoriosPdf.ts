@@ -495,7 +495,9 @@ export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosText
 export interface RelContratoVenda {
   numero: number;
   data_contrato: string;
+  comprador_id?: string | null;
   comprador_nome: string | null;
+  comprador_cpf_cnpj?: string | null;
   produto_nome: string | null;
   quantidade_kg: number | null;
   preco_kg: number | null;
@@ -517,28 +519,89 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
   doc.text(filtrosTexto, pageWidth / 2, 40, { align: "center" });
 
   const sc = (kg: number | null) => formatNumber((Number(kg) || 0) / 60, 1);
-  const body = contratos.map(c => [
-    c.numero.toString(),
-    formatDate(c.data_contrato),
-    c.comprador_nome || "-",
-    c.produto_nome || "-",
-    formatNumber(c.quantidade_kg, 0),
-    sc(c.quantidade_kg),
-    formatCurrency(c.preco_kg),
-    formatCurrency(c.valor_total),
-    formatNumber(c.total_carregado_kg, 0),
-    sc(c.total_carregado_kg),
-    formatNumber(c.saldo_kg, 0),
-    sc(c.saldo_kg),
-  ]);
 
-  const totContratado = contratos.reduce((s, c) => s + (c.quantidade_kg || 0), 0);
-  const totCarregado = contratos.reduce((s, c) => s + (c.total_carregado_kg || 0), 0);
-  const totSaldo = contratos.reduce((s, c) => s + (c.saldo_kg || 0), 0);
-  const totValor = contratos.reduce((s, c) => s + (c.valor_total || 0), 0);
+  // Agrupar por comprador
+  const SEM = "__SEM_COMPRADOR__";
+  const grupos = new Map<string, { label: string; doc: string | null; itens: RelContratoVenda[] }>();
+  for (const c of contratos) {
+    const key = (c.comprador_id || c.comprador_nome || SEM) as string;
+    if (!grupos.has(key)) {
+      grupos.set(key, {
+        label: c.comprador_nome || "SEM COMPRADOR",
+        doc: c.comprador_cpf_cnpj || null,
+        itens: [],
+      });
+    }
+    grupos.get(key)!.itens.push(c);
+  }
+  const gruposOrdenados = Array.from(grupos.values()).sort((a, b) => {
+    if (a.label === "SEM COMPRADOR") return 1;
+    if (b.label === "SEM COMPRADOR") return -1;
+    return a.label.localeCompare(b.label, "pt-BR");
+  });
 
+  const COL_COUNT = 11;
+  const body: any[] = [];
+  const headerRows = new Set<number>();
+  const subtotalRows = new Set<number>();
+  let totalGeralRowIdx = -1;
+
+  let totContratado = 0, totCarregado = 0, totSaldo = 0, totValor = 0, totContratos = 0;
+
+  for (const g of gruposOrdenados) {
+    // Cabeçalho do grupo
+    const headerText = `COMPRADOR: ${g.label}${g.doc ? `  —  CPF/CNPJ: ${g.doc}` : ""}`;
+    headerRows.add(body.length);
+    body.push([{ content: headerText, colSpan: COL_COUNT, styles: { halign: "left" } }]);
+
+    // Linhas
+    g.itens.sort((a, b) => (b.data_contrato || "").localeCompare(a.data_contrato || "") || (Number(b.numero) - Number(a.numero)));
+    let sQtd = 0, sCarreg = 0, sSaldo = 0, sValor = 0;
+    for (const c of g.itens) {
+      sQtd += c.quantidade_kg || 0;
+      sCarreg += c.total_carregado_kg || 0;
+      sSaldo += c.saldo_kg || 0;
+      sValor += c.valor_total || 0;
+      body.push([
+        c.numero?.toString() ?? "",
+        formatDate(c.data_contrato),
+        c.produto_nome || "-",
+        formatNumber(c.quantidade_kg, 0),
+        sc(c.quantidade_kg),
+        formatCurrency(c.preco_kg),
+        formatCurrency(c.valor_total),
+        formatNumber(c.total_carregado_kg, 0),
+        sc(c.total_carregado_kg),
+        formatNumber(c.saldo_kg, 0),
+        sc(c.saldo_kg),
+      ]);
+    }
+
+    // Subtotal do comprador
+    subtotalRows.add(body.length);
+    body.push([
+      { content: `Subtotal ${g.label} (${g.itens.length} contrato${g.itens.length !== 1 ? "s" : ""})`, colSpan: 3, styles: { halign: "right" } },
+      formatNumber(sQtd, 0),
+      sc(sQtd),
+      "",
+      formatCurrency(sValor),
+      formatNumber(sCarreg, 0),
+      sc(sCarreg),
+      formatNumber(sSaldo, 0),
+      sc(sSaldo),
+    ]);
+
+    totContratado += sQtd;
+    totCarregado += sCarreg;
+    totSaldo += sSaldo;
+    totValor += sValor;
+    totContratos += g.itens.length;
+  }
+
+  // TOTAL GERAL
+  totalGeralRowIdx = body.length;
   body.push([
-    "TOTAL", "", "", "",
+    { content: `TOTAL GERAL (${totContratos} contrato${totContratos !== 1 ? "s" : ""})`, colSpan: 3, styles: { halign: "right" } },
     formatNumber(totContratado, 0),
     sc(totContratado),
     "",
@@ -554,7 +617,7 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
     head: [[
       { content: "Nº", styles: { halign: "right" } },
       { content: "Data", styles: { halign: "center" } },
-      "Comprador", "Produto",
+      "Produto",
       { content: "Qtd (kg)", styles: { halign: "right" } },
       { content: "Sacas", styles: { halign: "right" } },
       { content: "Preço/kg", styles: { halign: "right" } },
@@ -568,19 +631,26 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
     styles: { fontSize: 7, cellPadding: 1.5 },
     headStyles: { fillColor: [66, 66, 66], textColor: 255 },
     columnStyles: {
-      0: { halign: "right", cellWidth: 10 },
+      0: { halign: "right", cellWidth: 12 },
       1: { halign: "center", cellWidth: 20 },
-      2: { halign: "left", cellWidth: 45 },
-      3: { halign: "left", cellWidth: 25 },
-      4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" },
-      7: { halign: "right" }, 8: { halign: "right" }, 9: { halign: "right" },
-      10: { halign: "right" }, 11: { halign: "right" },
+      2: { halign: "left", cellWidth: 35 },
+      3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" },
+      6: { halign: "right" }, 7: { halign: "right" }, 8: { halign: "right" },
+      9: { halign: "right" }, 10: { halign: "right" },
     },
-
     didParseCell: (data) => {
-      if (data.row.index === body.length - 1 && data.section === "body") {
+      if (data.section !== "body") return;
+      const i = data.row.index;
+      if (i === totalGeralRowIdx) {
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.fillColor = [200, 200, 200];
+      } else if (subtotalRows.has(i)) {
         data.cell.styles.fontStyle = "bold";
         data.cell.styles.fillColor = [230, 230, 230];
+      } else if (headerRows.has(i)) {
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.fillColor = [220, 235, 220];
+        data.cell.styles.textColor = [40, 40, 40];
       }
     },
   });
@@ -588,6 +658,7 @@ export function gerarRelatorioVendasPdf(contratos: RelContratoVenda[], filtrosTe
   desenharRodapeBrand(doc);
   downloadPdf(doc, "relatorio_vendas.pdf");
 }
+
 
 // ==================== RESUMO DO PRODUTOR ====================
 
