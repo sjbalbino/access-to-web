@@ -1550,26 +1550,26 @@ export default function EntradaColheita() {
 
 
               {/* Pesagem de Saída */}
-              <Card className="border-l-4 border-l-violet-500 bg-violet-500/5">
+              <Card className="border-l-[6px] border-l-violet-600 bg-violet-600/10 shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2 text-violet-700 dark:text-violet-400">
-                    <Scale className="h-4 w-4" />
+                  <CardTitle className="text-xl font-bold flex items-center gap-2 text-violet-800 dark:text-violet-300">
+                    <Scale className="h-6 w-6" />
                     Pesagem de Saída
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>Kgs Entrada</Label>
+                      <Label className="text-base">Kgs Entrada</Label>
                       <Input
                         value={pesoBrutoSelecionado.toLocaleString("pt-BR")}
                         readOnly
-                        className="bg-muted font-mono"
+                        className="bg-muted font-mono text-base"
                       />
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label>Kgs Tara *</Label>
+                        <Label className="text-base">Kgs Tara *</Label>
                         <BalancaButton onPeso={(kg) => setFormSaida(prev => ({ ...prev, peso_tara: Math.round(kg) }))} />
                       </div>
                       <Input
@@ -1577,14 +1577,15 @@ export default function EntradaColheita() {
                         value={formSaida.peso_tara || ""}
                         onChange={e => setFormSaida(prev => ({ ...prev, peso_tara: Number(e.target.value) }))}
                         placeholder="0"
+                        className="text-base"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Kgs Líquido</Label>
+                      <Label className="text-base">Kgs Líquido</Label>
                       <Input
                         value={calculos.pesoLiquido.toLocaleString("pt-BR")}
                         readOnly
-                        className="bg-muted font-mono"
+                        className="bg-muted font-mono text-base"
                       />
                     </div>
                   </div>
@@ -1673,19 +1674,19 @@ export default function EntradaColheita() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-base font-semibold">Líquido Final (Kg)</Label>
+                      <Label className="text-lg font-semibold">Líquido Final (Kg)</Label>
                       <Input
                         value={calculos.liquidoFinal.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
                         readOnly
-                        className="bg-primary/10 font-mono text-lg font-bold"
+                        className="bg-primary/10 font-mono text-xl font-bold"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-base font-semibold">Total Sacos</Label>
+                      <Label className="text-lg font-semibold">Total Sacos</Label>
                       <Input
                         value={calculos.totalSacos.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
                         readOnly
-                        className="bg-primary/10 font-mono text-lg font-bold"
+                        className="bg-primary/10 font-mono text-xl font-bold"
                       />
                     </div>
                   </div>
