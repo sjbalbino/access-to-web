@@ -1025,9 +1025,9 @@ export default function EntradaColheita() {
         </div>
 
         {/* Filtros */}
-        <Card>
+        <Card className="border-l-4 border-l-sky-500 bg-sky-500/5">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Contexto da Pesagem</CardTitle>
+            <CardTitle className="text-base text-sky-700 dark:text-sky-400">Contexto da Pesagem</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
