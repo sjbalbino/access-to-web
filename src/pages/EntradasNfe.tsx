@@ -173,9 +173,10 @@ export default function EntradasNfe() {
         operacao: 0,
         finalidade: isDevolucao ? 4 : 1,
         cfop_id: cfopNota?.id || null,
-        natureza_operacao: isDevolucao
+        natureza_operacao: (isDevolucao
           ? 'Devolução de ' + (e.natureza_operacao || 'mercadoria')
-          : 'Contra-nota de entrada - ' + (e.natureza_operacao || 'compra'),
+          : 'Contra-nota de entrada - ' + (e.natureza_operacao || 'compra')
+        ).slice(0, 60),
         data_emissao: new Date().toISOString().slice(0, 10),
         dest_tipo: cpfCnpj.length > 11 ? '1' : '0',
         dest_cpf_cnpj: cpfCnpj,
