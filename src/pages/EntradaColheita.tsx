@@ -1807,7 +1807,7 @@ export default function EntradaColheita() {
               </Card>
             </div>
           </div>
-        )}
+
       </div>
 
       {/* Dialog de Progresso da Emissão NF-e */}
