@@ -429,9 +429,20 @@ export default function NotasFiscais() {
             <div className="relative flex-1 sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por número, destinatário, chave..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por número, destinatário, chave... (Enter para buscar)"
+                value={searchInput}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setSearchInput(v);
+                  if (v === "") setSearchTerm("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setSearchTerm(searchInput);
+                  }
+                }}
+                onBlur={() => setSearchTerm(searchInput)}
                 className="pl-9"
               />
             </div>
