@@ -80,6 +80,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [loadingProdutoresSafra, setLoadingProdutoresSafra] = useState(false);
   const [inscricaoIdsComMovimento, setInscricaoIdsComMovimento] = useState<Set<string>>(new Set());
+  const [compradorIdsComContratos, setCompradorIdsComContratos] = useState<Set<string>>(new Set());
   const [previewPayload, setPreviewPayload] = useState<RelatorioPayload | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
