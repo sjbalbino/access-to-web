@@ -19,6 +19,7 @@ export interface NfeDestinatario {
   cpf?: string;
   nome: string;
   inscricaoEstadual?: string;
+  uf?: string;
 }
 
 export interface NfeItem {
