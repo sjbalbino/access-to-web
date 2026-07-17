@@ -118,29 +118,39 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
     return (map[cfop[0]] || cfop[0]) + cfop.slice(1);
   };
 
-  const vincularProdutos = (nfe: NfeParsed) => nfe.itens.map((item) => {
-    const prodByCod = produtos?.find((p: any) => p.cod_fornecedor && p.cod_fornecedor === item.codigoProduto);
-    const prodByNcm = !prodByCod ? produtos?.find((p: any) => p.ncm && p.ncm === item.ncm) : null;
-    const prod = prodByCod || prodByNcm;
-    return {
-      produto_id: prod?.id || null,
-      produto_xml_codigo: item.codigoProduto,
-      produto_xml_descricao: item.descricao,
-      produto_xml_ncm: item.ncm,
-      cfop: toEntradaCfop(item.cfop),
-      unidade_medida: item.unidade,
-      quantidade: item.quantidade,
-      valor_unitario: item.valorUnitario,
-      valor_total: item.valorTotal,
-      valor_desconto: item.valorDesconto,
-      valor_frete_rateio: item.valorFreteRateio,
-      cst_icms: item.cstIcms, base_icms: item.baseIcms, aliq_icms: item.aliqIcms, valor_icms: item.valorIcms,
-      cst_ipi: item.cstIpi, base_ipi: item.baseIpi, aliq_ipi: item.aliqIpi, valor_ipi: item.valorIpi,
-      cst_pis: item.cstPis, base_pis: item.basePis, aliq_pis: item.aliqPis, valor_pis: item.valorPis,
-      cst_cofins: item.cstCofins, base_cofins: item.baseCofins, aliq_cofins: item.aliqCofins, valor_cofins: item.valorCofins,
-      vinculado: !!prod,
-    };
-  });
+  const vincularProdutos = (nfe: NfeParsed, ufDestOverride?: string | null) => {
+    const ufEmit = nfe.emitente.uf || '';
+    const ufDest = (ufDestOverride || nfe.destinatario.uf || '').toUpperCase();
+    return nfe.itens.map((item) => {
+      const prodByCod = produtos?.find((p: any) => p.cod_fornecedor && p.cod_fornecedor === item.codigoProduto);
+      const prodByNcm = !prodByCod ? produtos?.find((p: any) => p.ncm && p.ncm === item.ncm) : null;
+      const prod: any = prodByCod || prodByNcm;
+      const grupo = prod?.grupo_id ? grupos?.find((g: any) => g.id === prod.grupo_id) : null;
+      const temClassificacao = !!(grupo && (grupo.insumos || grupo.maquinas_implementos || grupo.bens_benfeitorias));
+      const cfopFinal = temClassificacao
+        ? suggestCfopEntrada({ grupo, ufEmitente: ufEmit, ufDestinatario: ufDest })
+        : toEntradaCfop(item.cfop);
+      return {
+        produto_id: prod?.id || null,
+        produto_xml_codigo: item.codigoProduto,
+        produto_xml_descricao: item.descricao,
+        produto_xml_ncm: item.ncm,
+        cfop: cfopFinal,
+        unidade_medida: item.unidade,
+        quantidade: item.quantidade,
+        valor_unitario: item.valorUnitario,
+        valor_total: item.valorTotal,
+        valor_desconto: item.valorDesconto,
+        valor_frete_rateio: item.valorFreteRateio,
+        cst_icms: item.cstIcms, base_icms: item.baseIcms, aliq_icms: item.aliqIcms, valor_icms: item.valorIcms,
+        cst_ipi: item.cstIpi, base_ipi: item.baseIpi, aliq_ipi: item.aliqIpi, valor_ipi: item.valorIpi,
+        cst_pis: item.cstPis, base_pis: item.basePis, aliq_pis: item.aliqPis, valor_pis: item.valorPis,
+        cst_cofins: item.cstCofins, base_cofins: item.baseCofins, aliq_cofins: item.aliqCofins, valor_cofins: item.valorCofins,
+        vinculado: !!prod,
+      };
+    });
+  };
+
 
   const resetAll = () => {
     setParsedFiles([]);
