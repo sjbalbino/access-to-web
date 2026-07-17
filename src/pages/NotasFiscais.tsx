@@ -561,7 +561,35 @@ export default function NotasFiscais() {
                     </TableCell>
                     <TableCell className="text-right font-medium hidden sm:table-cell">{formatCurrency(nota.total_nota)}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(nota.status)}>{getStatusLabel(nota.status)}</Badge>
+                      <Badge
+                        variant={getStatusBadgeVariant(nota.status)}
+                        title={
+                          (nota.status === "cancelado" || nota.status === "cancelada")
+                            ? `Cancelada por ${(nota as any).cancelado_por_nome || "—"} em ${
+                                (nota as any).cancelado_em
+                                  ? format(new Date((nota as any).cancelado_em), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                                  : "—"
+                              }\nMotivo: ${(nota as any).cancelado_motivo || nota.motivo_status || "—"}`
+                            : undefined
+                        }
+                      >
+                        {getStatusLabel(nota.status)}
+                      </Badge>
+                      {(nota.status === "cancelado" || nota.status === "cancelada") && ((nota as any).cancelado_por_nome || (nota as any).cancelado_em) && (
+                        <div className="mt-1 text-[10px] leading-tight text-muted-foreground max-w-[220px]">
+                          <div>
+                            Por <span className="font-medium">{(nota as any).cancelado_por_nome || "—"}</span>
+                            {(nota as any).cancelado_em && (
+                              <> em {format(new Date((nota as any).cancelado_em), "dd/MM/yy HH:mm", { locale: ptBR })}</>
+                            )}
+                          </div>
+                          {((nota as any).cancelado_motivo || nota.motivo_status) && (
+                            <div className="truncate" title={(nota as any).cancelado_motivo || nota.motivo_status}>
+                              Motivo: {(nota as any).cancelado_motivo || nota.motivo_status}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </TableCell>
                     {canEdit && (
                       <TableCell className="sticky right-0 bg-background">
@@ -602,6 +630,19 @@ export default function NotasFiscais() {
 
                               <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950" onClick={() => { setSelectedNota(nota); setIsCancelDialogOpen(true); }} title="Cancelar NF-e">
                                 <XCircle className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {(nota.status === "cancelado" || nota.status === "cancelada") && (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => handleDownload(nota, "danfe")} title="Baixar DANFE (com tarja CANCELADA)" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950" onClick={() => handleDownload(nota, "xml")} title="Baixar XML da NF-e">
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950" onClick={() => handleDownload(nota, "xml_cancelamento")} title="Baixar XML de Cancelamento">
+                                <FileText className="h-4 w-4" />
                               </Button>
                             </>
                           )}

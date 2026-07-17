@@ -165,7 +165,30 @@ serve(async (req) => {
 
 
     if (!downloadUrl) {
-      throw new Error(`URL do ${tipo} não disponível. Status da nota: ${consultaData.status}`);
+      // Fallback: para DANFE de nota cancelada/autorizada, tentar endpoint direto .pdf
+      if (tipo === "danfe") {
+        const altUrl = `${baseUrl}/v2/nfe/${ref}.pdf`;
+        console.log("caminho_danfe ausente. Tentando endpoint alternativo:", altUrl);
+        const altResp = await fetch(altUrl, {
+          headers: { Authorization: `Basic ${btoa(`${emitenteToken}:`)}` },
+        });
+        if (altResp.ok) {
+          const altBuf = await altResp.arrayBuffer();
+          return new Response(altBuf, {
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/pdf",
+              "Content-Disposition": `attachment; filename="danfe_${ref}.pdf"`,
+            },
+          });
+        }
+        console.log("Fallback DANFE falhou:", altResp.status);
+      }
+      const statusNota = consultaData.status || "desconhecido";
+      throw new Error(
+        `DANFE não disponível na Focus NFe para esta nota (status: ${statusNota}). ` +
+        `Aguarde alguns segundos após o cancelamento/autorização e tente novamente.`
+      );
     }
 
     // Baixar o arquivo - usar URL completa

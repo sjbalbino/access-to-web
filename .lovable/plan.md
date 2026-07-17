@@ -1,50 +1,43 @@
 ## Objetivo
 
-Ao dar entrada de NF-e (importação por XML e cadastro manual), sugerir automaticamente o CFOP correto para cada item conforme:
+1. Passar a registrar **quem** cancelou a NF-e, **quando** e o **motivo**, exibindo essas informações na tela da nota.
+2. Corrigir o erro ao baixar a DANFE de notas canceladas.
 
-- **Destinação** do produto, derivada do **Grupo de Produtos**:
-  - `insumos = true` → **Insumo / matéria-prima** → 1.101 (interna) / 2.101 (interestadual)
-  - `maquinas_implementos = true` OU `bens_benfeitorias = true` → **Ativo imobilizado** → 1.551 / 2.551
-  - Nenhum dos acima → **Uso e consumo** → 1.556 / 2.556
-- **UF**: se UF do emitente da NF-e = UF do destinatário (produtor/inscrição) → CFOP interno (1.xxx). Caso contrário → interestadual (2.xxx). Regra genérica, não apenas RS.
+## Parte 1 — Auditoria do cancelamento
 
-## Escopo (frontend apenas)
+### Banco (migration)
+Adicionar em `notas_fiscais`:
+- `cancelado_por uuid` (referência lógica a `auth.users.id`)
+- `cancelado_por_nome text` (snapshot do nome, para não depender de join)
+- `cancelado_em timestamptz`
+- `cancelado_motivo text` (hoje o motivo vai para `motivo_status`, mas ele é sobrescrito por outras transições; guardar separado preserva o histórico)
 
-Nenhuma alteração de schema. Usa flags já existentes em `grupos_produtos` (`insumos`, `maquinas_implementos`, `bens_benfeitorias`).
+Backfill: para notas já `cancelado`, preencher `cancelado_em = updated_at` e `cancelado_motivo = motivo_status`. `cancelado_por` fica nulo (não temos como recuperar retroativamente).
 
-### 1. Helper novo `src/lib/cfopEntradaSuggest.ts`
+### Edge function `focus-nfe-cancelar`
+- Já valida o usuário (`_userData.user`). Buscar `nome` em `profiles` pelo `user.id`.
+- No `update` da nota após cancelamento bem-sucedido, gravar `cancelado_por`, `cancelado_por_nome`, `cancelado_em = now()`, `cancelado_motivo = justificativa`.
 
-```text
-suggestCfopEntrada({ grupo, ufEmitente, ufDestinatario }) → "1101" | "2101" | "1551" | "2551" | "1556" | "2556"
-```
+### Frontend
+- Em `src/pages/NotasFiscais.tsx` (detalhe/lista) e no cabeçalho de `NotaFiscalForm.tsx` quando status = cancelado, exibir bloco:
+  > Cancelada por **{nome}** em **{data/hora BR}** — Motivo: *{motivo}*
+- Atualizar `src/integrations/supabase/types.ts` (auto-gerado após migration).
 
-Regras exatas descritas acima. Interna quando UFs iguais e ambas presentes; caso qualquer UF esteja vazia, mantém interna por padrão (comportamento seguro para lançamento manual sem UF).
+## Parte 2 — Erro ao baixar DANFE de nota cancelada
 
-### 2. `src/components/entradas-nfe/ImportarXmlDialog.tsx`
+Diagnóstico: `focus-nfe-download` consulta a nota na Focus NFe e usa `consultaData.caminho_danfe`. Para notas canceladas, a Focus continua devolvendo `caminho_danfe` (a DANFE existe, apenas com tarja "CANCELADA"), mas em alguns casos o campo vem vazio até que a consulta pós-cancelamento seja processada, ou o `ref` salvo diverge.
 
-- Carregar produtos vinculados (já disponíveis via lookup) e grupos.
-- Após parse do XML, para cada item **vinculado a um produto** que tenha `grupo_produto_id`, sobrescrever `item.cfop` pelo código sugerido, ignorando o CFOP original do XML.
-- Itens sem vínculo/grupo mantêm o `toEntradaCfop(item.cfop)` atual.
-- Recalcular o CFOP do cabeçalho (mais frequente entre os itens) após a sugestão, buscando o registro correspondente em `cfops` com `tipo = 'entrada'`.
+Ações:
+1. Adicionar logs do payload de consulta quando `caminho_danfe` estiver ausente para descobrir a causa exata na nota 42.
+2. Se `caminho_danfe` ausente e status = cancelado, tentar endpoint alternativo `/v2/nfe/{ref}.pdf` da Focus NFe como fallback antes de erro.
+3. Retornar mensagem de erro clara ao usuário (“DANFE ainda não disponível para esta nota cancelada — tente novamente em alguns segundos”) em vez do erro genérico atual.
 
-### 3. `src/components/entradas-nfe/EntradaNfeFormDialog.tsx` (entrada manual)
-
-- Quando o usuário selecionar/alterar o **produto** de um item, olhar `produto.grupo_produto_id → grupo`, e preencher `item.cfop` com o CFOP sugerido (usando UF do emitente selecionado e UF do destinatário/inscrição).
-- Sobrescreve o `cfopCabecalhoCodigo` atualmente auto-injetado quando houver produto com grupo definido; não sobrescreve se o usuário já editou manualmente o CFOP daquele item (respeitar edição posterior).
-- Botão discreto "Sugerir CFOPs" no cabeçalho da tabela de itens que re-aplica a sugestão em todos os itens.
-
-### 4. Sem migrações / sem alterações em backend
-
-Emissão da contra-nota continua igual; o CFOP correto já entra no item antes do envio.
-
-## Detalhes técnicos
-
-- Tipagem: retorno do helper é um `string` de 4 dígitos. Consumidores fazem lookup em `useCfops()` para achar o `cfop_id` correspondente (`tipo === 'entrada'`).
-- UF do emitente: já disponível em `emitentes_nfe` (via inscrição do produtor selecionado no formulário).
-- UF do destinatário: no XML vem do `<dest><enderDest><UF>`; no manual, derivada da inscrição/produtor destinatário.
-- Fallback: se `cfops` não tiver a entrada correspondente (ex.: 1.551 não cadastrada), mantém sugestão como string e loga aviso via `toast` para o usuário cadastrar o CFOP.
+## Arquivos afetados
+- `supabase/migrations/<new>.sql` (colunas + backfill)
+- `supabase/functions/focus-nfe-cancelar/index.ts`
+- `supabase/functions/focus-nfe-download/index.ts`
+- `src/pages/NotasFiscais.tsx` e/ou componente de detalhe
+- `src/integrations/supabase/types.ts` (regenerado)
 
 ## Fora de escopo
-
-- Regras de diferimento de ICMS do RS (aviso apenas na documentação/tooltip; não altera cálculo).
-- Alteração dos cadastros de Grupos de Produtos (usa flags atuais).
+- Recuperar retroativamente quem cancelou notas antigas (informação não existe).
