@@ -108,6 +108,8 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const { data: contasBancarias } = useContasBancarias({ ativo: true });
   const createMutation = useCreateEntradaNfe();
   const updateMutation = useUpdateEntradaNfe();
+  const { data: grupos } = useGruposProdutos();
+
 
   const [granjaId, setGranjaId] = useState('');
   const [inscricaoId, setInscricaoId] = useState<string | undefined>(undefined);
