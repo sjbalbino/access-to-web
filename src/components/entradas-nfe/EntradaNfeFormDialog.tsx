@@ -18,6 +18,8 @@ import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useSafras } from "@/hooks/useSafras";
 import { useContasBancarias } from "@/hooks/useContasBancarias";
 import { useEntradaNfe, useCreateEntradaNfe, useUpdateEntradaNfe } from "@/hooks/useEntradasNfe";
+import { useGruposProdutos } from "@/hooks/useGruposProdutos";
+import { suggestCfopEntrada } from "@/lib/cfopEntradaSuggest";
 import { ContasPagarEntradaSection } from "@/components/contas/ContasPagarEntradaSection";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
