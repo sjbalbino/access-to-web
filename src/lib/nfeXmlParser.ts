@@ -147,6 +147,7 @@ export function parseNfeXml(xmlString: string): NfeParsed {
     cpf: dest ? getTextContent(dest, 'CPF') : '',
     nome: dest ? getTextContent(dest, 'xNome') : '',
     inscricaoEstadual: dest ? getTextContent(dest, 'IE') : '',
+    uf: dest ? getTextContent(dest.getElementsByTagName('enderDest')[0] || dest, 'UF') : '',
   };
 
   // Itens
