@@ -561,7 +561,35 @@ export default function NotasFiscais() {
                     </TableCell>
                     <TableCell className="text-right font-medium hidden sm:table-cell">{formatCurrency(nota.total_nota)}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(nota.status)}>{getStatusLabel(nota.status)}</Badge>
+                      <Badge
+                        variant={getStatusBadgeVariant(nota.status)}
+                        title={
+                          (nota.status === "cancelado" || nota.status === "cancelada")
+                            ? `Cancelada por ${(nota as any).cancelado_por_nome || "—"} em ${
+                                (nota as any).cancelado_em
+                                  ? format(new Date((nota as any).cancelado_em), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                                  : "—"
+                              }\nMotivo: ${(nota as any).cancelado_motivo || nota.motivo_status || "—"}`
+                            : undefined
+                        }
+                      >
+                        {getStatusLabel(nota.status)}
+                      </Badge>
+                      {(nota.status === "cancelado" || nota.status === "cancelada") && ((nota as any).cancelado_por_nome || (nota as any).cancelado_em) && (
+                        <div className="mt-1 text-[10px] leading-tight text-muted-foreground max-w-[220px]">
+                          <div>
+                            Por <span className="font-medium">{(nota as any).cancelado_por_nome || "—"}</span>
+                            {(nota as any).cancelado_em && (
+                              <> em {format(new Date((nota as any).cancelado_em), "dd/MM/yy HH:mm", { locale: ptBR })}</>
+                            )}
+                          </div>
+                          {((nota as any).cancelado_motivo || nota.motivo_status) && (
+                            <div className="truncate" title={(nota as any).cancelado_motivo || nota.motivo_status}>
+                              Motivo: {(nota as any).cancelado_motivo || nota.motivo_status}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </TableCell>
                     {canEdit && (
                       <TableCell className="sticky right-0 bg-background">
