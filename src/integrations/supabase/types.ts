@@ -3486,6 +3486,10 @@ export type Database = {
       }
       notas_fiscais: {
         Row: {
+          cancelado_em: string | null
+          cancelado_motivo: string | null
+          cancelado_por: string | null
+          cancelado_por_nome: string | null
           cfop_id: string | null
           chave_acesso: string | null
           cliente_fornecedor_id: string | null
@@ -3587,6 +3591,10 @@ export type Database = {
           xml_url: string | null
         }
         Insert: {
+          cancelado_em?: string | null
+          cancelado_motivo?: string | null
+          cancelado_por?: string | null
+          cancelado_por_nome?: string | null
           cfop_id?: string | null
           chave_acesso?: string | null
           cliente_fornecedor_id?: string | null
@@ -3688,6 +3696,10 @@ export type Database = {
           xml_url?: string | null
         }
         Update: {
+          cancelado_em?: string | null
+          cancelado_motivo?: string | null
+          cancelado_por?: string | null
+          cancelado_por_nome?: string | null
           cfop_id?: string | null
           chave_acesso?: string | null
           cliente_fornecedor_id?: string | null
