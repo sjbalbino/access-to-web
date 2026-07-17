@@ -62,7 +62,10 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
   const { data: inscricoes } = useInscricoesCompletas();
   const { data: safras } = useSafras();
   const { data: contasBancarias } = useContasBancarias({ ativo: true });
+  const { data: grupos } = useGruposProdutos();
   const createMutation = useCreateEntradaNfe();
+
+
 
   const inscricoesFiltradas = useMemo(() => {
     if (!granjaId) return [];
