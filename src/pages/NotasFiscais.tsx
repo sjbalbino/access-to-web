@@ -633,6 +633,19 @@ export default function NotasFiscais() {
                               </Button>
                             </>
                           )}
+                          {(nota.status === "cancelado" || nota.status === "cancelada") && (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => handleDownload(nota, "danfe")} title="Baixar DANFE (com tarja CANCELADA)" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950" onClick={() => handleDownload(nota, "xml")} title="Baixar XML da NF-e">
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950" onClick={() => handleDownload(nota, "xml_cancelamento")} title="Baixar XML de Cancelamento">
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                           {(nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao" || nota.status === "processando") && (
                             <>
                               <Button variant="ghost" size="icon" onClick={() => handleConsultarRejeicao(nota)} title="Consultar motivo da rejeição" disabled={focusNfe.isLoading} className="text-destructive hover:text-destructive hover:bg-destructive/10">
