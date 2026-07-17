@@ -238,6 +238,19 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       if (field === 'quantidade' || field === 'valor_unitario') {
         updated[idx].valor_total = toNumber(updated[idx].quantidade) * toNumber(updated[idx].valor_unitario);
       }
+      if (field === 'produto_id' && value) {
+        const prod: any = produtos?.find((p: any) => p.id === value);
+        const grupo = prod?.grupo_id ? grupos?.find((g: any) => g.id === prod.grupo_id) : null;
+        if (grupo && (grupo.insumos || grupo.maquinas_implementos || grupo.bens_benfeitorias)) {
+          const ufEmit = (clientes || []).find((c: any) => c.id === fornecedorId)?.uf || '';
+          const ufDest = (inscricoes || []).find((i: any) => i.id === inscricaoId)?.uf || '';
+          const sug = suggestCfopEntrada({ grupo, ufEmitente: ufEmit, ufDestinatario: ufDest });
+          updated[idx].cfop = sug;
+          // atualiza CFOP do cabeçalho se vazio
+          const cfopMatch = (cfops || []).find((c: any) => String(c.codigo) === sug && c.tipo === 'entrada');
+          if (cfopMatch && !cfopId) setCfopId(cfopMatch.id);
+        }
+      }
       return updated;
     });
   };
