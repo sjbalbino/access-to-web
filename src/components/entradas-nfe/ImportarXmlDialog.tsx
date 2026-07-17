@@ -172,7 +172,8 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
     for (const pf of validFiles) {
       const nfe = pf.nfe!;
       try {
-        const itens = vincularProdutos(nfe);
+        const ufDestInsc = inscricoesFiltradas.find((i) => i.id === inscricaoId)?.uf || '';
+        const itens = vincularProdutos(nfe, ufDestInsc);
         // Deriva CFOP do cabeçalho a partir do CFOP mais frequente nos itens
         const cfopCounts: Record<string, number> = {};
         itens.forEach((it: any) => {
