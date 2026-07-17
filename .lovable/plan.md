@@ -1,36 +1,50 @@
-## Problema
+## Objetivo
 
-Na Entrada NF-e nº 5 (chave `...051677761321`), a contra-nota já foi emitida e autorizada (NF-e nº 72, natureza "Contra-nota de entrada - TRANSFERENCIA DE BEM..."), mas:
+Ao dar entrada de NF-e (importação por XML e cadastro manual), sugerir automaticamente o CFOP correto para cada item conforme:
 
-- Status da entrada continua "Pendente".
-- Botão "Emitir Contra-nota" continua habilitado, permitindo emitir nova contra-nota duplicada.
+- **Destinação** do produto, derivada do **Grupo de Produtos**:
+  - `insumos = true` → **Insumo / matéria-prima** → 1.101 (interna) / 2.101 (interestadual)
+  - `maquinas_implementos = true` OU `bens_benfeitorias = true` → **Ativo imobilizado** → 1.551 / 2.551
+  - Nenhum dos acima → **Uso e consumo** → 1.556 / 2.556
+- **UF**: se UF do emitente da NF-e = UF do destinatário (produtor/inscrição) → CFOP interno (1.xxx). Caso contrário → interestadual (2.xxx). Regra genérica, não apenas RS.
 
-Causa raiz: a listagem de Entradas NF-e não verifica se já existe uma nota fiscal do tipo contra-nota/devolução referenciando a chave de acesso da entrada. Não há vínculo direto (`contra_nota_id`) nem consulta cruzada em `notas_fiscais_referenciadas`.
+## Escopo (frontend apenas)
 
-## Solução
+Nenhuma alteração de schema. Usa flags já existentes em `grupos_produtos` (`insumos`, `maquinas_implementos`, `bens_benfeitorias`).
 
-Detectar contra-notas/devoluções já emitidas para cada entrada via `notas_fiscais_referenciadas.chave_nfe = entradas_nfe.chave_acesso` e ajustar a UI.
+### 1. Helper novo `src/lib/cfopEntradaSuggest.ts`
 
-### 1. Hook `useEntradasNfe`
-Após buscar as entradas, executar uma segunda consulta em `notas_fiscais_referenciadas` (join com `notas_fiscais`) filtrando pelas `chave_acesso` das entradas retornadas. Anexar em cada entrada dois campos derivados:
-- `contra_nota`: `{ id, numero, status, tipo: 'contra' | 'devolucao' } | null`
-- Classificação por natureza: começa com "Contra-nota" → `contra`; começa com "Devolução" → `devolucao`.
+```text
+suggestCfopEntrada({ grupo, ufEmitente, ufDestinatario }) → "1101" | "2101" | "1551" | "2551" | "1556" | "2556"
+```
 
-### 2. Página `src/pages/EntradasNfe.tsx`
-- Botão "Emitir Contra-nota" (linha 402): `disabled` quando `e.contra_nota?.tipo === 'contra'`, título passa a "Contra-nota já emitida (NF-e nº X)".
-- Botão "Devolução" (linha 405): mesmo tratamento para `tipo === 'devolucao'`.
-- Ao clicar em um botão bloqueado por contra-nota existente: navegar para `/notas-fiscais/{id}` em vez de emitir.
-- Adicionar badge discreto "Contra-nota nº X" ou "Devolução nº X" ao lado do status quando houver, com link para a NF-e.
+Regras exatas descritas acima. Interna quando UFs iguais e ambas presentes; caso qualquer UF esteja vazia, mantém interna por padrão (comportamento seguro para lançamento manual sem UF).
 
-### 3. Não alterado
-- Status da entrada (`pendente/conferido/finalizado`) permanece controlado manualmente pelo botão Finalizar (que dá entrada no estoque). Emissão de contra-nota é evento fiscal independente e não deve auto-finalizar a entrada.
-- Nenhuma migration é necessária — a detecção usa a chave de acesso existente.
+### 2. `src/components/entradas-nfe/ImportarXmlDialog.tsx`
 
-### 4. Validação
-Após o ajuste, a Entrada nº 5 deve mostrar o botão Contra-nota desabilitado com tooltip apontando para a NF-e 72, e o botão Devolução permanecer ativo (não há devolução emitida).
+- Carregar produtos vinculados (já disponíveis via lookup) e grupos.
+- Após parse do XML, para cada item **vinculado a um produto** que tenha `grupo_produto_id`, sobrescrever `item.cfop` pelo código sugerido, ignorando o CFOP original do XML.
+- Itens sem vínculo/grupo mantêm o `toEntradaCfop(item.cfop)` atual.
+- Recalcular o CFOP do cabeçalho (mais frequente entre os itens) após a sugestão, buscando o registro correspondente em `cfops` com `tipo = 'entrada'`.
+
+### 3. `src/components/entradas-nfe/EntradaNfeFormDialog.tsx` (entrada manual)
+
+- Quando o usuário selecionar/alterar o **produto** de um item, olhar `produto.grupo_produto_id → grupo`, e preencher `item.cfop` com o CFOP sugerido (usando UF do emitente selecionado e UF do destinatário/inscrição).
+- Sobrescreve o `cfopCabecalhoCodigo` atualmente auto-injetado quando houver produto com grupo definido; não sobrescreve se o usuário já editou manualmente o CFOP daquele item (respeitar edição posterior).
+- Botão discreto "Sugerir CFOPs" no cabeçalho da tabela de itens que re-aplica a sugestão em todos os itens.
+
+### 4. Sem migrações / sem alterações em backend
+
+Emissão da contra-nota continua igual; o CFOP correto já entra no item antes do envio.
 
 ## Detalhes técnicos
 
-- Consulta adicional: `supabase.from('notas_fiscais_referenciadas').select('chave_nfe, nota_fiscal:notas_fiscais(id, numero, status, natureza_operacao)').in('chave_nfe', chavesValidas)` — apenas chaves com 44 dígitos.
-- Merge feito no client (map por chave). Sem impacto em RLS.
-- Se houver múltiplas notas para a mesma chave/tipo, prioriza a mais recente com status `autorizado`.
+- Tipagem: retorno do helper é um `string` de 4 dígitos. Consumidores fazem lookup em `useCfops()` para achar o `cfop_id` correspondente (`tipo === 'entrada'`).
+- UF do emitente: já disponível em `emitentes_nfe` (via inscrição do produtor selecionado no formulário).
+- UF do destinatário: no XML vem do `<dest><enderDest><UF>`; no manual, derivada da inscrição/produtor destinatário.
+- Fallback: se `cfops` não tiver a entrada correspondente (ex.: 1.551 não cadastrada), mantém sugestão como string e loga aviso via `toast` para o usuário cadastrar o CFOP.
+
+## Fora de escopo
+
+- Regras de diferimento de ICMS do RS (aviso apenas na documentação/tooltip; não altera cálculo).
+- Alteração dos cadastros de Grupos de Produtos (usa flags atuais).

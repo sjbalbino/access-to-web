@@ -18,6 +18,8 @@ import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useSafras } from "@/hooks/useSafras";
 import { useContasBancarias } from "@/hooks/useContasBancarias";
 import { useEntradaNfe, useCreateEntradaNfe, useUpdateEntradaNfe } from "@/hooks/useEntradasNfe";
+import { useGruposProdutos } from "@/hooks/useGruposProdutos";
+import { suggestCfopEntrada } from "@/lib/cfopEntradaSuggest";
 import { ContasPagarEntradaSection } from "@/components/contas/ContasPagarEntradaSection";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -106,6 +108,8 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const { data: contasBancarias } = useContasBancarias({ ativo: true });
   const createMutation = useCreateEntradaNfe();
   const updateMutation = useUpdateEntradaNfe();
+  const { data: grupos } = useGruposProdutos();
+
 
   const [granjaId, setGranjaId] = useState('');
   const [inscricaoId, setInscricaoId] = useState<string | undefined>(undefined);
@@ -233,6 +237,19 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       (updated[idx] as any)[field] = value;
       if (field === 'quantidade' || field === 'valor_unitario') {
         updated[idx].valor_total = toNumber(updated[idx].quantidade) * toNumber(updated[idx].valor_unitario);
+      }
+      if (field === 'produto_id' && value) {
+        const prod: any = produtos?.find((p: any) => p.id === value);
+        const grupo = prod?.grupo_id ? grupos?.find((g: any) => g.id === prod.grupo_id) : null;
+        if (grupo && (grupo.insumos || grupo.maquinas_implementos || grupo.bens_benfeitorias)) {
+          const ufEmit = (clientes || []).find((c: any) => c.id === fornecedorId)?.uf || '';
+          const ufDest = (inscricoes || []).find((i: any) => i.id === inscricaoId)?.uf || '';
+          const sug = suggestCfopEntrada({ grupo, ufEmitente: ufEmit, ufDestinatario: ufDest });
+          updated[idx].cfop = sug;
+          // atualiza CFOP do cabeçalho se vazio
+          const cfopMatch = (cfops || []).find((c: any) => String(c.codigo) === sug && c.tipo === 'entrada');
+          if (cfopMatch && !cfopId) setCfopId(cfopMatch.id);
+        }
       }
       return updated;
     });
