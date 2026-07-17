@@ -139,9 +139,24 @@ serve(async (req) => {
 
     // Atualizar no banco
     if (notaFiscalId && supabase) {
+      // Buscar nome do usuário que está cancelando (snapshot para auditoria)
+      let canceladoPorNome: string | null = null;
+      try {
+        const { data: perfil } = await supabase
+          .from("profiles")
+          .select("nome, email")
+          .eq("id", _userData.user.id)
+          .maybeSingle();
+        canceladoPorNome = perfil?.nome || perfil?.email || _userData.user.email || null;
+      } catch (_) { /* ignore */ }
+
       const updateData: Record<string, unknown> = {
         status: responseData.status || "cancelada",
         motivo_status: justificativa,
+        cancelado_por: _userData.user.id,
+        cancelado_por_nome: canceladoPorNome,
+        cancelado_em: new Date().toISOString(),
+        cancelado_motivo: justificativa,
       };
 
       if (responseData.caminho_xml_cancelamento) {
