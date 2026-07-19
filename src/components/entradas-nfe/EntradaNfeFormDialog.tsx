@@ -223,12 +223,42 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
     setInscricaoId(principal?.id);
   }, [granjaId, inscricoes, isEdit]);
 
+  // Autopreenche granja/safra principais no modo criação
+  useEffect(() => {
+    if (isEdit) return;
+    if (!granjaId && granjaPrincipal?.id) setGranjaId(granjaPrincipal.id);
+  }, [granjaPrincipal, isEdit]);
+  useEffect(() => {
+    if (isEdit) return;
+    if (!safraId && safraPrincipal?.id) setSafraId(safraPrincipal.id);
+  }, [safraPrincipal, isEdit]);
+
+  // CFOP padrão 1101 no modo criação
+  useEffect(() => {
+    if (isEdit || cfopId || !cfops?.length) return;
+    const c1101 = (cfops as any[]).find((c) => String(c.codigo) === '1101' && c.tipo === 'entrada');
+    if (c1101) setCfopId(c1101.id);
+  }, [cfops, isEdit, cfopId]);
+
+  // Sincroniza data de entrada com data de emissão (enquanto usuário não a editar)
+  useEffect(() => {
+    if (!dataEntradaTouched && dataEmissao) setDataEntrada(dataEmissao);
+  }, [dataEmissao, dataEntradaTouched]);
+
+  // Autopreenche Natureza da Operação a partir da descrição do CFOP
+  useEffect(() => {
+    if (naturezaTouched || !cfopId) return;
+    const c = (cfops || []).find((x: any) => x.id === cfopId);
+    if (c?.descricao) setNaturezaOperacao(String(c.descricao).slice(0, 60));
+  }, [cfopId, cfops, naturezaTouched]);
+
   const resetForm = () => {
+    const hoje = new Date().toISOString().split('T')[0];
     setGranjaId(''); setInscricaoId(undefined); setSafraId(undefined);
     setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false); setNumeroCheque('');
     setFornecedorId(''); setNumeroNfe(''); setSerie('1'); setChaveAcesso('');
-    setDataEmissao(''); setDataEntrada(new Date().toISOString().split('T')[0]);
-    setCfopId(''); setNaturezaOperacao(''); setObservacoes('');
+    setDataEmissao(hoje); setDataEntrada(hoje); setDataEntradaTouched(false);
+    setCfopId(''); setNaturezaOperacao(''); setNaturezaTouched(false); setObservacoes('');
     setItens([emptyItem()]);
     setValorProdutos(0); setValorFrete(0); setValorSeguro(0);
     setValorDesconto(0); setValorOutras(0);
