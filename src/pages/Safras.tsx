@@ -384,6 +384,13 @@ export default function Safras() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-center gap-2 pt-2">
+              <Switch
+                checked={formData.is_principal ?? false}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_principal: checked })}
+              />
+              <Label>Safra Principal</Label>
+            </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
