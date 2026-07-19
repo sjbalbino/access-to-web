@@ -106,6 +106,7 @@ export default function Safras() {
       data_inicio: safra.data_inicio,
       data_fim: safra.data_fim,
       status: safra.status || "ativa",
+      is_principal: safra.is_principal ?? false,
     });
     setDialogOpen(true);
   };
