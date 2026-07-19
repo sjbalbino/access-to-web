@@ -10,12 +10,12 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGranjas } from "@/hooks/useGranjas";
+import { useGranjas, useGranjaPrincipal } from "@/hooks/useGranjas";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
-import { useSafras } from "@/hooks/useSafras";
+import { useSafras, useSafraPrincipal } from "@/hooks/useSafras";
 import { useContasBancarias } from "@/hooks/useContasBancarias";
 import { useEntradaNfe, useCreateEntradaNfe, useUpdateEntradaNfe } from "@/hooks/useEntradasNfe";
 import { useGruposProdutos } from "@/hooks/useGruposProdutos";
