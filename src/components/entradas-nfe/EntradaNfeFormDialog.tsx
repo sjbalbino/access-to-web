@@ -420,6 +420,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
               <TabsTrigger value="cabecalho">Cabeçalho</TabsTrigger>
               <TabsTrigger value="itens">Itens ({itens.length})</TabsTrigger>
               <TabsTrigger value="totais">Totais</TabsTrigger>
+              {isEdit && <TabsTrigger value="pagar">Contas a Pagar</TabsTrigger>}
             </TabsList>
 
             <ScrollArea className="flex-1 min-h-0 pr-3">
@@ -430,7 +431,11 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     <Select isSearchable value={granjaId} onValueChange={setGranjaId} disabled={isFinalizado}>
                       <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
-                        {granjas?.map((g: any) => (<SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>))}
+                        {granjas?.map((g: any) => (
+                          <SelectItem key={g.id} value={g.id}>
+                            {g.razao_social}{g.nome_fantasia ? ` — ${g.nome_fantasia}` : ''}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
