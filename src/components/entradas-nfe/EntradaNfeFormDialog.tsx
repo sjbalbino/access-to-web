@@ -477,11 +477,11 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   </div>
                   <div>
                     <Label>Data Entrada</Label>
-                    <Input type="date" value={dataEntrada} onChange={(e) => setDataEntrada(e.target.value)} disabled={isFinalizado} />
+                    <Input type="date" value={dataEntrada} onChange={(e) => { setDataEntradaTouched(true); setDataEntrada(e.target.value); }} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Natureza da Operação</Label>
-                    <Input value={naturezaOperacao} onChange={(e) => setNaturezaOperacao(e.target.value)} disabled={isFinalizado} />
+                    <Input value={naturezaOperacao} onChange={(e) => { setNaturezaTouched(true); setNaturezaOperacao(e.target.value); }} disabled={isFinalizado} />
                   </div>
                   <div className="md:col-span-2 xl:col-span-2">
                     <Label>IE do Produtor *</Label>
