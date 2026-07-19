@@ -126,6 +126,7 @@ export function useUpdateGranja() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["granjas"] });
+      queryClient.invalidateQueries({ queryKey: ["granja_principal"] });
       toast.success("Granja atualizada com sucesso!");
     },
     onError: (error) => {
