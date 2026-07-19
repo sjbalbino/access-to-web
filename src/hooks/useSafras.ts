@@ -11,11 +11,28 @@ export interface Safra {
   data_inicio: string | null;
   data_fim: string | null;
   status: string | null;
+  is_principal: boolean | null;
   created_at: string;
   updated_at: string;
 }
 
 export type SafraInput = Omit<Safra, "id" | "created_at" | "updated_at">;
+
+export function useSafraPrincipal() {
+  return useQuery({
+    queryKey: ["safra_principal"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles').select('tenant_id').eq('id', user?.id).single();
+      let q = supabase.from('safras').select('*').eq('is_principal', true).limit(1);
+      if (profile?.tenant_id) q = q.eq('tenant_id', profile.tenant_id);
+      const { data, error } = await q.maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
+}
 
 export function useSafras() {
   return useQuery({
