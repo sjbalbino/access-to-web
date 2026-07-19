@@ -226,7 +226,12 @@ export default function Safras() {
                   {dadosPaginados.map((safra: any) => (
                     <TableRow key={safra.id}>
                       <TableCell className="font-medium hidden sm:table-cell">{safra.codigo || "-"}</TableCell>
-                      <TableCell className="font-medium">{safra.nome}</TableCell>
+                      <TableCell className="font-medium">
+                        <span className="inline-flex items-center gap-1.5">
+                          {safra.nome}
+                          {safra.is_principal && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
+                        </span>
+                      </TableCell>
                       <TableCell className="hidden sm:table-cell">{safra.culturas?.nome || "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">{safra.ano_colheita || "-"}</TableCell>
                       <TableCell>
