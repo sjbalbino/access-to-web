@@ -100,6 +100,8 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const isEdit = !!currentId;
   const { data: entradaData } = useEntradaNfe(currentId);
   const { data: granjas } = useGranjas();
+  const { data: granjaPrincipal } = useGranjaPrincipal();
+  const { data: safraPrincipal } = useSafraPrincipal();
   const { data: clientes } = useClientesFornecedores();
   const { cfops } = useCfops();
   const { data: produtos } = useProdutos();
