@@ -5093,6 +5093,7 @@ export type Database = {
           data_fim: string | null
           data_inicio: string | null
           id: string
+          is_principal: boolean
           nome: string
           status: string | null
           tenant_id: string | null
@@ -5106,6 +5107,7 @@ export type Database = {
           data_fim?: string | null
           data_inicio?: string | null
           id?: string
+          is_principal?: boolean
           nome: string
           status?: string | null
           tenant_id?: string | null
@@ -5119,6 +5121,7 @@ export type Database = {
           data_fim?: string | null
           data_inicio?: string | null
           id?: string
+          is_principal?: boolean
           nome?: string
           status?: string | null
           tenant_id?: string | null

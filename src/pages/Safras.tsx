@@ -36,7 +36,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar, Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Calendar, Plus, Pencil, Trash2, Search, Star } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import {
   useSafras,
@@ -59,6 +60,7 @@ const emptySafra: SafraInput = {
   data_inicio: null,
   data_fim: null,
   status: "ativa",
+  is_principal: false,
 };
 
 export default function Safras() {
@@ -105,6 +107,7 @@ export default function Safras() {
       data_inicio: safra.data_inicio,
       data_fim: safra.data_fim,
       status: safra.status || "ativa",
+      is_principal: safra.is_principal ?? false,
     });
     setDialogOpen(true);
   };
@@ -223,7 +226,12 @@ export default function Safras() {
                   {dadosPaginados.map((safra: any) => (
                     <TableRow key={safra.id}>
                       <TableCell className="font-medium hidden sm:table-cell">{safra.codigo || "-"}</TableCell>
-                      <TableCell className="font-medium">{safra.nome}</TableCell>
+                      <TableCell className="font-medium">
+                        <span className="inline-flex items-center gap-1.5">
+                          {safra.nome}
+                          {safra.is_principal && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
+                        </span>
+                      </TableCell>
                       <TableCell className="hidden sm:table-cell">{safra.culturas?.nome || "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">{safra.ano_colheita || "-"}</TableCell>
                       <TableCell>
@@ -375,6 +383,13 @@ export default function Safras() {
                   <SelectItem value="encerrada">Encerrada</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <Switch
+                checked={formData.is_principal ?? false}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_principal: checked })}
+              />
+              <Label>Safra Principal</Label>
             </div>
           </div>
           <div className="flex justify-end gap-2">

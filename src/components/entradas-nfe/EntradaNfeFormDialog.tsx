@@ -10,12 +10,12 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGranjas } from "@/hooks/useGranjas";
+import { useGranjas, useGranjaPrincipal } from "@/hooks/useGranjas";
 import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useCfops } from "@/hooks/useCfops";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
-import { useSafras } from "@/hooks/useSafras";
+import { useSafras, useSafraPrincipal } from "@/hooks/useSafras";
 import { useContasBancarias } from "@/hooks/useContasBancarias";
 import { useEntradaNfe, useCreateEntradaNfe, useUpdateEntradaNfe } from "@/hooks/useEntradasNfe";
 import { useGruposProdutos } from "@/hooks/useGruposProdutos";
@@ -100,6 +100,8 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const isEdit = !!currentId;
   const { data: entradaData } = useEntradaNfe(currentId);
   const { data: granjas } = useGranjas();
+  const { data: granjaPrincipal } = useGranjaPrincipal();
+  const { data: safraPrincipal } = useSafraPrincipal();
   const { data: clientes } = useClientesFornecedores();
   const { cfops } = useCfops();
   const { data: produtos } = useProdutos();
@@ -122,10 +124,12 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const [numeroNfe, setNumeroNfe] = useState('');
   const [serie, setSerie] = useState('1');
   const [chaveAcesso, setChaveAcesso] = useState('');
-  const [dataEmissao, setDataEmissao] = useState('');
+  const [dataEmissao, setDataEmissao] = useState(new Date().toISOString().split('T')[0]);
   const [dataEntrada, setDataEntrada] = useState(new Date().toISOString().split('T')[0]);
+  const [dataEntradaTouched, setDataEntradaTouched] = useState(false);
   const [cfopId, setCfopId] = useState('');
   const [naturezaOperacao, setNaturezaOperacao] = useState('');
+  const [naturezaTouched, setNaturezaTouched] = useState(false);
   const [observacoes, setObservacoes] = useState('');
   const [itens, setItens] = useState<ReturnType<typeof emptyItem>[]>([emptyItem()]);
   const [vincularIdx, setVincularIdx] = useState<number | null>(null);
@@ -219,12 +223,42 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
     setInscricaoId(principal?.id);
   }, [granjaId, inscricoes, isEdit]);
 
+  // Autopreenche granja/safra principais no modo criação
+  useEffect(() => {
+    if (isEdit) return;
+    if (!granjaId && granjaPrincipal?.id) setGranjaId(granjaPrincipal.id);
+  }, [granjaPrincipal, isEdit]);
+  useEffect(() => {
+    if (isEdit) return;
+    if (!safraId && safraPrincipal?.id) setSafraId(safraPrincipal.id);
+  }, [safraPrincipal, isEdit]);
+
+  // CFOP padrão 1101 no modo criação
+  useEffect(() => {
+    if (isEdit || cfopId || !cfops?.length) return;
+    const c1101 = (cfops as any[]).find((c) => String(c.codigo) === '1101' && c.tipo === 'entrada');
+    if (c1101) setCfopId(c1101.id);
+  }, [cfops, isEdit, cfopId]);
+
+  // Sincroniza data de entrada com data de emissão (enquanto usuário não a editar)
+  useEffect(() => {
+    if (!dataEntradaTouched && dataEmissao) setDataEntrada(dataEmissao);
+  }, [dataEmissao, dataEntradaTouched]);
+
+  // Autopreenche Natureza da Operação a partir da descrição do CFOP
+  useEffect(() => {
+    if (naturezaTouched || !cfopId) return;
+    const c = (cfops || []).find((x: any) => x.id === cfopId);
+    if (c?.descricao) setNaturezaOperacao(String(c.descricao).slice(0, 60));
+  }, [cfopId, cfops, naturezaTouched]);
+
   const resetForm = () => {
+    const hoje = new Date().toISOString().split('T')[0];
     setGranjaId(''); setInscricaoId(undefined); setSafraId(undefined);
     setFormaPagamento(undefined); setContaBancariaId(undefined); setJaPago(false); setNumeroCheque('');
     setFornecedorId(''); setNumeroNfe(''); setSerie('1'); setChaveAcesso('');
-    setDataEmissao(''); setDataEntrada(new Date().toISOString().split('T')[0]);
-    setCfopId(''); setNaturezaOperacao(''); setObservacoes('');
+    setDataEmissao(hoje); setDataEntrada(hoje); setDataEntradaTouched(false);
+    setCfopId(''); setNaturezaOperacao(''); setNaturezaTouched(false); setObservacoes('');
     setItens([emptyItem()]);
     setValorProdutos(0); setValorFrete(0); setValorSeguro(0);
     setValorDesconto(0); setValorOutras(0);
@@ -240,13 +274,21 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       }
       if (field === 'produto_id' && value) {
         const prod: any = produtos?.find((p: any) => p.id === value);
+        // Autopreencher unidade, quantidade e preço de custo
+        const unSigla = prod?.unidade_medida?.sigla || prod?.unidade_medida?.codigo || '';
+        if (unSigla && !updated[idx].unidade_medida) updated[idx].unidade_medida = unSigla;
+        if (!toNumber(updated[idx].quantidade)) updated[idx].quantidade = 1;
+        if (!toNumber(updated[idx].valor_unitario) && toNumber(prod?.preco_custo) > 0) {
+          updated[idx].valor_unitario = Number(prod.preco_custo);
+        }
+        updated[idx].valor_total = toNumber(updated[idx].quantidade) * toNumber(updated[idx].valor_unitario);
+
         const grupo = prod?.grupo_id ? grupos?.find((g: any) => g.id === prod.grupo_id) : null;
         if (grupo && (grupo.insumos || grupo.maquinas_implementos || grupo.bens_benfeitorias)) {
           const ufEmit = (clientes || []).find((c: any) => c.id === fornecedorId)?.uf || '';
           const ufDest = (inscricoes || []).find((i: any) => i.id === inscricaoId)?.uf || '';
           const sug = suggestCfopEntrada({ grupo, ufEmitente: ufEmit, ufDestinatario: ufDest });
           updated[idx].cfop = sug;
-          // atualiza CFOP do cabeçalho se vazio
           const cfopMatch = (cfops || []).find((c: any) => String(c.codigo) === sug && c.tipo === 'entrada');
           if (cfopMatch && !cfopId) setCfopId(cfopMatch.id);
         }
@@ -378,6 +420,7 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
               <TabsTrigger value="cabecalho">Cabeçalho</TabsTrigger>
               <TabsTrigger value="itens">Itens ({itens.length})</TabsTrigger>
               <TabsTrigger value="totais">Totais</TabsTrigger>
+              {isEdit && <TabsTrigger value="pagar">Contas a Pagar</TabsTrigger>}
             </TabsList>
 
             <ScrollArea className="flex-1 min-h-0 pr-3">
@@ -388,7 +431,11 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     <Select isSearchable value={granjaId} onValueChange={setGranjaId} disabled={isFinalizado}>
                       <SelectTrigger className="w-full min-w-0"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
-                        {granjas?.map((g: any) => (<SelectItem key={g.id} value={g.id}>{g.razao_social}</SelectItem>))}
+                        {granjas?.map((g: any) => (
+                          <SelectItem key={g.id} value={g.id}>
+                            {g.razao_social}{g.nome_fantasia ? ` — ${g.nome_fantasia}` : ''}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -430,11 +477,11 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                   </div>
                   <div>
                     <Label>Data Entrada</Label>
-                    <Input type="date" value={dataEntrada} onChange={(e) => setDataEntrada(e.target.value)} disabled={isFinalizado} />
+                    <Input type="date" value={dataEntrada} onChange={(e) => { setDataEntradaTouched(true); setDataEntrada(e.target.value); }} disabled={isFinalizado} />
                   </div>
                   <div>
                     <Label>Natureza da Operação</Label>
-                    <Input value={naturezaOperacao} onChange={(e) => setNaturezaOperacao(e.target.value)} disabled={isFinalizado} />
+                    <Input value={naturezaOperacao} onChange={(e) => { setNaturezaTouched(true); setNaturezaOperacao(e.target.value); }} disabled={isFinalizado} />
                   </div>
                   <div className="md:col-span-2 xl:col-span-2">
                     <Label>IE do Produtor *</Label>
@@ -465,11 +512,13 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={2} disabled={isFinalizado} />
                   </div>
                 </div>
-
-                {isEdit && entradaData && (
-                  <ContasPagarEntradaSection entrada={entradaData} />
-                )}
               </TabsContent>
+
+              {isEdit && entradaData && (
+                <TabsContent value="pagar" className="p-1 mt-3">
+                  <ContasPagarEntradaSection entrada={entradaData} />
+                </TabsContent>
+              )}
 
 
               <TabsContent value="itens" className="p-1 mt-3">

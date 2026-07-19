@@ -327,7 +327,7 @@ export function useCreateEntradaNfe() {
 export function useUpdateEntradaNfe() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, itens, ...input }: any) => {
+    mutationFn: async ({ id, itens, _duplicatas, _pagamento, ...input }: any) => {
       const { data, error } = await supabase
         .from('entradas_nfe')
         .update(input)
@@ -349,11 +349,48 @@ export function useUpdateEntradaNfe() {
           .insert(itensWithId);
         if (itensError) throw itensError;
       }
+
+      // Regenera contas a pagar se o total mudou e não há baixas registradas.
+      try {
+        const { data: cps } = await supabase
+          .from('contas_pagar')
+          .select('id, valor_pago, valor_original')
+          .eq('entrada_nfe_id', id);
+        const totalCp = (cps || []).reduce((s, c: any) => s + Number(c.valor_original || 0), 0);
+        const temBaixa = (cps || []).some((c: any) => Number(c.valor_pago) > 0);
+        const novoTotal = Number((data as any).valor_total) || 0;
+        if (!temBaixa && novoTotal > 0 && Math.abs(totalCp - novoTotal) > 0.01) {
+          if (cps?.length) {
+            await supabase.from('contas_pagar').delete().in('id', cps.map((c: any) => c.id));
+          }
+          // Deriva socio_produtor_id a partir da inscrição atual
+          let socioProdutorId: string | null = null;
+          if ((data as any).inscricao_produtor_id) {
+            const { data: insc } = await supabase
+              .from('inscricoes_produtor')
+              .select('produtor_id')
+              .eq('id', (data as any).inscricao_produtor_id)
+              .maybeSingle();
+            socioProdutorId = insc?.produtor_id || null;
+          }
+          await gerarContasPagarAutomatico(
+            { ...data, socio_produtor_id: socioProdutorId },
+            itens,
+            _duplicatas,
+            _pagamento,
+          );
+        }
+      } catch (err: any) {
+        console.error('Erro ao regenerar contas a pagar:', err);
+        toast.error('Entrada atualizada, mas falha ao regenerar Contas a Pagar: ' + err.message);
+      }
+
       return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['entradas_nfe'] });
       qc.invalidateQueries({ queryKey: ['entrada_nfe'] });
+      qc.invalidateQueries({ queryKey: ['contas_pagar'] });
       toast.success('Entrada atualizada com sucesso!');
     },
     onError: (error: any) => {
