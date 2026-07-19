@@ -124,10 +124,12 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   const [numeroNfe, setNumeroNfe] = useState('');
   const [serie, setSerie] = useState('1');
   const [chaveAcesso, setChaveAcesso] = useState('');
-  const [dataEmissao, setDataEmissao] = useState('');
+  const [dataEmissao, setDataEmissao] = useState(new Date().toISOString().split('T')[0]);
   const [dataEntrada, setDataEntrada] = useState(new Date().toISOString().split('T')[0]);
+  const [dataEntradaTouched, setDataEntradaTouched] = useState(false);
   const [cfopId, setCfopId] = useState('');
   const [naturezaOperacao, setNaturezaOperacao] = useState('');
+  const [naturezaTouched, setNaturezaTouched] = useState(false);
   const [observacoes, setObservacoes] = useState('');
   const [itens, setItens] = useState<ReturnType<typeof emptyItem>[]>([emptyItem()]);
   const [vincularIdx, setVincularIdx] = useState<number | null>(null);
