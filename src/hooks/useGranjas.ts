@@ -53,6 +53,22 @@ export function useGranjas() {
   });
 }
 
+export function useGranjaPrincipal() {
+  return useQuery({
+    queryKey: ["granja_principal"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles').select('tenant_id').eq('id', user?.id).single();
+      let q = supabase.from('granjas').select('*').eq('is_principal', true).limit(1);
+      if (profile?.tenant_id) q = q.eq('tenant_id', profile.tenant_id);
+      const { data, error } = await q.maybeSingle();
+      if (error) throw error;
+      return data as Granja | null;
+    },
+  });
+}
+
 export function useGranja(id: string | undefined) {
   return useQuery({
     queryKey: ["granjas", id],
