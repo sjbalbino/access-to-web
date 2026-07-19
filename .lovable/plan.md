@@ -1,24 +1,16 @@
-## Objetivo
-Garantir que exista apenas uma granja principal (`is_principal = true`) por empresa (`tenant_id`), tanto no banco de dados quanto na interface.
+## Verificação: Safra Principal por Empresa (Tenant)
 
-## Situação atual
-- A função `public.handle_principal_granja()` existe e desmarca a anterior filtrando por `tenant_id`.
-- O trigger que dispara essa função na tabela `public.granjas` **não está criado**.
-- A UI já mostra um aviso visual, mas a regra não é reforçada no banco.
+Consultei o banco e confirmei que a regra **já está corretamente aplicada** para `safras`, diferente do que aconteceu com `granjas`.
 
-## Plano de ação
+### Estado atual verificado
 
-### 1. Banco de dados
-- Criar o trigger `trg_handle_principal_granja` na tabela `public.granjas` (BEFORE INSERT OR UPDATE) para executar `public.handle_principal_granja()`.
-- Validar que o trigger filtra por `tenant_id`, mantendo uma principal por empresa.
+- **Função `handle_principal_safra()`**: existe e filtra por `tenant_id IS NOT DISTINCT FROM NEW.tenant_id`, desmarcando qualquer outra safra principal do mesmo tenant.
+- **Trigger `trg_handle_principal_safra`**: **está ativo** na tabela `public.safras` (`BEFORE INSERT OR UPDATE OF is_principal`, `tgenabled = 'O'`).
 
-### 2. Frontend
-- Manter o aviso visual na tela `Granjas.tsx` ao marcar uma nova granja como principal.
-- Garantir que o hook `useGranjaPrincipal` continue filtrando por `tenant_id` (já faz isso).
+### Conclusão
 
-### 3. Validação
-- Verificar no banco que, ao marcar uma granja como principal, a anterior do mesmo tenant é desmarcada.
-- Verificar que tenants diferentes podem ter suas próprias granjas principais sem conflito.
+A safra já segue a mesma regra da granja (uma principal por empresa/tenant), e a garantia está no banco — não depende apenas da interface. Diferente da granja, aqui o trigger não estava faltando.
 
-## Resultado esperado
-Cada empresa terá no máximo uma granja principal; a anterior é desmarcada automaticamente ao salvar uma nova.
+**Nenhuma migration ou alteração de código é necessária.**
+
+Se quiser, posso apenas fazer um teste rápido marcando duas safras como principais em tenants diferentes para confirmar o comportamento em produção — mas do ponto de vista de schema, está tudo correto.
