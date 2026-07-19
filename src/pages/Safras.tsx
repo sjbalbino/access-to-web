@@ -59,6 +59,7 @@ const emptySafra: SafraInput = {
   data_inicio: null,
   data_fim: null,
   status: "ativa",
+  is_principal: false,
 };
 
 export default function Safras() {
