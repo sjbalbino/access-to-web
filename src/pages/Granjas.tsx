@@ -412,6 +412,16 @@ export default function Granjas() {
               />
               <Label>Granja Principal</Label>
             </div>
+            {formData.is_principal && (() => {
+              const outraPrincipal = granjas?.find(
+                (g) => g.is_principal && g.id !== selectedGranja?.id
+              );
+              return outraPrincipal ? (
+                <div className="md:col-span-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-md px-3 py-2">
+                  Ao salvar, "{outraPrincipal.razao_social}" deixará de ser a granja principal.
+                </div>
+              ) : null;
+            })()}
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
