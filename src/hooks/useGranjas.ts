@@ -101,6 +101,7 @@ export function useCreateGranja() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["granjas"] });
+      queryClient.invalidateQueries({ queryKey: ["granja_principal"] });
       toast.success("Granja cadastrada com sucesso!");
     },
     onError: (error) => {
