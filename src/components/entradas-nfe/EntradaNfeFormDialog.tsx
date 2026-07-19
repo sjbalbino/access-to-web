@@ -274,13 +274,21 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
       }
       if (field === 'produto_id' && value) {
         const prod: any = produtos?.find((p: any) => p.id === value);
+        // Autopreencher unidade, quantidade e preço de custo
+        const unSigla = prod?.unidade_medida?.sigla || prod?.unidade_medida?.codigo || '';
+        if (unSigla && !updated[idx].unidade_medida) updated[idx].unidade_medida = unSigla;
+        if (!toNumber(updated[idx].quantidade)) updated[idx].quantidade = 1;
+        if (!toNumber(updated[idx].valor_unitario) && toNumber(prod?.preco_custo) > 0) {
+          updated[idx].valor_unitario = Number(prod.preco_custo);
+        }
+        updated[idx].valor_total = toNumber(updated[idx].quantidade) * toNumber(updated[idx].valor_unitario);
+
         const grupo = prod?.grupo_id ? grupos?.find((g: any) => g.id === prod.grupo_id) : null;
         if (grupo && (grupo.insumos || grupo.maquinas_implementos || grupo.bens_benfeitorias)) {
           const ufEmit = (clientes || []).find((c: any) => c.id === fornecedorId)?.uf || '';
           const ufDest = (inscricoes || []).find((i: any) => i.id === inscricaoId)?.uf || '';
           const sug = suggestCfopEntrada({ grupo, ufEmitente: ufEmit, ufDestinatario: ufDest });
           updated[idx].cfop = sug;
-          // atualiza CFOP do cabeçalho se vazio
           const cfopMatch = (cfops || []).find((c: any) => String(c.codigo) === sug && c.tipo === 'entrada');
           if (cfopMatch && !cfopId) setCfopId(cfopMatch.id);
         }
