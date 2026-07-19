@@ -512,11 +512,13 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                     <Textarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={2} disabled={isFinalizado} />
                   </div>
                 </div>
-
-                {isEdit && entradaData && (
-                  <ContasPagarEntradaSection entrada={entradaData} />
-                )}
               </TabsContent>
+
+              {isEdit && entradaData && (
+                <TabsContent value="pagar" className="p-1 mt-3">
+                  <ContasPagarEntradaSection entrada={entradaData} />
+                </TabsContent>
+              )}
 
 
               <TabsContent value="itens" className="p-1 mt-3">
