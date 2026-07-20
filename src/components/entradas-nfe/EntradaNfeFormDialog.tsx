@@ -566,10 +566,10 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                               )}
                             </TableCell>
                             <TableCell>
-                              <Input value={item.cfop} onChange={(e) => updateItem(idx, 'cfop', e.target.value)} className="w-16" disabled={isFinalizado} />
+                              <Input tabIndex={-1} value={item.cfop} onChange={(e) => updateItem(idx, 'cfop', e.target.value)} className="w-16" disabled={isFinalizado} />
                             </TableCell>
                             <TableCell>
-                              <Input value={item.unidade_medida} onChange={(e) => updateItem(idx, 'unidade_medida', e.target.value)} className="w-14" disabled={isFinalizado} />
+                              <Input tabIndex={-1} value={item.unidade_medida} onChange={(e) => updateItem(idx, 'unidade_medida', e.target.value)} className="w-14" disabled={isFinalizado} />
                             </TableCell>
                             <TableCell className="text-right">
                               <Input type="number" value={item.quantidade} onChange={(e) => updateItem(idx, 'quantidade', parseFloat(e.target.value) || 0)} className="w-20 text-right" disabled={isFinalizado} />
