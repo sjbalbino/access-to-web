@@ -176,6 +176,7 @@ export function useInscricoesComSaldo(filters: {
   granjaId?: string;
   produtoId?: string;
   localEntregaId?: string;
+  incluirSemSaldo?: boolean;
 }) {
   return useQuery({
     queryKey: ['inscricoes_com_saldo', filters],
@@ -409,10 +410,12 @@ export function useInscricoesComSaldo(filters: {
         const tipoProdutor = meta.produtores?.tipo_produtor;
         if (tipoProdutor !== 'produtor') return;
         if (filters.granjaId && meta.granja_id !== filters.granjaId) return;
-        if (b.saldo <= 0) return;
-        // Se o saldo agregado (todos os locais menos emissões) já é <= 0,
-        // não faz sentido oferecer esta inscrição para emissão de nova nota.
-        if ((saldoTotalPorInscricao.get(b.inscId) || 0) <= 0) return;
+        if (!filters.incluirSemSaldo) {
+          if (b.saldo <= 0) return;
+          // Se o saldo agregado (todos os locais menos emissões) já é <= 0,
+          // não faz sentido oferecer esta inscrição para emissão de nova nota.
+          if ((saldoTotalPorInscricao.get(b.inscId) || 0) <= 0) return;
+        }
 
         resultado.push({
           id: b.inscId,

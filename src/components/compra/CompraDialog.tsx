@@ -87,7 +87,8 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
   const { data: inscricoesSocio } = useInscricoesSocio();
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
     safraId, 
-    granjaId 
+    granjaId,
+    incluirSemSaldo: true,
   });
   const { data: todasInscricoes } = useInscricoesCompletas();
   const { cfops } = useCfops();
