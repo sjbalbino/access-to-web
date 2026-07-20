@@ -20,6 +20,7 @@ export interface CompraCereal {
   devolucao_id: string | null;
   nota_fiscal_id: string | null;
   status: string;
+  importado: boolean;
   observacao: string | null;
   created_at: string;
   updated_at: string;
