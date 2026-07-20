@@ -195,6 +195,7 @@ export default function CompraCereais() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           compra={compraSelecionada}
+          readOnly={dialogReadOnly}
         />
 
         {/* Dialog de Emissão de NFe */}
