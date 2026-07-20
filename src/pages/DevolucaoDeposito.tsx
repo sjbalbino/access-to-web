@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, Send } from 'lucide-react';
+import { Plus, Trash2, Edit, Send, Eye } from 'lucide-react';
 import { useDevolucoes, useDeleteDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
 import { useAllInscricoes } from '@/hooks/useAllInscricoes';
 import { useGranjas } from '@/hooks/useGranjas';
@@ -29,7 +29,8 @@ export default function DevolucaoDeposito() {
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [devolucaoSelecionada, setDevolucaoSelecionada] = useState<DevolucaoDeposito | null>(null);
-  
+  const [dialogReadOnly, setDialogReadOnly] = useState(false);
+
   // NFe Dialog state
   const [nfeDialogDevolucao, setNfeDialogDevolucao] = useState<DevolucaoDeposito | null>(null);
 
@@ -61,11 +62,19 @@ export default function DevolucaoDeposito() {
 
   const handleNovaDevolucao = () => {
     setDevolucaoSelecionada(null);
+    setDialogReadOnly(false);
     setDialogOpen(true);
   };
 
   const handleEditarDevolucao = (devolucao: DevolucaoDeposito) => {
     setDevolucaoSelecionada(devolucao);
+    setDialogReadOnly(false);
+    setDialogOpen(true);
+  };
+
+  const handleVisualizarDevolucao = (devolucao: DevolucaoDeposito) => {
+    setDevolucaoSelecionada(devolucao);
+    setDialogReadOnly(true);
     setDialogOpen(true);
   };
 
