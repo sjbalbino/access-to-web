@@ -27,6 +27,7 @@ export default function CompraCereais() {
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [compraSelecionada, setCompraSelecionada] = useState<CompraCereal | null>(null);
+  const [dialogReadOnly, setDialogReadOnly] = useState(false);
   const [nfeDialogCompra, setNfeDialogCompra] = useState<CompraCereal | null>(null);
 
   const { data: granjas } = useGranjas();
