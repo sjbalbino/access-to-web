@@ -625,6 +625,7 @@ export type Database = {
           devolucao_id: string | null
           granja_id: string
           id: string
+          importado: boolean
           inscricao_comprador_id: string
           inscricao_vendedor_id: string
           local_entrega_id: string | null
@@ -647,6 +648,7 @@ export type Database = {
           devolucao_id?: string | null
           granja_id: string
           id?: string
+          importado?: boolean
           inscricao_comprador_id: string
           inscricao_vendedor_id: string
           local_entrega_id?: string | null
@@ -669,6 +671,7 @@ export type Database = {
           devolucao_id?: string | null
           granja_id?: string
           id?: string
+          importado?: boolean
           inscricao_comprador_id?: string
           inscricao_vendedor_id?: string
           local_entrega_id?: string | null
