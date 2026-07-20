@@ -1072,6 +1072,10 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
           )}
 
           <DialogFooter className="gap-2 sm:gap-0">
+            {readOnly ? (
+              <Button onClick={handleCloseDialog}>Fechar</Button>
+            ) : (<>{/* placeholder */}</>)}
+            {!readOnly && (
             {emissionStatus.step === "success" ? (
               <Button onClick={handleCloseDialog}>
                 Fechar
