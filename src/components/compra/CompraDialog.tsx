@@ -805,7 +805,7 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
 
           {/* Formulário principal - esconder durante emissão em progresso */}
           {(emissionStatus.step === "idle" || emissionStatus.step === "success" || emissionStatus.step === "error") && (
-            <div className="grid gap-4 py-4">
+            <fieldset disabled={readOnly} className="contents"><div className="grid gap-4 py-4">
               {/* Granja, Safra, Produto selection */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
