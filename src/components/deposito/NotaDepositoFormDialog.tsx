@@ -631,17 +631,19 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Local (Granja) *</Label>
-                    <Select isSearchable value={granjaId} onValueChange={(v) => { setGranjaId(v); setInscricaoId(""); }}>
+                    <Label>Local de Entrega *</Label>
+                    <Select isSearchable value={localEntregaId} onValueChange={(v) => { setLocalEntregaId(v); setInscricaoId(""); }}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o local" />
+                        <SelectValue placeholder="Selecione o local de entrega" />
                       </SelectTrigger>
                       <SelectContent>
-                        {granjas.map((g) => (
-                          <SelectItem key={g.id} value={g.id}>
-                            {g.nome_fantasia || g.razao_social}
-                          </SelectItem>
-                        ))}
+                        {locaisEntrega
+                          .filter((l) => l.ativo !== false)
+                          .map((l) => (
+                            <SelectItem key={l.id} value={l.id}>
+                              {l.nome}{l.is_sede ? " (Sede)" : ""}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
