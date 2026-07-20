@@ -42,12 +42,14 @@ export interface ExtratoColheita {
   impureza: number | null;
   kg_desconto_total: number | null;
   producao_liquida_kg: number | null;
+  local_entrega?: string | null;
 }
 
 export interface ExtratoTransferencia {
   data_transferencia: string;
   nome_outro: string | null;
   quantidade_kg: number;
+  local_entrega?: string | null;
 }
 
 export interface ExtratoDevolucao {
@@ -55,12 +57,14 @@ export interface ExtratoDevolucao {
   quantidade_kg: number;
   taxa_armazenagem: number | null;
   kg_taxa_armazenagem: number | null;
+  local_entrega?: string | null;
 }
 
 export interface ExtratoNotaDeposito {
   data_emissao: string | null;
   nota_fiscal_numero: string | null;
   quantidade_kg: number;
+  local_entrega?: string | null;
 }
 
 export interface ExtratoData {
@@ -101,12 +105,92 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   const PESO_SACA = 60;
   const toSacas = (kg: number | null | undefined) => formatNumber((Number(kg) || 0) / PESO_SACA, 1);
 
-  // COLHEITAS
-  if (data.colheitas.length > 0) {
+  const localOf = (l: string | null | undefined) => (l && l.trim()) || "Sede";
+
+  // Helper: groups rows by local, emits subtotal rows and returns
+  // the list of subtotal indices for styling.
+  function renderSection<T>(
+    title: string,
+    items: T[],
+    getLocal: (t: T) => string,
+    toRow: (t: T) => any[],
+    sumCols: number, // number of numeric columns from end (used for subtotal)
+    sumFn: (list: T[]) => any[], // returns just the numeric totals cells
+    head: any[],
+    columnStyles: any,
+    localColSpan: number,
+  ) {
+    if (items.length === 0) return;
     doc.setFont("helvetica", "bold");
-    doc.text("COLHEITAS", 14, yPos);
-    const sumC = (key: keyof ExtratoColheita) => data.colheitas.reduce((s, c) => s + (Number(c[key]) || 0), 0);
-    const colheitasBody: any[] = data.colheitas.map(c => [
+    doc.text(title, 14, yPos);
+
+    const sorted = [...items].sort((a, b) => getLocal(a).localeCompare(getLocal(b), "pt-BR"));
+    const body: any[] = [];
+    const subtotalIdx = new Set<number>();
+    let currentLocal = "";
+    let bucket: T[] = [];
+
+    const flush = () => {
+      if (!bucket.length) return;
+      const totals = sumFn(bucket);
+      body.push([
+        { content: `Subtotal ${currentLocal}`, colSpan: localColSpan, styles: { fontStyle: "bold", halign: "right" } },
+        ...totals,
+      ]);
+      subtotalIdx.add(body.length - 1);
+      bucket = [];
+    };
+
+    sorted.forEach((it) => {
+      const loc = getLocal(it);
+      if (loc !== currentLocal) {
+        flush();
+        currentLocal = loc;
+      }
+      body.push(toRow(it));
+      bucket.push(it);
+    });
+    flush();
+
+    // Total geral
+    const totals = sumFn(sorted);
+    body.push([
+      { content: "TOTAL GERAL", colSpan: localColSpan, styles: { fontStyle: "bold", halign: "right" } },
+      ...totals,
+    ]);
+    const totalGeralIdx = body.length - 1;
+
+    autoTable(doc, {
+      startY: yPos + 2,
+      head: [head],
+      body,
+      styles: { fontSize: 7, cellPadding: 1.5 },
+      headStyles: { fillColor: [66, 66, 66], textColor: 255 },
+      columnStyles,
+      didParseCell: (d) => {
+        if (d.section !== "body") return;
+        if (subtotalIdx.has(d.row.index)) {
+          d.cell.styles.fillColor = [240, 240, 240];
+          d.cell.styles.fontStyle = "bold";
+        }
+        if (d.row.index === totalGeralIdx) {
+          d.cell.styles.fillColor = [210, 210, 210];
+          d.cell.styles.fontStyle = "bold";
+        }
+      },
+    });
+    yPos = (doc as any).lastAutoTable.finalY + 5;
+  }
+
+  const sumBy = (arr: any[], key: string) => arr.reduce((s, x) => s + (Number(x[key]) || 0), 0);
+
+  // COLHEITAS
+  renderSection<ExtratoColheita>(
+    "COLHEITAS",
+    data.colheitas,
+    (c) => localOf(c.local_entrega),
+    (c) => [
+      localOf(c.local_entrega),
       formatDate(c.data_colheita),
       c.lavoura || "-",
       c.variedade || "-",
@@ -118,166 +202,143 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       formatNumber(c.kg_desconto_total, 0),
       formatNumber(c.producao_liquida_kg, 0),
       toSacas(c.producao_liquida_kg),
-    ]);
-    const totLiqC = sumC("producao_liquida_kg");
-    colheitasBody.push([
-      "TOTAL", "", "",
-      formatNumber(sumC("peso_bruto"), 0),
-      formatNumber(sumC("peso_tara"), 0),
-      formatNumber(sumC("producao_kg"), 0),
-      "", "",
-      formatNumber(sumC("kg_desconto_total"), 0),
-      formatNumber(totLiqC, 0),
-      toSacas(totLiqC),
-    ]);
-    autoTable(doc, {
-      startY: yPos + 2,
-      head: [[
-        { content: "Data", styles: { halign: "center" } },
-        "Lavoura",
-        "Variedade",
-        { content: "P.Bruto", styles: { halign: "right" } },
-        { content: "Tara", styles: { halign: "right" } },
-        { content: "Líquido", styles: { halign: "right" } },
-        { content: "Umid.", styles: { halign: "right" } },
-        { content: "Imp.", styles: { halign: "right" } },
-        { content: "Desc.", styles: { halign: "right" } },
-        { content: "Prod.Líq.(kg)", styles: { halign: "right" } },
-        { content: "Sacas", styles: { halign: "right" } },
-      ]],
-      body: colheitasBody,
-      styles: { fontSize: 7, cellPadding: 1.5 },
-      headStyles: { fillColor: [66, 66, 66], textColor: 255 },
-      columnStyles: {
-        0: { halign: "center", cellWidth: 20 },
-        1: { halign: "left", cellWidth: 28 },
-        2: { halign: "left", cellWidth: 28 },
-        3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" },
-        6: { halign: "right" }, 7: { halign: "right" }, 8: { halign: "right" }, 9: { halign: "right" }, 10: { halign: "right" },
-      },
-      didParseCell: (d) => {
-        if (d.row.index === colheitasBody.length - 1) {
-          d.cell.styles.fontStyle = "bold";
-          d.cell.styles.fillColor = [240, 240, 240];
-        }
-      },
-    });
-    yPos = (doc as any).lastAutoTable.finalY + 5;
-  }
+    ],
+    8,
+    (list) => {
+      const totLiq = sumBy(list, "producao_liquida_kg");
+      return [
+        formatNumber(sumBy(list, "peso_bruto"), 0),
+        formatNumber(sumBy(list, "peso_tara"), 0),
+        formatNumber(sumBy(list, "producao_kg"), 0),
+        "", "",
+        formatNumber(sumBy(list, "kg_desconto_total"), 0),
+        formatNumber(totLiq, 0),
+        toSacas(totLiq),
+      ];
+    },
+    [
+      "Local",
+      { content: "Data", styles: { halign: "center" } },
+      "Lavoura", "Variedade",
+      { content: "P.Bruto", styles: { halign: "right" } },
+      { content: "Tara", styles: { halign: "right" } },
+      { content: "Líquido", styles: { halign: "right" } },
+      { content: "Umid.", styles: { halign: "right" } },
+      { content: "Imp.", styles: { halign: "right" } },
+      { content: "Desc.", styles: { halign: "right" } },
+      { content: "Prod.Líq.(kg)", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
+    ],
+    {
+      0: { halign: "left", cellWidth: 26 },
+      1: { halign: "center", cellWidth: 20 },
+      2: { halign: "left", cellWidth: 26 },
+      3: { halign: "left", cellWidth: 26 },
+      4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" },
+      7: { halign: "right" }, 8: { halign: "right" }, 9: { halign: "right" }, 10: { halign: "right" }, 11: { halign: "right" },
+    },
+    4,
+  );
 
   // TRANSFERÊNCIAS RECEBIDAS
-  if (data.transferenciasRecebidas.length > 0) {
-    doc.setFont("helvetica", "bold");
-    doc.text("TRANSFERÊNCIAS RECEBIDAS", 14, yPos);
-    const totRec = data.transferenciasRecebidas.reduce((s, t) => s + (t.quantidade_kg || 0), 0);
-    const bodyRec: any[] = data.transferenciasRecebidas.map(t => [formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0), toSacas(t.quantidade_kg)]);
-    bodyRec.push(["TOTAL", "", formatNumber(totRec, 0), toSacas(totRec)]);
-    autoTable(doc, {
-      startY: yPos + 2,
-      head: [[
-        { content: "Data", styles: { halign: "center" } },
-        "Origem",
-        { content: "Qtd (kg)", styles: { halign: "right" } },
-        { content: "Sacas", styles: { halign: "right" } },
-      ]],
-      body: bodyRec,
-      styles: { fontSize: 7, cellPadding: 1.5 },
-      headStyles: { fillColor: [66, 66, 66], textColor: 255 },
-      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "left" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "right", cellWidth: 24 } },
-      didParseCell: (d) => {
-        if (d.row.index === bodyRec.length - 1) { d.cell.styles.fontStyle = "bold"; d.cell.styles.fillColor = [240, 240, 240]; }
-      },
-    });
-    yPos = (doc as any).lastAutoTable.finalY + 5;
-  }
+  renderSection<ExtratoTransferencia>(
+    "TRANSFERÊNCIAS RECEBIDAS",
+    data.transferenciasRecebidas,
+    (t) => localOf(t.local_entrega),
+    (t) => [localOf(t.local_entrega), formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0), toSacas(t.quantidade_kg)],
+    2,
+    (list) => {
+      const tot = sumBy(list, "quantidade_kg");
+      return [formatNumber(tot, 0), toSacas(tot)];
+    },
+    [
+      "Local",
+      { content: "Data", styles: { halign: "center" } },
+      "Origem",
+      { content: "Qtd (kg)", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
+    ],
+    { 0: { halign: "left", cellWidth: 30 }, 1: { halign: "center", cellWidth: 25 }, 2: { halign: "left" }, 3: { halign: "right", cellWidth: 28 }, 4: { halign: "right", cellWidth: 24 } },
+    3,
+  );
 
   // TRANSFERÊNCIAS ENVIADAS
-  if (data.transferenciasEnviadas.length > 0) {
-    doc.setFont("helvetica", "bold");
-    doc.text("TRANSFERÊNCIAS ENVIADAS", 14, yPos);
-    const totEnv = data.transferenciasEnviadas.reduce((s, t) => s + (t.quantidade_kg || 0), 0);
-    const bodyEnv: any[] = data.transferenciasEnviadas.map(t => [formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0), toSacas(t.quantidade_kg)]);
-    bodyEnv.push(["TOTAL", "", formatNumber(totEnv, 0), toSacas(totEnv)]);
-    autoTable(doc, {
-      startY: yPos + 2,
-      head: [[
-        { content: "Data", styles: { halign: "center" } },
-        "Destino",
-        { content: "Qtd (kg)", styles: { halign: "right" } },
-        { content: "Sacas", styles: { halign: "right" } },
-      ]],
-      body: bodyEnv,
-      styles: { fontSize: 7, cellPadding: 1.5 },
-      headStyles: { fillColor: [66, 66, 66], textColor: 255 },
-      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "left" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "right", cellWidth: 24 } },
-      didParseCell: (d) => {
-        if (d.row.index === bodyEnv.length - 1) { d.cell.styles.fontStyle = "bold"; d.cell.styles.fillColor = [240, 240, 240]; }
-      },
-    });
-    yPos = (doc as any).lastAutoTable.finalY + 5;
-  }
+  renderSection<ExtratoTransferencia>(
+    "TRANSFERÊNCIAS ENVIADAS",
+    data.transferenciasEnviadas,
+    (t) => localOf(t.local_entrega),
+    (t) => [localOf(t.local_entrega), formatDate(t.data_transferencia), t.nome_outro || "-", formatNumber(t.quantidade_kg, 0), toSacas(t.quantidade_kg)],
+    2,
+    (list) => {
+      const tot = sumBy(list, "quantidade_kg");
+      return [formatNumber(tot, 0), toSacas(tot)];
+    },
+    [
+      "Local",
+      { content: "Data", styles: { halign: "center" } },
+      "Destino",
+      { content: "Qtd (kg)", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
+    ],
+    { 0: { halign: "left", cellWidth: 30 }, 1: { halign: "center", cellWidth: 25 }, 2: { halign: "left" }, 3: { halign: "right", cellWidth: 28 }, 4: { halign: "right", cellWidth: 24 } },
+    3,
+  );
 
   // DEVOLUÇÕES
-  if (data.devolucoes.length > 0) {
-    doc.setFont("helvetica", "bold");
-    doc.text("DEVOLUÇÕES", 14, yPos);
-    const totDev = data.devolucoes.reduce((s, d) => s + (d.quantidade_kg || 0), 0);
-    const totKgTx = data.devolucoes.reduce((s, d) => s + (d.kg_taxa_armazenagem || 0), 0);
-    const bodyDev: any[] = data.devolucoes.map(d => [
+  renderSection<ExtratoDevolucao>(
+    "DEVOLUÇÕES",
+    data.devolucoes,
+    (d) => localOf(d.local_entrega),
+    (d) => [
+      localOf(d.local_entrega),
       formatDate(d.data_devolucao),
       formatNumber(d.quantidade_kg, 0),
       toSacas(d.quantidade_kg),
       d.taxa_armazenagem != null ? formatNumber(d.taxa_armazenagem, 2) + "%" : "-",
       formatNumber(d.kg_taxa_armazenagem, 0),
       toSacas(d.kg_taxa_armazenagem),
-    ]);
-    bodyDev.push(["TOTAL", formatNumber(totDev, 0), toSacas(totDev), "", formatNumber(totKgTx, 0), toSacas(totKgTx)]);
-    autoTable(doc, {
-      startY: yPos + 2,
-      head: [[
-        { content: "Data", styles: { halign: "center" } },
-        { content: "Qtd (kg)", styles: { halign: "right" } },
-        { content: "Sacas", styles: { halign: "right" } },
-        { content: "Taxa Armaz. (%)", styles: { halign: "right" } },
-        { content: "Kg Taxa", styles: { halign: "right" } },
-        { content: "Sacas Taxa", styles: { halign: "right" } },
-      ]],
-      body: bodyDev,
-      styles: { fontSize: 7, cellPadding: 1.5 },
-      headStyles: { fillColor: [66, 66, 66], textColor: 255 },
-      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" } },
-      didParseCell: (d) => {
-        if (d.row.index === bodyDev.length - 1) { d.cell.styles.fontStyle = "bold"; d.cell.styles.fillColor = [240, 240, 240]; }
-      },
-    });
-    yPos = (doc as any).lastAutoTable.finalY + 5;
-  }
+    ],
+    5,
+    (list) => {
+      const tot = sumBy(list, "quantidade_kg");
+      const totTx = sumBy(list, "kg_taxa_armazenagem");
+      return [formatNumber(tot, 0), toSacas(tot), "", formatNumber(totTx, 0), toSacas(totTx)];
+    },
+    [
+      "Local",
+      { content: "Data", styles: { halign: "center" } },
+      { content: "Qtd (kg)", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
+      { content: "Taxa Armaz. (%)", styles: { halign: "right" } },
+      { content: "Kg Taxa", styles: { halign: "right" } },
+      { content: "Sacas Taxa", styles: { halign: "right" } },
+    ],
+    { 0: { halign: "left", cellWidth: 30 }, 1: { halign: "center", cellWidth: 25 }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" } },
+    2,
+  );
 
   // NOTAS DE DEPÓSITO
-  if (data.notasDeposito.length > 0) {
-    doc.setFont("helvetica", "bold");
-    doc.text("NOTAS DE DEPÓSITO", 14, yPos);
-    const totNd = data.notasDeposito.reduce((s, n) => s + (n.quantidade_kg || 0), 0);
-    const bodyNd: any[] = data.notasDeposito.map(n => [formatDate(n.data_emissao), n.nota_fiscal_numero || "-", formatNumber(n.quantidade_kg, 0), toSacas(n.quantidade_kg)]);
-    bodyNd.push(["TOTAL", "", formatNumber(totNd, 0), toSacas(totNd)]);
-    autoTable(doc, {
-      startY: yPos + 2,
-      head: [[
-        { content: "Data", styles: { halign: "center" } },
-        "Nota Fiscal",
-        { content: "Qtd (kg)", styles: { halign: "right" } },
-        { content: "Sacas", styles: { halign: "right" } },
-      ]],
-      body: bodyNd,
-      styles: { fontSize: 7, cellPadding: 1.5 },
-      headStyles: { fillColor: [66, 66, 66], textColor: 255 },
-      columnStyles: { 0: { halign: "center", cellWidth: 25 }, 1: { halign: "left" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "right", cellWidth: 24 } },
-      didParseCell: (d) => {
-        if (d.row.index === bodyNd.length - 1) { d.cell.styles.fontStyle = "bold"; d.cell.styles.fillColor = [240, 240, 240]; }
-      },
-    });
-    yPos = (doc as any).lastAutoTable.finalY + 5;
-  }
+  renderSection<ExtratoNotaDeposito>(
+    "NOTAS DE DEPÓSITO",
+    data.notasDeposito,
+    (n) => localOf(n.local_entrega),
+    (n) => [localOf(n.local_entrega), formatDate(n.data_emissao), n.nota_fiscal_numero || "-", formatNumber(n.quantidade_kg, 0), toSacas(n.quantidade_kg)],
+    2,
+    (list) => {
+      const tot = sumBy(list, "quantidade_kg");
+      return [formatNumber(tot, 0), toSacas(tot)];
+    },
+    [
+      "Local",
+      { content: "Data", styles: { halign: "center" } },
+      "Nota Fiscal",
+      { content: "Qtd (kg)", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
+    ],
+    { 0: { halign: "left", cellWidth: 30 }, 1: { halign: "center", cellWidth: 25 }, 2: { halign: "left" }, 3: { halign: "right", cellWidth: 28 }, 4: { halign: "right", cellWidth: 24 } },
+    3,
+  );
+
 
 
   // RESUMO POR VARIEDADE (agrupamento das colheitas)

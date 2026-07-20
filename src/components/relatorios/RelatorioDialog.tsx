@@ -312,7 +312,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     ),
     controle_lavoura:controle_lavouras!colheitas_controle_lavoura_id_fkey(
       lavouras(nome)
-    )
+    ),
+    local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(nome)
   `;
 
   // ========== SALDO DISPONÍVEL ==========
@@ -839,15 +840,15 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const { data: colheitas, error: colheitasError } = await colheitasQuery.order("data_colheita");
     if (colheitasError) throw colheitasError;
 
-    const trRecQuery = supabase.from("transferencias_deposito").select("data_transferencia, quantidade_kg, inscricao_origem:inscricoes_produtor!transferencias_deposito_inscricao_origem_id_fkey(granja, produtores(nome))")
+    const trRecQuery = supabase.from("transferencias_deposito").select("data_transferencia, quantidade_kg, inscricao_origem:inscricoes_produtor!transferencias_deposito_inscricao_origem_id_fkey(granja, produtores(nome)), local_entrega:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome)")
       .eq("inscricao_destino_id", inscricaoId).eq("safra_id", safraId);
     const { data: trRec } = await trRecQuery.order("data_transferencia");
 
-    const trEnvQuery = supabase.from("transferencias_deposito").select("data_transferencia, quantidade_kg, inscricao_destino:inscricoes_produtor!transferencias_deposito_inscricao_destino_id_fkey(granja, produtores(nome))")
+    const trEnvQuery = supabase.from("transferencias_deposito").select("data_transferencia, quantidade_kg, inscricao_destino:inscricoes_produtor!transferencias_deposito_inscricao_destino_id_fkey(granja, produtores(nome)), local_entrega:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome)")
       .eq("inscricao_origem_id", inscricaoId).eq("safra_id", safraId);
     const { data: trEnv } = await trEnvQuery.order("data_transferencia");
 
-    const devQuery = supabase.from("devolucoes_deposito").select("data_devolucao, quantidade_kg, taxa_armazenagem, kg_taxa_armazenagem")
+    const devQuery = supabase.from("devolucoes_deposito").select("data_devolucao, quantidade_kg, taxa_armazenagem, kg_taxa_armazenagem, local_entrega:locais_entrega!devolucoes_deposito_local_entrega_id_fkey(nome)")
       .eq("inscricao_produtor_id", inscricaoId).eq("safra_id", safraId);
     const { data: devolucoes } = await devQuery.order("data_devolucao");
 
@@ -860,11 +861,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
       cpfCnpj: null, inscricaoEstadual: inscricao?.inscricao_estadual || null,
       safraNome: safra?.nome || "-", produtoNome: produto?.nome || null,
-      colheitas: (colheitas || []).map((c: any) => ({ data_colheita: c.data_colheita, lavoura: c.controle_lavoura?.lavouras?.nome || null, variedade: c.variedade?.nome || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg })),
-      transferenciasRecebidas: (trRec || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_origem?.produtores?.nome || t.inscricao_origem?.granja || null, quantidade_kg: t.quantidade_kg })),
-      transferenciasEnviadas: (trEnv || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_destino?.produtores?.nome || t.inscricao_destino?.granja || null, quantidade_kg: t.quantidade_kg })),
-      devolucoes: (devolucoes || []).map((d: any) => ({ data_devolucao: d.data_devolucao, quantidade_kg: d.quantidade_kg, taxa_armazenagem: d.taxa_armazenagem, kg_taxa_armazenagem: d.kg_taxa_armazenagem })),
-      notasDeposito: (notasDep || []).map((n: any) => ({ data_emissao: n.data_emissao, nota_fiscal_numero: n.nota_fiscal?.numero?.toString() || null, quantidade_kg: n.quantidade_kg })),
+      colheitas: (colheitas || []).map((c: any) => ({ data_colheita: c.data_colheita, lavoura: c.controle_lavoura?.lavouras?.nome || null, variedade: c.variedade?.nome || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg, local_entrega: c.local_entrega?.nome || null })),
+      transferenciasRecebidas: (trRec || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_origem?.produtores?.nome || t.inscricao_origem?.granja || null, quantidade_kg: t.quantidade_kg, local_entrega: t.local_entrega?.nome || null })),
+      transferenciasEnviadas: (trEnv || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_destino?.produtores?.nome || t.inscricao_destino?.granja || null, quantidade_kg: t.quantidade_kg, local_entrega: t.local_entrega?.nome || null })),
+      devolucoes: (devolucoes || []).map((d: any) => ({ data_devolucao: d.data_devolucao, quantidade_kg: d.quantidade_kg, taxa_armazenagem: d.taxa_armazenagem, kg_taxa_armazenagem: d.kg_taxa_armazenagem, local_entrega: d.local_entrega?.nome || null })),
+      notasDeposito: (notasDep || []).map((n: any) => ({ data_emissao: n.data_emissao, nota_fiscal_numero: n.nota_fiscal?.numero?.toString() || null, quantidade_kg: n.quantidade_kg, local_entrega: null })),
     };
     const PS = 60;
     const sc = (kg: number) => Math.round((kg || 0) / PS);
