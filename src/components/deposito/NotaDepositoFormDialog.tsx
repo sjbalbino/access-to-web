@@ -59,9 +59,10 @@ interface NotaDepositoFormDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   editNotaId?: string | null;
+  readOnly?: boolean;
 }
 
-export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNotaId }: NotaDepositoFormDialogProps) {
+export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNotaId, readOnly = false }: NotaDepositoFormDialogProps) {
   // Filtros
   const [localEntregaId, setLocalEntregaId] = useState<string>("");
   const [safraId, setSafraId] = useState<string>("");
@@ -616,12 +617,13 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nova Nota de Depósito</DialogTitle>
+            <DialogTitle>{readOnly ? 'Visualizar Nota de Depósito (Importada)' : 'Nova Nota de Depósito'}</DialogTitle>
             <DialogDescription>
               Emissão de contra-nota (CFOP 1905) para entrada de mercadoria recebida para depósito
             </DialogDescription>
           </DialogHeader>
 
+          <fieldset disabled={readOnly} className="disabled:opacity-90">
           <div className="space-y-6 py-4">
             {/* Filtros */}
             <Card>
@@ -911,17 +913,20 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
               </>
             )}
           </div>
+          </fieldset>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {readOnly ? 'Fechar' : 'Cancelar'}
             </Button>
-            <Button 
-              onClick={handleGerarNfe}
-              disabled={isGenerating || !produtoId || !quantidadeKg || !inscricaoId}
-            >
-              {isGenerating ? "Gerando..." : "Gerar NFe"}
-            </Button>
+            {!readOnly && (
+              <Button 
+                onClick={handleGerarNfe}
+                disabled={isGenerating || !produtoId || !quantidadeKg || !inscricaoId}
+              >
+                {isGenerating ? "Gerando..." : "Gerar NFe"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

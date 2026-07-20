@@ -23,6 +23,7 @@ export interface DevolucaoDeposito {
   nfe_referenciada: string | null;
   status: string;
   observacao: string | null;
+  importado: boolean;
   created_at: string;
   updated_at: string;
   // Joins
@@ -48,7 +49,7 @@ export interface DevolucaoDeposito {
   nota_fiscal?: { id: string; numero: number; status: string };
 }
 
-export type DevolucaoInput = Partial<Omit<DevolucaoDeposito, 'id' | 'codigo' | 'created_at' | 'updated_at' | 'granja' | 'safra' | 'inscricao_emitente' | 'inscricao_produtor' | 'produto' | 'silo' | 'nota_fiscal'>> & {
+export type DevolucaoInput = Partial<Omit<DevolucaoDeposito, 'id' | 'codigo' | 'importado' | 'created_at' | 'updated_at' | 'granja' | 'safra' | 'inscricao_emitente' | 'inscricao_produtor' | 'produto' | 'silo' | 'nota_fiscal'>> & {
   granja_id: string;
   safra_id: string;
   produto_id: string;

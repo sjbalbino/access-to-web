@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Plus, Pencil, Trash2 } from "lucide-react";
+import { ArrowRight, Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useProdutos } from "@/hooks/useProdutos";
@@ -71,9 +71,17 @@ export default function Transferencias() {
 
   const deleteTransferencia = useDeleteTransferenciaDeposito();
 
+  const [viewingTransferencia, setViewingTransferencia] = useState<TransferenciaDeposito | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+
   const handleNovaTransferencia = () => {
     setEditingTransferencia(null);
     setDialogOpen(true);
+  };
+
+  const handleVisualizarTransferencia = (t: TransferenciaDeposito) => {
+    setViewingTransferencia(t);
+    setViewDialogOpen(true);
   };
 
   const handleEditarTransferencia = (t: TransferenciaDeposito) => {
@@ -246,12 +254,20 @@ export default function Transferencias() {
                         <TableCell className="text-right font-medium">{formatKg(t.quantidade_kg)} kg</TableCell>
                         <TableCell className="sticky right-0 bg-background">
                           <div className="flex items-center justify-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditarTransferencia(t)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(t.id)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {t.importado ? (
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleVisualizarTransferencia(t)} title="Visualizar (importado do sistema legado)">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditarTransferencia(t)}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(t.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -276,6 +292,14 @@ export default function Transferencias() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         transferencia={editingTransferencia}
+      />
+
+      {/* Dialog de Visualização (importados) */}
+      <TransferenciaDialog
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        transferencia={viewingTransferencia}
+        readOnly
       />
 
       {/* Dialog de Confirmação de Exclusão */}

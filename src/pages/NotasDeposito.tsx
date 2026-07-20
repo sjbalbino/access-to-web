@@ -44,6 +44,7 @@ export default function NotasDeposito() {
   // Dialog de formulário
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editNotaId, setEditNotaId] = useState<string | null>(null);
+  const [formDialogReadOnly, setFormDialogReadOnly] = useState(false);
   
   // Exclusão
   const [deleteNotaId, setDeleteNotaId] = useState<string | null>(null);
@@ -227,6 +228,7 @@ export default function NotasDeposito() {
                     const isRejeitado = nfStatus === 'rejeitado' || nfStatus === 'erro_autorizacao';
                     const canEdit = isRascunho || isRejeitado;
                     const canDelete = isRascunho;
+                    const isImportado = nota.importado;
                     
                     return (
                       <TableRow key={nota.id}>
@@ -257,68 +259,87 @@ export default function NotasDeposito() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {/* Visualizar NF-e (autorizada) */}
-                            {isAutorizado && nota.nota_fiscal_id && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`)}
-                                title="Visualizar nota fiscal"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {/* Editar NF-e (rascunho ou rejeitada com NF-e vinculada) */}
-                            {canEdit && nota.nota_fiscal_id && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`)}
-                                title="Editar nota fiscal"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {/* Editar registro (rascunho sem NF-e vinculada - importados) */}
-                            {canEdit && !nota.nota_fiscal_id && (
+                            {isImportado ? (
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => {
                                   setEditNotaId(nota.id);
+                                  setFormDialogReadOnly(true);
                                   setFormDialogOpen(true);
                                 }}
-                                title="Editar / Emitir NF-e"
+                                title="Visualizar (importado do sistema legado)"
                               >
-                                <Pencil className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </Button>
-                            )}
-                            {/* Reemitir NF-e (rejeitada) */}
-                            {isRejeitado && nota.nota_fiscal_id && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-amber-600 hover:text-amber-700"
-                                onClick={() => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`)}
-                                title="Corrigir e reemitir NF-e"
-                              >
-                                <RotateCw className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {/* Excluir (apenas rascunho) */}
-                            {canDelete && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => setDeleteNotaId(nota.id)}
-                                title="Excluir"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                            ) : (
+                              <>
+                                {/* Visualizar NF-e (autorizada) */}
+                                {isAutorizado && nota.nota_fiscal_id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`)}
+                                    title="Visualizar nota fiscal"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {/* Editar NF-e (rascunho ou rejeitada com NF-e vinculada) */}
+                                {canEdit && nota.nota_fiscal_id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`)}
+                                    title="Editar nota fiscal"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {/* Editar registro (rascunho sem NF-e vinculada - importados) */}
+                                {canEdit && !nota.nota_fiscal_id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      setEditNotaId(nota.id);
+                                      setFormDialogReadOnly(false);
+                                      setFormDialogOpen(true);
+                                    }}
+                                    title="Editar / Emitir NF-e"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {/* Reemitir NF-e (rejeitada) */}
+                                {isRejeitado && nota.nota_fiscal_id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-amber-600 hover:text-amber-700"
+                                    onClick={() => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`)}
+                                    title="Corrigir e reemitir NF-e"
+                                  >
+                                    <RotateCw className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {/* Excluir (apenas rascunho) */}
+                                {canDelete && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                    onClick={() => setDeleteNotaId(nota.id)}
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </>
                             )}
                           </div>
                         </TableCell>
@@ -345,9 +366,13 @@ export default function NotasDeposito() {
         open={formDialogOpen}
         onOpenChange={(open) => {
           setFormDialogOpen(open);
-          if (!open) setEditNotaId(null);
+          if (!open) {
+            setEditNotaId(null);
+            setFormDialogReadOnly(false);
+          }
         }}
         editNotaId={editNotaId}
+        readOnly={formDialogReadOnly}
         onSuccess={() => refetch()}
       />
 

@@ -1779,6 +1779,7 @@ export type Database = {
           data_devolucao: string
           granja_id: string
           id: string
+          importado: boolean
           inscricao_emitente_id: string
           inscricao_produtor_id: string
           inscricao_recebe_taxa_id: string | null
@@ -1803,6 +1804,7 @@ export type Database = {
           data_devolucao?: string
           granja_id: string
           id?: string
+          importado?: boolean
           inscricao_emitente_id: string
           inscricao_produtor_id: string
           inscricao_recebe_taxa_id?: string | null
@@ -1827,6 +1829,7 @@ export type Database = {
           data_devolucao?: string
           granja_id?: string
           id?: string
+          importado?: boolean
           inscricao_emitente_id?: string
           inscricao_produtor_id?: string
           inscricao_recebe_taxa_id?: string | null
@@ -3418,6 +3421,7 @@ export type Database = {
           data_emissao: string | null
           granja_id: string | null
           id: string
+          importado: boolean
           inscricao_produtor_id: string | null
           nota_fiscal_id: string | null
           produto_id: string | null
@@ -3430,6 +3434,7 @@ export type Database = {
           data_emissao?: string | null
           granja_id?: string | null
           id?: string
+          importado?: boolean
           inscricao_produtor_id?: string | null
           nota_fiscal_id?: string | null
           produto_id?: string | null
@@ -3442,6 +3447,7 @@ export type Database = {
           data_emissao?: string | null
           granja_id?: string | null
           id?: string
+          importado?: boolean
           inscricao_produtor_id?: string | null
           nota_fiscal_id?: string | null
           produto_id?: string | null
@@ -5425,6 +5431,7 @@ export type Database = {
           granja_destino_id: string | null
           granja_origem_id: string | null
           id: string
+          importado: boolean
           inscricao_destino_id: string | null
           inscricao_origem_id: string | null
           local_entrada_id: string | null
@@ -5444,6 +5451,7 @@ export type Database = {
           granja_destino_id?: string | null
           granja_origem_id?: string | null
           id?: string
+          importado?: boolean
           inscricao_destino_id?: string | null
           inscricao_origem_id?: string | null
           local_entrada_id?: string | null
@@ -5463,6 +5471,7 @@ export type Database = {
           granja_destino_id?: string | null
           granja_origem_id?: string | null
           id?: string
+          importado?: boolean
           inscricao_destino_id?: string | null
           inscricao_origem_id?: string | null
           local_entrada_id?: string | null

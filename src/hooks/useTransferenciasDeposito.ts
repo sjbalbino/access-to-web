@@ -18,6 +18,7 @@ export interface TransferenciaDeposito {
   local_saida_id: string | null;
   local_entrada_id: string | null;
   tipo: string | null;
+  importado: boolean;
   created_at: string;
   updated_at: string;
   // Joins
@@ -32,7 +33,7 @@ export interface TransferenciaDeposito {
   local_entrada?: { nome: string; cidade: string | null; uf: string | null } | null;
 }
 
-export type TransferenciaInput = Omit<TransferenciaDeposito, 'id' | 'codigo' | 'created_at' | 'updated_at' | 'granja_origem' | 'granja_destino' | 'inscricao_origem' | 'inscricao_destino' | 'safra' | 'produto' | 'silo'>;
+export type TransferenciaInput = Omit<TransferenciaDeposito, 'id' | 'codigo' | 'importado' | 'created_at' | 'updated_at' | 'granja_origem' | 'granja_destino' | 'inscricao_origem' | 'inscricao_destino' | 'safra' | 'produto' | 'silo' | 'local_saida' | 'local_entrada'>;
 
 export function useTransferenciasDeposito(filters?: {
   safraId?: string;

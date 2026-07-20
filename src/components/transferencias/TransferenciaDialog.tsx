@@ -28,9 +28,10 @@ interface TransferenciaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transferencia?: TransferenciaDeposito | null;
+  readOnly?: boolean;
 }
 
-export function TransferenciaDialog({ open, onOpenChange, transferencia }: TransferenciaDialogProps) {
+export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnly = false }: TransferenciaDialogProps) {
   const [dataTransferencia, setDataTransferencia] = useState<Date | undefined>(undefined);
   const [safraId, setSafraId] = useState("");
   const [produtoId, setProdutoId] = useState("");
@@ -215,9 +216,10 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar Transferência" : "Nova Transferência"}</DialogTitle>
+          <DialogTitle>{readOnly ? "Visualizar Transferência (Importada)" : isEditing ? "Editar Transferência" : "Nova Transferência"}</DialogTitle>
         </DialogHeader>
 
+        <fieldset disabled={readOnly} className="space-y-4 disabled:opacity-90">
         <div className="space-y-4">
           {/* Linha 1: Data, Safra, Produto, Silo */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -483,14 +485,17 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia }: Trans
             />
           </div>
         </div>
+        </fieldset>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+            {readOnly ? "Fechar" : "Cancelar"}
           </Button>
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? "Salvando..." : "Salvar"}
-          </Button>
+          {!readOnly && (
+            <Button onClick={handleSubmit} disabled={isPending}>
+              {isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
