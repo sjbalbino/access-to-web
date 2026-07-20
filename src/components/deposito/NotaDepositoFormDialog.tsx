@@ -669,10 +669,10 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                     <Select isSearchable 
                       value={inscricaoId} 
                       onValueChange={setInscricaoId}
-                      disabled={!granjaId || !safraId}
+                      disabled={!localEntregaId || !safraId}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={!granjaId || !safraId ? "Selecione local e safra" : "Selecione a inscrição"} />
+                        <SelectValue placeholder={!localEntregaId || !safraId ? "Selecione local e safra" : "Selecione a inscrição"} />
                       </SelectTrigger>
                       <SelectContent>
                         {inscricoesComSaldo.map((i) => (
