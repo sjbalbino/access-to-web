@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSafras } from "@/hooks/useSafras";
 import { useGranjas } from "@/hooks/useGranjas";
+import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useNotasDepositoEmitidas, useDeleteNotaDepositoEmitida } from "@/hooks/useNotasDepositoEmitidas";
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
