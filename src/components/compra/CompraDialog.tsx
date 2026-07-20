@@ -946,7 +946,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
                   <SelectContent>
                     {vendedoresOptions.map(i => (
                       <SelectItem key={i.id} value={i.id}>
-                        {labelInscricao(i)} ({i.total_depositado?.toLocaleString('pt-BR')} kg)
+                        {labelInscricao(i)} ({i.saldo_disponivel?.toLocaleString('pt-BR')} kg)
                       </SelectItem>
                     ))}
                   </SelectContent>
