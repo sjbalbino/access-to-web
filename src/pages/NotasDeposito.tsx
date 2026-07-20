@@ -245,9 +245,9 @@ export default function NotasDeposito() {
                           }
                         </TableCell>
                         <TableCell>
-                          {nota.granja?.inscricoes_produtor?.find(
-                            (i) => i.is_emitente_principal
-                          )?.produtores?.nome || "-"}
+                          {nota.inscricao_produtor
+                            ? labelInscricao(nota.inscricao_produtor).toUpperCase()
+                            : "-"}
                         </TableCell>
 
                         <TableCell>{nota.produto?.nome || "-"}</TableCell>
