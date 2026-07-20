@@ -934,7 +934,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
               </div>
 
               <div className="space-y-2">
-                <Label>Vendedor (Produtor com saldo) *</Label>
+                <Label>Vendedor *</Label>
                 <Select isSearchable 
                   value={inscricaoVendedorId} 
                   onValueChange={setInscricaoVendedorId}

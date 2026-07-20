@@ -42,12 +42,14 @@ export interface ExtratoColheita {
   impureza: number | null;
   kg_desconto_total: number | null;
   producao_liquida_kg: number | null;
+  local_entrega?: string | null;
 }
 
 export interface ExtratoTransferencia {
   data_transferencia: string;
   nome_outro: string | null;
   quantidade_kg: number;
+  local_entrega?: string | null;
 }
 
 export interface ExtratoDevolucao {
@@ -55,12 +57,14 @@ export interface ExtratoDevolucao {
   quantidade_kg: number;
   taxa_armazenagem: number | null;
   kg_taxa_armazenagem: number | null;
+  local_entrega?: string | null;
 }
 
 export interface ExtratoNotaDeposito {
   data_emissao: string | null;
   nota_fiscal_numero: string | null;
   quantidade_kg: number;
+  local_entrega?: string | null;
 }
 
 export interface ExtratoData {
