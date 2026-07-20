@@ -160,15 +160,23 @@ export default function CompraCereais() {
                       </TableCell>
                       <TableCell className="sticky right-0 bg-background">
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleEmitirNfe(c)} disabled={!!c.nota_fiscal_id} title={c.nota_fiscal_id ? 'NFe já emitida' : 'Emitir NFe'}>
-                            <Send className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleEditarCompra(c)} disabled={!!c.nota_fiscal_id}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteCompra.mutate(c.id)} disabled={!!c.nota_fiscal_id}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {c.importado ? (
+                            <Button variant="ghost" size="icon" onClick={() => handleVisualizarCompra(c)} title="Visualizar (importado do sistema legado)">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => handleEmitirNfe(c)} disabled={!!c.nota_fiscal_id} title={c.nota_fiscal_id ? 'NFe já emitida' : 'Emitir NFe'}>
+                                <Send className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleEditarCompra(c)} disabled={!!c.nota_fiscal_id}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => deleteCompra.mutate(c.id)} disabled={!!c.nota_fiscal_id}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
