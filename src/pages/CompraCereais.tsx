@@ -39,11 +39,19 @@ export default function CompraCereais() {
 
   const handleNovaCompra = () => {
     setCompraSelecionada(null);
+    setDialogReadOnly(false);
     setDialogOpen(true);
   };
 
   const handleEditarCompra = (compra: CompraCereal) => {
     setCompraSelecionada(compra);
+    setDialogReadOnly(false);
+    setDialogOpen(true);
+  };
+
+  const handleVisualizarCompra = (compra: CompraCereal) => {
+    setCompraSelecionada(compra);
+    setDialogReadOnly(true);
     setDialogOpen(true);
   };
 
