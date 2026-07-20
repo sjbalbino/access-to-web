@@ -176,6 +176,7 @@ export function useInscricoesComSaldo(filters: {
   granjaId?: string;
   produtoId?: string;
   localEntregaId?: string;
+  incluirSemSaldo?: boolean;
 }) {
   return useQuery({
     queryKey: ['inscricoes_com_saldo', filters],
