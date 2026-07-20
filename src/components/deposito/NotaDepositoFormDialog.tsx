@@ -197,7 +197,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
   };
 
   const resetForm = () => {
-    setGranjaId("");
+    setLocalEntregaId("");
     setSafraId("");
     setInscricaoId("");
     setProdutoId("");
