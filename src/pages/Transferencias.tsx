@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Plus, Pencil, Trash2 } from "lucide-react";
+import { ArrowRight, Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useProdutos } from "@/hooks/useProdutos";
@@ -71,9 +71,17 @@ export default function Transferencias() {
 
   const deleteTransferencia = useDeleteTransferenciaDeposito();
 
+  const [viewingTransferencia, setViewingTransferencia] = useState<TransferenciaDeposito | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+
   const handleNovaTransferencia = () => {
     setEditingTransferencia(null);
     setDialogOpen(true);
+  };
+
+  const handleVisualizarTransferencia = (t: TransferenciaDeposito) => {
+    setViewingTransferencia(t);
+    setViewDialogOpen(true);
   };
 
   const handleEditarTransferencia = (t: TransferenciaDeposito) => {
