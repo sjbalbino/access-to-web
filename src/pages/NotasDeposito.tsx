@@ -75,7 +75,7 @@ export default function NotasDeposito() {
   const { data: notasEmitidas = [], isLoading, refetch } = useNotasDepositoEmitidas({
     safraId: safraId || undefined,
     produtoId: produtoId || undefined,
-    granjaId: granjaId || undefined,
+    granjaId: granjaIdDoLocal || undefined,
     inscricaoProdutorId: inscricaoProdutorId || undefined,
   });
 
@@ -154,13 +154,15 @@ export default function NotasDeposito() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Granja</Label>
+                <Label>Local de Entrega</Label>
                 <ComboboxFilter
-                  value={granjaId}
-                  onValueChange={setGranjaId}
-                  options={granjas.map(g => ({ value: g.id, label: g.nome_fantasia || g.razao_social }))}
-                  searchPlaceholder="Buscar granja..."
-                  emptyText="Nenhuma granja encontrada."
+                  value={localEntregaId}
+                  onValueChange={setLocalEntregaId}
+                  options={locaisEntrega
+                    .filter((l) => l.ativo !== false)
+                    .map((l) => ({ value: l.id, label: `${l.nome}${l.is_sede ? " (Sede)" : ""}` }))}
+                  searchPlaceholder="Buscar local..."
+                  emptyText="Nenhum local encontrado."
                 />
               </div>
 
