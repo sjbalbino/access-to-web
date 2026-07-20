@@ -47,9 +47,10 @@ interface CompraDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   compra?: CompraCereal | null;
+  readOnly?: boolean;
 }
 
-export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) {
+export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: CompraDialogProps) {
   // Internal selection states
   const [granjaId, setGranjaId] = useState('');
   const [safraId, setSafraId] = useState('');
