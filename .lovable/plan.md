@@ -1,16 +1,21 @@
-## Verificação: Safra Principal por Empresa (Tenant)
+## Objetivo
+Ajustar a tela **Transferências de Depósito** para:
+1. Listar as transferências realizadas ordenadas pela **data da transferência, da mais recente para a mais antiga**.
+2. Adicionar um **filtro por intervalo de datas** (data inicial e data final).
 
-Consultei o banco e confirmei que a regra **já está corretamente aplicada** para `safras`, diferente do que aconteceu com `granjas`.
+## Alterações propostas
 
-### Estado atual verificado
+### 1. Hook `src/hooks/useTransferenciasDeposito.ts`
+- Trocar a ordenação do Supabase de `.order('codigo', { ascending: false })` para `.order('data_transferencia', { ascending: false })`.
+- Expandir a interface de filtros para aceitar `dataInicial?: string` e `dataFinal?: string`.
+- Aplicar `.gte('data_transferencia', filtros.dataInicial)` quando preenchido.
+- Aplicar `.lte('data_transferencia', filtros.dataFinal)` quando preenchido.
 
-- **Função `handle_principal_safra()`**: existe e filtra por `tenant_id IS NOT DISTINCT FROM NEW.tenant_id`, desmarcando qualquer outra safra principal do mesmo tenant.
-- **Trigger `trg_handle_principal_safra`**: **está ativo** na tabela `public.safras` (`BEFORE INSERT OR UPDATE OF is_principal`, `tgenabled = 'O'`).
+### 2. Página `src/pages/Transferencias.tsx`
+- Adicionar dois estados locais: `filtroDataInicio` e `filtroDataFim`.
+- Passar esses valores para o hook `useTransferenciasDeposito`.
+- Incluir dois campos `Input type="date"` na área de filtros, mantendo o padrão já usado em `Lançamentos Financeiros`.
+- Ajustar o grid de filtros para acomodar as novas datas sem quebrar o layout em telas menores.
 
-### Conclusão
-
-A safra já segue a mesma regra da granja (uma principal por empresa/tenant), e a garantia está no banco — não depende apenas da interface. Diferente da granja, aqui o trigger não estava faltando.
-
-**Nenhuma migration ou alteração de código é necessária.**
-
-Se quiser, posso apenas fazer um teste rápido marcando duas safras como principais em tenants diferentes para confirmar o comportamento em produção — mas do ponto de vista de schema, está tudo correto.
+## Resultado esperado
+A lista passa a exibir as transferências mais recentes primeiro, e o usuário poderá restringir o resultado a um período específico. Nenhuma mudança de banco de dados é necessária.

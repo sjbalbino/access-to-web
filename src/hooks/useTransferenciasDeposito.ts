@@ -41,6 +41,8 @@ export function useTransferenciasDeposito(filters?: {
   granjaId?: string;
   inscricaoOrigemId?: string;
   inscricaoDestinoId?: string;
+  dataInicial?: string;
+  dataFinal?: string;
 }) {
   return useQuery({
     queryKey: ['transferencias_deposito', filters],
@@ -59,7 +61,7 @@ export function useTransferenciasDeposito(filters?: {
           local_saida:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome, cidade, uf),
           local_entrada:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome, cidade, uf)
         `)
-        .order('codigo', { ascending: false });
+        .order('data_transferencia', { ascending: false });
 
       if (filters?.safraId) {
         query = query.eq('safra_id', filters.safraId);
@@ -78,6 +80,12 @@ export function useTransferenciasDeposito(filters?: {
       }
       if (filters?.inscricaoDestinoId) {
         query = query.eq('inscricao_destino_id', filters.inscricaoDestinoId);
+      }
+      if (filters?.dataInicial) {
+        query = query.gte('data_transferencia', filters.dataInicial);
+      }
+      if (filters?.dataFinal) {
+        query = query.lte('data_transferencia', filters.dataFinal);
       }
 
       const { data, error } = await query;
