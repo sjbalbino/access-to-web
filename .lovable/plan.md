@@ -1,30 +1,18 @@
 ## Objetivo
+No select de **Vendedor** da tela de Compra de Cereais, listar **todos os produtores ativos da granja selecionada**, mesmo que não tenham nenhuma movimentação (colheita, transferência ou devolução) na safra selecionada. O saldo exibido continua sendo o saldo real na safra (podendo ser 0 kg).
 
-Fazer com que a **Compra de Cereais** liste todos os produtores que tenham alguma movimentação na safra selecionada (colheita, transferência ou devolução), independentemente do saldo disponível — inclusive quando o saldo estiver zerado ou negativo.
-
-## Contexto
-
-O select de Vendedor em `src/components/compra/CompraDialog.tsx` usa o hook `useInscricoesComSaldo`. Hoje ele exclui buckets `(inscrição, local)` com `saldo <= 0` e também exclui inscrições cujo saldo agregado seja `<= 0`. Por isso GEDEON TRENHAGO, que está com saldo zero na safra TRIGO 2025 (Márcio Grings), não aparece.
+## Comportamento atual
+`useInscricoesComSaldo` só retorna inscrições que aparecem nos "buckets" de movimentação (colheitas + transferências + devoluções da safra). Produtores sem movimento naquela safra são omitidos.
 
 ## Mudanças
 
-Arquivo único: `src/hooks/useSaldosDeposito.ts`, dentro de `useInscricoesComSaldo`.
+### 1. `src/hooks/useSaldosDeposito.ts`
+Após montar os buckets, buscar **todas as inscrições de produtor** da granja (quando `granjaId` informado) ou do tenant, filtrando por `tipo_produtor = 'produtor'` e produtor ativo. Para cada inscrição que ainda não tem bucket, criar uma entrada com `total_depositado = 0` e `saldo = 0` — respeitando o local selecionado quando `localEntregaId` estiver preenchido (senão `local_entrega_id = null`).
 
-Remover os dois filtros de saldo:
+A regra de descarte por saldo continua condicionada ao flag `incluirSemSaldo` já existente — quando `true` (caso da CompraDialog), essas inscrições sem movimento passam.
 
-- Linha ~412: remover `if (b.saldo <= 0) return;`
-- Linhas ~413-415: remover o filtro por `saldoTotalPorInscricao <= 0`.
+### 2. `src/components/compra/CompraDialog.tsx`
+Nenhuma mudança na chamada (já passa `incluirSemSaldo: true`). O select passará a listar automaticamente todos os produtores da granja.
 
-Manter todos os demais filtros:
-
-- `tipoProdutor !== 'produtor'` continua excluindo sócios/terceiros.
-- `filters.granjaId` continua respeitado.
-- Ordenação alfabética preservada.
-
-## Efeito colateral
-
-Este hook também é usado em outras telas (Notas de Depósito, Devolução, etc.). Para não afetar aquelas — onde saldo positivo é obrigatório — o hook ganha um parâmetro opcional `incluirSemSaldo?: boolean` (default `false`, comportamento atual). A `CompraDialog` passa `incluirSemSaldo: true`.
-
-## Como o usuário verá
-
-Depois do ajuste, ao selecionar Safra "TRIGO 2025", produto "TRIGO INDUSTRIA" e local "Márcio Grings" na Compra de Cereais, GEDEON TRENHAGO aparecerá no select de Vendedor com **Saldo: 0 kg** (ou o valor negativo, quando for o caso). As demais telas (Notas de Depósito, Devolução) permanecem inalteradas.
+## Fora do escopo
+- Outras telas que usam `useInscricoesComSaldo` (Notas de Depósito, Devoluções, etc.) — como não passam `incluirSemSaldo: true`, continuam mostrando somente quem tem saldo > 0. Sem regressão.
