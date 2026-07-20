@@ -1068,7 +1068,7 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
                   </CardContent>
                 </Card>
               )}
-            </div>
+            </div></fieldset>
           )}
 
           <DialogFooter className="gap-2 sm:gap-0">
