@@ -209,60 +209,95 @@ export function useInscricoesComSaldo(filters: {
         return data || [];
       })();
 
-      const recebidasPromise = filters.produtoId
-        ? (async () => {
-            let q = supabase
-              .from('transferencias_deposito')
-              .select(`
-                inscricao_destino_id,
-                quantidade_kg,
-                local_entrada_id,
-                local_entrega:locais_entrega!transferencias_deposito_local_entrada_id_fkey(id, nome)
-              `)
-              .eq('safra_id', filters.safraId)
-              .in('produto_id', produtoIds || [filters.produtoId]);
-            if (localFilter) q = q.eq('local_entrada_id', localFilter);
-            const { data, error } = await q;
-            if (error) throw error;
-            return data || [];
-          })()
-        : Promise.resolve([]);
+      const recebidasPromise = (async () => {
+        let q = supabase
+          .from('transferencias_deposito')
+          .select(`
+            inscricao_destino_id,
+            quantidade_kg,
+            local_entrada_id,
+            local_entrega:locais_entrega!transferencias_deposito_local_entrada_id_fkey(id, nome)
+          `)
+          .eq('safra_id', filters.safraId);
+        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
+        if (localFilter) q = q.eq('local_entrada_id', localFilter);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+      })();
 
-      const enviadasPromise = filters.produtoId
-        ? (async () => {
-            let q = supabase
-              .from('transferencias_deposito')
-              .select('inscricao_origem_id, quantidade_kg, local_saida_id')
-              .eq('safra_id', filters.safraId)
-              .in('produto_id', produtoIds || [filters.produtoId]);
-            if (localFilter) q = q.eq('local_saida_id', localFilter);
-            const { data, error } = await q;
-            if (error) throw error;
-            return data || [];
-          })()
-        : Promise.resolve([]);
+      const enviadasPromise = (async () => {
+        let q = supabase
+          .from('transferencias_deposito')
+          .select('inscricao_origem_id, quantidade_kg, local_saida_id')
+          .eq('safra_id', filters.safraId);
+        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
+        if (localFilter) q = q.eq('local_saida_id', localFilter);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+      })();
 
-      const devolucoesPromise = filters.produtoId
-        ? (async () => {
-            let q = supabase
-              .from('devolucoes_deposito')
-              .select('inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem, local_entrega_id')
-              .eq('safra_id', filters.safraId)
-              .in('produto_id', produtoIds || [filters.produtoId])
-              .neq('status', 'cancelada');
-            if (localFilter) q = q.eq('local_entrega_id', localFilter);
-            const { data, error } = await q;
-            if (error) throw error;
-            return data || [];
-          })()
-        : Promise.resolve([]);
+      const devolucoesPromise = (async () => {
+        let q = supabase
+          .from('devolucoes_deposito')
+          .select('inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem, local_entrega_id')
+          .eq('safra_id', filters.safraId)
+          .neq('status', 'cancelada');
+        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
+        if (localFilter) q = q.eq('local_entrega_id', localFilter);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+      })();
 
-      const [colheitas, recebidas, enviadas, devolucoes] = await Promise.all([
+      // Notas de depósito emitidas: reduzem o saldo por inscrição (agregado,
+      // pois a tabela não guarda local_entrega_id).
+      const emitidasPromise = (async () => {
+        let q = supabase
+          .from('notas_deposito_emitidas')
+          .select('inscricao_produtor_id, quantidade_kg, nota_fiscal_id')
+          .eq('safra_id', filters.safraId);
+        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+      })();
+
+      const [colheitas, recebidas, enviadas, devolucoes, emitidas] = await Promise.all([
         colheitasPromise,
         recebidasPromise,
         enviadasPromise,
         devolucoesPromise,
+        emitidasPromise,
       ]);
+
+      // Excluir emissões cuja NF-e esteja cancelada
+      let emitidasValidas = emitidas as any[];
+      const nfIds = emitidasValidas.map((n) => n.nota_fiscal_id).filter(Boolean);
+      if (nfIds.length > 0) {
+        const { data: nfCanceladas } = await supabase
+          .from('notas_fiscais')
+          .select('id')
+          .in('id', nfIds)
+          .eq('status', 'cancelada');
+        const canceladasSet = new Set((nfCanceladas || []).map((n: any) => n.id));
+        if (canceladasSet.size > 0) {
+          emitidasValidas = emitidasValidas.filter(
+            (n) => !n.nota_fiscal_id || !canceladasSet.has(n.nota_fiscal_id)
+          );
+        }
+      }
+
+      // Total emitido por inscrição (usado para filtrar inscrições sem saldo global)
+      const emitidoPorInscricao = new Map<string, number>();
+      emitidasValidas.forEach((n: any) => {
+        if (!n.inscricao_produtor_id) return;
+        emitidoPorInscricao.set(
+          n.inscricao_produtor_id,
+          (emitidoPorInscricao.get(n.inscricao_produtor_id) || 0) + round(n.quantidade_kg)
+        );
+      });
 
       // Buckets: chave = `${inscId}_${localId}` → saldo consolidado.
       interface Bucket {
