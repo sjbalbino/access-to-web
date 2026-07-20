@@ -23,6 +23,7 @@ export interface DevolucaoDeposito {
   nfe_referenciada: string | null;
   status: string;
   observacao: string | null;
+  importado: boolean;
   created_at: string;
   updated_at: string;
   // Joins

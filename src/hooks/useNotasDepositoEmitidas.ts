@@ -12,6 +12,7 @@ export interface NotaDepositoEmitida {
   quantidade_kg: number;
   data_emissao: string | null;
   status: string | null;
+  importado: boolean;
   created_at: string;
   // Joins
   nota_fiscal?: { numero: number | null; serie: number | null; status: string | null } | null;
