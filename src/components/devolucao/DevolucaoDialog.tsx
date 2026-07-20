@@ -30,9 +30,10 @@ interface DevolucaoDialogProps {
     safraId: string;
     produtoId: string;
   };
+  readOnly?: boolean;
 }
 
-export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros }: DevolucaoDialogProps) {
+export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros, readOnly = false }: DevolucaoDialogProps) {
   // Campos do formulário - Granja removido, será obtido do Local de Entrega
   const [safraId, setSafraId] = useState('');
   const [produtoId, setProdutoId] = useState('');
@@ -321,9 +322,10 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Editar Devolução' : 'Nova Devolução de Depósito'}</DialogTitle>
+          <DialogTitle>{readOnly ? 'Visualizar Devolução (Importada)' : isEditing ? 'Editar Devolução' : 'Nova Devolução de Depósito'}</DialogTitle>
         </DialogHeader>
 
+        <fieldset disabled={readOnly} className="disabled:opacity-90">
         <div className="grid gap-4 py-4">
           {/* Seleção de Safra e Produto */}
           <div className="grid grid-cols-2 gap-4">
@@ -571,14 +573,17 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros 
             />
           </div>
         </div>
+        </fieldset>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+            {readOnly ? 'Fechar' : 'Cancelar'}
           </Button>
-          <Button onClick={handleSubmit} disabled={createDevolucao.isPending || updateDevolucao.isPending}>
-            {isEditing ? 'Salvar' : 'Registrar Devolução'}
-          </Button>
+          {!readOnly && (
+            <Button onClick={handleSubmit} disabled={createDevolucao.isPending || updateDevolucao.isPending}>
+              {isEditing ? 'Salvar' : 'Registrar Devolução'}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
