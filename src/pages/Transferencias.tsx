@@ -65,6 +65,8 @@ export default function Transferencias() {
     siloId: filtroSiloId || undefined,
     inscricaoOrigemId: filtroOrigemId || undefined,
     inscricaoDestinoId: filtroDestinoId || undefined,
+    dataInicial: filtroDataInicio || undefined,
+    dataFinal: filtroDataFim || undefined,
   });
 
   const deleteTransferencia = useDeleteTransferenciaDeposito();
@@ -116,7 +118,7 @@ export default function Transferencias() {
             <CardTitle className="text-base">Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
               <div className="space-y-2">
                 <Label>Produtor Origem</Label>
                 <ComboboxFilter
@@ -169,6 +171,24 @@ export default function Transferencias() {
                   options={silos.map(s => ({ value: s.id, label: s.nome }))}
                   searchPlaceholder="Buscar silo..."
                   emptyText="Nenhum silo encontrado."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Data Início</Label>
+                <Input
+                  type="date"
+                  value={filtroDataInicio}
+                  onChange={e => setFiltroDataInicio(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Data Fim</Label>
+                <Input
+                  type="date"
+                  value={filtroDataFim}
+                  onChange={e => setFiltroDataFim(e.target.value)}
                 />
               </div>
             </div>
