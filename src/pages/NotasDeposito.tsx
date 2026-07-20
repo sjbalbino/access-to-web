@@ -36,7 +36,7 @@ export default function NotasDeposito() {
   const navigate = useNavigate();
   
   // Filtros da listagem
-  const [granjaId, setGranjaId] = useState<string>("");
+  const [localEntregaId, setLocalEntregaId] = useState<string>("");
   const [safraId, setSafraId] = useState<string>("");
   const [produtoId, setProdutoId] = useState<string>("");
   const [inscricaoProdutorId, setInscricaoProdutorId] = useState<string>("");
@@ -50,8 +50,16 @@ export default function NotasDeposito() {
 
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
+  const { data: locaisEntrega = [] } = useLocaisEntrega();
   const { data: produtos = [] } = useProdutos();
   const { data: allInscricoes = [] } = useAllInscricoes();
+
+  // Local de entrega selecionado → granja derivada (para reaproveitar o
+  // filtro atual que é por granja_id na tabela de notas emitidas).
+  const granjaIdDoLocal = useMemo(() => {
+    if (!localEntregaId) return "";
+    return locaisEntrega.find((l) => l.id === localEntregaId)?.granja_id || "";
+  }, [locaisEntrega, localEntregaId]);
   
   // Opções de produtores para o filtro
   const produtorOptions = useMemo(() => {
