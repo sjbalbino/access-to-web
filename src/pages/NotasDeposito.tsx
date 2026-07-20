@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSafras } from "@/hooks/useSafras";
 import { useGranjas } from "@/hooks/useGranjas";
+import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useNotasDepositoEmitidas, useDeleteNotaDepositoEmitida } from "@/hooks/useNotasDepositoEmitidas";
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
@@ -35,7 +36,7 @@ export default function NotasDeposito() {
   const navigate = useNavigate();
   
   // Filtros da listagem
-  const [granjaId, setGranjaId] = useState<string>("");
+  const [localEntregaId, setLocalEntregaId] = useState<string>("");
   const [safraId, setSafraId] = useState<string>("");
   const [produtoId, setProdutoId] = useState<string>("");
   const [inscricaoProdutorId, setInscricaoProdutorId] = useState<string>("");
@@ -49,8 +50,16 @@ export default function NotasDeposito() {
 
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
+  const { data: locaisEntrega = [] } = useLocaisEntrega();
   const { data: produtos = [] } = useProdutos();
   const { data: allInscricoes = [] } = useAllInscricoes();
+
+  // Local de entrega selecionado → granja derivada (para reaproveitar o
+  // filtro atual que é por granja_id na tabela de notas emitidas).
+  const granjaIdDoLocal = useMemo(() => {
+    if (!localEntregaId) return "";
+    return locaisEntrega.find((l) => l.id === localEntregaId)?.granja_id || "";
+  }, [locaisEntrega, localEntregaId]);
   
   // Opções de produtores para o filtro
   const produtorOptions = useMemo(() => {
@@ -66,7 +75,7 @@ export default function NotasDeposito() {
   const { data: notasEmitidas = [], isLoading, refetch } = useNotasDepositoEmitidas({
     safraId: safraId || undefined,
     produtoId: produtoId || undefined,
-    granjaId: granjaId || undefined,
+    granjaId: granjaIdDoLocal || undefined,
     inscricaoProdutorId: inscricaoProdutorId || undefined,
   });
 
@@ -145,13 +154,15 @@ export default function NotasDeposito() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Granja</Label>
+                <Label>Local de Entrega</Label>
                 <ComboboxFilter
-                  value={granjaId}
-                  onValueChange={setGranjaId}
-                  options={granjas.map(g => ({ value: g.id, label: g.nome_fantasia || g.razao_social }))}
-                  searchPlaceholder="Buscar granja..."
-                  emptyText="Nenhuma granja encontrada."
+                  value={localEntregaId}
+                  onValueChange={setLocalEntregaId}
+                  options={locaisEntrega
+                    .filter((l) => l.ativo !== false)
+                    .map((l) => ({ value: l.id, label: `${l.nome}${l.is_sede ? " (Sede)" : ""}` }))}
+                  searchPlaceholder="Buscar local..."
+                  emptyText="Nenhum local encontrado."
                 />
               </div>
 

@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSafras } from "@/hooks/useSafras";
 import { useGranjas } from "@/hooks/useGranjas";
+import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useSaldosDeposito, useInscricoesComSaldo } from "@/hooks/useSaldosDeposito";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
@@ -62,7 +63,7 @@ interface NotaDepositoFormDialogProps {
 
 export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNotaId }: NotaDepositoFormDialogProps) {
   // Filtros
-  const [granjaId, setGranjaId] = useState<string>("");
+  const [localEntregaId, setLocalEntregaId] = useState<string>("");
   const [safraId, setSafraId] = useState<string>("");
   const [inscricaoId, setInscricaoId] = useState<string>("");
   
@@ -89,15 +90,24 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
+  const { data: locaisEntrega = [] } = useLocaisEntrega();
   const { data: produtos = [] } = useProdutosCereais();
   const { cfops } = useCfops();
   const { data: todasInscricoes = [] } = useInscricoesCompletas();
   const { data: municipios = [] } = useIbgeMunicipios();
 
+  // Local de entrega selecionado; a granja é derivada dele para permitir
+  // reaproveitar todo o pipeline de NFe (emitente, endereço etc.).
+  const localSelecionado = useMemo(
+    () => locaisEntrega.find((l) => l.id === localEntregaId) || null,
+    [locaisEntrega, localEntregaId]
+  );
+  const granjaId = localSelecionado?.granja_id || "";
+
   // Buscar inscrições com saldo disponível
   const { data: inscricoesComSaldo = [] } = useInscricoesComSaldo({
     safraId: safraId || undefined,
-    granjaId: granjaId || undefined,
+    localEntregaId: localEntregaId || undefined,
   });
 
   // Buscar saldos por produto para a inscrição selecionada
@@ -149,7 +159,8 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           .single();
         
         if (data) {
-          if (data.granja_id) setGranjaId(data.granja_id);
+          // granja é derivada do local selecionado; não precisamos setá-la
+          // diretamente aqui (o registro legado pode não ter local_entrega_id).
           if (data.safra_id) setSafraId(data.safra_id);
           if (data.inscricao_produtor_id) setInscricaoId(data.inscricao_produtor_id);
           if (data.produto_id) setProdutoId(data.produto_id);
@@ -186,7 +197,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
   };
 
   const resetForm = () => {
-    setGranjaId("");
+    setLocalEntregaId("");
     setSafraId("");
     setInscricaoId("");
     setProdutoId("");
@@ -620,17 +631,19 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Local (Granja) *</Label>
-                    <Select isSearchable value={granjaId} onValueChange={(v) => { setGranjaId(v); setInscricaoId(""); }}>
+                    <Label>Local de Entrega *</Label>
+                    <Select isSearchable value={localEntregaId} onValueChange={(v) => { setLocalEntregaId(v); setInscricaoId(""); }}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o local" />
+                        <SelectValue placeholder="Selecione o local de entrega" />
                       </SelectTrigger>
                       <SelectContent>
-                        {granjas.map((g) => (
-                          <SelectItem key={g.id} value={g.id}>
-                            {g.nome_fantasia || g.razao_social}
-                          </SelectItem>
-                        ))}
+                        {locaisEntrega
+                          .filter((l) => l.ativo !== false)
+                          .map((l) => (
+                            <SelectItem key={l.id} value={l.id}>
+                              {l.nome}{l.is_sede ? " (Sede)" : ""}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -656,10 +669,10 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                     <Select isSearchable 
                       value={inscricaoId} 
                       onValueChange={setInscricaoId}
-                      disabled={!granjaId || !safraId}
+                      disabled={!localEntregaId || !safraId}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={!granjaId || !safraId ? "Selecione local e safra" : "Selecione a inscrição"} />
+                        <SelectValue placeholder={!localEntregaId || !safraId ? "Selecione local e safra" : "Selecione a inscrição"} />
                       </SelectTrigger>
                       <SelectContent>
                         {inscricoesComSaldo.map((i) => (
