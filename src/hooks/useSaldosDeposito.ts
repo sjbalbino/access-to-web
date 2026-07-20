@@ -390,6 +390,18 @@ export function useInscricoesComSaldo(filters: {
         });
       }
 
+      // Saldo total por inscrição (soma de todos os locais - notas emitidas)
+      const saldoTotalPorInscricao = new Map<string, number>();
+      buckets.forEach((b) => {
+        saldoTotalPorInscricao.set(
+          b.inscId,
+          (saldoTotalPorInscricao.get(b.inscId) || 0) + b.saldo
+        );
+      });
+      emitidoPorInscricao.forEach((qtd, inscId) => {
+        saldoTotalPorInscricao.set(inscId, (saldoTotalPorInscricao.get(inscId) || 0) - qtd);
+      });
+
       const resultado: InscricaoComSaldoPorLocal[] = [];
       buckets.forEach((b) => {
         const meta = inscMeta.get(b.inscId);
@@ -398,6 +410,9 @@ export function useInscricoesComSaldo(filters: {
         if (tipoProdutor !== 'produtor') return;
         if (filters.granjaId && meta.granja_id !== filters.granjaId) return;
         if (b.saldo <= 0) return;
+        // Se o saldo agregado (todos os locais menos emissões) já é <= 0,
+        // não faz sentido oferecer esta inscrição para emissão de nova nota.
+        if ((saldoTotalPorInscricao.get(b.inscId) || 0) <= 0) return;
 
         resultado.push({
           id: b.inscId,
