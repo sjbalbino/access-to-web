@@ -351,8 +351,24 @@ export function useInscricoesComSaldo(filters: {
         b.saldo -= round(d.quantidade_kg) + round(d.kg_taxa_armazenagem);
       });
 
+      // Quando incluirSemSaldo estiver ligado, também trazemos inscrições da granja
+      // que não tenham nenhuma movimentação na safra — com saldo 0.
+      let inscIdsExtras: string[] = [];
+      if (filters.incluirSemSaldo && filters.granjaId) {
+        const { data: inscExtras } = await supabase
+          .from('inscricoes_produtor')
+          .select('id, produtor:produtores!inner(ativo, tipo_produtor)')
+          .eq('granja_id', filters.granjaId)
+          .eq('produtor.tipo_produtor', 'produtor')
+          .eq('produtor.ativo', true);
+        inscIdsExtras = (inscExtras || []).map((i: any) => i.id);
+      }
+
       // Buscar metadados das inscrições envolvidas.
-      const inscIds = Array.from(new Set(Array.from(buckets.values()).map((b) => b.inscId)));
+      const inscIds = Array.from(new Set([
+        ...Array.from(buckets.values()).map((b) => b.inscId),
+        ...inscIdsExtras,
+      ]));
       if (inscIds.length === 0) return [];
 
       const { data: inscricoesData, error: inscError } = await supabase
@@ -371,6 +387,15 @@ export function useInscricoesComSaldo(filters: {
 
       const inscMeta = new Map<string, any>();
       (inscricoesData || []).forEach((i: any) => inscMeta.set(i.id, i));
+
+      // Criar buckets vazios para inscrições extras que ainda não têm bucket.
+      inscIdsExtras.forEach((inscId) => {
+        const jaTemBucket = Array.from(buckets.values()).some((b) => b.inscId === inscId);
+        if (!jaTemBucket) {
+          const localId = filters.localEntregaId || null;
+          getBucket(inscId, localId, null);
+        }
+      });
 
       // Buscar nomes de locais que ainda não temos.
       const localIdsSemNome = Array.from(
