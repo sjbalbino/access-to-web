@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSafras } from "@/hooks/useSafras";
 import { useGranjas } from "@/hooks/useGranjas";
+import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useSaldosDeposito, useInscricoesComSaldo } from "@/hooks/useSaldosDeposito";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useIbgeMunicipios } from "@/hooks/useIbgeMunicipios";
