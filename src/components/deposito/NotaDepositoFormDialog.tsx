@@ -63,7 +63,7 @@ interface NotaDepositoFormDialogProps {
 
 export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNotaId }: NotaDepositoFormDialogProps) {
   // Filtros
-  const [granjaId, setGranjaId] = useState<string>("");
+  const [localEntregaId, setLocalEntregaId] = useState<string>("");
   const [safraId, setSafraId] = useState<string>("");
   const [inscricaoId, setInscricaoId] = useState<string>("");
   
@@ -90,15 +90,24 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
   const { data: safras = [] } = useSafras();
   const { data: granjas = [] } = useGranjas();
+  const { data: locaisEntrega = [] } = useLocaisEntrega();
   const { data: produtos = [] } = useProdutosCereais();
   const { cfops } = useCfops();
   const { data: todasInscricoes = [] } = useInscricoesCompletas();
   const { data: municipios = [] } = useIbgeMunicipios();
 
+  // Local de entrega selecionado; a granja é derivada dele para permitir
+  // reaproveitar todo o pipeline de NFe (emitente, endereço etc.).
+  const localSelecionado = useMemo(
+    () => locaisEntrega.find((l) => l.id === localEntregaId) || null,
+    [locaisEntrega, localEntregaId]
+  );
+  const granjaId = localSelecionado?.granja_id || "";
+
   // Buscar inscrições com saldo disponível
   const { data: inscricoesComSaldo = [] } = useInscricoesComSaldo({
     safraId: safraId || undefined,
-    granjaId: granjaId || undefined,
+    localEntregaId: localEntregaId || undefined,
   });
 
   // Buscar saldos por produto para a inscrição selecionada
