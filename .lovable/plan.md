@@ -1,43 +1,38 @@
-## Problema
+## Diagnóstico do caso LUIZ ANTONIO MARTINS DE SOUZA (SOJA 2025/2026)
 
-No diálogo de **Nova Devolução de Depósito**, o select "Produtor (Destinatário)" só lista inscrições que têm **colheitas** para a Safra + Produto — ignora transferências recebidas, enviadas e devoluções já feitas. Resultado: **ANTONIO FRANCISCO DA SILVA LIMA**, cujo saldo em SOJA 2025/2026 vem apenas de uma transferência recebida (300 kg), não aparece na lista.
+Consultei o banco e a movimentação do Luiz é:
 
-Confirmado no banco: ele não tem `colheitas` na safra atual, mas tem `transferencias_deposito` como destino.
+| Fonte | Kg |
+|---|---|
+| Colheitas | 0 |
+| Transferência recebida (cód. 1199, 27/04/2026) | +11.760 |
+| Transferências enviadas | 0 |
+| Devoluções | 0 |
+| **Notas de depósito emitidas (status "autorizado", 05/07/2026)** | **−11.760** |
+| **Saldo atual** | **0** |
 
-## Causa
+Respondendo à sua pergunta: **não**, os 11.760 kg **não** constam como "não emitidos" no nosso sistema — eles estão registrados em `notas_deposito_emitidas` com `status = 'autorizado'` (importados do legado). O que falta é apenas o vínculo com uma NF-e nossa (`nota_fiscal_id` está vazio), porque a NF-e foi emitida lá no legado. Do ponto de vista do saldo, o sistema já os considera como emitidos e por isso o saldo disponível é 0 — coerente com o legado.
 
-O hook `useInscricoesComSaldo` (em `src/hooks/useSaldosDeposito.ts`) monta a lista lendo apenas a tabela `colheitas`. Já existe a fórmula completa de saldo em `useSaldoDisponivelProdutor` (`src/hooks/useSaldoDisponivelProdutor.ts`):
+Portanto **não há divergência de saldo**: o Luiz recebeu 11.760 por transferência e essa mesma quantidade já foi baixada pela nota de depósito importada. Nenhum ajuste de cálculo é necessário.
 
-```
-Saldo = Colheitas + Transf.Recebidas − Transf.Enviadas − Devoluções
-```
+## O que vou implementar
 
-(A Taxa de Armazenagem e Notas de Depósito emitidas não entram, conforme já documentado no hook.)
+Apenas o ajuste de UX pedido: nas Notas de Depósito, trocar o campo/coluna **Local (Granja)** por **Local de Entrega**.
 
-## Correção
+### Alterações
 
-Reescrever `useInscricoesComSaldo` para usar a **mesma fórmula do Saldo Disponível do Produtor**, aplicada em lote a todas as inscrições da Safra/Produto:
+- **`src/components/notas-deposito/NotaDepositoFormDialog.tsx`**
+  - Substituir o Combobox de Granja pelo Combobox de **Local de Entrega** (usando `locais_entrega` da empresa, incluindo a Sede).
+  - Ao selecionar o destinatário (inscrição), listar apenas locais onde ele tem saldo > 0 e mostrar o saldo por local ao lado.
+  - Manter Granja apenas como referência interna (derivada do local, se necessário para persistência) — nenhum campo visível de granja.
 
-1. Buscar em paralelo, para a Safra + Produto (com equivalência via `resolveSaldoProdutoIds`) + Local (opcional):
-   - `colheitas` — soma `producao_liquida_kg` por `inscricao_produtor_id`.
-   - `transferencias_deposito` recebidas — soma `quantidade_kg` por `inscricao_destino_id`.
-   - `transferencias_deposito` enviadas — soma `quantidade_kg` por `inscricao_origem_id`.
-   - `devolucoes_deposito` com `status ≠ 'cancelada'` — soma `quantidade_kg` por `inscricao_produtor_id`.
-2. Consolidar num único `Map` por `(inscricao_produtor_id, local_entrega)`, calculando `saldo_disponivel = colheitas + recebidas − enviadas − devoluções`.
-3. Retornar apenas inscrições com `saldo_disponivel > 0` cujo produtor tenha `tipo_produtor = 'produtor'` (mantendo o filtro atual).
-4. Manter filtros opcionais existentes: `granjaId`, `localEntregaId`.
-5. Buscar metadados das inscrições que não vieram de `colheitas` (nome, IE, CPF, granja etc.) via um único `SELECT ... IN (ids)` em `inscricoes_produtor` — hoje esses metadados só aparecem quando há colheita.
+- **`src/pages/NotasDeposito.tsx`**
+  - Renomear coluna/filtro "Granja" para "Local de Entrega".
+  - Passar a exibir o nome do local de entrega vinculado ao registro (via `local_entrega_id` da NF-e associada, ou fallback pela granja quando o registro é legado sem local definido).
 
-## Detalhes técnicos
+- **`src/hooks/useSaldosDeposito.ts`**
+  - Ajustar `useInscricoesComSaldo` para agrupar saldo por `(inscricao, local_entrega)` em vez de `(inscricao, granja)`, usando a mesma fórmula já existente (colheitas + transferências recebidas − enviadas − devoluções − notas emitidas autorizadas).
+  - Registros legados sem local definido caem no **Local Sede** por padrão (mantendo a política já usada em relatórios).
 
-- Arquivo único a alterar: `src/hooks/useSaldosDeposito.ts`, função `useInscricoesComSaldo`.
-- `TransferenciaDialog` já usa o mesmo hook para o campo Origem — a mudança beneficia também as transferências (origem passa a listar quem tem saldo via recebimento).
-- Sem alteração de schema, sem migração.
-- O select do dialog já filtra `saldo_disponivel > 0`, então nenhum ajuste em `DevolucaoDialog.tsx` é necessário.
-
-## Validação
-
-- Selecionar Safra **SOJA 2025/2026** + Produto **Soja** → **ANTONIO FRANCISCO DA SILVA LIMA** deve aparecer com 300 kg.
-- Produtor que já devolveu tudo (saldo = 0) **não** deve aparecer.
-- Edição de devolução existente continua exibindo o produtor original (fallback já presente no dialog).
-- Tela de Transferência: Origem passa a listar produtores com saldo mesmo sem colheita própria.
+### Fora do escopo
+- Não vou alterar o cálculo de saldo nem ignorar as notas emitidas importadas do legado — elas continuam reduzindo o saldo, que é o comportamento correto conforme sua confirmação.
