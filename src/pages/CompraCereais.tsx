@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, Send } from 'lucide-react';
+import { Plus, Trash2, Edit, Send, Eye } from 'lucide-react';
 import { useComprasCereais, useDeleteCompraCereal, type CompraCereal } from '@/hooks/useComprasCereais';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
@@ -27,6 +27,7 @@ export default function CompraCereais() {
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [compraSelecionada, setCompraSelecionada] = useState<CompraCereal | null>(null);
+  const [dialogReadOnly, setDialogReadOnly] = useState(false);
   const [nfeDialogCompra, setNfeDialogCompra] = useState<CompraCereal | null>(null);
 
   const { data: granjas } = useGranjas();
@@ -38,11 +39,19 @@ export default function CompraCereais() {
 
   const handleNovaCompra = () => {
     setCompraSelecionada(null);
+    setDialogReadOnly(false);
     setDialogOpen(true);
   };
 
   const handleEditarCompra = (compra: CompraCereal) => {
     setCompraSelecionada(compra);
+    setDialogReadOnly(false);
+    setDialogOpen(true);
+  };
+
+  const handleVisualizarCompra = (compra: CompraCereal) => {
+    setCompraSelecionada(compra);
+    setDialogReadOnly(true);
     setDialogOpen(true);
   };
 
@@ -151,15 +160,23 @@ export default function CompraCereais() {
                       </TableCell>
                       <TableCell className="sticky right-0 bg-background">
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleEmitirNfe(c)} disabled={!!c.nota_fiscal_id} title={c.nota_fiscal_id ? 'NFe já emitida' : 'Emitir NFe'}>
-                            <Send className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleEditarCompra(c)} disabled={!!c.nota_fiscal_id}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteCompra.mutate(c.id)} disabled={!!c.nota_fiscal_id}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {c.importado ? (
+                            <Button variant="ghost" size="icon" onClick={() => handleVisualizarCompra(c)} title="Visualizar (importado do sistema legado)">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <>
+                              <Button variant="ghost" size="icon" onClick={() => handleEmitirNfe(c)} disabled={!!c.nota_fiscal_id} title={c.nota_fiscal_id ? 'NFe já emitida' : 'Emitir NFe'}>
+                                <Send className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleEditarCompra(c)} disabled={!!c.nota_fiscal_id}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => deleteCompra.mutate(c.id)} disabled={!!c.nota_fiscal_id}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -178,6 +195,7 @@ export default function CompraCereais() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           compra={compraSelecionada}
+          readOnly={dialogReadOnly}
         />
 
         {/* Dialog de Emissão de NFe */}

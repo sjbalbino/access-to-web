@@ -47,9 +47,10 @@ interface CompraDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   compra?: CompraCereal | null;
+  readOnly?: boolean;
 }
 
-export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) {
+export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: CompraDialogProps) {
   // Internal selection states
   const [granjaId, setGranjaId] = useState('');
   const [safraId, setSafraId] = useState('');
@@ -804,7 +805,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
 
           {/* Formulário principal - esconder durante emissão em progresso */}
           {(emissionStatus.step === "idle" || emissionStatus.step === "success" || emissionStatus.step === "error") && (
-            <div className="grid gap-4 py-4">
+            <fieldset disabled={readOnly} className="contents"><div className="grid gap-4 py-4">
               {/* Granja, Safra, Produto selection */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
@@ -1067,11 +1068,13 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
                   </CardContent>
                 </Card>
               )}
-            </div>
+            </div></fieldset>
           )}
 
           <DialogFooter className="gap-2 sm:gap-0">
-            {emissionStatus.step === "success" ? (
+            {readOnly ? (
+              <Button onClick={handleCloseDialog}>Fechar</Button>
+            ) : emissionStatus.step === "success" ? (
               <Button onClick={handleCloseDialog}>
                 Fechar
               </Button>
@@ -1117,6 +1120,7 @@ export function CompraDialog({ open, onOpenChange, compra }: CompraDialogProps) 
               </>
             )}
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
