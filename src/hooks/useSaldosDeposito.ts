@@ -171,10 +171,10 @@ export interface InscricaoComSaldoPorLocal {
   saldo_disponivel: number;
 }
 
-export function useInscricoesComSaldo(filters: { 
-  safraId?: string; 
+export function useInscricoesComSaldo(filters: {
+  safraId?: string;
   granjaId?: string;
-  produtoId?: string; 
+  produtoId?: string;
   localEntregaId?: string;
 }) {
   return useQuery({
@@ -183,129 +183,207 @@ export function useInscricoesComSaldo(filters: {
       if (!filters.safraId) return [];
 
       const produtoIds = filters.produtoId ? await resolveSaldoProdutoIds(filters.produtoId) : null;
+      const localFilter = filters.localEntregaId || null;
 
-      let colheitasQuery = supabase
-        .from('colheitas')
-        .select(`
-          inscricao_produtor_id,
-          producao_liquida_kg,
-          variedade_id,
-          local_entrega_terceiro_id,
-          local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(id, nome),
-          inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
-            id,
-            inscricao_estadual,
-            cpf_cnpj,
-            nome_fantasia,
-            granja,
-            granja_id,
-            produtores(nome, tipo_produtor)
-          )
-        `)
-        .eq('safra_id', filters.safraId)
-        .not('inscricao_produtor_id', 'is', null);
+      const round = (v: any) => Math.round(Number(v) || 0);
+      const localKey = (id: string | null | undefined) => id || 'sem_local';
 
-      if (produtoIds?.length) colheitasQuery = colheitasQuery.in('variedade_id', produtoIds);
-      if (filters.localEntregaId) colheitasQuery = colheitasQuery.eq('local_entrega_terceiro_id', filters.localEntregaId);
-
-      const { data: colheitas, error } = await colheitasQuery;
-      if (error) throw error;
-
-      const inscricaoMap = new Map<string, InscricaoComSaldoPorLocal>();
-
-      colheitas?.forEach((c: any) => {
-        const inscId = c.inscricao_produtor_id;
-        const localId = c.local_entrega_terceiro_id;
-        if (!inscId || !c.inscricao_produtor) return;
-
-        const tipoProdutor = c.inscricao_produtor.produtores?.tipo_produtor;
-        if (tipoProdutor !== 'produtor') return;
-        if (filters.granjaId && c.inscricao_produtor.granja_id !== filters.granjaId) return;
-
-        const key = `${inscId}_${localId || 'sem_local'}`;
-        const existing = inscricaoMap.get(key);
-        if (existing) {
-        existing.total_depositado += Math.round(Number(c.producao_liquida_kg) || 0);
-          existing.saldo_disponivel += Math.round(Number(c.producao_liquida_kg) || 0);
-        } else {
-          inscricaoMap.set(key, {
-            id: inscId,
-            inscricao_estadual: c.inscricao_produtor.inscricao_estadual,
-            cpf_cnpj: c.inscricao_produtor.cpf_cnpj,
-            nome_fantasia: c.inscricao_produtor.nome_fantasia || null,
-            granja: c.inscricao_produtor.granja,
-            granja_id: c.inscricao_produtor.granja_id,
-            produtor_nome: c.inscricao_produtor.produtores?.nome || null,
-            local_entrega_id: localId,
-            local_entrega_nome: c.local_entrega?.nome || null,
-            total_depositado: Math.round(Number(c.producao_liquida_kg) || 0),
-            saldo_disponivel: Math.round(Number(c.producao_liquida_kg) || 0),
-          });
-        }
-      });
-
-      const sortByProdutor = (arr: InscricaoComSaldoPorLocal[]) =>
-        arr.sort((a, b) => {
-          const na = (a.produtor_nome || a.nome_fantasia || a.inscricao_estadual || '').toString();
-          const nb = (b.produtor_nome || b.nome_fantasia || b.inscricao_estadual || '').toString();
-          return na.localeCompare(nb, 'pt-BR', { sensitivity: 'base' });
-        });
-
-      if (!filters.produtoId) {
-        return sortByProdutor(Array.from(inscricaoMap.values()).filter(i => i.total_depositado > 0));
-      }
-
-      const [recebidasRes, enviadasRes, devolucoesRes] = await Promise.all([
-        supabase
-          .from('transferencias_deposito')
-          .select('inscricao_destino_id, quantidade_kg, local_entrada_id')
+      // Buscas em paralelo (colheitas + transferências recebidas/enviadas + devoluções).
+      // Cada fonte contribui para o saldo por (inscrição, local).
+      const colheitasPromise = (async () => {
+        let q = supabase
+          .from('colheitas')
+          .select(`
+            inscricao_produtor_id,
+            producao_liquida_kg,
+            variedade_id,
+            local_entrega_terceiro_id,
+            local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(id, nome)
+          `)
           .eq('safra_id', filters.safraId)
-          .in('produto_id', produtoIds || [filters.produtoId])
-          .then((r) => r),
-        supabase
-          .from('transferencias_deposito')
-          .select('inscricao_origem_id, quantidade_kg, local_saida_id')
-          .eq('safra_id', filters.safraId)
-          .in('produto_id', produtoIds || [filters.produtoId])
-          .then((r) => r),
-        supabase
-          .from('devolucoes_deposito')
-          .select('inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem, local_entrega_id')
-          .eq('safra_id', filters.safraId)
-          .in('produto_id', produtoIds || [filters.produtoId])
-          .neq('status', 'cancelada')
-          .then((r) => r),
+          .not('inscricao_produtor_id', 'is', null);
+        if (produtoIds?.length) q = q.in('variedade_id', produtoIds);
+        if (localFilter) q = q.eq('local_entrega_terceiro_id', localFilter);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+      })();
+
+      const recebidasPromise = filters.produtoId
+        ? (async () => {
+            let q = supabase
+              .from('transferencias_deposito')
+              .select(`
+                inscricao_destino_id,
+                quantidade_kg,
+                local_entrada_id,
+                local_entrega:locais_entrega!transferencias_deposito_local_entrada_id_fkey(id, nome)
+              `)
+              .eq('safra_id', filters.safraId)
+              .in('produto_id', produtoIds || [filters.produtoId]);
+            if (localFilter) q = q.eq('local_entrada_id', localFilter);
+            const { data, error } = await q;
+            if (error) throw error;
+            return data || [];
+          })()
+        : Promise.resolve([]);
+
+      const enviadasPromise = filters.produtoId
+        ? (async () => {
+            let q = supabase
+              .from('transferencias_deposito')
+              .select('inscricao_origem_id, quantidade_kg, local_saida_id')
+              .eq('safra_id', filters.safraId)
+              .in('produto_id', produtoIds || [filters.produtoId]);
+            if (localFilter) q = q.eq('local_saida_id', localFilter);
+            const { data, error } = await q;
+            if (error) throw error;
+            return data || [];
+          })()
+        : Promise.resolve([]);
+
+      const devolucoesPromise = filters.produtoId
+        ? (async () => {
+            let q = supabase
+              .from('devolucoes_deposito')
+              .select('inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem, local_entrega_id')
+              .eq('safra_id', filters.safraId)
+              .in('produto_id', produtoIds || [filters.produtoId])
+              .neq('status', 'cancelada');
+            if (localFilter) q = q.eq('local_entrega_id', localFilter);
+            const { data, error } = await q;
+            if (error) throw error;
+            return data || [];
+          })()
+        : Promise.resolve([]);
+
+      const [colheitas, recebidas, enviadas, devolucoes] = await Promise.all([
+        colheitasPromise,
+        recebidasPromise,
+        enviadasPromise,
+        devolucoesPromise,
       ]);
 
-      if (recebidasRes.error) throw recebidasRes.error;
-      if (enviadasRes.error) throw enviadasRes.error;
-      if (devolucoesRes.error) throw devolucoesRes.error;
+      // Buckets: chave = `${inscId}_${localId}` → saldo consolidado.
+      interface Bucket {
+        inscId: string;
+        localId: string | null;
+        localNome: string | null;
+        total_depositado: number;
+        saldo: number;
+      }
+      const buckets = new Map<string, Bucket>();
 
-      (recebidasRes.data || []).forEach((t: any) => {
-        const key = `${t.inscricao_destino_id}_${t.local_entrada_id || 'sem_local'}`;
-        const existing = inscricaoMap.get(key);
-        if (existing) existing.saldo_disponivel += Math.round(Number(t.quantidade_kg) || 0);
-      });
-
-      (enviadasRes.data || []).forEach((t: any) => {
-        const key = `${t.inscricao_origem_id}_${t.local_saida_id || 'sem_local'}`;
-        const existing = inscricaoMap.get(key);
-        if (existing) existing.saldo_disponivel -= Math.round(Number(t.quantidade_kg) || 0);
-      });
-
-      (devolucoesRes.data || []).forEach((d: any) => {
-        const key = `${d.inscricao_produtor_id}_${d.local_entrega_id || 'sem_local'}`;
-        const existing = inscricaoMap.get(key);
-        if (existing) {
-          existing.saldo_disponivel -= Math.round(Number(d.quantidade_kg) || 0) + Math.round(Number(d.kg_taxa_armazenagem) || 0);
+      const getBucket = (inscId: string, localId: string | null, localNome: string | null) => {
+        const key = `${inscId}_${localKey(localId)}`;
+        let b = buckets.get(key);
+        if (!b) {
+          b = { inscId, localId, localNome, total_depositado: 0, saldo: 0 };
+          buckets.set(key, b);
+        } else if (!b.localNome && localNome) {
+          b.localNome = localNome;
         }
+        return b;
+      };
+
+      colheitas.forEach((c: any) => {
+        if (!c.inscricao_produtor_id) return;
+        const kg = round(c.producao_liquida_kg);
+        const b = getBucket(c.inscricao_produtor_id, c.local_entrega_terceiro_id, c.local_entrega?.nome || null);
+        b.total_depositado += kg;
+        b.saldo += kg;
       });
 
-      // Notas de Depósito emitidas NÃO entram no saldo disponível do produtor.
-      // Elas são controle paralelo (saldo a emitir) — vide useSaldosDeposito.
+      recebidas.forEach((t: any) => {
+        if (!t.inscricao_destino_id) return;
+        const b = getBucket(t.inscricao_destino_id, t.local_entrada_id, t.local_entrega?.nome || null);
+        b.saldo += round(t.quantidade_kg);
+      });
 
+      enviadas.forEach((t: any) => {
+        if (!t.inscricao_origem_id) return;
+        const b = getBucket(t.inscricao_origem_id, t.local_saida_id, null);
+        b.saldo -= round(t.quantidade_kg);
+      });
 
-      return sortByProdutor(Array.from(inscricaoMap.values()).filter(i => i.saldo_disponivel > 0));
+      devolucoes.forEach((d: any) => {
+        if (!d.inscricao_produtor_id) return;
+        const b = getBucket(d.inscricao_produtor_id, d.local_entrega_id, null);
+        // Taxa de armazenagem também sai do estoque do produtor (conforme
+        // fórmula de useSaldoDisponivelProdutor: kg_taxa é crédito do sócio,
+        // portanto reduz o disponível do produtor).
+        b.saldo -= round(d.quantidade_kg) + round(d.kg_taxa_armazenagem);
+      });
+
+      // Buscar metadados das inscrições envolvidas.
+      const inscIds = Array.from(new Set(Array.from(buckets.values()).map((b) => b.inscId)));
+      if (inscIds.length === 0) return [];
+
+      const { data: inscricoesData, error: inscError } = await supabase
+        .from('inscricoes_produtor')
+        .select(`
+          id,
+          inscricao_estadual,
+          cpf_cnpj,
+          nome_fantasia,
+          granja,
+          granja_id,
+          produtores(nome, tipo_produtor)
+        `)
+        .in('id', inscIds);
+      if (inscError) throw inscError;
+
+      const inscMeta = new Map<string, any>();
+      (inscricoesData || []).forEach((i: any) => inscMeta.set(i.id, i));
+
+      // Buscar nomes de locais que ainda não temos.
+      const localIdsSemNome = Array.from(
+        new Set(
+          Array.from(buckets.values())
+            .filter((b) => b.localId && !b.localNome)
+            .map((b) => b.localId as string)
+        )
+      );
+      if (localIdsSemNome.length > 0) {
+        const { data: locaisData } = await supabase
+          .from('locais_entrega')
+          .select('id, nome')
+          .in('id', localIdsSemNome);
+        const locaisMap = new Map<string, string>((locaisData || []).map((l: any) => [l.id, l.nome]));
+        buckets.forEach((b) => {
+          if (b.localId && !b.localNome) b.localNome = locaisMap.get(b.localId) || null;
+        });
+      }
+
+      const resultado: InscricaoComSaldoPorLocal[] = [];
+      buckets.forEach((b) => {
+        const meta = inscMeta.get(b.inscId);
+        if (!meta) return;
+        const tipoProdutor = meta.produtores?.tipo_produtor;
+        if (tipoProdutor !== 'produtor') return;
+        if (filters.granjaId && meta.granja_id !== filters.granjaId) return;
+        if (b.saldo <= 0) return;
+
+        resultado.push({
+          id: b.inscId,
+          inscricao_estadual: meta.inscricao_estadual,
+          cpf_cnpj: meta.cpf_cnpj,
+          nome_fantasia: meta.nome_fantasia || null,
+          granja: meta.granja,
+          granja_id: meta.granja_id,
+          produtor_nome: meta.produtores?.nome || null,
+          local_entrega_id: b.localId,
+          local_entrega_nome: b.localNome,
+          total_depositado: b.total_depositado,
+          saldo_disponivel: b.saldo,
+        });
+      });
+
+      return resultado.sort((a, b) => {
+        const na = (a.produtor_nome || a.nome_fantasia || a.inscricao_estadual || '').toString();
+        const nb = (b.produtor_nome || b.nome_fantasia || b.inscricao_estadual || '').toString();
+        return na.localeCompare(nb, 'pt-BR', { sensitivity: 'base' });
+      });
     },
     enabled: !!filters.safraId,
   });
