@@ -397,7 +397,13 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           cst_icms: cfop1905.cst_icms_padrao || '41',
           cst_pis: cfop1905.cst_pis_padrao || '08',
           cst_cofins: cfop1905.cst_cofins_padrao || '08',
+          cst_ibs: cstIbsResolved,
+          cst_cbs: cstCbsResolved,
+          cst_is: cstIsResolved,
+          cclass_trib_ibs: cclassTribIbsResolved,
+          cclass_trib_cbs: cclassTribCbsResolved,
         });
+
 
       if (itemError) throw itemError;
 
