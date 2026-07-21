@@ -1,6 +1,7 @@
 import type jsPDF from "jspdf";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { nowDateTimeSP } from "./datetime";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PdfBrand {
