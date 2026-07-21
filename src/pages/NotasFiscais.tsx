@@ -542,7 +542,7 @@ export default function NotasFiscais() {
                   <TableRow key={nota.id}>
                     <TableCell className="font-mono">{nota.numero || "-"}</TableCell>
                     <TableCell className="font-mono hidden md:table-cell">{nota.serie || "-"}</TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm">
+                    <TableCell className="text-sm">
                       <div className="truncate max-w-[180px]" title={nota.emitente?.inscricao?.nome || "-"}>
                         {nota.emitente?.inscricao?.nome || "-"}
                       </div>
@@ -556,7 +556,7 @@ export default function NotasFiscais() {
                     </TableCell>
 
                     <TableCell className="truncate max-w-[150px] hidden lg:table-cell">{nota.natureza_operacao}</TableCell>
-                    <TableCell className="hidden sm:table-cell">
+                    <TableCell>
                       {nota.data_emissao ? format(new Date(nota.data_emissao.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                     </TableCell>
                     <TableCell className="text-right font-medium hidden sm:table-cell">{formatCurrency(nota.total_nota)}</TableCell>
