@@ -579,7 +579,7 @@ export default function NotasFiscais() {
                           (nota.status === "cancelado" || nota.status === "cancelada")
                             ? `Cancelada por ${(nota as any).cancelado_por_nome || "—"} em ${
                                 (nota as any).cancelado_em
-                                  ? format(new Date((nota as any).cancelado_em), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                                  ? formatDateTimeSP((nota as any).cancelado_em)
                                   : "—"
                               }\nMotivo: ${(nota as any).cancelado_motivo || nota.motivo_status || "—"}`
                             : undefined
@@ -592,7 +592,7 @@ export default function NotasFiscais() {
                           <div>
                             Por <span className="font-medium">{(nota as any).cancelado_por_nome || "—"}</span>
                             {(nota as any).cancelado_em && (
-                              <> em {format(new Date((nota as any).cancelado_em), "dd/MM/yy HH:mm", { locale: ptBR })}</>
+                              <> em {formatSP((nota as any).cancelado_em, "dd/MM/yy HH:mm")}</>
                             )}
                           </div>
                           {((nota as any).cancelado_motivo || nota.motivo_status) && (
