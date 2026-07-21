@@ -23,6 +23,8 @@ export default function CompraCereais() {
   const [granjaId, setGranjaId] = useState<string>('');
   const [safraId, setSafraId] = useState<string>('');
   const [produtoId, setProdutoId] = useState<string>('');
+  const [dataInicial, setDataInicial] = useState<string>('');
+  const [dataFinal, setDataFinal] = useState<string>('');
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,7 +36,7 @@ export default function CompraCereais() {
   const { data: safras } = useSafras();
   const { data: produtos } = useProdutosSementes();
   
-  const { data: compras, isLoading, refetch } = useComprasCereais({ granjaId, safraId, produtoId });
+  const { data: compras, isLoading, refetch } = useComprasCereais({ granjaId, safraId, produtoId, dataInicial: dataInicial || undefined, dataFinal: dataFinal || undefined });
   const deleteCompra = useDeleteCompraCereal();
 
   const handleNovaCompra = () => {
