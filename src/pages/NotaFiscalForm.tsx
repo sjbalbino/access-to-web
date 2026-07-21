@@ -63,7 +63,7 @@ import { cn } from "@/lib/utils";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { calculateTaxes, type TaxCalculatorInput } from "@/lib/taxCalculator";
 import { getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
-import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
+import { CST_IBS_CBS, CST_IS, cstIbsCbsTemTributacao } from "@/lib/cstReformaTributaria";
 import { CST_PIS_COFINS, CST_IPI, getCstIcmsOptions } from "@/lib/cstTabelas";
 import { useNotasFiscaisDuplicatas } from "@/hooks/useNotasFiscaisDuplicatas";
 import { useNotasReferenciadas, useCreateNotaReferenciada, useDeleteNotaReferenciada, useUpdateNotaReferenciada } from "@/hooks/useNotasReferenciadas";
@@ -1222,9 +1222,13 @@ export default function NotaFiscalForm() {
     const pisTributa = CST_PIS_COFINS_TRIBUTADOS.includes(itemFormData.cst_pis || "");
     const cofinsTributa = CST_PIS_COFINS_TRIBUTADOS.includes(itemFormData.cst_cofins || "");
     const icmsTributa = CST_ICMS_TRIBUTADOS.includes(itemFormData.cst_icms || "");
+    const ibsTributa = cstIbsCbsTemTributacao(itemFormData.cst_ibs);
+    const cbsTributa = cstIbsCbsTemTributacao(itemFormData.cst_cbs);
     const aliqPisFinal = pisTributa ? (itemFormData.aliq_pis ?? 0) : 0;
     const aliqCofinsFinal = cofinsTributa ? (itemFormData.aliq_cofins ?? 0) : 0;
     const aliqIcmsFinal = icmsTributa ? (itemFormData.aliq_icms ?? 0) : 0;
+    const aliqIbsFinal = ibsTributa ? (itemFormData.aliq_ibs ?? 0) : 0;
+    const aliqCbsFinal = cbsTributa ? (itemFormData.aliq_cbs ?? 0) : 0;
     const itemData = {
       nota_fiscal_id: id,
       numero_item: selectedItem ? selectedItem.numero_item : itens.length + 1,
@@ -1253,19 +1257,19 @@ export default function NotaFiscalForm() {
       valor_cofins: Number((base * (aliqCofinsFinal / 100)).toFixed(2)),
       // Reforma Tributária (IBS, CBS, IS)
       cst_ibs: itemFormData.cst_ibs || null,
-      base_ibs: base,
-      aliq_ibs: itemFormData.aliq_ibs ?? 0,
-      valor_ibs: Number((base * ((itemFormData.aliq_ibs ?? 0) / 100)).toFixed(2)),
+      base_ibs: ibsTributa ? base : 0,
+      aliq_ibs: aliqIbsFinal,
+      valor_ibs: Number((base * (aliqIbsFinal / 100)).toFixed(2)),
       cst_cbs: itemFormData.cst_cbs || null,
-      base_cbs: base,
-      aliq_cbs: itemFormData.aliq_cbs ?? 0,
-      valor_cbs: Number((base * ((itemFormData.aliq_cbs ?? 0) / 100)).toFixed(2)),
+      base_cbs: cbsTributa ? base : 0,
+      aliq_cbs: aliqCbsFinal,
+      valor_cbs: Number((base * (aliqCbsFinal / 100)).toFixed(2)),
       cst_is: itemFormData.cst_is || null,
       base_is: base,
       aliq_is: itemFormData.aliq_is ?? 0,
       valor_is: Number((base * ((itemFormData.aliq_is ?? 0) / 100)).toFixed(2)),
-      cclass_trib_ibs: itemFormData.cclass_trib_ibs || null,
-      cclass_trib_cbs: itemFormData.cclass_trib_cbs || null,
+      cclass_trib_ibs: ibsTributa ? (itemFormData.cclass_trib_ibs || null) : null,
+      cclass_trib_cbs: cbsTributa ? (itemFormData.cclass_trib_cbs || null) : null,
     } as any;
 
     if (selectedItem) {
@@ -1326,6 +1330,8 @@ export default function NotaFiscalForm() {
       produtoCstIbs: produto?.cst_ibs || null,
       produtoCstCbs: produto?.cst_cbs || null,
       produtoCstIs: produto?.cst_is || null,
+      produtoAliqIbs: produto?.aliquota_ibs || null,
+      produtoAliqCbs: produto?.aliquota_cbs || null,
       produtoCclassTribIbs: produto?.cclass_trib_ibs || null,
       produtoCclassTribCbs: produto?.cclass_trib_cbs || null,
       ufDestinatario: formData.dest_uf || "SP",
