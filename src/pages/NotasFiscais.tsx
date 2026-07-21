@@ -31,7 +31,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban, RefreshCw, Send, AlertCircle, Copy, FileSearch } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban, RefreshCw, Send, AlertCircle, Copy, FileSearch, ChevronDown, ChevronUp, ChevronsDown, ChevronsUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
@@ -166,6 +166,24 @@ export default function NotasFiscais() {
   const [inutForm, setInutForm] = useState({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
   const [motivoDialog, setMotivoDialog] = useState<{ open: boolean; titulo: string; mensagem: string }>({ open: false, titulo: "", mensagem: "" });
   const [danfePreview, setDanfePreview] = useState<{ open: boolean; downloadUrl: string | null; pdfData: Uint8Array | null; filename: string; titulo: string; loading: boolean }>({ open: false, downloadUrl: null, pdfData: null, filename: "danfe.pdf", titulo: "", loading: false });
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (emitenteId: string | null) => {
+    const key = emitenteId ?? "__none__";
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const expandAllGroups = () => setCollapsedGroups(new Set());
+  const collapseAllGroups = () => {
+    const keys = new Set<string>();
+    dadosPaginados.forEach((n) => keys.add(n.emitente_id ?? "__none__"));
+    setCollapsedGroups(keys);
+  };
 
   const handleVisualizarDanfe = async (nota: any) => {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
@@ -526,8 +544,20 @@ export default function NotasFiscais() {
           )}
         </div>
 
-        <div className="text-sm text-muted-foreground">
-          {filteredNotas.length} nota(s) encontrada(s)
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="text-sm text-muted-foreground">
+            {filteredNotas.length} nota(s) encontrada(s)
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={expandAllGroups}>
+              <ChevronsDown className="h-4 w-4 mr-1" />
+              Expandir todos
+            </Button>
+            <Button variant="outline" size="sm" onClick={collapseAllGroups}>
+              <ChevronsUp className="h-4 w-4 mr-1" />
+              Recolher todos
+            </Button>
+          </div>
         </div>
 
         <div className="border rounded-lg overflow-hidden">
@@ -558,6 +588,8 @@ export default function NotasFiscais() {
 
                   dadosPaginados.forEach((nota) => {
                     const emitId = nota.emitente_id ?? null;
+                    const groupKey = emitId ?? "__none__";
+                    const isCollapsed = collapsedGroups.has(groupKey);
                     if (emitId !== lastEmitenteId) {
                       lastEmitenteId = emitId;
                       const grupo = groupNotas(emitId);
@@ -568,9 +600,21 @@ export default function NotasFiscais() {
                         <TableRow key={`grp-${emitId ?? "none"}`} className="bg-muted/60 hover:bg-muted/60">
                           <TableCell colSpan={totalCols} className="py-2">
                             <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                              <div className="font-semibold uppercase">
-                                {nomeEmit}
-                                <span className="ml-2 text-xs font-normal text-muted-foreground font-mono">IE: {ieEmit}</span>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => toggleGroup(emitId)}
+                                  title={isCollapsed ? "Expandir grupo" : "Recolher grupo"}
+                                  aria-label={isCollapsed ? "Expandir grupo" : "Recolher grupo"}
+                                >
+                                  {isCollapsed ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                </Button>
+                                <div className="font-semibold uppercase">
+                                  {nomeEmit}
+                                  <span className="ml-2 text-xs font-normal text-muted-foreground font-mono">IE: {ieEmit}</span>
+                                </div>
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 {grupo.length} nota(s) — Total: <span className="font-semibold text-foreground">{fmtBRL(totalGrupo)}</span>
@@ -580,129 +624,131 @@ export default function NotasFiscais() {
                         </TableRow>
                       );
                     }
-                    rows.push(
-                      <TableRow key={nota.id}>
-                        <TableCell className="font-mono">{nota.numero || "-"}</TableCell>
-                        <TableCell className="font-mono hidden md:table-cell">{nota.serie || "-"}</TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium truncate max-w-[150px]">{nota.dest_nome || "-"}</div>
-                            <div className="text-xs text-muted-foreground font-mono hidden sm:block">{formatCpfCnpj(nota.dest_cpf_cnpj) || "-"}</div>
-                          </div>
-                        </TableCell>
+                    if (!isCollapsed) {
+                      rows.push(
+                        <TableRow key={nota.id}>
+                          <TableCell className="font-mono">{nota.numero || "-"}</TableCell>
+                          <TableCell className="font-mono hidden md:table-cell">{nota.serie || "-"}</TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium truncate max-w-[150px]">{nota.dest_nome || "-"}</div>
+                              <div className="text-xs text-muted-foreground font-mono hidden sm:block">{formatCpfCnpj(nota.dest_cpf_cnpj) || "-"}</div>
+                            </div>
+                          </TableCell>
 
-                        <TableCell className="truncate max-w-[150px] hidden lg:table-cell">{nota.natureza_operacao}</TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {formatDataEmissao(nota.data_emissao, (nota as any).created_at)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium hidden sm:table-cell">{formatCurrency(nota.total_nota)}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={getStatusBadgeVariant(nota.status)}
-                            title={
-                              (nota.status === "cancelado" || nota.status === "cancelada")
-                                ? `Cancelada por ${(nota as any).cancelado_por_nome || "—"} em ${
-                                    (nota as any).cancelado_em
-                                      ? formatDateTimeSP((nota as any).cancelado_em)
-                                      : "—"
-                                  }\nMotivo: ${(nota as any).cancelado_motivo || nota.motivo_status || "—"}`
-                                : undefined
-                            }
-                          >
-                            {getStatusLabel(nota.status)}
-                          </Badge>
-                          {(nota.status === "cancelado" || nota.status === "cancelada") && ((nota as any).cancelado_por_nome || (nota as any).cancelado_em) && (
-                            <div className="mt-1 text-[10px] leading-tight text-muted-foreground max-w-[220px]">
-                              <div>
-                                Por <span className="font-medium">{(nota as any).cancelado_por_nome || "—"}</span>
-                                {(nota as any).cancelado_em && (
-                                  <> em {formatSP((nota as any).cancelado_em, "dd/MM/yy HH:mm")}</>
+                          <TableCell className="truncate max-w-[150px] hidden lg:table-cell">{nota.natureza_operacao}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {formatDataEmissao(nota.data_emissao, (nota as any).created_at)}
+                          </TableCell>
+                          <TableCell className="text-right font-medium hidden sm:table-cell">{formatCurrency(nota.total_nota)}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={getStatusBadgeVariant(nota.status)}
+                              title={
+                                (nota.status === "cancelado" || nota.status === "cancelada")
+                                  ? `Cancelada por ${(nota as any).cancelado_por_nome || "—"} em ${
+                                      (nota as any).cancelado_em
+                                        ? formatDateTimeSP((nota as any).cancelado_em)
+                                        : "—"
+                                    }\nMotivo: ${(nota as any).cancelado_motivo || nota.motivo_status || "—"}`
+                                  : undefined
+                              }
+                            >
+                              {getStatusLabel(nota.status)}
+                            </Badge>
+                            {(nota.status === "cancelado" || nota.status === "cancelada") && ((nota as any).cancelado_por_nome || (nota as any).cancelado_em) && (
+                              <div className="mt-1 text-[10px] leading-tight text-muted-foreground max-w-[220px]">
+                                <div>
+                                  Por <span className="font-medium">{(nota as any).cancelado_por_nome || "—"}</span>
+                                  {(nota as any).cancelado_em && (
+                                    <> em {formatSP((nota as any).cancelado_em, "dd/MM/yy HH:mm")}</>
+                                  )}
+                                </div>
+                                {((nota as any).cancelado_motivo || nota.motivo_status) && (
+                                  <div className="truncate" title={(nota as any).cancelado_motivo || nota.motivo_status}>
+                                    Motivo: {(nota as any).cancelado_motivo || nota.motivo_status}
+                                  </div>
                                 )}
                               </div>
-                              {((nota as any).cancelado_motivo || nota.motivo_status) && (
-                                <div className="truncate" title={(nota as any).cancelado_motivo || nota.motivo_status}>
-                                  Motivo: {(nota as any).cancelado_motivo || nota.motivo_status}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </TableCell>
-                        {canEdit && (
-                          <TableCell className="sticky right-0 bg-background">
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Visualizar/Editar" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDuplicar(nota)} title="Duplicar NF-e (nova cópia como rascunho)" className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-950">
-                                <Copy className="h-4 w-4" />
-                              </Button>
-                              {(nota.status === "autorizado" || nota.status === "autorizada") && (
-                                <>
-                                  <Button variant="ghost" size="icon" onClick={() => handleVisualizarDanfe(nota)} title="Visualizar DANFE" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950">
-                                    <FileSearch className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" onClick={() => handleDownload(nota, "danfe")} title="Download DANFE" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950">
-                                    <Download className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950" onClick={() => handleDownload(nota, "xml")} title="Download XML">
-                                    <FileText className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-sky-600 hover:text-sky-700 hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-950" onClick={() => { setSelectedNota(nota); setIsEnviarEmailDialogOpen(true); }} title="Enviar por Email">
-                                    <Mail className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950" onClick={() => { setSelectedNota(nota); setIsCartaCorrecaoDialogOpen(true); }} title="Carta de Correção">
-                                    <FileEdit className="h-4 w-4" />
-                                  </Button>
-                                  {typeof nota.info_complementar === "string" && nota.info_complementar.includes("Carta de Correção") && (
-                                    <>
-                                      <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950" onClick={() => handleDownload(nota, "cce_pdf")} title="Baixar PDF da Carta de Correção">
-                                        <Download className="h-4 w-4" />
-                                      </Button>
-                                      <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950" onClick={() => handleDownload(nota, "cce_xml")} title="Baixar XML da Carta de Correção">
-                                        <FileText className="h-4 w-4" />
-                                      </Button>
-                                    </>
-                                  )}
-
-                                  <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950" onClick={() => { setSelectedNota(nota); setIsCancelDialogOpen(true); }} title="Cancelar NF-e">
-                                    <XCircle className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
-                              {(nota.status === "cancelado" || nota.status === "cancelada") && (
-                                <>
-                                  <Button variant="ghost" size="icon" onClick={() => handleDownload(nota, "danfe")} title="Baixar DANFE (com tarja CANCELADA)" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950">
-                                    <Download className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950" onClick={() => handleDownload(nota, "xml")} title="Baixar XML da NF-e">
-                                    <FileText className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950" onClick={() => handleDownload(nota, "xml_cancelamento")} title="Baixar XML de Cancelamento">
-                                    <FileText className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
-                              {(nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao" || nota.status === "processando") && (
-                                <>
-                                  <Button variant="ghost" size="icon" onClick={() => handleConsultarRejeicao(nota)} title="Consultar motivo da rejeição" disabled={focusNfe.isLoading} className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                                    <AlertCircle className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Corrigir e reenviar" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950">
-                                    <Send className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
-                              {(nota.status === "rascunho" || nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao") && (
-                                <Button variant="ghost" size="icon" onClick={() => { setSelectedNota(nota); setAlsoInutilizar(["erro_autorizacao","rejeitada","rejeitado"].includes(nota.status) && !!nota.numero && !isEmitenteCpf(nota.emitente_id)); setIsDeleteDialogOpen(true); }} title="Excluir" className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-
+                            )}
                           </TableCell>
-                        )}
-                      </TableRow>
-                    );
+                          {canEdit && (
+                            <TableCell className="sticky right-0 bg-background">
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Visualizar/Editar" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleDuplicar(nota)} title="Duplicar NF-e (nova cópia como rascunho)" className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-950">
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                                {(nota.status === "autorizado" || nota.status === "autorizada") && (
+                                  <>
+                                    <Button variant="ghost" size="icon" onClick={() => handleVisualizarDanfe(nota)} title="Visualizar DANFE" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950">
+                                      <FileSearch className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDownload(nota, "danfe")} title="Download DANFE" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950">
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950" onClick={() => handleDownload(nota, "xml")} title="Download XML">
+                                      <FileText className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-sky-600 hover:text-sky-700 hover:bg-sky-50 dark:text-sky-400 dark:hover:bg-sky-950" onClick={() => { setSelectedNota(nota); setIsEnviarEmailDialogOpen(true); }} title="Enviar por Email">
+                                      <Mail className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950" onClick={() => { setSelectedNota(nota); setIsCartaCorrecaoDialogOpen(true); }} title="Carta de Correção">
+                                      <FileEdit className="h-4 w-4" />
+                                    </Button>
+                                    {typeof nota.info_complementar === "string" && nota.info_complementar.includes("Carta de Correção") && (
+                                      <>
+                                        <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950" onClick={() => handleDownload(nota, "cce_pdf")} title="Baixar PDF da Carta de Correção">
+                                          <Download className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950" onClick={() => handleDownload(nota, "cce_xml")} title="Baixar XML da Carta de Correção">
+                                          <FileText className="h-4 w-4" />
+                                        </Button>
+                                      </>
+                                    )}
+
+                                    <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950" onClick={() => { setSelectedNota(nota); setIsCancelDialogOpen(true); }} title="Cancelar NF-e">
+                                      <XCircle className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                )}
+                                {(nota.status === "cancelado" || nota.status === "cancelada") && (
+                                  <>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDownload(nota, "danfe")} title="Baixar DANFE (com tarja CANCELADA)" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950">
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950" onClick={() => handleDownload(nota, "xml")} title="Baixar XML da NF-e">
+                                      <FileText className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="hidden sm:inline-flex text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950" onClick={() => handleDownload(nota, "xml_cancelamento")} title="Baixar XML de Cancelamento">
+                                      <FileText className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                )}
+                                {(nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao" || nota.status === "processando") && (
+                                  <>
+                                    <Button variant="ghost" size="icon" onClick={() => handleConsultarRejeicao(nota)} title="Consultar motivo da rejeição" disabled={focusNfe.isLoading} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                      <AlertCircle className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Corrigir e reenviar" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950">
+                                      <Send className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                )}
+                                {(nota.status === "rascunho" || nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao") && (
+                                  <Button variant="ghost" size="icon" onClick={() => { setSelectedNota(nota); setAlsoInutilizar(["erro_autorizacao","rejeitada","rejeitado"].includes(nota.status) && !!nota.numero && !isEmitenteCpf(nota.emitente_id)); setIsDeleteDialogOpen(true); }} title="Excluir" className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      );
+                    }
                   });
                   return rows;
                 })()}
