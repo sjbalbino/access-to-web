@@ -396,11 +396,11 @@ function mapNotasReferenciadas(notas: NotaReferenciadaData[]): FocusNfeNotaRefer
     });
 }
 
-export function mapNotaToFocusNfe(
+export async function mapNotaToFocusNfe(
   nota: NotaFiscalData,
   itens: NotaFiscalItemData[],
   notasReferenciadas?: NotaReferenciadaData[]
-): FocusNfeNota {
+): Promise<FocusNfeNota> {
   const inscricao = nota.inscricaoProdutor;
   const emitente = nota.emitente;
   
@@ -429,6 +429,14 @@ export function mapNotaToFocusNfe(
   const itemsMapeados = itens.map((item, index) => mapItemToFocusNfe(item, index + 1, emitente?.crt, emitenteIsCpf));
   const totalReformaTributaria = calcularTotaisReformaTributaria(itemsMapeados);
   const infoReformaTributaria = montarInfoReformaTributaria(totalReformaTributaria);
+
+  // Resolver nomes de município (SEFAZ rejeita quando enviamos código IBGE em vez do nome)
+  const { resolveNomeMunicipio } = await import("./municipio");
+  const [municipioEmitenteNome, municipioDestinatarioNome, municipioTransportadorNome] = await Promise.all([
+    resolveNomeMunicipio(inscricao.cidade, inscricao.uf),
+    resolveNomeMunicipio(nota.dest_cidade, nota.dest_uf),
+    resolveNomeMunicipio(nota.transp_cidade, nota.transp_uf),
+  ]);
 
   
   const focusNota: FocusNfeNota = {
@@ -459,7 +467,7 @@ export function mapNotaToFocusNfe(
     logradouro_emitente: inscricao.logradouro || "",
     numero_emitente: inscricao.numero || "S/N",
     bairro_emitente: inscricao.bairro || "",
-    municipio_emitente: inscricao.cidade || "",
+    municipio_emitente: municipioEmitenteNome || inscricao.cidade || "",
     uf_emitente: inscricao.uf || "",
     cep_emitente: inscricao.cep?.replace(/\D/g, "") || "",
     regime_tributario_emitente: emitente?.crt ?? 3, // Default: Normal
@@ -473,7 +481,7 @@ export function mapNotaToFocusNfe(
     logradouro_destinatario: nota.dest_logradouro || "",
     numero_destinatario: nota.dest_numero || "S/N",
     bairro_destinatario: nota.dest_bairro || "",
-    municipio_destinatario: nota.dest_cidade || "",
+    municipio_destinatario: municipioDestinatarioNome || nota.dest_cidade || "",
     uf_destinatario: nota.dest_uf || "",
     cep_destinatario: nota.dest_cep?.replace(/\D/g, "") || undefined,
     indicador_inscricao_estadual_destinatario: mapIndicadorIE(nota.dest_tipo, nota.dest_ie),
@@ -492,7 +500,7 @@ export function mapNotaToFocusNfe(
         : {}),
     inscricao_estadual_transportador: nota.transp_ie?.replace(/\D/g, "") || undefined,
     endereco_transportador: nota.transp_endereco || undefined,
-    municipio_transportador: nota.transp_cidade || undefined,
+    municipio_transportador: municipioTransportadorNome || nota.transp_cidade || undefined,
     uf_transportador: nota.transp_uf || undefined,
     veiculo_placa: nota.veiculo_placa || undefined,
     veiculo_uf: nota.veiculo_uf || undefined,
