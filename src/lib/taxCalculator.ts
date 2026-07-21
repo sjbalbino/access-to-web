@@ -222,11 +222,13 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
   }
   
   // ========== PIS ==========
-  // Determina CST
-  if (input.produtoCstPis) {
-    resultado.cstPis = input.produtoCstPis;
+  // Prioridade: Emitente → CFOP → Produto (regime tributário do emitente prevalece)
+  if (input.cstPisPadraoEmitente) {
+    resultado.cstPis = input.cstPisPadraoEmitente;
   } else if (input.cstPisPadrao) {
     resultado.cstPis = input.cstPisPadrao;
+  } else if (input.produtoCstPis) {
+    resultado.cstPis = input.produtoCstPis;
   } else {
     resultado.cstPis = "08"; // Sem incidência (produtor rural PF)
   }
@@ -239,11 +241,13 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
   }
   
   // ========== COFINS ==========
-  // Determina CST
-  if (input.produtoCstCofins) {
-    resultado.cstCofins = input.produtoCstCofins;
+  // Prioridade: Emitente → CFOP → Produto
+  if (input.cstCofinsPadraoEmitente) {
+    resultado.cstCofins = input.cstCofinsPadraoEmitente;
   } else if (input.cstCofinsPadrao) {
     resultado.cstCofins = input.cstCofinsPadrao;
+  } else if (input.produtoCstCofins) {
+    resultado.cstCofins = input.produtoCstCofins;
   } else {
     resultado.cstCofins = "08"; // Sem incidência (produtor rural PF)
   }
