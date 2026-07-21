@@ -1217,6 +1217,14 @@ export default function NotaFiscalForm() {
     }
 
     const base = itemFormData.valor_total || 0;
+    const CST_PIS_COFINS_TRIBUTADOS = ["01", "02", "05"];
+    const CST_ICMS_TRIBUTADOS = ["00", "10", "20", "70", "90"];
+    const pisTributa = CST_PIS_COFINS_TRIBUTADOS.includes(itemFormData.cst_pis || "");
+    const cofinsTributa = CST_PIS_COFINS_TRIBUTADOS.includes(itemFormData.cst_cofins || "");
+    const icmsTributa = CST_ICMS_TRIBUTADOS.includes(itemFormData.cst_icms || "");
+    const aliqPisFinal = pisTributa ? (itemFormData.aliq_pis ?? 0) : 0;
+    const aliqCofinsFinal = cofinsTributa ? (itemFormData.aliq_cofins ?? 0) : 0;
+    const aliqIcmsFinal = icmsTributa ? (itemFormData.aliq_icms ?? 0) : 0;
     const itemData = {
       nota_fiscal_id: id,
       numero_item: selectedItem ? selectedItem.numero_item : itens.length + 1,
@@ -1232,30 +1240,30 @@ export default function NotaFiscalForm() {
       valor_desconto: itemFormData.valor_desconto || 0,
       origem: itemFormData.origem || 0,
       cst_icms: itemFormData.cst_icms || null,
-      base_icms: base,
-      aliq_icms: itemFormData.aliq_icms || 0,
-      valor_icms: base * ((itemFormData.aliq_icms || 0) / 100),
+      base_icms: icmsTributa ? base : 0,
+      aliq_icms: aliqIcmsFinal,
+      valor_icms: Number((base * (aliqIcmsFinal / 100)).toFixed(2)),
       cst_pis: itemFormData.cst_pis || null,
-      base_pis: base,
-      aliq_pis: itemFormData.aliq_pis || 0,
-      valor_pis: base * ((itemFormData.aliq_pis || 0) / 100),
+      base_pis: pisTributa ? base : 0,
+      aliq_pis: aliqPisFinal,
+      valor_pis: Number((base * (aliqPisFinal / 100)).toFixed(2)),
       cst_cofins: itemFormData.cst_cofins || null,
-      base_cofins: base,
-      aliq_cofins: itemFormData.aliq_cofins || 0,
-      valor_cofins: base * ((itemFormData.aliq_cofins || 0) / 100),
+      base_cofins: cofinsTributa ? base : 0,
+      aliq_cofins: aliqCofinsFinal,
+      valor_cofins: Number((base * (aliqCofinsFinal / 100)).toFixed(2)),
       // Reforma Tributária (IBS, CBS, IS)
       cst_ibs: itemFormData.cst_ibs || null,
       base_ibs: base,
-      aliq_ibs: itemFormData.aliq_ibs || 0,
-      valor_ibs: base * ((itemFormData.aliq_ibs || 0) / 100),
+      aliq_ibs: itemFormData.aliq_ibs ?? 0,
+      valor_ibs: Number((base * ((itemFormData.aliq_ibs ?? 0) / 100)).toFixed(2)),
       cst_cbs: itemFormData.cst_cbs || null,
       base_cbs: base,
-      aliq_cbs: itemFormData.aliq_cbs || 0,
-      valor_cbs: base * ((itemFormData.aliq_cbs || 0) / 100),
+      aliq_cbs: itemFormData.aliq_cbs ?? 0,
+      valor_cbs: Number((base * ((itemFormData.aliq_cbs ?? 0) / 100)).toFixed(2)),
       cst_is: itemFormData.cst_is || null,
       base_is: base,
-      aliq_is: itemFormData.aliq_is || 0,
-      valor_is: base * ((itemFormData.aliq_is || 0) / 100),
+      aliq_is: itemFormData.aliq_is ?? 0,
+      valor_is: Number((base * ((itemFormData.aliq_is ?? 0) / 100)).toFixed(2)),
       cclass_trib_ibs: itemFormData.cclass_trib_ibs || null,
       cclass_trib_cbs: itemFormData.cclass_trib_cbs || null,
     } as any;
