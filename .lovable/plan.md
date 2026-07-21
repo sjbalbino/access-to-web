@@ -1,53 +1,51 @@
-## Problema
+## Plano de correção
 
-Ao clicar em **Calcular Impostos** na edição de itens da NF-e, os campos **CST IBS**, **CST CBS** e **cClassTrib IBS/CBS** não refletem corretamente o regime tributário do emitente.
+Vou ajustar apenas o fluxo do botão **Calcular Impostos** na edição de itens da NF-e.
 
-### Causa raiz (confirmada em código)
+### Diagnóstico confirmado
 
-Em `src/lib/taxCalculator.ts`, a resolução de CST IBS/CBS usa apenas:
+- A nota atual usa CFOP **1905**.
+- No cadastro do CFOP, o **CST ICMS padrão é 41**, que é o correto para esta operação.
+- O produto do item tem **CST ICMS = 51**, e hoje o cálculo prioriza o produto antes do CFOP, por isso o botão troca indevidamente o ICMS para 51.
+- O CFOP está com **incidência IBS/CBS desativada** (`incidencia_ibs_cbs = false`). Por isso o cálculo entra no fluxo que deixa IBS/CBS e valores zerados, mesmo existindo no emitente/produto:
+  - CST IBS/CBS = 200
+  - cClassTrib IBS/CBS = 200036
+  - alíquotas IBS/CBS cadastradas
 
-```
-Produto → CFOP → "000"
-```
+### Alterações propostas
 
-O **emitente** (`emitentes_nfe.cst_ibs_padrao` / `cst_cbs_padrao`) não é consultado em momento algum — diferente do que foi feito recentemente para PIS/COFINS, que agora seguem `Emitente → CFOP → Produto`. Como consequência, o CST cadastrado no produto (frequentemente desatualizado) prevalece sobre o regime do emitente e, quando o CST resultante não é tributado, o `cClassTrib` também não é preenchido.
+1. **Corrigir prioridade do ICMS no cálculo da NF-e editável**
+   - Para o botão **Calcular Impostos**, usar prioridade:
+     - **CFOP → Produto → padrão por CRT**
+   - Assim, para CFOP 1905, o CST ICMS permanece **41** e não será substituído pelo CST 51 do produto.
 
-Em `src/pages/NotaFiscalForm.tsx` (linhas 1299-1331) o `TaxCalculatorInput` não repassa nenhum CST IBS/CBS do emitente, então mesmo que o calculador tentasse consultá-lo, o dado não chegaria.
+2. **Corrigir IBS/CBS para não depender do flag antigo de incidência do CFOP**
+   - O cálculo de CST e cClassTrib IBS/CBS será feito mesmo quando `incidencia_ibs_cbs` estiver desativado no CFOP.
+   - O flag de incidência passará a controlar apenas o cálculo monetário quando necessário, não a gravação dos campos fiscais cadastrais.
+   - CST IBS/CBS continuará resolvendo por prioridade:
+     - **Emitente → CFOP → Produto → 000**
+   - `cClassTrib` será preenchido pelo produto quando compatível com o CST resolvido.
 
-## Correção proposta
+3. **Usar alíquotas do produto como fallback para IBS/CBS**
+   - Se o resultado ficar sem alíquota pelo emitente, usar `produto.aliquota_ibs` e `produto.aliquota_cbs` antes de zerar.
+   - Isso evita que o botão zere IBS/CBS quando a alíquota já está no produto.
 
-Padronizar IBS/CBS pela **mesma prioridade** já aplicada a PIS/COFINS: `Emitente → CFOP → Produto`. O `cClassTrib` continua vindo do produto (única fonte no schema), mas passa a ser considerado sempre que o CST resolvido indicar tributação.
+4. **Ajustar persistência do item**
+   - Ao salvar o item, aplicar a mesma regra de tributação IBS/CBS para base/valor:
+     - se o CST tributa, calcula base e valor;
+     - se não tributa, mantém base/valor zerados;
+     - mantém `cClassTrib` somente quando o CST exige classificação.
 
-### 1. `src/lib/taxCalculator.ts`
+### Arquivos a alterar
 
-- Adicionar em `TaxCalculatorInput` os campos:
-  - `cstIbsPadraoEmitente: string | null`
-  - `cstCbsPadraoEmitente: string | null`
-- No bloco IBS/CBS, trocar
-  - `input.produtoCstIbs || input.cstIbsPadrao || "000"`
-  por
-  - `input.cstIbsPadraoEmitente || input.cstIbsPadrao || input.produtoCstIbs || "000"`
-- Idem para CBS.
-- Manter a atribuição de `cclassTribIbs` / `cclassTribCbs` a partir de `produtoCclassTribIbs/Cbs` sempre que o CST resolvido indicar tributação (`cstIbsCbsTemTributacao`). Quando o CST não for tributado, forçar `cclassTribIbs/Cbs = null`.
+- `src/lib/taxCalculator.ts`
+- `src/pages/NotaFiscalForm.tsx`
 
-### 2. `src/pages/NotaFiscalForm.tsx`
+### Validação
 
-Na montagem do `input` (linhas 1299-1331), incluir:
+Após implementar, vou validar que no item da nota atual:
 
-```
-cstIbsPadraoEmitente: emitente.cst_ibs_padrao,
-cstCbsPadraoEmitente: emitente.cst_cbs_padrao,
-```
-
-Nenhuma outra tela precisa alterar assinatura, pois `CompraDialog`, `NotaDepositoFormDialog`, `DevolucaoDialog` etc. usam sua própria lógica de emissão e não passam por `calculateTaxes` na hora do clique de "Calcular Impostos" do editor de NF-e.
-
-### 3. Comportamento resultante
-
-- Emitente com `cst_ibs_padrao = "050"` (por exemplo, diferimento) e produto com `cst_ibs = "000"` → passa a gravar `050` (regime do emitente).
-- Quando o CST resolvido não for tributado, o `cClassTrib` é limpo automaticamente, evitando inconsistência.
-- Quando for tributado, o `cClassTrib` do produto é aplicado.
-
-## Fora de escopo
-
-- Alterações no schema (não é necessário adicionar `cclass_trib` a CFOP/Emitente — a única fonte é o cadastro do produto).
-- Fluxos de emissão automática de Compra/Depósito/Devolução (usam mapeadores próprios).
+- **CST ICMS** permanece **41** ao clicar em Calcular Impostos.
+- **CST IBS/CBS** permanece/preenche **200**.
+- **cClassTrib IBS/CBS** permanece/preenche **200036**.
+- **IBS/CBS** não são zerados indevidamente quando houver CST tributado e alíquota disponível.

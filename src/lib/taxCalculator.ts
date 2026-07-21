@@ -42,6 +42,8 @@ export interface TaxCalculatorInput {
   produtoCstIbs: string | null;
   produtoCstCbs: string | null;
   produtoCstIs: string | null;
+  produtoAliqIbs: number | null;
+  produtoAliqCbs: number | null;
   produtoCclassTribIbs: string | null;
   produtoCclassTribCbs: string | null;
   
@@ -146,6 +148,16 @@ function cstPisCofinsTemTributacao(cst: string): boolean {
   return cstsTributados.includes(cst);
 }
 
+function resolveAliquotaTributada(...aliquotas: Array<number | null | undefined>): number {
+  const aliquota = aliquotas.find((valor) => valor !== null && valor !== undefined && valor > 0);
+  return aliquota ?? 0;
+}
+
+function resolveCclassTrib(cst: string, cclassTrib: string | null | undefined): string | null {
+  if (!cstIbsCbsTemTributacao(cst) || !cclassTrib) return null;
+  return cclassTrib.startsWith(cst) ? cclassTrib : null;
+}
+
 /**
  * Verifica se o CFOP é interestadual (começa com 6)
  */
@@ -188,11 +200,11 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
   };
   
   // ========== ICMS ==========
-  // Determina CST (prioridade: produto > CFOP > padrão)
-  if (input.produtoCstIcms) {
-    resultado.cstIcms = input.produtoCstIcms;
-  } else if (input.cstIcmsPadrao) {
+  // Determina CST (prioridade: CFOP > produto > padrão)
+  if (input.cstIcmsPadrao) {
     resultado.cstIcms = input.cstIcmsPadrao;
+  } else if (input.produtoCstIcms) {
+    resultado.cstIcms = input.produtoCstIcms;
   } else {
     // CST padrão baseado no CRT
     if (input.crt === 1 || input.crt === 2) {
@@ -262,39 +274,29 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
   }
   
   // ========== IBS/CBS/IS (Reforma Tributária) ==========
+  // CST e cClassTrib não devem depender do flag histórico do CFOP, pois esse cadastro
+  // pode estar desativado em operações antigas/importadas mesmo com CST/cClass válidos.
+  // IBS - prioridade: Emitente → CFOP → Produto
+  resultado.cstIbs = input.cstIbsPadraoEmitente || input.cstIbsPadrao || input.produtoCstIbs || "000";
+  resultado.cclassTribIbs = resolveCclassTrib(resultado.cstIbs, input.produtoCclassTribIbs);
+  if (cstIbsCbsTemTributacao(resultado.cstIbs)) {
+    resultado.baseIbs = input.valorTotal;
+    resultado.aliqIbs = resolveAliquotaTributada(input.aliqIbsPadrao, input.produtoAliqIbs);
+    resultado.valorIbs = Number(((resultado.baseIbs * resultado.aliqIbs) / 100).toFixed(2));
+  }
+
+  // CBS - prioridade: Emitente → CFOP → Produto
+  resultado.cstCbs = input.cstCbsPadraoEmitente || input.cstCbsPadrao || input.produtoCstCbs || "000";
+  resultado.cclassTribCbs = resolveCclassTrib(resultado.cstCbs, input.produtoCclassTribCbs);
+  if (cstIbsCbsTemTributacao(resultado.cstCbs)) {
+    resultado.baseCbs = input.valorTotal;
+    resultado.aliqCbs = resolveAliquotaTributada(input.aliqCbsPadrao, input.produtoAliqCbs);
+    resultado.valorCbs = Number(((resultado.baseCbs * resultado.aliqCbs) / 100).toFixed(2));
+  }
+
+  // IS permanece condicionado à incidência de Reforma Tributária do CFOP.
   if (input.incidenciaIbsCbs) {
-    // IBS - prioridade: produto > CFOP > padrão
-    resultado.cstIbs = input.cstIbsPadraoEmitente || input.cstIbsPadrao || input.produtoCstIbs || "000";
-    // Só calcula se CST indica tributação
-    if (cstIbsCbsTemTributacao(resultado.cstIbs) && input.aliqIbsPadrao && input.aliqIbsPadrao > 0) {
-      resultado.baseIbs = input.valorTotal;
-      resultado.aliqIbs = input.aliqIbsPadrao;
-      resultado.valorIbs = Number(((resultado.baseIbs * resultado.aliqIbs) / 100).toFixed(2));
-    }
-    // cClassTrib IBS — só faz sentido quando o CST usa classificação tributária
-    if (cstIbsCbsTemTributacao(resultado.cstIbs)) {
-      resultado.cclassTribIbs = input.produtoCclassTribIbs || null;
-    } else {
-      resultado.cclassTribIbs = null;
-    }
-
-    // CBS - prioridade: Emitente → CFOP → Produto
-    resultado.cstCbs = input.cstCbsPadraoEmitente || input.cstCbsPadrao || input.produtoCstCbs || "000";
-    // Só calcula se CST indica tributação
-    if (cstIbsCbsTemTributacao(resultado.cstCbs) && input.aliqCbsPadrao && input.aliqCbsPadrao > 0) {
-      resultado.baseCbs = input.valorTotal;
-      resultado.aliqCbs = input.aliqCbsPadrao;
-      resultado.valorCbs = Number(((resultado.baseCbs * resultado.aliqCbs) / 100).toFixed(2));
-    }
-    if (cstIbsCbsTemTributacao(resultado.cstCbs)) {
-      resultado.cclassTribCbs = input.produtoCclassTribCbs || null;
-    } else {
-      resultado.cclassTribCbs = null;
-    }
-
-    // IS - prioridade: produto > CFOP > padrão
     resultado.cstIs = input.produtoCstIs || input.cstIsPadrao || "000";
-    // Só calcula se CST indica tributação
     if (cstIsTemTributacao(resultado.cstIs) && input.aliqIsPadrao && input.aliqIsPadrao > 0) {
       resultado.baseIs = input.valorTotal;
       resultado.aliqIs = input.aliqIsPadrao;
