@@ -316,19 +316,23 @@ export function useInscricoesComSaldo(filters: {
       });
 
       // Subtrair notas de depósito emitidas do bucket. Como a tabela não guarda
-      // local_entrega_id, distribui o total emitido proporcionalmente entre os
-      // buckets existentes da inscrição.
-      const emitidoPorInsc = new Map<string, number>();
-      emitidas.forEach((n: any) => {
-        if (!n.inscricao_produtor_id) return;
-        const nfId = n.nota_fiscal_id;
-        // filtro de canceladas é aplicado logo abaixo
-        emitidoPorInsc.set(
-          n.inscricao_produtor_id,
-          (emitidoPorInsc.get(n.inscricao_produtor_id) || 0) + round(n.quantidade_kg)
-        );
-        // marcador para saber se precisamos filtrar canceladas
-        if (nfId) (emitidoPorInsc as any)._temNfId = true;
+      // local_entrega_id, distribui o total emitido por inscrição
+      // proporcionalmente entre os buckets (locais) existentes daquela inscrição.
+      emitidoPorInscricao.forEach((qtdEmitida, inscId) => {
+        if (qtdEmitida <= 0) return;
+        const bucketsInsc = Array.from(buckets.values()).filter((b) => b.inscId === inscId);
+        const totalSaldo = bucketsInsc.reduce((acc, b) => acc + b.saldo, 0);
+        if (bucketsInsc.length === 0) return;
+        if (totalSaldo <= 0) {
+          // Sem base positiva: subtrai igualmente entre os buckets.
+          const parte = qtdEmitida / bucketsInsc.length;
+          bucketsInsc.forEach((b) => { b.saldo -= parte; });
+        } else {
+          bucketsInsc.forEach((b) => {
+            const proporcao = b.saldo / totalSaldo;
+            b.saldo -= qtdEmitida * proporcao;
+          });
+        }
       });
 
       // Quando incluirSemSaldo estiver ligado, também trazemos inscrições da granja
