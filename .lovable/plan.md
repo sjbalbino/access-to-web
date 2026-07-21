@@ -1,43 +1,54 @@
-# Diagnóstico
+## Diagnóstico da Nota 89
 
-Consultei o banco para **CLAUDIA ANDREIA FRANCA SANTOS** (inscrição `77f410f2…`, granja Agropecuária Grings) na safra **SOJA 2025/2026** (`0db3a3c8…`):
+Nota 89 (`id 3c31c97c-…`, rascunho, "COMPRA PARA COMERCIALIZACAO", criada 21/07 17:15) foi gravada com:
+- `emitente_id` = `3bbed7…` (OK — emitente vinculado à inscrição `f0ad86…`)
+- `inscricao_produtor_id` = **NULL** ← problema
+- `inscricao_remetente_id` = NULL
 
-| Movimentação | Qtd (kg) | Local |
-|---|---|---|
-| Colheita | 0 | — |
-| Transferência recebida | 9.600 | Márcio Grings |
-| Devolução (pendente) | 9.600 | Márcio Grings |
-| Transferência enviada | 0 | — |
-| Notas de depósito emitidas | 0 | — |
+O mesmo padrão aparece nas notas 84, 90 e 94 (todas de compra, mesma granja). As notas 85, 86, 87, 88 (autorizadas) têm `inscricao_produtor_id` corretamente preenchido.
 
-**Saldo correto para emissão de nota de depósito** (Colheitas + Transferências Recebidas − Notas Emitidas) = **0 + 9.600 − 0 = 9.600 kg** → deveria aparecer.
+### Causa raiz (confirmada em código)
 
-# Causa
+Existem dois fluxos que criam NF-e de compra:
 
-O hook `useInscricoesComSaldo` em `src/hooks/useSaldosDeposito.ts` (usado pelo seletor de produtor no dialog de Nota de Depósito) está subtraindo **devoluções** e **transferências enviadas** do saldo — o que corresponde ao "Saldo Disponível" do produtor, **não** ao saldo elegível para contra-nota de depósito. Como resultado, o saldo cai para 0 e o filtro `if (b.saldo <= 0) return` descarta a Claudia.
+1. **`src/components/compra/EmitirNfeCompraDialog.tsx`** (linha 240): faz `insert` em `notas_fiscais` **incluindo** `inscricao_produtor_id: compra.inscricao_comprador_id`. As notas geradas por esse fluxo aparecem com o campo preenchido.
+2. **`src/components/compra/CompraDialog.tsx`** (linhas 430-462): faz `insert` em `notas_fiscais` **sem** incluir `inscricao_produtor_id`. Todas as notas em `rascunho` recentes vêm desse fluxo — por isso saíram sem o sócio emitente.
 
-Regra correta (já discutida): **Saldo para emitir nota de depósito = Colheitas + Transferências Recebidas − Notas de Depósito Emitidas** (não canceladas). Devoluções e transferências enviadas ficam de fora desse cálculo.
+Nenhum trigger/edge function limpa o campo depois; a coluna simplesmente não é enviada no `INSERT` desse diálogo.
 
-# Correção
+## Correção
 
-Alteração pontual em `src/hooks/useSaldosDeposito.ts`, apenas dentro de `useInscricoesComSaldo`:
+### 1) `src/components/compra/CompraDialog.tsx`
 
-1. **Remover** o processamento de `enviadasPromise` e `devolucoesPromise` da montagem dos buckets (as duas fontes deixam de compor o saldo elegível para emissão).
-2. **Subtrair notas de depósito emitidas por local** dos buckets. Hoje elas só são consideradas no saldo agregado por inscrição (`saldoTotalPorInscricao`), mas não descontadas do bucket por local. Como a tabela `notas_deposito_emitidas` não guarda `local_entrega_id`, o desconto será feito assim:
-   - Se existir apenas um bucket para a inscrição, todo o total emitido é subtraído dele.
-   - Se existirem múltiplos locais para a mesma inscrição, distribui o total emitido proporcionalmente entre os buckets da inscrição (mesma abordagem já usada em `saldoTotalPorInscricao`).
-3. Manter o filtro `saldo > 0` (ou `incluirSemSaldo`) e a checagem agregada por inscrição.
+No `insert` da nota fiscal (bloco iniciando em `.from('notas_fiscais').insert({ … })`, ~linha 432), adicionar:
 
-O `useSaldosDeposito` (saldo por produto após selecionar a inscrição) já segue esta fórmula correta — nenhuma mudança nele.
+```ts
+inscricao_produtor_id: inscricaoPrincipal?.id ?? emitente.inscricao_produtor_id ?? null,
+```
 
-Não altero relatórios, transferências, devoluções, nem o hook `useSaldoDisponivelProdutor` — o "Saldo Disponível" continua descontando devoluções em todos os outros contextos.
+- `inscricaoPrincipal` já é a inscrição do comprador (sócio principal da granja), usada logo abaixo em `inscricaoProdutor: { … }`.
+- Fallback via `emitente.inscricao_produtor_id` garante o vínculo mesmo se `inscricaoPrincipal` não estiver resolvido no momento do insert (o `emitente_nfe` é 1:1 com inscrição do produtor).
 
-# Validação
+### 2) Backfill dos registros existentes
 
-1. Reabrir **Nova Nota de Depósito** → Safra `SOJA 2025/2026`, Local `Márcio Grings` → Claudia deve aparecer com 9.600 kg.
-2. Produtores com notas de depósito já emitidas continuam com saldo reduzido apenas pelo emitido.
-3. Produtores com devoluções e/ou transferências enviadas voltam a mostrar o saldo bruto de depósito (colheita + transf. recebidas − emitidas), como acordado.
+Rodar UPDATE único para preencher `inscricao_produtor_id` das notas em rascunho/erro que ficaram sem o campo, usando o vínculo pelo `emitente_id`:
 
-# Arquivo tocado
+```sql
+UPDATE public.notas_fiscais nf
+   SET inscricao_produtor_id = e.inscricao_produtor_id
+  FROM public.emitentes_nfe e
+ WHERE nf.emitente_id = e.id
+   AND nf.inscricao_produtor_id IS NULL
+   AND e.inscricao_produtor_id IS NOT NULL;
+```
 
-- `src/hooks/useSaldosDeposito.ts` — função `useInscricoesComSaldo` apenas.
+Isso corrige a nota 89 (e as outras: 84, 90, 94, além de qualquer outra herdada do mesmo bug).
+
+### 3) Verificação
+
+- Reabrir a nota 89 na tela de Notas Fiscais e confirmar que o emitente/sócio aparece corretamente na exibição e no agrupamento.
+- Criar uma nova compra pelo `CompraDialog` e conferir que `notas_fiscais.inscricao_produtor_id` já sai preenchido no `INSERT`.
+
+## Escopo
+
+Somente `CompraDialog.tsx` (uma linha adicionada no insert) + UPDATE de backfill via ferramenta de dados. Nenhuma alteração de schema, RLS ou de outros fluxos (EmitirNfeCompraDialog, MDe, depósito, devolução, venda) — todos já preenchem o campo corretamente.
