@@ -80,6 +80,8 @@ export default function NotasDeposito() {
     produtoId: produtoId || undefined,
     granjaId: granjaIdDoLocal || undefined,
     inscricaoProdutorId: inscricaoProdutorId || undefined,
+    dataInicial: dataInicial || undefined,
+    dataFinal: dataFinal || undefined,
   });
 
   const deleteNotaMutation = useDeleteNotaDepositoEmitida();
