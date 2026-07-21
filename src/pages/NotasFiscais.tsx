@@ -550,7 +550,7 @@ export default function NotasFiscais() {
               <TableBody>
                 {(() => {
                   const totalCols = canEdit ? 9 : 8;
-                  const rows: JSX.Element[] = [];
+                  const rows: React.ReactNode[] = [];
                   let lastEmitenteId: string | null | undefined = undefined;
                   const groupNotas = (id: string | null | undefined) =>
                     dadosPaginados.filter((n) => (n.emitente_id ?? null) === (id ?? null));
