@@ -572,7 +572,7 @@ export default function NotasFiscais() {
 
                     <TableCell className="truncate max-w-[150px] hidden lg:table-cell">{nota.natureza_operacao}</TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {nota.data_emissao ? format(new Date(nota.data_emissao), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "-"}
+                      {formatDataEmissao(nota.data_emissao, (nota as any).created_at)}
                     </TableCell>
                     <TableCell className="text-right font-medium hidden sm:table-cell">{formatCurrency(nota.total_nota)}</TableCell>
                     <TableCell>
