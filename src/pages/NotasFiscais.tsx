@@ -544,8 +544,20 @@ export default function NotasFiscais() {
           )}
         </div>
 
-        <div className="text-sm text-muted-foreground">
-          {filteredNotas.length} nota(s) encontrada(s)
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="text-sm text-muted-foreground">
+            {filteredNotas.length} nota(s) encontrada(s)
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={expandAllGroups}>
+              <ChevronsDown className="h-4 w-4 mr-1" />
+              Expandir todos
+            </Button>
+            <Button variant="outline" size="sm" onClick={collapseAllGroups}>
+              <ChevronsUp className="h-4 w-4 mr-1" />
+              Recolher todos
+            </Button>
+          </div>
         </div>
 
         <div className="border rounded-lg overflow-hidden">
