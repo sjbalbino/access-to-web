@@ -40,6 +40,8 @@ export default function NotasDeposito() {
   const [safraId, setSafraId] = useState<string>("");
   const [produtoId, setProdutoId] = useState<string>("");
   const [inscricaoProdutorId, setInscricaoProdutorId] = useState<string>("");
+  const [dataInicial, setDataInicial] = useState<string>("");
+  const [dataFinal, setDataFinal] = useState<string>("");
   
   // Dialog de formulário
   const [formDialogOpen, setFormDialogOpen] = useState(false);
