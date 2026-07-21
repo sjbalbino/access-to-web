@@ -138,7 +138,7 @@ export function desenharCabecalhoBrand(doc: jsPDF, brand: PdfBrand = getBrandSyn
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.text(
-    `Emitido em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
+    `Emitido em ${nowDateTimeSP("dd/MM/yyyy 'às' HH:mm")}`,
     pageWidth - marginX,
     topY + 10,
     { align: "right" }
@@ -180,7 +180,7 @@ export function desenharRodapeBrand(doc: jsPDF) {
     doc.setTextColor(90);
     doc.text(DESENVOLVEDORA, 10, pageHeight - 6);
     doc.text(
-      format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR }),
+      nowDateTimeSP(),
       pageWidth / 2,
       pageHeight - 6,
       { align: "center" }

@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatDateSP, formatTimeSP, nowDateTimeSP } from "./datetime";
 import { supabase } from "@/integrations/supabase/client";
 import { loadPdfBrand } from "./pdfBrand";
 
@@ -23,20 +24,12 @@ const fmtNum = (v: number | null | undefined, dec = 0) => {
 
 const fmtDate = (d: string | null | undefined) => {
   if (!d) return "";
-  try {
-    return format(parseISO(d.length <= 10 ? `${d}T12:00:00` : d), "dd/MM/yyyy", { locale: ptBR });
-  } catch {
-    return d;
-  }
+  return formatDateSP(d);
 };
 
 const fmtHora = (d: string | null | undefined) => {
   if (!d) return "";
-  try {
-    return format(parseISO(d), "HH:mm", { locale: ptBR });
-  } catch {
-    return "";
-  }
+  return formatTimeSP(d);
 };
 
 // Formata uma linha com label à esquerda e valor à direita, preenchendo com espaços
@@ -202,7 +195,7 @@ export async function gerarTicketDepositoPdf(colheitaId: string): Promise<void> 
   add("_".repeat(COLS - 4), { center: true });
   add("Recebedor", { center: true });
   add(
-    `Emitido: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`,
+    `Emitido: ${nowDateTimeSP()}`,
     { center: true }
   );
 
