@@ -551,7 +551,7 @@ export default function NotasFiscais() {
                   const totalCols = canEdit ? 8 : 7;
                   const rows: React.ReactNode[] = [];
                   let lastEmitenteId: string | null | undefined = undefined;
-                  const groupNotas = (id=>
+                  const groupNotas = (id: string | null | undefined) =>
                     dadosPaginados.filter((n) => (n.emitente_id ?? null) === (id ?? null));
                   const fmtBRL = (v: number) =>
                     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
