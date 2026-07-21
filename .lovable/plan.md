@@ -1,54 +1,41 @@
-## Diagnóstico da Nota 89
 
-Nota 89 (`id 3c31c97c-…`, rascunho, "COMPRA PARA COMERCIALIZACAO", criada 21/07 17:15) foi gravada com:
-- `emitente_id` = `3bbed7…` (OK — emitente vinculado à inscrição `f0ad86…`)
-- `inscricao_produtor_id` = **NULL** ← problema
-- `inscricao_remetente_id` = NULL
+## Contexto
 
-O mesmo padrão aparece nas notas 84, 90 e 94 (todas de compra, mesma granja). As notas 85, 86, 87, 88 (autorizadas) têm `inscricao_produtor_id` corretamente preenchido.
+Na emissão de NFe, os CSTs de PIS e COFINS são resolvidos na ordem **Produto → Emitente → CFOP → fallback**. Hoje o sistema acaba gravando **CST 01** (operação tributável) em várias operações porque:
 
-### Causa raiz (confirmada em código)
+- CFOPs `1102`, `2102`, `5102`, `6102` estão cadastrados com `cst_pis_padrao = 01` e `cst_cofins_padrao = 01`
+- 5 emitentes (de 12) estão com CST PIS/COFINS = `01`
+- Fallback do código nos diálogos de Compra (Emitir), Devolução e Remessa é `"01"`
 
-Existem dois fluxos que criam NF-e de compra:
+Para produtor rural PF, o correto é **CST 08** (sem incidência da contribuição).
 
-1. **`src/components/compra/EmitirNfeCompraDialog.tsx`** (linha 240): faz `insert` em `notas_fiscais` **incluindo** `inscricao_produtor_id: compra.inscricao_comprador_id`. As notas geradas por esse fluxo aparecem com o campo preenchido.
-2. **`src/components/compra/CompraDialog.tsx`** (linhas 430-462): faz `insert` em `notas_fiscais` **sem** incluir `inscricao_produtor_id`. Todas as notas em `rascunho` recentes vêm desse fluxo — por isso saíram sem o sócio emitente.
+## Mudanças
 
-Nenhum trigger/edge function limpa o campo depois; a coluna simplesmente não é enviada no `INSERT` desse diálogo.
+### 1. Dados (via insert tool — UPDATE)
 
-## Correção
+- `cfops`: setar `cst_pis_padrao = '08'` e `cst_cofins_padrao = '08'` nos CFOPs `1102`, `2102`, `5102`, `6102` (os demais já estão em 08).
+- `emitentes_nfe`: setar `cst_pis_padrao = '08'` e `cst_cofins_padrao = '08'` em todos os registros onde estão nulos ou `01`.
+- `produtos`: idem — normalizar `cst_pis` e `cst_cofins` para `'08'` onde estão nulos ou `01`.
 
-### 1) `src/components/compra/CompraDialog.tsx`
+Notas fiscais **já autorizadas/canceladas** não serão alteradas (imutabilidade fiscal).
 
-No `insert` da nota fiscal (bloco iniciando em `.from('notas_fiscais').insert({ … })`, ~linha 432), adicionar:
+### 2. Código (fallbacks) — trocar `"01"` por `"08"`
 
-```ts
-inscricao_produtor_id: inscricaoPrincipal?.id ?? emitente.inscricao_produtor_id ?? null,
-```
+- `src/components/compra/EmitirNfeCompraDialog.tsx` (linhas 323/327)
+- `src/components/devolucao/EmitirNfeDevolucaoDialog.tsx` (linhas 278/282)
+- `src/components/remessas/EmitirNfeAutomaticoDialog.tsx` (linhas 345/349)
 
-- `inscricaoPrincipal` já é a inscrição do comprador (sócio principal da granja), usada logo abaixo em `inscricaoProdutor: { … }`.
-- Fallback via `emitente.inscricao_produtor_id` garante o vínculo mesmo se `inscricaoPrincipal` não estiver resolvido no momento do insert (o `emitente_nfe` é 1:1 com inscrição do produtor).
+Arquivos que já usam `"08"` como fallback (`CompraDialog.tsx`, `NotaDepositoFormDialog.tsx`) permanecem inalterados.
 
-### 2) Backfill dos registros existentes
+### 3. `src/lib/taxCalculator.ts`
 
-Rodar UPDATE único para preencher `inscricao_produtor_id` das notas em rascunho/erro que ficaram sem o campo, usando o vínculo pelo `emitente_id`:
+Trocar defaults `"01"` por `"08"` nos campos `cstPis`/`cstCofins` e ajustar cálculo para não gerar valor quando CST = 08 (já é a regra, pois 08 não está em `cstPisCofinsTemTributacao`).
 
-```sql
-UPDATE public.notas_fiscais nf
-   SET inscricao_produtor_id = e.inscricao_produtor_id
-  FROM public.emitentes_nfe e
- WHERE nf.emitente_id = e.id
-   AND nf.inscricao_produtor_id IS NULL
-   AND e.inscricao_produtor_id IS NOT NULL;
-```
+## Validação
 
-Isso corrige a nota 89 (e as outras: 84, 90, 94, além de qualquer outra herdada do mesmo bug).
+- Rodar uma emissão de teste (compra, devolução, remessa e nota de depósito) e conferir no XML/DB que os itens ficam com `cst_pis = 08`, `cst_cofins = 08`, `valor_pis = 0`, `valor_cofins = 0`.
+- Verificar que notas já autorizadas continuam com seus valores originais.
 
-### 3) Verificação
+## Fora de escopo
 
-- Reabrir a nota 89 na tela de Notas Fiscais e confirmar que o emitente/sócio aparece corretamente na exibição e no agrupamento.
-- Criar uma nova compra pelo `CompraDialog` e conferir que `notas_fiscais.inscricao_produtor_id` já sai preenchido no `INSERT`.
-
-## Escopo
-
-Somente `CompraDialog.tsx` (uma linha adicionada no insert) + UPDATE de backfill via ferramenta de dados. Nenhuma alteração de schema, RLS ou de outros fluxos (EmitirNfeCompraDialog, MDe, depósito, devolução, venda) — todos já preenchem o campo corretamente.
+- Ajustes de alíquotas de PIS/COFINS no cadastro dos emitentes (permanecem como estão; com CST 08 não são utilizadas no cálculo).

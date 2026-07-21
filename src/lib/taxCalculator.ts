@@ -158,11 +158,11 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
     aliqIcms: 0,
     baseIcms: 0,
     valorIcms: 0,
-    cstPis: "01",
+    cstPis: "08",
     aliqPis: 0,
     basePis: 0,
     valorPis: 0,
-    cstCofins: "01",
+    cstCofins: "08",
     aliqCofins: 0,
     baseCofins: 0,
     valorCofins: 0,
@@ -226,7 +226,7 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
   } else if (input.cstPisPadrao) {
     resultado.cstPis = input.cstPisPadrao;
   } else {
-    resultado.cstPis = "01"; // Operação tributável
+    resultado.cstPis = "08"; // Sem incidência (produtor rural PF)
   }
   
   // Calcula PIS se houver incidência
@@ -243,7 +243,7 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
   } else if (input.cstCofinsPadrao) {
     resultado.cstCofins = input.cstCofinsPadrao;
   } else {
-    resultado.cstCofins = "01"; // Operação tributável
+    resultado.cstCofins = "08"; // Sem incidência (produtor rural PF)
   }
   
   // Calcula COFINS se houver incidência
