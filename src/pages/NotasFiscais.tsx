@@ -53,12 +53,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatDateTimeSP, formatSP } from "@/lib/datetime";
 
+const isDateOnly = (s: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(s) ||
+  /T00:00:00(\.0+)?(Z|\+00:?00|-00:?00)$/.test(s);
+
 const formatDataEmissao = (dataEmissao: string | null | undefined, createdAt: string | null | undefined) => {
   const ts = dataEmissao || createdAt;
   if (!ts) return "-";
   const dataPart = formatSP(ts, "dd/MM/yyyy");
   let horaPart = formatSP(ts, "HH:mm");
-  if (horaPart === "00:00" && createdAt && dataEmissao) {
+  if (dataEmissao && isDateOnly(dataEmissao) && createdAt) {
     horaPart = formatSP(createdAt, "HH:mm");
   }
   return `${dataPart} ${horaPart}`;
