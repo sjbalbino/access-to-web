@@ -500,7 +500,7 @@ export async function mapNotaToFocusNfe(
         : {}),
     inscricao_estadual_transportador: nota.transp_ie?.replace(/\D/g, "") || undefined,
     endereco_transportador: nota.transp_endereco || undefined,
-    municipio_transportador: nota.transp_cidade || undefined,
+    municipio_transportador: municipioTransportadorNome || nota.transp_cidade || undefined,
     uf_transportador: nota.transp_uf || undefined,
     veiculo_placa: nota.veiculo_placa || undefined,
     veiculo_uf: nota.veiculo_uf || undefined,
