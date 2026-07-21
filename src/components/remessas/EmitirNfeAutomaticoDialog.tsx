@@ -200,15 +200,22 @@ export function EmitirNfeAutomaticoDialog({
 
       console.log("Próximo número NFe:", proximoNumero, "Série:", serieNfe);
 
-      // IMPORTANTE: Atualizar numero_atual_nfe ANTES de criar a nota para reservar o número
-      // Isso evita que outra emissão simultânea use o mesmo número
-      const { error: updateNumeroError } = await supabase
+      // IMPORTANTE: Atualizar numero_atual_nfe ANTES de criar a nota para reservar o número.
+      // Nunca regride — compara com valor fresco no banco para evitar duplicidade.
+      const { data: emitAtual } = await supabase
         .from("emitentes_nfe")
-        .update({ numero_atual_nfe: proximoNumero })
-        .eq("id", emitente.id);
-
-      if (updateNumeroError) {
-        console.warn("Aviso: não foi possível atualizar numero_atual_nfe:", updateNumeroError.message);
+        .select("numero_atual_nfe")
+        .eq("id", emitente.id)
+        .maybeSingle();
+      const numeroAtualNoBanco = Number(emitAtual?.numero_atual_nfe || 0);
+      if (proximoNumero > numeroAtualNoBanco) {
+        const { error: updateNumeroError } = await supabase
+          .from("emitentes_nfe")
+          .update({ numero_atual_nfe: proximoNumero })
+          .eq("id", emitente.id);
+        if (updateNumeroError) {
+          console.warn("Aviso: não foi possível atualizar numero_atual_nfe:", updateNumeroError.message);
+        }
       }
 
       setStatus({ step: "creating_nfe", message: "Criando nota fiscal...", progress: 30 });

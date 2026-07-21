@@ -474,15 +474,27 @@ serve(async (req) => {
 
     console.log("Nota fiscal atualizada com sucesso no banco de dados");
 
-    // Atualizar numero_atual_nfe do emitente para o número usado
+    // Atualizar numero_atual_nfe do emitente para o número usado — SEMPRE monotônico.
+    // Se um retorno tardio de uma NF-e anterior chegar depois de outra mais recente
+    // já autorizada, NÃO regride o contador (bug histórico que causou duplicidade).
     const numeroEmitido = Number(responseData.numero ?? proximoNumero);
     if (emitenteData?.id && numeroEmitido > 0) {
-      const { error: emitErr } = await supabase
+      const { data: emitAtual } = await supabase
         .from("emitentes_nfe")
-        .update({ numero_atual_nfe: numeroEmitido })
-        .eq("id", emitenteData.id);
-      if (emitErr) console.error("Erro ao atualizar numero_atual_nfe:", emitErr);
-      else console.log(`numero_atual_nfe atualizado para ${numeroEmitido}`);
+        .select("numero_atual_nfe")
+        .eq("id", emitenteData.id)
+        .maybeSingle();
+      const numeroAtualNoBanco = Number(emitAtual?.numero_atual_nfe ?? 0);
+      if (numeroEmitido > numeroAtualNoBanco) {
+        const { error: emitErr } = await supabase
+          .from("emitentes_nfe")
+          .update({ numero_atual_nfe: numeroEmitido })
+          .eq("id", emitenteData.id);
+        if (emitErr) console.error("Erro ao atualizar numero_atual_nfe:", emitErr);
+        else console.log(`numero_atual_nfe atualizado de ${numeroAtualNoBanco} para ${numeroEmitido}`);
+      } else {
+        console.log(`numero_atual_nfe (${numeroAtualNoBanco}) já é >= ${numeroEmitido}, mantendo (evitando regressão).`);
+      }
     }
 
     return new Response(

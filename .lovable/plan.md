@@ -1,40 +1,82 @@
-## Problema
 
-O SEFAZ está rejeitando as notas de compra porque no campo de município está sendo enviado o **código IBGE** (ex.: `4308904`) em vez do **nome do município** (ex.: `IJUÍ`).
+## Diagnóstico
 
-Isso acontece porque em `inscricoes_produtor.cidade` guardamos o código IBGE (7 dígitos), e o mapeador da NF-e (`focusNfeMapper.ts`) envia esse valor direto como `municipio_emitente`/`municipio_destinatario` — a Focus NFe/SEFAZ espera o **nome**.
+Confirmei no banco: existem duas NF-es número 86 / série 930 no emitente `3bbed79d…`:
 
-## O que será feito
+- `a3bb2c4a…` — criada 16:07, **autorizada** às 16:26 (chave final `…861215536120`).
+- `465d2a36…` — criada 16:52, rejeitada com **"Duplicidade de NF-e, com diferença na Chave de Acesso"** (código 539) no mesmo número 86.
 
-### 1. Correção da causa da rejeição (backend/emissão)
+Timeline no emitente (mesma série 930):
 
-Traduzir código IBGE → nome no momento de montar a NF-e, sem alterar o que está gravado no banco.
+| Nota | Criada | Autorizada (updated_at) | Nº |
+|---|---|---|---|
+| 4f6d228e | 16:00:49 | **16:29:49** | 85 |
+| a3bb2c4a | 16:07:55 | 16:26:22 | 86 |
+| 465d2a36 | 16:52:11 | 17:11:39 (rejeitada) | 86 |
 
-- Em `src/lib/focusNfeMapper.ts`: quando `cidade` for numérico (código IBGE), consultar `ibge_municipios` e substituir pelo `nome` do município antes de preencher `municipio_emitente` e `municipio_destinatario`. Fallback: manter o valor atual se não encontrar.
-- Aplicar a mesma tradução em `dest_cidade` gravado em `notas_fiscais` nos fluxos:
-  - `src/components/compra/EmitirNfeCompraDialog.tsx`
-  - `src/components/compra/CompraDialog.tsx`
-  - `src/components/devolucao/EmitirNfeDevolucaoDialog.tsx`
-  - `src/components/deposito/NotaDepositoFormDialog.tsx`
-  - `src/components/remessas/EmitirNfeAutomaticoDialog.tsx`
-  - `src/pages/EntradaColheita.tsx`
-  - `src/pages/NotaFiscalForm.tsx`
+A nota 85 foi enviada primeiro, mas o retorno da SEFAZ chegou **depois** da nota 86 (16:29 vs 16:26).
 
-Usando um helper novo em `src/lib/utils.ts` (ou `src/lib/municipio.ts`): `resolveNomeMunicipio(codigoOuNome, uf)`.
+## Causa raiz
 
-### 2. Ajuste no select de município
+Em `supabase/functions/focus-nfe-emitir/index.ts` (linhas 478–486), após autorização a função faz:
 
-Onde o usuário escolhe o município, exibir **"Nome (Código IBGE)"** de forma consistente:
+```ts
+await supabase.from("emitentes_nfe")
+  .update({ numero_atual_nfe: numeroEmitido })
+  .eq("id", emitenteData.id);
+```
 
-- `src/components/produtores/InscricoesTab.tsx` — já mostra `Nome (Código)` no botão; confirmar que a lista de opções também exibe `Nome (Código)` no `CommandItem`.
-- `src/pages/VendaProducaoForm.tsx` — combobox de cidade hoje mostra só o nome; adicionar `(Código IBGE)` ao lado.
+Isso **sobrescreve** `numero_atual_nfe` sem comparar com o valor atual. Quando uma nota mais antiga (85) tem retorno mais lento que uma mais nova (86), o update tardio da 85 **regride** o contador de 86 → 85.
 
-### 3. Validação
+Sequência que gerou o problema:
 
-- Testar emissão de uma compra de cereais e conferir no XML/retorno da Focus que `xMun` sai como nome.
-- Verificar que a lista/edição de inscrições continua exibindo o município corretamente.
+1. 16:07 — nota 86 emitida com `numero_atual_nfe=85` → reserva 86.
+2. 16:26 — SEFAZ autoriza a 86, contador vai para **86**.
+3. 16:29 — retorno tardio da 85 sobrescreve o contador de volta para **85**.
+4. 16:52 — usuário cria uma nova nota; a função lê `numero_atual_nfe=85` e reserva **86 de novo**.
+5. SEFAZ recusa (539 — Duplicidade), pois o número 86 já foi consumido com outra chave.
+
+O tratamento de duplicidade existente (linhas 373–396) só entra em ação **depois** da rejeição — não previne o problema.
+
+## Correção proposta
+
+Tornar a atualização de `numero_atual_nfe` monotônica (nunca regride) nos três pontos onde ela é gravada após a autorização:
+
+### 1. `supabase/functions/focus-nfe-emitir/index.ts`
+
+No bloco de sucesso (linhas 477–486), substituir o `update` cego por uma leitura + comparação:
+
+```ts
+const numeroEmitido = Number(responseData.numero ?? proximoNumero);
+if (emitenteData?.id && numeroEmitido > 0) {
+  const { data: cur } = await supabase
+    .from("emitentes_nfe")
+    .select("numero_atual_nfe")
+    .eq("id", emitenteData.id)
+    .maybeSingle();
+  const atual = Number(cur?.numero_atual_nfe ?? 0);
+  if (numeroEmitido > atual) {
+    await supabase
+      .from("emitentes_nfe")
+      .update({ numero_atual_nfe: numeroEmitido })
+      .eq("id", emitenteData.id);
+  }
+}
+```
+
+Também no bloco de duplicidade (linhas 390–396), o cálculo já usa `Math.max` — manter, apenas confirmar leitura fresca.
+
+### 2. `src/components/compra/EmitirNfeCompraDialog.tsx` (linhas 197–214) e `src/components/remessas/EmitirNfeAutomaticoDialog.tsx` (linhas 194–211)
+
+Ambos gravam `numero_atual_nfe = proximoNumero` diretamente. Aplicar o mesmo padrão: reler o valor atual e só atualizar se `proximoNumero > atual`.
+
+### 3. Correção pontual do dado atual
+
+A nota `465d2a36…` está com `numero=86` e status `erro_autorizacao`. O contador do emitente já está em 89 (correto). Duas opções — o usuário escolhe:
+
+- **Descartar**: excluir a nota `465d2a36` (é apenas uma tentativa rejeitada, nunca foi para a SEFAZ com sucesso), ou
+- **Reaproveitar**: limpar `numero`, `chave_acesso`, `uuid_api` e `protocolo` da nota `465d2a36` para que a próxima tentativa de emissão pegue o próximo número disponível (90).
 
 ## Fora do escopo
 
-- Migração de dados (não vamos reescrever `cidade` no banco de código para nome — a tradução é feita na emissão).
-- Alteração de outros campos de endereço.
+Não vou mexer em concorrência entre emissões simultâneas do mesmo emitente (dois usuários clicando "Emitir" ao mesmo tempo) — isso exigiria uma sequence Postgres dedicada por (emitente, série). Se quiser, posso planejar isso em separado.
