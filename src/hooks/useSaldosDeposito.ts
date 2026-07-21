@@ -227,30 +227,11 @@ export function useInscricoesComSaldo(filters: {
         return data || [];
       })();
 
-      const enviadasPromise = (async () => {
-        let q = supabase
-          .from('transferencias_deposito')
-          .select('inscricao_origem_id, quantidade_kg, local_saida_id')
-          .eq('safra_id', filters.safraId);
-        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
-        if (localFilter) q = q.eq('local_saida_id', localFilter);
-        const { data, error } = await q;
-        if (error) throw error;
-        return data || [];
-      })();
-
-      const devolucoesPromise = (async () => {
-        let q = supabase
-          .from('devolucoes_deposito')
-          .select('inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem, local_entrega_id')
-          .eq('safra_id', filters.safraId)
-          .neq('status', 'cancelada');
-        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
-        if (localFilter) q = q.eq('local_entrega_id', localFilter);
-        const { data, error } = await q;
-        if (error) throw error;
-        return data || [];
-      })();
+      // Saldo elegível para emissão de nota de depósito considera apenas:
+      // Colheitas + Transferências Recebidas − Notas de Depósito Emitidas.
+      // Devoluções e transferências enviadas NÃO reduzem esse saldo
+      // (comportam-se como saída futura / saldo disponível, mas o depósito
+      // físico ainda pode ser contra-notado).
 
       // Notas de depósito emitidas: reduzem o saldo por inscrição (agregado,
       // pois a tabela não guarda local_entrega_id).
@@ -265,11 +246,9 @@ export function useInscricoesComSaldo(filters: {
         return data || [];
       })();
 
-      const [colheitas, recebidas, enviadas, devolucoes, emitidas] = await Promise.all([
+      const [colheitas, recebidas, emitidas] = await Promise.all([
         colheitasPromise,
         recebidasPromise,
-        enviadasPromise,
-        devolucoesPromise,
         emitidasPromise,
       ]);
 
@@ -336,19 +315,24 @@ export function useInscricoesComSaldo(filters: {
         b.saldo += round(t.quantidade_kg);
       });
 
-      enviadas.forEach((t: any) => {
-        if (!t.inscricao_origem_id) return;
-        const b = getBucket(t.inscricao_origem_id, t.local_saida_id, null);
-        b.saldo -= round(t.quantidade_kg);
-      });
-
-      devolucoes.forEach((d: any) => {
-        if (!d.inscricao_produtor_id) return;
-        const b = getBucket(d.inscricao_produtor_id, d.local_entrega_id, null);
-        // Taxa de armazenagem também sai do estoque do produtor (conforme
-        // fórmula de useSaldoDisponivelProdutor: kg_taxa é crédito do sócio,
-        // portanto reduz o disponível do produtor).
-        b.saldo -= round(d.quantidade_kg) + round(d.kg_taxa_armazenagem);
+      // Subtrair notas de depósito emitidas do bucket. Como a tabela não guarda
+      // local_entrega_id, distribui o total emitido por inscrição
+      // proporcionalmente entre os buckets (locais) existentes daquela inscrição.
+      emitidoPorInscricao.forEach((qtdEmitida, inscId) => {
+        if (qtdEmitida <= 0) return;
+        const bucketsInsc = Array.from(buckets.values()).filter((b) => b.inscId === inscId);
+        const totalSaldo = bucketsInsc.reduce((acc, b) => acc + b.saldo, 0);
+        if (bucketsInsc.length === 0) return;
+        if (totalSaldo <= 0) {
+          // Sem base positiva: subtrai igualmente entre os buckets.
+          const parte = qtdEmitida / bucketsInsc.length;
+          bucketsInsc.forEach((b) => { b.saldo -= parte; });
+        } else {
+          bucketsInsc.forEach((b) => {
+            const proporcao = b.saldo / totalSaldo;
+            b.saldo -= qtdEmitida * proporcao;
+          });
+        }
       });
 
       // Quando incluirSemSaldo estiver ligado, também trazemos inscrições da granja
