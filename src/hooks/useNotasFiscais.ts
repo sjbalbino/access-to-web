@@ -172,6 +172,7 @@ export function useNotasFiscais() {
             inscricao:inscricoes_produtor!emitentes_nfe_inscricao_produtor_id_fkey(nome, cpf_cnpj)
           )
         `)
+        .order("data_emissao", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
 
       if (error) throw error;
