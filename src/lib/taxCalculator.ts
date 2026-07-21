@@ -264,7 +264,7 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
   // ========== IBS/CBS/IS (Reforma Tributária) ==========
   if (input.incidenciaIbsCbs) {
     // IBS - prioridade: produto > CFOP > padrão
-    resultado.cstIbs = input.produtoCstIbs || input.cstIbsPadrao || "000";
+    resultado.cstIbs = input.cstIbsPadraoEmitente || input.cstIbsPadrao || input.produtoCstIbs || "000";
     // Só calcula se CST indica tributação
     if (cstIbsCbsTemTributacao(resultado.cstIbs) && input.aliqIbsPadrao && input.aliqIbsPadrao > 0) {
       resultado.baseIbs = input.valorTotal;
@@ -274,10 +274,12 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
     // cClassTrib IBS — só faz sentido quando o CST usa classificação tributária
     if (cstIbsCbsTemTributacao(resultado.cstIbs)) {
       resultado.cclassTribIbs = input.produtoCclassTribIbs || null;
+    } else {
+      resultado.cclassTribIbs = null;
     }
 
-    // CBS - prioridade: produto > CFOP > padrão
-    resultado.cstCbs = input.produtoCstCbs || input.cstCbsPadrao || "000";
+    // CBS - prioridade: Emitente → CFOP → Produto
+    resultado.cstCbs = input.cstCbsPadraoEmitente || input.cstCbsPadrao || input.produtoCstCbs || "000";
     // Só calcula se CST indica tributação
     if (cstIbsCbsTemTributacao(resultado.cstCbs) && input.aliqCbsPadrao && input.aliqCbsPadrao > 0) {
       resultado.baseCbs = input.valorTotal;
@@ -286,6 +288,8 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
     }
     if (cstIbsCbsTemTributacao(resultado.cstCbs)) {
       resultado.cclassTribCbs = input.produtoCclassTribCbs || null;
+    } else {
+      resultado.cclassTribCbs = null;
     }
 
     // IS - prioridade: produto > CFOP > padrão
