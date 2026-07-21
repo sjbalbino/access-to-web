@@ -670,9 +670,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-9 w-9 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50"
-                          title="Visualizar DANFe"
-                          disabled={isLoading}
+                          className="h-9 w-9 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={danfeBloqueioTitle || "Visualizar DANFe"}
+                          disabled={!xmlDisponivel || isLoading}
                           onClick={() => handleVisualizarDanfe(nfe)}
                         >
                           <Eye className="h-5 w-5" />
@@ -681,9 +681,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-9 w-9 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                          title="Baixar DANFe"
-                          disabled={isLoading}
+                          className="h-9 w-9 text-slate-400 hover:text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={danfeBloqueioTitle || "Baixar DANFe"}
+                          disabled={!xmlDisponivel || isLoading}
                           onClick={() => downloadDanfe(inscricaoId, nfe.chave)}
                         >
                           <FileText className="h-5 w-5" />
