@@ -468,7 +468,7 @@ export function EmitirNfeAutomaticoDialog({
         aliq_cbs: itemData.aliq_cbs,
         valor_cbs: itemData.valor_cbs,
         cclass_trib_cbs: itemData.cclass_trib_cbs,
-        cst_is: null,
+        cst_is: (itemData as any).cst_is,
         base_is: null,
         aliq_is: null,
         valor_is: null,
