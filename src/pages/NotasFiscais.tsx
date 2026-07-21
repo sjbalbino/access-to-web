@@ -537,7 +537,6 @@ export default function NotasFiscais() {
                 <TableRow>
                   <TableHead className="w-20">Número</TableHead>
                   <TableHead className="hidden md:table-cell w-20">Série</TableHead>
-                  <TableHead>Emitente</TableHead>
                   <TableHead>Destinatário</TableHead>
                   <TableHead className="hidden lg:table-cell">Natureza Op.</TableHead>
                   <TableHead>Data Emissão</TableHead>
@@ -549,7 +548,7 @@ export default function NotasFiscais() {
               </TableHeader>
               <TableBody>
                 {(() => {
-                  const totalCols = canEdit ? 9 : 8;
+                  const totalCols = canEdit ? 8 : 7;
                   const rows: React.ReactNode[] = [];
                   let lastEmitenteId: string | null | undefined = undefined;
                   const groupNotas = (id: string | null | undefined) =>
@@ -585,14 +584,6 @@ export default function NotasFiscais() {
                       <TableRow key={nota.id}>
                         <TableCell className="font-mono">{nota.numero || "-"}</TableCell>
                         <TableCell className="font-mono hidden md:table-cell">{nota.serie || "-"}</TableCell>
-                        <TableCell className="text-sm">
-                          <div className="font-medium whitespace-normal break-words" title={nota.emitente?.inscricao?.nome || "-"}>
-                            {nota.emitente?.inscricao?.nome || "-"}
-                          </div>
-                          <div className="text-xs text-muted-foreground font-mono">
-                            IE: {(nota.emitente?.inscricao as any)?.inscricao_estadual || "-"}
-                          </div>
-                        </TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium truncate max-w-[150px]">{nota.dest_nome || "-"}</div>
