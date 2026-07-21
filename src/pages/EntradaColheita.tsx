@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { nowIsoSP } from "@/lib/datetime";
 import { Truck, Scale, Check, Loader2, AlertCircle, Package, Search, FileText, CheckCircle2, XCircle, Printer } from "lucide-react";
 import { gerarTicketDepositoPdf } from "@/lib/ticketDepositoPdf";
 import { toast } from "sonner";
@@ -604,7 +605,7 @@ export default function EntradaColheita() {
         // Dados do produtor/remetente
         const dataEmissao = formContraNota.tipo === "bloco" 
           ? formContraNota.data_emissao_nfp 
-          : format(new Date(), "yyyy-MM-dd'T'HH:mm:ssXXX");
+          : nowIsoSP();
         
         // Calcular próximo número da NF-e
         const proximoNumero = (emitente.numero_atual_nfe || 0) + 1;

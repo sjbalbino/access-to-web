@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { nowDateTimeSP } from "./datetime";
 
 interface RemessaData {
   id: string;
@@ -314,7 +315,7 @@ export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaDa
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text(
-      `Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })} - Página ${i} de ${pageCount}`,
+      `Gerado em ${nowDateTimeSP("dd/MM/yyyy 'às' HH:mm")} - Página ${i} de ${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: "center" }

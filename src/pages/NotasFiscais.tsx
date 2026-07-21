@@ -51,18 +51,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { format } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
-import { ptBR } from "date-fns/locale";
+import { formatDateTimeSP, formatSP } from "@/lib/datetime";
 
-const TZ_SP = "America/Sao_Paulo";
 const formatDataEmissao = (dataEmissao: string | null | undefined, createdAt: string | null | undefined) => {
   const ts = dataEmissao || createdAt;
   if (!ts) return "-";
-  const dataPart = formatInTimeZone(ts, TZ_SP, "dd/MM/yyyy");
-  let horaPart = formatInTimeZone(ts, TZ_SP, "HH:mm");
+  const dataPart = formatSP(ts, "dd/MM/yyyy");
+  let horaPart = formatSP(ts, "HH:mm");
   if (horaPart === "00:00" && createdAt && dataEmissao) {
-    horaPart = formatInTimeZone(createdAt, TZ_SP, "HH:mm");
+    horaPart = formatSP(createdAt, "HH:mm");
   }
   return `${dataPart} ${horaPart}`;
 };
@@ -582,7 +579,7 @@ export default function NotasFiscais() {
                           (nota.status === "cancelado" || nota.status === "cancelada")
                             ? `Cancelada por ${(nota as any).cancelado_por_nome || "—"} em ${
                                 (nota as any).cancelado_em
-                                  ? format(new Date((nota as any).cancelado_em), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                                  ? formatDateTimeSP((nota as any).cancelado_em)
                                   : "—"
                               }\nMotivo: ${(nota as any).cancelado_motivo || nota.motivo_status || "—"}`
                             : undefined
@@ -595,7 +592,7 @@ export default function NotasFiscais() {
                           <div>
                             Por <span className="font-medium">{(nota as any).cancelado_por_nome || "—"}</span>
                             {(nota as any).cancelado_em && (
-                              <> em {format(new Date((nota as any).cancelado_em), "dd/MM/yy HH:mm", { locale: ptBR })}</>
+                              <> em {formatSP((nota as any).cancelado_em, "dd/MM/yy HH:mm")}</>
                             )}
                           </div>
                           {((nota as any).cancelado_motivo || nota.motivo_status) && (

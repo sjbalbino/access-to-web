@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { nowDateTimeSP } from "./datetime";
 import { supabase } from "@/integrations/supabase/client";
 
 // Romaneio para impressora térmica de 80 colunas (bobina 80mm)
@@ -183,7 +184,7 @@ export async function gerarRomaneioVendaPdf(
   add("_".repeat(COLS - 4), { center: true });
   add("Recebedor", { center: true });
   add(
-    `Emitido: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`,
+    `Emitido: ${nowDateTimeSP()}`,
     { center: true }
   );
 
