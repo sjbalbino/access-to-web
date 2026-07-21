@@ -285,9 +285,23 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     try {
       // Buscar produto selecionado
       const produto = produtos.find(p => p.id === produtoId);
-      
+
+      // Resolver CST + cClassTrib de IBS/CBS/IS
+      // Prioridade: produto → emitente → CFOP → padrão depósito ("400" = isenção)
+      const cstIbsResolved =
+        (produto as any)?.cst_ibs || (emitente as any)?.cst_ibs_padrao || (cfop1905 as any)?.cst_ibs_padrao || "400";
+      const cstCbsResolved =
+        (produto as any)?.cst_cbs || (emitente as any)?.cst_cbs_padrao || (cfop1905 as any)?.cst_cbs_padrao || "400";
+      const cstIsResolved =
+        (produto as any)?.cst_is || (emitente as any)?.cst_is_padrao || (cfop1905 as any)?.cst_is_padrao || null;
+      const cclassTribIbsResolved =
+        (produto as any)?.cclass_trib_ibs || (emitente as any)?.cclass_trib_ibs_padrao || null;
+      const cclassTribCbsResolved =
+        (produto as any)?.cclass_trib_cbs || (emitente as any)?.cclass_trib_cbs_padrao || null;
+
       // Próximo número da nota
       const proximoNumero = (emitente.numero_atual_nfe || 0) + 1;
+
 
       // Montar informações complementares
       const infoComplementar = (() => {
