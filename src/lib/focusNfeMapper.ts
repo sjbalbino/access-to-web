@@ -481,7 +481,7 @@ export async function mapNotaToFocusNfe(
     logradouro_destinatario: nota.dest_logradouro || "",
     numero_destinatario: nota.dest_numero || "S/N",
     bairro_destinatario: nota.dest_bairro || "",
-    municipio_destinatario: nota.dest_cidade || "",
+    municipio_destinatario: municipioDestinatarioNome || nota.dest_cidade || "",
     uf_destinatario: nota.dest_uf || "",
     cep_destinatario: nota.dest_cep?.replace(/\D/g, "") || undefined,
     indicador_inscricao_estadual_destinatario: mapIndicadorIE(nota.dest_tipo, nota.dest_ie),
