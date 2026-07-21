@@ -37,6 +37,8 @@ export function useNotasDepositoEmitidas(filters?: {
   safraId?: string;
   produtoId?: string;
   granjaId?: string;
+  dataInicial?: string;
+  dataFinal?: string;
 }) {
   return useQuery({
     queryKey: ['notas_deposito_emitidas', filters],
@@ -52,6 +54,7 @@ export function useNotasDepositoEmitidas(filters?: {
           produto:produtos(nome)
 
         `)
+        .order('data_emissao', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false });
 
       if (filters?.inscricaoProdutorId) {
@@ -65,6 +68,12 @@ export function useNotasDepositoEmitidas(filters?: {
       }
       if (filters?.granjaId) {
         query = query.eq('granja_id', filters.granjaId);
+      }
+      if (filters?.dataInicial) {
+        query = query.gte('data_emissao', filters.dataInicial);
+      }
+      if (filters?.dataFinal) {
+        query = query.lte('data_emissao', filters.dataFinal);
       }
 
       const { data, error } = await query;

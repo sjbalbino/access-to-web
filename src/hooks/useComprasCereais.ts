@@ -61,6 +61,8 @@ interface CompraFilters {
   granjaId?: string;
   safraId?: string;
   produtoId?: string;
+  dataInicial?: string;
+  dataFinal?: string;
 }
 
 export function useComprasCereais(filters?: CompraFilters) {
@@ -85,6 +87,7 @@ export function useComprasCereais(filters?: CompraFilters) {
           silo:silos(id, nome),
           nota_fiscal:notas_fiscais(id, numero, status)
         `)
+        .order('data_compra', { ascending: false })
         .order('codigo', { ascending: false });
 
       if (filters?.granjaId) {
@@ -95,6 +98,12 @@ export function useComprasCereais(filters?: CompraFilters) {
       }
       if (filters?.produtoId) {
         query = query.eq('produto_id', filters.produtoId);
+      }
+      if (filters?.dataInicial) {
+        query = query.gte('data_compra', filters.dataInicial);
+      }
+      if (filters?.dataFinal) {
+        query = query.lte('data_compra', filters.dataFinal);
       }
 
       const { data, error } = await query;

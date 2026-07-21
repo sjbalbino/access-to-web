@@ -63,6 +63,8 @@ interface DevolucaoFilters {
   granjaId?: string;
   safraId?: string;
   produtoId?: string;
+  dataInicial?: string;
+  dataFinal?: string;
 }
 
 export function useDevolucoes(filters?: DevolucaoFilters) {
@@ -88,6 +90,7 @@ export function useDevolucoes(filters?: DevolucaoFilters) {
           local_entrega:locais_entrega!devolucoes_deposito_local_entrega_id_fkey(id, nome, is_sede),
           nota_fiscal:notas_fiscais(id, numero, status)
         `)
+        .order('data_devolucao', { ascending: false })
         .order('codigo', { ascending: false });
 
       if (filters?.granjaId) {
@@ -98,6 +101,12 @@ export function useDevolucoes(filters?: DevolucaoFilters) {
       }
       if (filters?.produtoId) {
         query = query.eq('produto_id', filters.produtoId);
+      }
+      if (filters?.dataInicial) {
+        query = query.gte('data_devolucao', filters.dataInicial);
+      }
+      if (filters?.dataFinal) {
+        query = query.lte('data_devolucao', filters.dataFinal);
       }
 
       const { data, error } = await query;

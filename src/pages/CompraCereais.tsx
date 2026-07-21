@@ -23,6 +23,8 @@ export default function CompraCereais() {
   const [granjaId, setGranjaId] = useState<string>('');
   const [safraId, setSafraId] = useState<string>('');
   const [produtoId, setProdutoId] = useState<string>('');
+  const [dataInicial, setDataInicial] = useState<string>('');
+  const [dataFinal, setDataFinal] = useState<string>('');
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,7 +36,7 @@ export default function CompraCereais() {
   const { data: safras } = useSafras();
   const { data: produtos } = useProdutosSementes();
   
-  const { data: compras, isLoading, refetch } = useComprasCereais({ granjaId, safraId, produtoId });
+  const { data: compras, isLoading, refetch } = useComprasCereais({ granjaId, safraId, produtoId, dataInicial: dataInicial || undefined, dataFinal: dataFinal || undefined });
   const deleteCompra = useDeleteCompraCereal();
 
   const handleNovaCompra = () => {
@@ -116,6 +118,24 @@ export default function CompraCereais() {
                   emptyText="Nenhum produto encontrado."
                 />
               </div>
+              <div>
+                <Label>Data Inicial</Label>
+                <input
+                  type="date"
+                  value={dataInicial}
+                  onChange={(e) => setDataInicial(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+              <div>
+                <Label>Data Final</Label>
+                <input
+                  type="date"
+                  value={dataFinal}
+                  onChange={(e) => setDataFinal(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -130,7 +150,6 @@ export default function CompraCereais() {
               <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cód</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Vendedor</TableHead>
                     <TableHead className="hidden sm:table-cell">Produto</TableHead>
@@ -142,12 +161,11 @@ export default function CompraCereais() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={8} className="text-center">Carregando...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center">Carregando...</TableCell></TableRow>
                   ) : !compras?.length ? (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Nenhuma compra encontrada</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Nenhuma compra encontrada</TableCell></TableRow>
                   ) : dadosPaginados.map(c => (
                     <TableRow key={c.id}>
-                      <TableCell>{c.codigo}</TableCell>
                       <TableCell>{format(parseISO(c.data_compra), 'dd/MM/yyyy')}</TableCell>
                       <TableCell className="max-w-[150px] truncate">{c.inscricao_vendedor?.produtores?.nome}</TableCell>
                       <TableCell className="hidden sm:table-cell">{c.produto?.nome}</TableCell>

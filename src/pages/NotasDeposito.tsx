@@ -40,6 +40,8 @@ export default function NotasDeposito() {
   const [safraId, setSafraId] = useState<string>("");
   const [produtoId, setProdutoId] = useState<string>("");
   const [inscricaoProdutorId, setInscricaoProdutorId] = useState<string>("");
+  const [dataInicial, setDataInicial] = useState<string>("");
+  const [dataFinal, setDataFinal] = useState<string>("");
   
   // Dialog de formulário
   const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -78,6 +80,8 @@ export default function NotasDeposito() {
     produtoId: produtoId || undefined,
     granjaId: granjaIdDoLocal || undefined,
     inscricaoProdutorId: inscricaoProdutorId || undefined,
+    dataInicial: dataInicial || undefined,
+    dataFinal: dataFinal || undefined,
   });
 
   const deleteNotaMutation = useDeleteNotaDepositoEmitida();
@@ -186,6 +190,26 @@ export default function NotasDeposito() {
                   options={produtosCereais.map(p => ({ value: p.id, label: p.nome }))}
                   searchPlaceholder="Buscar produto..."
                   emptyText="Nenhum produto encontrado."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Data Inicial</Label>
+                <input
+                  type="date"
+                  value={dataInicial}
+                  onChange={(e) => setDataInicial(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Data Final</Label>
+                <input
+                  type="date"
+                  value={dataFinal}
+                  onChange={(e) => setDataFinal(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
             </div>

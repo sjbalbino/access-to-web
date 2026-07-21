@@ -25,6 +25,8 @@ export default function DevolucaoDeposito() {
   const [safraId, setSafraId] = useState<string>('');
   const [produtoId, setProdutoId] = useState<string>('');
   const [produtorId, setProdutorId] = useState<string>('');
+  const [dataInicial, setDataInicial] = useState<string>('');
+  const [dataFinal, setDataFinal] = useState<string>('');
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -50,7 +52,7 @@ export default function DevolucaoDeposito() {
     return Array.from(map.entries()).map(([id, nome]) => ({ id, nome })).sort((a, b) => a.nome.localeCompare(b.nome));
   }, [allInscricoes]);
   
-  const { data: devolucoes, isLoading } = useDevolucoes({ granjaId, safraId, produtoId });
+  const { data: devolucoes, isLoading } = useDevolucoes({ granjaId, safraId, produtoId, dataInicial: dataInicial || undefined, dataFinal: dataFinal || undefined });
   const deleteDevolucao = useDeleteDevolucao();
 
   // Filtro local por produtor
@@ -104,7 +106,7 @@ export default function DevolucaoDeposito() {
         {/* Filtros */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Granja</Label>
                 <ComboboxFilter
@@ -146,6 +148,24 @@ export default function DevolucaoDeposito() {
                   popoverWidth="w-[350px]"
                 />
               </div>
+              <div>
+                <Label>Data Inicial</Label>
+                <input
+                  type="date"
+                  value={dataInicial}
+                  onChange={(e) => setDataInicial(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+              <div>
+                <Label>Data Final</Label>
+                <input
+                  type="date"
+                  value={dataFinal}
+                  onChange={(e) => setDataFinal(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -160,7 +180,6 @@ export default function DevolucaoDeposito() {
               <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cód</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Produtor</TableHead>
                     <TableHead className="hidden sm:table-cell">Produto</TableHead>
@@ -172,12 +191,11 @@ export default function DevolucaoDeposito() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={8} className="text-center">Carregando...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center">Carregando...</TableCell></TableRow>
                   ) : !devolucoes?.length ? (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Nenhuma devolução encontrada</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Nenhuma devolução encontrada</TableCell></TableRow>
                   ) : dadosPaginados.map(d => (
                     <TableRow key={d.id}>
-                      <TableCell>{d.codigo}</TableCell>
                       <TableCell>{format(new Date(d.data_devolucao), 'dd/MM/yyyy')}</TableCell>
                       <TableCell className="max-w-[150px] truncate">{d.inscricao_produtor?.produtores?.nome}</TableCell>
                       <TableCell className="hidden sm:table-cell">{d.produto?.nome}</TableCell>
