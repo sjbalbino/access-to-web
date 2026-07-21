@@ -150,7 +150,6 @@ export default function CompraCereais() {
               <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cód</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Vendedor</TableHead>
                     <TableHead className="hidden sm:table-cell">Produto</TableHead>
@@ -162,12 +161,11 @@ export default function CompraCereais() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={8} className="text-center">Carregando...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center">Carregando...</TableCell></TableRow>
                   ) : !compras?.length ? (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Nenhuma compra encontrada</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Nenhuma compra encontrada</TableCell></TableRow>
                   ) : dadosPaginados.map(c => (
                     <TableRow key={c.id}>
-                      <TableCell>{c.codigo}</TableCell>
                       <TableCell>{format(parseISO(c.data_compra), 'dd/MM/yyyy')}</TableCell>
                       <TableCell className="max-w-[150px] truncate">{c.inscricao_vendedor?.produtores?.nome}</TableCell>
                       <TableCell className="hidden sm:table-cell">{c.produto?.nome}</TableCell>
