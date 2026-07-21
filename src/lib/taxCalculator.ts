@@ -17,6 +17,8 @@ export interface TaxCalculatorInput {
   aliqIbsPadrao: number | null;
   aliqCbsPadrao: number | null;
   aliqIsPadrao: number | null;
+  cstPisPadraoEmitente: string | null;
+  cstCofinsPadraoEmitente: string | null;
   ufEmitente: string;
   
   // CFOP
