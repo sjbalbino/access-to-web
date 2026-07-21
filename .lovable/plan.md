@@ -1,51 +1,54 @@
-## Plano de correção
+## Diagnóstico da nota 94
 
-Vou ajustar apenas o fluxo do botão **Calcular Impostos** na edição de itens da NF-e.
+Confirmado no banco:
 
-### Diagnóstico confirmado
+- CFOP da nota e do item: **1102 – Compra para comercialização**, com `cst_icms_padrao = 00` e `incidencia_icms = true`.
+- Produto **SOJA INDUSTRIA – KGS** tem `cst_icms = 51` (diferimento), correto.
+- Após "Calcular Impostos": item ficou com `cst_icms = 00`, `aliq_icms = 18%`, `valor_icms = R$ 1.112,40`. IBS/CBS/cClassTrib estão corretos (200 / 200036).
 
-- A nota atual usa CFOP **1905**.
-- No cadastro do CFOP, o **CST ICMS padrão é 41**, que é o correto para esta operação.
-- O produto do item tem **CST ICMS = 51**, e hoje o cálculo prioriza o produto antes do CFOP, por isso o botão troca indevidamente o ICMS para 51.
-- O CFOP está com **incidência IBS/CBS desativada** (`incidencia_ibs_cbs = false`). Por isso o cálculo entra no fluxo que deixa IBS/CBS e valores zerados, mesmo existindo no emitente/produto:
-  - CST IBS/CBS = 200
-  - cClassTrib IBS/CBS = 200036
-  - alíquotas IBS/CBS cadastradas
+Causa raiz: no último ajuste do calculador, a prioridade do ICMS ficou **CFOP → Produto → padrão**. Como o CFOP 1102 tem CST padrão "00", ele sobrescreve o CST 51 do produto na compra de soja entre produtores rurais.
 
-### Alterações propostas
+Além disso, o produto é "SOJA INDUSTRIA", ou seja, compra para **industrialização** (CFOP 1.101), não comercialização (1.102). O CompraDialog está gravando 1102 como default.
 
-1. **Corrigir prioridade do ICMS no cálculo da NF-e editável**
-   - Para o botão **Calcular Impostos**, usar prioridade:
-     - **CFOP → Produto → padrão por CRT**
-   - Assim, para CFOP 1905, o CST ICMS permanece **41** e não será substituído pelo CST 51 do produto.
+## Correções propostas
 
-2. **Corrigir IBS/CBS para não depender do flag antigo de incidência do CFOP**
-   - O cálculo de CST e cClassTrib IBS/CBS será feito mesmo quando `incidencia_ibs_cbs` estiver desativado no CFOP.
-   - O flag de incidência passará a controlar apenas o cálculo monetário quando necessário, não a gravação dos campos fiscais cadastrais.
-   - CST IBS/CBS continuará resolvendo por prioridade:
-     - **Emitente → CFOP → Produto → 000**
-   - `cClassTrib` será preenchido pelo produto quando compatível com o CST resolvido.
+### 1. `src/lib/taxCalculator.ts` — prioridade correta do ICMS
 
-3. **Usar alíquotas do produto como fallback para IBS/CBS**
-   - Se o resultado ficar sem alíquota pelo emitente, usar `produto.aliquota_ibs` e `produto.aliquota_cbs` antes de zerar.
-   - Isso evita que o botão zere IBS/CBS quando a alíquota já está no produto.
+Inverter a resolução do CST ICMS para respeitar o regime do produto (que é onde o diferimento fica cadastrado):
 
-4. **Ajustar persistência do item**
-   - Ao salvar o item, aplicar a mesma regra de tributação IBS/CBS para base/valor:
-     - se o CST tributa, calcula base e valor;
-     - se não tributa, mantém base/valor zerados;
-     - mantém `cClassTrib` somente quando o CST exige classificação.
+- Nova prioridade: **Produto → CFOP → padrão por CRT**.
+- Assim, quando o produto tem CST 51, ele prevalece sobre o CST 00 do CFOP 1102.
+- Adicionalmente, se o CST resolvido for de **não tributação** (ex.: 40, 41, 50, 51, 60), zerar `baseIcms`, `aliqIcms` e `valorIcms` — hoje o cálculo aplica alíquota mesmo em CST não tributado por causa da checagem restrita em `cstIcmsTemTributacao`.
 
-### Arquivos a alterar
+Isso mantém intactas as regras já corrigidas de IBS/CBS/cClassTrib (Emitente → CFOP → Produto).
+
+### 2. `src/components/compra/CompraDialog.tsx` — CFOP padrão de compra
+
+Ajustar o default do CFOP na criação da compra:
+
+- Compra de grão de produtor rural → **1.101 (Compra para industrialização/produção rural)** interna e **2.101** interestadual.
+- Manter a possibilidade do usuário trocar, mas o default deixa de ser 1102.
+
+### 3. Ajustar nota 94 (correção pontual dos dados existentes)
+
+Como a nota 94 está em **rascunho**, atualizar:
+
+- `notas_fiscais.cfop_id` → CFOP 1101.
+- `notas_fiscais_itens.cfop` → "1101".
+- `notas_fiscais_itens.cst_icms` → "51".
+- `notas_fiscais_itens.aliq_icms` → 0, `base_icms` → 0, `valor_icms` → 0.
+- `notas_fiscais.total_icms` e `total_bc_icms` → 0 (recalcular a partir dos itens).
+
+### 4. Validação
+
+Após as mudanças, reabrir a nota 94, clicar em **Calcular Impostos** e confirmar que:
+
+- CFOP permanece **1101**.
+- CST ICMS permanece **51** (diferimento), sem alíquota nem valor.
+- IBS/CBS continuam **200 / 200036** com as alíquotas cadastradas.
+
+## Arquivos alterados
 
 - `src/lib/taxCalculator.ts`
-- `src/pages/NotaFiscalForm.tsx`
-
-### Validação
-
-Após implementar, vou validar que no item da nota atual:
-
-- **CST ICMS** permanece **41** ao clicar em Calcular Impostos.
-- **CST IBS/CBS** permanece/preenche **200**.
-- **cClassTrib IBS/CBS** permanece/preenche **200036**.
-- **IBS/CBS** não são zerados indevidamente quando houver CST tributado e alíquota disponível.
+- `src/components/compra/CompraDialog.tsx`
+- Migração de dados: `UPDATE` em `notas_fiscais` e `notas_fiscais_itens` da nota 94.
