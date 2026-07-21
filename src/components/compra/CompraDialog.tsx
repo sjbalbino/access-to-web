@@ -432,6 +432,7 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
         .insert({
           granja_id: granjaId,
           emitente_id: emitente.id,
+          inscricao_produtor_id: inscricaoPrincipal?.id ?? null,
           cfop_id: cfopCompra.id,
           natureza_operacao: cfopCompra.natureza_operacao || 'COMPRA PARA COMERCIALIZACAO',
           numero: proximoNumero,
