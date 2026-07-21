@@ -374,7 +374,7 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
     if (!cfopCompra) {
       toastHook({
         title: "CFOP não encontrado",
-        description: "O CFOP 1102/2102 não está cadastrado no sistema.",
+        description: "O CFOP 1101/2101 não está cadastrado no sistema.",
         variant: "destructive",
       });
       return;
