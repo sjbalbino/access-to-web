@@ -1,33 +1,43 @@
-## Problema confirmado
+# Diagnóstico
 
-Consulta ao banco mostra dois cenários no campo `data_emissao` (tipo `timestamptz`):
+Consultei o banco para **CLAUDIA ANDREIA FRANCA SANTOS** (inscrição `77f410f2…`, granja Agropecuária Grings) na safra **SOJA 2025/2026** (`0db3a3c8…`):
 
-1. **NF-e emitidas recentemente** (ex.: nº 89, 90, 93) — guardam o timestamp real em UTC. Ex.: `2026-07-21 17:57:59+00` = 14:57 em São Paulo (UTC-3). O que aparece como "21:00" no navegador acontece porque o `format(new Date(...))` está sendo aplicado sobre valores do outro cenário abaixo, e o browser converte para o fuso local (podendo variar quando a máquina não está em -03).
-2. **NF-e antigas / importadas / salvas só com data** (ex.: nº 87, 88) — guardam `2026-07-21 00:00:00+00`, ou seja, meia-noite UTC. Em São Paulo isso vira **20/07/2026 21:00** — exatamente o "21:00" que o usuário está vendo.
+| Movimentação | Qtd (kg) | Local |
+|---|---|---|
+| Colheita | 0 | — |
+| Transferência recebida | 9.600 | Márcio Grings |
+| Devolução (pendente) | 9.600 | Márcio Grings |
+| Transferência enviada | 0 | — |
+| Notas de depósito emitidas | 0 | — |
 
-## Correção proposta (somente frontend/exibição)
+**Saldo correto para emissão de nota de depósito** (Colheitas + Transferências Recebidas − Notas Emitidas) = **0 + 9.600 − 0 = 9.600 kg** → deveria aparecer.
 
-Em `src/pages/NotasFiscais.tsx`, na célula de Data Emissão:
+# Causa
 
-- Renderizar sempre no fuso **America/Sao_Paulo**, usando `formatInTimeZone` do `date-fns-tz` (padrão já usado no projeto) em vez de `new Date(...)` + `format` (que depende do fuso do navegador).
-- Quando a parte de horário do `data_emissao` for `00:00:00` em São Paulo (registro salvo apenas com data), usar o `created_at` como fonte do horário — assim as notas antigas mostram um horário coerente (o de gravação) em vez de "21:00" fantasma.
-- Manter o formato `dd/MM/yyyy HH:mm`.
+O hook `useInscricoesComSaldo` em `src/hooks/useSaldosDeposito.ts` (usado pelo seletor de produtor no dialog de Nota de Depósito) está subtraindo **devoluções** e **transferências enviadas** do saldo — o que corresponde ao "Saldo Disponível" do produtor, **não** ao saldo elegível para contra-nota de depósito. Como resultado, o saldo cai para 0 e o filtro `if (b.saldo <= 0) return` descarta a Claudia.
 
-Nenhuma alteração no banco, no hook `useNotasFiscais` nem nos fluxos de emissão — a gravação atual já persiste o timestamp correto para NF-e novas.
+Regra correta (já discutida): **Saldo para emitir nota de depósito = Colheitas + Transferências Recebidas − Notas de Depósito Emitidas** (não canceladas). Devoluções e transferências enviadas ficam de fora desse cálculo.
 
-### Detalhes técnicos
+# Correção
 
-- Import: `import { formatInTimeZone } from "date-fns-tz"`.
-- Helper local:
-  ```text
-  ts = data_emissao || created_at
-  sp = formatInTimeZone(ts, "America/Sao_Paulo", "HH:mm")
-  if data_emissao existe e sp == "00:00" e created_at existe:
-      usar created_at para o horário, mantendo a data de data_emissao
-  saída: "dd/MM/yyyy HH:mm"
-  ```
-- Mesma lógica de ordenação do hook permanece (`data_emissao DESC, created_at DESC`).
+Alteração pontual em `src/hooks/useSaldosDeposito.ts`, apenas dentro de `useInscricoesComSaldo`:
 
-## Fora de escopo (confirmar se quiser incluir depois)
+1. **Remover** o processamento de `enviadasPromise` e `devolucoesPromise` da montagem dos buckets (as duas fontes deixam de compor o saldo elegível para emissão).
+2. **Subtrair notas de depósito emitidas por local** dos buckets. Hoje elas só são consideradas no saldo agregado por inscrição (`saldoTotalPorInscricao`), mas não descontadas do bucket por local. Como a tabela `notas_deposito_emitidas` não guarda `local_entrega_id`, o desconto será feito assim:
+   - Se existir apenas um bucket para a inscrição, todo o total emitido é subtraído dele.
+   - Se existirem múltiplos locais para a mesma inscrição, distribui o total emitido proporcionalmente entre os buckets da inscrição (mesma abordagem já usada em `saldoTotalPorInscricao`).
+3. Manter o filtro `saldo > 0` (ou `incluirSemSaldo`) e a checagem agregada por inscrição.
 
-- Corrigir retroativamente `data_emissao` das notas com `00:00:00+00` para o `created_at`, ou tratar a mesma regra também nas telas de Remessas / Compras / Depósito.
+O `useSaldosDeposito` (saldo por produto após selecionar a inscrição) já segue esta fórmula correta — nenhuma mudança nele.
+
+Não altero relatórios, transferências, devoluções, nem o hook `useSaldoDisponivelProdutor` — o "Saldo Disponível" continua descontando devoluções em todos os outros contextos.
+
+# Validação
+
+1. Reabrir **Nova Nota de Depósito** → Safra `SOJA 2025/2026`, Local `Márcio Grings` → Claudia deve aparecer com 9.600 kg.
+2. Produtores com notas de depósito já emitidas continuam com saldo reduzido apenas pelo emitido.
+3. Produtores com devoluções e/ou transferências enviadas voltam a mostrar o saldo bruto de depósito (colheita + transf. recebidas − emitidas), como acordado.
+
+# Arquivo tocado
+
+- `src/hooks/useSaldosDeposito.ts` — função `useInscricoesComSaldo` apenas.

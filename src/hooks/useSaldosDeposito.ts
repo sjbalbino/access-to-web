@@ -227,30 +227,11 @@ export function useInscricoesComSaldo(filters: {
         return data || [];
       })();
 
-      const enviadasPromise = (async () => {
-        let q = supabase
-          .from('transferencias_deposito')
-          .select('inscricao_origem_id, quantidade_kg, local_saida_id')
-          .eq('safra_id', filters.safraId);
-        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
-        if (localFilter) q = q.eq('local_saida_id', localFilter);
-        const { data, error } = await q;
-        if (error) throw error;
-        return data || [];
-      })();
-
-      const devolucoesPromise = (async () => {
-        let q = supabase
-          .from('devolucoes_deposito')
-          .select('inscricao_produtor_id, quantidade_kg, kg_taxa_armazenagem, local_entrega_id')
-          .eq('safra_id', filters.safraId)
-          .neq('status', 'cancelada');
-        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
-        if (localFilter) q = q.eq('local_entrega_id', localFilter);
-        const { data, error } = await q;
-        if (error) throw error;
-        return data || [];
-      })();
+      // Saldo elegível para emissão de nota de depósito considera apenas:
+      // Colheitas + Transferências Recebidas − Notas de Depósito Emitidas.
+      // Devoluções e transferências enviadas NÃO reduzem esse saldo
+      // (comportam-se como saída futura / saldo disponível, mas o depósito
+      // físico ainda pode ser contra-notado).
 
       // Notas de depósito emitidas: reduzem o saldo por inscrição (agregado,
       // pois a tabela não guarda local_entrega_id).
@@ -265,11 +246,9 @@ export function useInscricoesComSaldo(filters: {
         return data || [];
       })();
 
-      const [colheitas, recebidas, enviadas, devolucoes, emitidas] = await Promise.all([
+      const [colheitas, recebidas, emitidas] = await Promise.all([
         colheitasPromise,
         recebidasPromise,
-        enviadasPromise,
-        devolucoesPromise,
         emitidasPromise,
       ]);
 
