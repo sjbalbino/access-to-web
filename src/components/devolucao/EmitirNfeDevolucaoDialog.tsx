@@ -242,6 +242,19 @@ export function EmitirNfeDevolucaoDialog({
 
       setStatus({ step: "creating_item", message: "Adicionando item à nota...", progress: 45, notaFiscalId: notaFiscal.id });
 
+      // Resolver CST + cClassTrib de IBS/CBS/IS
+      // Prioridade: produto → emitente → CFOP → padrão ("400" = isenção para retorno de depósito)
+      const cstIbsResolved =
+        (produto as any)?.cst_ibs || (emitente as any)?.cst_ibs_padrao || (cfop as any)?.cst_ibs_padrao || "400";
+      const cstCbsResolved =
+        (produto as any)?.cst_cbs || (emitente as any)?.cst_cbs_padrao || (cfop as any)?.cst_cbs_padrao || "400";
+      const cstIsResolved =
+        (produto as any)?.cst_is || (emitente as any)?.cst_is_padrao || (cfop as any)?.cst_is_padrao || null;
+      const cclassTribIbsResolved =
+        (produto as any)?.cclass_trib_ibs || (emitente as any)?.cclass_trib_ibs_padrao || null;
+      const cclassTribCbsResolved =
+        (produto as any)?.cclass_trib_cbs || (emitente as any)?.cclass_trib_cbs_padrao || null;
+
       // 4. Criar o item da nota fiscal
       const itemData = {
         nota_fiscal_id: notaFiscal.id,
@@ -269,6 +282,11 @@ export function EmitirNfeDevolucaoDialog({
         aliq_cofins: emitente.aliq_cofins_padrao || 0,
         base_cofins: valorTotal,
         valor_cofins: valorTotal * ((emitente.aliq_cofins_padrao || 0) / 100),
+        cst_ibs: cstIbsResolved,
+        cclass_trib_ibs: cclassTribIbsResolved,
+        cst_cbs: cstCbsResolved,
+        cclass_trib_cbs: cclassTribCbsResolved,
+        cst_is: cstIsResolved,
       };
 
       const { error: itemError } = await supabase
