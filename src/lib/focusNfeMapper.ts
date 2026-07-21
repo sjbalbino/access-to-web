@@ -396,11 +396,11 @@ function mapNotasReferenciadas(notas: NotaReferenciadaData[]): FocusNfeNotaRefer
     });
 }
 
-export function mapNotaToFocusNfe(
+export async function mapNotaToFocusNfe(
   nota: NotaFiscalData,
   itens: NotaFiscalItemData[],
   notasReferenciadas?: NotaReferenciadaData[]
-): FocusNfeNota {
+): Promise<FocusNfeNota> {
   const inscricao = nota.inscricaoProdutor;
   const emitente = nota.emitente;
   
@@ -429,6 +429,14 @@ export function mapNotaToFocusNfe(
   const itemsMapeados = itens.map((item, index) => mapItemToFocusNfe(item, index + 1, emitente?.crt, emitenteIsCpf));
   const totalReformaTributaria = calcularTotaisReformaTributaria(itemsMapeados);
   const infoReformaTributaria = montarInfoReformaTributaria(totalReformaTributaria);
+
+  // Resolver nomes de município (SEFAZ rejeita quando enviamos código IBGE em vez do nome)
+  const { resolveNomeMunicipio } = await import("./municipio");
+  const [municipioEmitenteNome, municipioDestinatarioNome, municipioTransportadorNome] = await Promise.all([
+    resolveNomeMunicipio(inscricao.cidade, inscricao.uf),
+    resolveNomeMunicipio(nota.dest_cidade, nota.dest_uf),
+    resolveNomeMunicipio(nota.transp_cidade, nota.transp_uf),
+  ]);
 
   
   const focusNota: FocusNfeNota = {
