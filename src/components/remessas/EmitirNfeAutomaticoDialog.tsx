@@ -352,15 +352,16 @@ export function EmitirNfeAutomaticoDialog({
         valor_cofins: valorTotal * ((emitente.aliq_cofins_padrao || 0) / 100),
         // Reforma Tributária - herdar do produto, com fallback para CFOP e emitente
         cst_ibs: produto.cst_ibs || cfop.cst_ibs_padrao || emitente.cst_ibs_padrao || null,
-        cclass_trib_ibs: produto.cclass_trib_ibs || null,
+        cclass_trib_ibs: (produto as any).cclass_trib_ibs || (emitente as any).cclass_trib_ibs_padrao || null,
         base_ibs: valorTotal,
         aliq_ibs: emitente.aliq_ibs_padrao || 0,
         valor_ibs: valorTotal * ((emitente.aliq_ibs_padrao || 0) / 100),
         cst_cbs: produto.cst_cbs || cfop.cst_cbs_padrao || emitente.cst_cbs_padrao || null,
-        cclass_trib_cbs: produto.cclass_trib_cbs || null,
+        cclass_trib_cbs: (produto as any).cclass_trib_cbs || (emitente as any).cclass_trib_cbs_padrao || null,
         base_cbs: valorTotal,
         aliq_cbs: emitente.aliq_cbs_padrao || 0,
         valor_cbs: valorTotal * ((emitente.aliq_cbs_padrao || 0) / 100),
+        cst_is: (produto as any).cst_is || (cfop as any).cst_is_padrao || (emitente as any).cst_is_padrao || null,
       };
 
       const { error: itemError } = await supabase
