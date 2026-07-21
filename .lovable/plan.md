@@ -1,82 +1,49 @@
-
 ## Diagnóstico
 
-Confirmei no banco: existem duas NF-es número 86 / série 930 no emitente `3bbed79d…`:
+Ao emitir NF-e de compra (CFOP 1102), o CST do ICMS está sendo gravado como **00** em vez de **51 (diferimento)**.
 
-- `a3bb2c4a…` — criada 16:07, **autorizada** às 16:26 (chave final `…861215536120`).
-- `465d2a36…` — criada 16:52, rejeitada com **"Duplicidade de NF-e, com diferença na Chave de Acesso"** (código 539) no mesmo número 86.
+**Causa raiz** — a resolução de CST em `EmitirNfeCompraDialog.tsx` (linha 318) usa a prioridade:
 
-Timeline no emitente (mesma série 930):
-
-| Nota | Criada | Autorizada (updated_at) | Nº |
-|---|---|---|---|
-| 4f6d228e | 16:00:49 | **16:29:49** | 85 |
-| a3bb2c4a | 16:07:55 | 16:26:22 | 86 |
-| 465d2a36 | 16:52:11 | 17:11:39 (rejeitada) | 86 |
-
-A nota 85 foi enviada primeiro, mas o retorno da SEFAZ chegou **depois** da nota 86 (16:29 vs 16:26).
-
-## Causa raiz
-
-Em `supabase/functions/focus-nfe-emitir/index.ts` (linhas 478–486), após autorização a função faz:
-
-```ts
-await supabase.from("emitentes_nfe")
-  .update({ numero_atual_nfe: numeroEmitido })
-  .eq("id", emitenteData.id);
+```
+produto.cst_icms → cfop.cst_icms_padrao → emitente.cst_icms_padrao → "00"
 ```
 
-Isso **sobrescreve** `numero_atual_nfe` sem comparar com o valor atual. Quando uma nota mais antiga (85) tem retorno mais lento que uma mais nova (86), o update tardio da 85 **regride** o contador de 86 → 85.
+Confirmei no banco:
 
-Sequência que gerou o problema:
+- CFOP **1102** (Compra para comercialização): `cst_icms_padrao = "00"`
+- CFOPs 1101, 2102, 5102: também com `"00"` gravado
+- Vários emitentes têm `cst_icms_padrao = "51"` configurado (produtor rural com diferimento)
 
-1. 16:07 — nota 86 emitida com `numero_atual_nfe=85` → reserva 86.
-2. 16:26 — SEFAZ autoriza a 86, contador vai para **86**.
-3. 16:29 — retorno tardio da 85 sobrescreve o contador de volta para **85**.
-4. 16:52 — usuário cria uma nova nota; a função lê `numero_atual_nfe=85` e reserva **86 de novo**.
-5. SEFAZ recusa (539 — Duplicidade), pois o número 86 já foi consumido com outra chave.
+Como o CFOP tem valor preenchido, ele **sempre vence** o emitente. Resultado: o CST do emitente ("51") nunca é aplicado.
 
-O tratamento de duplicidade existente (linhas 373–396) só entra em ação **depois** da rejeição — não previne o problema.
+O mesmo padrão de prioridade está replicado em:
+
+- `src/components/compra/EmitirNfeCompraDialog.tsx:318`
+- `src/components/devolucao/EmitirNfeDevolucaoDialog.tsx:273`
+- `src/components/remessas/EmitirNfeAutomaticoDialog.tsx:341`
+
+(Nota de Depósito usa lógica separada com CFOP 1905 fixo em "41", que é correto para depósito e não precisa mudar.)
 
 ## Correção proposta
 
-Tornar a atualização de `numero_atual_nfe` monotônica (nunca regride) nos três pontos onde ela é gravada após a autorização:
+Inverter a prioridade entre CFOP e emitente para ICMS, PIS e COFINS nos três diálogos acima:
 
-### 1. `supabase/functions/focus-nfe-emitir/index.ts`
-
-No bloco de sucesso (linhas 477–486), substituir o `update` cego por uma leitura + comparação:
-
-```ts
-const numeroEmitido = Number(responseData.numero ?? proximoNumero);
-if (emitenteData?.id && numeroEmitido > 0) {
-  const { data: cur } = await supabase
-    .from("emitentes_nfe")
-    .select("numero_atual_nfe")
-    .eq("id", emitenteData.id)
-    .maybeSingle();
-  const atual = Number(cur?.numero_atual_nfe ?? 0);
-  if (numeroEmitido > atual) {
-    await supabase
-      .from("emitentes_nfe")
-      .update({ numero_atual_nfe: numeroEmitido })
-      .eq("id", emitenteData.id);
-  }
-}
+```
+produto → emitente → CFOP → fallback
 ```
 
-Também no bloco de duplicidade (linhas 390–396), o cálculo já usa `Math.max` — manter, apenas confirmar leitura fresca.
+**Justificativa:** o CST tradicional (ICMS/PIS/COFINS) depende do **regime tributário do emitente** (diferimento do produtor rural, Simples Nacional, etc.), não do CFOP genérico. O CFOP fica apenas como fallback quando o emitente não tem CST cadastrado. Esse mesmo padrão já foi aplicado nos campos da Reforma Tributária (IBS/CBS/IS) na correção anterior — a mudança aqui alinha ICMS/PIS/COFINS ao mesmo comportamento.
 
-### 2. `src/components/compra/EmitirNfeCompraDialog.tsx` (linhas 197–214) e `src/components/remessas/EmitirNfeAutomaticoDialog.tsx` (linhas 194–211)
+Produto continua vencendo tudo (para casos específicos como itens isentos), e o fallback final permanece igual.
 
-Ambos gravam `numero_atual_nfe = proximoNumero` diretamente. Aplicar o mesmo padrão: reler o valor atual e só atualizar se `proximoNumero > atual`.
+### Arquivos alterados
 
-### 3. Correção pontual do dado atual
-
-A nota `465d2a36…` está com `numero=86` e status `erro_autorizacao`. O contador do emitente já está em 89 (correto). Duas opções — o usuário escolhe:
-
-- **Descartar**: excluir a nota `465d2a36` (é apenas uma tentativa rejeitada, nunca foi para a SEFAZ com sucesso), ou
-- **Reaproveitar**: limpar `numero`, `chave_acesso`, `uuid_api` e `protocolo` da nota `465d2a36` para que a próxima tentativa de emissão pegue o próximo número disponível (90).
+1. **`src/components/compra/EmitirNfeCompraDialog.tsx`** — trocar ordem `cfop || emitente` por `emitente || cfop` em `cst_icms`, `cst_pis` e `cst_cofins` (linha ~318).
+2. **`src/components/devolucao/EmitirNfeDevolucaoDialog.tsx`** — mesma troca (linha ~273).
+3. **`src/components/remessas/EmitirNfeAutomaticoDialog.tsx`** — mesma troca (linha ~341).
 
 ## Fora do escopo
 
-Não vou mexer em concorrência entre emissões simultâneas do mesmo emitente (dois usuários clicando "Emitir" ao mesmo tempo) — isso exigiria uma sequence Postgres dedicada por (emitente, série). Se quiser, posso planejar isso em separado.
+- Não vou alterar os `cst_icms_padrao` gravados nos CFOPs (mantidos como fallback).
+- Nota de Depósito (CFOP 1905) não muda — "41" é o correto para depósito.
+- Não vou re-emitir/corrigir notas já autorizadas — a mudança vale para novas emissões. Se quiser corrigir notas específicas, me diga quais.

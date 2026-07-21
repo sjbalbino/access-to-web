@@ -337,16 +337,16 @@ export function EmitirNfeAutomaticoDialog({
         valor_total: valorTotal,
         valor_desconto: 0,
         origem: 0, // Nacional
-        // Prioridade CST: 1º Produto, 2º CFOP, 3º Emitente, 4º Fallback
-        cst_icms: produto.cst_icms || cfop.cst_icms_padrao || emitente.cst_icms_padrao || "00",
+        // Prioridade CST: 1º Produto, 2º Emitente (regime tributário), 3º CFOP, 4º Fallback
+        cst_icms: produto.cst_icms || emitente.cst_icms_padrao || cfop.cst_icms_padrao || "00",
         aliq_icms: emitente.aliq_icms_padrao || 0,
         base_icms: valorTotal,
         valor_icms: valorTotal * ((emitente.aliq_icms_padrao || 0) / 100),
-        cst_pis: produto.cst_pis || cfop.cst_pis_padrao || emitente.cst_pis_padrao || "01",
+        cst_pis: produto.cst_pis || emitente.cst_pis_padrao || cfop.cst_pis_padrao || "01",
         aliq_pis: emitente.aliq_pis_padrao || 0,
         base_pis: valorTotal,
         valor_pis: valorTotal * ((emitente.aliq_pis_padrao || 0) / 100),
-        cst_cofins: produto.cst_cofins || cfop.cst_cofins_padrao || emitente.cst_cofins_padrao || "01",
+        cst_cofins: produto.cst_cofins || emitente.cst_cofins_padrao || cfop.cst_cofins_padrao || "01",
         aliq_cofins: emitente.aliq_cofins_padrao || 0,
         base_cofins: valorTotal,
         valor_cofins: valorTotal * ((emitente.aliq_cofins_padrao || 0) / 100),
