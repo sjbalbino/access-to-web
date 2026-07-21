@@ -315,19 +315,20 @@ export function useInscricoesComSaldo(filters: {
         b.saldo += round(t.quantidade_kg);
       });
 
-      enviadas.forEach((t: any) => {
-        if (!t.inscricao_origem_id) return;
-        const b = getBucket(t.inscricao_origem_id, t.local_saida_id, null);
-        b.saldo -= round(t.quantidade_kg);
-      });
-
-      devolucoes.forEach((d: any) => {
-        if (!d.inscricao_produtor_id) return;
-        const b = getBucket(d.inscricao_produtor_id, d.local_entrega_id, null);
-        // Taxa de armazenagem também sai do estoque do produtor (conforme
-        // fórmula de useSaldoDisponivelProdutor: kg_taxa é crédito do sócio,
-        // portanto reduz o disponível do produtor).
-        b.saldo -= round(d.quantidade_kg) + round(d.kg_taxa_armazenagem);
+      // Subtrair notas de depósito emitidas do bucket. Como a tabela não guarda
+      // local_entrega_id, distribui o total emitido proporcionalmente entre os
+      // buckets existentes da inscrição.
+      const emitidoPorInsc = new Map<string, number>();
+      emitidas.forEach((n: any) => {
+        if (!n.inscricao_produtor_id) return;
+        const nfId = n.nota_fiscal_id;
+        // filtro de canceladas é aplicado logo abaixo
+        emitidoPorInsc.set(
+          n.inscricao_produtor_id,
+          (emitidoPorInsc.get(n.inscricao_produtor_id) || 0) + round(n.quantidade_kg)
+        );
+        // marcador para saber se precisamos filtrar canceladas
+        if (nfId) (emitidoPorInsc as any)._temNfId = true;
       });
 
       // Quando incluirSemSaldo estiver ligado, também trazemos inscrições da granja
