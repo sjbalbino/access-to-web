@@ -467,7 +467,7 @@ export async function mapNotaToFocusNfe(
     logradouro_emitente: inscricao.logradouro || "",
     numero_emitente: inscricao.numero || "S/N",
     bairro_emitente: inscricao.bairro || "",
-    municipio_emitente: inscricao.cidade || "",
+    municipio_emitente: municipioEmitenteNome || inscricao.cidade || "",
     uf_emitente: inscricao.uf || "",
     cep_emitente: inscricao.cep?.replace(/\D/g, "") || "",
     regime_tributario_emitente: emitente?.crt ?? 3, // Default: Normal
