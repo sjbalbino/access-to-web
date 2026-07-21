@@ -201,27 +201,26 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
   };
   
   // ========== ICMS ==========
-  // Determina CST (prioridade: CFOP > produto > padrão)
-  if (input.cstIcmsPadrao) {
-    resultado.cstIcms = input.cstIcmsPadrao;
-  } else if (input.produtoCstIcms) {
+  // Prioridade: Produto → CFOP → padrão por CRT
+  // O CST do produto reflete o regime fiscal do item (ex.: 51 diferimento para grãos)
+  // e deve prevalecer sobre o CST padrão do CFOP.
+  if (input.produtoCstIcms) {
     resultado.cstIcms = input.produtoCstIcms;
+  } else if (input.cstIcmsPadrao) {
+    resultado.cstIcms = input.cstIcmsPadrao;
   } else {
-    // CST padrão baseado no CRT
     if (input.crt === 1 || input.crt === 2) {
-      // Simples Nacional - usa CSOSN
-      resultado.cstIcms = "102"; // CSOSN 102 = Tributada SN sem permissão de crédito
+      resultado.cstIcms = "102";
     } else {
-      // Regime Normal
-      resultado.cstIcms = "00"; // CST 00 = Tributada integralmente
+      resultado.cstIcms = "00";
     }
   }
-  
-  // Calcula ICMS se houver incidência
-  if (input.incidenciaIcms && cstIcmsTemTributacao(resultado.cstIcms)) {
+
+  // Calcula ICMS apenas se o CST indicar tributação. Em CSTs de não tributação
+  // (40, 41, 50, 51, 60, etc.) base/alíquota/valor permanecem zerados.
+  if (cstIcmsTemTributacao(resultado.cstIcms)) {
     resultado.baseIcms = input.valorTotal;
-    
-    // Se for operação interestadual, usa alíquota interestadual
+
     if (isInterestadual(input.cfopCodigo)) {
       const aliqInterestadual = getAliquotaInterestadual(
         input.ufEmitente,
@@ -232,9 +231,10 @@ export function calculateTaxes(input: TaxCalculatorInput): TaxCalculatorOutput {
     } else {
       resultado.aliqIcms = input.aliqIcmsPadrao || 18;
     }
-    
+
     resultado.valorIcms = Number(((resultado.baseIcms * resultado.aliqIcms) / 100).toFixed(2));
   }
+
   
   // ========== PIS ==========
   // Prioridade: Emitente → CFOP → Produto (regime tributário do emitente prevalece)
