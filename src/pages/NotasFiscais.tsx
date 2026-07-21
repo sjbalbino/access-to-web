@@ -52,7 +52,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { ptBR } from "date-fns/locale";
+
+const TZ_SP = "America/Sao_Paulo";
+const formatDataEmissao = (dataEmissao: string | null | undefined, createdAt: string | null | undefined) => {
+  const ts = dataEmissao || createdAt;
+  if (!ts) return "-";
+  const dataPart = formatInTimeZone(ts, TZ_SP, "dd/MM/yyyy");
+  let horaPart = formatInTimeZone(ts, TZ_SP, "HH:mm");
+  if (horaPart === "00:00" && createdAt && dataEmissao) {
+    horaPart = formatInTimeZone(createdAt, TZ_SP, "HH:mm");
+  }
+  return `${dataPart} ${horaPart}`;
+};
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { toast } from "sonner";
 import { formatCpfCnpj } from "@/lib/formatters";
@@ -559,7 +572,7 @@ export default function NotasFiscais() {
 
                     <TableCell className="truncate max-w-[150px] hidden lg:table-cell">{nota.natureza_operacao}</TableCell>
                     <TableCell className="whitespace-nowrap">
-                      {nota.data_emissao ? format(new Date(nota.data_emissao), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "-"}
+                      {formatDataEmissao(nota.data_emissao, (nota as any).created_at)}
                     </TableCell>
                     <TableCell className="text-right font-medium hidden sm:table-cell">{formatCurrency(nota.total_nota)}</TableCell>
                     <TableCell>

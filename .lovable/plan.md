@@ -1,49 +1,33 @@
-## Diagnóstico
+## Problema confirmado
 
-Ao emitir NF-e de compra (CFOP 1102), o CST do ICMS está sendo gravado como **00** em vez de **51 (diferimento)**.
+Consulta ao banco mostra dois cenários no campo `data_emissao` (tipo `timestamptz`):
 
-**Causa raiz** — a resolução de CST em `EmitirNfeCompraDialog.tsx` (linha 318) usa a prioridade:
+1. **NF-e emitidas recentemente** (ex.: nº 89, 90, 93) — guardam o timestamp real em UTC. Ex.: `2026-07-21 17:57:59+00` = 14:57 em São Paulo (UTC-3). O que aparece como "21:00" no navegador acontece porque o `format(new Date(...))` está sendo aplicado sobre valores do outro cenário abaixo, e o browser converte para o fuso local (podendo variar quando a máquina não está em -03).
+2. **NF-e antigas / importadas / salvas só com data** (ex.: nº 87, 88) — guardam `2026-07-21 00:00:00+00`, ou seja, meia-noite UTC. Em São Paulo isso vira **20/07/2026 21:00** — exatamente o "21:00" que o usuário está vendo.
 
-```
-produto.cst_icms → cfop.cst_icms_padrao → emitente.cst_icms_padrao → "00"
-```
+## Correção proposta (somente frontend/exibição)
 
-Confirmei no banco:
+Em `src/pages/NotasFiscais.tsx`, na célula de Data Emissão:
 
-- CFOP **1102** (Compra para comercialização): `cst_icms_padrao = "00"`
-- CFOPs 1101, 2102, 5102: também com `"00"` gravado
-- Vários emitentes têm `cst_icms_padrao = "51"` configurado (produtor rural com diferimento)
+- Renderizar sempre no fuso **America/Sao_Paulo**, usando `formatInTimeZone` do `date-fns-tz` (padrão já usado no projeto) em vez de `new Date(...)` + `format` (que depende do fuso do navegador).
+- Quando a parte de horário do `data_emissao` for `00:00:00` em São Paulo (registro salvo apenas com data), usar o `created_at` como fonte do horário — assim as notas antigas mostram um horário coerente (o de gravação) em vez de "21:00" fantasma.
+- Manter o formato `dd/MM/yyyy HH:mm`.
 
-Como o CFOP tem valor preenchido, ele **sempre vence** o emitente. Resultado: o CST do emitente ("51") nunca é aplicado.
+Nenhuma alteração no banco, no hook `useNotasFiscais` nem nos fluxos de emissão — a gravação atual já persiste o timestamp correto para NF-e novas.
 
-O mesmo padrão de prioridade está replicado em:
+### Detalhes técnicos
 
-- `src/components/compra/EmitirNfeCompraDialog.tsx:318`
-- `src/components/devolucao/EmitirNfeDevolucaoDialog.tsx:273`
-- `src/components/remessas/EmitirNfeAutomaticoDialog.tsx:341`
+- Import: `import { formatInTimeZone } from "date-fns-tz"`.
+- Helper local:
+  ```text
+  ts = data_emissao || created_at
+  sp = formatInTimeZone(ts, "America/Sao_Paulo", "HH:mm")
+  if data_emissao existe e sp == "00:00" e created_at existe:
+      usar created_at para o horário, mantendo a data de data_emissao
+  saída: "dd/MM/yyyy HH:mm"
+  ```
+- Mesma lógica de ordenação do hook permanece (`data_emissao DESC, created_at DESC`).
 
-(Nota de Depósito usa lógica separada com CFOP 1905 fixo em "41", que é correto para depósito e não precisa mudar.)
+## Fora de escopo (confirmar se quiser incluir depois)
 
-## Correção proposta
-
-Inverter a prioridade entre CFOP e emitente para ICMS, PIS e COFINS nos três diálogos acima:
-
-```
-produto → emitente → CFOP → fallback
-```
-
-**Justificativa:** o CST tradicional (ICMS/PIS/COFINS) depende do **regime tributário do emitente** (diferimento do produtor rural, Simples Nacional, etc.), não do CFOP genérico. O CFOP fica apenas como fallback quando o emitente não tem CST cadastrado. Esse mesmo padrão já foi aplicado nos campos da Reforma Tributária (IBS/CBS/IS) na correção anterior — a mudança aqui alinha ICMS/PIS/COFINS ao mesmo comportamento.
-
-Produto continua vencendo tudo (para casos específicos como itens isentos), e o fallback final permanece igual.
-
-### Arquivos alterados
-
-1. **`src/components/compra/EmitirNfeCompraDialog.tsx`** — trocar ordem `cfop || emitente` por `emitente || cfop` em `cst_icms`, `cst_pis` e `cst_cofins` (linha ~318).
-2. **`src/components/devolucao/EmitirNfeDevolucaoDialog.tsx`** — mesma troca (linha ~273).
-3. **`src/components/remessas/EmitirNfeAutomaticoDialog.tsx`** — mesma troca (linha ~341).
-
-## Fora do escopo
-
-- Não vou alterar os `cst_icms_padrao` gravados nos CFOPs (mantidos como fallback).
-- Nota de Depósito (CFOP 1905) não muda — "41" é o correto para depósito.
-- Não vou re-emitir/corrigir notas já autorizadas — a mudança vale para novas emissões. Se quiser corrigir notas específicas, me diga quais.
+- Corrigir retroativamente `data_emissao` das notas com `00:00:00+00` para o `created_at`, ou tratar a mesma regra também nas telas de Remessas / Compras / Depósito.
