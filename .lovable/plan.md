@@ -1,18 +1,40 @@
 ## Objetivo
-No select de **Vendedor** da tela de Compra de Cereais, listar **todos os produtores ativos da granja selecionada**, mesmo que não tenham nenhuma movimentação (colheita, transferência ou devolução) na safra selecionada. O saldo exibido continua sendo o saldo real na safra (podendo ser 0 kg).
+Na tela **Entradas NF-e → Buscar no SEFAZ (DFe)**, deixar os botões **XML** e **Dar entrada** desabilitados visualmente enquanto a NF-e não tiver manifestação processada, e exibir um placeholder mais claro no lugar de "-" quando o nome do emitente não estiver disponível.
 
-## Comportamento atual
-`useInscricoesComSaldo` só retorna inscrições que aparecem nos "buckets" de movimentação (colheitas + transferências + devoluções da safra). Produtores sem movimento naquela safra são omitidos.
+## Contexto atual
+- A coluna **Emitente** mostra `nfe.nome || "-"`. Esse nome só vem preenchido quando a SEFAZ entrega o XML completo, o que só ocorre após uma manifestação (Ciência, Confirmação etc.).
+- Os botões **XML** e **Dar entrada** já funcionam corretamente, mas permanecem clicáveis mesmo sem manifestação, gerando retornos de erro da SEFAZ.
 
-## Mudanças
+## Alterações propostas
 
-### 1. `src/hooks/useSaldosDeposito.ts`
-Após montar os buckets, buscar **todas as inscrições de produtor** da granja (quando `granjaId` informado) ou do tenant, filtrando por `tipo_produtor = 'produtor'` e produtor ativo. Para cada inscrição que ainda não tem bucket, criar uma entrada com `total_depositado = 0` e `saldo = 0` — respeitando o local selecionado quando `localEntregaId` estiver preenchido (senão `local_entrega_id = null`).
+### 1. Desabilitar botões XML e "Dar entrada" sem manifestação
+No componente `src/components/entradas-nfe/MdeDialog.tsx`, na linha de ações de cada NF-e:
 
-A regra de descarte por saldo continua condicionada ao flag `incluirSemSaldo` já existente — quando `true` (caso da CompraDialog), essas inscrições sem movimento passam.
+- Criar uma verificação `const manifestacaoProcessada = !!nfe.manifestacao_destinatario;`.
+- Aplicar `disabled={!manifestacaoProcessada}` nos botões:
+  - **XML** (download do arquivo XML).
+  - **Dar entrada** (importação automática para `entradas_nfe`).
+- Adicionar `title` explicativo quando desabilitado:  
+  *"Manifeste a NF-e primeiro para liberar o XML completo"*.
+- Aplicar estilo visual de desabilitado (opacidade reduzida, cursor `not-allowed`) para deixar claro que a ação está bloqueada.
 
-### 2. `src/components/compra/CompraDialog.tsx`
-Nenhuma mudança na chamada (já passa `incluirSemSaldo: true`). O select passará a listar automaticamente todos os produtores da granja.
+### 2. Melhorar placeholder do emitente
+Na coluna **Emitente**, quando `nfe.nome` estiver vazio:
 
-## Fora do escopo
-- Outras telas que usam `useInscricoesComSaldo` (Notas de Depósito, Devoluções, etc.) — como não passam `incluirSemSaldo: true`, continuam mostrando somente quem tem saldo > 0. Sem regressão.
+- Substituir o texto "-" por:  
+  **"Aguardando manifestação"**.
+- Manter o CNPJ e a chave visíveis abaixo, pois esses dados vêm do resumo do DFe.
+- Opcionalmente, aplicar cor âmbar no placeholder para associar visualmente ao status "Sem manifestação".
+
+### 3. Ajustar preview do DANFe (consistência)
+No preview do DANFe (modal secundário), o botão **XML** também deve respeitar a mesma regra de desabilitação quando não houver manifestação processada.
+
+## Arquivos envolvidos
+- `src/components/entradas-nfe/MdeDialog.tsx`
+
+## Critérios de aceitação
+- Botões **XML** e **Dar entrada** aparecem desabilitados (visualmente apagados) para NF-es com status "Sem manifestação".
+- Ao passar o mouse sobre os botões desabilitados, exibe tooltip explicando a necessidade da manifestação.
+- NF-es sem nome do emitente exibem "Aguardando manifestação" em vez de "-".
+- Manifestações registradas (Ciência, Confirmação, Desconhecimento, Não Realizada) mantêm os botões habilitados normalmente.
+- Nenhuma alteração de comportamento nas demais ações (Manifestar, Visualizar DANFe, Baixar DANFe).

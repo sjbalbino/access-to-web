@@ -90,11 +90,11 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [filtroDataIni, setFiltroDataIni] = useState("");
   const [filtroDataFim, setFiltroDataFim] = useState("");
 
-  const [danfePreview, setDanfePreview] = useState<{ open: boolean; loading: boolean; pdfData: Uint8Array | null; downloadUrl: string | null; filename: string; titulo: string; chave: string }>({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "" });
+  const [danfePreview, setDanfePreview] = useState<{ open: boolean; loading: boolean; pdfData: Uint8Array | null; downloadUrl: string | null; filename: string; titulo: string; chave: string; manifestacao_destinatario: string | null }>({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "", manifestacao_destinatario: null });
 
   const handleVisualizarDanfe = async (nfe: NfeRecebida) => {
     const filename = `DANFE-${nfe.numero || nfe.chave}.pdf`;
-    setDanfePreview({ open: true, loading: true, pdfData: null, downloadUrl: null, filename, titulo: `DANFE - NF-e nº ${nfe.numero || ""}`, chave: nfe.chave });
+    setDanfePreview({ open: true, loading: true, pdfData: null, downloadUrl: null, filename, titulo: `DANFE - NF-e nº ${nfe.numero || ""}`, chave: nfe.chave, manifestacao_destinatario: nfe.manifestacao_destinatario || null });
     try {
       const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
         body: { action: "download_danfe", inscricaoId, chave: nfe.chave },
@@ -107,14 +107,14 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
       setDanfePreview((prev) => ({ ...prev, loading: false, pdfData, downloadUrl }));
     } catch (e: any) {
       toast.error("Erro ao carregar DANFE", { description: e?.message });
-      setDanfePreview({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "" });
+      setDanfePreview({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "", manifestacao_destinatario: null });
     }
   };
 
   const closeDanfePreview = () => {
     setDanfePreview((prev) => {
       if (prev.downloadUrl) URL.revokeObjectURL(prev.downloadUrl);
-      return { open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "" };
+      return { open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "", manifestacao_destinatario: null };
     });
   };
 
@@ -543,11 +543,20 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                nfesFiltradas.map((nfe) => (
+                nfesFiltradas.map((nfe) => {
+                  const manifestacaoProcessada = !!nfe.manifestacao_destinatario;
+                  const bloqueioTitle = manifestacaoProcessada
+                    ? undefined
+                    : "Manifeste a NF-e primeiro para liberar o XML completo";
+                  return (
                   <TableRow key={nfe.chave} className="hover:bg-blue-50/30 transition-colors border-b last:border-0">
                     <TableCell className="py-4 px-6">
                       <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-[13px] text-slate-900 uppercase leading-tight">{nfe.nome || "-"}</span>
+                        {nfe.nome ? (
+                          <span className="font-bold text-[13px] text-slate-900 uppercase leading-tight">{nfe.nome}</span>
+                        ) : (
+                          <span className="font-semibold text-[13px] text-amber-600 leading-tight">Aguardando manifestação</span>
+                        )}
                         <span className="text-xs font-medium text-slate-500">{formatCpfCnpj(nfe.cnpj)}</span>
                         <span className="text-[10px] text-slate-400 font-mono mt-1 select-all">{nfe.chave}</span>
                       </div>
@@ -583,8 +592,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-9 px-3 flex items-center gap-2 text-xs font-semibold hover:bg-slate-100"
-                          disabled={isLoading}
+                          className="h-9 px-3 flex items-center gap-2 text-xs font-semibold hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={!manifestacaoProcessada || isLoading}
+                          title={bloqueioTitle}
                           onClick={() => downloadXml(inscricaoId, nfe.chave)}
                         >
                           <Download className="h-4 w-4" /> XML
@@ -593,8 +603,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         <Button
                           variant="default"
                           size="sm"
-                          className="h-9 px-3 flex items-center gap-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 shadow-sm"
-                          disabled={isLoading || importingChave === nfe.chave}
+                          className="h-9 px-3 flex items-center gap-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={!manifestacaoProcessada || isLoading || importingChave === nfe.chave}
+                          title={bloqueioTitle}
                           onClick={() => handleImportar(nfe)}
                         >
                           {importingChave === nfe.chave ? (
@@ -656,7 +667,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                )})
               )}
             </TableBody>
           </Table>
@@ -706,7 +717,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                 </a>
               </Button>
             )}
-            <Button size="sm" variant="outline" onClick={() => danfePreview.chave && downloadXml(inscricaoId, danfePreview.chave)} disabled={!danfePreview.chave || isLoading}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => danfePreview.chave && downloadXml(inscricaoId, danfePreview.chave)}
+              disabled={!danfePreview.manifestacao_destinatario || !danfePreview.chave || isLoading}
+              title={danfePreview.manifestacao_destinatario ? undefined : "Manifeste a NF-e primeiro para liberar o XML completo"}
+            >
               <FileCode className="h-4 w-4 mr-1" /> XML
             </Button>
             <Button size="sm" variant="ghost" onClick={closeDanfePreview}>
