@@ -134,10 +134,11 @@ export function getAliquotaInterestadual(ufOrigem: string, ufDestino: string, or
  * Verifica se o CST indica que há tributação de ICMS
  */
 function cstIcmsTemTributacao(cst: string): boolean {
-  // CSTs que indicam tributação normal
-  const cstsTributados = ["00", "10", "20", "70", "90"];
+  // CSTs que indicam tributação normal (Regime Normal e Simples Nacional)
+  const cstsTributados = ["00", "10", "20", "70", "90", "101", "102", "201", "202", "900"];
   return cstsTributados.includes(cst);
 }
+
 
 /**
  * Verifica se o CST indica que há tributação de PIS/COFINS
