@@ -51,18 +51,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { format } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
-import { ptBR } from "date-fns/locale";
+import { formatDateTimeSP, formatSP } from "@/lib/datetime";
 
-const TZ_SP = "America/Sao_Paulo";
 const formatDataEmissao = (dataEmissao: string | null | undefined, createdAt: string | null | undefined) => {
   const ts = dataEmissao || createdAt;
   if (!ts) return "-";
-  const dataPart = formatInTimeZone(ts, TZ_SP, "dd/MM/yyyy");
-  let horaPart = formatInTimeZone(ts, TZ_SP, "HH:mm");
+  const dataPart = formatSP(ts, "dd/MM/yyyy");
+  let horaPart = formatSP(ts, "HH:mm");
   if (horaPart === "00:00" && createdAt && dataEmissao) {
-    horaPart = formatInTimeZone(createdAt, TZ_SP, "HH:mm");
+    horaPart = formatSP(createdAt, "HH:mm");
   }
   return `${dataPart} ${horaPart}`;
 };
