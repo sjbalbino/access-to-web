@@ -545,9 +545,30 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
               ) : (
                 nfesFiltradas.map((nfe) => {
                   const manifestacaoProcessada = !!nfe.manifestacao_destinatario;
+                  const xmlDisponivel = manifestacaoProcessada && !!nfe.nome;
+                  const statusProcessamento: "pendente" | "aguardando" | "pronto" = !manifestacaoProcessada
+                    ? "pendente"
+                    : xmlDisponivel
+                      ? "pronto"
+                      : "aguardando";
+                  const statusLabels: Record<typeof statusProcessamento, string> = {
+                    pendente: "Manifestação pendente",
+                    aguardando: "Aguardando nfeProc",
+                    pronto: "Pronto",
+                  };
+                  const statusClasses: Record<typeof statusProcessamento, string> = {
+                    pendente: "text-amber-700 border-amber-300 bg-amber-50",
+                    aguardando: "text-blue-700 border-blue-300 bg-blue-50",
+                    pronto: "text-emerald-700 border-emerald-300 bg-emerald-50",
+                  };
                   const bloqueioTitle = manifestacaoProcessada
-                    ? undefined
+                    ? xmlDisponivel
+                      ? undefined
+                      : "Aguardando SEFAZ liberar o XML completo (nfeProc) após a manifestação"
                     : "Manifeste a NF-e primeiro para liberar o XML completo";
+                  const danfeBloqueioTitle = xmlDisponivel
+                    ? undefined
+                    : bloqueioTitle;
                   return (
                   <TableRow key={nfe.chave} className="hover:bg-blue-50/30 transition-colors border-b last:border-0">
                     <TableCell className="py-4 px-6">
@@ -577,6 +598,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                     </TableCell>
                     <TableCell className="px-6">
                       <div className="flex flex-col gap-1.5">
+                        <Badge variant="outline" className={`${statusClasses[statusProcessamento]} w-fit text-[11px] h-5 font-semibold`}>
+                          {statusLabels[statusProcessamento]}
+                        </Badge>
                         {nfe.manifestacao_destinatario ? (
                           <Badge variant={manifestacaoVariants[nfe.manifestacao_destinatario] || "secondary"} className="w-fit text-[11px] h-5">
                             {manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}
@@ -646,9 +670,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-9 w-9 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50"
-                          title="Visualizar DANFe"
-                          disabled={isLoading}
+                          className="h-9 w-9 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={danfeBloqueioTitle || "Visualizar DANFe"}
+                          disabled={!xmlDisponivel || isLoading}
                           onClick={() => handleVisualizarDanfe(nfe)}
                         >
                           <Eye className="h-5 w-5" />
@@ -657,9 +681,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-9 w-9 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                          title="Baixar DANFe"
-                          disabled={isLoading}
+                          className="h-9 w-9 text-slate-400 hover:text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={danfeBloqueioTitle || "Baixar DANFe"}
+                          disabled={!xmlDisponivel || isLoading}
                           onClick={() => downloadDanfe(inscricaoId, nfe.chave)}
                         >
                           <FileText className="h-5 w-5" />
