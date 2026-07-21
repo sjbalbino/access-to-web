@@ -169,7 +169,7 @@ export function useNotasFiscais() {
           granja:granjas(id, razao_social, nome_fantasia),
           emitente:emitentes_nfe!notas_fiscais_emitente_id_fkey(
             id,
-            inscricao:inscricoes_produtor!emitentes_nfe_inscricao_produtor_id_fkey(nome, cpf_cnpj)
+            inscricao:inscricoes_produtor!emitentes_nfe_inscricao_produtor_id_fkey(nome, cpf_cnpj, inscricao_estadual)
           )
         `)
         .order("data_emissao", { ascending: false, nullsFirst: false })

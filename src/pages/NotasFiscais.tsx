@@ -543,10 +543,12 @@ export default function NotasFiscais() {
                     <TableCell className="font-mono">{nota.numero || "-"}</TableCell>
                     <TableCell className="font-mono hidden md:table-cell">{nota.serie || "-"}</TableCell>
                     <TableCell className="text-sm">
-                      <div className="truncate max-w-[180px]" title={nota.emitente?.inscricao?.nome || "-"}>
+                      <div className="font-medium whitespace-normal break-words" title={nota.emitente?.inscricao?.nome || "-"}>
                         {nota.emitente?.inscricao?.nome || "-"}
                       </div>
-                      <div className="text-xs text-muted-foreground font-mono">{formatCpfCnpj(nota.emitente?.inscricao?.cpf_cnpj || "") || "-"}</div>
+                      <div className="text-xs text-muted-foreground font-mono">
+                        IE: {(nota.emitente?.inscricao as any)?.inscricao_estadual || "-"}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div>
@@ -556,8 +558,8 @@ export default function NotasFiscais() {
                     </TableCell>
 
                     <TableCell className="truncate max-w-[150px] hidden lg:table-cell">{nota.natureza_operacao}</TableCell>
-                    <TableCell>
-                      {nota.data_emissao ? format(new Date(nota.data_emissao.split('T')[0] + 'T12:00:00'), "dd/MM/yyyy", { locale: ptBR }) : "-"}
+                    <TableCell className="whitespace-nowrap">
+                      {nota.data_emissao ? format(new Date(nota.data_emissao), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "-"}
                     </TableCell>
                     <TableCell className="text-right font-medium hidden sm:table-cell">{formatCurrency(nota.total_nota)}</TableCell>
                     <TableCell>
