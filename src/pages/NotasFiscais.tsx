@@ -527,10 +527,10 @@ export default function NotasFiscais() {
                 <TableRow>
                   <TableHead className="w-20">Número</TableHead>
                   <TableHead className="hidden md:table-cell w-20">Série</TableHead>
-                  <TableHead className="hidden lg:table-cell">Emitente</TableHead>
+                  <TableHead>Emitente</TableHead>
                   <TableHead>Destinatário</TableHead>
                   <TableHead className="hidden lg:table-cell">Natureza Op.</TableHead>
-                  <TableHead className="hidden sm:table-cell">Data Emissão</TableHead>
+                  <TableHead>Data Emissão</TableHead>
                   <TableHead className="text-right hidden sm:table-cell">Valor Total</TableHead>
                   <TableHead>Status</TableHead>
                   {canEdit && <TableHead className="sticky right-0 bg-background">Ações</TableHead>}
