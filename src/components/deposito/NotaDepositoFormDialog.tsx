@@ -285,9 +285,23 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     try {
       // Buscar produto selecionado
       const produto = produtos.find(p => p.id === produtoId);
-      
+
+      // Resolver CST + cClassTrib de IBS/CBS/IS
+      // Prioridade: produto → emitente → CFOP → padrão depósito ("400" = isenção)
+      const cstIbsResolved =
+        (produto as any)?.cst_ibs || (emitente as any)?.cst_ibs_padrao || (cfop1905 as any)?.cst_ibs_padrao || "400";
+      const cstCbsResolved =
+        (produto as any)?.cst_cbs || (emitente as any)?.cst_cbs_padrao || (cfop1905 as any)?.cst_cbs_padrao || "400";
+      const cstIsResolved =
+        (produto as any)?.cst_is || (emitente as any)?.cst_is_padrao || (cfop1905 as any)?.cst_is_padrao || null;
+      const cclassTribIbsResolved =
+        (produto as any)?.cclass_trib_ibs || (emitente as any)?.cclass_trib_ibs_padrao || null;
+      const cclassTribCbsResolved =
+        (produto as any)?.cclass_trib_cbs || (emitente as any)?.cclass_trib_cbs_padrao || null;
+
       // Próximo número da nota
       const proximoNumero = (emitente.numero_atual_nfe || 0) + 1;
+
 
       // Montar informações complementares
       const infoComplementar = (() => {
@@ -383,7 +397,13 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           cst_icms: cfop1905.cst_icms_padrao || '41',
           cst_pis: cfop1905.cst_pis_padrao || '08',
           cst_cofins: cfop1905.cst_cofins_padrao || '08',
+          cst_ibs: cstIbsResolved,
+          cst_cbs: cstCbsResolved,
+          cst_is: cstIsResolved,
+          cclass_trib_ibs: cclassTribIbsResolved,
+          cclass_trib_cbs: cclassTribCbsResolved,
         });
+
 
       if (itemError) throw itemError;
 
@@ -512,17 +532,18 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
         valor_seguro: 0,
         valor_outros: 0,
         // Reforma tributária
-        cst_ibs: null,
+        cst_ibs: cstIbsResolved,
         base_ibs: null,
         aliq_ibs: null,
         valor_ibs: null,
-        cclass_trib_ibs: null,
-        cst_cbs: null,
+        cclass_trib_ibs: cclassTribIbsResolved,
+        cst_cbs: cstCbsResolved,
         base_cbs: null,
         aliq_cbs: null,
         valor_cbs: null,
-        cclass_trib_cbs: null,
-        cst_is: null,
+        cclass_trib_cbs: cclassTribCbsResolved,
+        cst_is: cstIsResolved,
+
         base_is: null,
         aliq_is: null,
         valor_is: null,
