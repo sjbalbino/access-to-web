@@ -126,13 +126,14 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
     return safras?.find(s => s.id === safraId);
   }, [safras, safraId]);
 
-  // CFOP para compra (1102 = dentro do estado, 2102 = fora do estado)
+  // CFOP para compra de grão de produtor rural (1101 = dentro do estado, 2101 = fora do estado)
   const cfopCompra = useMemo(() => {
     if (!inscricaoPrincipal?.uf || !inscricaoVendedor?.uf) return null;
     const mesmoEstado = inscricaoPrincipal.uf === inscricaoVendedor.uf;
-    const codigoCfop = mesmoEstado ? '1102' : '2102';
+    const codigoCfop = mesmoEstado ? '1101' : '2101';
     return cfops.find(c => c.codigo === codigoCfop);
   }, [cfops, inscricaoPrincipal?.uf, inscricaoVendedor?.uf]);
+
 
   // Carregar notas referenciadas existentes quando abrir edição
   useEffect(() => {
