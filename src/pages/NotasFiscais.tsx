@@ -537,7 +537,6 @@ export default function NotasFiscais() {
                 <TableRow>
                   <TableHead className="w-20">Número</TableHead>
                   <TableHead className="hidden md:table-cell w-20">Série</TableHead>
-                  <TableHead>Emitente</TableHead>
                   <TableHead>Destinatário</TableHead>
                   <TableHead className="hidden lg:table-cell">Natureza Op.</TableHead>
                   <TableHead>Data Emissão</TableHead>
