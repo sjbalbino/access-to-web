@@ -598,6 +598,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                     </TableCell>
                     <TableCell className="px-6">
                       <div className="flex flex-col gap-1.5">
+                        <Badge variant="outline" className={`${statusClasses[statusProcessamento]} w-fit text-[11px] h-5 font-semibold`}>
+                          {statusLabels[statusProcessamento]}
+                        </Badge>
                         {nfe.manifestacao_destinatario ? (
                           <Badge variant={manifestacaoVariants[nfe.manifestacao_destinatario] || "secondary"} className="w-fit text-[11px] h-5">
                             {manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}
