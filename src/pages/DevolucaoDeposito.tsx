@@ -180,7 +180,6 @@ export default function DevolucaoDeposito() {
               <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cód</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Produtor</TableHead>
                     <TableHead className="hidden sm:table-cell">Produto</TableHead>
@@ -192,12 +191,11 @@ export default function DevolucaoDeposito() {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={8} className="text-center">Carregando...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center">Carregando...</TableCell></TableRow>
                   ) : !devolucoes?.length ? (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground">Nenhuma devolução encontrada</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">Nenhuma devolução encontrada</TableCell></TableRow>
                   ) : dadosPaginados.map(d => (
                     <TableRow key={d.id}>
-                      <TableCell>{d.codigo}</TableCell>
                       <TableCell>{format(new Date(d.data_devolucao), 'dd/MM/yyyy')}</TableCell>
                       <TableCell className="max-w-[150px] truncate">{d.inscricao_produtor?.produtores?.nome}</TableCell>
                       <TableCell className="hidden sm:table-cell">{d.produto?.nome}</TableCell>
