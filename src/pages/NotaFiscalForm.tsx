@@ -1307,6 +1307,8 @@ export default function NotaFiscalForm() {
       aliqIsPadrao: emitente.aliq_is_padrao,
       cstPisPadraoEmitente: emitente.cst_pis_padrao,
       cstCofinsPadraoEmitente: emitente.cst_cofins_padrao,
+      cstIbsPadraoEmitente: emitente.cst_ibs_padrao,
+      cstCbsPadraoEmitente: emitente.cst_cbs_padrao,
       ufEmitente: ufEmitente,
       cfopCodigo: itemFormData.cfop || cfop.codigo,
       incidenciaIcms: cfop.incidencia_icms ?? true,
