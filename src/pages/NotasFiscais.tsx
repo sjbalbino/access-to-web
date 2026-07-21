@@ -631,7 +631,7 @@ export default function NotasFiscais() {
                           <TableCell className="font-mono hidden md:table-cell">{nota.serie || "-"}</TableCell>
                           <TableCell>
                             <div>
-                              <div className="font-medium truncate max-w-[150px]">{nota.dest_nesh: nota.dest_nome || "-"}</div>
+                              <div className="font-medium truncate max-w-[150px]">{nota.dest_nome || "-"}</div>
                               <div className="text-xs text-muted-foreground font-mono hidden sm:block">{formatCpfCnpj(nota.dest_cpf_cnpj) || "-"}</div>
                             </div>
                           </TableCell>
