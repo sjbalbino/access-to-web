@@ -106,7 +106,7 @@ export default function DevolucaoDeposito() {
         {/* Filtros */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Granja</Label>
                 <ComboboxFilter
@@ -146,6 +146,24 @@ export default function DevolucaoDeposito() {
                   searchPlaceholder="Buscar produtor..."
                   emptyText="Nenhum produtor encontrado."
                   popoverWidth="w-[350px]"
+                />
+              </div>
+              <div>
+                <Label>Data Inicial</Label>
+                <input
+                  type="date"
+                  value={dataInicial}
+                  onChange={(e) => setDataInicial(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+              <div>
+                <Label>Data Final</Label>
+                <input
+                  type="date"
+                  value={dataFinal}
+                  onChange={(e) => setDataFinal(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
             </div>
