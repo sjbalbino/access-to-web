@@ -156,7 +156,7 @@ export function useFocusNfe() {
       }
 
       // Mapear para formato Focus NFe (incluindo notas referenciadas)
-      const focusNfeData = mapNotaToFocusNfe(notaDataComNumero, itens, notasReferenciadasMapeadas);
+      const focusNfeData = await mapNotaToFocusNfe(notaDataComNumero, itens, notasReferenciadasMapeadas);
 
       setStatus("enviando");
 
