@@ -1,40 +1,40 @@
-## Objetivo
-Na tela **Entradas NF-e → Buscar no SEFAZ (DFe)**, deixar os botões **XML** e **Dar entrada** desabilitados visualmente enquanto a NF-e não tiver manifestação processada, e exibir um placeholder mais claro no lugar de "-" quando o nome do emitente não estiver disponível.
+## Problema
 
-## Contexto atual
-- A coluna **Emitente** mostra `nfe.nome || "-"`. Esse nome só vem preenchido quando a SEFAZ entrega o XML completo, o que só ocorre após uma manifestação (Ciência, Confirmação etc.).
-- Os botões **XML** e **Dar entrada** já funcionam corretamente, mas permanecem clicáveis mesmo sem manifestação, gerando retornos de erro da SEFAZ.
+O SEFAZ está rejeitando as notas de compra porque no campo de município está sendo enviado o **código IBGE** (ex.: `4308904`) em vez do **nome do município** (ex.: `IJUÍ`).
 
-## Alterações propostas
+Isso acontece porque em `inscricoes_produtor.cidade` guardamos o código IBGE (7 dígitos), e o mapeador da NF-e (`focusNfeMapper.ts`) envia esse valor direto como `municipio_emitente`/`municipio_destinatario` — a Focus NFe/SEFAZ espera o **nome**.
 
-### 1. Desabilitar botões XML e "Dar entrada" sem manifestação
-No componente `src/components/entradas-nfe/MdeDialog.tsx`, na linha de ações de cada NF-e:
+## O que será feito
 
-- Criar uma verificação `const manifestacaoProcessada = !!nfe.manifestacao_destinatario;`.
-- Aplicar `disabled={!manifestacaoProcessada}` nos botões:
-  - **XML** (download do arquivo XML).
-  - **Dar entrada** (importação automática para `entradas_nfe`).
-- Adicionar `title` explicativo quando desabilitado:  
-  *"Manifeste a NF-e primeiro para liberar o XML completo"*.
-- Aplicar estilo visual de desabilitado (opacidade reduzida, cursor `not-allowed`) para deixar claro que a ação está bloqueada.
+### 1. Correção da causa da rejeição (backend/emissão)
 
-### 2. Melhorar placeholder do emitente
-Na coluna **Emitente**, quando `nfe.nome` estiver vazio:
+Traduzir código IBGE → nome no momento de montar a NF-e, sem alterar o que está gravado no banco.
 
-- Substituir o texto "-" por:  
-  **"Aguardando manifestação"**.
-- Manter o CNPJ e a chave visíveis abaixo, pois esses dados vêm do resumo do DFe.
-- Opcionalmente, aplicar cor âmbar no placeholder para associar visualmente ao status "Sem manifestação".
+- Em `src/lib/focusNfeMapper.ts`: quando `cidade` for numérico (código IBGE), consultar `ibge_municipios` e substituir pelo `nome` do município antes de preencher `municipio_emitente` e `municipio_destinatario`. Fallback: manter o valor atual se não encontrar.
+- Aplicar a mesma tradução em `dest_cidade` gravado em `notas_fiscais` nos fluxos:
+  - `src/components/compra/EmitirNfeCompraDialog.tsx`
+  - `src/components/compra/CompraDialog.tsx`
+  - `src/components/devolucao/EmitirNfeDevolucaoDialog.tsx`
+  - `src/components/deposito/NotaDepositoFormDialog.tsx`
+  - `src/components/remessas/EmitirNfeAutomaticoDialog.tsx`
+  - `src/pages/EntradaColheita.tsx`
+  - `src/pages/NotaFiscalForm.tsx`
 
-### 3. Ajustar preview do DANFe (consistência)
-No preview do DANFe (modal secundário), o botão **XML** também deve respeitar a mesma regra de desabilitação quando não houver manifestação processada.
+Usando um helper novo em `src/lib/utils.ts` (ou `src/lib/municipio.ts`): `resolveNomeMunicipio(codigoOuNome, uf)`.
 
-## Arquivos envolvidos
-- `src/components/entradas-nfe/MdeDialog.tsx`
+### 2. Ajuste no select de município
 
-## Critérios de aceitação
-- Botões **XML** e **Dar entrada** aparecem desabilitados (visualmente apagados) para NF-es com status "Sem manifestação".
-- Ao passar o mouse sobre os botões desabilitados, exibe tooltip explicando a necessidade da manifestação.
-- NF-es sem nome do emitente exibem "Aguardando manifestação" em vez de "-".
-- Manifestações registradas (Ciência, Confirmação, Desconhecimento, Não Realizada) mantêm os botões habilitados normalmente.
-- Nenhuma alteração de comportamento nas demais ações (Manifestar, Visualizar DANFe, Baixar DANFe).
+Onde o usuário escolhe o município, exibir **"Nome (Código IBGE)"** de forma consistente:
+
+- `src/components/produtores/InscricoesTab.tsx` — já mostra `Nome (Código)` no botão; confirmar que a lista de opções também exibe `Nome (Código)` no `CommandItem`.
+- `src/pages/VendaProducaoForm.tsx` — combobox de cidade hoje mostra só o nome; adicionar `(Código IBGE)` ao lado.
+
+### 3. Validação
+
+- Testar emissão de uma compra de cereais e conferir no XML/retorno da Focus que `xMun` sai como nome.
+- Verificar que a lista/edição de inscrições continua exibindo o município corretamente.
+
+## Fora do escopo
+
+- Migração de dados (não vamos reescrever `cidade` no banco de código para nome — a tradução é feita na emissão).
+- Alteração de outros campos de endereço.
