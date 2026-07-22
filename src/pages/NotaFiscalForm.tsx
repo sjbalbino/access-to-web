@@ -1079,7 +1079,6 @@ export default function NotaFiscalForm() {
             } catch (err) {
               console.error("Erro ao vincular NFe à origem:", err);
             }
-          }
           } else if (realStatus === "erro_autorizacao" || realStatus === "rejeitado" || realStatus === "rejeitada") {
             const motivo = (pollResult.data as Record<string, unknown>)?.mensagem_sefaz as string || 
                            (pollResult.data as Record<string, unknown>)?.motivo_status as string ||
