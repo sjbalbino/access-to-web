@@ -32,6 +32,7 @@ export default function CompraCereais() {
   const [compraSelecionada, setCompraSelecionada] = useState<CompraCereal | null>(null);
   const [dialogReadOnly, setDialogReadOnly] = useState(false);
   const [nfeDialogCompra, setNfeDialogCompra] = useState<CompraCereal | null>(null);
+  const [vincularCompra, setVincularCompra] = useState<CompraCereal | null>(null);
 
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
