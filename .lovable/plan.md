@@ -1,48 +1,42 @@
-## Diagnóstico
+## Contexto
 
-As 9 compras (códigos 5 a 13, de 21/07/2026) permanecem com status **Pendente** apesar de suas NFes (números 82, 84, 85, 86, 87, 88, 89, 90 e 94) estarem **autorizadas** na SEFAZ.
+Hoje o vínculo entre a NF-e e o registro de origem (Compra de Cereais / Devolução de Depósito) só acontece dentro dos diálogos dedicados:
 
-**Causa raiz** (`src/components/compra/EmitirNfeCompraDialog.tsx`, linhas 488-494):
+- `EmitirNfeCompraDialog` grava `nota_fiscal_id` e status `nfe_emitida` em `compras_cereais`.
+- `EmitirNfeDevolucaoDialog` faz o mesmo em `devolucoes_deposito`.
 
-O vínculo entre a compra e a nota fiscal (`compras_cereais.nota_fiscal_id`) e a mudança de status para `nfe_emitida` só ocorrem **dentro do bloco de polling**, quando a SEFAZ devolve `autorizado` dentro da janela do polling (30 tentativas × 3s = 90s). Se:
+Quando o usuário emite a NF-e **direto pela página de Notas Fiscais** (`NotaFiscalForm.tsx`), o polling atualiza apenas a própria nota. As tabelas `compras_cereais` e `devolucoes_deposito` continuam com `status = 'pendente'` e `nota_fiscal_id = null` — mesmo padrão do bug já corrigido nas 9 compras órfãs de 21/07.
 
-- o polling estoura o tempo (SEFAZ demora >90s para autorizar), OU
-- o usuário fecha o diálogo antes da autorização, OU
-- a conexão cai durante o polling,
+## O que fazer
 
-…a NFe é criada e autorizada normalmente pela SEFAZ, mas a compra fica órfã com `nota_fiscal_id = NULL` e status `pendente`. Foi exatamente o que aconteceu com essas 9 compras.
+### 1. Auto-vinculação no momento da autorização (NotaFiscalForm)
+Após `realStatus === 'autorizado' | 'autorizada'` no bloco de polling (linhas ~1057 de `src/pages/NotaFiscalForm.tsx`), executar uma tentativa de vínculo:
 
-Confirmei via banco que existe correspondência 1:1 inequívoca entre cada compra pendente e uma NFe autorizada (mesmo `dest_cpf_cnpj` do vendedor + mesmo `total_nota` + mesma data). Ex.: compra #7 (R$ 19.296,00, Claudia Andreia) ↔ NFe #85.
+- Detectar o "tipo de origem" pela **CFOP dos itens** da nota:
+  - `1101 / 1102 / 2101 / 2102` → compra de cereais
+  - `1905 / 2905` (entrada em devolução do depositante) → devolução de depósito
+- Buscar candidatos elegíveis (`tenant_id` atual, `status = 'pendente'`, `nota_fiscal_id IS NULL`) com:
+  - mesmo `cpf_cnpj` da contraparte (vendedor da compra = emitente/destinatário conforme o caso; produtor da devolução),
+  - `valor_total` igual ao total da nota (tolerância R$ 0,01),
+  - `data_operacao` dentro de ±3 dias da `data_emissao`.
+- Se **exatamente 1 candidato** → `UPDATE compras_cereais|devolucoes_deposito SET nota_fiscal_id = <id>, status = 'nfe_emitida'`.
+- Se **0 ou múltiplos** → não altera nada e exibe toast informativo ("Vincule manualmente à compra/devolução correspondente").
+- Invalida os caches `["compras-cereais"]` / `["devolucoes-deposito"]`.
 
-## Correção proposta
+### 2. Vínculo manual nas listas
+Nas telas `CompraCereais` e `DevolucoesDeposito`, no menu de ações de registros com status "Pendente":
 
-### 1. Backfill imediato das 9 compras afetadas (migration)
+- Novo item **"Vincular NF-e existente…"** abre um diálogo que lista as NF-es autorizadas do mesmo emitente/tenant sem origem vinculada (`SELECT` filtrado por CFOP + `cpf_cnpj` contraparte + faixa de datas).
+- Ao selecionar, grava `nota_fiscal_id` e status `nfe_emitida` no registro.
 
-Atualizar `compras_cereais` casando por CPF/CNPJ do vendedor (normalizado, sem máscara) + `total_nota` + `natureza_operacao ILIKE 'COMPRA%'` + `status IN ('autorizado','autorizada')`, escolhendo a NFe mais próxima temporalmente e que ainda não esteja vinculada a outra compra:
+### 3. Backfill retroativo
+Migration única de reconciliação com o mesmo critério da regra automática (CFOP + CPF/CNPJ + valor + janela de datas) para vincular registros pendentes anteriores à correção. Estritamente vínculos 1‑para‑1; múltiplos ficam para vínculo manual.
 
-```
-UPDATE compras_cereais SET nota_fiscal_id = <nf.id>, status = 'nfe_emitida'
-WHERE id IN (as 9 compras)
-```
+### 4. Cancelamento (consistência)
+`supabase/functions/focus-nfe-cancelar` já limpa vínculos em compras. Estender a mesma lógica para `devolucoes_deposito` (volta status para `pendente` e limpa `nota_fiscal_id` quando a NF-e vinculada for cancelada).
 
-### 2. Fix na lógica de emissão (`EmitirNfeCompraDialog.tsx`)
+## Detalhes técnicos
 
-Alterar a ordem de gravação para eliminar a janela de perda:
-
-- **Logo após criar a `notas_fiscais` (linha ~282)**: já persistir `compras_cereais.nota_fiscal_id = notaFiscal.id` (mantendo `status = 'pendente'`). Isso garante o vínculo mesmo se o polling falhar.
-- **Após autorização confirmada no polling**: apenas mudar `status` para `'nfe_emitida'`.
-- **No branch `else` (linha 518, "sem ref")**: manter o vínculo já persistido; não deixar a compra sem `nota_fiscal_id`.
-
-### 3. Rotina de reconciliação preventiva (opcional, recomendado)
-
-Ao abrir a página `CompraCereais`, para cada compra `status='pendente' AND nota_fiscal_id IS NOT NULL`, consultar o status atual da nota vinculada; se estiver `autorizada`, atualizar o status da compra para `nfe_emitida`. Isso cobre casos onde a nota foi autorizada depois do fechamento do diálogo.
-
-## Arquivos afetados
-
-- `src/components/compra/EmitirNfeCompraDialog.tsx` — reordenar gravação do vínculo
-- Nova migration — backfill das 9 compras + atualização de status
-- (Opcional) `src/hooks/useComprasCereais.ts` — reconciliação ao carregar a lista
-
-## Observação
-
-O mesmo padrão de bug pode existir em `EmitirNfeDevolucaoDialog.tsx` e no fluxo de emissão de Notas de Depósito. Recomendo revisar em seguida, mas fora do escopo desta correção pontual.
+- Arquivos afetados: `src/pages/NotaFiscalForm.tsx`, `src/pages/CompraCereais.tsx`, `src/pages/DevolucoesDeposito.tsx` (+ novo `VincularNfeDialog.tsx` compartilhado), `supabase/functions/focus-nfe-cancelar/index.ts`, 1 migration SQL de backfill.
+- Reuso: helpers de match (CFOP → origem, comparação de valor/datas) ficam em `src/lib/nfeVinculo.ts` para serem chamados tanto no polling quanto no diálogo manual.
+- Nenhuma mudança de schema — só usa colunas já existentes (`nota_fiscal_id`, `status`, `cpf_cnpj`, `valor_total`, `data_operacao`).
