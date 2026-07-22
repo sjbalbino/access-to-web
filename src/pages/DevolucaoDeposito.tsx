@@ -219,6 +219,11 @@ export default function DevolucaoDeposito() {
                               <Button variant="ghost" size="icon" onClick={() => setNfeDialogDevolucao(d)} disabled={!!d.nota_fiscal_id}>
                                 <Send className="h-4 w-4" />
                               </Button>
+                              {!d.nota_fiscal_id && (
+                                <Button variant="ghost" size="icon" onClick={() => setVincularDevolucao(d)} title="Vincular NF-e existente">
+                                  <Link2 className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button variant="ghost" size="icon" onClick={() => handleEditarDevolucao(d)} disabled={!!d.nota_fiscal_id}>
                                 <Edit className="h-4 w-4" />
                               </Button>
