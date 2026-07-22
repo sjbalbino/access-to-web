@@ -189,6 +189,11 @@ export default function CompraCereais() {
                               <Button variant="ghost" size="icon" onClick={() => handleEmitirNfe(c)} disabled={!!c.nota_fiscal_id} title={c.nota_fiscal_id ? 'NFe já emitida' : 'Emitir NFe'}>
                                 <Send className="h-4 w-4" />
                               </Button>
+                              {!c.nota_fiscal_id && (
+                                <Button variant="ghost" size="icon" onClick={() => setVincularCompra(c)} title="Vincular NF-e existente">
+                                  <Link2 className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button variant="ghost" size="icon" onClick={() => handleEditarCompra(c)} disabled={!!c.nota_fiscal_id}>
                                 <Edit className="h-4 w-4" />
                               </Button>
