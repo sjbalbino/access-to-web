@@ -53,6 +53,7 @@ import { useTransportadoras } from "@/hooks/useTransportadoras";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { vincularNfeAutorizada } from "@/lib/nfeVinculo";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { ValidacaoIbsCbsDialog } from "@/components/notas-fiscais/ValidacaoIbsCbsDialog";
 import { useFocusNfeVerificarEmpresa } from "@/hooks/useFocusNfeVerificarEmpresa";
