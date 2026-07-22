@@ -260,6 +260,19 @@ export default function DevolucaoDeposito() {
           onClose={() => setNfeDialogDevolucao(null)}
           onSuccess={() => setNfeDialogDevolucao(null)}
         />
+
+        {vincularDevolucao && (
+          <VincularNfeDialog
+            open={!!vincularDevolucao}
+            onOpenChange={(o) => !o && setVincularDevolucao(null)}
+            origem="devolucao_deposito"
+            registroId={vincularDevolucao.id}
+            granjaId={vincularDevolucao.granja_id}
+            cpfCnpjContraparte={vincularDevolucao.inscricao_produtor?.cpf_cnpj}
+            valorTotal={Number(vincularDevolucao.valor_total ?? 0)}
+            dataOperacao={vincularDevolucao.data_devolucao}
+          />
+        )}
       </div>
     </AppLayout>
   );
