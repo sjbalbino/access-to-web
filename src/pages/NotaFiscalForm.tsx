@@ -53,6 +53,7 @@ import { useTransportadoras } from "@/hooks/useTransportadoras";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { vincularNfeAutorizada } from "@/lib/nfeVinculo";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { ValidacaoIbsCbsDialog } from "@/components/notas-fiscais/ValidacaoIbsCbsDialog";
 import { useFocusNfeVerificarEmpresa } from "@/hooks/useFocusNfeVerificarEmpresa";
@@ -1061,6 +1062,23 @@ export default function NotaFiscalForm() {
               progress: 100,
               details: `Protocolo: ${protocolo || "N/A"}`
             });
+
+            // Auto-vincular a compra/devolução pendente correspondente
+            try {
+              const vinc = await vincularNfeAutorizada(id);
+              if (vinc.vinculadoId) {
+                const label = vinc.tipo === "compra_cereais" ? "compra de cereais" : "devolução de depósito";
+                toast.success(`NF-e vinculada automaticamente à ${label} pendente.`);
+                queryClient.invalidateQueries({ queryKey: ["compras-cereais"] });
+                queryClient.invalidateQueries({ queryKey: ["devolucoes-deposito"] });
+              } else if (vinc.tipo && vinc.candidatos > 1) {
+                toast.info(
+                  `Existem ${vinc.candidatos} ${vinc.tipo === "compra_cereais" ? "compras" : "devoluções"} pendentes compatíveis. Vincule manualmente na respectiva lista.`,
+                );
+              }
+            } catch (err) {
+              console.error("Erro ao vincular NFe à origem:", err);
+            }
           } else if (realStatus === "erro_autorizacao" || realStatus === "rejeitado" || realStatus === "rejeitada") {
             const motivo = (pollResult.data as Record<string, unknown>)?.mensagem_sefaz as string || 
                            (pollResult.data as Record<string, unknown>)?.motivo_status as string ||

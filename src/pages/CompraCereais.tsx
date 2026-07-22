@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, Send, Eye } from 'lucide-react';
+import { Plus, Trash2, Edit, Send, Eye, Link2 } from 'lucide-react';
+import { VincularNfeDialog } from '@/components/nfe/VincularNfeDialog';
 import { useComprasCereais, useDeleteCompraCereal, type CompraCereal } from '@/hooks/useComprasCereais';
 import { useGranjas } from '@/hooks/useGranjas';
 import { useSafras } from '@/hooks/useSafras';
@@ -31,6 +32,7 @@ export default function CompraCereais() {
   const [compraSelecionada, setCompraSelecionada] = useState<CompraCereal | null>(null);
   const [dialogReadOnly, setDialogReadOnly] = useState(false);
   const [nfeDialogCompra, setNfeDialogCompra] = useState<CompraCereal | null>(null);
+  const [vincularCompra, setVincularCompra] = useState<CompraCereal | null>(null);
 
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
@@ -187,6 +189,11 @@ export default function CompraCereais() {
                               <Button variant="ghost" size="icon" onClick={() => handleEmitirNfe(c)} disabled={!!c.nota_fiscal_id} title={c.nota_fiscal_id ? 'NFe já emitida' : 'Emitir NFe'}>
                                 <Send className="h-4 w-4" />
                               </Button>
+                              {!c.nota_fiscal_id && (
+                                <Button variant="ghost" size="icon" onClick={() => setVincularCompra(c)} title="Vincular NF-e existente">
+                                  <Link2 className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button variant="ghost" size="icon" onClick={() => handleEditarCompra(c)} disabled={!!c.nota_fiscal_id}>
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -225,6 +232,20 @@ export default function CompraCereais() {
             refetch();
           }}
         />
+
+        {vincularCompra && (
+          <VincularNfeDialog
+            open={!!vincularCompra}
+            onOpenChange={(o) => !o && setVincularCompra(null)}
+            origem="compra_cereais"
+            registroId={vincularCompra.id}
+            granjaId={vincularCompra.granja_id}
+            cpfCnpjContraparte={vincularCompra.inscricao_vendedor?.cpf_cnpj}
+            valorTotal={Number(vincularCompra.valor_total ?? 0)}
+            dataOperacao={vincularCompra.data_compra}
+            onVinculado={() => refetch()}
+          />
+        )}
       </div>
     </AppLayout>
   );

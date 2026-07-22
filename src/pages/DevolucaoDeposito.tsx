@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Edit, Send, Eye } from 'lucide-react';
+import { Plus, Trash2, Edit, Send, Eye, Link2 } from 'lucide-react';
+import { VincularNfeDialog } from '@/components/nfe/VincularNfeDialog';
 import { useDevolucoes, useDeleteDevolucao, type DevolucaoDeposito } from '@/hooks/useDevolucoes';
 import { useAllInscricoes } from '@/hooks/useAllInscricoes';
 import { useGranjas } from '@/hooks/useGranjas';
@@ -35,6 +36,7 @@ export default function DevolucaoDeposito() {
 
   // NFe Dialog state
   const [nfeDialogDevolucao, setNfeDialogDevolucao] = useState<DevolucaoDeposito | null>(null);
+  const [vincularDevolucao, setVincularDevolucao] = useState<DevolucaoDeposito | null>(null);
 
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
@@ -217,6 +219,11 @@ export default function DevolucaoDeposito() {
                               <Button variant="ghost" size="icon" onClick={() => setNfeDialogDevolucao(d)} disabled={!!d.nota_fiscal_id}>
                                 <Send className="h-4 w-4" />
                               </Button>
+                              {!d.nota_fiscal_id && (
+                                <Button variant="ghost" size="icon" onClick={() => setVincularDevolucao(d)} title="Vincular NF-e existente">
+                                  <Link2 className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button variant="ghost" size="icon" onClick={() => handleEditarDevolucao(d)} disabled={!!d.nota_fiscal_id}>
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -253,6 +260,19 @@ export default function DevolucaoDeposito() {
           onClose={() => setNfeDialogDevolucao(null)}
           onSuccess={() => setNfeDialogDevolucao(null)}
         />
+
+        {vincularDevolucao && (
+          <VincularNfeDialog
+            open={!!vincularDevolucao}
+            onOpenChange={(o) => !o && setVincularDevolucao(null)}
+            origem="devolucao_deposito"
+            registroId={vincularDevolucao.id}
+            granjaId={vincularDevolucao.granja_id}
+            cpfCnpjContraparte={vincularDevolucao.inscricao_produtor?.cpf_cnpj}
+            valorTotal={Number(vincularDevolucao.valor_total ?? 0)}
+            dataOperacao={vincularDevolucao.data_devolucao}
+          />
+        )}
       </div>
     </AppLayout>
   );
