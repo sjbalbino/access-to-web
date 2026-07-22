@@ -493,7 +493,8 @@ export function EmitirNfeCompraDialog({
         const finalStatus = (pollResult.data as Record<string, unknown>)?.status as string;
 
         if (finalStatus === "autorizado" || finalStatus === "autorizada") {
-          // Atualizar compra com nota_fiscal_id e status
+          // nota_fiscal_id já foi vinculado logo após a criação da NFe;
+          // aqui só marcamos a compra como emitida.
           await updateCompra.mutateAsync({
             id: compra.id,
             nota_fiscal_id: notaFiscal.id,
