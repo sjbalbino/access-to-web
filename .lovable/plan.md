@@ -1,54 +1,38 @@
-## Diagnóstico da nota 94
+## Objetivo
+Aplicar o favicon de folha verde já usado no sisagro.app e corrigir metadados do <head> para que o Google exiba o ícone correto nos resultados de busca.
 
-Confirmado no banco:
+## Diagnóstico atual
+- `public/favicon.png` e `public/favicon.ico` já contêm a folha verde, idênticos aos arquivos publicados em sisagro.app.
+- Porém `public/favicon.png` está salvo como JPEG apesar da extensão `.png`, o que pode confundir crawlers/navegadores.
+- `index.html` ainda usa metadados do template Lovable (`og:title="Lovable App"`, `og:description="Lovable Generated Project"`, imagem OG da Lovable), o que reforça a impressão errada no Google.
 
-- CFOP da nota e do item: **1102 – Compra para comercialização**, com `cst_icms_padrao = 00` e `incidencia_icms = true`.
-- Produto **SOJA INDUSTRIA – KGS** tem `cst_icms = 51` (diferimento), correto.
-- Após "Calcular Impostos": item ficou com `cst_icms = 00`, `aliq_icms = 18%`, `valor_icms = R$ 1.112,40`. IBS/CBS/cClassTrib estão corretos (200 / 200036).
+## Plano de execução
 
-Causa raiz: no último ajuste do calculador, a prioridade do ICMS ficou **CFOP → Produto → padrão**. Como o CFOP 1102 tem CST padrão "00", ele sobrescreve o CST 51 do produto na compra de soja entre produtores rurais.
+### 1. Corrigir favicon.png
+- Converter o arquivo atual para PNG válido 512×512, mantendo a folha verde.
+- Substituir `public/favicon.png`.
 
-Além disso, o produto é "SOJA INDUSTRIA", ou seja, compra para **industrialização** (CFOP 1.101), não comercialização (1.102). O CompraDialog está gravando 1102 como default.
+### 2. Regenerar favicon.ico
+- Gerar ícone multi-resolução (16×16, 32×32, 48×48, 180×180, 256×256) a partir do PNG corrigido.
+- Substituir `public/favicon.ico`.
 
-## Correções propostas
+### 3. Atualizar metadados em index.html
+- `<title>`: manter "AgroGestão" (ou ajustar se necessário).
+- `<meta name="description">`: descrição em português do sistema.
+- `og:title`, `og:description`: remover referências ao Lovable.
+- Remover `og:image` e `twitter:image` do Lovable (deixar vazio para o hosting injetar o preview correto, ou usar imagem própria se fornecida).
+- Adicionar:
+  - `<link rel="apple-touch-icon" href="/apple-touch-icon.png">`
+  - `<link rel="manifest" href="/manifest.json">`
+  - `<meta name="theme-color" content="#16a34a">` (verde agrícola)
 
-### 1. `src/lib/taxCalculator.ts` — prioridade correta do ICMS
+### 4. Criar manifest.json
+- Criar `public/manifest.json` com nome curto, nome completo, ícones, theme_color e background_color.
+- Gerar `public/apple-touch-icon.png` (180×180) a partir do favicon.
 
-Inverter a resolução do CST ICMS para respeitar o regime do produto (que é onde o diferimento fica cadastrado):
+### 5. Verificar build
+- Rodar build/typecheck para garantir que nenhum caminho quebrou.
+- Verificar com `file` e `identify` se os novos favicons estão em formatos corretos.
 
-- Nova prioridade: **Produto → CFOP → padrão por CRT**.
-- Assim, quando o produto tem CST 51, ele prevalece sobre o CST 00 do CFOP 1102.
-- Adicionalmente, se o CST resolvido for de **não tributação** (ex.: 40, 41, 50, 51, 60), zerar `baseIcms`, `aliqIcms` e `valorIcms` — hoje o cálculo aplica alíquota mesmo em CST não tributado por causa da checagem restrita em `cstIcmsTemTributacao`.
-
-Isso mantém intactas as regras já corrigidas de IBS/CBS/cClassTrib (Emitente → CFOP → Produto).
-
-### 2. `src/components/compra/CompraDialog.tsx` — CFOP padrão de compra
-
-Ajustar o default do CFOP na criação da compra:
-
-- Compra de grão de produtor rural → **1.101 (Compra para industrialização/produção rural)** interna e **2.101** interestadual.
-- Manter a possibilidade do usuário trocar, mas o default deixa de ser 1102.
-
-### 3. Ajustar nota 94 (correção pontual dos dados existentes)
-
-Como a nota 94 está em **rascunho**, atualizar:
-
-- `notas_fiscais.cfop_id` → CFOP 1101.
-- `notas_fiscais_itens.cfop` → "1101".
-- `notas_fiscais_itens.cst_icms` → "51".
-- `notas_fiscais_itens.aliq_icms` → 0, `base_icms` → 0, `valor_icms` → 0.
-- `notas_fiscais.total_icms` e `total_bc_icms` → 0 (recalcular a partir dos itens).
-
-### 4. Validação
-
-Após as mudanças, reabrir a nota 94, clicar em **Calcular Impostos** e confirmar que:
-
-- CFOP permanece **1101**.
-- CST ICMS permanece **51** (diferimento), sem alíquota nem valor.
-- IBS/CBS continuam **200 / 200036** com as alíquotas cadastradas.
-
-## Arquivos alterados
-
-- `src/lib/taxCalculator.ts`
-- `src/components/compra/CompraDialog.tsx`
-- Migração de dados: `UPDATE` em `notas_fiscais` e `notas_fiscais_itens` da nota 94.
+## Resultado esperado
+Favicon válido em PNG/ICO, metadados limpos sem referências ao Lovable, e melhores condições para o Google atualizar o ícone nos resultados de busca (embora o cache do Google ainda possa levar dias).
