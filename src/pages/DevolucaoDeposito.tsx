@@ -36,6 +36,7 @@ export default function DevolucaoDeposito() {
 
   // NFe Dialog state
   const [nfeDialogDevolucao, setNfeDialogDevolucao] = useState<DevolucaoDeposito | null>(null);
+  const [vincularDevolucao, setVincularDevolucao] = useState<DevolucaoDeposito | null>(null);
 
   const { data: granjas } = useGranjas();
   const { data: safras } = useSafras();
