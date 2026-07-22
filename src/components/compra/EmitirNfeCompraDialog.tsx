@@ -285,6 +285,13 @@ export function EmitirNfeCompraDialog({
         throw new Error(`Erro ao criar nota fiscal: ${nfError?.message}`);
       }
 
+      // Vincula a NFe à compra imediatamente para não perder a referência
+      // caso o polling estoure o tempo ou o diálogo seja fechado antes da autorização.
+      await supabase
+        .from("compras_cereais")
+        .update({ nota_fiscal_id: notaFiscal.id })
+        .eq("id", compra.id);
+
       setStatus({ step: "creating_item", message: "Adicionando item à nota...", progress: 45, notaFiscalId: notaFiscal.id });
 
       // Resolver CST + cClassTrib de IBS/CBS/IS
