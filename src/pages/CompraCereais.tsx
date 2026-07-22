@@ -232,6 +232,20 @@ export default function CompraCereais() {
             refetch();
           }}
         />
+
+        {vincularCompra && (
+          <VincularNfeDialog
+            open={!!vincularCompra}
+            onOpenChange={(o) => !o && setVincularCompra(null)}
+            origem="compra_cereais"
+            registroId={vincularCompra.id}
+            granjaId={vincularCompra.granja_id}
+            cpfCnpjContraparte={vincularCompra.inscricao_vendedor?.cpf_cnpj}
+            valorTotal={Number(vincularCompra.valor_total ?? 0)}
+            dataOperacao={vincularCompra.data_compra}
+            onVinculado={() => refetch()}
+          />
+        )}
       </div>
     </AppLayout>
   );
