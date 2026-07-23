@@ -15,7 +15,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe, Eye, Printer, FileCode, CheckCircle2 } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe, Eye, Printer, FileCode, CheckCircle2, Info } from "lucide-react";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useMde, type NfeRecebida } from "@/hooks/useMde";
 import { formatNumber } from "@/lib/formatters";
@@ -601,6 +602,16 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
             <span className="text-[11px] text-slate-500 italic">Filtros aplicados automaticamente</span>
             <span className="text-xs text-slate-500 ml-auto font-medium">{nfesFiltradas.length} de {nfesRecebidas.length}</span>
           </div>
+        )}
+
+        {inscricaoId && !isLoading && nfesRecebidas.length === 0 && !syncBloqueado && (
+          <Alert className="mb-4 border-blue-200 bg-blue-50 text-blue-900 [&>svg]:text-blue-600">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Nenhuma NF-e no cache desta IE</AlertTitle>
+            <AlertDescription>
+              Clique em <b>Sincronizar SEFAZ</b> para buscar as notas fiscais recebidas para esta inscrição na SEFAZ.
+            </AlertDescription>
+          </Alert>
         )}
 
         <div className="rounded-xl border shadow-sm overflow-hidden">
