@@ -271,6 +271,24 @@ export function useCreateEntradaNfe() {
   return useMutation({
     mutationFn: async (input: any) => {
       const { itens, _duplicatas, _pagamento, ...header } = input;
+
+      // Guarda anti-duplicidade por chave de acesso
+      if (header.chave_acesso) {
+        const chaveLimpa = String(header.chave_acesso).replace(/\D/g, "");
+        if (chaveLimpa) {
+          const { data: existente } = await supabase
+            .from("entradas_nfe")
+            .select("id, numero_nfe, status")
+            .eq("chave_acesso", chaveLimpa)
+            .maybeSingle();
+          if (existente) {
+            throw new Error(
+              `NF-e ${existente.numero_nfe || ""} já cadastrada (chave duplicada, status: ${existente.status}).`
+            );
+          }
+        }
+      }
+
       // Deriva socio_produtor_id a partir da inscricao
       if (header.inscricao_produtor_id && !header.socio_produtor_id) {
         const { data: insc } = await supabase

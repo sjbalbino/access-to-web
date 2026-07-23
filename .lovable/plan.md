@@ -1,42 +1,46 @@
-## Contexto
+## Problema
 
-Hoje o vínculo entre a NF-e e o registro de origem (Compra de Cereais / Devolução de Depósito) só acontece dentro dos diálogos dedicados:
+A nota **160720003** tem **6 registros** em `entradas_nfe` para a mesma `chave_acesso` (4 criados hoje). Cada clique em **"Dar entrada"** no diálogo MDe importa o XML novamente e cria uma nova linha em `entradas_nfe`, sem verificar duplicidade.
 
-- `EmitirNfeCompraDialog` grava `nota_fiscal_id` e status `nfe_emitida` em `compras_cereais`.
-- `EmitirNfeDevolucaoDialog` faz o mesmo em `devolucoes_deposito`.
+### Causa raiz
 
-Quando o usuário emite a NF-e **direto pela página de Notas Fiscais** (`NotaFiscalForm.tsx`), o polling atualiza apenas a própria nota. As tabelas `compras_cereais` e `devolucoes_deposito` continuam com `status = 'pendente'` e `nota_fiscal_id = null` — mesmo padrão do bug já corrigido nas 9 compras órfãs de 21/07.
+`handleImportar` em `src/components/entradas-nfe/MdeDialog.tsx` (linha 202):
+- Baixa o XML, cria fornecedor, monta o header e chama `createEntradaMutation.mutateAsync(...)` — sem consultar se já existe `entradas_nfe` com a mesma `chave_acesso`.
+- `useCreateEntradaNfe` em `src/hooks/useEntradasNfe.ts` (linha 269) também insere direto, sem checar `chave_acesso`.
+- Consequência: cada clique gera nova entrada pendente + duplica **contas a pagar** (via `gerarContasPagarAutomatico`).
 
-## O que fazer
+O status "pendente" persistente que vimos antes agravou: como a listagem passou a derivar "finalizado" via contra-nota, o usuário reclicou "Dar entrada" achando que não tinha entrado, criando mais duplicatas.
 
-### 1. Auto-vinculação no momento da autorização (NotaFiscalForm)
-Após `realStatus === 'autorizado' | 'autorizada'` no bloco de polling (linhas ~1057 de `src/pages/NotaFiscalForm.tsx`), executar uma tentativa de vínculo:
+## Plano de correção
 
-- Detectar o "tipo de origem" pela **CFOP dos itens** da nota:
-  - `1101 / 1102 / 2101 / 2102` → compra de cereais
-  - `1905 / 2905` (entrada em devolução do depositante) → devolução de depósito
-- Buscar candidatos elegíveis (`tenant_id` atual, `status = 'pendente'`, `nota_fiscal_id IS NULL`) com:
-  - mesmo `cpf_cnpj` da contraparte (vendedor da compra = emitente/destinatário conforme o caso; produtor da devolução),
-  - `valor_total` igual ao total da nota (tolerância R$ 0,01),
-  - `data_operacao` dentro de ±3 dias da `data_emissao`.
-- Se **exatamente 1 candidato** → `UPDATE compras_cereais|devolucoes_deposito SET nota_fiscal_id = <id>, status = 'nfe_emitida'`.
-- Se **0 ou múltiplos** → não altera nada e exibe toast informativo ("Vincule manualmente à compra/devolução correspondente").
-- Invalida os caches `["compras-cereais"]` / `["devolucoes-deposito"]`.
+### 1. Guarda anti-duplicidade em `handleImportar` (MdeDialog)
+Antes de baixar XML / criar fornecedor / inserir:
+- `SELECT id, status FROM entradas_nfe WHERE chave_acesso = nfe.chave LIMIT 1`.
+- Se existir:
+  - Toast informativo: "Esta NF-e já foi importada (status: X)".
+  - Não recriar. Opcionalmente abrir o registro existente para edição.
+- Só prosseguir com a importação se não houver registro.
 
-### 2. Vínculo manual nas listas
-Nas telas `CompraCereais` e `DevolucoesDeposito`, no menu de ações de registros com status "Pendente":
+### 2. Guarda defensiva em `useCreateEntradaNfe`
+Segunda camada em `src/hooks/useEntradasNfe.ts`:
+- Se `header.chave_acesso` estiver presente, `SELECT id FROM entradas_nfe WHERE chave_acesso = ? LIMIT 1` antes do `insert`.
+- Se existir, `throw new Error("NF-e já cadastrada (chave duplicada).")` — evita duplicatas por qualquer origem (MdE, XML manual, importação).
 
-- Novo item **"Vincular NF-e existente…"** abre um diálogo que lista as NF-es autorizadas do mesmo emitente/tenant sem origem vinculada (`SELECT` filtrado por CFOP + `cpf_cnpj` contraparte + faixa de datas).
-- Ao selecionar, grava `nota_fiscal_id` e status `nfe_emitida` no registro.
+### 3. Limpeza no banco da nota 160720003
+- Manter o registro **mais antigo finalizado** (`72c84bfe...` de 2026-07-20 — foi o que gerou o estoque e contas a pagar originais).
+- Deletar as 4 duplicatas criadas hoje (3 pendentes de 2026-07-23 + 1 finalizada de 2026-07-22), junto com seus `entradas_nfe_itens` e `contas_pagar` sem baixa vinculadas via `entrada_nfe_id`.
+- Manter contas a pagar com baixa (se houver) e apenas desvincular `entrada_nfe_id`.
 
-### 3. Backfill retroativo
-Migration única de reconciliação com o mesmo critério da regra automática (CFOP + CPF/CNPJ + valor + janela de datas) para vincular registros pendentes anteriores à correção. Estritamente vínculos 1‑para‑1; múltiplos ficam para vínculo manual.
+### 4. Varredura das demais chaves duplicadas
+Rodar diagnóstico `SELECT chave_acesso, COUNT(*) FROM entradas_nfe GROUP BY chave_acesso HAVING COUNT(*) > 1` e aplicar a mesma limpeza (manter o mais antigo com baixa/finalizado, remover pendentes duplicadas sem baixas).
 
-### 4. Cancelamento (consistência)
-`supabase/functions/focus-nfe-cancelar` já limpa vínculos em compras. Estender a mesma lógica para `devolucoes_deposito` (volta status para `pendente` e limpa `nota_fiscal_id` quando a NF-e vinculada for cancelada).
+## Arquivos afetados
 
-## Detalhes técnicos
+- `src/components/entradas-nfe/MdeDialog.tsx` — guarda em `handleImportar`.
+- `src/hooks/useEntradasNfe.ts` — guarda em `useCreateEntradaNfe`.
+- Banco de dados — migração de limpeza das duplicatas.
 
-- Arquivos afetados: `src/pages/NotaFiscalForm.tsx`, `src/pages/CompraCereais.tsx`, `src/pages/DevolucoesDeposito.tsx` (+ novo `VincularNfeDialog.tsx` compartilhado), `supabase/functions/focus-nfe-cancelar/index.ts`, 1 migration SQL de backfill.
-- Reuso: helpers de match (CFOP → origem, comparação de valor/datas) ficam em `src/lib/nfeVinculo.ts` para serem chamados tanto no polling quanto no diálogo manual.
-- Nenhuma mudança de schema — só usa colunas já existentes (`nota_fiscal_id`, `status`, `cpf_cnpj`, `valor_total`, `data_operacao`).
+## Fora de escopo
+
+- Refatorar o fluxo de vínculo/rescisão entre entrada manual e XML importado (pode ser tratado depois).
+- Adicionar constraint UNIQUE em `entradas_nfe.chave_acesso` — deixamos para uma segunda etapa após a limpeza, para não quebrar migrations com dados legados.
