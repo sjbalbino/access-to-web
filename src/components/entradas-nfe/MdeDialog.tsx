@@ -731,7 +731,6 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         ) : (
                           <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 w-fit text-[11px] h-5">Sem manifestação</Badge>
                         )}
-                        <Badge variant="outline" className="text-[10px] w-fit h-4 text-slate-400 border-slate-100">{nfe.situacao || "-"}</Badge>
                       </div>
                     </TableCell>
                     <TableCell className="text-right px-6">
