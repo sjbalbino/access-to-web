@@ -680,17 +680,19 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         <Button
                           variant="default"
                           size="sm"
-                          className="h-9 px-3 flex items-center gap-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={!manifestacaoProcessada || isLoading || importingChave === nfe.chave}
-                          title={bloqueioTitle}
+                          className="h-9 px-3 flex items-center gap-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-400 disabled:hover:bg-slate-400"
+                          disabled={!manifestacaoProcessada || isLoading || importingChave === nfe.chave || jaTemEntrada}
+                          title={entradaTitle || bloqueioTitle}
                           onClick={() => handleImportar(nfe)}
                         >
                           {importingChave === nfe.chave ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : jaTemEntrada ? (
+                            <CheckCircle2 className="h-4 w-4" />
                           ) : (
                             <Import className="h-4 w-4" />
                           )}
-                          Dar entrada
+                          {jaTemEntrada ? "Já importada" : "Dar entrada"}
                         </Button>
 
                         <DropdownMenu>
