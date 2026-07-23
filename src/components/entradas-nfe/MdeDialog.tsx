@@ -658,7 +658,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                     </TableCell>
                     <TableCell className="px-6">
                       <div className="flex flex-col gap-1.5">
-                        <Badge variant="outline" className={`${statusClasses[statusProcessamento]} w-fit text-[11px] h-5 font-semibold`}>
+                        <Badge variant="outline" className={`${statusClasses[statusProcessamento]} w-fit text-[11px] h-5 font-semibold whitespace-nowrap`}>
                           {statusLabels[statusProcessamento]}
                         </Badge>
                         {nfe.manifestacao_destinatario ? (
