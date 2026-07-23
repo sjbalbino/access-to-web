@@ -585,28 +585,40 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                 </TableRow>
               ) : (
                 nfesFiltradas.map((nfe) => {
+                  const chaveLimpa = (nfe.chave || "").replace(/\D/g, "");
+                  const entradaExistente = entradasExistentes?.[chaveLimpa];
+                  const jaTemEntrada = !!entradaExistente;
                   const manifestacaoProcessada = !!nfe.manifestacao_destinatario;
                   const xmlDisponivel = manifestacaoProcessada && !!nfe.nome;
-                  const statusProcessamento: "pendente" | "aguardando" | "pronto" = !manifestacaoProcessada
-                    ? "pendente"
-                    : xmlDisponivel
-                      ? "pronto"
-                      : "aguardando";
+                  const statusProcessamento: "pendente" | "aguardando" | "pronto" | "entrada" = jaTemEntrada
+                    ? "entrada"
+                    : !manifestacaoProcessada
+                      ? "pendente"
+                      : xmlDisponivel
+                        ? "pronto"
+                        : "aguardando";
                   const statusLabels: Record<typeof statusProcessamento, string> = {
                     pendente: "Manifestação pendente",
-                    aguardando: "Aguardando nfeProc",
+                    aguardando: "Aguardando XML",
                     pronto: "Pronto",
+                    entrada: entradaExistente?.numero_nfe
+                      ? `Entrada gerada Nº ${entradaExistente.numero_nfe}`
+                      : "Entrada gerada",
                   };
                   const statusClasses: Record<typeof statusProcessamento, string> = {
                     pendente: "text-amber-700 border-amber-300 bg-amber-50",
                     aguardando: "text-blue-700 border-blue-300 bg-blue-50",
                     pronto: "text-emerald-700 border-emerald-300 bg-emerald-50",
+                    entrada: "text-violet-700 border-violet-300 bg-violet-50",
                   };
                   const bloqueioTitle = manifestacaoProcessada
                     ? xmlDisponivel
                       ? undefined
                       : "Aguardando SEFAZ liberar o XML completo (nfeProc) após a manifestação"
                     : "Manifeste a NF-e primeiro para liberar o XML completo";
+                  const entradaTitle = jaTemEntrada
+                    ? `Entrada já gerada para esta NF-e${entradaExistente?.numero_nfe ? ` (Nº ${entradaExistente.numero_nfe})` : ""}`
+                    : undefined;
                   const danfeBloqueioTitle = xmlDisponivel
                     ? undefined
                     : bloqueioTitle;
