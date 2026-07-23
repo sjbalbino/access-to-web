@@ -720,8 +720,8 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                           variant="outline"
                           size="sm"
                           className="h-9 px-3 flex items-center gap-2 text-xs font-semibold hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={!manifestacaoProcessada || isLoading}
-                          title={bloqueioTitle}
+                          disabled={!manifestacaoProcessada || isLoading || jaTemEntrada}
+                          title={jaTemEntrada ? entradaTitle : bloqueioTitle}
                           onClick={() => downloadXml(inscricaoId, nfe.chave)}
                         >
                           <Download className="h-4 w-4" /> XML
@@ -742,42 +742,59 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                           ) : (
                             <Import className="h-4 w-4" />
                           )}
-                          {jaTemEntrada ? "Já importada" : "Dar entrada"}
+                          {jaTemEntrada ? "Entrada gerada" : "Dar entrada"}
                         </Button>
 
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              size="sm"
-                              className="h-9 bg-blue-600 hover:bg-blue-700 text-xs font-bold px-4 shadow-sm disabled:bg-slate-300 disabled:cursor-not-allowed"
-                              disabled={isLoading}
-                              title={nfe.manifestacao_destinatario ? `Manifestação atual: ${manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}` : "Registrar manifestação do destinatário"}
+                        <div className="flex items-center gap-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="sm"
+                                className="h-9 bg-blue-600 hover:bg-blue-700 text-xs font-bold px-4 shadow-sm disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                disabled={isLoading || jaTemEntrada || manifestacaoProcessada}
+                                title={
+                                  jaTemEntrada
+                                    ? entradaTitle
+                                    : nfe.manifestacao_destinatario
+                                      ? `Manifestação já registrada: ${manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}`
+                                      : "Registrar manifestação do destinatário"
+                                }
+                              >
+                                {manifestacaoProcessada && <CheckCircle2 className="h-4 w-4" />}
+                                {manifestacaoProcessada ? "Já manifestado" : "Manifestar"}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-60 p-2">
+                              <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "ciencia")}>
+                                <HelpCircle className="h-4 w-4 mr-2 text-blue-500" /> Ciência da Operação
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "confirmacao")}>
+                                <Check className="h-4 w-4 mr-2 text-green-500" /> Confirmação da Operação
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "desconhecimento")}>
+                                <X className="h-4 w-4 mr-2 text-orange-500" /> Desconhecimento da Operação
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "nao_realizada")}>
+                                <X className="h-4 w-4 mr-2 text-red-500" /> Operação Não Realizada
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {manifestacaoProcessada && nfe.manifestacao_destinatario && (
+                            <Badge
+                              variant={manifestacaoVariants[nfe.manifestacao_destinatario] || "secondary"}
+                              className="text-[11px] h-6 whitespace-nowrap"
                             >
-                              Manifestar
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-60 p-2">
-                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "ciencia")}>
-                              <HelpCircle className="h-4 w-4 mr-2 text-blue-500" /> Ciência da Operação
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "confirmacao")}>
-                              <Check className="h-4 w-4 mr-2 text-green-500" /> Confirmação da Operação
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "desconhecimento")}>
-                              <X className="h-4 w-4 mr-2 text-orange-500" /> Desconhecimento da Operação
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "nao_realizada")}>
-                              <X className="h-4 w-4 mr-2 text-red-500" /> Operação Não Realizada
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              {manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}
+                            </Badge>
+                          )}
+                        </div>
 
                         <Button
                           size="icon"
                           variant="ghost"
                           className="h-9 w-9 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                          title={danfeBloqueioTitle || "Visualizar DANFe"}
-                          disabled={!xmlDisponivel || isLoading}
+                          title={jaTemEntrada ? entradaTitle : (danfeBloqueioTitle || "Visualizar DANFe")}
+                          disabled={!xmlDisponivel || isLoading || jaTemEntrada}
                           onClick={() => handleVisualizarDanfe(nfe)}
                         >
                           <Eye className="h-5 w-5" />
@@ -787,8 +804,8 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                           size="icon"
                           variant="ghost"
                           className="h-9 w-9 text-slate-400 hover:text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                          title={danfeBloqueioTitle || "Baixar DANFe"}
-                          disabled={!xmlDisponivel || isLoading}
+                          title={jaTemEntrada ? entradaTitle : (danfeBloqueioTitle || "Baixar DANFe")}
+                          disabled={!xmlDisponivel || isLoading || jaTemEntrada}
                           onClick={() => downloadDanfe(inscricaoId, nfe.chave)}
                         >
                           <FileText className="h-5 w-5" />
