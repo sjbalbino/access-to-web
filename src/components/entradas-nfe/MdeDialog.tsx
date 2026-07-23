@@ -162,7 +162,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     [nfesRecebidas]
   );
   const { data: entradasExistentes } = useQuery({
-    queryKey: ["mde-entradas-existentes", chavesDaLista.sort().join(",")],
+    queryKey: ["mde-entradas-existentes", chavesDaLista.slice().sort().join(",")],
     queryFn: async () => {
       if (chavesDaLista.length === 0) return {} as Record<string, { id: string; numero_nfe: string | null; status: string }>;
       const { data, error } = await supabase
@@ -175,10 +175,16 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         const k = (e.chave_acesso || "").replace(/\D/g, "");
         if (k) map[k] = { id: e.id, numero_nfe: e.numero_nfe, status: e.status };
       });
+      if (typeof window !== "undefined") {
+        console.debug("[MdE] chavesDaLista:", chavesDaLista.length, "matches:", Object.keys(map).length);
+      }
       return map;
     },
     enabled: chavesDaLista.length > 0,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
+
 
   const limparFiltros = () => {
     setFiltroBusca("");
