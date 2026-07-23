@@ -281,6 +281,14 @@ export function useMde() {
     }
   };
 
+  const carregarCache = async (inscricaoId: string) => {
+    if (!inscricaoId) return [] as NfeRecebida[];
+    const cached = await loadCache(inscricaoId);
+    const sorted = cached.sort((a, b) => (b.data_emissao || "").localeCompare(a.data_emissao || ""));
+    setNfesRecebidas(sorted);
+    return sorted;
+  };
+
   return {
     isLoading,
     nfesRecebidas,
@@ -288,6 +296,7 @@ export function useMde() {
     clearReturnMessage: () => setReturnMessage(null),
     consultarDestinatarias,
     consultarPorChave,
+    carregarCache,
     manifestar,
     downloadXml,
     downloadDanfe,
