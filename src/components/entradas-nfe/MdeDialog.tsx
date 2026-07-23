@@ -187,38 +187,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   }, [nfesRecebidas, filtroBusca, filtroManifest, filtroDataIni, filtroDataFim]);
 
   // Detecta quais chaves já possuem entrada gerada no sistema
+  // (pareamento centralizado em useEntradasPorChaves — normaliza p/ 44 dígitos)
   const chavesDaLista = useMemo(
-    () => nfesRecebidas.map((n) => (n.chave || "").replace(/\D/g, "")).filter((c) => c.length === 44),
+    () => nfesRecebidas.map((n) => normalizarChaveAcesso(n.chave)).filter(Boolean),
     [nfesRecebidas]
   );
-  const { data: entradasExistentes } = useQuery({
-    // Prefixo "entradas_nfe" para ser invalidado quando uma nova entrada for criada
-    queryKey: ["entradas_nfe", "mde-existentes", chavesDaLista.slice().sort().join(",")],
-    queryFn: async () => {
-      if (chavesDaLista.length === 0) return {} as Record<string, { id: string; numero_nfe: string | null; status: string }>;
-      const { data, error } = await supabase
-        .from("entradas_nfe")
-        .select("id, numero_nfe, status, chave_acesso")
-        .in("chave_acesso", chavesDaLista);
-      if (error) {
-        console.error("[MdE] erro ao buscar entradas existentes:", error);
-        throw error;
-      }
-      const map: Record<string, { id: string; numero_nfe: string | null; status: string }> = {};
-      (data || []).forEach((e: any) => {
-        const k = (e.chave_acesso || "").replace(/\D/g, "");
-        if (k) map[k] = { id: e.id, numero_nfe: e.numero_nfe, status: e.status };
-      });
-      if (typeof window !== "undefined") {
-        console.debug("[MdE] chavesDaLista:", chavesDaLista.length, "matches:", Object.keys(map).length);
-      }
-      return map;
-    },
-    enabled: chavesDaLista.length > 0,
-    staleTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-  });
+  const { data: entradasExistentes } = useEntradasPorChaves(chavesDaLista);
+
 
 
   const limparFiltros = () => {
