@@ -66,11 +66,38 @@ export function useMde() {
   };
 
   const loadCache = async (inscricaoId: string): Promise<NfeRecebida[]> => {
+    // DFe SEFAZ é por CNPJ do destinatário — carrega cache de todas as
+    // inscrições que compartilham o mesmo CPF/CNPJ, para que ao trocar
+    // de IE do mesmo produtor a lista permaneça visível.
+    const { data: insc } = await supabase
+      .from("inscricoes_produtor")
+      .select("cpf_cnpj")
+      .eq("id", inscricaoId)
+      .maybeSingle();
+    const cpfCnpjRaw = (insc?.cpf_cnpj || "").toString();
+    const cpfCnpjDigits = cpfCnpjRaw.replace(/\D/g, "");
+
+    let inscricaoIds: string[] = [inscricaoId];
+    if (cpfCnpjDigits) {
+      const { data: irmas } = await supabase
+        .from("inscricoes_produtor")
+        .select("id, cpf_cnpj");
+      const ids = (irmas || [])
+        .filter((r: any) => (r.cpf_cnpj || "").replace(/\D/g, "") === cpfCnpjDigits)
+        .map((r: any) => r.id as string);
+      if (ids.length > 0) inscricaoIds = ids;
+    }
+
     const { data } = await supabase
       .from("dfe_nfes_cache" as any)
       .select("chave,numero,serie,nome,cnpj,valor,data_emissao,situacao,tipo_nfe,manifestacao_destinatario")
-      .eq("inscricao_id", inscricaoId);
-    return ((data as any[]) || []).map((r) => ({
+      .in("inscricao_id", inscricaoIds);
+    // Dedup por chave — mesma NF-e pode estar cacheada por múltiplas IEs
+    const byChave = new Map<string, any>();
+    ((data as any[]) || []).forEach((r) => {
+      if (!byChave.has(r.chave)) byChave.set(r.chave, r);
+    });
+    return Array.from(byChave.values()).map((r) => ({
       chave: r.chave,
       nome: r.nome ?? "",
       cnpj: r.cnpj ?? "",
