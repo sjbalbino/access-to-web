@@ -192,14 +192,18 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     [nfesRecebidas]
   );
   const { data: entradasExistentes } = useQuery({
-    queryKey: ["mde-entradas-existentes", chavesDaLista.slice().sort().join(",")],
+    // Prefixo "entradas_nfe" para ser invalidado quando uma nova entrada for criada
+    queryKey: ["entradas_nfe", "mde-existentes", chavesDaLista.slice().sort().join(",")],
     queryFn: async () => {
       if (chavesDaLista.length === 0) return {} as Record<string, { id: string; numero_nfe: string | null; status: string }>;
       const { data, error } = await supabase
         .from("entradas_nfe")
         .select("id, numero_nfe, status, chave_acesso")
         .in("chave_acesso", chavesDaLista);
-      if (error) throw error;
+      if (error) {
+        console.error("[MdE] erro ao buscar entradas existentes:", error);
+        throw error;
+      }
       const map: Record<string, { id: string; numero_nfe: string | null; status: string }> = {};
       (data || []).forEach((e: any) => {
         const k = (e.chave_acesso || "").replace(/\D/g, "");
@@ -213,6 +217,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     enabled: chavesDaLista.length > 0,
     staleTime: 0,
     refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
 
@@ -288,11 +293,17 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
       // Guarda anti-duplicidade: já existe entrada com esta chave?
       const chaveLimpa = (nfe.chave || "").replace(/\D/g, "");
       if (chaveLimpa) {
-        const { data: existente } = await supabase
+        const { data: existentes, error: errExist } = await supabase
           .from("entradas_nfe")
           .select("id, numero_nfe, status")
           .eq("chave_acesso", chaveLimpa)
-          .maybeSingle();
+          .limit(1);
+        if (errExist) {
+          console.error("[MdE] erro ao verificar duplicidade:", errExist);
+          toast.error("Falha ao verificar se a NF-e já foi importada. Tente novamente.");
+          return;
+        }
+        const existente = existentes?.[0];
         if (existente) {
           toast.warning(
             `NF-e ${existente.numero_nfe || ""} já importada (status: ${existente.status}). Importação ignorada.`
