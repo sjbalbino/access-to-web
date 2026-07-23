@@ -1,28 +1,35 @@
 ## Objetivo
-Garantir que o diálogo **NF-es Recebidas (DFe)** identifique corretamente as NF-es que já têm entrada gerada no sistema, exibindo o badge "Entrada gerada Nº X" e bloqueando o botão "Dar entrada".
-
-## Causa raiz
-O `useQuery` `mde-entradas-existentes` em `src/components/entradas-nfe/MdeDialog.tsx` está servindo cache desatualizado. A verificação foi feita, mas o resultado não é revalidado quando o diálogo reabre nem quando entradas são criadas por outros fluxos (contra-nota, devolução, importação de XML fora do MdE).
-
-Confirmado no banco: as chaves das notas 160720002 e 160720003 existem em `entradas_nfe` sem formatação (44 dígitos), portanto o `.in("chave_acesso", chavesDaLista)` deveria bater — o problema é apenas o cache/refetch.
+Refinar o diálogo **NF-es Recebidas (DFe)** em `src/components/entradas-nfe/MdeDialog.tsx` para:
+1. Quando a entrada da NF-e já foi gerada → status **"Entrada Gerada"** e **todos** os botões de ação (XML, Dar entrada, Manifestar, DANFE) ficam bloqueados.
+2. Quando a NF-e já foi manifestada → botão **Manifestar** fica desabilitado, o texto passa a **"Já manifestado"** e aparece um **badge ao lado** indicando o tipo (Ciência / Confirmada / Desconhecida / Não realizada).
+3. Botão **Sincronizar DFe** respeita intervalo mínimo de **1 hora** (NT SEFAZ). Se acionado antes, fica bloqueado exibindo o tempo restante em contagem regressiva (mm:ss).
 
 ## Mudanças em `src/components/entradas-nfe/MdeDialog.tsx`
 
-### 1. Forçar revalidação da query
-Adicionar `staleTime: 0` e `refetchOnMount: "always"` ao `useQuery` `mde-entradas-existentes` para que toda abertura do diálogo (ou nova sincronização DFe) verifique o estado atual das entradas no banco.
+### 1. Bloqueio total quando entrada já gerada
+- Nas variáveis da linha (`jaTemEntrada`), aplicar `disabled` a **todos** os botões da célula de ações: XML, Dar entrada, Manifestar e o item DANFE do dropdown.
+- Tooltip padrão: `"Entrada já gerada Nº X — ações bloqueadas"`.
+- O badge de status "Entrada gerada Nº X" (violeta) já existe e continua sendo exibido.
 
-### 2. Ajustar largura do badge de status
-O rótulo "Aguardando XML" (17 caracteres) está estourando a coluna Status na largura atual. Vou:
-- Reduzir o rótulo `aguardando` para **"Aguardando"** (o tooltip completo já explica que é o `nfeProc`).
-- Adicionar `whitespace-nowrap` explícito ao Badge para evitar quebra.
+### 2. Botão Manifestar pós-manifestação
+- Quando `nfe.manifestacao_destinatario` estiver preenchido **e** a entrada ainda não existir:
+  - Trigger do `DropdownMenu` fica `disabled`.
+  - Texto do botão muda para **"Já manifestado"** (ícone `CheckCircle2`).
+  - Ao lado do botão, renderizar um `Badge` com o rótulo da manifestação (usando `manifestacaoLabels` e `manifestacaoVariants` já existentes no arquivo).
+- Se ainda não houver manifestação, comportamento atual permanece.
 
-### 3. Log de diagnóstico temporário (removido depois de validar)
-Console.debug com `chavesDaLista.length` e `Object.keys(entradasExistentes || {}).length` no render para confirmar em produção que a query está devolvendo os matches esperados. Caso o preview confirme o funcionamento com as mudanças 1 e 2, o log sai.
+### 3. Throttle de 1 hora no Sincronizar DFe
+- Armazenar timestamp da última sincronização **por inscrição** em `localStorage` sob a chave `mde:last-sync:<inscricaoId>`, atualizado ao final de cada `consultarDestinatarias` bem-sucedida (inclusive no `useEffect` que dispara ao abrir/trocar inscrição).
+- Estado local `secondsUntilNextSync` calculado a cada 1s via `setInterval` enquanto o diálogo estiver aberto e houver inscrição selecionada.
+- Regra: `MIN_INTERVAL_MS = 60 * 60 * 1000`. Se `now - lastSync < MIN_INTERVAL_MS`, botão fica `disabled` e exibe **"Aguarde mm:ss"** ao lado do rótulo. Tooltip explica a regra da NT SEFAZ.
+- A busca **por chave específica** (`consultarPorChave`) **não** é afetada pelo throttle — apenas o botão de sincronização geral.
+- O `useEffect` que auto-sincroniza ao abrir o diálogo passa a respeitar o intervalo (não refaz a chamada se ainda estiver dentro da janela de 1 hora); apenas carrega o cache local via merge normal do `useMde`.
 
 ## Arquivos
 - `src/components/entradas-nfe/MdeDialog.tsx` — única edição.
 
 ## Notas técnicas
-- Não altero a `queryKey` (continua baseada nas chaves) para preservar o comportamento por-lista.
-- Nenhuma mudança em backend/RLS — a política de SELECT por tenant já cobre o cenário.
-- Após aprovado, valido no preview reabrindo o diálogo do MdE e confirmando que as notas 160720002/160720003 aparecem com badge violeta "Entrada gerada Nº ..." e botão bloqueado.
+- Nenhuma alteração em backend, RLS ou edge functions.
+- Sem novas dependências; `setInterval` é limpo no unmount / fechamento do diálogo.
+- O throttle é client-side (localStorage) — é uma proteção de UX contra chamadas excessivas, não uma trava de segurança. Se o usuário limpar o storage, sincroniza novamente.
+- Validação final no preview: (a) linha com entrada gerada tem todos os botões cinzas; (b) linha manifestada mostra "Já manifestado" + badge do tipo; (c) após clicar em Sincronizar DFe, o botão exibe contagem regressiva até zerar em 1h.

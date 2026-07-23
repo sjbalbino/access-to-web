@@ -91,6 +91,37 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [filtroDataIni, setFiltroDataIni] = useState("");
   const [filtroDataFim, setFiltroDataFim] = useState("");
 
+  // Throttle Sincronizar DFe: 1x por hora por inscrição (NT SEFAZ)
+  const SYNC_MIN_INTERVAL_MS = 60 * 60 * 1000;
+  const syncStorageKey = (id: string) => `mde:last-sync:${id}`;
+  const readLastSync = (id: string): number => {
+    if (!id) return 0;
+    try {
+      const raw = localStorage.getItem(syncStorageKey(id));
+      const n = raw ? parseInt(raw, 10) : 0;
+      return Number.isFinite(n) ? n : 0;
+    } catch { return 0; }
+  };
+  const writeLastSync = (id: string) => {
+    if (!id) return;
+    try { localStorage.setItem(syncStorageKey(id), String(Date.now())); } catch { /* ignore */ }
+  };
+  const [nowTs, setNowTs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!open) return;
+    const t = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [open]);
+  const msSinceLastSync = inscricaoId ? nowTs - readLastSync(inscricaoId) : Infinity;
+  const msRestantesSync = Math.max(0, SYNC_MIN_INTERVAL_MS - msSinceLastSync);
+  const syncBloqueado = !!inscricaoId && msRestantesSync > 0;
+  const formatMmSs = (ms: number) => {
+    const s = Math.ceil(ms / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2, "0");
+    const ss = String(s % 60).padStart(2, "0");
+    return `${mm}:${ss}`;
+  };
+
   const [danfePreview, setDanfePreview] = useState<{ open: boolean; loading: boolean; pdfData: Uint8Array | null; downloadUrl: string | null; filename: string; titulo: string; chave: string; manifestacao_destinatario: string | null }>({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "", manifestacao_destinatario: null });
 
   const handleVisualizarDanfe = async (nfe: NfeRecebida) => {
@@ -206,14 +237,25 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     [inscricoesEmissoras, inscricaoId]
   );
 
-  const handleConsultar = () => {
+  const handleConsultar = async () => {
     if (!inscricaoId) return;
-    consultarDestinatarias(inscricaoId);
+    if (syncBloqueado) {
+      toast.warning(`Aguarde ${formatMmSs(msRestantesSync)} para nova sincronização (NT SEFAZ: 1x por hora).`);
+      return;
+    }
+    writeLastSync(inscricaoId);
+    setNowTs(Date.now());
+    await consultarDestinatarias(inscricaoId);
   };
 
   useEffect(() => {
     if (open && inscricaoId) {
-      consultarDestinatarias(inscricaoId);
+      const last = readLastSync(inscricaoId);
+      if (Date.now() - last >= SYNC_MIN_INTERVAL_MS) {
+        writeLastSync(inscricaoId);
+        setNowTs(Date.now());
+        consultarDestinatarias(inscricaoId);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inscricaoId, open]);
@@ -464,11 +506,12 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
           </div>
           <Button
             onClick={handleConsultar}
-            disabled={!inscricaoId || isLoading}
+            disabled={!inscricaoId || isLoading || syncBloqueado}
             className="bg-blue-600 hover:bg-blue-700 h-11 px-8 font-semibold shadow-md mt-[26px]"
+            title={syncBloqueado ? `NT SEFAZ: aguarde ${formatMmSs(msRestantesSync)} para nova sincronização (limite de 1x por hora).` : undefined}
           >
             {isLoading ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Search className="h-5 w-5 mr-2" />}
-            Sincronizar DFe
+            {syncBloqueado ? `Aguarde ${formatMmSs(msRestantesSync)}` : "Sincronizar DFe"}
           </Button>
         </div>
 
@@ -677,8 +720,8 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                           variant="outline"
                           size="sm"
                           className="h-9 px-3 flex items-center gap-2 text-xs font-semibold hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={!manifestacaoProcessada || isLoading}
-                          title={bloqueioTitle}
+                          disabled={!manifestacaoProcessada || isLoading || jaTemEntrada}
+                          title={jaTemEntrada ? entradaTitle : bloqueioTitle}
                           onClick={() => downloadXml(inscricaoId, nfe.chave)}
                         >
                           <Download className="h-4 w-4" /> XML
@@ -699,42 +742,59 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                           ) : (
                             <Import className="h-4 w-4" />
                           )}
-                          {jaTemEntrada ? "Já importada" : "Dar entrada"}
+                          {jaTemEntrada ? "Entrada gerada" : "Dar entrada"}
                         </Button>
 
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              size="sm"
-                              className="h-9 bg-blue-600 hover:bg-blue-700 text-xs font-bold px-4 shadow-sm disabled:bg-slate-300 disabled:cursor-not-allowed"
-                              disabled={isLoading}
-                              title={nfe.manifestacao_destinatario ? `Manifestação atual: ${manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}` : "Registrar manifestação do destinatário"}
+                        <div className="flex items-center gap-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="sm"
+                                className="h-9 bg-blue-600 hover:bg-blue-700 text-xs font-bold px-4 shadow-sm disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                disabled={isLoading || jaTemEntrada || manifestacaoProcessada}
+                                title={
+                                  jaTemEntrada
+                                    ? entradaTitle
+                                    : nfe.manifestacao_destinatario
+                                      ? `Manifestação já registrada: ${manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}`
+                                      : "Registrar manifestação do destinatário"
+                                }
+                              >
+                                {manifestacaoProcessada && <CheckCircle2 className="h-4 w-4" />}
+                                {manifestacaoProcessada ? "Já manifestado" : "Manifestar"}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-60 p-2">
+                              <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "ciencia")}>
+                                <HelpCircle className="h-4 w-4 mr-2 text-blue-500" /> Ciência da Operação
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "confirmacao")}>
+                                <Check className="h-4 w-4 mr-2 text-green-500" /> Confirmação da Operação
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "desconhecimento")}>
+                                <X className="h-4 w-4 mr-2 text-orange-500" /> Desconhecimento da Operação
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "nao_realizada")}>
+                                <X className="h-4 w-4 mr-2 text-red-500" /> Operação Não Realizada
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {manifestacaoProcessada && nfe.manifestacao_destinatario && (
+                            <Badge
+                              variant={manifestacaoVariants[nfe.manifestacao_destinatario] || "secondary"}
+                              className="text-[11px] h-6 whitespace-nowrap"
                             >
-                              Manifestar
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-60 p-2">
-                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "ciencia")}>
-                              <HelpCircle className="h-4 w-4 mr-2 text-blue-500" /> Ciência da Operação
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "confirmacao")}>
-                              <Check className="h-4 w-4 mr-2 text-green-500" /> Confirmação da Operação
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "desconhecimento")}>
-                              <X className="h-4 w-4 mr-2 text-orange-500" /> Desconhecimento da Operação
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-md py-2.5 cursor-pointer" onClick={() => handleManifestar(nfe.chave, "nao_realizada")}>
-                              <X className="h-4 w-4 mr-2 text-red-500" /> Operação Não Realizada
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              {manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}
+                            </Badge>
+                          )}
+                        </div>
 
                         <Button
                           size="icon"
                           variant="ghost"
                           className="h-9 w-9 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                          title={danfeBloqueioTitle || "Visualizar DANFe"}
-                          disabled={!xmlDisponivel || isLoading}
+                          title={jaTemEntrada ? entradaTitle : (danfeBloqueioTitle || "Visualizar DANFe")}
+                          disabled={!xmlDisponivel || isLoading || jaTemEntrada}
                           onClick={() => handleVisualizarDanfe(nfe)}
                         >
                           <Eye className="h-5 w-5" />
@@ -744,8 +804,8 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                           size="icon"
                           variant="ghost"
                           className="h-9 w-9 text-slate-400 hover:text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                          title={danfeBloqueioTitle || "Baixar DANFe"}
-                          disabled={!xmlDisponivel || isLoading}
+                          title={jaTemEntrada ? entradaTitle : (danfeBloqueioTitle || "Baixar DANFe")}
+                          disabled={!xmlDisponivel || isLoading || jaTemEntrada}
                           onClick={() => downloadDanfe(inscricaoId, nfe.chave)}
                         >
                           <FileText className="h-5 w-5" />
