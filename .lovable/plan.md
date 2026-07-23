@@ -1,46 +1,30 @@
-## Problema
+## Objetivo
+No diálogo **NF-es Recebidas (DFe)** (`MdeDialog.tsx`), identificar visualmente as NF-es que já tiveram entrada gerada no sistema, bloquear o botão "Dar entrada" nesses casos e ajustar o rótulo do status "Aguardando nfeProc".
 
-A nota **160720003** tem **6 registros** em `entradas_nfe` para a mesma `chave_acesso` (4 criados hoje). Cada clique em **"Dar entrada"** no diálogo MDe importa o XML novamente e cria uma nova linha em `entradas_nfe`, sem verificar duplicidade.
+## Mudanças
 
-### Causa raiz
+### 1. Detectar entradas já criadas (`MdeDialog.tsx`)
+- Após carregar `nfesRecebidas`, executar uma consulta em `entradas_nfe` filtrando por `chave_acesso IN (...)` (via `useQuery`) para as chaves da lista atual.
+- Retornar um `Map<chave, { id, numero_nfe, status }>` com as entradas já existentes.
 
-`handleImportar` em `src/components/entradas-nfe/MdeDialog.tsx` (linha 202):
-- Baixa o XML, cria fornecedor, monta o header e chama `createEntradaMutation.mutateAsync(...)` — sem consultar se já existe `entradas_nfe` com a mesma `chave_acesso`.
-- `useCreateEntradaNfe` em `src/hooks/useEntradasNfe.ts` (linha 269) também insere direto, sem checar `chave_acesso`.
-- Consequência: cada clique gera nova entrada pendente + duplica **contas a pagar** (via `gerarContasPagarAutomatico`).
+### 2. Novo status "Entrada gerada"
+- Adicionar quarta variante ao `statusProcessamento`: `"entrada"`.
+- Quando a chave existir no mapa de entradas → status vira `"entrada"` (prioridade máxima, sobrepõe pendente/aguardando/pronto).
+- Label: **"Entrada gerada Nº {numero_nfe}"** (ou apenas "Entrada gerada" se sem número).
+- Classe visual: verde escuro/roxo distinto (`text-violet-700 border-violet-300 bg-violet-50`) para diferenciar do "Pronto".
 
-O status "pendente" persistente que vimos antes agravou: como a listagem passou a derivar "finalizado" via contra-nota, o usuário reclicou "Dar entrada" achando que não tinha entrado, criando mais duplicatas.
+### 3. Bloquear botão "Dar entrada"
+- Adicionar condição `jaTemEntrada` ao `disabled` do botão.
+- Ajustar `title` para: "Entrada já gerada para esta NF-e (Nº X)".
+- Trocar ícone/cor para cinza (`bg-slate-400`) quando bloqueado, mantendo tamanho.
 
-## Plano de correção
+### 4. Ajustar rótulo "Aguardando nfeProc"
+- Trocar o label do status `aguardando` de `"Aguardando nfeProc"` para `"Aguardando XML"` (mais curto, cabe no badge).
+- Manter o tooltip explicativo completo mencionando nfeProc.
 
-### 1. Guarda anti-duplicidade em `handleImportar` (MdeDialog)
-Antes de baixar XML / criar fornecedor / inserir:
-- `SELECT id, status FROM entradas_nfe WHERE chave_acesso = nfe.chave LIMIT 1`.
-- Se existir:
-  - Toast informativo: "Esta NF-e já foi importada (status: X)".
-  - Não recriar. Opcionalmente abrir o registro existente para edição.
-- Só prosseguir com a importação se não houver registro.
+## Arquivos
+- `src/components/entradas-nfe/MdeDialog.tsx` — única edição.
 
-### 2. Guarda defensiva em `useCreateEntradaNfe`
-Segunda camada em `src/hooks/useEntradasNfe.ts`:
-- Se `header.chave_acesso` estiver presente, `SELECT id FROM entradas_nfe WHERE chave_acesso = ? LIMIT 1` antes do `insert`.
-- Se existir, `throw new Error("NF-e já cadastrada (chave duplicada).")` — evita duplicatas por qualquer origem (MdE, XML manual, importação).
-
-### 3. Limpeza no banco da nota 160720003
-- Manter o registro **mais antigo finalizado** (`72c84bfe...` de 2026-07-20 — foi o que gerou o estoque e contas a pagar originais).
-- Deletar as 4 duplicatas criadas hoje (3 pendentes de 2026-07-23 + 1 finalizada de 2026-07-22), junto com seus `entradas_nfe_itens` e `contas_pagar` sem baixa vinculadas via `entrada_nfe_id`.
-- Manter contas a pagar com baixa (se houver) e apenas desvincular `entrada_nfe_id`.
-
-### 4. Varredura das demais chaves duplicadas
-Rodar diagnóstico `SELECT chave_acesso, COUNT(*) FROM entradas_nfe GROUP BY chave_acesso HAVING COUNT(*) > 1` e aplicar a mesma limpeza (manter o mais antigo com baixa/finalizado, remover pendentes duplicadas sem baixas).
-
-## Arquivos afetados
-
-- `src/components/entradas-nfe/MdeDialog.tsx` — guarda em `handleImportar`.
-- `src/hooks/useEntradasNfe.ts` — guarda em `useCreateEntradaNfe`.
-- Banco de dados — migração de limpeza das duplicatas.
-
-## Fora de escopo
-
-- Refatorar o fluxo de vínculo/rescisão entre entrada manual e XML importado (pode ser tratado depois).
-- Adicionar constraint UNIQUE em `entradas_nfe.chave_acesso` — deixamos para uma segunda etapa após a limpeza, para não quebrar migrations com dados legados.
+## Notas técnicas
+- Query de verificação usa `.in('chave_acesso', chaves)` limitando aos 44 dígitos limpos.
+- Cache invalidado quando `createEntrada` é bem-sucedido (adicionar `queryKey` própria e invalidar em conjunto com `entradas_nfe`).

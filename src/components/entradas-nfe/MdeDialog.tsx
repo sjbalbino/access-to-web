@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe, Eye, Printer, FileCode } from "lucide-react";
+import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe, Eye, Printer, FileCode, CheckCircle2 } from "lucide-react";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useMde, type NfeRecebida } from "@/hooks/useMde";
 import { formatNumber } from "@/lib/formatters";
@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 interface MdeDialogProps {
   open: boolean;
