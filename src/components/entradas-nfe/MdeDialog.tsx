@@ -162,7 +162,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     [nfesRecebidas]
   );
   const { data: entradasExistentes } = useQuery({
-    queryKey: ["mde-entradas-existentes", chavesDaLista.sort().join(",")],
+    queryKey: ["mde-entradas-existentes", chavesDaLista.slice().sort().join(",")],
     queryFn: async () => {
       if (chavesDaLista.length === 0) return {} as Record<string, { id: string; numero_nfe: string | null; status: string }>;
       const { data, error } = await supabase
@@ -175,10 +175,16 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         const k = (e.chave_acesso || "").replace(/\D/g, "");
         if (k) map[k] = { id: e.id, numero_nfe: e.numero_nfe, status: e.status };
       });
+      if (typeof window !== "undefined") {
+        console.debug("[MdE] chavesDaLista:", chavesDaLista.length, "matches:", Object.keys(map).length);
+      }
       return map;
     },
     enabled: chavesDaLista.length > 0,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
+
 
   const limparFiltros = () => {
     setFiltroBusca("");
@@ -599,12 +605,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         : "aguardando";
                   const statusLabels: Record<typeof statusProcessamento, string> = {
                     pendente: "Manifestação pendente",
-                    aguardando: "Aguardando XML",
+                    aguardando: "Aguardando",
                     pronto: "Pronto",
                     entrada: entradaExistente?.numero_nfe
                       ? `Entrada gerada Nº ${entradaExistente.numero_nfe}`
                       : "Entrada gerada",
                   };
+
                   const statusClasses: Record<typeof statusProcessamento, string> = {
                     pendente: "text-amber-700 border-amber-300 bg-amber-50",
                     aguardando: "text-blue-700 border-blue-300 bg-blue-50",
@@ -651,7 +658,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                     </TableCell>
                     <TableCell className="px-6">
                       <div className="flex flex-col gap-1.5">
-                        <Badge variant="outline" className={`${statusClasses[statusProcessamento]} w-fit text-[11px] h-5 font-semibold`}>
+                        <Badge variant="outline" className={`${statusClasses[statusProcessamento]} w-fit text-[11px] h-5 font-semibold whitespace-nowrap`}>
                           {statusLabels[statusProcessamento]}
                         </Badge>
                         {nfe.manifestacao_destinatario ? (
