@@ -668,8 +668,8 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         : "aguardando";
                   const statusLabels: Record<typeof statusProcessamento, string> = {
                     pendente: "Manifestação pendente",
-                    aguardando: "Aguardando",
-                    pronto: "Pronto",
+                    aguardando: "XML pendente na SEFAZ",
+                    pronto: "Pronto p/ entrada",
                     entrada: entradaExistente?.numero_nfe
                       ? `Entrada gerada Nº ${entradaExistente.numero_nfe}`
                       : "Entrada gerada",
@@ -731,7 +731,6 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         ) : (
                           <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 w-fit text-[11px] h-5">Sem manifestação</Badge>
                         )}
-                        <Badge variant="outline" className="text-[10px] w-fit h-4 text-slate-400 border-slate-100">{nfe.situacao || "-"}</Badge>
                       </div>
                     </TableCell>
                     <TableCell className="text-right px-6">
@@ -799,14 +798,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                          {manifestacaoProcessada && nfe.manifestacao_destinatario && (
-                            <Badge
-                              variant={manifestacaoVariants[nfe.manifestacao_destinatario] || "secondary"}
-                              className="text-[11px] h-6 whitespace-nowrap"
-                            >
-                              {manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}
-                            </Badge>
-                          )}
+
                         </div>
 
                         <Button
