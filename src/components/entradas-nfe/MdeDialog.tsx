@@ -605,12 +605,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         : "aguardando";
                   const statusLabels: Record<typeof statusProcessamento, string> = {
                     pendente: "Manifestação pendente",
-                    aguardando: "Aguardando XML",
+                    aguardando: "Aguardando",
                     pronto: "Pronto",
                     entrada: entradaExistente?.numero_nfe
                       ? `Entrada gerada Nº ${entradaExistente.numero_nfe}`
                       : "Entrada gerada",
                   };
+
                   const statusClasses: Record<typeof statusProcessamento, string> = {
                     pendente: "text-amber-700 border-amber-300 bg-amber-50",
                     aguardando: "text-blue-700 border-blue-300 bg-blue-50",
