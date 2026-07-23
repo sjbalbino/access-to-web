@@ -604,6 +604,16 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
           </div>
         )}
 
+        {inscricaoId && !isLoading && nfesRecebidas.length === 0 && !syncBloqueado && (
+          <Alert className="mb-4 border-blue-200 bg-blue-50 text-blue-900 [&>svg]:text-blue-600">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Nenhuma NF-e no cache desta IE</AlertTitle>
+            <AlertDescription>
+              Clique em <b>Sincronizar SEFAZ</b> para buscar as notas fiscais recebidas para esta inscrição na SEFAZ.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="rounded-xl border shadow-sm overflow-hidden">
           <Table>
             <TableHeader className="bg-slate-50">
