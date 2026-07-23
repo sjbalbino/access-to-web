@@ -15,7 +15,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe, Eye, Printer, FileCode, CheckCircle2 } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe, Eye, Printer, FileCode, CheckCircle2, Info } from "lucide-react";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useMde, type NfeRecebida } from "@/hooks/useMde";
 import { formatNumber } from "@/lib/formatters";
