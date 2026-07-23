@@ -203,6 +203,22 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     if (!inscricaoId) return;
     setImportingChave(nfe.chave);
     try {
+      // Guarda anti-duplicidade: já existe entrada com esta chave?
+      const chaveLimpa = (nfe.chave || "").replace(/\D/g, "");
+      if (chaveLimpa) {
+        const { data: existente } = await supabase
+          .from("entradas_nfe")
+          .select("id, numero_nfe, status")
+          .eq("chave_acesso", chaveLimpa)
+          .maybeSingle();
+        if (existente) {
+          toast.warning(
+            `NF-e ${existente.numero_nfe || ""} já importada (status: ${existente.status}). Importação ignorada.`
+          );
+          return;
+        }
+      }
+
       const xmlText = await downloadXml(inscricaoId, nfe.chave);
       if (!xmlText) return;
 
