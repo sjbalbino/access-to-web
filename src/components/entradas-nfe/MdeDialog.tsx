@@ -629,8 +629,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                 </TableRow>
               ) : (
                 nfesFiltradas.map((nfe) => {
-                  const chaveLimpa = (nfe.chave || "").replace(/\D/g, "");
-                  const entradaExistente = entradasExistentes?.[chaveLimpa];
+                  const chaveLimpa = normalizarChaveAcesso(nfe.chave);
+                  const entradaExistente = chaveLimpa ? entradasExistentes?.[chaveLimpa] : undefined;
+
                   const jaTemEntrada = !!entradaExistente;
                   const manifestacaoProcessada = !!nfe.manifestacao_destinatario;
                   const xmlDisponivel = manifestacaoProcessada && !!nfe.nome;
