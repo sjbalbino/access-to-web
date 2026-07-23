@@ -65,7 +65,11 @@ export function useEntradasNfe(granjaId?: string | null, safraId?: string | null
       return (data || []).map((e: any) => {
         const chave = (e.chave_acesso || '').replace(/\D/g, '');
         const bucket = refsByChave[chave] || {};
-        return { ...e, contra_nota: bucket.contra || null, devolucao_nota: bucket.devolucao || null };
+        const temAutorizada =
+          (bucket.contra && (bucket.contra.status === 'autorizada' || bucket.contra.status === 'autorizado')) ||
+          (bucket.devolucao && (bucket.devolucao.status === 'autorizada' || bucket.devolucao.status === 'autorizado'));
+        const status = e.status === 'pendente' && temAutorizada ? 'finalizado' : e.status;
+        return { ...e, status, contra_nota: bucket.contra || null, devolucao_nota: bucket.devolucao || null };
       });
     },
   });
