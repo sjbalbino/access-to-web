@@ -293,11 +293,17 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
       // Guarda anti-duplicidade: já existe entrada com esta chave?
       const chaveLimpa = (nfe.chave || "").replace(/\D/g, "");
       if (chaveLimpa) {
-        const { data: existente } = await supabase
+        const { data: existentes, error: errExist } = await supabase
           .from("entradas_nfe")
           .select("id, numero_nfe, status")
           .eq("chave_acesso", chaveLimpa)
-          .maybeSingle();
+          .limit(1);
+        if (errExist) {
+          console.error("[MdE] erro ao verificar duplicidade:", errExist);
+          toast.error("Falha ao verificar se a NF-e já foi importada. Tente novamente.");
+          return;
+        }
+        const existente = existentes?.[0];
         if (existente) {
           toast.warning(
             `NF-e ${existente.numero_nfe || ""} já importada (status: ${existente.status}). Importação ignorada.`
