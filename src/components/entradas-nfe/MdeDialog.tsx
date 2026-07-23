@@ -57,7 +57,7 @@ function formatCpfCnpj(value?: string | null) {
 export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [inscricaoId, setInscricaoId] = useState<string>("");
   const { data: inscricoes } = useInscricoesCompletas();
-  const { isLoading, nfesRecebidas, returnMessage, clearReturnMessage, consultarDestinatarias, consultarPorChave, manifestar, downloadXml, downloadDanfe } = useMde();
+  const { isLoading, nfesRecebidas, returnMessage, clearReturnMessage, consultarDestinatarias, consultarPorChave, carregarCache, manifestar, downloadXml, downloadDanfe } = useMde();
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
   const [chaveBusca, setChaveBusca] = useState("");
