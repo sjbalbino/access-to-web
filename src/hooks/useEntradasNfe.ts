@@ -2,6 +2,75 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export type EntradaExistente = {
+  id: string;
+  numero_nfe: string | null;
+  status: string;
+  chave_acesso: string;
+};
+
+/**
+ * Normaliza uma chave de acesso NF-e para 44 dígitos (sem máscara).
+ * Retorna string vazia se a entrada for inválida.
+ */
+export function normalizarChaveAcesso(chave?: string | null): string {
+  if (!chave) return '';
+  const digits = String(chave).replace(/\D/g, '');
+  return digits.length === 44 ? digits : '';
+}
+
+/**
+ * Pareamento de NF-es recebidas (DFe) com entradas já geradas no sistema
+ * usando chave_acesso normalizada (44 dígitos). Retorna um Map indexado
+ * pela chave limpa para lookup O(1) na UI.
+ *
+ * Compartilha o prefixo de queryKey "entradas_nfe" para ser invalidado
+ * automaticamente sempre que uma nova entrada for criada/atualizada.
+ */
+export function useEntradasPorChaves(chaves: string[]) {
+  const chavesNormalizadas = Array.from(
+    new Set((chaves || []).map(normalizarChaveAcesso).filter(Boolean))
+  ).sort();
+
+  return useQuery({
+    queryKey: ['entradas_nfe', 'por-chaves', chavesNormalizadas.join(',')],
+    queryFn: async () => {
+      const map: Record<string, EntradaExistente> = {};
+      if (chavesNormalizadas.length === 0) return map;
+
+      const { data, error } = await supabase
+        .from('entradas_nfe')
+        .select('id, numero_nfe, status, chave_acesso')
+        .in('chave_acesso', chavesNormalizadas);
+
+      if (error) {
+        console.error('[useEntradasPorChaves] erro:', error);
+        throw error;
+      }
+
+      (data || []).forEach((e: any) => {
+        const k = normalizarChaveAcesso(e.chave_acesso);
+        if (k) {
+          map[k] = {
+            id: e.id,
+            numero_nfe: e.numero_nfe,
+            status: e.status,
+            chave_acesso: k,
+          };
+        }
+      });
+
+      return map;
+    },
+    enabled: chavesNormalizadas.length > 0,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+  });
+}
+
+
+
 export function useEntradasNfe(granjaId?: string | null, safraId?: string | null, inscricaoId?: string | null) {
   return useQuery({
     queryKey: ['entradas_nfe', granjaId, safraId, inscricaoId],
