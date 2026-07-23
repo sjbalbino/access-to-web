@@ -798,14 +798,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                          {manifestacaoProcessada && nfe.manifestacao_destinatario && (
-                            <Badge
-                              variant={manifestacaoVariants[nfe.manifestacao_destinatario] || "secondary"}
-                              className="text-[11px] h-6 whitespace-nowrap"
-                            >
-                              {manifestacaoLabels[nfe.manifestacao_destinatario] || nfe.manifestacao_destinatario}
-                            </Badge>
-                          )}
+
                         </div>
 
                         <Button
