@@ -237,14 +237,25 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     [inscricoesEmissoras, inscricaoId]
   );
 
-  const handleConsultar = () => {
+  const handleConsultar = async () => {
     if (!inscricaoId) return;
-    consultarDestinatarias(inscricaoId);
+    if (syncBloqueado) {
+      toast.warning(`Aguarde ${formatMmSs(msRestantesSync)} para nova sincronização (NT SEFAZ: 1x por hora).`);
+      return;
+    }
+    writeLastSync(inscricaoId);
+    setNowTs(Date.now());
+    await consultarDestinatarias(inscricaoId);
   };
 
   useEffect(() => {
     if (open && inscricaoId) {
-      consultarDestinatarias(inscricaoId);
+      const last = readLastSync(inscricaoId);
+      if (Date.now() - last >= SYNC_MIN_INTERVAL_MS) {
+        writeLastSync(inscricaoId);
+        setNowTs(Date.now());
+        consultarDestinatarias(inscricaoId);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inscricaoId, open]);
