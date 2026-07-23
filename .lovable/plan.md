@@ -1,35 +1,25 @@
 ## Objetivo
-Refinar o diálogo **NF-es Recebidas (DFe)** em `src/components/entradas-nfe/MdeDialog.tsx` para:
-1. Quando a entrada da NF-e já foi gerada → status **"Entrada Gerada"** e **todos** os botões de ação (XML, Dar entrada, Manifestar, DANFE) ficam bloqueados.
-2. Quando a NF-e já foi manifestada → botão **Manifestar** fica desabilitado, o texto passa a **"Já manifestado"** e aparece um **badge ao lado** indicando o tipo (Ciência / Confirmada / Desconhecida / Não realizada).
-3. Botão **Sincronizar DFe** respeita intervalo mínimo de **1 hora** (NT SEFAZ). Se acionado antes, fica bloqueado exibindo o tempo restante em contagem regressiva (mm:ss).
+Quando o botão **Sincronizar DFe** estiver bloqueado pelo intervalo de 1h, o diálogo deve continuar mostrando as NF-es já encontradas em consultas anteriores. Hoje a lista fica vazia porque nenhuma chamada à SEFAZ é feita e o cache local nunca é carregado.
 
-## Mudanças em `src/components/entradas-nfe/MdeDialog.tsx`
+## Causa
+O `useEffect` de abertura em `MdeDialog.tsx` só popula `nfesRecebidas` quando chama `consultarDestinatarias`. Dentro da janela de 1h nada é chamado e a lista fica em branco. O `useMde` já mantém o cache em `dfe_nfes_cache` via `loadCache`, mas essa função é interna ao hook.
 
-### 1. Bloqueio total quando entrada já gerada
-- Nas variáveis da linha (`jaTemEntrada`), aplicar `disabled` a **todos** os botões da célula de ações: XML, Dar entrada, Manifestar e o item DANFE do dropdown.
-- Tooltip padrão: `"Entrada já gerada Nº X — ações bloqueadas"`.
-- O badge de status "Entrada gerada Nº X" (violeta) já existe e continua sendo exibido.
+## Mudanças
 
-### 2. Botão Manifestar pós-manifestação
-- Quando `nfe.manifestacao_destinatario` estiver preenchido **e** a entrada ainda não existir:
-  - Trigger do `DropdownMenu` fica `disabled`.
-  - Texto do botão muda para **"Já manifestado"** (ícone `CheckCircle2`).
-  - Ao lado do botão, renderizar um `Badge` com o rótulo da manifestação (usando `manifestacaoLabels` e `manifestacaoVariants` já existentes no arquivo).
-- Se ainda não houver manifestação, comportamento atual permanece.
+### 1. `src/hooks/useMde.ts`
+- Expor uma nova ação `carregarCache(inscricaoId)` que executa o `loadCache` já existente e faz `setNfesRecebidas(...)` ordenado por `data_emissao` desc.
 
-### 3. Throttle de 1 hora no Sincronizar DFe
-- Armazenar timestamp da última sincronização **por inscrição** em `localStorage` sob a chave `mde:last-sync:<inscricaoId>`, atualizado ao final de cada `consultarDestinatarias` bem-sucedida (inclusive no `useEffect` que dispara ao abrir/trocar inscrição).
-- Estado local `secondsUntilNextSync` calculado a cada 1s via `setInterval` enquanto o diálogo estiver aberto e houver inscrição selecionada.
-- Regra: `MIN_INTERVAL_MS = 60 * 60 * 1000`. Se `now - lastSync < MIN_INTERVAL_MS`, botão fica `disabled` e exibe **"Aguarde mm:ss"** ao lado do rótulo. Tooltip explica a regra da NT SEFAZ.
-- A busca **por chave específica** (`consultarPorChave`) **não** é afetada pelo throttle — apenas o botão de sincronização geral.
-- O `useEffect` que auto-sincroniza ao abrir o diálogo passa a respeitar o intervalo (não refaz a chamada se ainda estiver dentro da janela de 1 hora); apenas carrega o cache local via merge normal do `useMde`.
+### 2. `src/components/entradas-nfe/MdeDialog.tsx`
+- Consumir `carregarCache` do `useMde`.
+- No `useEffect` de abertura/troca de inscrição:
+  - Sempre chamar `carregarCache(inscricaoId)` primeiro para popular a lista imediatamente.
+  - Em seguida, se estiver fora da janela de 1h, chamar `consultarDestinatarias` normalmente (que já faz merge com o cache).
+- Nenhuma alteração no throttle nem nos botões da linha.
 
 ## Arquivos
-- `src/components/entradas-nfe/MdeDialog.tsx` — única edição.
+- `src/hooks/useMde.ts`
+- `src/components/entradas-nfe/MdeDialog.tsx`
 
-## Notas técnicas
-- Nenhuma alteração em backend, RLS ou edge functions.
-- Sem novas dependências; `setInterval` é limpo no unmount / fechamento do diálogo.
-- O throttle é client-side (localStorage) — é uma proteção de UX contra chamadas excessivas, não uma trava de segurança. Se o usuário limpar o storage, sincroniza novamente.
-- Validação final no preview: (a) linha com entrada gerada tem todos os botões cinzas; (b) linha manifestada mostra "Já manifestado" + badge do tipo; (c) após clicar em Sincronizar DFe, o botão exibe contagem regressiva até zerar em 1h.
+## Validação
+- Reabrir o diálogo dentro da janela de 1h → lista das NF-es previamente sincronizadas continua visível, com botão exibindo `Aguarde mm:ss`.
+- Trocar a inscrição → cache dessa inscrição aparece imediatamente.

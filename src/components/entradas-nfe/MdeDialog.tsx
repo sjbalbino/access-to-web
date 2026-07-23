@@ -57,7 +57,7 @@ function formatCpfCnpj(value?: string | null) {
 export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [inscricaoId, setInscricaoId] = useState<string>("");
   const { data: inscricoes } = useInscricoesCompletas();
-  const { isLoading, nfesRecebidas, returnMessage, clearReturnMessage, consultarDestinatarias, consultarPorChave, manifestar, downloadXml, downloadDanfe } = useMde();
+  const { isLoading, nfesRecebidas, returnMessage, clearReturnMessage, consultarDestinatarias, consultarPorChave, carregarCache, manifestar, downloadXml, downloadDanfe } = useMde();
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
   const [chaveBusca, setChaveBusca] = useState("");
@@ -250,6 +250,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
   useEffect(() => {
     if (open && inscricaoId) {
+      // Sempre mostra o cache local primeiro para não deixar a lista vazia
+      // enquanto o botão de sincronização estiver bloqueado pela janela de 1h.
+      carregarCache(inscricaoId);
       const last = readLastSync(inscricaoId);
       if (Date.now() - last >= SYNC_MIN_INTERVAL_MS) {
         writeLastSync(inscricaoId);
