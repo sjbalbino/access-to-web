@@ -156,6 +156,30 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     });
   }, [nfesRecebidas, filtroBusca, filtroManifest, filtroDataIni, filtroDataFim]);
 
+  // Detecta quais chaves já possuem entrada gerada no sistema
+  const chavesDaLista = useMemo(
+    () => nfesRecebidas.map((n) => (n.chave || "").replace(/\D/g, "")).filter((c) => c.length === 44),
+    [nfesRecebidas]
+  );
+  const { data: entradasExistentes } = useQuery({
+    queryKey: ["mde-entradas-existentes", chavesDaLista.sort().join(",")],
+    queryFn: async () => {
+      if (chavesDaLista.length === 0) return {} as Record<string, { id: string; numero_nfe: string | null; status: string }>;
+      const { data, error } = await supabase
+        .from("entradas_nfe")
+        .select("id, numero_nfe, status, chave_acesso")
+        .in("chave_acesso", chavesDaLista);
+      if (error) throw error;
+      const map: Record<string, { id: string; numero_nfe: string | null; status: string }> = {};
+      (data || []).forEach((e: any) => {
+        const k = (e.chave_acesso || "").replace(/\D/g, "");
+        if (k) map[k] = { id: e.id, numero_nfe: e.numero_nfe, status: e.status };
+      });
+      return map;
+    },
+    enabled: chavesDaLista.length > 0,
+  });
+
   const limparFiltros = () => {
     setFiltroBusca("");
     setFiltroManifest("all");
