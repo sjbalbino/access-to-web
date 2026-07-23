@@ -91,6 +91,37 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [filtroDataIni, setFiltroDataIni] = useState("");
   const [filtroDataFim, setFiltroDataFim] = useState("");
 
+  // Throttle Sincronizar DFe: 1x por hora por inscrição (NT SEFAZ)
+  const SYNC_MIN_INTERVAL_MS = 60 * 60 * 1000;
+  const syncStorageKey = (id: string) => `mde:last-sync:${id}`;
+  const readLastSync = (id: string): number => {
+    if (!id) return 0;
+    try {
+      const raw = localStorage.getItem(syncStorageKey(id));
+      const n = raw ? parseInt(raw, 10) : 0;
+      return Number.isFinite(n) ? n : 0;
+    } catch { return 0; }
+  };
+  const writeLastSync = (id: string) => {
+    if (!id) return;
+    try { localStorage.setItem(syncStorageKey(id), String(Date.now())); } catch { /* ignore */ }
+  };
+  const [nowTs, setNowTs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!open) return;
+    const t = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [open]);
+  const msSinceLastSync = inscricaoId ? nowTs - readLastSync(inscricaoId) : Infinity;
+  const msRestantesSync = Math.max(0, SYNC_MIN_INTERVAL_MS - msSinceLastSync);
+  const syncBloqueado = !!inscricaoId && msRestantesSync > 0;
+  const formatMmSs = (ms: number) => {
+    const s = Math.ceil(ms / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2, "0");
+    const ss = String(s % 60).padStart(2, "0");
+    return `${mm}:${ss}`;
+  };
+
   const [danfePreview, setDanfePreview] = useState<{ open: boolean; loading: boolean; pdfData: Uint8Array | null; downloadUrl: string | null; filename: string; titulo: string; chave: string; manifestacao_destinatario: string | null }>({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "", manifestacao_destinatario: null });
 
   const handleVisualizarDanfe = async (nfe: NfeRecebida) => {
