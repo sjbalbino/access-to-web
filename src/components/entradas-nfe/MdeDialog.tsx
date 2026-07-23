@@ -262,15 +262,10 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   useEffect(() => {
     if (open && inscricaoId) {
       try { localStorage.setItem(LAST_INSCRICAO_KEY, inscricaoId); } catch { /* ignore */ }
-      // Sempre mostra o cache local primeiro para não deixar a lista vazia
-      // enquanto o botão de sincronização estiver bloqueado pela janela de 1h.
+      // Ao selecionar a inscrição, apenas carrega o cache local das NF-es
+      // já encontradas. A busca na SEFAZ só ocorre quando o usuário clica
+      // manualmente em "Sincronizar SEFAZ".
       carregarCache(inscricaoId);
-      const last = readLastSync(inscricaoId);
-      if (Date.now() - last >= SYNC_MIN_INTERVAL_MS) {
-        writeLastSync(inscricaoId);
-        setNowTs(Date.now());
-        consultarDestinatarias(inscricaoId);
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inscricaoId, open]);
