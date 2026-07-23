@@ -25,7 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+
 
 interface MdeDialogProps {
   open: boolean;
