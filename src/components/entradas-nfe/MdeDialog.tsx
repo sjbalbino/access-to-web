@@ -506,11 +506,12 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
           </div>
           <Button
             onClick={handleConsultar}
-            disabled={!inscricaoId || isLoading}
+            disabled={!inscricaoId || isLoading || syncBloqueado}
             className="bg-blue-600 hover:bg-blue-700 h-11 px-8 font-semibold shadow-md mt-[26px]"
+            title={syncBloqueado ? `NT SEFAZ: aguarde ${formatMmSs(msRestantesSync)} para nova sincronização (limite de 1x por hora).` : undefined}
           >
             {isLoading ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Search className="h-5 w-5 mr-2" />}
-            Sincronizar DFe
+            {syncBloqueado ? `Aguarde ${formatMmSs(msRestantesSync)}` : "Sincronizar DFe"}
           </Button>
         </div>
 
