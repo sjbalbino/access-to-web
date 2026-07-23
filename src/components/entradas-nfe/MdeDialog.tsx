@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe, Eye, Printer, FileCode } from "lucide-react";
+import { Search, Download, FileText, Check, X, HelpCircle, Loader2, Import, Globe, Eye, Printer, FileCode, CheckCircle2 } from "lucide-react";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useMde, type NfeRecebida } from "@/hooks/useMde";
 import { formatNumber } from "@/lib/formatters";
@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 interface MdeDialogProps {
   open: boolean;
@@ -154,6 +155,30 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
       return true;
     });
   }, [nfesRecebidas, filtroBusca, filtroManifest, filtroDataIni, filtroDataFim]);
+
+  // Detecta quais chaves já possuem entrada gerada no sistema
+  const chavesDaLista = useMemo(
+    () => nfesRecebidas.map((n) => (n.chave || "").replace(/\D/g, "")).filter((c) => c.length === 44),
+    [nfesRecebidas]
+  );
+  const { data: entradasExistentes } = useQuery({
+    queryKey: ["mde-entradas-existentes", chavesDaLista.sort().join(",")],
+    queryFn: async () => {
+      if (chavesDaLista.length === 0) return {} as Record<string, { id: string; numero_nfe: string | null; status: string }>;
+      const { data, error } = await supabase
+        .from("entradas_nfe")
+        .select("id, numero_nfe, status, chave_acesso")
+        .in("chave_acesso", chavesDaLista);
+      if (error) throw error;
+      const map: Record<string, { id: string; numero_nfe: string | null; status: string }> = {};
+      (data || []).forEach((e: any) => {
+        const k = (e.chave_acesso || "").replace(/\D/g, "");
+        if (k) map[k] = { id: e.id, numero_nfe: e.numero_nfe, status: e.status };
+      });
+      return map;
+    },
+    enabled: chavesDaLista.length > 0,
+  });
 
   const limparFiltros = () => {
     setFiltroBusca("");
@@ -560,28 +585,40 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                 </TableRow>
               ) : (
                 nfesFiltradas.map((nfe) => {
+                  const chaveLimpa = (nfe.chave || "").replace(/\D/g, "");
+                  const entradaExistente = entradasExistentes?.[chaveLimpa];
+                  const jaTemEntrada = !!entradaExistente;
                   const manifestacaoProcessada = !!nfe.manifestacao_destinatario;
                   const xmlDisponivel = manifestacaoProcessada && !!nfe.nome;
-                  const statusProcessamento: "pendente" | "aguardando" | "pronto" = !manifestacaoProcessada
-                    ? "pendente"
-                    : xmlDisponivel
-                      ? "pronto"
-                      : "aguardando";
+                  const statusProcessamento: "pendente" | "aguardando" | "pronto" | "entrada" = jaTemEntrada
+                    ? "entrada"
+                    : !manifestacaoProcessada
+                      ? "pendente"
+                      : xmlDisponivel
+                        ? "pronto"
+                        : "aguardando";
                   const statusLabels: Record<typeof statusProcessamento, string> = {
                     pendente: "Manifestação pendente",
-                    aguardando: "Aguardando nfeProc",
+                    aguardando: "Aguardando XML",
                     pronto: "Pronto",
+                    entrada: entradaExistente?.numero_nfe
+                      ? `Entrada gerada Nº ${entradaExistente.numero_nfe}`
+                      : "Entrada gerada",
                   };
                   const statusClasses: Record<typeof statusProcessamento, string> = {
                     pendente: "text-amber-700 border-amber-300 bg-amber-50",
                     aguardando: "text-blue-700 border-blue-300 bg-blue-50",
                     pronto: "text-emerald-700 border-emerald-300 bg-emerald-50",
+                    entrada: "text-violet-700 border-violet-300 bg-violet-50",
                   };
                   const bloqueioTitle = manifestacaoProcessada
                     ? xmlDisponivel
                       ? undefined
                       : "Aguardando SEFAZ liberar o XML completo (nfeProc) após a manifestação"
                     : "Manifeste a NF-e primeiro para liberar o XML completo";
+                  const entradaTitle = jaTemEntrada
+                    ? `Entrada já gerada para esta NF-e${entradaExistente?.numero_nfe ? ` (Nº ${entradaExistente.numero_nfe})` : ""}`
+                    : undefined;
                   const danfeBloqueioTitle = xmlDisponivel
                     ? undefined
                     : bloqueioTitle;
@@ -643,17 +680,19 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                         <Button
                           variant="default"
                           size="sm"
-                          className="h-9 px-3 flex items-center gap-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={!manifestacaoProcessada || isLoading || importingChave === nfe.chave}
-                          title={bloqueioTitle}
+                          className="h-9 px-3 flex items-center gap-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-400 disabled:hover:bg-slate-400"
+                          disabled={!manifestacaoProcessada || isLoading || importingChave === nfe.chave || jaTemEntrada}
+                          title={entradaTitle || bloqueioTitle}
                           onClick={() => handleImportar(nfe)}
                         >
                           {importingChave === nfe.chave ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : jaTemEntrada ? (
+                            <CheckCircle2 className="h-4 w-4" />
                           ) : (
                             <Import className="h-4 w-4" />
                           )}
-                          Dar entrada
+                          {jaTemEntrada ? "Já importada" : "Dar entrada"}
                         </Button>
 
                         <DropdownMenu>
