@@ -92,19 +92,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [filtroDataFim, setFiltroDataFim] = useState("");
 
   // Throttle Sincronizar DFe: 1x por hora por inscrição (NT SEFAZ)
+  // Escopo APENAS da sessão atual do diálogo — não persistir em localStorage,
+  // para que o botão inicie sempre liberado ao abrir/selecionar a IE.
   const SYNC_MIN_INTERVAL_MS = 60 * 60 * 1000;
-  const syncStorageKey = (id: string) => `mde:last-sync:${id}`;
-  const readLastSync = (id: string): number => {
-    if (!id) return 0;
-    try {
-      const raw = localStorage.getItem(syncStorageKey(id));
-      const n = raw ? parseInt(raw, 10) : 0;
-      return Number.isFinite(n) ? n : 0;
-    } catch { return 0; }
-  };
+  const [lastSyncByInscricao, setLastSyncByInscricao] = useState<Record<string, number>>({});
   const writeLastSync = (id: string) => {
     if (!id) return;
-    try { localStorage.setItem(syncStorageKey(id), String(Date.now())); } catch { /* ignore */ }
+    setLastSyncByInscricao((prev) => ({ ...prev, [id]: Date.now() }));
   };
   const [nowTs, setNowTs] = useState(() => Date.now());
   useEffect(() => {
@@ -112,9 +106,14 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     const t = setInterval(() => setNowTs(Date.now()), 1000);
     return () => clearInterval(t);
   }, [open]);
-  const msSinceLastSync = inscricaoId ? nowTs - readLastSync(inscricaoId) : Infinity;
+  // Reset dos timestamps ao fechar o diálogo (garante estado limpo na próxima abertura)
+  useEffect(() => {
+    if (!open) setLastSyncByInscricao({});
+  }, [open]);
+  const lastSyncTs = inscricaoId ? (lastSyncByInscricao[inscricaoId] ?? 0) : 0;
+  const msSinceLastSync = lastSyncTs ? nowTs - lastSyncTs : Infinity;
   const msRestantesSync = Math.max(0, SYNC_MIN_INTERVAL_MS - msSinceLastSync);
-  const syncBloqueado = !!inscricaoId && msRestantesSync > 0;
+  const syncBloqueado = !!inscricaoId && lastSyncTs > 0 && msRestantesSync > 0;
   const formatMmSs = (ms: number) => {
     const s = Math.ceil(ms / 1000);
     const mm = String(Math.floor(s / 60)).padStart(2, "0");
