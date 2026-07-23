@@ -248,8 +248,20 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     await consultarDestinatarias(inscricaoId);
   };
 
+  // Auto-seleciona a primeira inscrição emissora quando o diálogo abre
+  const LAST_INSCRICAO_KEY = "mde:last-inscricao";
+  useEffect(() => {
+    if (!open) return;
+    if (inscricaoId) return;
+    const last = (() => { try { return localStorage.getItem(LAST_INSCRICAO_KEY) || ""; } catch { return ""; } })();
+    const preferida = inscricoesEmissoras.find((i: any) => i.id === last) || inscricoesEmissoras[0];
+    if (preferida) setInscricaoId(preferida.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, inscricoesEmissoras]);
+
   useEffect(() => {
     if (open && inscricaoId) {
+      try { localStorage.setItem(LAST_INSCRICAO_KEY, inscricaoId); } catch { /* ignore */ }
       // Sempre mostra o cache local primeiro para não deixar a lista vazia
       // enquanto o botão de sincronização estiver bloqueado pela janela de 1h.
       carregarCache(inscricaoId);
