@@ -109,6 +109,7 @@ export function DevolucaoDialog({ open, onOpenChange, devolucao, defaultFiltros,
   const { data: inscricoesComSaldo } = useInscricoesComSaldo({ 
     safraId, 
     produtoId,
+    modo: 'devolucao',
   });
 
   // Saldo do produtor selecionado - agora inclui local de entrega
