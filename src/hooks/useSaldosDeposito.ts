@@ -355,25 +355,42 @@ export function useInscricoesComSaldo(filters: {
         b.saldo += round(t.quantidade_kg);
       });
 
-      // Subtrair notas de depósito emitidas do bucket. Como a tabela não guarda
-      // local_entrega_id, distribui o total emitido por inscrição
+      // Modo 'devolucao': subtrair transferências enviadas e devoluções já feitas
+      // por (inscrição, local). Notas de depósito emitidas NÃO reduzem o saldo aqui.
+      if (modo === 'devolucao') {
+        (enviadas as any[]).forEach((t) => {
+          if (!t.inscricao_origem_id) return;
+          const b = getBucket(t.inscricao_origem_id, t.local_saida_id, null);
+          b.saldo -= round(t.quantidade_kg);
+        });
+        (devolucoesFeitas as any[]).forEach((d) => {
+          if (!d.inscricao_produtor_id) return;
+          const b = getBucket(d.inscricao_produtor_id, d.local_entrega_id, null);
+          b.saldo -= round(d.quantidade_kg);
+        });
+      }
+
+      // Modo 'emissao': subtrair notas de depósito emitidas do bucket. Como a tabela
+      // não guarda local_entrega_id, distribui o total emitido por inscrição
       // proporcionalmente entre os buckets (locais) existentes daquela inscrição.
-      emitidoPorInscricao.forEach((qtdEmitida, inscId) => {
-        if (qtdEmitida <= 0) return;
-        const bucketsInsc = Array.from(buckets.values()).filter((b) => b.inscId === inscId);
-        const totalSaldo = bucketsInsc.reduce((acc, b) => acc + b.saldo, 0);
-        if (bucketsInsc.length === 0) return;
-        if (totalSaldo <= 0) {
-          // Sem base positiva: subtrai igualmente entre os buckets.
-          const parte = qtdEmitida / bucketsInsc.length;
-          bucketsInsc.forEach((b) => { b.saldo -= parte; });
-        } else {
-          bucketsInsc.forEach((b) => {
-            const proporcao = b.saldo / totalSaldo;
-            b.saldo -= qtdEmitida * proporcao;
-          });
-        }
-      });
+      if (modo === 'emissao') {
+        emitidoPorInscricao.forEach((qtdEmitida, inscId) => {
+          if (qtdEmitida <= 0) return;
+          const bucketsInsc = Array.from(buckets.values()).filter((b) => b.inscId === inscId);
+          const totalSaldo = bucketsInsc.reduce((acc, b) => acc + b.saldo, 0);
+          if (bucketsInsc.length === 0) return;
+          if (totalSaldo <= 0) {
+            // Sem base positiva: subtrai igualmente entre os buckets.
+            const parte = qtdEmitida / bucketsInsc.length;
+            bucketsInsc.forEach((b) => { b.saldo -= parte; });
+          } else {
+            bucketsInsc.forEach((b) => {
+              const proporcao = b.saldo / totalSaldo;
+              b.saldo -= qtdEmitida * proporcao;
+            });
+          }
+        });
+      }
 
       // Quando incluirSemSaldo estiver ligado, também trazemos inscrições da granja
       // que não tenham nenhuma movimentação na safra — com saldo 0.
