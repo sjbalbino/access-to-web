@@ -465,9 +465,11 @@ export function useInscricoesComSaldo(filters: {
           (saldoTotalPorInscricao.get(b.inscId) || 0) + b.saldo
         );
       });
-      emitidoPorInscricao.forEach((qtd, inscId) => {
-        saldoTotalPorInscricao.set(inscId, (saldoTotalPorInscricao.get(inscId) || 0) - qtd);
-      });
+      if (modo === 'emissao') {
+        emitidoPorInscricao.forEach((qtd, inscId) => {
+          saldoTotalPorInscricao.set(inscId, (saldoTotalPorInscricao.get(inscId) || 0) - qtd);
+        });
+      }
 
       const resultado: InscricaoComSaldoPorLocal[] = [];
       buckets.forEach((b) => {
