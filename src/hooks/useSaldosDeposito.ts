@@ -177,7 +177,16 @@ export function useInscricoesComSaldo(filters: {
   produtoId?: string;
   localEntregaId?: string;
   incluirSemSaldo?: boolean;
+  /**
+   * 'emissao' (default): saldo elegível para EMITIR nota de depósito
+   *   = Colheitas + Transf. Recebidas − Notas de Depósito Emitidas
+   * 'devolucao': saldo físico disponível para DEVOLVER ao produtor
+   *   = Colheitas + Transf. Recebidas − Transf. Enviadas − Devoluções já feitas
+   *   (Notas de Depósito emitidas NÃO reduzem esse saldo.)
+   */
+  modo?: 'emissao' | 'devolucao';
 }) {
+  const modo = filters.modo || 'emissao';
   return useQuery({
     queryKey: ['inscricoes_com_saldo', filters],
     queryFn: async (): Promise<InscricaoComSaldoPorLocal[]> => {
