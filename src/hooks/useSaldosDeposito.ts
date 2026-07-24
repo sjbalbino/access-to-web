@@ -177,7 +177,16 @@ export function useInscricoesComSaldo(filters: {
   produtoId?: string;
   localEntregaId?: string;
   incluirSemSaldo?: boolean;
+  /**
+   * 'emissao' (default): saldo elegível para EMITIR nota de depósito
+   *   = Colheitas + Transf. Recebidas − Notas de Depósito Emitidas
+   * 'devolucao': saldo físico disponível para DEVOLVER ao produtor
+   *   = Colheitas + Transf. Recebidas − Transf. Enviadas − Devoluções já feitas
+   *   (Notas de Depósito emitidas NÃO reduzem esse saldo.)
+   */
+  modo?: 'emissao' | 'devolucao';
 }) {
+  const modo = filters.modo || 'emissao';
   return useQuery({
     queryKey: ['inscricoes_com_saldo', filters],
     queryFn: async (): Promise<InscricaoComSaldoPorLocal[]> => {
@@ -234,8 +243,9 @@ export function useInscricoesComSaldo(filters: {
       // físico ainda pode ser contra-notado).
 
       // Notas de depósito emitidas: reduzem o saldo por inscrição (agregado,
-      // pois a tabela não guarda local_entrega_id).
+      // pois a tabela não guarda local_entrega_id). Usadas apenas no modo 'emissao'.
       const emitidasPromise = (async () => {
+        if (modo !== 'emissao') return [] as any[];
         let q = supabase
           .from('notas_deposito_emitidas')
           .select('inscricao_produtor_id, quantidade_kg, nota_fiscal_id')
@@ -246,10 +256,40 @@ export function useInscricoesComSaldo(filters: {
         return data || [];
       })();
 
-      const [colheitas, recebidas, emitidas] = await Promise.all([
+      // Transferências enviadas: reduzem o saldo físico para devolução.
+      const enviadasPromise = (async () => {
+        if (modo !== 'devolucao') return [] as any[];
+        let q = supabase
+          .from('transferencias_deposito')
+          .select('inscricao_origem_id, quantidade_kg, local_saida_id')
+          .eq('safra_id', filters.safraId);
+        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
+        if (localFilter) q = q.eq('local_saida_id', localFilter);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+      })();
+
+      // Devoluções já feitas: reduzem o saldo físico para nova devolução.
+      const devolucoesPromise = (async () => {
+        if (modo !== 'devolucao') return [] as any[];
+        let q = supabase
+          .from('devolucoes_deposito')
+          .select('inscricao_produtor_id, quantidade_kg, local_entrega_id')
+          .eq('safra_id', filters.safraId);
+        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
+        if (localFilter) q = q.eq('local_entrega_id', localFilter);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+      })();
+
+      const [colheitas, recebidas, emitidas, enviadas, devolucoesFeitas] = await Promise.all([
         colheitasPromise,
         recebidasPromise,
         emitidasPromise,
+        enviadasPromise,
+        devolucoesPromise,
       ]);
 
       // Excluir emissões cuja NF-e esteja cancelada
@@ -315,25 +355,42 @@ export function useInscricoesComSaldo(filters: {
         b.saldo += round(t.quantidade_kg);
       });
 
-      // Subtrair notas de depósito emitidas do bucket. Como a tabela não guarda
-      // local_entrega_id, distribui o total emitido por inscrição
+      // Modo 'devolucao': subtrair transferências enviadas e devoluções já feitas
+      // por (inscrição, local). Notas de depósito emitidas NÃO reduzem o saldo aqui.
+      if (modo === 'devolucao') {
+        (enviadas as any[]).forEach((t) => {
+          if (!t.inscricao_origem_id) return;
+          const b = getBucket(t.inscricao_origem_id, t.local_saida_id, null);
+          b.saldo -= round(t.quantidade_kg);
+        });
+        (devolucoesFeitas as any[]).forEach((d) => {
+          if (!d.inscricao_produtor_id) return;
+          const b = getBucket(d.inscricao_produtor_id, d.local_entrega_id, null);
+          b.saldo -= round(d.quantidade_kg);
+        });
+      }
+
+      // Modo 'emissao': subtrair notas de depósito emitidas do bucket. Como a tabela
+      // não guarda local_entrega_id, distribui o total emitido por inscrição
       // proporcionalmente entre os buckets (locais) existentes daquela inscrição.
-      emitidoPorInscricao.forEach((qtdEmitida, inscId) => {
-        if (qtdEmitida <= 0) return;
-        const bucketsInsc = Array.from(buckets.values()).filter((b) => b.inscId === inscId);
-        const totalSaldo = bucketsInsc.reduce((acc, b) => acc + b.saldo, 0);
-        if (bucketsInsc.length === 0) return;
-        if (totalSaldo <= 0) {
-          // Sem base positiva: subtrai igualmente entre os buckets.
-          const parte = qtdEmitida / bucketsInsc.length;
-          bucketsInsc.forEach((b) => { b.saldo -= parte; });
-        } else {
-          bucketsInsc.forEach((b) => {
-            const proporcao = b.saldo / totalSaldo;
-            b.saldo -= qtdEmitida * proporcao;
-          });
-        }
-      });
+      if (modo === 'emissao') {
+        emitidoPorInscricao.forEach((qtdEmitida, inscId) => {
+          if (qtdEmitida <= 0) return;
+          const bucketsInsc = Array.from(buckets.values()).filter((b) => b.inscId === inscId);
+          const totalSaldo = bucketsInsc.reduce((acc, b) => acc + b.saldo, 0);
+          if (bucketsInsc.length === 0) return;
+          if (totalSaldo <= 0) {
+            // Sem base positiva: subtrai igualmente entre os buckets.
+            const parte = qtdEmitida / bucketsInsc.length;
+            bucketsInsc.forEach((b) => { b.saldo -= parte; });
+          } else {
+            bucketsInsc.forEach((b) => {
+              const proporcao = b.saldo / totalSaldo;
+              b.saldo -= qtdEmitida * proporcao;
+            });
+          }
+        });
+      }
 
       // Quando incluirSemSaldo estiver ligado, também trazemos inscrições da granja
       // que não tenham nenhuma movimentação na safra — com saldo 0.
@@ -408,9 +465,11 @@ export function useInscricoesComSaldo(filters: {
           (saldoTotalPorInscricao.get(b.inscId) || 0) + b.saldo
         );
       });
-      emitidoPorInscricao.forEach((qtd, inscId) => {
-        saldoTotalPorInscricao.set(inscId, (saldoTotalPorInscricao.get(inscId) || 0) - qtd);
-      });
+      if (modo === 'emissao') {
+        emitidoPorInscricao.forEach((qtd, inscId) => {
+          saldoTotalPorInscricao.set(inscId, (saldoTotalPorInscricao.get(inscId) || 0) - qtd);
+        });
+      }
 
       const resultado: InscricaoComSaldoPorLocal[] = [];
       buckets.forEach((b) => {
