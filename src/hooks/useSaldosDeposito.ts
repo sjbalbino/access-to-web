@@ -243,8 +243,9 @@ export function useInscricoesComSaldo(filters: {
       // físico ainda pode ser contra-notado).
 
       // Notas de depósito emitidas: reduzem o saldo por inscrição (agregado,
-      // pois a tabela não guarda local_entrega_id).
+      // pois a tabela não guarda local_entrega_id). Usadas apenas no modo 'emissao'.
       const emitidasPromise = (async () => {
+        if (modo !== 'emissao') return [] as any[];
         let q = supabase
           .from('notas_deposito_emitidas')
           .select('inscricao_produtor_id, quantidade_kg, nota_fiscal_id')
@@ -255,10 +256,40 @@ export function useInscricoesComSaldo(filters: {
         return data || [];
       })();
 
-      const [colheitas, recebidas, emitidas] = await Promise.all([
+      // Transferências enviadas: reduzem o saldo físico para devolução.
+      const enviadasPromise = (async () => {
+        if (modo !== 'devolucao') return [] as any[];
+        let q = supabase
+          .from('transferencias_deposito')
+          .select('inscricao_origem_id, quantidade_kg, local_saida_id')
+          .eq('safra_id', filters.safraId);
+        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
+        if (localFilter) q = q.eq('local_saida_id', localFilter);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+      })();
+
+      // Devoluções já feitas: reduzem o saldo físico para nova devolução.
+      const devolucoesPromise = (async () => {
+        if (modo !== 'devolucao') return [] as any[];
+        let q = supabase
+          .from('devolucoes_deposito')
+          .select('inscricao_produtor_id, quantidade_kg, local_entrega_id')
+          .eq('safra_id', filters.safraId);
+        if (produtoIds?.length) q = q.in('produto_id', produtoIds);
+        if (localFilter) q = q.eq('local_entrega_id', localFilter);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
+      })();
+
+      const [colheitas, recebidas, emitidas, enviadas, devolucoesFeitas] = await Promise.all([
         colheitasPromise,
         recebidasPromise,
         emitidasPromise,
+        enviadasPromise,
+        devolucoesPromise,
       ]);
 
       // Excluir emissões cuja NF-e esteja cancelada
