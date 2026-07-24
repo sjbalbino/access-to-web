@@ -1,43 +1,31 @@
-## Unificação do produtor duplicado LAURO REICHERT
+## Diagnóstico
 
-### Diagnóstico
+Analisando a produtora **MARLICIA DA SILVA FERREIRA** (IE 472.100.647-0):
 
-Existem **dois cadastros do produtor LAURO REICHERT** na mesma granja (7c708923...), criados no mesmo instante pela importação de 05/07/2026:
-
-| Produtor ID | CPF | Ativo | Inscrição vinculada | IE |
+| Movimentação | Data | Qtd (kg) | Local | Status |
 |---|---|---|---|---|
-| `ccf3bbba…0afb` (**canônico**) | 279.291.080-15 | ✅ Sim | `ed5dfdbf…90e2` | 472.101.871-0 |
-| `e82b73db…1664` (duplicado) | — vazio — | ❌ Não | `75eacfbd…abee` | 472.101.871-0 |
+| Transferência entrada | 27/04/2026 | 15.000 | Márcio Grings | Confere com legado |
+| Devolução #4105 | 28/04/2026 | 12.000 | Márcio Grings | Confere com legado |
+| **Devolução #4245** | **24/06/2026** | **25.500** | **TosAgro** | **Não existe no legado (segundo o print)** |
 
-Ambas as inscrições apontam para a **mesma IE 472.101.871-0**, o que confirma que se trata de um único produtor real fragmentado durante a importação.
+O extrato do legado mostra saldo **3.000 kg** para o Local **Márcio Grings** (15.000 − 12.000), que bate perfeitamente com as duas primeiras movimentações. A devolução #4245, importada via wizard, está registrada no local **TosAgro** — que não aparece no print enviado.
 
-### Movimentações encontradas
+## Próximo passo (aguardando você)
 
-Só a **inscrição duplicada `75eacfbd`** ainda carrega movimento próprio — todo o resto já está na inscrição canônica:
+Você optou por **verificar no legado antes** de qualquer alteração. Por favor, confira no sistema legado:
 
-- **2 colheitas** na inscrição duplicada:
-  - 01/04/2024 — 4.390 kg
-  - 19/04/2026 — 16.269 kg
-- Inscrição canônica `ed5dfdbf`: 1 colheita + 3 transferências (origem) + 1 (destino) + 2 notas de depósito + 3 devoluções.
-- Nenhuma nota fiscal, contrato, rateio ou entrada NF-e vinculada ao produtor/inscrição duplicada.
+1. Existe algum extrato/movimentação da MARLICIA no local **TosAgro**?
+2. A devolução de **25.500 kg em 24/06/2026** existe em algum outro produtor/local do legado?
+3. Se existir, qual é a IE / produtor correto para essa devolução?
 
-### Ação de unificação (SQL, uma única migração)
+## O que farei após seu retorno
 
-```text
-1. UPDATE colheitas
-     SET inscricao_produtor_id = 'ed5dfdbf…90e2'   -- canônica
-   WHERE inscricao_produtor_id = '75eacfbd…abee';  -- duplicada
-       (2 linhas afetadas)
+Dependendo da resposta:
 
-2. DELETE FROM inscricoes_produtor
-   WHERE id = '75eacfbd…abee';
+- **Se a devolução #4245 não existir no legado** → executo `DELETE` do registro `10751542-...` na tabela `devolucoes_deposito` (via ferramenta de dados).
+- **Se pertencer a outro produtor** → executo `UPDATE` de `inscricao_produtor_id` (e `local_entrega_id` se necessário) para o cadastro correto.
+- **Se pertencer à MARLICIA mesmo em outro local** → nenhuma alteração de dados; investigo a apresentação do relatório do nosso sistema para agrupar corretamente por local (o legado provavelmente exibe uma segunda seção "Local TosAgro" que o print não mostra).
 
-3. DELETE FROM produtores
-   WHERE id = 'e82b73db…1664';   -- duplicado inativo, agora sem vínculos
-```
+## Observação técnica
 
-Nenhum outro dado é tocado. A inscrição canônica passa a totalizar **3 colheitas** (as 2 migradas + a que já tinha) e continua respondendo por todas as transferências, notas de depósito e devoluções existentes. O saldo do produtor deixa de estar dividido em dois cadastros.
-
-### Observação
-
-O cadastro canônico está com `percentual_participacao = 0.00`. Se o LAURO for sócio de rateio, esse percentual precisa ser ajustado à parte — este plano não altera esse campo, apenas unifica os cadastros.
+Trata-se de correção pontual de dados importados. Nenhuma mudança de código de aplicação está prevista neste plano.
