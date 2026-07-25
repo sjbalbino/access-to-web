@@ -1456,6 +1456,25 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       return;
     }
 
+    // Normaliza o Local por IE: cada Inscrição aparece sob um único "Local de Entrega"
+    // (o local dos depósitos/colheitas; fallback = transferências/compras; senão sede).
+    // Isso evita que Vendas e Compras criem sub-grupos separados por local dentro da mesma IE.
+    const localPorInsc = new Map<string, string>();
+    const prioridade: Record<string, number> = { deposito: 1, transf_entrada: 2, transf_saida: 3, compra: 4, devolucao: 5, venda: 6 };
+    const melhorLocal = new Map<string, { local: string; peso: number }>();
+    rows.forEach(r => {
+      if (!r.inscricao_id) return;
+      const peso = prioridade[r.operacao] ?? 99;
+      const atual = melhorLocal.get(r.inscricao_id);
+      if (!atual || peso < atual.peso) melhorLocal.set(r.inscricao_id, { local: r.local_nome || tenantSedeNome, peso });
+    });
+    melhorLocal.forEach((v, k) => localPorInsc.set(k, v.local));
+    rows.forEach(r => {
+      const canon = localPorInsc.get(r.inscricao_id);
+      if (canon) r.local_nome = canon;
+    });
+
+
     const inscSel = inscricaoId ? inscricoesDoProdutor.find(i => i.id === inscricaoId) : null;
     const filtroInscLabel = inscSel ? `${inscSel.inscricao_estadual}${(inscSel as any).nome_fantasia ? ' - ' + (inscSel as any).nome_fantasia : ''}` : null;
 
