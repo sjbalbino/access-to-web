@@ -1684,4 +1684,341 @@ export function gerarExtratoDepositosProdutorPdf(params: RelExtratoDepParams): v
 }
 
 
+// ==================== EXTRATO DE MOVIMENTAÇÃO (livro-razão cronológico) ====================
+
+export type MovOperacao =
+  | "deposito"
+  | "venda"
+  | "compra"
+  | "transf_entrada"
+  | "transf_saida"
+  | "devolucao";
+
+export interface ExtratoMovRow {
+  local_nome: string;
+  inscricao_id: string;
+  inscricao_estadual: string;
+  inscricao_nome: string;
+  data: string;
+  operacao: MovOperacao;
+  docto: string;
+  tipo: string;
+  variedade: string;
+  kilos: number;
+  sacos: number;
+  nfe: string;
+  contraparte: string;
+}
+
+export interface ExtratoMovParams {
+  produtorNome: string;
+  cpfCnpj: string | null;
+  safraNome: string;
+  filtroInscricao: string | null;
+  orientation?: "portrait" | "landscape";
+  format?: "a4" | "a3" | "letter" | "legal";
+  rows: ExtratoMovRow[];
+}
+
+const OP_LABELS: Record<MovOperacao, { code: string; label: string }> = {
+  deposito: { code: "1", label: "Deposito" },
+  venda: { code: "2", label: "Venda" },
+  transf_saida: { code: "4", label: "Transf.Saida" },
+  transf_entrada: { code: "5", label: "Transf.Entrada" },
+  devolucao: { code: "6", label: "Devolucao" },
+  compra: { code: "7", label: "Compras" },
+};
+
+export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
+  const doc = new jsPDF({
+    orientation: params.orientation || "landscape",
+    format: params.format || "a4",
+  });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
+
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("EXTRATO DE MOVIMENTAÇÃO", pageWidth / 2, 34, { align: "center" });
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Produtor: ${params.produtorNome}`, 14, 41);
+  if (params.cpfCnpj) doc.text(`CPF/CNPJ: ${params.cpfCnpj}`, pageWidth / 2, 41, { align: "center" });
+  doc.text(`Safra: ${params.safraNome}`, pageWidth - 14, 41, { align: "right" });
+  if (params.filtroInscricao) {
+    doc.text(`Filtro por IE: ${params.filtroInscricao}`, 14, 46);
+  }
+
+  const sorted = [...params.rows].sort((a, b) => {
+    const l = a.local_nome.localeCompare(b.local_nome, "pt-BR");
+    if (l !== 0) return l;
+    const ie = (b.inscricao_estadual || "").localeCompare(a.inscricao_estadual || "", "pt-BR");
+    if (ie !== 0) return ie;
+    const da = (a.data || "").localeCompare(b.data || "");
+    if (da !== 0) return da;
+    return (a.docto || "").localeCompare(b.docto || "", "pt-BR", { numeric: true });
+  });
+
+  const numCols = 10;
+  const body: any[] = [];
+  const groupHeaderRows: number[] = [];
+  const subgroupHeaderRows: number[] = [];
+  const inscTotalRows: number[] = [];
+  const localTotalRows: number[] = [];
+  const totalGeralRows: number[] = [];
+
+  const spacer = (label: string): any[] => [{ content: label, colSpan: numCols, styles: { fontStyle: "bold" } }];
+
+  type ResumoAcc = { local: string; opLabel: string; produto: string; entradas: number; saidas: number; sacos: number };
+  const resumoMap = new Map<string, ResumoAcc>();
+  const addResumo = (r: ExtratoMovRow) => {
+    const opLabel = OP_LABELS[r.operacao].label;
+    const produto = (r.operacao === "venda" || r.operacao === "devolucao") ? "" : (r.variedade || "");
+    const key = `${r.local_nome}|${opLabel}|${produto}`;
+    const acc = resumoMap.get(key) || { local: r.local_nome, opLabel, produto, entradas: 0, saidas: 0, sacos: 0 };
+    if (r.kilos >= 0) acc.entradas += r.kilos; else acc.saidas += r.kilos;
+    acc.sacos += r.sacos;
+    resumoMap.set(key, acc);
+  };
+
+  let currentLocal = "";
+  let currentInsc = "";
+  let localKilos = 0, localSacos = 0;
+  let inscKilos = 0, inscSacos = 0, inscSaldo = 0;
+  let totalGeralKilos = 0, totalGeralSacos = 0;
+
+  const flushInscTotal = () => {
+    if (!currentInsc) return;
+    body.push([
+      { content: "Total da Inscrição -->", colSpan: 5, styles: { fontStyle: "bold", halign: "right" } },
+      { content: formatNumber(inscKilos, 0), styles: { fontStyle: "bold", halign: "right" } },
+      { content: formatNumber(inscSacos, 0), styles: { fontStyle: "bold", halign: "right" } },
+      { content: "", colSpan: 3 },
+    ]);
+    inscTotalRows.push(body.length - 1);
+    inscKilos = 0; inscSacos = 0; inscSaldo = 0;
+  };
+  const flushLocalTotal = () => {
+    if (!currentLocal) return;
+    body.push([
+      { content: "Total Local Entrega -->", colSpan: 5, styles: { fontStyle: "bold", halign: "right" } },
+      { content: formatNumber(localKilos, 0), styles: { fontStyle: "bold", halign: "right" } },
+      { content: formatNumber(localSacos, 0), styles: { fontStyle: "bold", halign: "right" } },
+      { content: "", colSpan: 3 },
+    ]);
+    localTotalRows.push(body.length - 1);
+    localKilos = 0; localSacos = 0;
+  };
+
+  sorted.forEach((r) => {
+    if (r.local_nome !== currentLocal) {
+      flushInscTotal();
+      flushLocalTotal();
+      currentLocal = r.local_nome;
+      currentInsc = "";
+      body.push(spacer(`Local Entrega:   ${r.local_nome}`));
+      groupHeaderRows.push(body.length - 1);
+    }
+    if (r.inscricao_id !== currentInsc) {
+      flushInscTotal();
+      currentInsc = r.inscricao_id;
+      body.push(spacer(`Inscrição:   ${r.inscricao_estadual}                  Nome: ${r.inscricao_nome}`));
+      subgroupHeaderRows.push(body.length - 1);
+    }
+
+    inscSaldo += r.kilos;
+    inscKilos += r.kilos;
+    inscSacos += r.sacos;
+    localKilos += r.kilos;
+    localSacos += r.sacos;
+    totalGeralKilos += r.kilos;
+    totalGeralSacos += r.sacos;
+    addResumo(r);
+
+    const op = OP_LABELS[r.operacao];
+    body.push([
+      { content: formatDate(r.data), styles: { halign: "center" } },
+      `${op.code} ${op.label}`,
+      { content: r.docto || "", styles: { halign: "right" } },
+      r.tipo || "",
+      r.variedade || "",
+      { content: formatNumber(r.kilos, 0), styles: { halign: "right" } },
+      { content: formatNumber(r.sacos, 0), styles: { halign: "right" } },
+      { content: formatNumber(inscSaldo, 0), styles: { halign: "right" } },
+      { content: r.nfe || "", styles: { halign: "right" } },
+      r.contraparte || "",
+    ]);
+  });
+  flushInscTotal();
+  flushLocalTotal();
+
+  body.push([
+    { content: "Total do Produtor -->", colSpan: 5, styles: { fontStyle: "bold", halign: "right" } },
+    { content: formatNumber(totalGeralKilos, 0), styles: { fontStyle: "bold", halign: "right" } },
+    { content: formatNumber(totalGeralSacos, 0), styles: { fontStyle: "bold", halign: "right" } },
+    { content: "", colSpan: 3 },
+  ]);
+  totalGeralRows.push(body.length - 1);
+
+  autoTable(doc, {
+    startY: 52,
+    head: [[
+      { content: "Data", styles: { halign: "center" } },
+      "Operação",
+      { content: "Docto", styles: { halign: "right" } },
+      "Tipo",
+      "Variedade",
+      { content: "Kilos", styles: { halign: "right" } },
+      { content: "Sacos", styles: { halign: "right" } },
+      { content: "Saldo", styles: { halign: "right" } },
+      { content: "NFe", styles: { halign: "right" } },
+      "Comprador/Vendedor",
+    ]],
+    body,
+    styles: { fontSize: 7, cellPadding: 1.2, overflow: "linebreak" },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255 },
+    columnStyles: {
+      0: { cellWidth: 20, halign: "center" },
+      1: { cellWidth: 24 },
+      2: { cellWidth: 16, halign: "right" },
+      3: { cellWidth: 22 },
+      4: { cellWidth: 38 },
+      5: { cellWidth: 22, halign: "right" },
+      6: { cellWidth: 16, halign: "right" },
+      7: { cellWidth: 24, halign: "right" },
+      8: { cellWidth: 16, halign: "right" },
+      9: { cellWidth: "auto" },
+    },
+    didParseCell: (d) => {
+      if (d.section !== "body") return;
+      const idx = d.row.index;
+      if (groupHeaderRows.includes(idx)) {
+        d.cell.styles.fillColor = [220, 235, 245];
+        d.cell.styles.fontStyle = "bold";
+      } else if (subgroupHeaderRows.includes(idx)) {
+        d.cell.styles.fillColor = [235, 245, 235];
+        d.cell.styles.fontStyle = "bold";
+      } else if (inscTotalRows.includes(idx)) {
+        d.cell.styles.fillColor = [245, 245, 245];
+        d.cell.styles.fontStyle = "bold";
+      } else if (localTotalRows.includes(idx)) {
+        d.cell.styles.fillColor = [230, 230, 230];
+        d.cell.styles.fontStyle = "bold";
+      } else if (totalGeralRows.includes(idx)) {
+        d.cell.styles.fillColor = [210, 210, 210];
+        d.cell.styles.fontStyle = "bold";
+      }
+    },
+  });
+
+  // ============ RESUMO GERAL ============
+  let yPos = (doc as any).lastAutoTable.finalY + 6;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  if (yPos > pageHeight - 60) {
+    doc.addPage();
+    yPos = 20;
+  }
+
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text("RESUMO GERAL", pageWidth / 2, yPos, { align: "center" });
+  yPos += 4;
+
+  const porLocal = new Map<string, ResumoAcc[]>();
+  Array.from(resumoMap.values()).forEach((r) => {
+    const arr = porLocal.get(r.local) || [];
+    arr.push(r);
+    porLocal.set(r.local, arr);
+  });
+
+  const resumoBody: any[] = [];
+  const localHeaderIdx: number[] = [];
+  const localTotIdx: number[] = [];
+  let grandEntradas = 0, grandSaidas = 0;
+
+  Array.from(porLocal.entries())
+    .sort(([a], [b]) => a.localeCompare(b, "pt-BR"))
+    .forEach(([local, items]) => {
+      resumoBody.push([{ content: `Local Entrega:   ${local}`, colSpan: 5, styles: { fontStyle: "bold" } }]);
+      localHeaderIdx.push(resumoBody.length - 1);
+
+      let ent = 0, sai = 0;
+      items
+        .sort((a, b) => a.opLabel.localeCompare(b.opLabel, "pt-BR") || a.produto.localeCompare(b.produto, "pt-BR"))
+        .forEach((r) => {
+          ent += r.entradas; sai += r.saidas;
+          resumoBody.push([
+            "",
+            r.opLabel,
+            r.produto,
+            { content: formatNumber(r.entradas, 0), styles: { halign: "right" } },
+            { content: formatNumber(r.saidas, 0), styles: { halign: "right" } },
+          ]);
+        });
+      resumoBody.push([
+        { content: "Total do Local -->", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+        { content: formatNumber(ent, 0), styles: { fontStyle: "bold", halign: "right" } },
+        { content: formatNumber(sai, 0), styles: { fontStyle: "bold", halign: "right" } },
+      ]);
+      localTotIdx.push(resumoBody.length - 1);
+      resumoBody.push([
+        { content: "Saldo do Local -->", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+        { content: formatNumber(ent + sai, 0), colSpan: 2, styles: { fontStyle: "bold", halign: "right" } },
+      ]);
+      localTotIdx.push(resumoBody.length - 1);
+
+      grandEntradas += ent; grandSaidas += sai;
+    });
+
+  resumoBody.push([
+    { content: "Total Geral -->", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+    { content: formatNumber(grandEntradas, 0), styles: { fontStyle: "bold", halign: "right" } },
+    { content: formatNumber(grandSaidas, 0), styles: { fontStyle: "bold", halign: "right" } },
+  ]);
+  const gTot1 = resumoBody.length - 1;
+  resumoBody.push([
+    { content: "Saldo Geral -->", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
+    { content: formatNumber(grandEntradas + grandSaidas, 0), colSpan: 2, styles: { fontStyle: "bold", halign: "right" } },
+  ]);
+  const gTot2 = resumoBody.length - 1;
+
+  autoTable(doc, {
+    startY: yPos + 2,
+    head: [[
+      "",
+      "Operação",
+      "Produto",
+      { content: "Entradas", styles: { halign: "right" } },
+      { content: "Saídas", styles: { halign: "right" } },
+    ]],
+    body: resumoBody,
+    styles: { fontSize: 8, cellPadding: 1.5 },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255 },
+    columnStyles: {
+      0: { cellWidth: 14 },
+      1: { cellWidth: 40 },
+      2: { cellWidth: "auto" },
+      3: { cellWidth: 32, halign: "right" },
+      4: { cellWidth: 32, halign: "right" },
+    },
+    didParseCell: (d) => {
+      if (d.section !== "body") return;
+      const idx = d.row.index;
+      if (localHeaderIdx.includes(idx)) {
+        d.cell.styles.fillColor = [220, 235, 245];
+        d.cell.styles.fontStyle = "bold";
+      } else if (localTotIdx.includes(idx)) {
+        d.cell.styles.fillColor = [235, 235, 235];
+        d.cell.styles.fontStyle = "bold";
+      } else if (idx === gTot1 || idx === gTot2) {
+        d.cell.styles.fillColor = [210, 210, 210];
+        d.cell.styles.fontStyle = "bold";
+      }
+    },
+  });
+
+  desenharRodapeBrand(doc);
+  downloadPdf(doc, `extrato_movimentacao_${params.produtorNome.replace(/\s/g, "_")}.pdf`);
+}
 
