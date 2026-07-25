@@ -67,6 +67,14 @@ export interface ExtratoNotaDeposito {
   local_entrega?: string | null;
 }
 
+export interface ExtratoCompra {
+  data_compra: string;
+  contraparte: string | null;
+  quantidade_kg: number;
+  nfe: string | null;
+  local_entrega?: string | null;
+}
+
 export interface ExtratoData {
   produtorNome: string;
   cpfCnpj: string | null;
@@ -78,7 +86,10 @@ export interface ExtratoData {
   transferenciasEnviadas: ExtratoTransferencia[];
   devolucoes: ExtratoDevolucao[];
   notasDeposito: ExtratoNotaDeposito[];
+  comprasAdquiridas?: ExtratoCompra[]; // sócio como comprador (entrada)
+  comprasVendidas?: ExtratoCompra[];    // sócio como vendedor (saída)
 }
+
 
 export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   const doc = new jsPDF({ orientation: "landscape" });
