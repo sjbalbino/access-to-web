@@ -381,36 +381,8 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     4,
   );
 
-  // COMPRAS DE CEREAIS — como VENDEDOR (saída)
-  const comprasVend = data.comprasVendidas || [];
-  renderSection<ExtratoCompra>(
-    "COMPRAS DE CEREAIS (Sócio Vendedor)",
-    comprasVend,
-    (c) => localOf(c.local_entrega),
-    (c) => [
-      localOf(c.local_entrega),
-      formatDate(c.data_compra),
-      c.contraparte || "-",
-      c.nfe || "-",
-      formatNumber(c.quantidade_kg, 0),
-      toSacas(c.quantidade_kg),
-    ],
-    2,
-    (list) => {
-      const tot = sumBy(list, "quantidade_kg");
-      return [formatNumber(tot, 0), toSacas(tot)];
-    },
-    [
-      "Local",
-      { content: "Data", styles: { halign: "center" } },
-      "Comprador",
-      "NFe",
-      { content: "Qtd (kg)", styles: { halign: "right" } },
-      { content: "Sacas", styles: { halign: "right" } },
-    ],
-    { 0: { halign: "left", cellWidth: 30 }, 1: { halign: "center", cellWidth: 25 }, 2: { halign: "left" }, 3: { halign: "left", cellWidth: 22 }, 4: { halign: "right", cellWidth: 28 }, 5: { halign: "right", cellWidth: 24 } },
-    4,
-  );
+
+
 
 
 
