@@ -1677,13 +1677,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Produtor - resumo_produtor */}
-          {tipo === "resumo_produtor" && (
+          {/* Produtor - resumo_produtor / extrato_depositos */}
+          {(tipo === "resumo_produtor" || tipo === "extrato_depositos") && (
             <div>
               <Label>Produtor *</Label>
               <ComboboxFilter
                 value={produtorId}
-                onValueChange={setProdutorId}
+                onValueChange={(v) => { setProdutorId(v); setInscricaoId(""); }}
                 options={(produtoresList || [])
                   .filter(p => p.ativo !== false)
                   .slice()
@@ -1694,6 +1694,61 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 emptyText="Nenhum produtor encontrado."
                 popoverWidth="w-[400px]"
               />
+            </div>
+          )}
+
+          {/* Inscrição (IE) opcional - extrato_depositos */}
+          {tipo === "extrato_depositos" && (
+            <div>
+              <Label>Inscrição (IE) — opcional</Label>
+              <ComboboxFilter
+                value={inscricaoId}
+                onValueChange={setInscricaoId}
+                options={(inscricoes || [])
+                  .filter(i => i.produtores?.id === produtorId || i.produtor_id === produtorId)
+                  .map(i => ({
+                    value: i.id,
+                    label: `${i.inscricao_estadual || "-"}${i.nome_fantasia ? ` - ${i.nome_fantasia}` : ''}`,
+                  }))}
+                placeholder="Todas as IEs (relatório geral)"
+                searchPlaceholder="Buscar IE..."
+                emptyText={produtorId ? "Nenhuma IE encontrada." : "Selecione o produtor primeiro."}
+                allLabel="Todas"
+                disabled={!produtorId}
+                popoverWidth="w-[400px]"
+              />
+            </div>
+          )}
+
+          {/* Orientação e Tamanho da Página - vendas / extrato_depositos */}
+          {(tipo === "vendas" || tipo === "extrato_depositos") && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="min-w-0">
+                <Label>Orientação</Label>
+                <ComboboxFilter
+                  value={vendasOrientacao}
+                  onValueChange={(v) => setVendasOrientacao(v as "portrait" | "landscape")}
+                  options={[
+                    { value: "landscape", label: "Paisagem" },
+                    { value: "portrait", label: "Retrato" },
+                  ]}
+                  searchPlaceholder="Buscar..."
+                />
+              </div>
+              <div className="min-w-0">
+                <Label>Tamanho</Label>
+                <ComboboxFilter
+                  value={vendasTamanho}
+                  onValueChange={(v) => setVendasTamanho(v as "a4" | "a3" | "letter" | "legal")}
+                  options={[
+                    { value: "a4", label: "A4" },
+                    { value: "a3", label: "A3" },
+                    { value: "letter", label: "Carta (Letter)" },
+                    { value: "legal", label: "Ofício (Legal)" },
+                  ]}
+                  searchPlaceholder="Buscar..."
+                />
+              </div>
             </div>
           )}
 
