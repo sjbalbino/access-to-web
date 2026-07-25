@@ -1416,4 +1416,272 @@ export function gerarResumoColheitaLavouraPdf(params: RelResumoColheitaLavouraPa
   downloadPdf(doc, "resumo_colheita_lavoura.pdf");
 }
 
+// ==================== EXTRATO DE DEPÓSITOS POR PRODUTOR ====================
+
+export interface RelExtratoDepRow {
+  local_nome: string;
+  inscricao_id: string;
+  inscricao_estadual: string;
+  inscricao_nome: string;      // "MARCIO GRINGS - BOA VISTA DO INCRA"
+  data_colheita: string | null;
+  romaneio: string;
+  tipo_colheita: string;
+  peso_bruto: number;
+  peso_tara: number;
+  peso_liquido: number;        // bruto - tara
+  perc_impureza: number;
+  kg_impureza: number;
+  perc_umidade: number;
+  perc_desconto: number;
+  kg_umidade: number;
+  perc_avariados: number;
+  kg_avariados: number;
+  perc_outros: number;
+  kg_outros: number;
+  kg_desconto_total: number;
+  producao_liquida_kg: number;
+  total_sacos: number;
+  ph: number;
+  variedade: string;
+}
+
+export interface RelExtratoDepParams {
+  produtorNome: string;
+  safraNome: string;
+  culturaNome: string;
+  filtroInscricao: string | null; // rótulo quando individual; null = geral
+  orientation?: "portrait" | "landscape";
+  format?: "a4" | "a3" | "letter" | "legal";
+  rows: RelExtratoDepRow[];
+}
+
+export function gerarExtratoDepositosProdutorPdf(params: RelExtratoDepParams): void {
+  const doc = new jsPDF({
+    orientation: params.orientation || "landscape",
+    format: params.format || "a4",
+  });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
+
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("EXTRATO DE DEPÓSITOS", pageWidth / 2, 34, { align: "center" });
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Produtor: ${params.produtorNome}`, 14, 41);
+  doc.text(`Safra: ${params.safraNome}`, pageWidth / 2, 41, { align: "center" });
+  doc.text(`Cultura: ${params.culturaNome}`, pageWidth - 14, 41, { align: "right" });
+  if (params.filtroInscricao) {
+    doc.text(`Filtro por IE: ${params.filtroInscricao}`, 14, 46);
+  }
+
+  const numCols = 20; // total de colunas
+  const spacerCells = (label: string): any[] => {
+    const arr: any[] = new Array(numCols).fill("");
+    arr[0] = label;
+    return arr;
+  };
+
+  const rows = params.rows;
+  const body: any[] = [];
+  const groupHeaderRows: number[] = []; // Local
+  const subgroupHeaderRows: number[] = []; // Inscrição
+  const dayTotalRows: number[] = [];
+  const inscTotalRows: number[] = [];
+  const localTotalRows: number[] = [];
+  const totalGeralRows: number[] = [];
+
+  // Média ponderada (impureza/umidade) usando produção líquida como peso
+  const mediaPond = (list: RelExtratoDepRow[], fn: (r: RelExtratoDepRow) => number): number => {
+    const totPeso = list.reduce((a, r) => a + (r.producao_liquida_kg || 0), 0);
+    if (totPeso <= 0) return 0;
+    const acc = list.reduce((a, r) => a + (fn(r) || 0) * (r.producao_liquida_kg || 0), 0);
+    return acc / totPeso;
+  };
+
+  const somaRow = (label: string, list: RelExtratoDepRow[]): any[] => {
+    const s = (fn: (r: RelExtratoDepRow) => number) => list.reduce((a, r) => a + (fn(r) || 0), 0);
+    return [
+      label,
+      String(list.length),
+      "",
+      formatNumber(s(r => r.peso_bruto), 0),
+      formatNumber(s(r => r.peso_tara), 0),
+      formatNumber(s(r => r.peso_liquido), 0),
+      formatNumber(mediaPond(list, r => r.perc_impureza), 2),
+      formatNumber(s(r => r.kg_impureza), 0),
+      formatNumber(mediaPond(list, r => r.perc_umidade), 2),
+      "",
+      formatNumber(s(r => r.kg_umidade), 0),
+      formatNumber(s(r => r.kg_avariados), 0),
+      formatNumber(s(r => r.kg_outros), 0),
+      formatNumber(s(r => r.kg_desconto_total), 0),
+      formatNumber(s(r => r.producao_liquida_kg), 0),
+      formatNumber(s(r => r.total_sacos), 0),
+      "",
+      "",
+      "",
+      "",
+    ];
+  };
+
+  // Ordenar por Local -> Inscrição (por IE) -> Data -> Romaneio
+  const rowsOrdenadas = [...rows].sort((a, b) => {
+    const l = a.local_nome.localeCompare(b.local_nome, "pt-BR");
+    if (l !== 0) return l;
+    const ie = a.inscricao_estadual.localeCompare(b.inscricao_estadual, "pt-BR");
+    if (ie !== 0) return ie;
+    const d = (a.data_colheita || "").localeCompare(b.data_colheita || "");
+    if (d !== 0) return d;
+    return (a.romaneio || "").localeCompare(b.romaneio || "", "pt-BR", { numeric: true });
+  });
+
+  // Agrupamento Local -> Inscrição -> Data
+  const porLocal = new Map<string, RelExtratoDepRow[]>();
+  rowsOrdenadas.forEach(r => {
+    if (!porLocal.has(r.local_nome)) porLocal.set(r.local_nome, []);
+    porLocal.get(r.local_nome)!.push(r);
+  });
+
+  porLocal.forEach((listaLocal, local) => {
+    body.push(spacerCells(`Local Entrega: ${local}`));
+    groupHeaderRows.push(body.length - 1);
+
+    const porInsc = new Map<string, RelExtratoDepRow[]>();
+    listaLocal.forEach(r => {
+      const k = r.inscricao_id;
+      if (!porInsc.has(k)) porInsc.set(k, []);
+      porInsc.get(k)!.push(r);
+    });
+
+    porInsc.forEach((listaInsc) => {
+      const first = listaInsc[0];
+      body.push(spacerCells(`Inscrição: ${first.inscricao_estadual}   Nome: ${first.inscricao_nome}`));
+      subgroupHeaderRows.push(body.length - 1);
+
+      let acumKg = 0;
+      let acumSc = 0;
+
+      const porData = new Map<string, RelExtratoDepRow[]>();
+      listaInsc.forEach(r => {
+        const k = r.data_colheita || "";
+        if (!porData.has(k)) porData.set(k, []);
+        porData.get(k)!.push(r);
+      });
+
+      porData.forEach((rowsDia, data) => {
+        rowsDia.forEach(r => {
+          acumKg += r.producao_liquida_kg || 0;
+          acumSc += r.total_sacos || 0;
+          body.push([
+            formatDate(r.data_colheita),
+            r.romaneio || "",
+            r.tipo_colheita || "",
+            formatNumber(r.peso_bruto, 0),
+            formatNumber(r.peso_tara, 0),
+            formatNumber(r.peso_liquido, 0),
+            r.perc_impureza ? formatNumber(r.perc_impureza, 2) : "",
+            r.kg_impureza ? formatNumber(r.kg_impureza, 0) : "",
+            r.perc_umidade ? formatNumber(r.perc_umidade, 2) : "",
+            r.perc_desconto ? formatNumber(r.perc_desconto, 2) : "",
+            r.kg_umidade ? formatNumber(r.kg_umidade, 0) : "",
+            r.kg_avariados ? formatNumber(r.kg_avariados, 0) : "0",
+            r.kg_outros ? formatNumber(r.kg_outros, 0) : "0",
+            formatNumber(r.kg_desconto_total, 0),
+            formatNumber(r.producao_liquida_kg, 0),
+            formatNumber(r.total_sacos, 0),
+            formatNumber(acumKg, 0),
+            formatNumber(acumSc, 0),
+            r.ph ? formatNumber(r.ph, 2) : "0,00",
+            r.variedade || "",
+          ]);
+        });
+        const totDia = somaRow(`Total do Dia --> ${formatDate(data)}`, rowsDia);
+        body.push(totDia);
+        dayTotalRows.push(body.length - 1);
+      });
+
+      const totInsc = somaRow(`Total Inscrição --> ${first.inscricao_estadual}`, listaInsc);
+      body.push(totInsc);
+      inscTotalRows.push(body.length - 1);
+    });
+
+    const totLocal = somaRow(`Total Local Entrega --> ${local}`, listaLocal);
+    body.push(totLocal);
+    localTotalRows.push(body.length - 1);
+  });
+
+  const totGeral = somaRow(`TOTAL GERAL --->`, rowsOrdenadas);
+  body.push(totGeral);
+  totalGeralRows.push(body.length - 1);
+
+  autoTable(doc, {
+    startY: params.filtroInscricao ? 51 : 46,
+    head: [[
+      { content: "Data", styles: { halign: "center" } },
+      { content: "Roma.", styles: { halign: "center" } },
+      { content: "Tipo", styles: { halign: "center" } },
+      { content: "Bruto", styles: { halign: "right" } },
+      { content: "Tara", styles: { halign: "right" } },
+      { content: "Líquido", styles: { halign: "right" } },
+      { content: "%Imp", styles: { halign: "right" } },
+      { content: "Kg.Imp", styles: { halign: "right" } },
+      { content: "%Um", styles: { halign: "right" } },
+      { content: "%Um.Dsc", styles: { halign: "right" } },
+      { content: "Kg.Um", styles: { halign: "right" } },
+      { content: "Avar", styles: { halign: "right" } },
+      { content: "Out.", styles: { halign: "right" } },
+      { content: "Kg.Desc.", styles: { halign: "right" } },
+      { content: "Líq.Final", styles: { halign: "right" } },
+      { content: "Sacos", styles: { halign: "right" } },
+      { content: "Acum.Kg", styles: { halign: "right" } },
+      { content: "Acum.Sc", styles: { halign: "right" } },
+      { content: "PH", styles: { halign: "right" } },
+      { content: "Variedade", styles: { halign: "left" } },
+    ]],
+    body,
+    styles: { fontSize: 6.5, cellPadding: 1 },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255, fontSize: 7 },
+    columnStyles: {
+      0: { halign: "center" },
+      1: { halign: "center" },
+      2: { halign: "center" },
+      3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" },
+      6: { halign: "right" }, 7: { halign: "right" }, 8: { halign: "right" },
+      9: { halign: "right" }, 10: { halign: "right" }, 11: { halign: "right" },
+      12: { halign: "right" }, 13: { halign: "right" }, 14: { halign: "right" },
+      15: { halign: "right" }, 16: { halign: "right" }, 17: { halign: "right" },
+      18: { halign: "right" }, 19: { halign: "left" },
+    },
+    didParseCell: (d) => {
+      if (d.section !== "body") return;
+      const idx = d.row.index;
+      if (groupHeaderRows.includes(idx)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [200, 220, 240];
+      } else if (subgroupHeaderRows.includes(idx)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [225, 235, 245];
+      } else if (totalGeralRows.includes(idx)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [180, 180, 180];
+      } else if (localTotalRows.includes(idx)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [205, 205, 205];
+      } else if (inscTotalRows.includes(idx)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [225, 225, 225];
+      } else if (dayTotalRows.includes(idx)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [240, 240, 240];
+      }
+    },
+  });
+
+  desenharRodapeBrand(doc);
+  downloadPdf(doc, `extrato_depositos_${params.produtorNome.replace(/\s/g, "_")}.pdf`);
+}
+
+
 

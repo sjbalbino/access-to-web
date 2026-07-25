@@ -22,11 +22,13 @@ import {
   gerarResumoProdutorPdf,
   gerarColheitaDiariaPdf,
   gerarResumoColheitaLavouraPdf,
+  gerarExtratoDepositosProdutorPdf,
   type ExtratoData,
   type RelColheita,
   type RelContratoVenda,
   type RelColheitaDiariaRow,
   type RelResumoColheitaRow,
+  type RelExtratoDepRow,
   type ResumoProdutorRow,
 } from "@/lib/relatoriosPdf";
 
@@ -52,7 +54,7 @@ import { captureNextRelatorio, cancelPendingCapture, setPendingSheets, type Rela
 import { loadPdfBrand } from "@/lib/pdfBrand";
 import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
 
-export type TipoRelatorio = "extrato" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "resumo_colheita_lavoura" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+export type TipoRelatorio = "extrato" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "resumo_colheita_lavoura" | "extrato_depositos" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 
 interface Props {
@@ -233,6 +235,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     colheita_diaria: "Colheita Diária",
 
     resumo_colheita_lavoura: "Resumo da Colheita por Lavoura",
+    extrato_depositos: "Extrato de Depósitos por Produtor",
     vendas: "Relatório de Vendas",
 
     demonstrativo_gerencial: "Demonstrativo Gerencial",
@@ -264,6 +267,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       else if (tipo === "colheitas") await gerarColheitas();
       else if (tipo === "colheita_diaria") await gerarColheitaDiaria();
       else if (tipo === "resumo_colheita_lavoura") await gerarResumoColheitaLavoura();
+      else if (tipo === "extrato_depositos") await gerarExtratoDepositos();
 
 
       else if (tipo === "vendas") await gerarVendas();
@@ -1092,6 +1096,106 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     });
   };
 
+  // ========== EXTRATO DE DEPÓSITOS POR PRODUTOR ==========
+  const gerarExtratoDepositos = async () => {
+    if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
+    if (!produtorId) { toast({ title: "Filtro obrigatório", description: "Selecione o produtor.", variant: "destructive" }); return; }
+
+    const { data: safraRow } = await supabase
+      .from("safras")
+      .select("id, nome, cultura:cultura_id(nome)")
+      .eq("id", safraId)
+      .maybeSingle();
+    const culturaNome = (safraRow as any)?.cultura?.nome || "-";
+    const safraNome = safraRow?.nome || "-";
+
+    const produtorSel = produtoresList?.find(p => p.id === produtorId);
+    const produtorNome = produtorSel?.nome || "-";
+
+    // IEs do produtor selecionado
+    const inscricoesDoProdutor = (inscricoes || []).filter(i => i.produtores?.id === produtorId || i.produtor_id === produtorId);
+    let inscricaoIdsFiltro = inscricoesDoProdutor.map(i => i.id);
+    if (inscricaoId) inscricaoIdsFiltro = inscricaoIdsFiltro.filter(id => id === inscricaoId);
+    if (inscricaoIdsFiltro.length === 0) {
+      toast({ title: "Sem dados", description: "Produtor sem inscrições cadastradas." });
+      return;
+    }
+
+    let q = supabase
+      .from("colheitas")
+      .select(`
+        data_colheita, peso_bruto, peso_tara, producao_kg, kg_impureza, impureza, umidade, percentual_desconto,
+        kg_umidade, percentual_avariados, kg_avariados, percentual_outros, kg_outros,
+        kg_desconto_total, producao_liquida_kg, total_sacos, romaneio, ph, tipo_colheita,
+        local_entrega_terceiro_id, inscricao_produtor_id,
+        variedade:produtos!colheitas_variedade_id_fkey(nome),
+        inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
+          id, inscricao_estadual, nome_fantasia, produtores:produtor_id(nome)
+        ),
+        local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(nome)
+      `)
+      .eq("safra_id", safraId)
+      .in("inscricao_produtor_id", inscricaoIdsFiltro)
+      .gt("producao_liquida_kg", 0);
+
+    if (dataInicial) q = q.gte("data_colheita", dataInicial);
+    if (dataFinal) q = q.lte("data_colheita", dataFinal);
+
+    const { data, error } = await q.order("data_colheita");
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhum depósito encontrado para os filtros." });
+      return;
+    }
+
+    const rows: RelExtratoDepRow[] = (data as any[]).map((c: any) => {
+      const bruto = Number(c.peso_bruto) || 0;
+      const tara = Number(c.peso_tara) || 0;
+      const liquido = Number(c.producao_kg) || Math.max(0, bruto - tara);
+      const inscNome = c.inscricao_produtor?.produtores?.nome || "-";
+      const inscFant = c.inscricao_produtor?.nome_fantasia || "";
+      return {
+        local_nome: c.local_entrega?.nome || tenantSedeNome,
+        inscricao_id: c.inscricao_produtor?.id || c.inscricao_produtor_id,
+        inscricao_estadual: c.inscricao_produtor?.inscricao_estadual || "-",
+        inscricao_nome: inscFant ? `${inscNome} - ${inscFant}` : inscNome,
+        data_colheita: c.data_colheita,
+        romaneio: c.romaneio != null ? String(c.romaneio) : "",
+        tipo_colheita: c.tipo_colheita || "",
+        peso_bruto: bruto,
+        peso_tara: tara,
+        peso_liquido: liquido,
+        perc_impureza: Number(c.impureza) || 0,
+        kg_impureza: Number(c.kg_impureza) || 0,
+        perc_umidade: Number(c.umidade) || 0,
+        perc_desconto: Number(c.percentual_desconto) || 0,
+        kg_umidade: Number(c.kg_umidade) || 0,
+        perc_avariados: Number(c.percentual_avariados) || 0,
+        kg_avariados: Number(c.kg_avariados) || 0,
+        perc_outros: Number(c.percentual_outros) || 0,
+        kg_outros: Number(c.kg_outros) || 0,
+        kg_desconto_total: Number(c.kg_desconto_total) || 0,
+        producao_liquida_kg: Number(c.producao_liquida_kg) || 0,
+        total_sacos: Number(c.total_sacos) || 0,
+        ph: Number(c.ph) || 0,
+        variedade: c.variedade?.nome || "-",
+      };
+    });
+
+    const inscSel = inscricaoId ? inscricoesDoProdutor.find(i => i.id === inscricaoId) : null;
+    const filtroInscLabel = inscSel ? `${inscSel.inscricao_estadual}${inscSel.nome_fantasia ? ' - ' + inscSel.nome_fantasia : ''}` : null;
+
+    gerarExtratoDepositosProdutorPdf({
+      produtorNome,
+      safraNome,
+      culturaNome,
+      filtroInscricao: filtroInscLabel,
+      orientation: vendasOrientacao,
+      format: vendasTamanho,
+      rows,
+    });
+  };
+
   // ========== RESUMO DA COLHEITA POR LAVOURA ==========
   const gerarResumoColheitaLavoura = async () => {
     if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
@@ -1573,13 +1677,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Produtor - resumo_produtor */}
-          {tipo === "resumo_produtor" && (
+          {/* Produtor - resumo_produtor / extrato_depositos */}
+          {(tipo === "resumo_produtor" || tipo === "extrato_depositos") && (
             <div>
               <Label>Produtor *</Label>
               <ComboboxFilter
                 value={produtorId}
-                onValueChange={setProdutorId}
+                onValueChange={(v) => { setProdutorId(v); setInscricaoId(""); }}
                 options={(produtoresList || [])
                   .filter(p => p.ativo !== false)
                   .slice()
@@ -1590,6 +1694,61 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 emptyText="Nenhum produtor encontrado."
                 popoverWidth="w-[400px]"
               />
+            </div>
+          )}
+
+          {/* Inscrição (IE) opcional - extrato_depositos */}
+          {tipo === "extrato_depositos" && (
+            <div>
+              <Label>Inscrição (IE) — opcional</Label>
+              <ComboboxFilter
+                value={inscricaoId}
+                onValueChange={setInscricaoId}
+                options={(inscricoes || [])
+                  .filter(i => i.produtores?.id === produtorId || i.produtor_id === produtorId)
+                  .map(i => ({
+                    value: i.id,
+                    label: `${i.inscricao_estadual || "-"}${i.nome_fantasia ? ` - ${i.nome_fantasia}` : ''}`,
+                  }))}
+                placeholder="Todas as IEs (relatório geral)"
+                searchPlaceholder="Buscar IE..."
+                emptyText={produtorId ? "Nenhuma IE encontrada." : "Selecione o produtor primeiro."}
+                allLabel="Todas"
+                disabled={!produtorId}
+                popoverWidth="w-[400px]"
+              />
+            </div>
+          )}
+
+          {/* Orientação e Tamanho da Página - vendas / extrato_depositos */}
+          {(tipo === "vendas" || tipo === "extrato_depositos") && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="min-w-0">
+                <Label>Orientação</Label>
+                <ComboboxFilter
+                  value={vendasOrientacao}
+                  onValueChange={(v) => setVendasOrientacao(v as "portrait" | "landscape")}
+                  options={[
+                    { value: "landscape", label: "Paisagem" },
+                    { value: "portrait", label: "Retrato" },
+                  ]}
+                  searchPlaceholder="Buscar..."
+                />
+              </div>
+              <div className="min-w-0">
+                <Label>Tamanho</Label>
+                <ComboboxFilter
+                  value={vendasTamanho}
+                  onValueChange={(v) => setVendasTamanho(v as "a4" | "a3" | "letter" | "legal")}
+                  options={[
+                    { value: "a4", label: "A4" },
+                    { value: "a3", label: "A3" },
+                    { value: "letter", label: "Carta (Letter)" },
+                    { value: "legal", label: "Ofício (Legal)" },
+                  ]}
+                  searchPlaceholder="Buscar..."
+                />
+              </div>
             </div>
           )}
 
@@ -1670,37 +1829,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Orientação e Tamanho da Página - vendas */}
-          {tipo === "vendas" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="min-w-0">
-                <Label>Orientação</Label>
-                <ComboboxFilter
-                  value={vendasOrientacao}
-                  onValueChange={(v) => setVendasOrientacao(v as "portrait" | "landscape")}
-                  options={[
-                    { value: "landscape", label: "Paisagem" },
-                    { value: "portrait", label: "Retrato" },
-                  ]}
-                  searchPlaceholder="Buscar..."
-                />
-              </div>
-              <div className="min-w-0">
-                <Label>Tamanho</Label>
-                <ComboboxFilter
-                  value={vendasTamanho}
-                  onValueChange={(v) => setVendasTamanho(v as "a4" | "a3" | "letter" | "legal")}
-                  options={[
-                    { value: "a4", label: "A4" },
-                    { value: "a3", label: "A3" },
-                    { value: "letter", label: "Carta (Letter)" },
-                    { value: "legal", label: "Ofício (Legal)" },
-                  ]}
-                  searchPlaceholder="Buscar..."
-                />
-              </div>
-            </div>
-          )}
+
+
 
           {/* Granja - management reports */}
           {isGestao && (
