@@ -144,7 +144,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id").eq("safra_id", safraId),
         supabase.from("devolucoes_deposito").select("inscricao_produtor_id").eq("safra_id", safraId).neq("status", "cancelada"),
         supabase.from("notas_deposito_emitidas").select("inscricao_produtor_id").eq("safra_id", safraId),
-        supabase.from("compras_cereais").select("inscricao_vendedor_id, inscricao_comprador_id").eq("safra_id", safraId),
+        supabase.from("compras_cereais").select("inscricao_comprador_id").eq("safra_id", safraId),
         supabase.from("contratos_venda").select("inscricao_produtor_id").eq("safra_id", safraId),
       ]);
 
@@ -160,7 +160,6 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       (devolucoesRes.data || []).forEach((row) => adicionarId(ids, row.inscricao_produtor_id));
       (notasDepositoRes.data || []).forEach((row) => adicionarId(ids, row.inscricao_produtor_id));
       (comprasRes.data || []).forEach((row) => {
-        adicionarId(ids, row.inscricao_vendedor_id);
         adicionarId(ids, row.inscricao_comprador_id);
       });
       (contratosRes.data || []).forEach((row) => adicionarId(ids, row.inscricao_produtor_id));
@@ -864,16 +863,13 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       .eq("inscricao_produtor_id", inscricaoId).eq("safra_id", safraId);
     const { data: notasDep } = await ndQuery.order("data_emissao");
 
-    // Compras de Cereais — como comprador (entrada) e como vendedor (saída)
+    // Compras de Cereais — somente quando a inscrição é o COMPRADOR/Sócio.
+    // O vendedor não movimenta o saldo do Extrato do Produtor neste relatório.
     const compAdqQuery = supabase.from("compras_cereais")
-      .select("data_compra, quantidade_kg, numero_nota_legado, local_entrega:locais_entrega(nome), inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, produtores(nome)), nota_fiscal:notas_fiscais(numero)")
+      .select("codigo, data_compra, quantidade_kg, local_entrega:locais_entrega!compras_cereais_local_entrega_id_fkey(nome), inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, produtores(nome)), nota_fiscal:notas_fiscais(numero)")
       .eq("inscricao_comprador_id", inscricaoId).eq("safra_id", safraId);
-    const { data: compAdq } = await compAdqQuery.order("data_compra");
-
-    const compVendQuery = supabase.from("compras_cereais")
-      .select("data_compra, quantidade_kg, numero_nota_legado, local_entrega:locais_entrega(nome), inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, produtores(nome)), nota_fiscal:notas_fiscais(numero)")
-      .eq("inscricao_vendedor_id", inscricaoId).eq("safra_id", safraId);
-    const { data: compVend } = await compVendQuery.order("data_compra");
+    const { data: compAdq, error: compAdqError } = await compAdqQuery.order("data_compra");
+    if (compAdqError) throw compAdqError;
 
     const extratoData: ExtratoData = {
       produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
@@ -887,13 +883,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       comprasAdquiridas: (compAdq || []).map((c: any) => ({
         data_compra: c.data_compra, quantidade_kg: Number(c.quantidade_kg) || 0,
         contraparte: c.inscricao_vendedor?.produtores?.nome ? `${c.inscricao_vendedor.produtores.nome} - IE:${c.inscricao_vendedor.inscricao_estadual || ""}` : null,
-        nfe: c.nota_fiscal?.numero ? String(c.nota_fiscal.numero) : (c.numero_nota_legado || null),
-        local_entrega: c.local_entrega?.nome || null,
-      })),
-      comprasVendidas: (compVend || []).map((c: any) => ({
-        data_compra: c.data_compra, quantidade_kg: Number(c.quantidade_kg) || 0,
-        contraparte: c.inscricao_comprador?.produtores?.nome ? `${c.inscricao_comprador.produtores.nome} - IE:${c.inscricao_comprador.inscricao_estadual || ""}` : null,
-        nfe: c.nota_fiscal?.numero ? String(c.nota_fiscal.numero) : (c.numero_nota_legado || null),
+        nfe: c.nota_fiscal?.numero ? String(c.nota_fiscal.numero) : null,
         local_entrega: c.local_entrega?.nome || null,
       })),
     };
@@ -932,12 +922,19 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       ndRows.push(["TOTAL", "", tot, sc(tot)]);
     }
 
+    const comprasAdqRows = (extratoData.comprasAdquiridas || []).map(c => [c.data_compra, c.contraparte ?? "", c.nfe ?? "", c.quantidade_kg, sc(Number(c.quantidade_kg) || 0)]);
+    if (comprasAdqRows.length) {
+      const tot = sum(extratoData.comprasAdquiridas || [], "quantidade_kg");
+      comprasAdqRows.push(["TOTAL", "", "", tot, sc(tot)]);
+    }
+
     const totalColheitas = sum(extratoData.colheitas, "producao_liquida_kg");
     const totalTrRec = sum(extratoData.transferenciasRecebidas, "quantidade_kg");
     const totalTrEnv = sum(extratoData.transferenciasEnviadas, "quantidade_kg");
     const totalDev = sum(extratoData.devolucoes, "quantidade_kg");
     const totalKgTaxa = sum(extratoData.devolucoes, "kg_taxa_armazenagem");
-    const saldo = totalColheitas + totalTrRec - totalTrEnv - totalDev - totalKgTaxa;
+    const totalCompAdq = sum(extratoData.comprasAdquiridas || [], "quantidade_kg");
+    const saldo = totalColheitas + totalTrRec + totalCompAdq - totalTrEnv - totalDev - totalKgTaxa;
 
     const porVariedade = new Map<string, { qtd: number; producao: number; liquida: number }>();
     extratoData.colheitas.forEach((c) => {
@@ -964,10 +961,12 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       { name: "Transf. Enviadas", header: ["Data", "Para", "Qtd (kg)", "Sacas"], rows: trEnvRows },
       { name: "Devoluções", header: ["Data", "Qtd (kg)", "Sacas", "Taxa Arm. %", "Kg Taxa"], rows: devRows },
       { name: "Notas Depósito", header: ["Data", "NF", "Qtd (kg)", "Sacas"], rows: ndRows },
+      { name: "Compras de Cereais", header: ["Data", "Vendedor", "NFe", "Qtd (kg)", "Sacas"], rows: comprasAdqRows },
       { name: "Resumo por Variedade", header: ["Variedade", "Colheitas", "Prod. Bruta (kg)", "Prod. Líquida (kg)", "Sacas"], rows: variedadeRows },
       { name: "Resumo Final", header: ["Descrição", "Kg", "Sacas"], rows: [
         ["Total Colheitas", totalColheitas, sc(totalColheitas)],
         ["(+) Transf. Recebidas", totalTrRec, sc(totalTrRec)],
+        ["(+) Compras de Cereais", totalCompAdq, sc(totalCompAdq)],
         ["(-) Transf. Enviadas", totalTrEnv, sc(totalTrEnv)],
         ["(-) Devoluções", totalDev, sc(totalDev)],
         ["(-) Kg Taxa Armazenagem", totalKgTaxa, sc(totalKgTaxa)],
@@ -1265,32 +1264,21 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     if (dataLteCol) qCol = qCol.lte("data_colheita", dataLteCol.col);
     const { data: cols } = await qCol;
 
-    // Compras (produtor como vendedor OU comprador)
-    let qComV = supabase.from("compras_cereais").select(`
-      data_compra, quantidade_kg, romaneio, numero_nota_legado,
-      inscricao_vendedor_id, inscricao_comprador_id,
-      produto:produtos(nome),
-      local_entrega:locais_entrega(nome),
-      inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, produtores(nome)),
-      inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, produtores(nome)),
-      nota_fiscal:notas_fiscais(numero)
-    `).eq("safra_id", safraId).in("inscricao_vendedor_id", inscricaoIdsFiltro);
-    if (dataInicial) qComV = qComV.gte("data_compra", dataInicial);
-    if (dataFinal) qComV = qComV.lte("data_compra", dataFinal);
-    const { data: comprasVendedor } = await qComV;
-
+    // Compras de Cereais: somente quando o produtor/IE é o COMPRADOR (Sócio).
+    // O vendedor não movimenta o saldo deste extrato.
     let qComC = supabase.from("compras_cereais").select(`
-      data_compra, quantidade_kg, romaneio, numero_nota_legado,
+      data_compra, quantidade_kg, codigo,
       inscricao_vendedor_id, inscricao_comprador_id,
       produto:produtos(nome),
-      local_entrega:locais_entrega(nome),
+      local_entrega:locais_entrega!compras_cereais_local_entrega_id_fkey(nome),
       inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, produtores(nome)),
       inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, produtores(nome)),
       nota_fiscal:notas_fiscais(numero)
     `).eq("safra_id", safraId).in("inscricao_comprador_id", inscricaoIdsFiltro);
     if (dataInicial) qComC = qComC.gte("data_compra", dataInicial);
     if (dataFinal) qComC = qComC.lte("data_compra", dataFinal);
-    const { data: comprasComprador } = await qComC;
+    const { data: comprasComprador, error: comprasCompradorError } = await qComC;
+    if (comprasCompradorError) throw comprasCompradorError;
 
     // Transferências (origem = saída / destino = entrada)
     let qTrOr = supabase.from("transferencias_deposito").select(`
@@ -1370,25 +1358,6 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       });
     });
 
-    (comprasVendedor || []).forEach((r: any) => {
-      // Produtor é o vendedor => saída no seu extrato
-      const insc = inscIdx.get(r.inscricao_vendedor_id) || { ie: "-", nome: produtorNome };
-      const kg = Number(r.quantidade_kg) || 0;
-      const comprador = r.inscricao_comprador?.produtores?.nome
-        ? `${r.inscricao_comprador.produtores.nome} - IE:${r.inscricao_comprador.inscricao_estadual || ""}`
-        : "-";
-      rows.push({
-        local_nome: r.local_entrega?.nome || tenantSedeNome,
-        inscricao_id: r.inscricao_vendedor_id, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
-        data: r.data_compra, operacao: "compra",
-        docto: r.romaneio != null ? String(r.romaneio) : "",
-        tipo: "", variedade: r.produto?.nome || "",
-        kilos: -kg, sacos: -Math.round(kg / 60),
-        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : (r.numero_nota_legado || ""),
-        contraparte: comprador,
-      });
-    });
-
     (comprasComprador || []).forEach((r: any) => {
       // Produtor é comprador => entrada no seu extrato (compra recebida)
       const insc = inscIdx.get(r.inscricao_comprador_id) || { ie: "-", nome: produtorNome };
@@ -1400,10 +1369,10 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         local_nome: r.local_entrega?.nome || tenantSedeNome,
         inscricao_id: r.inscricao_comprador_id, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
         data: r.data_compra, operacao: "compra",
-        docto: r.romaneio != null ? String(r.romaneio) : "",
+        docto: r.codigo != null ? String(r.codigo) : "",
         tipo: "", variedade: r.produto?.nome || "",
         kilos: kg, sacos: Math.round(kg / 60),
-        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : (r.numero_nota_legado || ""),
+        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : "",
         contraparte: vend,
       });
     });
