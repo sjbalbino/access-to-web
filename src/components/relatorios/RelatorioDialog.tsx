@@ -864,6 +864,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       .eq("inscricao_produtor_id", inscricaoId).eq("safra_id", safraId);
     const { data: notasDep } = await ndQuery.order("data_emissao");
 
+    // Compras de Cereais — como comprador (entrada) e como vendedor (saída)
+    const compAdqQuery = supabase.from("compras_cereais")
+      .select("data_compra, quantidade_kg, numero_nota_legado, local_entrega:locais_entrega(nome), inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, produtores(nome)), nota_fiscal:notas_fiscais(numero)")
+      .eq("inscricao_comprador_id", inscricaoId).eq("safra_id", safraId);
+    const { data: compAdq } = await compAdqQuery.order("data_compra");
+
+    const compVendQuery = supabase.from("compras_cereais")
+      .select("data_compra, quantidade_kg, numero_nota_legado, local_entrega:locais_entrega(nome), inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, produtores(nome)), nota_fiscal:notas_fiscais(numero)")
+      .eq("inscricao_vendedor_id", inscricaoId).eq("safra_id", safraId);
+    const { data: compVend } = await compVendQuery.order("data_compra");
 
     const extratoData: ExtratoData = {
       produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
@@ -874,7 +884,20 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       transferenciasEnviadas: (trEnv || []).map((t: any) => ({ data_transferencia: t.data_transferencia, nome_outro: t.inscricao_destino?.produtores?.nome || t.inscricao_destino?.granja || null, quantidade_kg: t.quantidade_kg, local_entrega: t.local_entrega?.nome || null })),
       devolucoes: (devolucoes || []).map((d: any) => ({ data_devolucao: d.data_devolucao, quantidade_kg: d.quantidade_kg, taxa_armazenagem: d.taxa_armazenagem, kg_taxa_armazenagem: d.kg_taxa_armazenagem, local_entrega: d.local_entrega?.nome || null })),
       notasDeposito: (notasDep || []).map((n: any) => ({ data_emissao: n.data_emissao, nota_fiscal_numero: n.nota_fiscal?.numero?.toString() || null, quantidade_kg: n.quantidade_kg, local_entrega: null })),
+      comprasAdquiridas: (compAdq || []).map((c: any) => ({
+        data_compra: c.data_compra, quantidade_kg: Number(c.quantidade_kg) || 0,
+        contraparte: c.inscricao_vendedor?.produtores?.nome ? `${c.inscricao_vendedor.produtores.nome} - IE:${c.inscricao_vendedor.inscricao_estadual || ""}` : null,
+        nfe: c.nota_fiscal?.numero ? String(c.nota_fiscal.numero) : (c.numero_nota_legado || null),
+        local_entrega: c.local_entrega?.nome || null,
+      })),
+      comprasVendidas: (compVend || []).map((c: any) => ({
+        data_compra: c.data_compra, quantidade_kg: Number(c.quantidade_kg) || 0,
+        contraparte: c.inscricao_comprador?.produtores?.nome ? `${c.inscricao_comprador.produtores.nome} - IE:${c.inscricao_comprador.inscricao_estadual || ""}` : null,
+        nfe: c.nota_fiscal?.numero ? String(c.nota_fiscal.numero) : (c.numero_nota_legado || null),
+        local_entrega: c.local_entrega?.nome || null,
+      })),
     };
+
     const PS = 60;
     const sc = (kg: number) => Math.round((kg || 0) / PS);
     const sum = (arr: any[], key: string) => arr.reduce((s, x) => s + (Number(x[key]) || 0), 0);
@@ -1455,6 +1478,25 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       toast({ title: "Sem dados", description: "Nenhuma movimentação encontrada para os filtros." });
       return;
     }
+
+    // Normaliza o Local por IE: cada Inscrição aparece sob um único "Local de Entrega"
+    // (o local dos depósitos/colheitas; fallback = transferências/compras; senão sede).
+    // Isso evita que Vendas e Compras criem sub-grupos separados por local dentro da mesma IE.
+    const localPorInsc = new Map<string, string>();
+    const prioridade: Record<string, number> = { deposito: 1, transf_entrada: 2, transf_saida: 3, compra: 4, devolucao: 5, venda: 6 };
+    const melhorLocal = new Map<string, { local: string; peso: number }>();
+    rows.forEach(r => {
+      if (!r.inscricao_id) return;
+      const peso = prioridade[r.operacao] ?? 99;
+      const atual = melhorLocal.get(r.inscricao_id);
+      if (!atual || peso < atual.peso) melhorLocal.set(r.inscricao_id, { local: r.local_nome || tenantSedeNome, peso });
+    });
+    melhorLocal.forEach((v, k) => localPorInsc.set(k, v.local));
+    rows.forEach(r => {
+      const canon = localPorInsc.get(r.inscricao_id);
+      if (canon) r.local_nome = canon;
+    });
+
 
     const inscSel = inscricaoId ? inscricoesDoProdutor.find(i => i.id === inscricaoId) : null;
     const filtroInscLabel = inscSel ? `${inscSel.inscricao_estadual}${(inscSel as any).nome_fantasia ? ' - ' + (inscSel as any).nome_fantasia : ''}` : null;

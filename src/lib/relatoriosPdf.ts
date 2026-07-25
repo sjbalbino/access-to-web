@@ -67,6 +67,14 @@ export interface ExtratoNotaDeposito {
   local_entrega?: string | null;
 }
 
+export interface ExtratoCompra {
+  data_compra: string;
+  contraparte: string | null;
+  quantidade_kg: number;
+  nfe: string | null;
+  local_entrega?: string | null;
+}
+
 export interface ExtratoData {
   produtorNome: string;
   cpfCnpj: string | null;
@@ -78,7 +86,10 @@ export interface ExtratoData {
   transferenciasEnviadas: ExtratoTransferencia[];
   devolucoes: ExtratoDevolucao[];
   notasDeposito: ExtratoNotaDeposito[];
+  comprasAdquiridas?: ExtratoCompra[]; // sócio como comprador (entrada)
+  comprasVendidas?: ExtratoCompra[];    // sócio como vendedor (saída)
 }
+
 
 export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   const doc = new jsPDF({ orientation: "landscape" });
@@ -339,6 +350,69 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     3,
   );
 
+  // COMPRAS DE CEREAIS — como COMPRADOR (entrada)
+  const comprasAdq = data.comprasAdquiridas || [];
+  renderSection<ExtratoCompra>(
+    "COMPRAS DE CEREAIS (Sócio Comprador)",
+    comprasAdq,
+    (c) => localOf(c.local_entrega),
+    (c) => [
+      localOf(c.local_entrega),
+      formatDate(c.data_compra),
+      c.contraparte || "-",
+      c.nfe || "-",
+      formatNumber(c.quantidade_kg, 0),
+      toSacas(c.quantidade_kg),
+    ],
+    2,
+    (list) => {
+      const tot = sumBy(list, "quantidade_kg");
+      return [formatNumber(tot, 0), toSacas(tot)];
+    },
+    [
+      "Local",
+      { content: "Data", styles: { halign: "center" } },
+      "Vendedor",
+      "NFe",
+      { content: "Qtd (kg)", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
+    ],
+    { 0: { halign: "left", cellWidth: 30 }, 1: { halign: "center", cellWidth: 25 }, 2: { halign: "left" }, 3: { halign: "left", cellWidth: 22 }, 4: { halign: "right", cellWidth: 28 }, 5: { halign: "right", cellWidth: 24 } },
+    4,
+  );
+
+  // COMPRAS DE CEREAIS — como VENDEDOR (saída)
+  const comprasVend = data.comprasVendidas || [];
+  renderSection<ExtratoCompra>(
+    "COMPRAS DE CEREAIS (Sócio Vendedor)",
+    comprasVend,
+    (c) => localOf(c.local_entrega),
+    (c) => [
+      localOf(c.local_entrega),
+      formatDate(c.data_compra),
+      c.contraparte || "-",
+      c.nfe || "-",
+      formatNumber(c.quantidade_kg, 0),
+      toSacas(c.quantidade_kg),
+    ],
+    2,
+    (list) => {
+      const tot = sumBy(list, "quantidade_kg");
+      return [formatNumber(tot, 0), toSacas(tot)];
+    },
+    [
+      "Local",
+      { content: "Data", styles: { halign: "center" } },
+      "Comprador",
+      "NFe",
+      { content: "Qtd (kg)", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
+    ],
+    { 0: { halign: "left", cellWidth: 30 }, 1: { halign: "center", cellWidth: 25 }, 2: { halign: "left" }, 3: { halign: "left", cellWidth: 22 }, 4: { halign: "right", cellWidth: 28 }, 5: { halign: "right", cellWidth: 24 } },
+    4,
+  );
+
+
 
 
   // RESUMO POR VARIEDADE (agrupamento das colheitas)
@@ -413,8 +487,10 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   const totalRecebidas = data.transferenciasRecebidas.reduce((s, t) => s + t.quantidade_kg, 0);
   const totalEnviadas = data.transferenciasEnviadas.reduce((s, t) => s + t.quantidade_kg, 0);
   const totalDevolucoes = data.devolucoes.reduce((s, d) => s + d.quantidade_kg, 0);
+  const totalCompAdq = (data.comprasAdquiridas || []).reduce((s, c) => s + (c.quantidade_kg || 0), 0);
+  const totalCompVend = (data.comprasVendidas || []).reduce((s, c) => s + (c.quantidade_kg || 0), 0);
   // Kg de Taxa de Armazenagem é crédito do sócio recebedor da taxa, não sai do estoque do produtor.
-  const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes;
+  const saldo = totalColheitas + totalRecebidas + totalCompAdq - totalEnviadas - totalDevolucoes - totalCompVend;
 
 
   // Check if need new page
@@ -433,10 +509,13 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   const resumoData = [
     ["Total Colheitas", fmtKgSc(totalColheitas)],
     ["(+) Transf. Recebidas", fmtKgSc(totalRecebidas)],
+    ["(+) Compras Adquiridas", fmtKgSc(totalCompAdq)],
     ["(-) Transf. Enviadas", fmtKgSc(totalEnviadas)],
     ["(-) Devoluções", fmtKgSc(totalDevolucoes)],
+    ["(-) Compras Vendidas", fmtKgSc(totalCompVend)],
     ["= SALDO", fmtKgSc(saldo)],
   ];
+
 
 
   autoTable(doc, {
