@@ -1991,8 +1991,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Orientação e Tamanho da Página - vendas / extrato_depositos */}
-          {(tipo === "vendas" || tipo === "extrato_depositos") && (
+          {/* Orientação e Tamanho da Página - vendas / extrato_depositos / extrato_movimentacao */}
+          {(tipo === "vendas" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="min-w-0">
                 <Label>Orientação</Label>
