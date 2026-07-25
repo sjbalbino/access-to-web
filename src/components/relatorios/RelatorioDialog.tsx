@@ -1264,32 +1264,21 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     if (dataLteCol) qCol = qCol.lte("data_colheita", dataLteCol.col);
     const { data: cols } = await qCol;
 
-    // Compras (produtor como vendedor OU comprador)
-    let qComV = supabase.from("compras_cereais").select(`
-      data_compra, quantidade_kg, romaneio, numero_nota_legado,
-      inscricao_vendedor_id, inscricao_comprador_id,
-      produto:produtos(nome),
-      local_entrega:locais_entrega(nome),
-      inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, produtores(nome)),
-      inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, produtores(nome)),
-      nota_fiscal:notas_fiscais(numero)
-    `).eq("safra_id", safraId).in("inscricao_vendedor_id", inscricaoIdsFiltro);
-    if (dataInicial) qComV = qComV.gte("data_compra", dataInicial);
-    if (dataFinal) qComV = qComV.lte("data_compra", dataFinal);
-    const { data: comprasVendedor } = await qComV;
-
+    // Compras de Cereais: somente quando o produtor/IE é o COMPRADOR (Sócio).
+    // O vendedor não movimenta o saldo deste extrato.
     let qComC = supabase.from("compras_cereais").select(`
-      data_compra, quantidade_kg, romaneio, numero_nota_legado,
+      data_compra, quantidade_kg, codigo,
       inscricao_vendedor_id, inscricao_comprador_id,
       produto:produtos(nome),
-      local_entrega:locais_entrega(nome),
+      local_entrega:locais_entrega!compras_cereais_local_entrega_id_fkey(nome),
       inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, produtores(nome)),
       inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, produtores(nome)),
       nota_fiscal:notas_fiscais(numero)
     `).eq("safra_id", safraId).in("inscricao_comprador_id", inscricaoIdsFiltro);
     if (dataInicial) qComC = qComC.gte("data_compra", dataInicial);
     if (dataFinal) qComC = qComC.lte("data_compra", dataFinal);
-    const { data: comprasComprador } = await qComC;
+    const { data: comprasComprador, error: comprasCompradorError } = await qComC;
+    if (comprasCompradorError) throw comprasCompradorError;
 
     // Transferências (origem = saída / destino = entrada)
     let qTrOr = supabase.from("transferencias_deposito").select(`
@@ -1369,25 +1358,6 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       });
     });
 
-    (comprasVendedor || []).forEach((r: any) => {
-      // Produtor é o vendedor => saída no seu extrato
-      const insc = inscIdx.get(r.inscricao_vendedor_id) || { ie: "-", nome: produtorNome };
-      const kg = Number(r.quantidade_kg) || 0;
-      const comprador = r.inscricao_comprador?.produtores?.nome
-        ? `${r.inscricao_comprador.produtores.nome} - IE:${r.inscricao_comprador.inscricao_estadual || ""}`
-        : "-";
-      rows.push({
-        local_nome: r.local_entrega?.nome || tenantSedeNome,
-        inscricao_id: r.inscricao_vendedor_id, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
-        data: r.data_compra, operacao: "compra",
-        docto: r.romaneio != null ? String(r.romaneio) : "",
-        tipo: "", variedade: r.produto?.nome || "",
-        kilos: -kg, sacos: -Math.round(kg / 60),
-        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : (r.numero_nota_legado || ""),
-        contraparte: comprador,
-      });
-    });
-
     (comprasComprador || []).forEach((r: any) => {
       // Produtor é comprador => entrada no seu extrato (compra recebida)
       const insc = inscIdx.get(r.inscricao_comprador_id) || { ie: "-", nome: produtorNome };
@@ -1399,10 +1369,10 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         local_nome: r.local_entrega?.nome || tenantSedeNome,
         inscricao_id: r.inscricao_comprador_id, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
         data: r.data_compra, operacao: "compra",
-        docto: r.romaneio != null ? String(r.romaneio) : "",
+        docto: r.codigo != null ? String(r.codigo) : "",
         tipo: "", variedade: r.produto?.nome || "",
         kilos: kg, sacos: Math.round(kg / 60),
-        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : (r.numero_nota_legado || ""),
+        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : "",
         contraparte: vend,
       });
     });
