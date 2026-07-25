@@ -1096,6 +1096,106 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     });
   };
 
+  // ========== EXTRATO DE DEPÓSITOS POR PRODUTOR ==========
+  const gerarExtratoDepositos = async () => {
+    if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
+    if (!produtorId) { toast({ title: "Filtro obrigatório", description: "Selecione o produtor.", variant: "destructive" }); return; }
+
+    const { data: safraRow } = await supabase
+      .from("safras")
+      .select("id, nome, cultura:cultura_id(nome)")
+      .eq("id", safraId)
+      .maybeSingle();
+    const culturaNome = (safraRow as any)?.cultura?.nome || "-";
+    const safraNome = safraRow?.nome || "-";
+
+    const produtorSel = produtoresList?.find(p => p.id === produtorId);
+    const produtorNome = produtorSel?.nome || "-";
+
+    // IEs do produtor selecionado
+    const inscricoesDoProdutor = (inscricoes || []).filter(i => i.produtores?.id === produtorId || i.produtor_id === produtorId);
+    let inscricaoIdsFiltro = inscricoesDoProdutor.map(i => i.id);
+    if (inscricaoId) inscricaoIdsFiltro = inscricaoIdsFiltro.filter(id => id === inscricaoId);
+    if (inscricaoIdsFiltro.length === 0) {
+      toast({ title: "Sem dados", description: "Produtor sem inscrições cadastradas." });
+      return;
+    }
+
+    let q = supabase
+      .from("colheitas")
+      .select(`
+        data_colheita, peso_bruto, peso_tara, producao_kg, kg_impureza, impureza, umidade, percentual_desconto,
+        kg_umidade, percentual_avariados, kg_avariados, percentual_outros, kg_outros,
+        kg_desconto_total, producao_liquida_kg, total_sacos, romaneio, ph, tipo_colheita,
+        local_entrega_terceiro_id, inscricao_produtor_id,
+        variedade:produtos!colheitas_variedade_id_fkey(nome),
+        inscricao_produtor:inscricoes_produtor!colheitas_inscricao_produtor_id_fkey(
+          id, inscricao_estadual, municipio, produtores:produtor_id(nome)
+        ),
+        local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(nome)
+      `)
+      .eq("safra_id", safraId)
+      .in("inscricao_produtor_id", inscricaoIdsFiltro)
+      .gt("producao_liquida_kg", 0);
+
+    if (dataInicial) q = q.gte("data_colheita", dataInicial);
+    if (dataFinal) q = q.lte("data_colheita", dataFinal);
+
+    const { data, error } = await q.order("data_colheita");
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhum depósito encontrado para os filtros." });
+      return;
+    }
+
+    const rows: RelExtratoDepRow[] = (data as any[]).map((c: any) => {
+      const bruto = Number(c.peso_bruto) || 0;
+      const tara = Number(c.peso_tara) || 0;
+      const liquido = Number(c.producao_kg) || Math.max(0, bruto - tara);
+      const inscNome = c.inscricao_produtor?.produtores?.nome || "-";
+      const inscMun = c.inscricao_produtor?.municipio || "";
+      return {
+        local_nome: c.local_entrega?.nome || tenantSedeNome,
+        inscricao_id: c.inscricao_produtor?.id || c.inscricao_produtor_id,
+        inscricao_estadual: c.inscricao_produtor?.inscricao_estadual || "-",
+        inscricao_nome: inscMun ? `${inscNome} - ${inscMun}` : inscNome,
+        data_colheita: c.data_colheita,
+        romaneio: c.romaneio != null ? String(c.romaneio) : "",
+        tipo_colheita: c.tipo_colheita || "",
+        peso_bruto: bruto,
+        peso_tara: tara,
+        peso_liquido: liquido,
+        perc_impureza: Number(c.impureza) || 0,
+        kg_impureza: Number(c.kg_impureza) || 0,
+        perc_umidade: Number(c.umidade) || 0,
+        perc_desconto: Number(c.percentual_desconto) || 0,
+        kg_umidade: Number(c.kg_umidade) || 0,
+        perc_avariados: Number(c.percentual_avariados) || 0,
+        kg_avariados: Number(c.kg_avariados) || 0,
+        perc_outros: Number(c.percentual_outros) || 0,
+        kg_outros: Number(c.kg_outros) || 0,
+        kg_desconto_total: Number(c.kg_desconto_total) || 0,
+        producao_liquida_kg: Number(c.producao_liquida_kg) || 0,
+        total_sacos: Number(c.total_sacos) || 0,
+        ph: Number(c.ph) || 0,
+        variedade: c.variedade?.nome || "-",
+      };
+    });
+
+    const inscSel = inscricaoId ? inscricoesDoProdutor.find(i => i.id === inscricaoId) : null;
+    const filtroInscLabel = inscSel ? `${inscSel.inscricao_estadual}${inscSel.municipio ? ' - ' + inscSel.municipio : ''}` : null;
+
+    gerarExtratoDepositosProdutorPdf({
+      produtorNome,
+      safraNome,
+      culturaNome,
+      filtroInscricao: filtroInscLabel,
+      orientation: vendasOrientacao,
+      format: vendasTamanho,
+      rows,
+    });
+  };
+
   // ========== RESUMO DA COLHEITA POR LAVOURA ==========
   const gerarResumoColheitaLavoura = async () => {
     if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
