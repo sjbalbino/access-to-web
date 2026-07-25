@@ -1183,7 +1183,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     });
 
     const inscSel = inscricaoId ? inscricoesDoProdutor.find(i => i.id === inscricaoId) : null;
-    const filtroInscLabel = inscSel ? `${inscSel.inscricao_estadual}${inscSel.municipio ? ' - ' + inscSel.municipio : ''}` : null;
+    const filtroInscLabel = inscSel ? `${inscSel.inscricao_estadual}${inscSel.nome_fantasia ? ' - ' + inscSel.nome_fantasia : ''}` : null;
 
     gerarExtratoDepositosProdutorPdf({
       produtorNome,
