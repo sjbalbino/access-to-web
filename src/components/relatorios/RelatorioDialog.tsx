@@ -1153,12 +1153,12 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       const tara = Number(c.peso_tara) || 0;
       const liquido = Number(c.producao_kg) || Math.max(0, bruto - tara);
       const inscNome = c.inscricao_produtor?.produtores?.nome || "-";
-      const inscMun = c.inscricao_produtor?.municipio || "";
+      const inscFant = c.inscricao_produtor?.nome_fantasia || "";
       return {
         local_nome: c.local_entrega?.nome || tenantSedeNome,
         inscricao_id: c.inscricao_produtor?.id || c.inscricao_produtor_id,
         inscricao_estadual: c.inscricao_produtor?.inscricao_estadual || "-",
-        inscricao_nome: inscMun ? `${inscNome} - ${inscMun}` : inscNome,
+        inscricao_nome: inscFant ? `${inscNome} - ${inscFant}` : inscNome,
         data_colheita: c.data_colheita,
         romaneio: c.romaneio != null ? String(c.romaneio) : "",
         tipo_colheita: c.tipo_colheita || "",
