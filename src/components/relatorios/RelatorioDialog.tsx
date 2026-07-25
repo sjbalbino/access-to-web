@@ -1948,8 +1948,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Produtor - resumo_produtor / extrato_depositos */}
-          {(tipo === "resumo_produtor" || tipo === "extrato_depositos") && (
+          {/* Produtor - resumo_produtor / extrato_depositos / extrato_movimentacao */}
+          {(tipo === "resumo_produtor" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
             <div>
               <Label>Produtor *</Label>
               <ComboboxFilter
