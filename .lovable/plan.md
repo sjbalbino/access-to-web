@@ -1,57 +1,64 @@
-## Diagnóstico correto
 
-Reinvestigando o banco, JOAO ARI OLIVEIRA DE SOUZA **tem sim** 21.000 kg de transferências recebidas na SOJA 2025/2026 (12.000 em 31/03/2026 vindo de NELSON SEIBEL WERLE + 9.000 em 04/05/2026 vindo de ARISSON CAMPOS DE SOUZA), todas no local Márcio Grings. E ele também tem uma Nota de Depósito Emitida de 21.000 kg na mesma safra.
+# Novo relatório: Extrato de Depósitos por Produtor
 
-O `DevolucaoDialog.tsx` alimenta o combobox "Produtor (Destinatário)" com o hook `useInscricoesComSaldo` (`src/hooks/useSaldosDeposito.ts`). Esse hook calcula:
+Novo card em **Relatórios de Produção** que gera o extrato de recebimento (colheitas) idêntico ao legado anexado, com filtros que atendem os dois modos pedidos:
 
-```
-saldo = Colheitas + Transferências Recebidas − Notas de Depósito Emitidas
-```
+- **Geral** — Produtor + Safra (todas as IEs, agrupado por Local → IE → Dia).
+- **Individual** — mesmo formato, com filtro adicional de **IE específica**.
 
-Para JOAO ARI: `0 + 21.000 − 21.000 = 0`. E o hook, na linha 423, faz `if (b.saldo <= 0) return;` — excluindo a inscrição. Mesmo cenário no saldo total agregado (`saldoTotalPorInscricao`, linha 426).
+Um único gerador de PDF cobre os dois cenários; o "Individual" é só o mesmo relatório com a IE preenchida.
 
-**Esse é o cálculo de "saldo para EMITIR nova nota de depósito", não o de "saldo para DEVOLVER".** Semanticamente, no diálogo de devolução, a nota de depósito emitida **não deve reduzir** o saldo disponível para devolução — ela apenas formaliza o depósito. A devolução é justamente a operação que baixa fisicamente esse saldo depositado. Isso bate com o Extrato do Produtor (imagem enviada), que mostra SALDO = 21.000 kg sem descontar a nota de depósito.
+## Layout do PDF (paisagem, A4)
 
-## Objetivo
+Cabeçalho fixo: `Extrato de Depósitos — Produtor: {nome} — Safra: {nome}`.
 
-Fazer o combobox de "Produtor (Destinatário)" da Devolução usar a fórmula correta de saldo disponível para devolução:
+Tabela com as colunas do legado:
 
 ```
-saldo_devolver = Colheitas + Transferências Recebidas − Transferências Enviadas − Devoluções já feitas
+Data | Roma. | Tipo | Bruto | Tara | Líquido | Imp.% | Imp.Kg | Umi.% | %Um.Desc | Kg Um | Avar | Out. | Kg.Desc. | Líq.Final | Sacos | Acum.Kg | Acum.Sc | PH | Variedade
 ```
 
-(A nota de depósito emitida NÃO entra na conta.)
+Hierarquia e subtotais:
 
-## Escopo
+```text
+Local Entrega: {nome}
+  Inscrição: {IE} — {Nome/Fantasia}
+    {linhas dos romaneios da IE, ordenadas por data}
+    Total do Dia -->  contagem + somas do dia + médias ponderadas (Imp.% e Umi.%)
+    Total Inscrição --> somas da IE + médias ponderadas
+  Total Local Entrega --> somas do local
+Total Geral --> somas de tudo
+```
 
-Alteração cirúrgica em `src/hooks/useSaldosDeposito.ts`. Vou introduzir um flag no `useInscricoesComSaldo` para alternar entre as duas semânticas, sem quebrar os outros consumidores (NotaDepositoFormDialog, CompraDialog) que precisam continuar com a fórmula atual.
+Acumulados de Kg e Sacos são cumulativos dentro da IE (como no legado).
 
-## Mudanças
+## Filtros no `RelatorioDialog`
 
-**Arquivo:** `src/hooks/useSaldosDeposito.ts`
+Para o tipo `extrato_depositos`:
+- **Produtor** (obrigatório) — combobox com todos os produtores da granja.
+- **Safra** (obrigatório) — `useSafras`.
+- **Local de Entrega** (opcional) — filtra apenas um local.
+- **Inscrição Estadual** (opcional) — quando preenchida, restringe a uma IE (modo "individual").
+- **Orientação** e **Tamanho da página** (já disponíveis no diálogo).
 
-1. Adicionar novo parâmetro opcional `modo?: 'emissao' | 'devolucao'` (default `'emissao'`) em `useInscricoesComSaldo`.
-2. Quando `modo === 'devolucao'`:
-   - Buscar **transferências enviadas** (`inscricao_origem_id`) e **devoluções já feitas** por (inscrição, local) na safra/produto — de forma análoga às consultas atuais.
-   - Buckets recebem: `+ colheitas + transf_recebidas − transf_enviadas − devolucoes_ja_feitas`.
-   - **Não** subtrair `notas_deposito_emitidas` (o bloco `emitidoPorInscricao.forEach` é ignorado neste modo).
-   - `saldoTotalPorInscricao` também não desconta emitidas.
-3. Quando `modo === 'emissao'` (default): comportamento atual permanece intacto.
-4. `queryKey` já inclui `filters` inteiro, então o modo participa naturalmente da chave de cache.
+## Fonte dos dados
 
-**Arquivo:** `src/components/devolucao/DevolucaoDialog.tsx`
+Query em `colheitas` filtrando por `safra_id` + `inscricao_produtor_id IN (IEs do produtor)` (ou só a IE selecionada), trazendo:
+- `inscricoes_produtor` (para agrupar por IE e mostrar nome/IE)
+- `locais_entrega` via `local_entrega_terceiro_id` (ou "Sede" quando null → substituir pelo local sede da granja igual aos outros relatórios)
+- `produtos` via `variedade_id` (variedade da soja)
 
-- Uma única linha: passar `modo: 'devolucao'` na chamada de `useInscricoesComSaldo` (linhas 109-112).
+Ordenação: Local → IE (por IE decrescente igual ao padrão do sistema) → data ascendente → romaneio ascendente.
 
-## Não altera
+## Arquivos a criar/editar
 
-- `NotaDepositoFormDialog.tsx`, `CompraDialog.tsx` e demais chamadores continuam sem o parâmetro, mantendo `modo = 'emissao'` (fórmula atual).
-- `useSaldoDisponivelProdutor` (usado depois de selecionar o produtor para mostrar o saldo detalhado no rodapé) já está correto — não mexer.
-- Nada de banco, migrations ou RLS.
+1. `src/lib/relatoriosPdf.ts` — nova função `gerarExtratoDepositosProdutorPdf(params)` com toda a lógica de agrupamento e subtotais (médias ponderadas de Imp.% e Umi.% usando `producao_liquida_kg` como peso).
+2. `src/components/relatorios/RelatorioDialog.tsx` — novo caso `extrato_depositos`: query dos dados + campos de filtro (Produtor, Safra, Local opcional, IE opcional).
+3. `src/pages/Relatorios.tsx` — novo card **"Extrato de Depósitos"** no grupo Produção/Estoque com o tipo `extrato_depositos`.
 
-## Validação
+Nenhuma migração de banco; nenhum novo hook — reaproveita `useSafras`, `useProdutores`, `useAllInscricoes` e `useLocaisEntrega`.
 
-1. Reabrir "Nova Devolução de Depósito" com Safra SOJA 2025/2026 + Produto SOJA INDUSTRIA - KGS + Local Márcio Grings → JOAO ARI aparece na lista com saldo disponível = 21.000 kg.
-2. Verificar que a lista de produtores no diálogo de **Emissão de Nota de Depósito** (NotaDepositoFormDialog) permanece igual ao que já era exibido (fórmula antiga inalterada).
-3. Verificar que produtores que já tinham devolvido tudo (ex.: safras antigas 100% baixadas) não aparecem no combobox de devolução.
-4. Lançar uma devolução parcial e conferir que o saldo restante do produtor é atualizado corretamente.
+## Perguntas
+
+1. Confirma que o card único com filtro de IE opcional atende os dois modos (Geral quando IE em branco, Individual quando IE selecionada)? Ou prefere **dois cards separados** na tela de Relatórios?
+2. **Tipo** (INDUSTRIA/…) deve vir de `colheitas.tipo_colheita`? Confirmado, mas quero validar antes de codar.
