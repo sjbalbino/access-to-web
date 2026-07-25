@@ -23,6 +23,8 @@ import {
   gerarColheitaDiariaPdf,
   gerarResumoColheitaLavouraPdf,
   gerarExtratoDepositosProdutorPdf,
+  gerarExtratoMovimentacaoPdf,
+  type ExtratoMovRow,
   type ExtratoData,
   type RelColheita,
   type RelContratoVenda,
