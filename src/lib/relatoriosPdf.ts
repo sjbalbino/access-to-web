@@ -1735,20 +1735,42 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
     format: params.format || "a4",
   });
   const pageWidth = doc.internal.pageSize.getWidth();
-  desenharCabecalhoBrand(doc);
 
-  doc.setFontSize(13);
-  doc.setFont("helvetica", "bold");
-  doc.text("EXTRATO DE MOVIMENTAÇÃO", pageWidth / 2, 34, { align: "center" });
+  const trunc = (s: string, n: number) => {
+    if (!s) return "";
+    const str = String(s).trim();
+    return str.length > n ? str.substring(0, n - 1) + "…" : str;
+  };
 
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Produtor: ${params.produtorNome}`, 14, 41);
-  if (params.cpfCnpj) doc.text(`CPF/CNPJ: ${params.cpfCnpj}`, pageWidth / 2, 41, { align: "center" });
-  doc.text(`Safra: ${params.safraNome}`, pageWidth - 14, 41, { align: "right" });
-  if (params.filtroInscricao) {
-    doc.text(`Filtro por IE: ${params.filtroInscricao}`, 14, 46);
-  }
+  const drawTopBanner = (localCtx: string, inscCtx: string, cont: boolean) => {
+    desenharCabecalhoBrand(doc);
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.text(
+      cont ? "EXTRATO DE MOVIMENTAÇÃO (cont.)" : "EXTRATO DE MOVIMENTAÇÃO",
+      pageWidth / 2,
+      34,
+      { align: "center" },
+    );
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Produtor: ${params.produtorNome}`, 14, 41);
+    if (params.cpfCnpj) doc.text(`CPF/CNPJ: ${params.cpfCnpj}`, pageWidth / 2, 41, { align: "center" });
+    doc.text(`Safra: ${params.safraNome}`, pageWidth - 14, 41, { align: "right" });
+    if (params.filtroInscricao) {
+      doc.setFontSize(8);
+      doc.text(`Filtro por IE: ${params.filtroInscricao}`, 14, 46);
+    }
+    if (cont) {
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      if (localCtx) doc.text(`Local: ${trunc(localCtx, 60)}`, 14, 50);
+      if (inscCtx) doc.text(`Inscrição: ${trunc(inscCtx, 80)}`, pageWidth / 2, 50, { align: "center" });
+      doc.setFont("helvetica", "normal");
+    }
+  };
+
+  drawTopBanner("", "", false);
 
   const sorted = [...params.rows].sort((a, b) => {
     const l = a.local_nome.localeCompare(b.local_nome, "pt-BR");
@@ -1767,6 +1789,9 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
   const inscTotalRows: number[] = [];
   const localTotalRows: number[] = [];
   const totalGeralRows: number[] = [];
+  // Contexto por índice de linha (para banner de continuação)
+  const rowLocal: string[] = [];
+  const rowInsc: string[] = [];
 
   const spacer = (label: string): any[] => [{ content: label, colSpan: numCols, styles: { fontStyle: "bold" } }];
 
@@ -1784,6 +1809,8 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
 
   let currentLocal = "";
   let currentInsc = "";
+  let currentLocalLabel = "";
+  let currentInscLabel = "";
   let localKilos = 0, localSacos = 0;
   let inscKilos = 0, inscSacos = 0, inscSaldo = 0;
   let totalGeralKilos = 0, totalGeralSacos = 0;
@@ -1797,6 +1824,8 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
       { content: "", colSpan: 3 },
     ]);
     inscTotalRows.push(body.length - 1);
+    rowLocal.push(currentLocalLabel);
+    rowInsc.push(currentInscLabel);
     inscKilos = 0; inscSacos = 0; inscSaldo = 0;
   };
   const flushLocalTotal = () => {
@@ -1808,6 +1837,8 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
       { content: "", colSpan: 3 },
     ]);
     localTotalRows.push(body.length - 1);
+    rowLocal.push(currentLocalLabel);
+    rowInsc.push("");
     localKilos = 0; localSacos = 0;
   };
 
@@ -1816,15 +1847,22 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
       flushInscTotal();
       flushLocalTotal();
       currentLocal = r.local_nome;
+      currentLocalLabel = r.local_nome;
       currentInsc = "";
-      body.push(spacer(`Local Entrega:   ${r.local_nome}`));
+      currentInscLabel = "";
+      body.push(spacer(`Local Entrega:  ${r.local_nome}`));
       groupHeaderRows.push(body.length - 1);
+      rowLocal.push(currentLocalLabel);
+      rowInsc.push("");
     }
     if (r.inscricao_id !== currentInsc) {
       flushInscTotal();
       currentInsc = r.inscricao_id;
-      body.push(spacer(`Inscrição:   ${r.inscricao_estadual}                  Nome: ${r.inscricao_nome}`));
+      currentInscLabel = `${r.inscricao_estadual} — ${r.inscricao_nome}`;
+      body.push(spacer(`Inscrição:  ${r.inscricao_estadual}   —   ${r.inscricao_nome}`));
       subgroupHeaderRows.push(body.length - 1);
+      rowLocal.push(currentLocalLabel);
+      rowInsc.push(currentInscLabel);
     }
 
     inscSaldo += r.kilos;
@@ -1841,14 +1879,16 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
       { content: formatDate(r.data), styles: { halign: "center" } },
       `${op.code} ${op.label}`,
       { content: r.docto || "", styles: { halign: "right" } },
-      r.tipo || "",
-      r.variedade || "",
+      trunc(r.tipo || "", 12),
+      trunc(r.variedade || "", 22),
       { content: formatNumber(r.kilos, 0), styles: { halign: "right" } },
       { content: formatNumber(r.sacos, 0), styles: { halign: "right" } },
       { content: formatNumber(inscSaldo, 0), styles: { halign: "right" } },
       { content: r.nfe || "", styles: { halign: "right" } },
-      r.contraparte || "",
+      trunc(r.contraparte || "", 42),
     ]);
+    rowLocal.push(currentLocalLabel);
+    rowInsc.push(currentInscLabel);
   });
   flushInscTotal();
   flushLocalTotal();
@@ -1860,9 +1900,17 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
     { content: "", colSpan: 3 },
   ]);
   totalGeralRows.push(body.length - 1);
+  rowLocal.push("");
+  rowInsc.push("");
+
+  // Contexto ativo enquanto autoTable desenha as células (para banner de páginas seguintes)
+  let ctxLocal = "";
+  let ctxInsc = "";
+  let pageDrawn = 1;
 
   autoTable(doc, {
-    startY: 52,
+    startY: 54,
+    margin: { top: 54, left: 10, right: 10, bottom: 14 },
     head: [[
       { content: "Data", styles: { halign: "center" } },
       "Operação",
@@ -1876,19 +1924,20 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
       "Comprador/Vendedor",
     ]],
     body,
-    styles: { fontSize: 7, cellPadding: 1.2, overflow: "linebreak" },
-    headStyles: { fillColor: [66, 66, 66], textColor: 255 },
+    styles: { fontSize: 7, cellPadding: 1, overflow: "ellipsize", valign: "middle" },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255, fontSize: 7.5 },
+    rowPageBreak: "avoid",
     columnStyles: {
-      0: { cellWidth: 20, halign: "center" },
-      1: { cellWidth: 24 },
-      2: { cellWidth: 16, halign: "right" },
-      3: { cellWidth: 22 },
-      4: { cellWidth: 38 },
-      5: { cellWidth: 22, halign: "right" },
-      6: { cellWidth: 16, halign: "right" },
-      7: { cellWidth: 24, halign: "right" },
-      8: { cellWidth: 16, halign: "right" },
-      9: { cellWidth: "auto" },
+      0: { cellWidth: 18, halign: "center" },
+      1: { cellWidth: 22 },
+      2: { cellWidth: 14, halign: "right" },
+      3: { cellWidth: 18 },
+      4: { cellWidth: 34, overflow: "linebreak" },
+      5: { cellWidth: 20, halign: "right" },
+      6: { cellWidth: 14, halign: "right" },
+      7: { cellWidth: 22, halign: "right" },
+      8: { cellWidth: 18, halign: "right" },
+      9: { cellWidth: "auto", overflow: "ellipsize" },
     },
     didParseCell: (d) => {
       if (d.section !== "body") return;
@@ -1909,6 +1958,17 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
         d.cell.styles.fillColor = [210, 210, 210];
         d.cell.styles.fontStyle = "bold";
       }
+    },
+    didDrawCell: (d) => {
+      if (d.section !== "body" || d.column.index !== 0) return;
+      const idx = d.row.index;
+      if (rowLocal[idx]) ctxLocal = rowLocal[idx];
+      if (rowInsc[idx]) ctxInsc = rowInsc[idx];
+    },
+    didDrawPage: (data) => {
+      if (data.pageNumber === pageDrawn) return;
+      pageDrawn = data.pageNumber;
+      drawTopBanner(ctxLocal, ctxInsc, true);
     },
   });
 
