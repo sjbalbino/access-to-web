@@ -1968,8 +1968,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Inscrição (IE) opcional - extrato_depositos */}
-          {tipo === "extrato_depositos" && (
+          {/* Inscrição (IE) opcional - extrato_depositos / extrato_movimentacao */}
+          {(tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
             <div>
               <Label>Inscrição (IE) — opcional</Label>
               <ComboboxFilter
