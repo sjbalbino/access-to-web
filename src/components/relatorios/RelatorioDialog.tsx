@@ -1200,7 +1200,274 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     });
   };
 
-  // ========== RESUMO DA COLHEITA POR LAVOURA ==========
+  // ========== EXTRATO DE MOVIMENTAÇÃO (livro-razão) ==========
+  const gerarExtratoMovimentacao = async () => {
+    if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
+    if (!produtorId) { toast({ title: "Filtro obrigatório", description: "Selecione o produtor.", variant: "destructive" }); return; }
+
+    const { data: safraRow } = await supabase.from("safras").select("id, nome").eq("id", safraId).maybeSingle();
+    const safraNome = safraRow?.nome || "-";
+
+    const produtorSel = produtoresList?.find(p => p.id === produtorId);
+    const produtorNome = produtorSel?.nome || "-";
+    const produtorCpf = (produtorSel as any)?.cpf_cnpj || null;
+
+    const inscricoesDoProdutor = (inscricoes || []).filter(i => i.produtores?.id === produtorId || i.produtor_id === produtorId);
+    let inscricaoIdsFiltro = inscricoesDoProdutor.map(i => i.id);
+    if (inscricaoId) inscricaoIdsFiltro = inscricaoIdsFiltro.filter(id => id === inscricaoId);
+    if (inscricaoIdsFiltro.length === 0) {
+      toast({ title: "Sem dados", description: "Produtor sem inscrições cadastradas." });
+      return;
+    }
+
+    // Índice para dados da IE
+    const inscIdx = new Map<string, { ie: string; nome: string }>();
+    inscricoesDoProdutor.forEach(i => {
+      const nm = i.produtores?.nome || "-";
+      const fant = (i as any).nome_fantasia || "";
+      inscIdx.set(i.id, { ie: i.inscricao_estadual || "-", nome: fant ? `${nm} - ${fant}` : nm });
+    });
+
+    const dataGteCol = dataInicial ? { col: dataInicial } : null;
+    const dataLteCol = dataFinal ? { col: dataFinal } : null;
+
+    // Colheitas -> Depósito
+    let qCol = supabase.from("colheitas").select(`
+      data_colheita, producao_liquida_kg, total_sacos, romaneio, tipo_colheita,
+      inscricao_produtor_id,
+      variedade:produtos!colheitas_variedade_id_fkey(nome),
+      local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(nome)
+    `).eq("safra_id", safraId).in("inscricao_produtor_id", inscricaoIdsFiltro).gt("producao_liquida_kg", 0);
+    if (dataGteCol) qCol = qCol.gte("data_colheita", dataGteCol.col);
+    if (dataLteCol) qCol = qCol.lte("data_colheita", dataLteCol.col);
+    const { data: cols } = await qCol;
+
+    // Compras (produtor como vendedor OU comprador)
+    let qComV = supabase.from("compras_cereais").select(`
+      data_compra, quantidade_kg, romaneio, numero_nota_legado,
+      inscricao_vendedor_id, inscricao_comprador_id,
+      produto:produtos(nome),
+      local_entrega:locais_entrega(nome),
+      inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, produtores(nome)),
+      inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, produtores(nome)),
+      nota_fiscal:notas_fiscais(numero)
+    `).eq("safra_id", safraId).in("inscricao_vendedor_id", inscricaoIdsFiltro);
+    if (dataInicial) qComV = qComV.gte("data_compra", dataInicial);
+    if (dataFinal) qComV = qComV.lte("data_compra", dataFinal);
+    const { data: comprasVendedor } = await qComV;
+
+    let qComC = supabase.from("compras_cereais").select(`
+      data_compra, quantidade_kg, romaneio, numero_nota_legado,
+      inscricao_vendedor_id, inscricao_comprador_id,
+      produto:produtos(nome),
+      local_entrega:locais_entrega(nome),
+      inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, produtores(nome)),
+      inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, produtores(nome)),
+      nota_fiscal:notas_fiscais(numero)
+    `).eq("safra_id", safraId).in("inscricao_comprador_id", inscricaoIdsFiltro);
+    if (dataInicial) qComC = qComC.gte("data_compra", dataInicial);
+    if (dataFinal) qComC = qComC.lte("data_compra", dataFinal);
+    const { data: comprasComprador } = await qComC;
+
+    // Transferências (origem = saída / destino = entrada)
+    let qTrOr = supabase.from("transferencias_deposito").select(`
+      data_transferencia, quantidade_kg, codigo,
+      inscricao_origem_id, inscricao_destino_id,
+      produto:produtos(nome),
+      local_saida:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome),
+      inscricao_destino:inscricoes_produtor!transferencias_deposito_inscricao_destino_id_fkey(inscricao_estadual, produtores(nome))
+    `).eq("safra_id", safraId).in("inscricao_origem_id", inscricaoIdsFiltro);
+    if (dataInicial) qTrOr = qTrOr.gte("data_transferencia", dataInicial);
+    if (dataFinal) qTrOr = qTrOr.lte("data_transferencia", dataFinal);
+    const { data: transfOrigem } = await qTrOr;
+
+    let qTrDe = supabase.from("transferencias_deposito").select(`
+      data_transferencia, quantidade_kg, codigo,
+      inscricao_origem_id, inscricao_destino_id,
+      produto:produtos(nome),
+      local_entrada:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome),
+      inscricao_origem:inscricoes_produtor!transferencias_deposito_inscricao_origem_id_fkey(inscricao_estadual, produtores(nome))
+    `).eq("safra_id", safraId).in("inscricao_destino_id", inscricaoIdsFiltro);
+    if (dataInicial) qTrDe = qTrDe.gte("data_transferencia", dataInicial);
+    if (dataFinal) qTrDe = qTrDe.lte("data_transferencia", dataFinal);
+    const { data: transfDestino } = await qTrDe;
+
+    // Devoluções
+    let qDev = supabase.from("devolucoes_deposito").select(`
+      data_devolucao, quantidade_kg, codigo,
+      inscricao_produtor_id,
+      produto:produtos(nome),
+      local_entrega:locais_entrega(nome),
+      nota_fiscal:notas_fiscais(numero)
+    `).eq("safra_id", safraId).in("inscricao_produtor_id", inscricaoIdsFiltro).neq("status", "cancelada");
+    if (dataInicial) qDev = qDev.gte("data_devolucao", dataInicial);
+    if (dataFinal) qDev = qDev.lte("data_devolucao", dataFinal);
+    const { data: devs } = await qDev;
+
+    // Remessas (Venda) -> via contratos_venda do produtor
+    const { data: contratos } = await supabase.from("contratos_venda")
+      .select("id, comprador:clientes_fornecedores(nome), inscricao_produtor_id")
+      .eq("safra_id", safraId)
+      .in("inscricao_produtor_id", inscricaoIdsFiltro);
+    const contratoIds = (contratos || []).map(c => c.id);
+    const contratoIdx = new Map<string, { comprador: string; inscricao_id: string }>();
+    (contratos || []).forEach((c: any) => {
+      contratoIdx.set(c.id, { comprador: c.comprador?.nome || "-", inscricao_id: c.inscricao_produtor_id });
+    });
+
+    let remessas: any[] = [];
+    if (contratoIds.length > 0) {
+      let qRem = supabase.from("remessas_venda").select(`
+        data_remessa, kg_remessa, sacos, romaneio, contrato_venda_id,
+        local_entrega_nome,
+        variedade:produtos(nome),
+        nota_fiscal:notas_fiscais(numero)
+      `).in("contrato_venda_id", contratoIds).neq("status", "cancelada");
+      if (dataInicial) qRem = qRem.gte("data_remessa", dataInicial);
+      if (dataFinal) qRem = qRem.lte("data_remessa", dataFinal);
+      const { data } = await qRem;
+      remessas = data || [];
+    }
+
+    // Consolida
+    const rows: ExtratoMovRow[] = [];
+
+    (cols || []).forEach((c: any) => {
+      const insc = inscIdx.get(c.inscricao_produtor_id) || { ie: "-", nome: produtorNome };
+      const kg = Number(c.producao_liquida_kg) || 0;
+      const sacos = Number(c.total_sacos) || 0;
+      rows.push({
+        local_nome: c.local_entrega?.nome || tenantSedeNome,
+        inscricao_id: c.inscricao_produtor_id, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
+        data: c.data_colheita, operacao: "deposito",
+        docto: c.romaneio != null ? String(c.romaneio) : "",
+        tipo: c.tipo_colheita || "",
+        variedade: c.variedade?.nome || "",
+        kilos: kg, sacos, nfe: "", contraparte: "",
+      });
+    });
+
+    (comprasVendedor || []).forEach((r: any) => {
+      // Produtor é o vendedor => saída no seu extrato
+      const insc = inscIdx.get(r.inscricao_vendedor_id) || { ie: "-", nome: produtorNome };
+      const kg = Number(r.quantidade_kg) || 0;
+      const comprador = r.inscricao_comprador?.produtores?.nome
+        ? `${r.inscricao_comprador.produtores.nome} - IE:${r.inscricao_comprador.inscricao_estadual || ""}`
+        : "-";
+      rows.push({
+        local_nome: r.local_entrega?.nome || tenantSedeNome,
+        inscricao_id: r.inscricao_vendedor_id, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
+        data: r.data_compra, operacao: "compra",
+        docto: r.romaneio != null ? String(r.romaneio) : "",
+        tipo: "", variedade: r.produto?.nome || "",
+        kilos: -kg, sacos: -Math.round(kg / 60),
+        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : (r.numero_nota_legado || ""),
+        contraparte: comprador,
+      });
+    });
+
+    (comprasComprador || []).forEach((r: any) => {
+      // Produtor é comprador => entrada no seu extrato (compra recebida)
+      const insc = inscIdx.get(r.inscricao_comprador_id) || { ie: "-", nome: produtorNome };
+      const kg = Number(r.quantidade_kg) || 0;
+      const vend = r.inscricao_vendedor?.produtores?.nome
+        ? `${r.inscricao_vendedor.produtores.nome} - IE:${r.inscricao_vendedor.inscricao_estadual || ""}`
+        : "-";
+      rows.push({
+        local_nome: r.local_entrega?.nome || tenantSedeNome,
+        inscricao_id: r.inscricao_comprador_id, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
+        data: r.data_compra, operacao: "compra",
+        docto: r.romaneio != null ? String(r.romaneio) : "",
+        tipo: "", variedade: r.produto?.nome || "",
+        kilos: kg, sacos: Math.round(kg / 60),
+        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : (r.numero_nota_legado || ""),
+        contraparte: vend,
+      });
+    });
+
+    (transfOrigem || []).forEach((t: any) => {
+      const insc = inscIdx.get(t.inscricao_origem_id) || { ie: "-", nome: produtorNome };
+      const kg = Number(t.quantidade_kg) || 0;
+      const dest = t.inscricao_destino?.produtores?.nome
+        ? `${t.inscricao_destino.produtores.nome} - IE:${t.inscricao_destino.inscricao_estadual || ""}`
+        : "-";
+      rows.push({
+        local_nome: t.local_saida?.nome || tenantSedeNome,
+        inscricao_id: t.inscricao_origem_id, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
+        data: t.data_transferencia, operacao: "transf_saida",
+        docto: t.codigo != null ? String(t.codigo) : "",
+        tipo: "", variedade: t.produto?.nome || "",
+        kilos: -kg, sacos: -Math.round(kg / 60),
+        nfe: "", contraparte: dest,
+      });
+    });
+
+    (transfDestino || []).forEach((t: any) => {
+      const insc = inscIdx.get(t.inscricao_destino_id) || { ie: "-", nome: produtorNome };
+      const kg = Number(t.quantidade_kg) || 0;
+      const org = t.inscricao_origem?.produtores?.nome
+        ? `${t.inscricao_origem.produtores.nome} - IE:${t.inscricao_origem.inscricao_estadual || ""}`
+        : "-";
+      rows.push({
+        local_nome: t.local_entrada?.nome || tenantSedeNome,
+        inscricao_id: t.inscricao_destino_id, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
+        data: t.data_transferencia, operacao: "transf_entrada",
+        docto: t.codigo != null ? String(t.codigo) : "",
+        tipo: "", variedade: t.produto?.nome || "",
+        kilos: kg, sacos: Math.round(kg / 60),
+        nfe: "", contraparte: org,
+      });
+    });
+
+    (devs || []).forEach((d: any) => {
+      const insc = inscIdx.get(d.inscricao_produtor_id) || { ie: "-", nome: produtorNome };
+      const kg = Number(d.quantidade_kg) || 0;
+      rows.push({
+        local_nome: d.local_entrega?.nome || tenantSedeNome,
+        inscricao_id: d.inscricao_produtor_id, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
+        data: d.data_devolucao, operacao: "devolucao",
+        docto: d.codigo != null ? String(d.codigo) : "",
+        tipo: "", variedade: d.produto?.nome || "",
+        kilos: -kg, sacos: -Math.round(kg / 60),
+        nfe: d.nota_fiscal?.numero ? String(d.nota_fiscal.numero) : "",
+        contraparte: "",
+      });
+    });
+
+    (remessas || []).forEach((r: any) => {
+      const meta = contratoIdx.get(r.contrato_venda_id);
+      const inscId = meta?.inscricao_id || "";
+      const insc = inscIdx.get(inscId) || { ie: "-", nome: produtorNome };
+      const kg = Number(r.kg_remessa) || 0;
+      rows.push({
+        local_nome: r.local_entrega_nome || tenantSedeNome,
+        inscricao_id: inscId, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
+        data: r.data_remessa, operacao: "venda",
+        docto: r.romaneio != null ? String(r.romaneio) : "",
+        tipo: "", variedade: r.variedade?.nome || "",
+        kilos: -kg, sacos: -(Number(r.sacos) || Math.round(kg / 60)),
+        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : "",
+        contraparte: meta?.comprador || "-",
+      });
+    });
+
+    if (rows.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhuma movimentação encontrada para os filtros." });
+      return;
+    }
+
+    const inscSel = inscricaoId ? inscricoesDoProdutor.find(i => i.id === inscricaoId) : null;
+    const filtroInscLabel = inscSel ? `${inscSel.inscricao_estadual}${(inscSel as any).nome_fantasia ? ' - ' + (inscSel as any).nome_fantasia : ''}` : null;
+
+    gerarExtratoMovimentacaoPdf({
+      produtorNome, cpfCnpj: produtorCpf, safraNome,
+      filtroInscricao: filtroInscLabel,
+      orientation: vendasOrientacao, format: vendasTamanho,
+      rows,
+    });
+  };
+
+
   const gerarResumoColheitaLavoura = async () => {
     if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
 
