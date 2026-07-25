@@ -232,6 +232,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
   const titulos: Record<TipoRelatorio, string> = {
     extrato: "Extrato do Produtor",
+    extrato_movimentacao: "Extrato de Movimentação",
     resumo_produtor: "Resumo do Produtor",
     colheitas: "Relatório de Colheitas",
     colheita_diaria: "Colheita Diária",
