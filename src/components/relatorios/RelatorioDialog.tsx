@@ -1447,7 +1447,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       const insc = inscIdx.get(inscId) || { ie: "-", nome: produtorNome };
       const kg = Number(r.kg_remessa) || 0;
       rows.push({
-        local_nome: r.local_entrega_nome || tenantSedeNome,
+        // Venda usa sempre o local de entrega padrão da granja do sócio vendedor,
+        // e não o local do comprador gravado na remessa.
+        local_nome: localPadraoGranja,
         inscricao_id: inscId, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
         data: r.data_remessa, operacao: "venda",
         docto: r.romaneio != null ? String(r.romaneio) : "",
