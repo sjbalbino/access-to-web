@@ -348,11 +348,21 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     // Fetch all data for the safra (without .in() filter to avoid URL length limits)
     const [colheitasRes, trDepRes, devRes, comprasRes] = await Promise.all([
-      supabase.from("colheitas").select("inscricao_produtor_id, producao_liquida_kg, tipo_colheita, local_entrega_terceiro_id").eq("safra_id", safraId),
+      supabase.from("colheitas").select("inscricao_produtor_id, producao_liquida_kg, tipo_colheita, local_entrega_terceiro_id, local_entrega:locais_entrega!colheitas_local_entrega_terceiro_id_fkey(nome)").eq("safra_id", safraId),
       supabase.from("transferencias_deposito").select("inscricao_origem_id, inscricao_destino_id, quantidade_kg").eq("safra_id", safraId),
       supabase.from("devolucoes_deposito").select("inscricao_produtor_id, inscricao_recebe_taxa_id, quantidade_kg, kg_taxa_armazenagem").eq("safra_id", safraId).neq("status", "cancelada"),
       supabase.from("compras_cereais").select("inscricao_vendedor_id, inscricao_comprador_id, quantidade_kg").eq("safra_id", safraId),
     ]);
+
+    // Local de entrega predominante por inscrição (nome real; fallback = sede do tenant)
+    const localPorInscricao: Record<string, string> = {};
+    (colheitasRes.data || []).forEach((c: any) => {
+      if (!c.inscricao_produtor_id) return;
+      if (!localPorInscricao[c.inscricao_produtor_id]) {
+        localPorInscricao[c.inscricao_produtor_id] = c.local_entrega?.nome || tenantSedeNome;
+      }
+    });
+
 
     // Fetch vendas (remessas via contratos)
     const { data: contratosVenda } = await supabase
