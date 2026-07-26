@@ -1017,6 +1017,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       { name: "Devoluções", header: ["Data", "Qtd (kg)", "Sacas", "Taxa Arm. %", "Kg Taxa"], rows: devRows },
       { name: "Notas Depósito", header: ["Data", "NF", "Qtd (kg)", "Sacas"], rows: ndRows },
       { name: "Compras de Cereais", header: ["Data", "Vendedor", "NFe", "Qtd (kg)", "Sacas"], rows: comprasAdqRows },
+      { name: "Vendas da Produção", header: ["Data", "Comprador", "Variedade", "NFe", "Qtd (kg)", "Sacas"], rows: vendasRows },
       { name: "Resumo por Variedade", header: ["Variedade", "Colheitas", "Prod. Bruta (kg)", "Prod. Líquida (kg)", "Sacas"], rows: variedadeRows },
       { name: "Resumo Final", header: ["Descrição", "Kg", "Sacas"], rows: [
         ["Total Colheitas", totalColheitas, sc(totalColheitas)],
@@ -1025,6 +1026,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         ["(-) Transf. Enviadas", totalTrEnv, sc(totalTrEnv)],
         ["(-) Devoluções", totalDev, sc(totalDev)],
         ["(-) Kg Taxa Armazenagem", totalKgTaxa, sc(totalKgTaxa)],
+        ["(-) Vendas da Produção", totalVendas, sc(totalVendas)],
         ["SALDO", saldo, sc(saldo)],
       ] },
     ]);
