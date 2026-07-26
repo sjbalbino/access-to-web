@@ -397,6 +397,49 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     4,
   );
 
+  // VENDAS DA PRODUÇÃO (remessas de venda — saída do saldo)
+  const vendasList = data.vendas || [];
+  renderSection<ExtratoVenda>(
+    "VENDAS DA PRODUÇÃO",
+    vendasList,
+    (v) => localOf(v.local_entrega),
+    (v) => [
+      localOf(v.local_entrega),
+      formatDate(v.data_remessa),
+      trunc(v.comprador || "-", 40),
+      trunc(v.variedade || "-", 22),
+      v.nfe || "-",
+      formatNumber(v.quantidade_kg, 0),
+      toSacas(v.quantidade_kg),
+    ],
+    2,
+    (list) => {
+      const tot = sumBy(list, "quantidade_kg");
+      return [formatNumber(tot, 0), toSacas(tot)];
+    },
+    [
+      "Local",
+      { content: "Data", styles: { halign: "center" } },
+      "Comprador",
+      "Variedade",
+      "NFe",
+      { content: "Qtd (kg)", styles: { halign: "right" } },
+      { content: "Sacas", styles: { halign: "right" } },
+    ],
+    {
+      0: { halign: "left", cellWidth: 30 },
+      1: { halign: "center", cellWidth: 25 },
+      2: { halign: "left", overflow: "ellipsize" },
+      3: { halign: "left", cellWidth: 34, overflow: "ellipsize" },
+      4: { halign: "left", cellWidth: 22 },
+      5: { halign: "right", cellWidth: 28 },
+      6: { halign: "right", cellWidth: 24 },
+    },
+    5,
+  );
+
+
+
 
 
 
