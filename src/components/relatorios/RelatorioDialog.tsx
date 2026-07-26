@@ -2029,8 +2029,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Local de Entrega - colheita_diaria */}
-          {tipo === "colheita_diaria" && (
+          {/* Local de Entrega - colheita_diaria / saldo_disponivel */}
+          {(tipo === "colheita_diaria" || tipo === "saldo_disponivel") && (
+
             <div>
               <Label>Local de Entrega</Label>
               <ComboboxFilter
