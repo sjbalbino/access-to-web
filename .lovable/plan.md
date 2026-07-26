@@ -1,21 +1,30 @@
-## Diagnóstico
+## Objetivo
 
-No Extrato de Movimentação (`src/components/relatorios/RelatorioDialog.tsx`), a coluna Sacos é montada por linha com critérios diferentes:
+No relatório **Extrato do Produtor**, a coluna **Variedade** (e, junto dela, Local e Lavoura) quebra em várias linhas por célula, inflando a altura das linhas e o número de páginas. O objetivo é garantir uma linha por registro, sem perder legibilidade nem alterar nenhum cálculo.
 
-- Depósitos/colheitas: usam `total_sacos` gravado no banco (linha ~1364), que vem com arredondamento próprio do romaneio.
-- Transferências, devoluções e compras: usam `Math.round(kg / 60)` (linhas ~1389, 1407, 1424, 1438).
-- Vendas: usam `sacos` da remessa, com fallback `Math.round(kg / 60)` (linha ~1457).
+## Situação atual (verificada)
 
-Os totais (Total da Inscrição / Local / Produtor) em `src/lib/relatoriosPdf.ts` somam esses valores já arredondados (`acc.sacos += r.sacos`, linhas ~1920-1924). Como cada linha é arredondada isoladamente, a soma das entradas e saídas não se cancela: no caso do DIRCEU VIDAL DE TOLEDO, os Kilos fecham em 0 mas os sacos deixam resíduo de 1.
+Em `src/lib/relatoriosPdf.ts`, na função `gerarExtratoProdutorPdf` (seção **COLHEITAS**, linhas ~199-252):
+- As colunas 0 (Local), 2 (Lavoura) e 3 (Variedade) usam `cellWidth: 26` com o comportamento padrão do autoTable (`overflow: "linebreak"`), então textos longos quebram em 2-3 linhas.
+- A tabela **RESUMO POR VARIEDADE** (linhas ~405-455) tem o mesmo comportamento na coluna de variedade.
 
-## Correção proposta
+## Mudanças propostas (somente apresentação)
 
-1. Em `src/lib/relatoriosPdf.ts` (`gerarExtratoMovimentacaoPdf`): acumular também os kilos por inscrição/local/produtor e calcular o total de sacos como `Math.round(totalKg / 60)` em vez de somar os sacos já arredondados das linhas. Assim, kg zero sempre resulta em 0 sacos.
-2. Aplicar o mesmo critério no bloco RESUMO GERAL (acumulador `sacos` por operação/produto): derivar sacos de `entradas - saidas` em kg.
-3. Manter as linhas individuais exibindo o saco do documento (romaneio/remessa), que é o valor fiscal real de cada movimento.
+Arquivo único: `src/lib/relatoriosPdf.ts`
 
-## Detalhes técnicos
+1. **Forçar linha única nas colunas de texto da tabela COLHEITAS**
+   - Aplicar `overflow: "ellipsize"` e `cellWidth` fixo nas colunas Local, Lavoura e Variedade, de modo que texto excedente seja cortado com reticências em vez de quebrar linha.
+   - Reservar um pouco mais de largura para Variedade (ex.: Local 24 / Lavoura 26 / Variedade 34 mm), aproveitando a folga do formato paisagem, já que as colunas numéricas restantes são estreitas.
 
-- Alterar apenas a camada de apresentação do PDF; nenhuma query ou regra de negócio muda.
-- Peso da saca fixo em 60 kg, igual ao já usado no arquivo.
-- Arredondamento com `Math.round` e exibição com `formatNumber(..., 0)`, conforme o padrão BR do projeto.
+2. **Truncamento inteligente antes da renderização**
+   - Aplicar um helper de truncamento (já existe o padrão `trunc` usado no Extrato de Movimentação) nos valores de Lavoura e Variedade, evitando que a ellipsização do autoTable seja acionada em textos muito longos.
+
+3. **Compactar a altura das linhas**
+   - Reduzir levemente o `cellPadding` das linhas de corpo dessa tabela (de 1.5 para 1.2) mantendo `fontSize: 7`, o que reduz páginas sem prejudicar a leitura.
+
+4. **Mesmo tratamento no RESUMO POR VARIEDADE**
+   - Coluna de variedade com largura fixa maior e `overflow: "ellipsize"`, garantindo uma linha por variedade.
+
+## Fora de escopo
+
+- Nenhuma alteração em queries, cálculos, subtotais ou nos demais relatórios (Extrato de Movimentação, Extrato de Depósitos, etc.).
