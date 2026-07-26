@@ -472,8 +472,19 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       row.saldo_kg = row.depositos_kg + row.compras_kg - row.vendas_kg - row.devolucoes_kg - row.tr_saida_kg + row.tr_entrada_kg - row.notas_deposito_kg;
     });
 
-    const rows = Object.values(rowMap).sort((a, b) => a.produtor_nome.localeCompare(b.produtor_nome));
+    // Filtro por Local de Entrega (vazio = todos)
+    const localSelecionado = localEntregaId ? locaisEntrega?.find(l => l.id === localEntregaId) : undefined;
+    const entriesFiltradas = Object.entries(rowMap).filter(([inscId]) => {
+      if (!localEntregaId) return true;
+      const localId = localIdPorInscricao[inscId] ?? null;
+      // Sede: inscrições sem local de terceiro (ou sem colheitas) pertencem à sede
+      if (localSelecionado?.is_sede) return localId === null;
+      return localId === localEntregaId;
+    });
+
+    const rows = entriesFiltradas.map(([, r]) => r).sort((a, b) => a.produtor_nome.localeCompare(b.produtor_nome));
     if (rows.length === 0) { toast({ title: "Sem dados" }); return; }
+
 
     const tipoEntregaLabel: Record<string, string> = {
       "todos": "Todos",
