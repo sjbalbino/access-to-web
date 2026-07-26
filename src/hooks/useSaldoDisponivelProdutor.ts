@@ -18,6 +18,7 @@ interface SaldoDisponivelResult {
   devolucoes: number;
   kgTaxaArmazenagem: number;
   notasDeposito: number; // Notas de depósito emitidas (CFOP 1905)
+  vendasProducao: number;
 }
 
 /**
