@@ -1836,7 +1836,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     let query = supabase
       .from("contratos_venda")
-      .select(`id, numero, data_contrato, quantidade_kg, preco_kg, valor_total, comprador_id, inscricao_produtor_id,
+      .select(`id, numero, numero_contrato_comprador, data_contrato, quantidade_kg, preco_kg, valor_total, comprador_id, inscricao_produtor_id,
         comprador:clientes_fornecedores(nome, nome_fantasia),
         produto:produtos(nome),
         inscricao_produtor:inscricoes_produtor(inscricao_estadual, nome_fantasia, produtores(nome))`)
@@ -1880,7 +1880,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         comprador_label: compradorLabel,
         tipo_label: /sement/i.test(produtoNome) ? "SEMENTE" : "INDUSTRIA",
         data_contrato: c.data_contrato,
-        numero: c.numero != null ? String(c.numero) : null,
+        numero: (c.numero_contrato_comprador && String(c.numero_contrato_comprador).trim()) || (c.numero != null ? String(c.numero) : null),
         produto_nome: produtoNome,
         quantidade_kg: qtd,
         preco_kg: Number(c.preco_kg) || 0,
@@ -1892,7 +1892,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     setPendingSheets([{
       name: "Extrato Venda Producao",
-      header: ["Vendedor", "Comprador", "Tipo", "Data", "Contrato", "Produto", "Sacos", "Valor/kg", "Tonelada (kg)", "Total (R$)", "Remessa (kg)", "Saldo (kg)"],
+      header: ["Vendedor", "Comprador", "Tipo", "Data", "Contrato Comprador", "Produto", "Sacos", "Valor/kg", "Tonelada (kg)", "Total (R$)", "Remessa (kg)", "Saldo (kg)"],
       rows: rows.map(r => [
         r.vendedor_label, r.comprador_label, r.tipo_label, r.data_contrato ?? "", r.numero ?? "", r.produto_nome ?? "",
         Math.round(r.quantidade_kg / 60), r.preco_kg, r.quantidade_kg, r.valor_total, r.remessa_kg, r.saldo_kg,
