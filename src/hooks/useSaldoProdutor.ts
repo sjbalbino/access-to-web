@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { resolveSaldoProdutoIds } from '@/lib/produtoSaldo';
+import { calcularVendasProducaoKg } from '@/lib/vendasProducaoSaldo';
 
 interface SaldoProdutorFilters {
   inscricaoProdutorId?: string;
@@ -13,6 +14,7 @@ interface SaldoResult {
   colheitas: number;
   transferenciasRecebidas: number;
   transferenciasEnviadas: number;
+  vendasProducao: number;
 }
 
 export function useSaldoProdutor(filters: SaldoProdutorFilters) {
