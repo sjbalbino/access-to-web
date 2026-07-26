@@ -1950,9 +1950,10 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
   body.push([
     { content: "Total do Produtor -->", colSpan: 5, styles: { fontStyle: "bold", halign: "right" } },
     { content: formatNumber(totalGeralKilos, 0), styles: { fontStyle: "bold", halign: "right" } },
-    { content: formatNumber(totalGeralSacos, 0), styles: { fontStyle: "bold", halign: "right" } },
+    { content: formatNumber(sacosDeKg(totalGeralKilos), 0), styles: { fontStyle: "bold", halign: "right" } },
     { content: "", colSpan: 3 },
   ]);
+
   totalGeralRows.push(body.length - 1);
   rowLocal.push("");
   rowInsc.push("");
