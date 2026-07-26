@@ -153,9 +153,12 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         0
       ));
 
+      // Vendas da Produção (remessas não canceladas) — saída física de estoque
+      const totalVendas = await calcularVendasProducaoKg(inscricaoProdutorId, safraId, produtoIds);
+
       // Kg de Taxa de Armazenagem é crédito exclusivo do sócio recebedor da taxa, não debita do produtor.
       // Notas de Depósito emitidas também não entram no saldo disponível para devolução.
-      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes;
+      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalVendas;
 
       return {
         saldo,
@@ -165,6 +168,7 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         devolucoes: totalDevolucoes,
         kgTaxaArmazenagem: totalKgTaxaArmazenagem,
         notasDeposito: totalNotasDeposito,
+        vendasProducao: totalVendas,
       };
     },
     enabled: Boolean(filters.inscricaoProdutorId && filters.safraId && filters.produtoId),
