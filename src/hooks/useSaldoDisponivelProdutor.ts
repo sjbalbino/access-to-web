@@ -33,7 +33,7 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
       const { inscricaoProdutorId, safraId, produtoId, localEntregaId } = filters;
 
       if (!inscricaoProdutorId || !safraId || !produtoId) {
-        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0, devolucoes: 0, kgTaxaArmazenagem: 0, notasDeposito: 0 };
+        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0, devolucoes: 0, kgTaxaArmazenagem: 0, notasDeposito: 0, vendasProducao: 0 };
       }
 
       const produtoIds = await resolveSaldoProdutoIds(produtoId);
