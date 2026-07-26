@@ -926,6 +926,14 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         nfe: c.nota_fiscal?.numero ? String(c.nota_fiscal.numero) : null,
         local_entrega: c.local_entrega?.nome || null,
       })),
+      vendas: remessasExtrato.map((r: any) => ({
+        data_remessa: r.data_remessa,
+        comprador: compradorPorContrato.get(r.contrato_venda_id) || "-",
+        variedade: r.variedade?.nome || null,
+        quantidade_kg: Number(r.kg_remessa) || 0,
+        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : null,
+        local_entrega: localPadraoVenda,
+      })),
     };
 
     const PS = 60;
