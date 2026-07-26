@@ -12,7 +12,7 @@ import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
 
 type TipoRelatorio =
   | "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "extrato_depositos" | "vendas"
-  | "demonstrativo_gerencial" | "dre" | "bens_moveis"
+  | "extrato_venda_producao" | "demonstrativo_gerencial" | "dre" | "bens_moveis"
   | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 
@@ -85,6 +85,9 @@ const GRUPOS: Grupo[] = [
       { tipo: "vendas", titulo: "Relatório de Vendas", descricao: "Resumo dos contratos de venda",
         detalhe: "Contratos, quantidades, valores, carregado e saldo pendente.",
         icon: ShoppingCart, iconBg: "bg-info/10", iconColor: "text-info", primario: true },
+      { tipo: "extrato_venda_producao", titulo: "Extrato Venda da Produção", descricao: "Vendas por vendedor (sócio/IE)",
+        detalhe: "Agrupado por Vendedor -> Comprador -> Tipo, com sacos, tonelada, valor, remessa e saldo.",
+        icon: FileText, iconBg: "bg-info/10", iconColor: "text-info", primario: true },
     ],
   },
   {

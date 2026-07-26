@@ -25,10 +25,12 @@ import {
   gerarResumoColheitaLavouraPdf,
   gerarExtratoDepositosProdutorPdf,
   gerarExtratoMovimentacaoPdf,
+  gerarExtratoVendaProducaoPdf,
   type ExtratoMovRow,
   type ExtratoData,
   type RelColheita,
   type RelContratoVenda,
+  type RelExtratoVendaRow,
   type RelColheitaDiariaRow,
   type RelEntregaVariedadeRow,
   type RelResumoColheitaRow,
@@ -58,7 +60,7 @@ import { captureNextRelatorio, cancelPendingCapture, setPendingSheets, type Rela
 import { loadPdfBrand } from "@/lib/pdfBrand";
 import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
 
-export type TipoRelatorio = "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "extrato_depositos" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+export type TipoRelatorio = "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "extrato_depositos" | "vendas" | "extrato_venda_producao" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 
 interface Props {
@@ -89,6 +91,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [loadingProdutoresSafra, setLoadingProdutoresSafra] = useState(false);
   const [inscricaoIdsComMovimento, setInscricaoIdsComMovimento] = useState<Set<string>>(new Set());
   const [compradorIdsComContratos, setCompradorIdsComContratos] = useState<Set<string>>(new Set());
+  const [inscricaoIdsComContratos, setInscricaoIdsComContratos] = useState<Set<string>>(new Set());
   const [previewPayload, setPreviewPayload] = useState<RelatorioPayload | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -193,25 +196,33 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   }, [tipo, safraId]);
 
   useEffect(() => {
-    if (tipo !== "vendas" || !safraId) {
+    if ((tipo !== "vendas" && tipo !== "extrato_venda_producao") || !safraId) {
       setCompradorIdsComContratos(new Set());
+      setInscricaoIdsComContratos(new Set());
       return;
     }
     let ativo = true;
     (async () => {
       const { data, error } = await supabase
         .from("contratos_venda")
-        .select("comprador_id")
+        .select("comprador_id, inscricao_produtor_id")
         .eq("safra_id", safraId);
       if (!ativo) return;
       if (error) {
         setCompradorIdsComContratos(new Set());
+        setInscricaoIdsComContratos(new Set());
         return;
       }
       const ids = new Set<string>();
-      (data || []).forEach((r: any) => { if (r.comprador_id) ids.add(r.comprador_id); });
+      const insc = new Set<string>();
+      (data || []).forEach((r: any) => {
+        if (r.comprador_id) ids.add(r.comprador_id);
+        if (r.inscricao_produtor_id) insc.add(r.inscricao_produtor_id);
+      });
       setCompradorIdsComContratos(ids);
+      setInscricaoIdsComContratos(insc);
       setCompradorId((atual) => (atual && ids.has(atual) ? atual : ""));
+      if (tipo === "extrato_venda_producao") setInscricaoId((atual) => (atual && insc.has(atual) ? atual : ""));
     })();
     return () => { ativo = false; };
   }, [tipo, safraId]);
@@ -242,6 +253,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     resumo_colheita_lavoura: "Resumo da Colheita por Lavoura",
     extrato_depositos: "Extrato de Depósitos por Produtor",
     vendas: "Relatório de Vendas",
+    extrato_venda_producao: "Extrato Venda da Produção",
 
     demonstrativo_gerencial: "Demonstrativo Gerencial",
     dre: "DRE - Demonstrativo de Resultado",
@@ -278,6 +290,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
 
       else if (tipo === "vendas") await gerarVendas();
+      else if (tipo === "extrato_venda_producao") await gerarExtratoVendaProducao();
       else if (tipo === "demonstrativo_gerencial") await gerarDemonstrativo();
       else if (tipo === "dre") await gerarDre();
       else if (tipo === "bens_moveis") await gerarBensMoveis();
@@ -1807,6 +1820,94 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     gerarRelatorioVendasPdf(mapped, `Safra: ${safra?.nome || "-"}`, { orientacao: vendasOrientacao, tamanho: vendasTamanho });
   };
 
+  /**
+   * Extrato Venda da Produção — agrupado por Vendedor (inscrição) -> Comprador -> Tipo.
+   */
+  const gerarExtratoVendaProducao = async () => {
+    if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
+
+    const { data: safraRow } = await supabase
+      .from("safras")
+      .select("nome, cultura:cultura_id(nome)")
+      .eq("id", safraId)
+      .maybeSingle();
+    const safraNome = (safraRow as any)?.nome || "-";
+    const culturaNome = (safraRow as any)?.cultura?.nome || "-";
+
+    let query = supabase
+      .from("contratos_venda")
+      .select(`id, numero, data_contrato, quantidade_kg, preco_kg, valor_total, comprador_id, inscricao_produtor_id,
+        comprador:clientes_fornecedores(nome, nome_fantasia),
+        produto:produtos(nome),
+        inscricao_produtor:inscricoes_produtor(inscricao_estadual, nome_fantasia, produtores(nome))`)
+      .eq("safra_id", safraId);
+    if (compradorId) query = query.eq("comprador_id", compradorId);
+    if (inscricaoId) query = query.eq("inscricao_produtor_id", inscricaoId);
+    if (dataInicial) query = query.gte("data_contrato", dataInicial);
+    if (dataFinal) query = query.lte("data_contrato", dataFinal);
+
+    const { data: contratos, error } = await query.order("data_contrato");
+    if (error) throw error;
+    if (!contratos || contratos.length === 0) { toast({ title: "Sem dados", description: "Nenhum contrato encontrado." }); return; }
+
+    // Remessas (não canceladas) por contrato
+    const { data: remessas } = await supabase
+      .from("remessas_venda")
+      .select("contrato_venda_id, kg_remessa")
+      .in("contrato_venda_id", contratos.map((c: any) => c.id))
+      .neq("status", "cancelada");
+    const remessaPorContrato: Record<string, number> = {};
+    (remessas || []).forEach((r: any) => {
+      if (!r.contrato_venda_id) return;
+      remessaPorContrato[r.contrato_venda_id] = (remessaPorContrato[r.contrato_venda_id] || 0) + (Number(r.kg_remessa) || 0);
+    });
+
+    const rows: RelExtratoVendaRow[] = contratos.map((c: any) => {
+      const insc = c.inscricao_produtor;
+      const vendedorLabel = insc
+        ? `${(insc.produtores?.nome || "SEM NOME").toUpperCase()}${insc.nome_fantasia ? ` - ${insc.nome_fantasia}` : ""} - IE: ${insc.inscricao_estadual || "-"}`
+        : "SEM VENDEDOR";
+      const compradorLabel = c.comprador?.nome
+        ? `${c.comprador.nome}${c.comprador.nome_fantasia ? ` (${c.comprador.nome_fantasia})` : ""}`
+        : "SEM COMPRADOR";
+      const produtoNome = c.produto?.nome || "-";
+      const qtd = Number(c.quantidade_kg) || 0;
+      const remessa = remessaPorContrato[c.id] || 0;
+      return {
+        vendedor_key: c.inscricao_produtor_id || "sem_vendedor",
+        vendedor_label: vendedorLabel,
+        comprador_key: c.comprador_id || "sem_comprador",
+        comprador_label: compradorLabel,
+        tipo_label: /sement/i.test(produtoNome) ? "SEMENTE" : "INDUSTRIA",
+        data_contrato: c.data_contrato,
+        numero: c.numero != null ? String(c.numero) : null,
+        produto_nome: produtoNome,
+        quantidade_kg: qtd,
+        preco_kg: Number(c.preco_kg) || 0,
+        valor_total: Number(c.valor_total) || 0,
+        remessa_kg: remessa,
+        saldo_kg: qtd - remessa,
+      };
+    });
+
+    setPendingSheets([{
+      name: "Extrato Venda Producao",
+      header: ["Vendedor", "Comprador", "Tipo", "Data", "Contrato", "Produto", "Sacos", "Valor/kg", "Tonelada (kg)", "Total (R$)", "Remessa (kg)", "Saldo (kg)"],
+      rows: rows.map(r => [
+        r.vendedor_label, r.comprador_label, r.tipo_label, r.data_contrato ?? "", r.numero ?? "", r.produto_nome ?? "",
+        Math.round(r.quantidade_kg / 60), r.preco_kg, r.quantidade_kg, r.valor_total, r.remessa_kg, r.saldo_kg,
+      ]),
+    }]);
+
+    gerarExtratoVendaProducaoPdf({
+      safraNome,
+      culturaNome,
+      rows,
+      orientacao: vendasOrientacao,
+      tamanho: vendasTamanho,
+    });
+  };
+
   // ========== Management reports ==========
   const gerarDemonstrativo = async () => {
     if (!dataInicial || !dataFinal) { toast({ title: "Filtros obrigatórios", description: "Informe o período.", variant: "destructive" }); return; }
@@ -2215,7 +2316,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
           {/* Orientação e Tamanho da Página - vendas / extrato_depositos / extrato_movimentacao */}
-          {(tipo === "vendas" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
+          {(tipo === "vendas" || tipo === "extrato_venda_producao" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="min-w-0">
                 <Label>Orientação</Label>
@@ -2308,8 +2409,30 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
+          {/* Vendedor (Inscrição) - extrato venda produção */}
+          {tipo === "extrato_venda_producao" && (
+            <div className="min-w-0">
+              <Label>Vendedor (Inscrição)</Label>
+              <ComboboxFilter
+                value={inscricaoId}
+                onValueChange={setInscricaoId}
+                options={(inscricoes || [])
+                  .filter(i => !safraId || inscricaoIdsComContratos.has(i.id))
+                  .map(i => ({
+                    value: i.id,
+                    label: `${i.produtores?.nome || "Sem nome"} - IE: ${i.inscricao_estadual || "-"}`,
+                  }))}
+                placeholder="Todos os vendedores"
+                searchPlaceholder="Buscar vendedor..."
+                emptyText="Nenhum vendedor com contratos."
+                allLabel="Todos"
+                popoverWidth="w-[400px]"
+              />
+            </div>
+          )}
+
           {/* Comprador - vendas */}
-          {tipo === "vendas" && (
+          {(tipo === "vendas" || tipo === "extrato_venda_producao") && (
             <div className="min-w-0">
               <Label>Comprador</Label>
               <ComboboxFilter
