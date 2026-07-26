@@ -207,10 +207,10 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     data.colheitas,
     (c) => localOf(c.local_entrega),
     (c) => [
-      localOf(c.local_entrega),
+      trunc(localOf(c.local_entrega), 18),
       formatDate(c.data_colheita),
-      c.lavoura || "-",
-      c.variedade || "-",
+      trunc(c.lavoura || "-", 20),
+      trunc(c.variedade || "-", 26),
       formatNumber(c.peso_bruto, 0),
       formatNumber(c.peso_tara, 0),
       formatNumber(c.producao_kg, 0),
