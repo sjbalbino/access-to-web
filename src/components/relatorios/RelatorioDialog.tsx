@@ -976,13 +976,20 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       comprasAdqRows.push(["TOTAL", "", "", tot, sc(tot)]);
     }
 
+    const vendasRows = (extratoData.vendas || []).map(v => [v.data_remessa, v.comprador ?? "", v.variedade ?? "", v.nfe ?? "", v.quantidade_kg, sc(Number(v.quantidade_kg) || 0)]);
+    if (vendasRows.length) {
+      const tot = sum(extratoData.vendas || [], "quantidade_kg");
+      vendasRows.push(["TOTAL", "", "", "", tot, sc(tot)]);
+    }
+
     const totalColheitas = sum(extratoData.colheitas, "producao_liquida_kg");
     const totalTrRec = sum(extratoData.transferenciasRecebidas, "quantidade_kg");
     const totalTrEnv = sum(extratoData.transferenciasEnviadas, "quantidade_kg");
     const totalDev = sum(extratoData.devolucoes, "quantidade_kg");
     const totalKgTaxa = sum(extratoData.devolucoes, "kg_taxa_armazenagem");
     const totalCompAdq = sum(extratoData.comprasAdquiridas || [], "quantidade_kg");
-    const saldo = totalColheitas + totalTrRec + totalCompAdq - totalTrEnv - totalDev - totalKgTaxa;
+    const totalVendas = sum(extratoData.vendas || [], "quantidade_kg");
+    const saldo = totalColheitas + totalTrRec + totalCompAdq - totalTrEnv - totalDev - totalKgTaxa - totalVendas;
 
     const porVariedade = new Map<string, { qtd: number; producao: number; liquida: number }>();
     extratoData.colheitas.forEach((c) => {
