@@ -18,7 +18,9 @@ function downloadPdf(doc: jsPDF, filename: string) {
 
 export interface SaldoDisponivelRow {
   produtor_nome: string;
+  inscricao_estadual?: string;
   local_entrega: string;
+
   tipo: string; // INDUST / SEMENT
   depositos_kg: number;
   compras_kg: number;
