@@ -402,7 +402,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         const insc = filteredInscricoes.find(i => i.id === inscId);
         rowMap[inscId] = {
           produtor_nome: insc?.produtores?.nome || insc?.inscricao_estadual || "-",
-          local_entrega: insc?.granja || "-",
+          inscricao_estadual: insc?.inscricao_estadual || "-",
+          local_entrega: localPorInscricao[inscId] || tenantSedeNome,
+
           tipo: "INDUST",
           depositos_kg: 0, compras_kg: 0, vendas_kg: 0,
           devolucoes_kg: 0, tr_saida_kg: 0, tr_entrada_kg: 0,
