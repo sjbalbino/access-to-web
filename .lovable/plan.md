@@ -1,32 +1,45 @@
 ## Objetivo
 
-Permitir filtrar o relatório **Saldo Disponível - Estoque Geral** por um Local de Entrega específico, ou listar todos os locais (comportamento atual).
+Reproduzir o relatório legado **Entrega por Variedade**: entregas de colheita agregadas por variedade, com hierarquia Local de Entrega → Tipo de Entrega → Produtor → Variedade, e totalizadores em cada nível.
 
-## Situação verificada
+## Layout (retrato)
 
-- O filtro `localEntregaId` (estado + `useLocaisEntrega`) já existe no `RelatorioDialog.tsx`, mas hoje só é exibido para o relatório `colheita_diaria` (linhas 2015-2029).
-- Em `gerarSaldoDisponivel` (linha 327), o local de cada inscrição é derivado da primeira colheita da safra (`localPorInscricao`), com fallback para a sede do tenant (`tenantSedeNome`). Não há nenhum filtro por local.
-- `gerarSaldoDisponivelPdf` (`src/lib/relatoriosEstoque.ts`) recebe `safraNome`, `tipoEntrega`, `pesoSaco` e `rows`, e imprime a linha de filtros no cabeçalho.
+Cabeçalho: nome do sistema/tenant à esquerda, título "Entrega por Variedade" centralizado, página e data/hora à direita; abaixo, Safra e filtros aplicados.
 
-## Mudanças
+Colunas: `Inscrição | Nome | CPF | Tipo | Variedade | Depósitos (kg) | Sacos`.
 
-### 1. UI — `src/components/relatorios/RelatorioDialog.tsx`
+Quebras e subtotais:
+```text
+Local Entrega: TosAgro
+  Tipo de Entrega: Terceiros
+    Produtor: CLAUDIO JACO LUDWIG
+      472.101.443-0  CLAUDIO...  458.537.380-20  INDUSTRIA  SOJA PATENTE DECLARADA  318.735  5.312
+                                                 INDUSTRIA  SOJA INDUSTRIA - KGS    112.789  1.880
+      Total Produtor: CLAUDIO JACO LUDWIG --> 2            431.524  7.192
+    Total Tipo Entrega: Terceiros --> 10                 1.230.695  ...
+  Total Local Entrega: TosAgro --> 10                    1.230.695  ...
+Total Geral -->                                          1.230.695  ...
+```
+O número após a seta (`--> 2`) é a quantidade de linhas/variedades agregadas no grupo, como no legado.
 
-Estender a condição do bloco "Local de Entrega" para incluir `tipo === "saldo_disponivel"`, mantendo o `ComboboxFilter` já existente com `allLabel="Todos"` / placeholder "Todos os locais" (valor vazio = listar todos).
+## Regras de cálculo
 
-### 2. Geração dos dados — `gerarSaldoDisponivel`
+- Fonte: tabela `colheitas` da safra selecionada (mesma base do relatório Colheita Diária), com `producao_liquida_kg > 0`.
+- Agregação: soma de `producao_liquida_kg` por (Local, Tipo de contrato da inscrição, Inscrição/Produtor, Tipo de colheita, Variedade).
+- **Sacos = arredondamento de (Kg líquido / 60)** por linha; subtotais somam os kg e recalculam/soma dos sacos.
+- Local nulo (`local_entrega_terceiro_id` null) exibido como a sede do tenant.
+- Tipo de Entrega vem de `inscricoes_produtor.tipo` (Parceria / Arrendamento / Terceiros).
+- CPF: `produtores.cpf_cnpj` com fallback para `inscricoes_produtor.cpf_cnpj`.
+- Formatação BR: kg e sacos inteiros com separador de milhar.
 
-- Guardar também o `local_entrega_terceiro_id` predominante por inscrição (junto do nome), tratando `null` como a sede do tenant.
-- Quando `localEntregaId` estiver preenchido: manter apenas as inscrições cujo local corresponda ao selecionado; se o local escolhido for o `is_sede`, incluir também as inscrições sem `local_entrega_terceiro_id` (mesma regra já usada na Colheita Diária, linhas 1110-1116).
-- O filtro é aplicado sobre as linhas finais (`rowMap`), preservando os cálculos de saldo já existentes.
+## Filtros do card
 
-### 3. Cabeçalho do PDF — `src/lib/relatoriosEstoque.ts`
+Safra (obrigatória), Local de Entrega (Todos ou específico; a Sede inclui registros sem local) e Tipo de contrato (Todos/Parceria/Arrendamento/Terceiros). Também respeita as opções já existentes de orientação e tamanho de página.
 
-- Adicionar campo opcional `localEntrega?: string` em `SaldoDisponivelData`.
-- Exibir na linha de filtros: `SAFRA: X | Tipo de Entrega: Y | Local: Z` (Z = "Todos" quando sem filtro).
+## Alterações técnicas
 
-## Detalhes técnicos
+- `src/lib/relatoriosPdf.ts`: novo `gerarEntregaVariedadePdf` com tipos `RelEntregaVariedadeRow` / `Params`, seguindo o padrão dos geradores existentes (autoTable com linhas de grupo e subtotal).
+- `src/components/relatorios/RelatorioDialog.tsx`: novo tipo `entrega_variedade` em `TipoRelatorio`, label, função `gerarEntregaVariedade()` (query + agregação + exportação para planilha via `setPendingSheets`), e habilitação dos filtros Safra/Local/Tipo para esse tipo.
+- `src/pages/Relatorios.tsx`: novo card "Entrega por Variedade" na seção de Produção, com descrição "Entregas agregadas por variedade e produtor".
 
-- Nenhuma alteração de schema ou de dados no banco.
-- A planilha (`pendingSheets`) refletirá automaticamente as linhas filtradas.
-- Inscrições sem colheitas na safra continuam caindo na sede do tenant, portanto aparecem quando o local selecionado é a sede.
+Nenhuma mudança de banco de dados é necessária.
