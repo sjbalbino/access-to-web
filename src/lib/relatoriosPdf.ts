@@ -442,10 +442,10 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
         { content: "Sacas", styles: { halign: "right" } },
       ]],
       body: variedadesBody,
-      styles: { fontSize: 8, cellPadding: 2 },
+      styles: { fontSize: 8, cellPadding: 1.5, overflow: "ellipsize" },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
       columnStyles: {
-        0: { halign: "left" },
+        0: { halign: "left", cellWidth: 90, overflow: "ellipsize" },
         1: { halign: "right", cellWidth: 25 },
         2: { halign: "right", cellWidth: 35 },
         3: { halign: "right", cellWidth: 40 },
