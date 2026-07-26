@@ -543,6 +543,7 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     ["(+) Compras Adquiridas", fmtKgSc(totalCompAdq)],
     ["(-) Transf. Enviadas", fmtKgSc(totalEnviadas)],
     ["(-) Devoluções", fmtKgSc(totalDevolucoes)],
+    ["(-) Vendas da Produção", fmtKgSc(totalVendas)],
     ["= SALDO", fmtKgSc(saldo)],
   ];
 
