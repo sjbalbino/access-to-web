@@ -1,30 +1,49 @@
 ## Objetivo
 
-No relatório **Extrato do Produtor**, a coluna **Variedade** (e, junto dela, Local e Lavoura) quebra em várias linhas por célula, inflando a altura das linhas e o número de páginas. O objetivo é garantir uma linha por registro, sem perder legibilidade nem alterar nenhum cálculo.
+As remessas de venda (Vendas da Produção) hoje não são deduzidas no **Extrato do Produtor** nem nos hooks de saldo. Passar a computá-las usando a mesma abordagem do **Extrato de Movimentação**: contratos de venda da inscrição (`contratos_venda.inscricao_produtor_id`) → remessas (`remessas_venda`) com `status <> 'cancelada'`.
 
-## Situação atual (verificada)
+## Situação verificada
 
-Em `src/lib/relatoriosPdf.ts`, na função `gerarExtratoProdutorPdf` (seção **COLHEITAS**, linhas ~199-252):
-- As colunas 0 (Local), 2 (Lavoura) e 3 (Variedade) usam `cellWidth: 26` com o comportamento padrão do autoTable (`overflow: "linebreak"`), então textos longos quebram em 2-3 linhas.
-- A tabela **RESUMO POR VARIEDADE** (linhas ~405-455) tem o mesmo comportamento na coluna de variedade.
+- `gerarExtratoProdutorPdf` (`src/lib/relatoriosPdf.ts`): não há seção VENDAS; saldo = Colheitas + Transf. Recebidas + Compras − Transf. Enviadas − Devoluções.
+- `gerarExtrato` (`RelatorioDialog.tsx`): não busca remessas.
+- `gerarResumoProdutor` / `gerarResumoProdutorPdf`: **já** deduzem vendas (coluna Vendas e saldo) — sem alteração.
+- `useSaldoSocio`: `vendasProducao` fixo em `0` (TODO no código).
+- `useSaldoProdutor`: saldo = Colheitas + Recebidas − Enviadas (sem vendas).
+- `useSaldoDisponivelProdutor`: saldo = Colheitas + Recebidas − Enviadas − Devoluções (sem vendas).
+- `useSaldosDeposito`: sem vendas — **permanece como está** (decisão do usuário).
 
-## Mudanças propostas (somente apresentação)
+## Mudanças
 
-Arquivo único: `src/lib/relatoriosPdf.ts`
+### 1. Extrato do Produtor — dados (`src/components/relatorios/RelatorioDialog.tsx`)
 
-1. **Forçar linha única nas colunas de texto da tabela COLHEITAS**
-   - Aplicar `overflow: "ellipsize"` e `cellWidth` fixo nas colunas Local, Lavoura e Variedade, de modo que texto excedente seja cortado com reticências em vez de quebrar linha.
-   - Reservar um pouco mais de largura para Variedade (ex.: Local 24 / Lavoura 26 / Variedade 34 mm), aproveitando a folga do formato paisagem, já que as colunas numéricas restantes são estreitas.
+Em `gerarExtrato`, após as demais buscas:
+- Buscar `contratos_venda` (`id`, `comprador:clientes_fornecedores(nome)`) por `inscricao_produtor_id = inscricaoId` e `safra_id = safraId`.
+- Se houver contratos, buscar `remessas_venda` (`data_remessa, kg_remessa, romaneio, contrato_venda_id, variedade:produtos(nome), nota_fiscal:notas_fiscais(numero)`) com `.in("contrato_venda_id", ids)` e `.neq("status","cancelada")`.
+- Local de entrega da venda: mesma regra do Extrato de Movimentação — local `is_sede` da granja do produtor, com fallback para a sede do tenant (reaproveitar o helper já usado por `gerarExtratoMovimentacao`).
+- Mapear para `vendas: ExtratoVenda[]` no `ExtratoData`.
 
-2. **Truncamento inteligente antes da renderização**
-   - Aplicar um helper de truncamento (já existe o padrão `trunc` usado no Extrato de Movimentação) nos valores de Lavoura e Variedade, evitando que a ellipsização do autoTable seja acionada em textos muito longos.
+### 2. Extrato do Produtor — PDF (`src/lib/relatoriosPdf.ts`)
 
-3. **Compactar a altura das linhas**
-   - Reduzir levemente o `cellPadding` das linhas de corpo dessa tabela (de 1.5 para 1.2) mantendo `fontSize: 7`, o que reduz páginas sem prejudicar a leitura.
+- Nova interface `ExtratoVenda { data_remessa, comprador, variedade, quantidade_kg, nfe, local_entrega }` e campo opcional `vendas?: ExtratoVenda[]` em `ExtratoData`.
+- Nova seção **VENDAS** via `renderSection`, agrupada por Local (mesmo padrão das demais), colunas: Local | Data | Comprador | Variedade | NF-e | Qtd (kg) | Sacas, com subtotais por local e total.
+- RESUMO: acrescentar linha `(-) Vendas` e alterar o saldo para
+  `Colheitas + Transf. Recebidas + Compras − Transf. Enviadas − Devoluções − Vendas`.
+- Manter o padrão de sacas por total (`Math.round(totalKg / 60)`), evitando resíduo de 1 saco.
 
-4. **Mesmo tratamento no RESUMO POR VARIEDADE**
-   - Coluna de variedade com largura fixa maior e `overflow: "ellipsize"`, garantindo uma linha por variedade.
+### 3. Hooks de saldo
+
+- `useSaldoSocio`: substituir `totalVendasProducao = 0` pela soma real (contratos da inscrição + remessas não canceladas, filtradas por safra; produto via `resolveSaldoProdutoIds` quando a remessa tiver `produto_id`/`variedade_id`). Saldo já subtrai `vendasProducao`.
+- `useSaldoDisponivelProdutor`: buscar vendas da mesma forma e subtrair do saldo; expor `vendasProducao` no resultado.
+- `useSaldoProdutor`: mesma dedução, expondo o total de vendas.
+- `useSaldosDeposito`: **sem alteração** (saldo de emissão de Nota de Depósito).
+
+## Detalhes técnicos
+
+- Filtro por produto nas remessas: aplicar apenas quando a remessa possuir coluna de produto; caso contrário, considerar todas as remessas do contrato (o contrato já tem `produto_id`, que será usado como fonte primária).
+- Todos os kg arredondados para inteiro (`Math.round`), conforme padrão BR do projeto.
+- Nenhuma alteração de schema ou de dados no banco.
 
 ## Fora de escopo
 
-- Nenhuma alteração em queries, cálculos, subtotais ou nos demais relatórios (Extrato de Movimentação, Extrato de Depósitos, etc.).
+- Resumo do Produtor e Saldo Disponível (relatório) — já contemplam vendas.
+- Saldo de emissão de Nota de Depósito (`useSaldosDeposito`).
