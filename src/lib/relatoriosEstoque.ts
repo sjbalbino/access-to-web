@@ -35,9 +35,11 @@ export interface SaldoDisponivelRow {
 export interface SaldoDisponivelData {
   safraNome: string;
   tipoEntrega: string; // Particular, Arrendamentos, Terceiros, Todos
+  localEntrega?: string; // Nome do local de entrega filtrado ("Todos" quando sem filtro)
   pesoSaco: number;
   rows: SaldoDisponivelRow[];
 }
+
 
 export function gerarSaldoDisponivelPdf(data: SaldoDisponivelData): void {
   const doc = new jsPDF({ orientation: "landscape", format: "a4" });
