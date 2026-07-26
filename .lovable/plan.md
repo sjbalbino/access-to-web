@@ -1,49 +1,32 @@
 ## Objetivo
 
-As remessas de venda (Vendas da Produção) hoje não são deduzidas no **Extrato do Produtor** nem nos hooks de saldo. Passar a computá-las usando a mesma abordagem do **Extrato de Movimentação**: contratos de venda da inscrição (`contratos_venda.inscricao_produtor_id`) → remessas (`remessas_venda`) com `status <> 'cancelada'`.
+Permitir filtrar o relatório **Saldo Disponível - Estoque Geral** por um Local de Entrega específico, ou listar todos os locais (comportamento atual).
 
 ## Situação verificada
 
-- `gerarExtratoProdutorPdf` (`src/lib/relatoriosPdf.ts`): não há seção VENDAS; saldo = Colheitas + Transf. Recebidas + Compras − Transf. Enviadas − Devoluções.
-- `gerarExtrato` (`RelatorioDialog.tsx`): não busca remessas.
-- `gerarResumoProdutor` / `gerarResumoProdutorPdf`: **já** deduzem vendas (coluna Vendas e saldo) — sem alteração.
-- `useSaldoSocio`: `vendasProducao` fixo em `0` (TODO no código).
-- `useSaldoProdutor`: saldo = Colheitas + Recebidas − Enviadas (sem vendas).
-- `useSaldoDisponivelProdutor`: saldo = Colheitas + Recebidas − Enviadas − Devoluções (sem vendas).
-- `useSaldosDeposito`: sem vendas — **permanece como está** (decisão do usuário).
+- O filtro `localEntregaId` (estado + `useLocaisEntrega`) já existe no `RelatorioDialog.tsx`, mas hoje só é exibido para o relatório `colheita_diaria` (linhas 2015-2029).
+- Em `gerarSaldoDisponivel` (linha 327), o local de cada inscrição é derivado da primeira colheita da safra (`localPorInscricao`), com fallback para a sede do tenant (`tenantSedeNome`). Não há nenhum filtro por local.
+- `gerarSaldoDisponivelPdf` (`src/lib/relatoriosEstoque.ts`) recebe `safraNome`, `tipoEntrega`, `pesoSaco` e `rows`, e imprime a linha de filtros no cabeçalho.
 
 ## Mudanças
 
-### 1. Extrato do Produtor — dados (`src/components/relatorios/RelatorioDialog.tsx`)
+### 1. UI — `src/components/relatorios/RelatorioDialog.tsx`
 
-Em `gerarExtrato`, após as demais buscas:
-- Buscar `contratos_venda` (`id`, `comprador:clientes_fornecedores(nome)`) por `inscricao_produtor_id = inscricaoId` e `safra_id = safraId`.
-- Se houver contratos, buscar `remessas_venda` (`data_remessa, kg_remessa, romaneio, contrato_venda_id, variedade:produtos(nome), nota_fiscal:notas_fiscais(numero)`) com `.in("contrato_venda_id", ids)` e `.neq("status","cancelada")`.
-- Local de entrega da venda: mesma regra do Extrato de Movimentação — local `is_sede` da granja do produtor, com fallback para a sede do tenant (reaproveitar o helper já usado por `gerarExtratoMovimentacao`).
-- Mapear para `vendas: ExtratoVenda[]` no `ExtratoData`.
+Estender a condição do bloco "Local de Entrega" para incluir `tipo === "saldo_disponivel"`, mantendo o `ComboboxFilter` já existente com `allLabel="Todos"` / placeholder "Todos os locais" (valor vazio = listar todos).
 
-### 2. Extrato do Produtor — PDF (`src/lib/relatoriosPdf.ts`)
+### 2. Geração dos dados — `gerarSaldoDisponivel`
 
-- Nova interface `ExtratoVenda { data_remessa, comprador, variedade, quantidade_kg, nfe, local_entrega }` e campo opcional `vendas?: ExtratoVenda[]` em `ExtratoData`.
-- Nova seção **VENDAS** via `renderSection`, agrupada por Local (mesmo padrão das demais), colunas: Local | Data | Comprador | Variedade | NF-e | Qtd (kg) | Sacas, com subtotais por local e total.
-- RESUMO: acrescentar linha `(-) Vendas` e alterar o saldo para
-  `Colheitas + Transf. Recebidas + Compras − Transf. Enviadas − Devoluções − Vendas`.
-- Manter o padrão de sacas por total (`Math.round(totalKg / 60)`), evitando resíduo de 1 saco.
+- Guardar também o `local_entrega_terceiro_id` predominante por inscrição (junto do nome), tratando `null` como a sede do tenant.
+- Quando `localEntregaId` estiver preenchido: manter apenas as inscrições cujo local corresponda ao selecionado; se o local escolhido for o `is_sede`, incluir também as inscrições sem `local_entrega_terceiro_id` (mesma regra já usada na Colheita Diária, linhas 1110-1116).
+- O filtro é aplicado sobre as linhas finais (`rowMap`), preservando os cálculos de saldo já existentes.
 
-### 3. Hooks de saldo
+### 3. Cabeçalho do PDF — `src/lib/relatoriosEstoque.ts`
 
-- `useSaldoSocio`: substituir `totalVendasProducao = 0` pela soma real (contratos da inscrição + remessas não canceladas, filtradas por safra; produto via `resolveSaldoProdutoIds` quando a remessa tiver `produto_id`/`variedade_id`). Saldo já subtrai `vendasProducao`.
-- `useSaldoDisponivelProdutor`: buscar vendas da mesma forma e subtrair do saldo; expor `vendasProducao` no resultado.
-- `useSaldoProdutor`: mesma dedução, expondo o total de vendas.
-- `useSaldosDeposito`: **sem alteração** (saldo de emissão de Nota de Depósito).
+- Adicionar campo opcional `localEntrega?: string` em `SaldoDisponivelData`.
+- Exibir na linha de filtros: `SAFRA: X | Tipo de Entrega: Y | Local: Z` (Z = "Todos" quando sem filtro).
 
 ## Detalhes técnicos
 
-- Filtro por produto nas remessas: aplicar apenas quando a remessa possuir coluna de produto; caso contrário, considerar todas as remessas do contrato (o contrato já tem `produto_id`, que será usado como fonte primária).
-- Todos os kg arredondados para inteiro (`Math.round`), conforme padrão BR do projeto.
 - Nenhuma alteração de schema ou de dados no banco.
-
-## Fora de escopo
-
-- Resumo do Produtor e Saldo Disponível (relatório) — já contemplam vendas.
-- Saldo de emissão de Nota de Depósito (`useSaldosDeposito`).
+- A planilha (`pendingSheets`) refletirá automaticamente as linhas filtradas.
+- Inscrições sem colheitas na safra continuam caindo na sede do tenant, portanto aparecem quando o local selecionado é a sede.
