@@ -356,12 +356,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     // Local de entrega predominante por inscrição (nome real; fallback = sede do tenant)
     const localPorInscricao: Record<string, string> = {};
+    // Id do local predominante (null = sede do tenant)
+    const localIdPorInscricao: Record<string, string | null> = {};
     (colheitasRes.data || []).forEach((c: any) => {
       if (!c.inscricao_produtor_id) return;
       if (!localPorInscricao[c.inscricao_produtor_id]) {
         localPorInscricao[c.inscricao_produtor_id] = c.local_entrega?.nome || tenantSedeNome;
+        localIdPorInscricao[c.inscricao_produtor_id] = c.local_entrega_terceiro_id || null;
       }
     });
+
 
 
     // Fetch vendas (remessas via contratos)
