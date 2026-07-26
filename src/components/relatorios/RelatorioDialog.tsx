@@ -871,6 +871,46 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const { data: compAdq, error: compAdqError } = await compAdqQuery.order("data_compra");
     if (compAdqError) throw compAdqError;
 
+    // Vendas da Produção (mesma abordagem do Extrato de Movimentação):
+    // contratos de venda da inscrição -> remessas não canceladas.
+    // O Local de Entrega usado é o local padrão (sede) da granja do sócio vendedor.
+    let localPadraoVenda = tenantSedeNome;
+    const granjaIdInsc = (inscricao as any)?.granja_id || null;
+    if (granjaIdInsc) {
+      const { data: sedeGranja } = await supabase
+        .from("locais_entrega")
+        .select("nome")
+        .eq("granja_id", granjaIdInsc)
+        .eq("is_sede", true)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (sedeGranja?.nome) localPadraoVenda = sedeGranja.nome;
+    }
+
+    const { data: contratosVendaExtrato, error: contratosVendaError } = await supabase
+      .from("contratos_venda")
+      .select("id, comprador:clientes_fornecedores(nome, nome_fantasia)")
+      .eq("inscricao_produtor_id", inscricaoId)
+      .eq("safra_id", safraId);
+    if (contratosVendaError) throw contratosVendaError;
+
+    const compradorPorContrato = new Map<string, string>();
+    (contratosVendaExtrato || []).forEach((c: any) => {
+      compradorPorContrato.set(c.id, c.comprador?.nome || c.comprador?.nome_fantasia || "-");
+    });
+
+    let remessasExtrato: any[] = [];
+    if (compradorPorContrato.size > 0) {
+      const { data: remData, error: remError } = await supabase
+        .from("remessas_venda")
+        .select("data_remessa, kg_remessa, contrato_venda_id, variedade:produtos(nome), nota_fiscal:notas_fiscais(numero)")
+        .in("contrato_venda_id", Array.from(compradorPorContrato.keys()))
+        .neq("status", "cancelada")
+        .order("data_remessa");
+      if (remError) throw remError;
+      remessasExtrato = remData || [];
+    }
+
     const extratoData: ExtratoData = {
       produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
       cpfCnpj: null, inscricaoEstadual: inscricao?.inscricao_estadual || null,
