@@ -1234,6 +1234,21 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const produtorNome = produtorSel?.nome || "-";
     const produtorCpf = (produtorSel as any)?.cpf_cnpj || null;
 
+    // Local de entrega padrão da granja do produtor (sócio vendedor).
+    // Usado nas VENDAS, que gravam o local do comprador em `local_entrega_nome`.
+    let localPadraoGranja = tenantSedeNome;
+    const granjaIdProdutor = (produtorSel as any)?.granja_id || (produtorSel as any)?.granja?.id || null;
+    if (granjaIdProdutor) {
+      const { data: sedeGranja } = await supabase
+        .from("locais_entrega")
+        .select("nome")
+        .eq("granja_id", granjaIdProdutor)
+        .eq("is_sede", true)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (sedeGranja?.nome) localPadraoGranja = sedeGranja.nome;
+    }
+
     const inscricoesDoProdutor = (inscricoes || []).filter(i => i.produtores?.id === produtorId || i.produtor_id === produtorId);
     let inscricaoIdsFiltro = inscricoesDoProdutor.map(i => i.id);
     if (inscricaoId) inscricaoIdsFiltro = inscricaoIdsFiltro.filter(id => id === inscricaoId);
@@ -1432,7 +1447,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       const insc = inscIdx.get(inscId) || { ie: "-", nome: produtorNome };
       const kg = Number(r.kg_remessa) || 0;
       rows.push({
-        local_nome: r.local_entrega_nome || tenantSedeNome,
+        // Venda usa sempre o local de entrega padrão da granja do sócio vendedor,
+        // e não o local do comprador gravado na remessa.
+        local_nome: localPadraoGranja,
         inscricao_id: inscId, inscricao_estadual: insc.ie, inscricao_nome: insc.nome,
         data: r.data_remessa, operacao: "venda",
         docto: r.romaneio != null ? String(r.romaneio) : "",
