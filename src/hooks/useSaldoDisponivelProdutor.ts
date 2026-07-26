@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { resolveSaldoProdutoIds } from '@/lib/produtoSaldo';
+import { calcularVendasProducaoKg } from '@/lib/vendasProducaoSaldo';
 
 interface SaldoDisponivelProdutorFilters {
   inscricaoProdutorId?: string;
@@ -17,6 +18,7 @@ interface SaldoDisponivelResult {
   devolucoes: number;
   kgTaxaArmazenagem: number;
   notasDeposito: number; // Notas de depósito emitidas (CFOP 1905)
+  vendasProducao: number;
 }
 
 /**
@@ -31,7 +33,7 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
       const { inscricaoProdutorId, safraId, produtoId, localEntregaId } = filters;
 
       if (!inscricaoProdutorId || !safraId || !produtoId) {
-        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0, devolucoes: 0, kgTaxaArmazenagem: 0, notasDeposito: 0 };
+        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0, devolucoes: 0, kgTaxaArmazenagem: 0, notasDeposito: 0, vendasProducao: 0 };
       }
 
       const produtoIds = await resolveSaldoProdutoIds(produtoId);
@@ -151,9 +153,12 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         0
       ));
 
+      // Vendas da Produção (remessas não canceladas) — saída física de estoque
+      const totalVendas = await calcularVendasProducaoKg(inscricaoProdutorId, safraId, produtoIds);
+
       // Kg de Taxa de Armazenagem é crédito exclusivo do sócio recebedor da taxa, não debita do produtor.
       // Notas de Depósito emitidas também não entram no saldo disponível para devolução.
-      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes;
+      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalDevolucoes - totalVendas;
 
       return {
         saldo,
@@ -163,6 +168,7 @@ export function useSaldoDisponivelProdutor(filters: SaldoDisponivelProdutorFilte
         devolucoes: totalDevolucoes,
         kgTaxaArmazenagem: totalKgTaxaArmazenagem,
         notasDeposito: totalNotasDeposito,
+        vendasProducao: totalVendas,
       };
     },
     enabled: Boolean(filters.inscricaoProdutorId && filters.safraId && filters.produtoId),

@@ -871,6 +871,46 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const { data: compAdq, error: compAdqError } = await compAdqQuery.order("data_compra");
     if (compAdqError) throw compAdqError;
 
+    // Vendas da Produção (mesma abordagem do Extrato de Movimentação):
+    // contratos de venda da inscrição -> remessas não canceladas.
+    // O Local de Entrega usado é o local padrão (sede) da granja do sócio vendedor.
+    let localPadraoVenda = tenantSedeNome;
+    const granjaIdInsc = (inscricao as any)?.granja_id || null;
+    if (granjaIdInsc) {
+      const { data: sedeGranja } = await supabase
+        .from("locais_entrega")
+        .select("nome")
+        .eq("granja_id", granjaIdInsc)
+        .eq("is_sede", true)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (sedeGranja?.nome) localPadraoVenda = sedeGranja.nome;
+    }
+
+    const { data: contratosVendaExtrato, error: contratosVendaError } = await supabase
+      .from("contratos_venda")
+      .select("id, comprador:clientes_fornecedores(nome, nome_fantasia)")
+      .eq("inscricao_produtor_id", inscricaoId)
+      .eq("safra_id", safraId);
+    if (contratosVendaError) throw contratosVendaError;
+
+    const compradorPorContrato = new Map<string, string>();
+    (contratosVendaExtrato || []).forEach((c: any) => {
+      compradorPorContrato.set(c.id, c.comprador?.nome || c.comprador?.nome_fantasia || "-");
+    });
+
+    let remessasExtrato: any[] = [];
+    if (compradorPorContrato.size > 0) {
+      const { data: remData, error: remError } = await supabase
+        .from("remessas_venda")
+        .select("data_remessa, kg_remessa, contrato_venda_id, variedade:produtos(nome), nota_fiscal:notas_fiscais(numero)")
+        .in("contrato_venda_id", Array.from(compradorPorContrato.keys()))
+        .neq("status", "cancelada")
+        .order("data_remessa");
+      if (remError) throw remError;
+      remessasExtrato = remData || [];
+    }
+
     const extratoData: ExtratoData = {
       produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
       cpfCnpj: null, inscricaoEstadual: inscricao?.inscricao_estadual || null,
@@ -885,6 +925,14 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         contraparte: c.inscricao_vendedor?.produtores?.nome ? `${c.inscricao_vendedor.produtores.nome} - IE:${c.inscricao_vendedor.inscricao_estadual || ""}` : null,
         nfe: c.nota_fiscal?.numero ? String(c.nota_fiscal.numero) : null,
         local_entrega: c.local_entrega?.nome || null,
+      })),
+      vendas: remessasExtrato.map((r: any) => ({
+        data_remessa: r.data_remessa,
+        comprador: compradorPorContrato.get(r.contrato_venda_id) || "-",
+        variedade: r.variedade?.nome || null,
+        quantidade_kg: Number(r.kg_remessa) || 0,
+        nfe: r.nota_fiscal?.numero ? String(r.nota_fiscal.numero) : null,
+        local_entrega: localPadraoVenda,
       })),
     };
 
@@ -928,13 +976,20 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       comprasAdqRows.push(["TOTAL", "", "", tot, sc(tot)]);
     }
 
+    const vendasRows = (extratoData.vendas || []).map(v => [v.data_remessa, v.comprador ?? "", v.variedade ?? "", v.nfe ?? "", v.quantidade_kg, sc(Number(v.quantidade_kg) || 0)]);
+    if (vendasRows.length) {
+      const tot = sum(extratoData.vendas || [], "quantidade_kg");
+      vendasRows.push(["TOTAL", "", "", "", tot, sc(tot)]);
+    }
+
     const totalColheitas = sum(extratoData.colheitas, "producao_liquida_kg");
     const totalTrRec = sum(extratoData.transferenciasRecebidas, "quantidade_kg");
     const totalTrEnv = sum(extratoData.transferenciasEnviadas, "quantidade_kg");
     const totalDev = sum(extratoData.devolucoes, "quantidade_kg");
     const totalKgTaxa = sum(extratoData.devolucoes, "kg_taxa_armazenagem");
     const totalCompAdq = sum(extratoData.comprasAdquiridas || [], "quantidade_kg");
-    const saldo = totalColheitas + totalTrRec + totalCompAdq - totalTrEnv - totalDev - totalKgTaxa;
+    const totalVendas = sum(extratoData.vendas || [], "quantidade_kg");
+    const saldo = totalColheitas + totalTrRec + totalCompAdq - totalTrEnv - totalDev - totalKgTaxa - totalVendas;
 
     const porVariedade = new Map<string, { qtd: number; producao: number; liquida: number }>();
     extratoData.colheitas.forEach((c) => {
@@ -962,6 +1017,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       { name: "Devoluções", header: ["Data", "Qtd (kg)", "Sacas", "Taxa Arm. %", "Kg Taxa"], rows: devRows },
       { name: "Notas Depósito", header: ["Data", "NF", "Qtd (kg)", "Sacas"], rows: ndRows },
       { name: "Compras de Cereais", header: ["Data", "Vendedor", "NFe", "Qtd (kg)", "Sacas"], rows: comprasAdqRows },
+      { name: "Vendas da Produção", header: ["Data", "Comprador", "Variedade", "NFe", "Qtd (kg)", "Sacas"], rows: vendasRows },
       { name: "Resumo por Variedade", header: ["Variedade", "Colheitas", "Prod. Bruta (kg)", "Prod. Líquida (kg)", "Sacas"], rows: variedadeRows },
       { name: "Resumo Final", header: ["Descrição", "Kg", "Sacas"], rows: [
         ["Total Colheitas", totalColheitas, sc(totalColheitas)],
@@ -970,6 +1026,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         ["(-) Transf. Enviadas", totalTrEnv, sc(totalTrEnv)],
         ["(-) Devoluções", totalDev, sc(totalDev)],
         ["(-) Kg Taxa Armazenagem", totalKgTaxa, sc(totalKgTaxa)],
+        ["(-) Vendas da Produção", totalVendas, sc(totalVendas)],
         ["SALDO", saldo, sc(saldo)],
       ] },
     ]);

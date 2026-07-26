@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { resolveSaldoProdutoIds } from '@/lib/produtoSaldo';
+import { calcularVendasProducaoKg } from '@/lib/vendasProducaoSaldo';
 
 interface SaldoSocioFilters {
   inscricaoSocioId?: string;
@@ -116,9 +117,8 @@ export function useSaldoSocio(filters: SaldoSocioFilters) {
       }
       totalKgTaxa = Math.round(totalKgTaxa);
 
-      // Vendas da produção - simplificado para evitar problemas de tipo
-      // TODO: Implementar RPC function para calcular vendas
-      const totalVendasProducao = 0;
+      // Vendas da Produção: contratos_venda -> remessas_venda não canceladas
+      const totalVendasProducao = await calcularVendasProducaoKg(inscricaoSocioId, safraId, produtoIds);
 
       // SALDO = Colheitas + Recebidas + Compras + kgTaxaArmazenagem - Enviadas - Vendas
       const saldo = totalColheitas + totalRecebidas + totalCompras + totalKgTaxa - totalEnviadas - totalVendasProducao;

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { resolveSaldoProdutoIds } from '@/lib/produtoSaldo';
+import { calcularVendasProducaoKg } from '@/lib/vendasProducaoSaldo';
 
 interface SaldoProdutorFilters {
   inscricaoProdutorId?: string;
@@ -13,6 +14,7 @@ interface SaldoResult {
   colheitas: number;
   transferenciasRecebidas: number;
   transferenciasEnviadas: number;
+  vendasProducao: number;
 }
 
 export function useSaldoProdutor(filters: SaldoProdutorFilters) {
@@ -22,7 +24,7 @@ export function useSaldoProdutor(filters: SaldoProdutorFilters) {
       const { inscricaoProdutorId, safraId, produtoId } = filters;
 
       if (!inscricaoProdutorId || !safraId || !produtoId) {
-        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0 };
+        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0, vendasProducao: 0 };
       }
 
       const produtoIds = await resolveSaldoProdutoIds(produtoId);
@@ -72,14 +74,18 @@ export function useSaldoProdutor(filters: SaldoProdutorFilters) {
         0
       ));
 
-      // SALDO = Colheitas + Recebidas - Enviadas
-      const saldo = totalColheitas + totalRecebidas - totalEnviadas;
+      // Vendas da Produção (remessas não canceladas) — saída de estoque
+      const totalVendas = await calcularVendasProducaoKg(inscricaoProdutorId, safraId, produtoIds);
+
+      // SALDO = Colheitas + Recebidas - Enviadas - Vendas
+      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalVendas;
 
       return {
         saldo,
         colheitas: totalColheitas,
         transferenciasRecebidas: totalRecebidas,
         transferenciasEnviadas: totalEnviadas,
+        vendasProducao: totalVendas,
       };
     },
     enabled: Boolean(filters.inscricaoProdutorId && filters.safraId && filters.produtoId),
