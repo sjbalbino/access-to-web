@@ -481,8 +481,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     setPendingSheets([{
       name: "Saldo Disponível",
-      header: ["Produtor", "Local", "Tipo", "Depósitos (kg)", "Compras (kg)", "Vendas (kg)", "Devoluções (kg)", "Transf. Saída (kg)", "Transf. Entrada (kg)", "Notas Depósito (kg)", "Saldo (kg)"],
-      rows: rows.map(r => [r.produtor_nome, r.local_entrega, r.tipo, r.depositos_kg, r.compras_kg, r.vendas_kg, r.devolucoes_kg, r.tr_saida_kg, r.tr_entrada_kg, r.notas_deposito_kg, r.saldo_kg]),
+      header: ["Produtor", "IE", "Local", "Tipo", "Depósitos (kg)", "Compras (kg)", "Vendas (kg)", "Devoluções (kg)", "Transf. Saída (kg)", "Transf. Entrada (kg)", "Notas Depósito (kg)", "Saldo (kg)"],
+      rows: rows.map(r => [r.produtor_nome, r.inscricao_estadual || "-", r.local_entrega, r.tipo, r.depositos_kg, r.compras_kg, r.vendas_kg, r.devolucoes_kg, r.tr_saida_kg, r.tr_entrada_kg, r.notas_deposito_kg, r.saldo_kg]),
+
     }]);
 
     gerarSaldoDisponivelPdf({
