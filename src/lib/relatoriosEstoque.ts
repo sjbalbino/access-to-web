@@ -58,7 +58,9 @@ export function gerarSaldoDisponivelPdf(data: SaldoDisponivelData): void {
 
   const body = data.rows.map(r => [
     r.produtor_nome,
+    r.inscricao_estadual || "-",
     r.local_entrega,
+
     r.tipo,
     formatNumber(r.depositos_kg),
     formatNumber(toSacos(r.depositos_kg)),
