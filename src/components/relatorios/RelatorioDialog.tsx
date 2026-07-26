@@ -356,12 +356,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     // Local de entrega predominante por inscrição (nome real; fallback = sede do tenant)
     const localPorInscricao: Record<string, string> = {};
+    // Id do local predominante (null = sede do tenant)
+    const localIdPorInscricao: Record<string, string | null> = {};
     (colheitasRes.data || []).forEach((c: any) => {
       if (!c.inscricao_produtor_id) return;
       if (!localPorInscricao[c.inscricao_produtor_id]) {
         localPorInscricao[c.inscricao_produtor_id] = c.local_entrega?.nome || tenantSedeNome;
+        localIdPorInscricao[c.inscricao_produtor_id] = c.local_entrega_terceiro_id || null;
       }
     });
+
 
 
     // Fetch vendas (remessas via contratos)
@@ -468,8 +472,19 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       row.saldo_kg = row.depositos_kg + row.compras_kg - row.vendas_kg - row.devolucoes_kg - row.tr_saida_kg + row.tr_entrada_kg - row.notas_deposito_kg;
     });
 
-    const rows = Object.values(rowMap).sort((a, b) => a.produtor_nome.localeCompare(b.produtor_nome));
+    // Filtro por Local de Entrega (vazio = todos)
+    const localSelecionado = localEntregaId ? locaisEntrega?.find(l => l.id === localEntregaId) : undefined;
+    const entriesFiltradas = Object.entries(rowMap).filter(([inscId]) => {
+      if (!localEntregaId) return true;
+      const localId = localIdPorInscricao[inscId] ?? null;
+      // Sede: inscrições sem local de terceiro (ou sem colheitas) pertencem à sede
+      if (localSelecionado?.is_sede) return localId === null;
+      return localId === localEntregaId;
+    });
+
+    const rows = entriesFiltradas.map(([, r]) => r).sort((a, b) => a.produtor_nome.localeCompare(b.produtor_nome));
     if (rows.length === 0) { toast({ title: "Sem dados" }); return; }
+
 
     const tipoEntregaLabel: Record<string, string> = {
       "todos": "Todos",
@@ -489,9 +504,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     gerarSaldoDisponivelPdf({
       safraNome: safra?.nome || "-",
       tipoEntrega: tipoEntregaLabel[tipoProdutorFiltro] || "Todos",
+      localEntrega: localSelecionado?.nome || "Todos",
       pesoSaco: 60,
       rows,
     });
+
   };
 
   // ========== DEPÓSITOS GERAL ==========
@@ -2012,8 +2029,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
-          {/* Local de Entrega - colheita_diaria */}
-          {tipo === "colheita_diaria" && (
+          {/* Local de Entrega - colheita_diaria / saldo_disponivel */}
+          {(tipo === "colheita_diaria" || tipo === "saldo_disponivel") && (
+
             <div>
               <Label>Local de Entrega</Label>
               <ComboboxFilter
