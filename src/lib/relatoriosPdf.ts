@@ -416,7 +416,7 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     const variedadesBody = Array.from(porVariedade.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([variedade, v]) => [
-        variedade,
+        trunc(variedade, 45),
         String(v.qtd),
         formatNumber(v.producao, 0),
         formatNumber(v.liquida, 0),
