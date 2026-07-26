@@ -1234,6 +1234,21 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const produtorNome = produtorSel?.nome || "-";
     const produtorCpf = (produtorSel as any)?.cpf_cnpj || null;
 
+    // Local de entrega padrão da granja do produtor (sócio vendedor).
+    // Usado nas VENDAS, que gravam o local do comprador em `local_entrega_nome`.
+    let localPadraoGranja = tenantSedeNome;
+    const granjaIdProdutor = (produtorSel as any)?.granja_id || (produtorSel as any)?.granja?.id || null;
+    if (granjaIdProdutor) {
+      const { data: sedeGranja } = await supabase
+        .from("locais_entrega")
+        .select("nome")
+        .eq("granja_id", granjaIdProdutor)
+        .eq("is_sede", true)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (sedeGranja?.nome) localPadraoGranja = sedeGranja.nome;
+    }
+
     const inscricoesDoProdutor = (inscricoes || []).filter(i => i.produtores?.id === produtorId || i.produtor_id === produtorId);
     let inscricaoIdsFiltro = inscricoesDoProdutor.map(i => i.id);
     if (inscricaoId) inscricaoIdsFiltro = inscricaoIdsFiltro.filter(id => id === inscricaoId);
