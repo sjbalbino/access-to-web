@@ -74,14 +74,18 @@ export function useSaldoProdutor(filters: SaldoProdutorFilters) {
         0
       ));
 
-      // SALDO = Colheitas + Recebidas - Enviadas
-      const saldo = totalColheitas + totalRecebidas - totalEnviadas;
+      // Vendas da Produção (remessas não canceladas) — saída de estoque
+      const totalVendas = await calcularVendasProducaoKg(inscricaoProdutorId, safraId, produtoIds);
+
+      // SALDO = Colheitas + Recebidas - Enviadas - Vendas
+      const saldo = totalColheitas + totalRecebidas - totalEnviadas - totalVendas;
 
       return {
         saldo,
         colheitas: totalColheitas,
         transferenciasRecebidas: totalRecebidas,
         transferenciasEnviadas: totalEnviadas,
+        vendasProducao: totalVendas,
       };
     },
     enabled: Boolean(filters.inscricaoProdutorId && filters.safraId && filters.produtoId),
