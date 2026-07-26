@@ -11,7 +11,7 @@ import {
 import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
 
 type TipoRelatorio =
-  | "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "resumo_colheita_lavoura" | "extrato_depositos" | "vendas"
+  | "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "extrato_depositos" | "vendas"
   | "demonstrativo_gerencial" | "dre" | "bens_moveis"
   | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
@@ -55,6 +55,9 @@ const GRUPOS: Grupo[] = [
         icon: Wheat, iconBg: "bg-success/10", iconColor: "text-success" },
       { tipo: "colheita_diaria", titulo: "Colheita Diária", descricao: "Recebimento diário por local e data",
         detalhe: "Agrupado por Local de Entrega e Dia, com subtotais, HA, média e resumo por variedade.",
+        icon: Wheat, iconBg: "bg-success/10", iconColor: "text-success", primario: true },
+      { tipo: "entrega_variedade", titulo: "Entrega por Variedade", descricao: "Entregas agregadas por variedade e produtor",
+        detalhe: "Agrupado por Local de Entrega -> Tipo de Entrega -> Produtor -> Variedade, com subtotais em kg e sacos.",
         icon: Wheat, iconBg: "bg-success/10", iconColor: "text-success", primario: true },
       { tipo: "resumo_colheita_lavoura", titulo: "Resumo da Colheita por Lavoura", descricao: "Totais consolidados por lavoura na safra",
         detalhe: "Agrupado por cultura e local de entrega, com médias ponderadas de impureza/umidade/avaria e média em sacos/HA.",

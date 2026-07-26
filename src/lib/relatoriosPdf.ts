@@ -2198,3 +2198,158 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
   downloadPdf(doc, `extrato_movimentacao_${params.produtorNome.replace(/\s/g, "_")}.pdf`);
 }
 
+
+// ==================== RELATÓRIO ENTREGA POR VARIEDADE ====================
+
+export interface RelEntregaVariedadeRow {
+  local_nome: string;
+  tipo_entrega_label: string;   // Parceria / Arrendamento / Terceiros
+  produtor_nome: string;
+  inscricao_estadual: string;
+  cpf: string;
+  tipo_colheita: string;        // INDUSTRIA / SEMENTE
+  variedade: string;
+  kg: number;
+  sacos: number;
+}
+
+export interface RelEntregaVariedadeParams {
+  safraNome: string;
+  culturaNome: string;
+  tipoProdutorLabel: string;
+  localFiltroLabel: string;
+  rows: RelEntregaVariedadeRow[];
+}
+
+export function gerarEntregaVariedadePdf(params: RelEntregaVariedadeParams): void {
+  const doc = new jsPDF({ orientation: "portrait", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
+
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("ENTREGA POR VARIEDADE", pageWidth / 2, 34, { align: "center" });
+
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "normal");
+  doc.text(`SAFRA: ${params.safraNome}`, 14, 41);
+  doc.text(`CULTURA: ${params.culturaNome}`, pageWidth / 2, 41, { align: "center" });
+  doc.text(`Tipo: ${params.tipoProdutorLabel}`, 14, 46);
+  doc.text(`Local: ${params.localFiltroLabel}`, pageWidth - 14, 46, { align: "right" });
+
+  const NUM_COLS = 7;
+  const body: any[] = [];
+  const groupHeaderRows: number[] = [];
+  const subtotalRows: number[] = [];
+  const boldRows: number[] = [];
+
+  const spacer = (label: string): any[] => [{ content: label, colSpan: NUM_COLS }];
+
+  const totais = (list: RelEntregaVariedadeRow[]) => ({
+    kg: list.reduce((a, r) => a + (r.kg || 0), 0),
+    sacos: list.reduce((a, r) => a + (r.sacos || 0), 0),
+  });
+
+  const totalRow = (label: string, list: RelEntregaVariedadeRow[]): any[] => {
+    const t = totais(list);
+    return [
+      { content: `${label} ${list.length}`, colSpan: 5, styles: { halign: "right" as const } },
+      formatNumber(t.kg, 0),
+      formatNumber(t.sacos, 0),
+    ];
+  };
+
+  const ordenadas = [...params.rows].sort((a, b) =>
+    a.local_nome.localeCompare(b.local_nome, "pt-BR")
+    || a.tipo_entrega_label.localeCompare(b.tipo_entrega_label, "pt-BR")
+    || a.produtor_nome.localeCompare(b.produtor_nome, "pt-BR")
+    || a.variedade.localeCompare(b.variedade, "pt-BR")
+  );
+
+  const agrupar = <T,>(list: T[], key: (item: T) => string) => {
+    const map = new Map<string, T[]>();
+    list.forEach(item => {
+      const k = key(item);
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(item);
+    });
+    return map;
+  };
+
+  agrupar(ordenadas, r => r.local_nome).forEach((porLocal, local) => {
+    body.push(spacer(`Local Entrega: ${local}`));
+    groupHeaderRows.push(body.length - 1);
+
+    agrupar(porLocal, r => r.tipo_entrega_label).forEach((porTipo, tipoEntrega) => {
+      body.push(spacer(`Tipo de Entrega: ${tipoEntrega}`));
+      groupHeaderRows.push(body.length - 1);
+
+      agrupar(porTipo, r => `${r.produtor_nome}|${r.inscricao_estadual}`).forEach((porProdutor) => {
+        const primeiro = porProdutor[0];
+        body.push(spacer(`Produtor: ${primeiro.produtor_nome}`));
+        groupHeaderRows.push(body.length - 1);
+
+        porProdutor.forEach((r, idx) => {
+          body.push([
+            idx === 0 ? r.inscricao_estadual : "",
+            idx === 0 ? r.produtor_nome : "",
+            idx === 0 ? r.cpf : "",
+            r.tipo_colheita,
+            r.variedade,
+            formatNumber(r.kg, 0),
+            formatNumber(r.sacos, 0),
+          ]);
+        });
+
+        body.push(totalRow(`Total Produtor: ${primeiro.produtor_nome} -->`, porProdutor));
+        subtotalRows.push(body.length - 1);
+      });
+
+      body.push(totalRow(`Total Tipo Entrega: ${tipoEntrega} -->`, porTipo));
+      boldRows.push(body.length - 1);
+    });
+
+    body.push(totalRow(`Total Local Entrega: ${local} -->`, porLocal));
+    boldRows.push(body.length - 1);
+  });
+
+  body.push(totalRow("Total Geral -->", ordenadas));
+  boldRows.push(body.length - 1);
+
+  autoTable(doc, {
+    startY: 51,
+    head: [[
+      "Inscrição", "Nome", "CPF", "Tipo", "Variedade",
+      { content: "Depósitos", styles: { halign: "right" } },
+      { content: "Sacos", styles: { halign: "right" } },
+    ]],
+    body,
+    styles: { fontSize: 7, cellPadding: 1.2, overflow: "hidden" },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255, fontSize: 7.5 },
+    columnStyles: {
+      0: { halign: "left", cellWidth: 24 },
+      1: { halign: "left", cellWidth: 42 },
+      2: { halign: "left", cellWidth: 28 },
+      3: { halign: "left", cellWidth: 20 },
+      4: { halign: "left", cellWidth: 40 },
+      5: { halign: "right" },
+      6: { halign: "right" },
+    },
+    didParseCell: (d) => {
+      if (d.section !== "body") return;
+      if (groupHeaderRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [220, 230, 241];
+      } else if (boldRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [200, 200, 200];
+      } else if (subtotalRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [235, 235, 235];
+      }
+    },
+  });
+
+  desenharRodapeBrand(doc);
+  downloadPdf(doc, "entrega_por_variedade.pdf");
+}
