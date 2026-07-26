@@ -25,10 +25,12 @@ import {
   gerarResumoColheitaLavouraPdf,
   gerarExtratoDepositosProdutorPdf,
   gerarExtratoMovimentacaoPdf,
+  gerarExtratoVendaProducaoPdf,
   type ExtratoMovRow,
   type ExtratoData,
   type RelColheita,
   type RelContratoVenda,
+  type RelExtratoVendaRow,
   type RelColheitaDiariaRow,
   type RelEntregaVariedadeRow,
   type RelResumoColheitaRow,
@@ -58,7 +60,7 @@ import { captureNextRelatorio, cancelPendingCapture, setPendingSheets, type Rela
 import { loadPdfBrand } from "@/lib/pdfBrand";
 import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
 
-export type TipoRelatorio = "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "extrato_depositos" | "vendas" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+export type TipoRelatorio = "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "extrato_depositos" | "vendas" | "extrato_venda_producao" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 
 interface Props {
@@ -193,7 +195,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   }, [tipo, safraId]);
 
   useEffect(() => {
-    if (tipo !== "vendas" || !safraId) {
+    if ((tipo !== "vendas" && tipo !== "extrato_venda_producao") || !safraId) {
       setCompradorIdsComContratos(new Set());
       return;
     }
@@ -242,6 +244,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     resumo_colheita_lavoura: "Resumo da Colheita por Lavoura",
     extrato_depositos: "Extrato de Depósitos por Produtor",
     vendas: "Relatório de Vendas",
+    extrato_venda_producao: "Extrato Venda da Produção",
 
     demonstrativo_gerencial: "Demonstrativo Gerencial",
     dre: "DRE - Demonstrativo de Resultado",
@@ -278,6 +281,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
 
       else if (tipo === "vendas") await gerarVendas();
+      else if (tipo === "extrato_venda_producao") await gerarExtratoVendaProducao();
       else if (tipo === "demonstrativo_gerencial") await gerarDemonstrativo();
       else if (tipo === "dre") await gerarDre();
       else if (tipo === "bens_moveis") await gerarBensMoveis();
@@ -2215,7 +2219,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
           {/* Orientação e Tamanho da Página - vendas / extrato_depositos / extrato_movimentacao */}
-          {(tipo === "vendas" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
+          {(tipo === "vendas" || tipo === "extrato_venda_producao" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="min-w-0">
                 <Label>Orientação</Label>
@@ -2308,8 +2312,30 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
             </div>
           )}
 
+          {/* Vendedor (Inscrição) - extrato venda produção */}
+          {tipo === "extrato_venda_producao" && (
+            <div className="min-w-0">
+              <Label>Vendedor (Inscrição)</Label>
+              <ComboboxFilter
+                value={inscricaoId}
+                onValueChange={setInscricaoId}
+                options={(inscricoes || [])
+                  .filter(i => !safraId || inscricaoIdsComContratos.has(i.id))
+                  .map(i => ({
+                    value: i.id,
+                    label: `${i.produtores?.nome || "Sem nome"} - IE: ${i.inscricao_estadual || "-"}`,
+                  }))}
+                placeholder="Todos os vendedores"
+                searchPlaceholder="Buscar vendedor..."
+                emptyText="Nenhum vendedor com contratos."
+                allLabel="Todos"
+                popoverWidth="w-[400px]"
+              />
+            </div>
+          )}
+
           {/* Comprador - vendas */}
-          {tipo === "vendas" && (
+          {(tipo === "vendas" || tipo === "extrato_venda_producao") && (
             <div className="min-w-0">
               <Label>Comprador</Label>
               <ComboboxFilter
