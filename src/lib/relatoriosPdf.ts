@@ -118,6 +118,12 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
 
   const localOf = (l: string | null | undefined) => (l && l.trim()) || "Sede";
 
+  // Trunca textos longos para garantir uma única linha por célula
+  const trunc = (s: string, n: number) => {
+    const t = (s || "").trim();
+    return t.length > n ? t.slice(0, n - 1) + "…" : t;
+  };
+
   // Helper: groups rows by local, emits subtotal rows and returns
   // the list of subtotal indices for styling.
   function renderSection<T>(
