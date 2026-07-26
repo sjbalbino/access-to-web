@@ -75,6 +75,15 @@ export interface ExtratoCompra {
   local_entrega?: string | null;
 }
 
+export interface ExtratoVenda {
+  data_remessa: string;
+  comprador: string | null;
+  variedade: string | null;
+  quantidade_kg: number;
+  nfe: string | null;
+  local_entrega?: string | null;
+}
+
 export interface ExtratoData {
   produtorNome: string;
   cpfCnpj: string | null;
@@ -88,6 +97,7 @@ export interface ExtratoData {
   notasDeposito: ExtratoNotaDeposito[];
   comprasAdquiridas?: ExtratoCompra[]; // sócio como comprador (entrada)
   comprasVendidas?: ExtratoCompra[];    // sócio como vendedor (saída)
+  vendas?: ExtratoVenda[];              // Vendas da Produção (remessas) — saída
 }
 
 
