@@ -2243,11 +2243,7 @@ export function gerarEntregaVariedadePdf(params: RelEntregaVariedadeParams): voi
   const subtotalRows: number[] = [];
   const boldRows: number[] = [];
 
-  const spacer = (label: string): any[] => {
-    const arr: any[] = new Array(NUM_COLS).fill("");
-    arr[0] = label;
-    return arr;
-  };
+  const spacer = (label: string): any[] => [{ content: label, colSpan: NUM_COLS }];
 
   const totais = (list: RelEntregaVariedadeRow[]) => ({
     kg: list.reduce((a, r) => a + (r.kg || 0), 0),
@@ -2256,7 +2252,11 @@ export function gerarEntregaVariedadePdf(params: RelEntregaVariedadeParams): voi
 
   const totalRow = (label: string, list: RelEntregaVariedadeRow[]): any[] => {
     const t = totais(list);
-    return [label, String(list.length), "", "", "", formatNumber(t.kg, 0), formatNumber(t.sacos, 0)];
+    return [
+      { content: `${label} ${list.length}`, colSpan: 5, styles: { halign: "right" as const } },
+      formatNumber(t.kg, 0),
+      formatNumber(t.sacos, 0),
+    ];
   };
 
   const ordenadas = [...params.rows].sort((a, b) =>
@@ -2340,7 +2340,6 @@ export function gerarEntregaVariedadePdf(params: RelEntregaVariedadeParams): voi
       if (groupHeaderRows.includes(d.row.index)) {
         d.cell.styles.fontStyle = "bold";
         d.cell.styles.fillColor = [220, 230, 241];
-        if (d.column.index === 0) d.cell.colSpan = 1;
       } else if (boldRows.includes(d.row.index)) {
         d.cell.styles.fontStyle = "bold";
         d.cell.styles.fillColor = [200, 200, 200];
