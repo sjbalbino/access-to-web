@@ -181,7 +181,7 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       startY: yPos + 2,
       head: [head],
       body,
-      styles: { fontSize: 7, cellPadding: 1.5 },
+      styles: { fontSize: 7, cellPadding: 1.2, overflow: "ellipsize" },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
       columnStyles,
       didParseCell: (d) => {
