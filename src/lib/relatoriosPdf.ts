@@ -118,6 +118,12 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
 
   const localOf = (l: string | null | undefined) => (l && l.trim()) || "Sede";
 
+  // Trunca textos longos para garantir uma única linha por célula
+  const trunc = (s: string, n: number) => {
+    const t = (s || "").trim();
+    return t.length > n ? t.slice(0, n - 1) + "…" : t;
+  };
+
   // Helper: groups rows by local, emits subtotal rows and returns
   // the list of subtotal indices for styling.
   function renderSection<T>(
@@ -175,7 +181,7 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       startY: yPos + 2,
       head: [head],
       body,
-      styles: { fontSize: 7, cellPadding: 1.5 },
+      styles: { fontSize: 7, cellPadding: 1.2, overflow: "ellipsize" },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
       columnStyles,
       didParseCell: (d) => {
@@ -201,10 +207,10 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     data.colheitas,
     (c) => localOf(c.local_entrega),
     (c) => [
-      localOf(c.local_entrega),
+      trunc(localOf(c.local_entrega), 18),
       formatDate(c.data_colheita),
-      c.lavoura || "-",
-      c.variedade || "-",
+      trunc(c.lavoura || "-", 20),
+      trunc(c.variedade || "-", 26),
       formatNumber(c.peso_bruto, 0),
       formatNumber(c.peso_tara, 0),
       formatNumber(c.producao_kg, 0),
@@ -241,10 +247,10 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
       { content: "Sacas", styles: { halign: "right" } },
     ],
     {
-      0: { halign: "left", cellWidth: 26 },
-      1: { halign: "center", cellWidth: 20 },
-      2: { halign: "left", cellWidth: 26 },
-      3: { halign: "left", cellWidth: 26 },
+      0: { halign: "left", cellWidth: 24, overflow: "ellipsize" },
+      1: { halign: "center", cellWidth: 18 },
+      2: { halign: "left", cellWidth: 26, overflow: "ellipsize" },
+      3: { halign: "left", cellWidth: 34, overflow: "ellipsize" },
       4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" },
       7: { halign: "right" }, 8: { halign: "right" }, 9: { halign: "right" }, 10: { halign: "right" }, 11: { halign: "right" },
     },
@@ -410,7 +416,7 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
     const variedadesBody = Array.from(porVariedade.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([variedade, v]) => [
-        variedade,
+        trunc(variedade, 45),
         String(v.qtd),
         formatNumber(v.producao, 0),
         formatNumber(v.liquida, 0),
@@ -436,10 +442,10 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
         { content: "Sacas", styles: { halign: "right" } },
       ]],
       body: variedadesBody,
-      styles: { fontSize: 8, cellPadding: 2 },
+      styles: { fontSize: 8, cellPadding: 1.5, overflow: "ellipsize" },
       headStyles: { fillColor: [66, 66, 66], textColor: 255 },
       columnStyles: {
-        0: { halign: "left" },
+        0: { halign: "left", cellWidth: 90, overflow: "ellipsize" },
         1: { halign: "right", cellWidth: 25 },
         2: { halign: "right", cellWidth: 35 },
         3: { halign: "right", cellWidth: 40 },
