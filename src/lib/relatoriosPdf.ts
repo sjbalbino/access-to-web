@@ -1865,12 +1865,15 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
   let inscKilos = 0, inscSacos = 0, inscSaldo = 0;
   let totalGeralKilos = 0, totalGeralSacos = 0;
 
+  // Sacos dos totais são derivados do total em kg (evita resíduo de arredondamento por linha)
+  const sacosDeKg = (kg: number) => Math.round(kg / 60);
+
   const flushInscTotal = () => {
     if (!currentInsc) return;
     body.push([
       { content: "Total da Inscrição -->", colSpan: 5, styles: { fontStyle: "bold", halign: "right" } },
       { content: formatNumber(inscKilos, 0), styles: { fontStyle: "bold", halign: "right" } },
-      { content: formatNumber(inscSacos, 0), styles: { fontStyle: "bold", halign: "right" } },
+      { content: formatNumber(sacosDeKg(inscKilos), 0), styles: { fontStyle: "bold", halign: "right" } },
       { content: "", colSpan: 3 },
     ]);
     inscTotalRows.push(body.length - 1);
@@ -1883,7 +1886,7 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
     body.push([
       { content: "Total Local Entrega -->", colSpan: 5, styles: { fontStyle: "bold", halign: "right" } },
       { content: formatNumber(localKilos, 0), styles: { fontStyle: "bold", halign: "right" } },
-      { content: formatNumber(localSacos, 0), styles: { fontStyle: "bold", halign: "right" } },
+      { content: formatNumber(sacosDeKg(localKilos), 0), styles: { fontStyle: "bold", halign: "right" } },
       { content: "", colSpan: 3 },
     ]);
     localTotalRows.push(body.length - 1);
@@ -1891,6 +1894,7 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
     rowInsc.push("");
     localKilos = 0; localSacos = 0;
   };
+
 
   sorted.forEach((r) => {
     if (r.local_nome !== currentLocal) {
@@ -1946,9 +1950,10 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
   body.push([
     { content: "Total do Produtor -->", colSpan: 5, styles: { fontStyle: "bold", halign: "right" } },
     { content: formatNumber(totalGeralKilos, 0), styles: { fontStyle: "bold", halign: "right" } },
-    { content: formatNumber(totalGeralSacos, 0), styles: { fontStyle: "bold", halign: "right" } },
+    { content: formatNumber(sacosDeKg(totalGeralKilos), 0), styles: { fontStyle: "bold", halign: "right" } },
     { content: "", colSpan: 3 },
   ]);
+
   totalGeralRows.push(body.length - 1);
   rowLocal.push("");
   rowInsc.push("");
