@@ -504,9 +504,11 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     gerarSaldoDisponivelPdf({
       safraNome: safra?.nome || "-",
       tipoEntrega: tipoEntregaLabel[tipoProdutorFiltro] || "Todos",
+      localEntrega: localSelecionado?.nome || "Todos",
       pesoSaco: 60,
       rows,
     });
+
   };
 
   // ========== DEPÓSITOS GERAL ==========
