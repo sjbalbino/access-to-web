@@ -91,7 +91,7 @@ export function gerarSaldoDisponivelPdf(data: SaldoDisponivelData): void {
   const totSaldo = data.rows.reduce((s, r) => s + r.saldo_kg, 0);
 
   body.push([
-    "TOTAL", "", "",
+    "TOTAL", "", "", "",
     formatNumber(totDep), formatNumber(toSacos(totDep)),
     formatNumber(totComp), formatNumber(toSacos(totComp)),
     formatNumber(totVend), formatNumber(toSacos(totVend)),
@@ -105,7 +105,7 @@ export function gerarSaldoDisponivelPdf(data: SaldoDisponivelData): void {
   autoTable(doc, {
     startY: yPos,
     head: [[
-      "Produtor", "Entrega", "Tipo",
+      "Produtor", "IE", "Entrega", "Tipo",
       { content: "Depósitos", styles: { halign: "right" } },
       { content: "Sacos", styles: { halign: "right" } },
       { content: "Compras", styles: { halign: "right" } },
@@ -127,18 +127,20 @@ export function gerarSaldoDisponivelPdf(data: SaldoDisponivelData): void {
     styles: { fontSize: 6, cellPadding: 1 },
     headStyles: { fillColor: [66, 66, 66], textColor: 255, fontSize: 6 },
     columnStyles: {
-      0: { halign: "left", cellWidth: 42 },
+      0: { halign: "left", cellWidth: 40 },
       1: { halign: "left", cellWidth: 22 },
-      2: { halign: "left", cellWidth: 14 },
-      3: { halign: "right" }, 4: { halign: "right" },
-      5: { halign: "right" }, 6: { halign: "right" },
-      7: { halign: "right" }, 8: { halign: "right" },
-      9: { halign: "right" }, 10: { halign: "right" },
-      11: { halign: "right" }, 12: { halign: "right" },
-      13: { halign: "right" }, 14: { halign: "right" },
-      15: { halign: "right" }, 16: { halign: "right" },
-      17: { halign: "right" }, 18: { halign: "right" },
+      2: { halign: "left", cellWidth: 26 },
+      3: { halign: "left", cellWidth: 13 },
+      4: { halign: "right" }, 5: { halign: "right" },
+      6: { halign: "right" }, 7: { halign: "right" },
+      8: { halign: "right" }, 9: { halign: "right" },
+      10: { halign: "right" }, 11: { halign: "right" },
+      12: { halign: "right" }, 13: { halign: "right" },
+      14: { halign: "right" }, 15: { halign: "right" },
+      16: { halign: "right" }, 17: { halign: "right" },
+      18: { halign: "right" }, 19: { halign: "right" },
     },
+
     didParseCell: (data) => {
       if (data.row.index === body.length - 1 && data.section === "body") {
         data.cell.styles.fontStyle = "bold";
