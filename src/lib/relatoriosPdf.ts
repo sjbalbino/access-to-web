@@ -2353,3 +2353,209 @@ export function gerarEntregaVariedadePdf(params: RelEntregaVariedadeParams): voi
   desenharRodapeBrand(doc);
   downloadPdf(doc, "entrega_por_variedade.pdf");
 }
+
+// ==================== EXTRATO VENDA DA PRODUÇÃO (POR VENDEDOR) ====================
+
+export interface RelExtratoVendaRow {
+  vendedor_key: string;
+  vendedor_label: string;
+  comprador_key: string;
+  comprador_label: string;
+  tipo_label: string;
+  data_contrato: string | null;
+  numero: string | null;
+  produto_nome: string | null;
+  quantidade_kg: number;
+  preco_kg: number;
+  valor_total: number;
+  remessa_kg: number;
+  saldo_kg: number;
+}
+
+export interface ExtratoVendaProducaoData {
+  safraNome: string;
+  culturaNome: string;
+  rows: RelExtratoVendaRow[];
+  orientacao?: VendasPdfOrientation;
+  tamanho?: VendasPdfPageSize;
+}
+
+/**
+ * Extrato Venda da Produção — replica o layout legado:
+ * VENDEDOR -> COMPRADOR -> TIPO, com subtotais em cada nível.
+ */
+export function gerarExtratoVendaProducaoPdf(data: ExtratoVendaProducaoData): void {
+  const doc = new jsPDF({
+    orientation: data.orientacao ?? "portrait",
+    format: data.tamanho ?? "a4",
+  });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("EXTRATO VENDA DA PRODUÇÃO", pageWidth / 2, 34, { align: "center" });
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`SAFRA: ${data.safraNome}    CULTURA: ${data.culturaNome}`, pageWidth / 2, 40, { align: "center" });
+
+  const COL_COUNT = 9;
+  const body: any[] = [];
+  const vendedorHeaderRows: number[] = [];
+  const compradorRows: number[] = [];
+  const tipoRows: number[] = [];
+  const totalGeralRows: number[] = [];
+
+  const sc = (kg: number) => formatNumber(kg / 60, 0);
+
+  // Agrupa: vendedor -> comprador -> tipo
+  const vendedores = new Map<string, { label: string; compradores: Map<string, { label: string; tipos: Map<string, RelExtratoVendaRow[]> }> }>();
+  for (const r of data.rows) {
+    if (!vendedores.has(r.vendedor_key)) vendedores.set(r.vendedor_key, { label: r.vendedor_label, compradores: new Map() });
+    const v = vendedores.get(r.vendedor_key)!;
+    if (!v.compradores.has(r.comprador_key)) v.compradores.set(r.comprador_key, { label: r.comprador_label, tipos: new Map() });
+    const c = v.compradores.get(r.comprador_key)!;
+    if (!c.tipos.has(r.tipo_label)) c.tipos.set(r.tipo_label, []);
+    c.tipos.get(r.tipo_label)!.push(r);
+  }
+
+  const acumular = (itens: RelExtratoVendaRow[]) => itens.reduce(
+    (acc, i) => ({
+      qtd: acc.qtd + i.quantidade_kg,
+      valor: acc.valor + i.valor_total,
+      remessa: acc.remessa + i.remessa_kg,
+      saldo: acc.saldo + i.saldo_kg,
+    }),
+    { qtd: 0, valor: 0, remessa: 0, saldo: 0 },
+  );
+
+  let geral = { qtd: 0, valor: 0, remessa: 0, saldo: 0 };
+
+  const vendedoresOrdenados = Array.from(vendedores.values()).sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+  for (const v of vendedoresOrdenados) {
+    vendedorHeaderRows.push(body.length);
+    body.push([{ content: `VENDEDOR: ${v.label}`, colSpan: COL_COUNT, styles: { halign: "left" } }]);
+
+    const itensVendedor: RelExtratoVendaRow[] = [];
+    const compradoresOrdenados = Array.from(v.compradores.values()).sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+
+    for (const c of compradoresOrdenados) {
+      const itensComprador: RelExtratoVendaRow[] = [];
+      const tiposOrdenados = Array.from(c.tipos.entries()).sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
+
+      for (const [tipoLabel, itens] of tiposOrdenados) {
+        itens.sort((a, b) => (a.data_contrato || "").localeCompare(b.data_contrato || ""));
+        for (const i of itens) {
+          body.push([
+            formatDate(i.data_contrato),
+            i.numero || "-",
+            i.produto_nome || "-",
+            sc(i.quantidade_kg),
+            formatCurrency(i.preco_kg),
+            formatNumber(i.quantidade_kg, 0),
+            formatCurrency(i.valor_total),
+            formatNumber(i.remessa_kg, 0),
+            formatNumber(i.saldo_kg, 0),
+          ]);
+        }
+        const t = acumular(itens);
+        tipoRows.push(body.length);
+        body.push([
+          { content: `TIPO --> ${tipoLabel}`, colSpan: 3, styles: { halign: "right" } },
+          sc(t.qtd), "",
+          formatNumber(t.qtd, 0),
+          formatCurrency(t.valor),
+          formatNumber(t.remessa, 0),
+          formatNumber(t.saldo, 0),
+        ]);
+        itensComprador.push(...itens);
+      }
+
+      const tc = acumular(itensComprador);
+      compradorRows.push(body.length);
+      body.push([
+        { content: `TOTAL COMPRADOR -> ${c.label}`, colSpan: 3, styles: { halign: "left" } },
+        sc(tc.qtd), "",
+        formatNumber(tc.qtd, 0),
+        formatCurrency(tc.valor),
+        formatNumber(tc.remessa, 0),
+        formatNumber(tc.saldo, 0),
+      ]);
+      itensVendedor.push(...itensComprador);
+    }
+
+    const tv = acumular(itensVendedor);
+    totalGeralRows.push(body.length);
+    body.push([
+      { content: `TOTAL VENDEDOR -> ${v.label}`, colSpan: 3, styles: { halign: "left" } },
+      sc(tv.qtd), "",
+      formatNumber(tv.qtd, 0),
+      formatCurrency(tv.valor),
+      formatNumber(tv.remessa, 0),
+      formatNumber(tv.saldo, 0),
+    ]);
+
+    geral = {
+      qtd: geral.qtd + tv.qtd,
+      valor: geral.valor + tv.valor,
+      remessa: geral.remessa + tv.remessa,
+      saldo: geral.saldo + tv.saldo,
+    };
+  }
+
+  if (vendedoresOrdenados.length > 1) {
+    totalGeralRows.push(body.length);
+    body.push([
+      { content: "TOTAL GERAL", colSpan: 3, styles: { halign: "left" } },
+      sc(geral.qtd), "",
+      formatNumber(geral.qtd, 0),
+      formatCurrency(geral.valor),
+      formatNumber(geral.remessa, 0),
+      formatNumber(geral.saldo, 0),
+    ]);
+  }
+
+  autoTable(doc, {
+    startY: 44,
+    head: [[
+      { content: "Data", styles: { halign: "center" } },
+      "Contr.",
+      "Produto",
+      { content: "Sacos", styles: { halign: "right" } },
+      { content: "Valor/kg", styles: { halign: "right" } },
+      { content: "Tonelada (kg)", styles: { halign: "right" } },
+      { content: "Total (R$)", styles: { halign: "right" } },
+      { content: "Remessa (kg)", styles: { halign: "right" } },
+      { content: "Saldo (kg)", styles: { halign: "right" } },
+    ]],
+    body,
+    styles: { fontSize: 7, cellPadding: 1.2, overflow: "hidden" },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255, fontSize: 7.5 },
+    columnStyles: {
+      0: { halign: "center", cellWidth: 18 },
+      1: { halign: "left", cellWidth: 20 },
+      2: { halign: "left", cellWidth: 38 },
+      3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" },
+      6: { halign: "right" }, 7: { halign: "right" }, 8: { halign: "right" },
+    },
+    didParseCell: (d) => {
+      if (d.section !== "body") return;
+      const i = d.row.index;
+      if (vendedorHeaderRows.includes(i)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [220, 230, 241];
+      } else if (totalGeralRows.includes(i)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [200, 200, 200];
+      } else if (compradorRows.includes(i)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [235, 235, 235];
+      } else if (tipoRows.includes(i)) {
+        d.cell.styles.fontStyle = "bold";
+      }
+    },
+  });
+
+  desenharRodapeBrand(doc);
+  downloadPdf(doc, "extrato_venda_producao.pdf");
+}
