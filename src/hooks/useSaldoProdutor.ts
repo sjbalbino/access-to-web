@@ -24,7 +24,7 @@ export function useSaldoProdutor(filters: SaldoProdutorFilters) {
       const { inscricaoProdutorId, safraId, produtoId } = filters;
 
       if (!inscricaoProdutorId || !safraId || !produtoId) {
-        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0 };
+        return { saldo: 0, colheitas: 0, transferenciasRecebidas: 0, transferenciasEnviadas: 0, vendasProducao: 0 };
       }
 
       const produtoIds = await resolveSaldoProdutoIds(produtoId);
