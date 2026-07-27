@@ -239,7 +239,7 @@ export function EmitirNfeCompraDialog({
         granja_id: compra.granja_id,
         inscricao_produtor_id: compra.inscricao_comprador_id,
         natureza_operacao: cfop.natureza_operacao || "COMPRA PARA COMERCIALIZACAO",
-        data_emissao: new Date().toISOString().split("T")[0],
+        data_emissao: new Date().toISOString(),
         operacao: 0, // ENTRADA (compra)
         finalidade: 1, // Normal
         cfop_id: cfop.id,

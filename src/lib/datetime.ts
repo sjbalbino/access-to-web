@@ -22,6 +22,12 @@ const toDate = (input: Date | string | number | null | undefined): Date | null =
     if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
       return parseISO(`${input}T12:00:00Z`);
     }
+    // Timestamps gravados como meia-noite UTC representam data pura no banco
+    // (timestamptz). Sem o ajuste, exibiriam o dia anterior em America/Sao_Paulo.
+    const midnightUtc = /^(\d{4}-\d{2}-\d{2})[T ]00:00:00(\.0+)?(Z|\+00:?00|-00:?00)$/.exec(input);
+    if (midnightUtc) {
+      return parseISO(`${midnightUtc[1]}T12:00:00Z`);
+    }
     return parseISO(input);
   } catch {
     return null;
