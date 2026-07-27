@@ -235,6 +235,13 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
     setDialogOpen(true);
   };
 
+  /**
+   * Regra de negócio: apenas inscrições vinculadas a um emitente de NF-e ativo
+   * e com API configurada podem ser o emitente principal da granja.
+   */
+  const podeSerEmitentePrincipal = (inscricao: InscricaoProdutor): boolean =>
+    !!inscricao.emitente_id && inscricao.emitente?.api_configurada === true;
+
   // Handler para marcar/desmarcar inscrição principal
   const handleToggleEmitentePrincipal = async (inscricao: InscricaoProdutor) => {
     if (!inscricao.granja_id) {
@@ -248,6 +255,17 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
 
     const novoValor = !inscricao.is_emitente_principal;
 
+    // Bloqueio: só pode marcar quem tem emitente de NF-e com API configurada
+    if (novoValor && !podeSerEmitentePrincipal(inscricao)) {
+      toast({
+        title: "Emitente de NF-e não configurado",
+        description:
+          "Somente inscrições com emitente de NF-e configurado (API ativa) podem ser emitente principal da granja.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Se estiver marcando como principal, desmarcar outras da mesma granja primeiro
       if (novoValor) {
@@ -257,6 +275,7 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
           .eq("granja_id", inscricao.granja_id)
           .eq("is_emitente_principal", true);
       }
+
 
       // Atualizar a inscrição atual
       await updateInscricao.mutateAsync({
