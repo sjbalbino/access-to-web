@@ -47,6 +47,13 @@ import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 
 type EmissionStep = "idle" | "validating" | "creating" | "sending" | "processing" | "success" | "error";
 
+/** Item (variedade) incluído na contra-nota de depósito. */
+interface ItemNotaDeposito {
+  produto_id: string;
+  quantidade_kg: number;
+}
+
+
 interface EmissionStatus {
   step: EmissionStep;
   message: string;
