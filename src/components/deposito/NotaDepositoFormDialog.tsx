@@ -350,15 +350,9 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
       return;
     }
 
-    const qtdKg = parseFloat(quantidadeKg);
-    if (saldoProduto && qtdKg > saldoProduto.saldo_a_emitir_kg) {
-      toast({
-        title: "Quantidade inválida",
-        description: `A quantidade informada (${formatKg(qtdKg)} kg) é maior que o saldo disponível (${formatKg(saldoProduto.saldo_a_emitir_kg)} kg).`,
-        variant: "destructive",
-      });
-      return;
-    }
+    // Quantidade acima do saldo é permitida — apenas confirmada pelo usuário
+    // (ver handleGerarNfeClick). Nenhum bloqueio aqui.
+
 
     // Abrir diálogo de emissão e iniciar progresso
     setIsEmissionDialogOpen(true);
