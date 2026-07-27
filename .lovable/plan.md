@@ -1,41 +1,24 @@
 ## Objetivo
 
-Na emissão da Nota de Depósito (CFOP 1905), no bloco "Dados da Contra-Nota":
+Na tela **Notas Fiscais**, a coluna "Valor Total" fica parcialmente coberta e a barra de ações (até 8 ícones) força rolagem horizontal, cortando itens da linha. A meta é deixar todos os itens visíveis dentro da largura útil da tela.
 
-1. Permitir informar quantidade **maior** que o saldo depositado (hoje é bloqueado).
-2. Permitir incluir **mais de uma variedade** na mesma nota (hoje só uma).
+## Diagnóstico (verificado em `src/pages/NotasFiscais.tsx`, linhas 567–753)
 
-## 1) Quantidade acima do saldo
+- A tabela usa `min-w-[600px]` dentro de `overflow-x-auto`, e a coluna de Ações é `sticky right-0` — ela flutua sobre a coluna "Valor Total" quando há rolagem, exatamente o efeito do print.
+- A célula de ações renderiza até 8 botões `size="icon"` (40px cada) em `flex gap-1`, o que soma ~330px só de ações.
+- Colunas como "Natureza Op." e "Série" ocupam espaço mas têm baixo valor informativo na listagem.
 
-Situação atual (`src/components/deposito/NotaDepositoFormDialog.tsx`):
-- O `handleGerarNfe` interrompe a emissão com toast "Quantidade inválida" quando `qtdKg > saldo_a_emitir_kg`.
-- O campo `Input` tem `max={saldoProduto?.saldo_a_emitir_kg}`, limitando também pela UI.
-- O `Select` de variedade só lista produtos com `saldo_a_emitir_kg > 0`.
+## Mudanças propostas (apenas apresentação, em `src/pages/NotasFiscais.tsx`)
 
-Mudanças:
-- Remover o bloqueio de emissão; manter apenas **aviso visual** (texto em âmbar: "Quantidade acima do saldo disponível (X kg)") ao lado do campo.
-- Remover o atributo `max` do input.
-- Listar no select **todas** as variedades com saldo do produtor, inclusive as com saldo zero (indicando o saldo entre parênteses), para não impedir emissões legítimas.
-- Antes de transmitir, se algum item exceder o saldo, exibir um diálogo de confirmação ("Existem itens acima do saldo. Deseja emitir mesmo assim?") — evita emissão acidental sem impedir a operação.
-
-## 2) Múltiplas variedades por nota
-
-Situação atual: estado único `produtoId` + `quantidadeKg`; grava 1 registro em `notas_fiscais_itens`, 1 item no payload de transmissão e 1 registro em `notas_deposito_emitidas`.
-
-Mudanças no mesmo arquivo:
-- Substituir o estado único por uma lista de itens: `{ produto_id, quantidade_kg }[]`.
-- UI: linha de inclusão (Variedade + Quantidade + botão "Adicionar") acima de uma tabela dos itens adicionados, com coluna Variedade, Saldo, Quantidade (editável), Valor (R$ 1,00/kg) e botão de remover. Rodapé com total de kg e valor total da nota.
-- Impedir a mesma variedade duplicada na lista (soma na existente ou bloqueia com aviso).
-- Persistência:
-  - `notas_fiscais`: `total_produtos` / `total_nota` = soma das quantidades.
-  - `notas_fiscais_itens`: um registro por item, com `numero_item` sequencial (1..n) e a mesma resolução de CST/cClassTrib/alíquotas IBS-CBS já existente, aplicada por produto.
-  - `notas_deposito_emitidas`: um registro por item, todos referenciando o mesmo `nota_fiscal_id` (inseridos somente após autorização, como hoje).
-  - Payload de emissão (`itensParaEmissao`): array com todos os itens.
-- Modo edição/visualização (`editNotaId`): carregar todos os registros de `notas_deposito_emitidas` da mesma `nota_fiscal_id` para preencher a tabela de itens.
+1. **Remover o comportamento sticky** da coluna Ações (header e célula), eliminando a sobreposição sobre "Valor Total".
+2. **Compactar a barra de ações**: botões em tamanho reduzido (`h-7 w-7`, ícones `h-3.5 w-3.5`), `gap-0.5`, e `flex-nowrap` com alinhamento à direita — reduz a largura de ~330px para ~200px.
+3. **Agrupar ações secundárias em um menu "mais"** (ícone de três pontos, `DropdownMenu`): mantêm-se visíveis diretamente Visualizar, Duplicar, DANFE e Download; entram no menu XML, E-mail, Carta de Correção (e seus downloads), Cancelar e Excluir. Assim a linha nunca ultrapassa a largura, independentemente do status da nota.
+4. **Enxugar colunas**: "Série" passa a ser exibida junto ao Número (ex.: `104 / 930`) e a coluna "Natureza Op." fica apenas em telas `xl`. Larguras fixas para Número, Data e Status; Destinatário absorve o restante.
+5. **Ajustar o container**: manter `overflow-x-auto` como salvaguarda em telas muito estreitas, mas com `min-w-[640px]` e `table-fixed` para que em desktop (≥1000px, como no print) tudo caiba sem barra de rolagem.
 
 ## Detalhes técnicos
 
-- Arquivo principal: `src/components/deposito/NotaDepositoFormDialog.tsx` (único arquivo alterado; sem migração de banco — o esquema atual já suporta N itens por nota fiscal e N registros de depósito por `nota_fiscal_id`).
-- A resolução de CST/alíquotas IBS/CBS (produto → emitente → CFOP → padrão) é extraída para uma função auxiliar `resolverTributos(produto)` chamada por item.
-- As informações complementares (safra, "PRODUTO JÁ TESTADO POR...", notas referenciadas) permanecem no nível da nota.
-- Relatórios e listagens que consultam `notas_deposito_emitidas` continuam funcionando, pois passam a ver várias linhas por nota — o cálculo de saldo por produto já é por `produto_id`.
+- Nenhuma alteração em hooks, queries ou regras de negócio.
+- Reutilizar o `DropdownMenu` do shadcn já disponível em `@/components/ui/dropdown-menu`.
+- Tokens semânticos preservados; as cores por ação continuam nas classes existentes.
+- Validação: abrir `/notas-fiscais` no preview em 1012px de largura e conferir que Valor Total, Status e todas as ações aparecem sem rolagem horizontal.
