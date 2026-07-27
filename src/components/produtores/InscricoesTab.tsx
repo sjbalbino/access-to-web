@@ -457,11 +457,19 @@ export function InscricoesTab({ produtorId }: InscricoesTabProps) {
                          <Button
                            variant="ghost"
                            size="icon"
-                           title={inscricao.is_emitente_principal ? "Emitente principal da granja (clique para desmarcar)" : "Marcar como emitente principal da granja"}
+                           disabled={!inscricao.is_emitente_principal && !podeSerEmitentePrincipal(inscricao)}
+                           title={
+                             inscricao.is_emitente_principal
+                               ? "Emitente principal da granja (clique para desmarcar)"
+                               : podeSerEmitentePrincipal(inscricao)
+                                 ? "Marcar como emitente principal da granja"
+                                 : "Indisponível: esta inscrição não possui emitente de NF-e com API configurada"
+                           }
                            onClick={() => handleToggleEmitentePrincipal(inscricao)}
                          >
                            <Crown className={cn("h-4 w-4", inscricao.is_emitente_principal ? "text-amber-500 fill-amber-500" : "text-muted-foreground")} />
                          </Button>
+
                          <Button
                            variant="ghost"
                            size="icon"
