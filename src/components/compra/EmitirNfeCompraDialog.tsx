@@ -307,6 +307,33 @@ export function EmitirNfeCompraDialog({
       const cclassTribCbsResolved =
         (produto as any)?.cclass_trib_cbs || (emitente as any)?.cclass_trib_cbs_padrao || null;
 
+      // Alíquotas IBS/CBS: produto → emitente (só quando o CST for tributado)
+      const CSTS_IBS_CBS_TRIBUTADOS = ["000", "200", "210", "220"];
+      const ibsTributado = CSTS_IBS_CBS_TRIBUTADOS.includes(cstIbsResolved);
+      const cbsTributado = CSTS_IBS_CBS_TRIBUTADOS.includes(cstCbsResolved);
+      const aliqIbsResolved = ibsTributado
+        ? Number((produto as any)?.aliquota_ibs ?? (emitente as any)?.aliq_ibs_padrao ?? 0)
+        : 0;
+      const aliqCbsResolved = cbsTributado
+        ? Number((produto as any)?.aliquota_cbs ?? (emitente as any)?.aliq_cbs_padrao ?? 0)
+        : 0;
+      const baseIbsResolved = ibsTributado ? valorTotal : 0;
+      const baseCbsResolved = cbsTributado ? valorTotal : 0;
+      const valorIbsResolved = Number(((baseIbsResolved * aliqIbsResolved) / 100).toFixed(2));
+      const valorCbsResolved = Number(((baseCbsResolved * aliqCbsResolved) / 100).toFixed(2));
+
+      // ICMS: só tributa quando o CST indicar tributação (00/10/20/70/90/101/201/900)
+      const cstIcmsResolved =
+        produto.cst_icms || emitente.cst_icms_padrao || cfop.cst_icms_padrao || "00";
+      const icmsTributado = ["00", "10", "20", "70", "90", "101", "201", "900"].includes(cstIcmsResolved);
+      const aliqIcmsResolved = icmsTributado ? Number(emitente.aliq_icms_padrao || 0) : 0;
+      const baseIcmsResolved = icmsTributado ? valorTotal : 0;
+
+      const cstPisResolved = produto.cst_pis || emitente.cst_pis_padrao || cfop.cst_pis_padrao || "08";
+      const cstCofinsResolved = produto.cst_cofins || emitente.cst_cofins_padrao || cfop.cst_cofins_padrao || "08";
+      const pisTributado = ["01", "02", "05"].includes(cstPisResolved);
+      const cofinsTributado = ["01", "02", "05"].includes(cstCofinsResolved);
+
       // 4. Criar o item da nota fiscal
       const itemData = {
         nota_fiscal_id: notaFiscal.id,
@@ -323,24 +350,31 @@ export function EmitirNfeCompraDialog({
         valor_desconto: 0,
         origem: 0, // Nacional
         // Prioridade CST: 1º Produto, 2º Emitente (regime tributário), 3º CFOP, 4º Fallback
-        cst_icms: produto.cst_icms || emitente.cst_icms_padrao || cfop.cst_icms_padrao || "00",
-        aliq_icms: emitente.aliq_icms_padrao || 0,
-        base_icms: valorTotal,
-        valor_icms: valorTotal * ((emitente.aliq_icms_padrao || 0) / 100),
-        cst_pis: produto.cst_pis || emitente.cst_pis_padrao || cfop.cst_pis_padrao || "08",
-        aliq_pis: ["01","02","05"].includes(produto.cst_pis || emitente.cst_pis_padrao || cfop.cst_pis_padrao || "08") ? (emitente.aliq_pis_padrao || 0) : 0,
-        base_pis: ["01","02","05"].includes(produto.cst_pis || emitente.cst_pis_padrao || cfop.cst_pis_padrao || "08") ? valorTotal : 0,
-        valor_pis: ["01","02","05"].includes(produto.cst_pis || emitente.cst_pis_padrao || cfop.cst_pis_padrao || "08") ? valorTotal * ((emitente.aliq_pis_padrao || 0) / 100) : 0,
-        cst_cofins: produto.cst_cofins || emitente.cst_cofins_padrao || cfop.cst_cofins_padrao || "08",
-        aliq_cofins: ["01","02","05"].includes(produto.cst_cofins || emitente.cst_cofins_padrao || cfop.cst_cofins_padrao || "08") ? (emitente.aliq_cofins_padrao || 0) : 0,
-        base_cofins: ["01","02","05"].includes(produto.cst_cofins || emitente.cst_cofins_padrao || cfop.cst_cofins_padrao || "08") ? valorTotal : 0,
-        valor_cofins: ["01","02","05"].includes(produto.cst_cofins || emitente.cst_cofins_padrao || cfop.cst_cofins_padrao || "08") ? valorTotal * ((emitente.aliq_cofins_padrao || 0) / 100) : 0,
+        cst_icms: cstIcmsResolved,
+        aliq_icms: aliqIcmsResolved,
+        base_icms: baseIcmsResolved,
+        valor_icms: Number(((baseIcmsResolved * aliqIcmsResolved) / 100).toFixed(2)),
+        cst_pis: cstPisResolved,
+        aliq_pis: pisTributado ? (emitente.aliq_pis_padrao || 0) : 0,
+        base_pis: pisTributado ? valorTotal : 0,
+        valor_pis: pisTributado ? Number((valorTotal * ((emitente.aliq_pis_padrao || 0) / 100)).toFixed(2)) : 0,
+        cst_cofins: cstCofinsResolved,
+        aliq_cofins: cofinsTributado ? (emitente.aliq_cofins_padrao || 0) : 0,
+        base_cofins: cofinsTributado ? valorTotal : 0,
+        valor_cofins: cofinsTributado ? Number((valorTotal * ((emitente.aliq_cofins_padrao || 0) / 100)).toFixed(2)) : 0,
         cst_ibs: cstIbsResolved,
+        aliq_ibs: aliqIbsResolved,
+        base_ibs: baseIbsResolved,
+        valor_ibs: valorIbsResolved,
         cclass_trib_ibs: cclassTribIbsResolved,
         cst_cbs: cstCbsResolved,
+        aliq_cbs: aliqCbsResolved,
+        base_cbs: baseCbsResolved,
+        valor_cbs: valorCbsResolved,
         cclass_trib_cbs: cclassTribCbsResolved,
         cst_is: cstIsResolved,
       };
+
 
       const { error: itemError } = await supabase
         .from("notas_fiscais_itens")
@@ -455,14 +489,14 @@ export function EmitirNfeCompraDialog({
         valor_seguro: null,
         valor_outros: null,
         cst_ibs: cstIbsResolved,
-        base_ibs: null,
-        aliq_ibs: null,
-        valor_ibs: null,
+        base_ibs: baseIbsResolved,
+        aliq_ibs: aliqIbsResolved,
+        valor_ibs: valorIbsResolved,
         cclass_trib_ibs: cclassTribIbsResolved,
         cst_cbs: cstCbsResolved,
-        base_cbs: null,
-        aliq_cbs: null,
-        valor_cbs: null,
+        base_cbs: baseCbsResolved,
+        aliq_cbs: aliqCbsResolved,
+        valor_cbs: valorCbsResolved,
         cclass_trib_cbs: cclassTribCbsResolved,
         cst_is: cstIsResolved,
         base_is: null,

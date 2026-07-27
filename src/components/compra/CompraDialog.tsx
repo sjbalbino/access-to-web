@@ -402,6 +402,44 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
       const produto = produtos?.find(p => p.id === produtoId);
       const proximoNumero = (emitente.numero_atual_nfe || 0) + 1;
 
+      // ===== Resolução de tributos: Produto → Emitente → CFOP → padrão =====
+      const p = produto as any;
+      const e = emitente as any;
+      const c = cfopCompra as any;
+
+      const cstIcmsResolved = p?.cst_icms || e?.cst_icms_padrao || c?.cst_icms_padrao || '41';
+      const cstPisResolved = p?.cst_pis || e?.cst_pis_padrao || c?.cst_pis_padrao || '08';
+      const cstCofinsResolved = p?.cst_cofins || e?.cst_cofins_padrao || c?.cst_cofins_padrao || '08';
+      const cstIbsResolved = p?.cst_ibs || e?.cst_ibs_padrao || c?.cst_ibs_padrao || null;
+      const cstCbsResolved = p?.cst_cbs || e?.cst_cbs_padrao || c?.cst_cbs_padrao || null;
+      const cstIsResolved = p?.cst_is || e?.cst_is_padrao || c?.cst_is_padrao || null;
+      const cclassTribIbsResolved = p?.cclass_trib_ibs || e?.cclass_trib_ibs_padrao || null;
+      const cclassTribCbsResolved = p?.cclass_trib_cbs || e?.cclass_trib_cbs_padrao || null;
+
+      const CSTS_PIS_COFINS_TRIBUTADOS = ['01', '02', '05'];
+      const CSTS_IBS_CBS_TRIBUTADOS = ['000', '200', '210', '220'];
+
+      const pisTributado = CSTS_PIS_COFINS_TRIBUTADOS.includes(cstPisResolved);
+      const cofinsTributado = CSTS_PIS_COFINS_TRIBUTADOS.includes(cstCofinsResolved);
+
+      const aliqPisResolved = pisTributado ? Number(p?.aliquota_pis ?? e?.aliq_pis_padrao ?? 0) : 0;
+      const aliqCofinsResolved = cofinsTributado ? Number(p?.aliquota_cofins ?? e?.aliq_cofins_padrao ?? 0) : 0;
+      const basePisResolved = pisTributado ? valorTotal : 0;
+      const baseCofinsResolved = cofinsTributado ? valorTotal : 0;
+      const valorPisResolved = Number(((basePisResolved * aliqPisResolved) / 100).toFixed(2));
+      const valorCofinsResolved = Number(((baseCofinsResolved * aliqCofinsResolved) / 100).toFixed(2));
+
+      const ibsTributado = !!cstIbsResolved && CSTS_IBS_CBS_TRIBUTADOS.includes(cstIbsResolved);
+      const cbsTributado = !!cstCbsResolved && CSTS_IBS_CBS_TRIBUTADOS.includes(cstCbsResolved);
+      const aliqIbsResolved = ibsTributado ? Number(p?.aliquota_ibs ?? e?.aliq_ibs_padrao ?? 0) : 0;
+      const aliqCbsResolved = cbsTributado ? Number(p?.aliquota_cbs ?? e?.aliq_cbs_padrao ?? 0) : 0;
+      const baseIbsResolved = ibsTributado ? valorTotal : 0;
+      const baseCbsResolved = cbsTributado ? valorTotal : 0;
+      const valorIbsResolved = Number(((baseIbsResolved * aliqIbsResolved) / 100).toFixed(2));
+      const valorCbsResolved = Number(((baseCbsResolved * aliqCbsResolved) / 100).toFixed(2));
+
+
+
       // Montar informações complementares
       const infoComplementar = (() => {
         const partes: string[] = [];
@@ -483,9 +521,29 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
           valor_unitario: valorUnitarioKg,
           valor_total: valorTotal,
           origem: 0,
-          cst_icms: cfopCompra.cst_icms_padrao || '41',
-          cst_pis: cfopCompra.cst_pis_padrao || '08',
-          cst_cofins: cfopCompra.cst_cofins_padrao || '08',
+          cst_icms: cstIcmsResolved,
+          aliq_icms: 0,
+          base_icms: 0,
+          valor_icms: 0,
+          cst_pis: cstPisResolved,
+          aliq_pis: aliqPisResolved,
+          base_pis: basePisResolved,
+          valor_pis: valorPisResolved,
+          cst_cofins: cstCofinsResolved,
+          aliq_cofins: aliqCofinsResolved,
+          base_cofins: baseCofinsResolved,
+          valor_cofins: valorCofinsResolved,
+          cst_ibs: cstIbsResolved,
+          aliq_ibs: aliqIbsResolved,
+          base_ibs: baseIbsResolved,
+          valor_ibs: valorIbsResolved,
+          cclass_trib_ibs: cclassTribIbsResolved,
+          cst_cbs: cstCbsResolved,
+          aliq_cbs: aliqCbsResolved,
+          base_cbs: baseCbsResolved,
+          valor_cbs: valorCbsResolved,
+          cclass_trib_cbs: cclassTribCbsResolved,
+          cst_is: cstIsResolved,
         });
 
       if (itemError) throw itemError;
@@ -580,19 +638,19 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
         valor_unitario: valorUnitarioKg,
         valor_total: valorTotal,
         origem: 0,
-        cst_icms: cfopCompra.cst_icms_padrao || '41',
+        cst_icms: cstIcmsResolved,
         modalidade_bc_icms: 0,
         base_icms: 0,
         aliq_icms: 0,
         valor_icms: 0,
-        cst_pis: cfopCompra.cst_pis_padrao || '08',
-        base_pis: 0,
-        aliq_pis: 0,
-        valor_pis: 0,
-        cst_cofins: cfopCompra.cst_cofins_padrao || '08',
-        base_cofins: 0,
-        aliq_cofins: 0,
-        valor_cofins: 0,
+        cst_pis: cstPisResolved,
+        base_pis: basePisResolved,
+        aliq_pis: aliqPisResolved,
+        valor_pis: valorPisResolved,
+        cst_cofins: cstCofinsResolved,
+        base_cofins: baseCofinsResolved,
+        aliq_cofins: aliqCofinsResolved,
+        valor_cofins: valorCofinsResolved,
         cst_ipi: '53',
         base_ipi: 0,
         aliq_ipi: 0,
@@ -601,17 +659,17 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
         valor_frete: 0,
         valor_seguro: 0,
         valor_outros: 0,
-        cst_ibs: null,
-        base_ibs: null,
-        aliq_ibs: null,
-        valor_ibs: null,
-        cclass_trib_ibs: null,
-        cst_cbs: null,
-        base_cbs: null,
-        aliq_cbs: null,
-        valor_cbs: null,
-        cclass_trib_cbs: null,
-        cst_is: null,
+        cst_ibs: cstIbsResolved,
+        base_ibs: baseIbsResolved,
+        aliq_ibs: aliqIbsResolved,
+        valor_ibs: valorIbsResolved,
+        cclass_trib_ibs: cclassTribIbsResolved,
+        cst_cbs: cstCbsResolved,
+        base_cbs: baseCbsResolved,
+        aliq_cbs: aliqCbsResolved,
+        valor_cbs: valorCbsResolved,
+        cclass_trib_cbs: cclassTribCbsResolved,
+        cst_is: cstIsResolved,
         base_is: null,
         aliq_is: null,
         valor_is: null,
