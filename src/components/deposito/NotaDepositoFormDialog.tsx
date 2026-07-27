@@ -304,15 +304,36 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     return "pending";
   };
 
-  const handleGerarNfe = async () => {
-    if (!granjaId || !inscricaoId || !produtoId || !quantidadeKg || !safraId) {
+  /**
+   * Valida a lista de itens e dispara confirmação quando alguma variedade
+   * excede o saldo disponível do produtor.
+   */
+  const handleGerarNfeClick = () => {
+    if (itens.length === 0) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios.",
+        title: "Nenhuma variedade incluída",
+        description: "Adicione ao menos uma variedade à contra-nota.",
         variant: "destructive",
       });
       return;
     }
+    if (itensExcedentes.length > 0) {
+      setConfirmarExcedente(true);
+      return;
+    }
+    handleGerarNfe();
+  };
+
+  const handleGerarNfe = async () => {
+    if (!granjaId || !inscricaoId || !safraId || itens.length === 0) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios e inclua ao menos uma variedade.",
+        variant: "destructive",
+      });
+      return;
+    }
+
 
     if (!cfop1905) {
       toast({
