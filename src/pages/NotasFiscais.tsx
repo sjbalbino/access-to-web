@@ -578,8 +578,8 @@ export default function NotasFiscais() {
                   <TableHead className="w-[78px] px-2">Nº / Série</TableHead>
                   <TableHead className="px-2">Destinatário</TableHead>
                   <TableHead className="hidden 2xl:table-cell w-[140px] px-2">Natureza Op.</TableHead>
-                  <TableHead className="w-[108px] px-2">Data Emissão</TableHead>
-                  <TableHead className="text-right hidden sm:table-cell w-[104px] px-2">Valor Total</TableHead>
+                  <TableHead className="w-[100px] px-2">Data Emissão</TableHead>
+                  <TableHead className="text-right hidden sm:table-cell w-[96px] px-2">Valor Total</TableHead>
                   <TableHead className="w-[94px] px-2">Status</TableHead>
                   {canEdit && <TableHead className="w-[148px] px-2 text-right">Ações</TableHead>}
                 </TableRow>
@@ -649,10 +649,10 @@ export default function NotasFiscais() {
                           </TableCell>
 
                           <TableCell className="truncate hidden 2xl:table-cell px-2" title={nota.natureza_operacao}>{nota.natureza_operacao}</TableCell>
-                          <TableCell className="whitespace-nowrap text-sm px-2">
+                          <TableCell className="whitespace-nowrap text-xs px-2">
                             {formatDataEmissao(nota.data_emissao, (nota as any).created_at)}
                           </TableCell>
-                          <TableCell className="text-right font-medium hidden sm:table-cell whitespace-nowrap px-2">{formatCurrency(nota.total_nota)}</TableCell>
+                          <TableCell className="text-right font-medium text-xs hidden sm:table-cell whitespace-nowrap px-2">{formatCurrency(nota.total_nota)}</TableCell>
 
                           <TableCell className="px-2">
 
