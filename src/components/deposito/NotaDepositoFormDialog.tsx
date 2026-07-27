@@ -284,8 +284,10 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     setInscricaoId("");
     setProdutoId("");
     setQuantidadeKg("");
+    setItens([]);
     setNotasReferenciadas([]);
   };
+
 
   const getStepStatus = (step: EmissionStep): "pending" | "active" | "completed" | "error" => {
     const steps: EmissionStep[] = ["validating", "creating", "sending", "processing"];
