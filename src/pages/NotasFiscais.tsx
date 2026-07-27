@@ -697,7 +697,7 @@ export default function NotasFiscais() {
                             const iconBtn = "h-7 w-7";
                             const iconSize = "h-3.5 w-3.5";
                             return (
-                              <TableCell className="py-1">
+                              <TableCell className="py-1 px-2">
                                 <div className="flex flex-nowrap items-center justify-end gap-0.5">
                                   <Button variant="ghost" size="icon" className={`${iconBtn} text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950`} onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Visualizar/Editar">
                                     <Eye className={iconSize} />
