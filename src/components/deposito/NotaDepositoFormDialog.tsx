@@ -299,6 +299,13 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
       const cclassTribCbsResolved =
         (produto as any)?.cclass_trib_cbs || (emitente as any)?.cclass_trib_cbs_padrao || null;
 
+      // Alíquotas IBS/CBS — prioridade: produto → emitente → 0
+      // Necessário porque CSTs tributados (ex.: 200) exigem alíquota na transmissão
+      const aliqIbsResolved =
+        Number((produto as any)?.aliquota_ibs ?? (emitente as any)?.aliq_ibs_padrao ?? 0) || 0;
+      const aliqCbsResolved =
+        Number((produto as any)?.aliquota_cbs ?? (emitente as any)?.aliq_cbs_padrao ?? 0) || 0;
+
       // Próximo número da nota
       const proximoNumero = (emitente.numero_atual_nfe || 0) + 1;
 
@@ -402,6 +409,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           cst_is: cstIsResolved,
           cclass_trib_ibs: cclassTribIbsResolved,
           cclass_trib_cbs: cclassTribCbsResolved,
+          base_ibs: qtdKg,
+          aliq_ibs: aliqIbsResolved,
+          valor_ibs: Number(((qtdKg * aliqIbsResolved) / 100).toFixed(2)),
+          base_cbs: qtdKg,
+          aliq_cbs: aliqCbsResolved,
+          valor_cbs: Number(((qtdKg * aliqCbsResolved) / 100).toFixed(2)),
         });
 
 
@@ -533,14 +546,14 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
         valor_outros: 0,
         // Reforma tributária
         cst_ibs: cstIbsResolved,
-        base_ibs: null,
-        aliq_ibs: null,
-        valor_ibs: null,
+        base_ibs: qtdKg,
+        aliq_ibs: aliqIbsResolved,
+        valor_ibs: Number(((qtdKg * aliqIbsResolved) / 100).toFixed(2)),
         cclass_trib_ibs: cclassTribIbsResolved,
         cst_cbs: cstCbsResolved,
-        base_cbs: null,
-        aliq_cbs: null,
-        valor_cbs: null,
+        base_cbs: qtdKg,
+        aliq_cbs: aliqCbsResolved,
+        valor_cbs: Number(((qtdKg * aliqCbsResolved) / 100).toFixed(2)),
         cclass_trib_cbs: cclassTribCbsResolved,
         cst_is: cstIsResolved,
 
