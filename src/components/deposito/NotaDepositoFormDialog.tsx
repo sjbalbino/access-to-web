@@ -465,9 +465,9 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           dest_cep: inscricaoSelecionada?.cep?.replace(/\D/g, '') || null,
           dest_telefone: inscricaoSelecionada?.telefone,
           dest_email: inscricaoSelecionada?.email,
-          // Totais serão calculados pelo item
-          total_produtos: qtdKg * 1, // Valor unitário de R$ 1,00 para depósito
-          total_nota: qtdKg * 1,
+          // Totais calculados a partir dos itens (valor unitário simbólico R$ 1,00/kg)
+          total_produtos: totalNotaKg,
+          total_nota: totalNotaKg,
           status: 'rascunho',
         })
         .select()
@@ -475,40 +475,42 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
       if (notaError) throw notaError;
 
-      // Criar item da nota
+      // Criar itens da nota (uma linha por variedade)
       const { error: itemError } = await supabase
         .from('notas_fiscais_itens')
-        .insert({
-          nota_fiscal_id: notaFiscal.id,
-          numero_item: 1,
-          produto_id: produtoId,
-          codigo: produto?.codigo || '',
-          descricao: produto?.nome || 'Produto',
-          ncm: produto?.ncm || '',
-          cfop: cfop1905.codigo,
-          unidade: 'KG',
-          quantidade: qtdKg,
-          valor_unitario: 1, // Valor simbólico para depósito
-          valor_total: qtdKg,
-          origem: 0,
-          cst_icms: cfop1905.cst_icms_padrao || '41',
-          cst_pis: cfop1905.cst_pis_padrao || '08',
-          cst_cofins: cfop1905.cst_cofins_padrao || '08',
-          cst_ibs: cstIbsResolved,
-          cst_cbs: cstCbsResolved,
-          cst_is: cstIsResolved,
-          cclass_trib_ibs: cclassTribIbsResolved,
-          cclass_trib_cbs: cclassTribCbsResolved,
-          base_ibs: qtdKg,
-          aliq_ibs: aliqIbsResolved,
-          valor_ibs: Number(((qtdKg * aliqIbsResolved) / 100).toFixed(2)),
-          base_cbs: qtdKg,
-          aliq_cbs: aliqCbsResolved,
-          valor_cbs: Number(((qtdKg * aliqCbsResolved) / 100).toFixed(2)),
-        });
-
+        .insert(
+          itensResolvidos.map(({ numero_item, produto_id, quantidade, produto, tributos }) => ({
+            nota_fiscal_id: notaFiscal.id,
+            numero_item,
+            produto_id,
+            codigo: (produto as any)?.codigo || '',
+            descricao: (produto as any)?.nome || 'Produto',
+            ncm: (produto as any)?.ncm || '',
+            cfop: cfop1905.codigo,
+            unidade: 'KG',
+            quantidade,
+            valor_unitario: 1, // Valor simbólico para depósito
+            valor_total: quantidade,
+            origem: 0,
+            cst_icms: cfop1905.cst_icms_padrao || '41',
+            cst_pis: cfop1905.cst_pis_padrao || '08',
+            cst_cofins: cfop1905.cst_cofins_padrao || '08',
+            cst_ibs: tributos.cstIbs,
+            cst_cbs: tributos.cstCbs,
+            cst_is: tributos.cstIs,
+            cclass_trib_ibs: tributos.cclassTribIbs,
+            cclass_trib_cbs: tributos.cclassTribCbs,
+            base_ibs: quantidade,
+            aliq_ibs: tributos.aliqIbs,
+            valor_ibs: Number(((quantidade * tributos.aliqIbs) / 100).toFixed(2)),
+            base_cbs: quantidade,
+            aliq_cbs: tributos.aliqCbs,
+            valor_cbs: Number(((quantidade * tributos.aliqCbs) / 100).toFixed(2)),
+          }))
+        );
 
       if (itemError) throw itemError;
+
 
       // Criar notas referenciadas
       if (notasReferenciadas.length > 0) {
