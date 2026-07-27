@@ -153,13 +153,30 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     return safras.find(s => s.id === safraId);
   }, [safras, safraId]);
 
-  // Saldo disponível para o produto selecionado
+  // Saldo disponível para o produto selecionado na linha de inclusão
   const saldoProduto = useMemo(() => {
     if (!produtoId) return null;
     return saldos.find(s => s.produto_id === produtoId);
   }, [saldos, produtoId]);
 
-  // Carregar dados para edição
+  const getSaldo = (pid: string) => saldos.find(s => s.produto_id === pid)?.saldo_a_emitir_kg ?? 0;
+  const getNomeProduto = (pid: string) =>
+    saldos.find(s => s.produto_id === pid)?.produto_nome ||
+    produtos.find(p => p.id === pid)?.nome ||
+    "Produto";
+
+  const totalKg = useMemo(
+    () => itens.reduce((acc, i) => acc + (Number(i.quantidade_kg) || 0), 0),
+    [itens]
+  );
+
+  // Itens cuja quantidade excede o saldo disponível (permitido, mas avisado)
+  const itensExcedentes = useMemo(
+    () => itens.filter(i => i.quantidade_kg > getSaldo(i.produto_id)),
+    [itens, saldos]
+  );
+
+  // Carregar dados para edição — todos os itens da mesma nota fiscal
   useEffect(() => {
     if (editNotaId && open) {
       const loadEditData = async () => {
@@ -168,19 +185,73 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           .select('*')
           .eq('id', editNotaId)
           .single();
-        
-        if (data) {
-          // granja é derivada do local selecionado; não precisamos setá-la
-          // diretamente aqui (o registro legado pode não ter local_entrega_id).
-          if (data.safra_id) setSafraId(data.safra_id);
-          if (data.inscricao_produtor_id) setInscricaoId(data.inscricao_produtor_id);
-          if (data.produto_id) setProdutoId(data.produto_id);
-          if (data.quantidade_kg) setQuantidadeKg(String(data.quantidade_kg));
+
+        if (!data) return;
+
+        // granja é derivada do local selecionado; não precisamos setá-la
+        // diretamente aqui (o registro legado pode não ter local_entrega_id).
+        if (data.safra_id) setSafraId(data.safra_id);
+        if (data.inscricao_produtor_id) setInscricaoId(data.inscricao_produtor_id);
+
+        // Notas multi-variedade: buscar todos os registros da mesma NF-e.
+        let registros = [data];
+        if (data.nota_fiscal_id) {
+          const { data: irmaos } = await supabase
+            .from('notas_deposito_emitidas')
+            .select('*')
+            .eq('nota_fiscal_id', data.nota_fiscal_id);
+          if (irmaos && irmaos.length > 0) registros = irmaos;
         }
+
+        setItens(
+          registros
+            .filter(r => r.produto_id)
+            .map(r => ({
+              produto_id: r.produto_id as string,
+              quantidade_kg: Number(r.quantidade_kg) || 0,
+            }))
+        );
       };
       loadEditData();
     }
   }, [editNotaId, open]);
+
+  /** Adiciona a variedade selecionada à lista de itens da nota. */
+  const handleAddItem = () => {
+    const qtd = parseFloat(quantidadeKg);
+    if (!produtoId || !qtd || qtd <= 0) {
+      toast({
+        title: "Dados incompletos",
+        description: "Selecione a variedade e informe uma quantidade maior que zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (itens.some(i => i.produto_id === produtoId)) {
+      toast({
+        title: "Variedade já incluída",
+        description: "Edite a quantidade do item existente na lista.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setItens(prev => [...prev, { produto_id: produtoId, quantidade_kg: qtd }]);
+    setProdutoId("");
+    setQuantidadeKg("");
+  };
+
+  const handleUpdateItemQtd = (produtoIdItem: string, valor: string) => {
+    const qtd = parseFloat(valor);
+    setItens(prev =>
+      prev.map(i => (i.produto_id === produtoIdItem ? { ...i, quantidade_kg: Number.isFinite(qtd) ? qtd : 0 } : i))
+    );
+  };
+
+  const handleRemoveItem = (produtoIdItem: string) => {
+    setItens(prev => prev.filter(i => i.produto_id !== produtoIdItem));
+  };
+
+
   const handleAddNotaReferenciada = (nota: NotaReferenciadaTemp) => {
     setNotasReferenciadas(prev => [...prev, nota]);
     setShowNotaForm(false);
