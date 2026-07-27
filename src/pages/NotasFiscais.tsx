@@ -572,17 +572,18 @@ export default function NotasFiscais() {
 
         <div className="border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <Table className="min-w-[640px]">
+            <Table className="min-w-[620px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[92px]">Nº / Série</TableHead>
-                  <TableHead className="min-w-[170px]">Destinatário</TableHead>
-                  <TableHead className="hidden xl:table-cell w-[150px]">Natureza Op.</TableHead>
-                  <TableHead className="w-[125px]">Data Emissão</TableHead>
-                  <TableHead className="text-right hidden sm:table-cell w-[110px]">Valor Total</TableHead>
-                  <TableHead className="w-[110px]">Status</TableHead>
-                  {canEdit && <TableHead className="w-[168px] text-right">Ações</TableHead>}
+                  <TableHead className="w-[78px] px-2">Nº / Série</TableHead>
+                  <TableHead className="px-2">Destinatário</TableHead>
+                  <TableHead className="hidden 2xl:table-cell w-[140px] px-2">Natureza Op.</TableHead>
+                  <TableHead className="w-[108px] px-2">Data Emissão</TableHead>
+                  <TableHead className="text-right hidden sm:table-cell w-[104px] px-2">Valor Total</TableHead>
+                  <TableHead className="w-[94px] px-2">Status</TableHead>
+                  {canEdit && <TableHead className="w-[148px] px-2 text-right">Ações</TableHead>}
                 </TableRow>
+
 
               </TableHeader>
               <TableBody>
