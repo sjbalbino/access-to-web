@@ -68,9 +68,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
   const [safraId, setSafraId] = useState<string>("");
   const [inscricaoId, setInscricaoId] = useState<string>("");
   
-  // Dados da NFe a gerar
+  // Dados da NFe a gerar — itens (múltiplas variedades)
+  const [itens, setItens] = useState<ItemNotaDeposito[]>([]);
   const [produtoId, setProdutoId] = useState<string>("");
   const [quantidadeKg, setQuantidadeKg] = useState<string>("");
+  const [confirmarExcedente, setConfirmarExcedente] = useState(false);
+
   
   // Notas referenciadas (temporárias até gerar a NFe)
   const [notasReferenciadas, setNotasReferenciadas] = useState<NotaReferenciadaTemp[]>([]);
