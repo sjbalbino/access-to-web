@@ -572,23 +572,22 @@ export default function NotasFiscais() {
 
         <div className="border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <Table className="min-w-[600px]">
+            <Table className="min-w-[640px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-20">Número</TableHead>
-                  <TableHead className="hidden md:table-cell w-20">Série</TableHead>
+                  <TableHead className="w-[92px]">Nº / Série</TableHead>
                   <TableHead>Destinatário</TableHead>
-                  <TableHead className="hidden lg:table-cell">Natureza Op.</TableHead>
-                  <TableHead>Data Emissão</TableHead>
-                  <TableHead className="text-right hidden sm:table-cell">Valor Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  {canEdit && <TableHead className="sticky right-0 bg-background">Ações</TableHead>}
+                  <TableHead className="hidden xl:table-cell w-[150px]">Natureza Op.</TableHead>
+                  <TableHead className="w-[125px]">Data Emissão</TableHead>
+                  <TableHead className="text-right hidden sm:table-cell w-[110px]">Valor Total</TableHead>
+                  <TableHead className="w-[110px]">Status</TableHead>
+                  {canEdit && <TableHead className="w-[168px] text-right">Ações</TableHead>}
                 </TableRow>
 
               </TableHeader>
               <TableBody>
                 {(() => {
-                  const totalCols = canEdit ? 8 : 7;
+                  const totalCols = canEdit ? 7 : 6;
                   const rows: React.ReactNode[] = [];
                   let lastEmitenteId: string | null | undefined = undefined;
                   const groupNotas = (id: string | null | undefined) =>
