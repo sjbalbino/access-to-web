@@ -366,28 +366,35 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     setIsGenerating(true);
 
     try {
-      // Buscar produto selecionado
-      const produto = produtos.find(p => p.id === produtoId);
+      /**
+       * Resolve CST/cClassTrib/alíquotas de IBS-CBS-IS para um produto.
+       * Prioridade: produto → emitente → CFOP → padrão depósito ("400" = isenção).
+       */
+      const resolverTributos = (produto: any) => ({
+        cstIbs: produto?.cst_ibs || (emitente as any)?.cst_ibs_padrao || (cfop1905 as any)?.cst_ibs_padrao || "400",
+        cstCbs: produto?.cst_cbs || (emitente as any)?.cst_cbs_padrao || (cfop1905 as any)?.cst_cbs_padrao || "400",
+        cstIs: produto?.cst_is || (emitente as any)?.cst_is_padrao || (cfop1905 as any)?.cst_is_padrao || null,
+        cclassTribIbs: produto?.cclass_trib_ibs || (emitente as any)?.cclass_trib_ibs_padrao || null,
+        cclassTribCbs: produto?.cclass_trib_cbs || (emitente as any)?.cclass_trib_cbs_padrao || null,
+        // CSTs tributados (ex.: 200) exigem alíquota na transmissão
+        aliqIbs: Number(produto?.aliquota_ibs ?? (emitente as any)?.aliq_ibs_padrao ?? 0) || 0,
+        aliqCbs: Number(produto?.aliquota_cbs ?? (emitente as any)?.aliq_cbs_padrao ?? 0) || 0,
+      });
 
-      // Resolver CST + cClassTrib de IBS/CBS/IS
-      // Prioridade: produto → emitente → CFOP → padrão depósito ("400" = isenção)
-      const cstIbsResolved =
-        (produto as any)?.cst_ibs || (emitente as any)?.cst_ibs_padrao || (cfop1905 as any)?.cst_ibs_padrao || "400";
-      const cstCbsResolved =
-        (produto as any)?.cst_cbs || (emitente as any)?.cst_cbs_padrao || (cfop1905 as any)?.cst_cbs_padrao || "400";
-      const cstIsResolved =
-        (produto as any)?.cst_is || (emitente as any)?.cst_is_padrao || (cfop1905 as any)?.cst_is_padrao || null;
-      const cclassTribIbsResolved =
-        (produto as any)?.cclass_trib_ibs || (emitente as any)?.cclass_trib_ibs_padrao || null;
-      const cclassTribCbsResolved =
-        (produto as any)?.cclass_trib_cbs || (emitente as any)?.cclass_trib_cbs_padrao || null;
+      // Itens resolvidos (produto + tributos) — usados na persistência e na transmissão
+      const itensResolvidos = itens.map((item, idx) => {
+        const produto = produtos.find(p => p.id === item.produto_id);
+        return {
+          numero_item: idx + 1,
+          produto_id: item.produto_id,
+          quantidade: Number(item.quantidade_kg) || 0,
+          produto,
+          tributos: resolverTributos(produto),
+        };
+      });
 
-      // Alíquotas IBS/CBS — prioridade: produto → emitente → 0
-      // Necessário porque CSTs tributados (ex.: 200) exigem alíquota na transmissão
-      const aliqIbsResolved =
-        Number((produto as any)?.aliquota_ibs ?? (emitente as any)?.aliq_ibs_padrao ?? 0) || 0;
-      const aliqCbsResolved =
-        Number((produto as any)?.aliquota_cbs ?? (emitente as any)?.aliq_cbs_padrao ?? 0) || 0;
+      const totalNotaKg = itensResolvidos.reduce((acc, i) => acc + i.quantidade, 0);
+
 
       // Próximo número da nota
       const proximoNumero = (emitente.numero_atual_nfe || 0) + 1;
