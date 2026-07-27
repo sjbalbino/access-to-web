@@ -636,20 +636,23 @@ export default function NotasFiscais() {
                     if (!isCollapsed) {
                       rows.push(
                         <TableRow key={nota.id}>
-                          <TableCell className="font-mono">{nota.numero || "-"}</TableCell>
-                          <TableCell className="font-mono hidden md:table-cell">{nota.serie || "-"}</TableCell>
+                          <TableCell className="font-mono whitespace-nowrap">
+                            {nota.numero || "-"}
+                            <span className="text-xs text-muted-foreground"> / {nota.serie || "-"}</span>
+                          </TableCell>
                           <TableCell>
-                            <div>
-                              <div className="font-medium truncate max-w-[150px]">{nota.dest_nome || "-"}</div>
-                              <div className="text-xs text-muted-foreground font-mono hidden sm:block">{formatCpfCnpj(nota.dest_cpf_cnpj) || "-"}</div>
+                            <div className="min-w-0">
+                              <div className="font-medium truncate" title={nota.dest_nome || undefined}>{nota.dest_nome || "-"}</div>
+                              <div className="text-xs text-muted-foreground font-mono hidden sm:block truncate">{formatCpfCnpj(nota.dest_cpf_cnpj) || "-"}</div>
                             </div>
                           </TableCell>
 
-                          <TableCell className="truncate max-w-[150px] hidden lg:table-cell">{nota.natureza_operacao}</TableCell>
-                          <TableCell className="whitespace-nowrap">
+                          <TableCell className="truncate hidden xl:table-cell" title={nota.natureza_operacao}>{nota.natureza_operacao}</TableCell>
+                          <TableCell className="whitespace-nowrap text-sm">
                             {formatDataEmissao(nota.data_emissao, (nota as any).created_at)}
                           </TableCell>
-                          <TableCell className="text-right font-medium hidden sm:table-cell">{formatCurrency(nota.total_nota)}</TableCell>
+                          <TableCell className="text-right font-medium hidden sm:table-cell whitespace-nowrap">{formatCurrency(nota.total_nota)}</TableCell>
+
                           <TableCell>
                             <Badge
                               variant={getStatusBadgeVariant(nota.status)}
