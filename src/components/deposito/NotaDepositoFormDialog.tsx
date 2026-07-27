@@ -47,6 +47,13 @@ import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 
 type EmissionStep = "idle" | "validating" | "creating" | "sending" | "processing" | "success" | "error";
 
+/** Item (variedade) incluído na contra-nota de depósito. */
+interface ItemNotaDeposito {
+  produto_id: string;
+  quantidade_kg: number;
+}
+
+
 interface EmissionStatus {
   step: EmissionStep;
   message: string;
@@ -68,9 +75,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
   const [safraId, setSafraId] = useState<string>("");
   const [inscricaoId, setInscricaoId] = useState<string>("");
   
-  // Dados da NFe a gerar
+  // Dados da NFe a gerar — itens (múltiplas variedades)
+  const [itens, setItens] = useState<ItemNotaDeposito[]>([]);
   const [produtoId, setProdutoId] = useState<string>("");
   const [quantidadeKg, setQuantidadeKg] = useState<string>("");
+  const [confirmarExcedente, setConfirmarExcedente] = useState(false);
+
   
   // Notas referenciadas (temporárias até gerar a NFe)
   const [notasReferenciadas, setNotasReferenciadas] = useState<NotaReferenciadaTemp[]>([]);
@@ -143,13 +153,30 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     return safras.find(s => s.id === safraId);
   }, [safras, safraId]);
 
-  // Saldo disponível para o produto selecionado
+  // Saldo disponível para o produto selecionado na linha de inclusão
   const saldoProduto = useMemo(() => {
     if (!produtoId) return null;
     return saldos.find(s => s.produto_id === produtoId);
   }, [saldos, produtoId]);
 
-  // Carregar dados para edição
+  const getSaldo = (pid: string) => saldos.find(s => s.produto_id === pid)?.saldo_a_emitir_kg ?? 0;
+  const getNomeProduto = (pid: string) =>
+    saldos.find(s => s.produto_id === pid)?.produto_nome ||
+    produtos.find(p => p.id === pid)?.nome ||
+    "Produto";
+
+  const totalKg = useMemo(
+    () => itens.reduce((acc, i) => acc + (Number(i.quantidade_kg) || 0), 0),
+    [itens]
+  );
+
+  // Itens cuja quantidade excede o saldo disponível (permitido, mas avisado)
+  const itensExcedentes = useMemo(
+    () => itens.filter(i => i.quantidade_kg > getSaldo(i.produto_id)),
+    [itens, saldos]
+  );
+
+  // Carregar dados para edição — todos os itens da mesma nota fiscal
   useEffect(() => {
     if (editNotaId && open) {
       const loadEditData = async () => {
@@ -158,19 +185,73 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           .select('*')
           .eq('id', editNotaId)
           .single();
-        
-        if (data) {
-          // granja é derivada do local selecionado; não precisamos setá-la
-          // diretamente aqui (o registro legado pode não ter local_entrega_id).
-          if (data.safra_id) setSafraId(data.safra_id);
-          if (data.inscricao_produtor_id) setInscricaoId(data.inscricao_produtor_id);
-          if (data.produto_id) setProdutoId(data.produto_id);
-          if (data.quantidade_kg) setQuantidadeKg(String(data.quantidade_kg));
+
+        if (!data) return;
+
+        // granja é derivada do local selecionado; não precisamos setá-la
+        // diretamente aqui (o registro legado pode não ter local_entrega_id).
+        if (data.safra_id) setSafraId(data.safra_id);
+        if (data.inscricao_produtor_id) setInscricaoId(data.inscricao_produtor_id);
+
+        // Notas multi-variedade: buscar todos os registros da mesma NF-e.
+        let registros = [data];
+        if (data.nota_fiscal_id) {
+          const { data: irmaos } = await supabase
+            .from('notas_deposito_emitidas')
+            .select('*')
+            .eq('nota_fiscal_id', data.nota_fiscal_id);
+          if (irmaos && irmaos.length > 0) registros = irmaos;
         }
+
+        setItens(
+          registros
+            .filter(r => r.produto_id)
+            .map(r => ({
+              produto_id: r.produto_id as string,
+              quantidade_kg: Number(r.quantidade_kg) || 0,
+            }))
+        );
       };
       loadEditData();
     }
   }, [editNotaId, open]);
+
+  /** Adiciona a variedade selecionada à lista de itens da nota. */
+  const handleAddItem = () => {
+    const qtd = parseFloat(quantidadeKg);
+    if (!produtoId || !qtd || qtd <= 0) {
+      toast({
+        title: "Dados incompletos",
+        description: "Selecione a variedade e informe uma quantidade maior que zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (itens.some(i => i.produto_id === produtoId)) {
+      toast({
+        title: "Variedade já incluída",
+        description: "Edite a quantidade do item existente na lista.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setItens(prev => [...prev, { produto_id: produtoId, quantidade_kg: qtd }]);
+    setProdutoId("");
+    setQuantidadeKg("");
+  };
+
+  const handleUpdateItemQtd = (produtoIdItem: string, valor: string) => {
+    const qtd = parseFloat(valor);
+    setItens(prev =>
+      prev.map(i => (i.produto_id === produtoIdItem ? { ...i, quantidade_kg: Number.isFinite(qtd) ? qtd : 0 } : i))
+    );
+  };
+
+  const handleRemoveItem = (produtoIdItem: string) => {
+    setItens(prev => prev.filter(i => i.produto_id !== produtoIdItem));
+  };
+
+
   const handleAddNotaReferenciada = (nota: NotaReferenciadaTemp) => {
     setNotasReferenciadas(prev => [...prev, nota]);
     setShowNotaForm(false);
@@ -203,8 +284,10 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     setInscricaoId("");
     setProdutoId("");
     setQuantidadeKg("");
+    setItens([]);
     setNotasReferenciadas([]);
   };
+
 
   const getStepStatus = (step: EmissionStep): "pending" | "active" | "completed" | "error" => {
     const steps: EmissionStep[] = ["validating", "creating", "sending", "processing"];
@@ -221,15 +304,36 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     return "pending";
   };
 
-  const handleGerarNfe = async () => {
-    if (!granjaId || !inscricaoId || !produtoId || !quantidadeKg || !safraId) {
+  /**
+   * Valida a lista de itens e dispara confirmação quando alguma variedade
+   * excede o saldo disponível do produtor.
+   */
+  const handleGerarNfeClick = () => {
+    if (itens.length === 0) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios.",
+        title: "Nenhuma variedade incluída",
+        description: "Adicione ao menos uma variedade à contra-nota.",
         variant: "destructive",
       });
       return;
     }
+    if (itensExcedentes.length > 0) {
+      setConfirmarExcedente(true);
+      return;
+    }
+    handleGerarNfe();
+  };
+
+  const handleGerarNfe = async () => {
+    if (!granjaId || !inscricaoId || !safraId || itens.length === 0) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios e inclua ao menos uma variedade.",
+        variant: "destructive",
+      });
+      return;
+    }
+
 
     if (!cfop1905) {
       toast({
@@ -267,15 +371,9 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
       return;
     }
 
-    const qtdKg = parseFloat(quantidadeKg);
-    if (saldoProduto && qtdKg > saldoProduto.saldo_a_emitir_kg) {
-      toast({
-        title: "Quantidade inválida",
-        description: `A quantidade informada (${formatKg(qtdKg)} kg) é maior que o saldo disponível (${formatKg(saldoProduto.saldo_a_emitir_kg)} kg).`,
-        variant: "destructive",
-      });
-      return;
-    }
+    // Quantidade acima do saldo é permitida — apenas confirmada pelo usuário
+    // (ver handleGerarNfeClick). Nenhum bloqueio aqui.
+
 
     // Abrir diálogo de emissão e iniciar progresso
     setIsEmissionDialogOpen(true);
@@ -283,28 +381,35 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     setIsGenerating(true);
 
     try {
-      // Buscar produto selecionado
-      const produto = produtos.find(p => p.id === produtoId);
+      /**
+       * Resolve CST/cClassTrib/alíquotas de IBS-CBS-IS para um produto.
+       * Prioridade: produto → emitente → CFOP → padrão depósito ("400" = isenção).
+       */
+      const resolverTributos = (produto: any) => ({
+        cstIbs: produto?.cst_ibs || (emitente as any)?.cst_ibs_padrao || (cfop1905 as any)?.cst_ibs_padrao || "400",
+        cstCbs: produto?.cst_cbs || (emitente as any)?.cst_cbs_padrao || (cfop1905 as any)?.cst_cbs_padrao || "400",
+        cstIs: produto?.cst_is || (emitente as any)?.cst_is_padrao || (cfop1905 as any)?.cst_is_padrao || null,
+        cclassTribIbs: produto?.cclass_trib_ibs || (emitente as any)?.cclass_trib_ibs_padrao || null,
+        cclassTribCbs: produto?.cclass_trib_cbs || (emitente as any)?.cclass_trib_cbs_padrao || null,
+        // CSTs tributados (ex.: 200) exigem alíquota na transmissão
+        aliqIbs: Number(produto?.aliquota_ibs ?? (emitente as any)?.aliq_ibs_padrao ?? 0) || 0,
+        aliqCbs: Number(produto?.aliquota_cbs ?? (emitente as any)?.aliq_cbs_padrao ?? 0) || 0,
+      });
 
-      // Resolver CST + cClassTrib de IBS/CBS/IS
-      // Prioridade: produto → emitente → CFOP → padrão depósito ("400" = isenção)
-      const cstIbsResolved =
-        (produto as any)?.cst_ibs || (emitente as any)?.cst_ibs_padrao || (cfop1905 as any)?.cst_ibs_padrao || "400";
-      const cstCbsResolved =
-        (produto as any)?.cst_cbs || (emitente as any)?.cst_cbs_padrao || (cfop1905 as any)?.cst_cbs_padrao || "400";
-      const cstIsResolved =
-        (produto as any)?.cst_is || (emitente as any)?.cst_is_padrao || (cfop1905 as any)?.cst_is_padrao || null;
-      const cclassTribIbsResolved =
-        (produto as any)?.cclass_trib_ibs || (emitente as any)?.cclass_trib_ibs_padrao || null;
-      const cclassTribCbsResolved =
-        (produto as any)?.cclass_trib_cbs || (emitente as any)?.cclass_trib_cbs_padrao || null;
+      // Itens resolvidos (produto + tributos) — usados na persistência e na transmissão
+      const itensResolvidos = itens.map((item, idx) => {
+        const produto = produtos.find(p => p.id === item.produto_id);
+        return {
+          numero_item: idx + 1,
+          produto_id: item.produto_id,
+          quantidade: Number(item.quantidade_kg) || 0,
+          produto,
+          tributos: resolverTributos(produto),
+        };
+      });
 
-      // Alíquotas IBS/CBS — prioridade: produto → emitente → 0
-      // Necessário porque CSTs tributados (ex.: 200) exigem alíquota na transmissão
-      const aliqIbsResolved =
-        Number((produto as any)?.aliquota_ibs ?? (emitente as any)?.aliq_ibs_padrao ?? 0) || 0;
-      const aliqCbsResolved =
-        Number((produto as any)?.aliquota_cbs ?? (emitente as any)?.aliq_cbs_padrao ?? 0) || 0;
+      const totalNotaKg = itensResolvidos.reduce((acc, i) => acc + i.quantidade, 0);
+
 
       // Próximo número da nota
       const proximoNumero = (emitente.numero_atual_nfe || 0) + 1;
@@ -375,9 +480,9 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           dest_cep: inscricaoSelecionada?.cep?.replace(/\D/g, '') || null,
           dest_telefone: inscricaoSelecionada?.telefone,
           dest_email: inscricaoSelecionada?.email,
-          // Totais serão calculados pelo item
-          total_produtos: qtdKg * 1, // Valor unitário de R$ 1,00 para depósito
-          total_nota: qtdKg * 1,
+          // Totais calculados a partir dos itens (valor unitário simbólico R$ 1,00/kg)
+          total_produtos: totalNotaKg,
+          total_nota: totalNotaKg,
           status: 'rascunho',
         })
         .select()
@@ -385,40 +490,42 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
       if (notaError) throw notaError;
 
-      // Criar item da nota
+      // Criar itens da nota (uma linha por variedade)
       const { error: itemError } = await supabase
         .from('notas_fiscais_itens')
-        .insert({
-          nota_fiscal_id: notaFiscal.id,
-          numero_item: 1,
-          produto_id: produtoId,
-          codigo: produto?.codigo || '',
-          descricao: produto?.nome || 'Produto',
-          ncm: produto?.ncm || '',
-          cfop: cfop1905.codigo,
-          unidade: 'KG',
-          quantidade: qtdKg,
-          valor_unitario: 1, // Valor simbólico para depósito
-          valor_total: qtdKg,
-          origem: 0,
-          cst_icms: cfop1905.cst_icms_padrao || '41',
-          cst_pis: cfop1905.cst_pis_padrao || '08',
-          cst_cofins: cfop1905.cst_cofins_padrao || '08',
-          cst_ibs: cstIbsResolved,
-          cst_cbs: cstCbsResolved,
-          cst_is: cstIsResolved,
-          cclass_trib_ibs: cclassTribIbsResolved,
-          cclass_trib_cbs: cclassTribCbsResolved,
-          base_ibs: qtdKg,
-          aliq_ibs: aliqIbsResolved,
-          valor_ibs: Number(((qtdKg * aliqIbsResolved) / 100).toFixed(2)),
-          base_cbs: qtdKg,
-          aliq_cbs: aliqCbsResolved,
-          valor_cbs: Number(((qtdKg * aliqCbsResolved) / 100).toFixed(2)),
-        });
-
+        .insert(
+          itensResolvidos.map(({ numero_item, produto_id, quantidade, produto, tributos }) => ({
+            nota_fiscal_id: notaFiscal.id,
+            numero_item,
+            produto_id,
+            codigo: (produto as any)?.codigo || '',
+            descricao: (produto as any)?.nome || 'Produto',
+            ncm: (produto as any)?.ncm || '',
+            cfop: cfop1905.codigo,
+            unidade: 'KG',
+            quantidade,
+            valor_unitario: 1, // Valor simbólico para depósito
+            valor_total: quantidade,
+            origem: 0,
+            cst_icms: cfop1905.cst_icms_padrao || '41',
+            cst_pis: cfop1905.cst_pis_padrao || '08',
+            cst_cofins: cfop1905.cst_cofins_padrao || '08',
+            cst_ibs: tributos.cstIbs,
+            cst_cbs: tributos.cstCbs,
+            cst_is: tributos.cstIs,
+            cclass_trib_ibs: tributos.cclassTribIbs,
+            cclass_trib_cbs: tributos.cclassTribCbs,
+            base_ibs: quantidade,
+            aliq_ibs: tributos.aliqIbs,
+            valor_ibs: Number(((quantidade * tributos.aliqIbs) / 100).toFixed(2)),
+            base_cbs: quantidade,
+            aliq_cbs: tributos.aliqCbs,
+            valor_cbs: Number(((quantidade * tributos.aliqCbs) / 100).toFixed(2)),
+          }))
+        );
 
       if (itemError) throw itemError;
+
 
       // Criar notas referenciadas
       if (notasReferenciadas.length > 0) {
@@ -454,16 +561,18 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
         description: `Nota fiscal ${proximoNumero} criada. Iniciando transmissão à SEFAZ...`,
       });
 
-      // Dados para registrar nota de depósito emitida APÓS autorização
-      const dadosNotaDeposito = {
+      // Dados para registrar as notas de depósito emitidas APÓS autorização
+      // (um registro por variedade da nota)
+      const dadosNotaDeposito = itensResolvidos.map(({ produto_id, quantidade }) => ({
         nota_fiscal_id: notaFiscal.id,
         granja_id: granjaId,
         inscricao_produtor_id: inscricaoId,
         safra_id: safraId,
-        produto_id: produtoId,
-        quantidade_kg: qtdKg,
+        produto_id,
+        quantidade_kg: quantidade,
         data_emissao: new Date().toISOString().split('T')[0],
-      };
+      }));
+
 
       // Montar dados para emissão via hook
       const notaDataParaEmissao: NotaFiscalData = {
@@ -512,55 +621,57 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
         },
       };
 
-      const itensParaEmissao: NotaFiscalItemData[] = [{
-        numero_item: 1,
-        codigo: produto?.codigo || '',
-        descricao: produto?.nome || 'Produto',
-        ncm: produto?.ncm || '',
-        cfop: cfop1905.codigo,
-        unidade: 'KG',
-        quantidade: qtdKg,
-        valor_unitario: 1,
-        valor_total: qtdKg,
-        origem: 0,
-        cst_icms: cfop1905.cst_icms_padrao || '41',
-        modalidade_bc_icms: 0,
-        base_icms: 0,
-        aliq_icms: 0,
-        valor_icms: 0,
-        cst_pis: cfop1905.cst_pis_padrao || '08',
-        base_pis: 0,
-        aliq_pis: 0,
-        valor_pis: 0,
-        cst_cofins: cfop1905.cst_cofins_padrao || '08',
-        base_cofins: 0,
-        aliq_cofins: 0,
-        valor_cofins: 0,
-        cst_ipi: '53',
-        base_ipi: 0,
-        aliq_ipi: 0,
-        valor_ipi: 0,
-        valor_desconto: 0,
-        valor_frete: 0,
-        valor_seguro: 0,
-        valor_outros: 0,
-        // Reforma tributária
-        cst_ibs: cstIbsResolved,
-        base_ibs: qtdKg,
-        aliq_ibs: aliqIbsResolved,
-        valor_ibs: Number(((qtdKg * aliqIbsResolved) / 100).toFixed(2)),
-        cclass_trib_ibs: cclassTribIbsResolved,
-        cst_cbs: cstCbsResolved,
-        base_cbs: qtdKg,
-        aliq_cbs: aliqCbsResolved,
-        valor_cbs: Number(((qtdKg * aliqCbsResolved) / 100).toFixed(2)),
-        cclass_trib_cbs: cclassTribCbsResolved,
-        cst_is: cstIsResolved,
+      const itensParaEmissao: NotaFiscalItemData[] = itensResolvidos.map(
+        ({ numero_item, quantidade, produto, tributos }) => ({
+          numero_item,
+          codigo: (produto as any)?.codigo || '',
+          descricao: (produto as any)?.nome || 'Produto',
+          ncm: (produto as any)?.ncm || '',
+          cfop: cfop1905.codigo,
+          unidade: 'KG',
+          quantidade,
+          valor_unitario: 1,
+          valor_total: quantidade,
+          origem: 0,
+          cst_icms: cfop1905.cst_icms_padrao || '41',
+          modalidade_bc_icms: 0,
+          base_icms: 0,
+          aliq_icms: 0,
+          valor_icms: 0,
+          cst_pis: cfop1905.cst_pis_padrao || '08',
+          base_pis: 0,
+          aliq_pis: 0,
+          valor_pis: 0,
+          cst_cofins: cfop1905.cst_cofins_padrao || '08',
+          base_cofins: 0,
+          aliq_cofins: 0,
+          valor_cofins: 0,
+          cst_ipi: '53',
+          base_ipi: 0,
+          aliq_ipi: 0,
+          valor_ipi: 0,
+          valor_desconto: 0,
+          valor_frete: 0,
+          valor_seguro: 0,
+          valor_outros: 0,
+          // Reforma tributária
+          cst_ibs: tributos.cstIbs,
+          base_ibs: quantidade,
+          aliq_ibs: tributos.aliqIbs,
+          valor_ibs: Number(((quantidade * tributos.aliqIbs) / 100).toFixed(2)),
+          cclass_trib_ibs: tributos.cclassTribIbs,
+          cst_cbs: tributos.cstCbs,
+          base_cbs: quantidade,
+          aliq_cbs: tributos.aliqCbs,
+          valor_cbs: Number(((quantidade * tributos.aliqCbs) / 100).toFixed(2)),
+          cclass_trib_cbs: tributos.cclassTribCbs,
+          cst_is: tributos.cstIs,
+          base_is: null,
+          aliq_is: null,
+          valor_is: null,
+        })
+      );
 
-        base_is: null,
-        aliq_is: null,
-        valor_is: null,
-      }];
 
       setEmissionStatus({ step: "sending", message: "Enviando para SEFAZ...", progress: 50 });
 
@@ -894,54 +1005,104 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                       Dados da Contra-Nota (NFe CFOP 1905)
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <CardContent className="space-y-4">
+                    {/* Linha de inclusão de variedade */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                       <div className="space-y-2">
-                        <Label>Variedade *</Label>
-                        <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={!inscricaoId}>
+                        <Label>Variedade</Label>
+                        <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={!inscricaoId || readOnly}>
                           <SelectTrigger>
                             <SelectValue placeholder={!inscricaoId ? "Selecione a inscrição primeiro" : "Selecione a variedade"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {saldos.filter(s => s.saldo_a_emitir_kg > 0).map((s) => (
-                              <SelectItem key={s.produto_id} value={s.produto_id}>
-                                {s.produto_nome} (Saldo: {formatKg(s.saldo_a_emitir_kg)} kg)
-                              </SelectItem>
-                            ))}
+                            {saldos
+                              .filter(s => s.saldo_a_emitir_kg > 0 && !itens.some(i => i.produto_id === s.produto_id))
+                              .map((s) => (
+                                <SelectItem key={s.produto_id} value={s.produto_id}>
+                                  {s.produto_nome} (Saldo: {formatKg(s.saldo_a_emitir_kg)} kg)
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Quantidade (kg) *</Label>
+                        <Label>Quantidade (kg)</Label>
                         <Input
                           type="number"
                           step="0.01"
                           min="0"
-                          max={saldoProduto?.saldo_a_emitir_kg}
                           value={quantidadeKg}
                           onChange={(e) => setQuantidadeKg(e.target.value)}
                           placeholder="0,00"
-                          disabled={!inscricaoId || !produtoId}
+                          disabled={!inscricaoId || !produtoId || readOnly}
                         />
                         {saldoProduto && (
                           <p className="text-xs text-muted-foreground">
-                            Máximo disponível: {formatKg(saldoProduto.saldo_a_emitir_kg)} kg
+                            Saldo disponível: {formatKg(saldoProduto.saldo_a_emitir_kg)} kg
                           </p>
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>Valor Total</Label>
-                        <Input
-                          type="text"
-                          value={quantidadeKg ? `R$ ${formatNumber(parseFloat(quantidadeKg))}` : "R$ 0,00"}
-                          disabled
-                          className="bg-muted"
-                        />
-                        <p className="text-xs text-muted-foreground">Valor simbólico (R$ 1,00/kg)</p>
-                      </div>
+                      <Button type="button" variant="secondary" onClick={handleAddItem} disabled={readOnly}>
+                        Adicionar variedade
+                      </Button>
                     </div>
+
+                    {/* Itens incluídos na nota */}
+                    {itens.length === 0 ? (
+                      <p className="text-sm text-muted-foreground border rounded-md p-4 text-center">
+                        Nenhuma variedade incluída. A nota pode conter mais de uma variedade.
+                      </p>
+                    ) : (
+                      <div className="border rounded-md divide-y">
+                        {itens.map((item) => {
+                          const saldoItem = getSaldo(item.produto_id);
+                          const excede = item.quantidade_kg > saldoItem;
+                          return (
+                            <div key={item.produto_id} className="flex items-center gap-3 p-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{getNomeProduto(item.produto_id)}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Saldo: {formatKg(saldoItem)} kg
+                                  {excede && (
+                                    <span className="text-destructive font-medium">
+                                      {" "}• quantidade acima do saldo entregue
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                className="w-36"
+                                value={String(item.quantidade_kg)}
+                                onChange={(e) => handleUpdateItemQtd(item.produto_id, e.target.value)}
+                                disabled={readOnly}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveItem(item.produto_id)}
+                                disabled={readOnly}
+                                aria-label="Remover variedade"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                        <div className="flex items-center justify-between p-3 bg-muted/50 text-sm font-medium">
+                          <span>Total da nota</span>
+                          <span>
+                            {formatKg(totalKg)} kg • R$ {formatNumber(totalKg)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">Valor simbólico (R$ 1,00/kg)</p>
                   </CardContent>
                 </Card>
               </>
@@ -955,13 +1116,14 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
             </Button>
             {!readOnly && (
               <Button 
-                onClick={handleGerarNfe}
-                disabled={isGenerating || !produtoId || !quantidadeKg || !inscricaoId}
+                onClick={handleGerarNfeClick}
+                disabled={isGenerating || itens.length === 0 || !inscricaoId}
               >
                 {isGenerating ? "Gerando..." : "Gerar NFe"}
               </Button>
             )}
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
@@ -988,6 +1150,40 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Confirmação de quantidade acima do saldo entregue */}
+      <AlertDialog open={confirmarExcedente} onOpenChange={setConfirmarExcedente}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quantidade acima do saldo entregue</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>As variedades abaixo excedem o saldo disponível do produtor:</p>
+                <ul className="list-disc pl-5">
+                  {itensExcedentes.map((i) => (
+                    <li key={i.produto_id}>
+                      {getNomeProduto(i.produto_id)}: {formatKg(i.quantidade_kg)} kg (saldo {formatKg(getSaldo(i.produto_id))} kg)
+                    </li>
+                  ))}
+                </ul>
+                <p>Deseja emitir a nota mesmo assim?</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmarExcedente(false);
+                handleGerarNfe();
+              }}
+            >
+              Emitir mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* Painel de Progresso da Emissão */}
       <Dialog open={isEmissionDialogOpen} onOpenChange={handleCloseEmissionDialog}>

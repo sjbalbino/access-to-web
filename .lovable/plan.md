@@ -1,29 +1,41 @@
-## Diagnóstico (confirmado)
+## Objetivo
 
-A nota 102 (rascunho, CFOP 1905, SOJA INDUSTRIA - KGS) foi gravada com:
-- `cst_ibs` / `cst_cbs` = **200** (herdado do cadastro do produto)
-- `aliq_ibs` / `aliq_cbs` = **0** (o formulário envia `null`)
+Na emissão da Nota de Depósito (CFOP 1905), no bloco "Dados da Contra-Nota":
 
-Em `src/components/deposito/NotaDepositoFormDialog.tsx` (linhas ~535-544) o item enviado para emissão fixa `aliq_ibs: null` e `aliq_cbs: null`, mas resolve o CST a partir do produto (200). Como o CST 200 consta na lista de CSTs tributados de `validarIbsCbsItens` (`src/lib/focusNfeMapper.ts`, linha 753), a validação exige alíquotas > 0 e bloqueia a transmissão com "IBS/CBS incompletos" — exatamente o erro do print.
+1. Permitir informar quantidade **maior** que o saldo depositado (hoje é bloqueado).
+2. Permitir incluir **mais de uma variedade** na mesma nota (hoje só uma).
 
-Notas 1905 anteriores autorizadas (92, 93, 100) tinham 0,10% / 0,90% gravados, por isso passavam.
+## 1) Quantidade acima do saldo
 
-## Correção
+Situação atual (`src/components/deposito/NotaDepositoFormDialog.tsx`):
+- O `handleGerarNfe` interrompe a emissão com toast "Quantidade inválida" quando `qtdKg > saldo_a_emitir_kg`.
+- O campo `Input` tem `max={saldoProduto?.saldo_a_emitir_kg}`, limitando também pela UI.
+- O `Select` de variedade só lista produtos com `saldo_a_emitir_kg > 0`.
 
-Enviar as alíquotas do cadastro do produto, como nas notas já autorizadas.
+Mudanças:
+- Remover o bloqueio de emissão; manter apenas **aviso visual** (texto em âmbar: "Quantidade acima do saldo disponível (X kg)") ao lado do campo.
+- Remover o atributo `max` do input.
+- Listar no select **todas** as variedades com saldo do produtor, inclusive as com saldo zero (indicando o saldo entre parênteses), para não impedir emissões legítimas.
+- Antes de transmitir, se algum item exceder o saldo, exibir um diálogo de confirmação ("Existem itens acima do saldo. Deseja emitir mesmo assim?") — evita emissão acidental sem impedir a operação.
 
-**`src/components/deposito/NotaDepositoFormDialog.tsx`**
-- Resolver, junto com o CST, as alíquotas com a mesma prioridade já usada (produto → emitente → padrão):
-  - `aliqIbsResolved = produto.aliquota_ibs ?? emitente.aliq_ibs_padrao ?? 0`
-  - `aliqCbsResolved = produto.aliquota_cbs ?? emitente.aliq_cbs_padrao ?? 0`
-- No item enviado para emissão (linhas 535-544), substituir `aliq_ibs: null` / `aliq_cbs: null` por essas alíquotas, com `base_ibs` / `base_cbs` = valor total do item e `valor_ibs` / `valor_cbs` calculados (base × alíquota / 100).
-- Gravar os mesmos campos no `insert` de `notas_fiscais_itens` (linhas 400-404), para o item persistido ficar coerente com o transmitido.
+## 2) Múltiplas variedades por nota
 
-**Reemissão da nota 102**
-- A nota 102 continua em rascunho; após o ajuste basta reemiti-la pela tela (o item será atualizado na nova emissão). Se preferir, atualizo os campos da nota 102 no banco para 0,10 / 0,90 para que ela já fique consistente antes da reemissão.
+Situação atual: estado único `produtoId` + `quantidadeKg`; grava 1 registro em `notas_fiscais_itens`, 1 item no payload de transmissão e 1 registro em `notas_deposito_emitidas`.
 
-## Observações técnicas
+Mudanças no mesmo arquivo:
+- Substituir o estado único por uma lista de itens: `{ produto_id, quantidade_kg }[]`.
+- UI: linha de inclusão (Variedade + Quantidade + botão "Adicionar") acima de uma tabela dos itens adicionados, com coluna Variedade, Saldo, Quantidade (editável), Valor (R$ 1,00/kg) e botão de remover. Rodapé com total de kg e valor total da nota.
+- Impedir a mesma variedade duplicada na lista (soma na existente ou bloqueia com aviso).
+- Persistência:
+  - `notas_fiscais`: `total_produtos` / `total_nota` = soma das quantidades.
+  - `notas_fiscais_itens`: um registro por item, com `numero_item` sequencial (1..n) e a mesma resolução de CST/cClassTrib/alíquotas IBS-CBS já existente, aplicada por produto.
+  - `notas_deposito_emitidas`: um registro por item, todos referenciando o mesmo `nota_fiscal_id` (inseridos somente após autorização, como hoje).
+  - Payload de emissão (`itensParaEmissao`): array com todos os itens.
+- Modo edição/visualização (`editNotaId`): carregar todos os registros de `notas_deposito_emitidas` da mesma `nota_fiscal_id` para preencher a tabela de itens.
 
-- O CFOP 1905 está com `incidencia_ibs_cbs = false` no cadastro, mas o CST vem do produto (200 – alíquota reduzida com cClassTrib 200036, produtos agropecuários in natura). Mantemos o CST 200 e passamos a alíquota, que é o comportamento das notas já autorizadas pela SEFAZ.
-- Nenhuma mudança em `validarIbsCbsItens` — a validação continua exigindo alíquota para CSTs tributados.
-- Escopo limitado à emissão de nota de depósito; devolução e compra não são alteradas nesta correção.
+## Detalhes técnicos
+
+- Arquivo principal: `src/components/deposito/NotaDepositoFormDialog.tsx` (único arquivo alterado; sem migração de banco — o esquema atual já suporta N itens por nota fiscal e N registros de depósito por `nota_fiscal_id`).
+- A resolução de CST/alíquotas IBS/CBS (produto → emitente → CFOP → padrão) é extraída para uma função auxiliar `resolverTributos(produto)` chamada por item.
+- As informações complementares (safra, "PRODUTO JÁ TESTADO POR...", notas referenciadas) permanecem no nível da nota.
+- Relatórios e listagens que consultam `notas_deposito_emitidas` continuam funcionando, pois passam a ver várias linhas por nota — o cálculo de saldo por produto já é por `produto_id`.
