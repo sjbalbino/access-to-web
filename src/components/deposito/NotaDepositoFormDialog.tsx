@@ -546,16 +546,18 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
         description: `Nota fiscal ${proximoNumero} criada. Iniciando transmissão à SEFAZ...`,
       });
 
-      // Dados para registrar nota de depósito emitida APÓS autorização
-      const dadosNotaDeposito = {
+      // Dados para registrar as notas de depósito emitidas APÓS autorização
+      // (um registro por variedade da nota)
+      const dadosNotaDeposito = itensResolvidos.map(({ produto_id, quantidade }) => ({
         nota_fiscal_id: notaFiscal.id,
         granja_id: granjaId,
         inscricao_produtor_id: inscricaoId,
         safra_id: safraId,
-        produto_id: produtoId,
-        quantidade_kg: qtdKg,
+        produto_id,
+        quantidade_kg: quantidade,
         data_emissao: new Date().toISOString().split('T')[0],
-      };
+      }));
+
 
       // Montar dados para emissão via hook
       const notaDataParaEmissao: NotaFiscalData = {
