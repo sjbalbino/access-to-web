@@ -409,6 +409,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           cst_is: cstIsResolved,
           cclass_trib_ibs: cclassTribIbsResolved,
           cclass_trib_cbs: cclassTribCbsResolved,
+          base_ibs: qtdKg,
+          aliq_ibs: aliqIbsResolved,
+          valor_ibs: Number(((qtdKg * aliqIbsResolved) / 100).toFixed(2)),
+          base_cbs: qtdKg,
+          aliq_cbs: aliqCbsResolved,
+          valor_cbs: Number(((qtdKg * aliqCbsResolved) / 100).toFixed(2)),
         });
 
 
