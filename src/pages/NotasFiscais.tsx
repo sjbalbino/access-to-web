@@ -637,24 +637,25 @@ export default function NotasFiscais() {
                     if (!isCollapsed) {
                       rows.push(
                         <TableRow key={nota.id}>
-                          <TableCell className="font-mono whitespace-nowrap">
+                          <TableCell className="font-mono whitespace-nowrap px-2">
                             {nota.numero || "-"}
                             <span className="text-xs text-muted-foreground"> / {nota.serie || "-"}</span>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="px-2">
                             <div className="min-w-0">
                               <div className="font-medium truncate" title={nota.dest_nome || undefined}>{nota.dest_nome || "-"}</div>
                               <div className="text-xs text-muted-foreground font-mono hidden sm:block truncate">{formatCpfCnpj(nota.dest_cpf_cnpj) || "-"}</div>
                             </div>
                           </TableCell>
 
-                          <TableCell className="truncate hidden xl:table-cell" title={nota.natureza_operacao}>{nota.natureza_operacao}</TableCell>
-                          <TableCell className="whitespace-nowrap text-sm">
+                          <TableCell className="truncate hidden 2xl:table-cell px-2" title={nota.natureza_operacao}>{nota.natureza_operacao}</TableCell>
+                          <TableCell className="whitespace-nowrap text-sm px-2">
                             {formatDataEmissao(nota.data_emissao, (nota as any).created_at)}
                           </TableCell>
-                          <TableCell className="text-right font-medium hidden sm:table-cell whitespace-nowrap">{formatCurrency(nota.total_nota)}</TableCell>
+                          <TableCell className="text-right font-medium hidden sm:table-cell whitespace-nowrap px-2">{formatCurrency(nota.total_nota)}</TableCell>
 
-                          <TableCell>
+                          <TableCell className="px-2">
+
                             <Badge
                               variant={getStatusBadgeVariant(nota.status)}
                               title={
