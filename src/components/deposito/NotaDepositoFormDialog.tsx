@@ -1151,6 +1151,40 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Confirmação de quantidade acima do saldo entregue */}
+      <AlertDialog open={confirmarExcedente} onOpenChange={setConfirmarExcedente}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quantidade acima do saldo entregue</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>As variedades abaixo excedem o saldo disponível do produtor:</p>
+                <ul className="list-disc pl-5">
+                  {itensExcedentes.map((i) => (
+                    <li key={i.produto_id}>
+                      {getNomeProduto(i.produto_id)}: {formatKg(i.quantidade_kg)} kg (saldo {formatKg(getSaldo(i.produto_id))} kg)
+                    </li>
+                  ))}
+                </ul>
+                <p>Deseja emitir a nota mesmo assim?</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmarExcedente(false);
+                handleGerarNfe();
+              }}
+            >
+              Emitir mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
       {/* Painel de Progresso da Emissão */}
       <Dialog open={isEmissionDialogOpen} onOpenChange={handleCloseEmissionDialog}>
         <DialogContent className="sm:max-w-md">
