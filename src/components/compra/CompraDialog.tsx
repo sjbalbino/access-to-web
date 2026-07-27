@@ -402,6 +402,44 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
       const produto = produtos?.find(p => p.id === produtoId);
       const proximoNumero = (emitente.numero_atual_nfe || 0) + 1;
 
+      // ===== Resolução de tributos: Produto → Emitente → CFOP → padrão =====
+      const p = produto as any;
+      const e = emitente as any;
+      const c = cfopCompra as any;
+
+      const cstIcmsResolved = p?.cst_icms || e?.cst_icms_padrao || c?.cst_icms_padrao || '41';
+      const cstPisResolved = p?.cst_pis || e?.cst_pis_padrao || c?.cst_pis_padrao || '08';
+      const cstCofinsResolved = p?.cst_cofins || e?.cst_cofins_padrao || c?.cst_cofins_padrao || '08';
+      const cstIbsResolved = p?.cst_ibs || e?.cst_ibs_padrao || c?.cst_ibs_padrao || null;
+      const cstCbsResolved = p?.cst_cbs || e?.cst_cbs_padrao || c?.cst_cbs_padrao || null;
+      const cstIsResolved = p?.cst_is || e?.cst_is_padrao || c?.cst_is_padrao || null;
+      const cclassTribIbsResolved = p?.cclass_trib_ibs || e?.cclass_trib_ibs_padrao || null;
+      const cclassTribCbsResolved = p?.cclass_trib_cbs || e?.cclass_trib_cbs_padrao || null;
+
+      const CSTS_PIS_COFINS_TRIBUTADOS = ['01', '02', '05'];
+      const CSTS_IBS_CBS_TRIBUTADOS = ['000', '200', '210', '220'];
+
+      const pisTributado = CSTS_PIS_COFINS_TRIBUTADOS.includes(cstPisResolved);
+      const cofinsTributado = CSTS_PIS_COFINS_TRIBUTADOS.includes(cstCofinsResolved);
+
+      const aliqPisResolved = pisTributado ? Number(p?.aliquota_pis ?? e?.aliq_pis_padrao ?? 0) : 0;
+      const aliqCofinsResolved = cofinsTributado ? Number(p?.aliquota_cofins ?? e?.aliq_cofins_padrao ?? 0) : 0;
+      const basePisResolved = pisTributado ? valorTotal : 0;
+      const baseCofinsResolved = cofinsTributado ? valorTotal : 0;
+      const valorPisResolved = Number(((basePisResolved * aliqPisResolved) / 100).toFixed(2));
+      const valorCofinsResolved = Number(((baseCofinsResolved * aliqCofinsResolved) / 100).toFixed(2));
+
+      const ibsTributado = !!cstIbsResolved && CSTS_IBS_CBS_TRIBUTADOS.includes(cstIbsResolved);
+      const cbsTributado = !!cstCbsResolved && CSTS_IBS_CBS_TRIBUTADOS.includes(cstCbsResolved);
+      const aliqIbsResolved = ibsTributado ? Number(p?.aliquota_ibs ?? e?.aliq_ibs_padrao ?? 0) : 0;
+      const aliqCbsResolved = cbsTributado ? Number(p?.aliquota_cbs ?? e?.aliq_cbs_padrao ?? 0) : 0;
+      const baseIbsResolved = ibsTributado ? valorTotal : 0;
+      const baseCbsResolved = cbsTributado ? valorTotal : 0;
+      const valorIbsResolved = Number(((baseIbsResolved * aliqIbsResolved) / 100).toFixed(2));
+      const valorCbsResolved = Number(((baseCbsResolved * aliqCbsResolved) / 100).toFixed(2));
+
+
+
       // Montar informações complementares
       const infoComplementar = (() => {
         const partes: string[] = [];
