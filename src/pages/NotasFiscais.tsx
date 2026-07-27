@@ -576,7 +576,7 @@ export default function NotasFiscais() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[78px] px-2">Nº / Série</TableHead>
-                  <TableHead className="px-2">Destinatário</TableHead>
+                  <TableHead className="w-[190px] px-2">Destinatário</TableHead>
                   <TableHead className="hidden 2xl:table-cell w-[140px] px-2">Natureza Op.</TableHead>
                   <TableHead className="w-[100px] px-2">Data Emissão</TableHead>
                   <TableHead className="text-right hidden sm:table-cell w-[96px] px-2">Valor Total</TableHead>
