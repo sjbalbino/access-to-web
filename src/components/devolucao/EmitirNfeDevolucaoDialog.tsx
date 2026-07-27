@@ -194,7 +194,7 @@ export function EmitirNfeDevolucaoDialog({
         granja_id: devolucao.granja_id,
         inscricao_produtor_id: devolucao.inscricao_emitente_id,
         natureza_operacao: cfop.natureza_operacao || "RETORNO DE MERCADORIA DEPOSITADA",
-        data_emissao: new Date().toISOString().split("T")[0],
+        data_emissao: new Date().toISOString(),
         operacao: 1, // Saída
         finalidade: 1, // Normal
         cfop_id: cfop.id,

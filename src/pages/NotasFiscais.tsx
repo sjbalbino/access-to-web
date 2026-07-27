@@ -283,7 +283,7 @@ export default function NotasFiscais() {
         if (!BLACKLIST.has(k)) novaNota[k] = v;
       }
       novaNota.status = "rascunho";
-      novaNota.data_emissao = new Date().toISOString().split("T")[0];
+      novaNota.data_emissao = new Date().toISOString();
       novaNota.natureza_operacao = `${original.natureza_operacao || ""} (cópia)`.trim();
 
       const { data: created, error: errCreate } = await supabase

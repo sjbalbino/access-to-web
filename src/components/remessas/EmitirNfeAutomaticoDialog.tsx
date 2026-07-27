@@ -256,7 +256,7 @@ export function EmitirNfeAutomaticoDialog({
         inscricao_produtor_id: contrato.inscricao_produtor_id,
         cliente_fornecedor_id: contrato.comprador_id,
         natureza_operacao: naturezaOperacao || cfop.natureza_operacao || "VENDA DE PRODUÇÃO DO ESTABELECIMENTO",
-        data_emissao: new Date().toISOString().split("T")[0],
+        data_emissao: new Date().toISOString(),
         operacao: 1, // Saída
         finalidade: 1, // Normal
         cfop_id: cfop.id,
