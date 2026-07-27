@@ -572,11 +572,11 @@ export default function NotasFiscais() {
 
         <div className="border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
-            <Table className="min-w-[640px] table-fixed">
+            <Table className="min-w-[640px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[92px]">Nº / Série</TableHead>
-                  <TableHead>Destinatário</TableHead>
+                  <TableHead className="min-w-[170px]">Destinatário</TableHead>
                   <TableHead className="hidden xl:table-cell w-[150px]">Natureza Op.</TableHead>
                   <TableHead className="w-[125px]">Data Emissão</TableHead>
                   <TableHead className="text-right hidden sm:table-cell w-[110px]">Valor Total</TableHead>
