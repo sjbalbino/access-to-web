@@ -800,7 +800,7 @@ export default function NotasFiscais() {
                 })()}
                 {filteredNotas.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canEdit ? 9 : 8} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal encontrada</TableCell>
+                    <TableCell colSpan={canEdit ? 7 : 6} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal encontrada</TableCell>
                   </TableRow>
                 )}
               </TableBody>
