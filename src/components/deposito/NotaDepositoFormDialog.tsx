@@ -1005,54 +1005,104 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                       Dados da Contra-Nota (NFe CFOP 1905)
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <CardContent className="space-y-4">
+                    {/* Linha de inclusão de variedade */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                       <div className="space-y-2">
-                        <Label>Variedade *</Label>
-                        <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={!inscricaoId}>
+                        <Label>Variedade</Label>
+                        <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={!inscricaoId || readOnly}>
                           <SelectTrigger>
                             <SelectValue placeholder={!inscricaoId ? "Selecione a inscrição primeiro" : "Selecione a variedade"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {saldos.filter(s => s.saldo_a_emitir_kg > 0).map((s) => (
-                              <SelectItem key={s.produto_id} value={s.produto_id}>
-                                {s.produto_nome} (Saldo: {formatKg(s.saldo_a_emitir_kg)} kg)
-                              </SelectItem>
-                            ))}
+                            {saldos
+                              .filter(s => s.saldo_a_emitir_kg > 0 && !itens.some(i => i.produto_id === s.produto_id))
+                              .map((s) => (
+                                <SelectItem key={s.produto_id} value={s.produto_id}>
+                                  {s.produto_nome} (Saldo: {formatKg(s.saldo_a_emitir_kg)} kg)
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Quantidade (kg) *</Label>
+                        <Label>Quantidade (kg)</Label>
                         <Input
                           type="number"
                           step="0.01"
                           min="0"
-                          max={saldoProduto?.saldo_a_emitir_kg}
                           value={quantidadeKg}
                           onChange={(e) => setQuantidadeKg(e.target.value)}
                           placeholder="0,00"
-                          disabled={!inscricaoId || !produtoId}
+                          disabled={!inscricaoId || !produtoId || readOnly}
                         />
                         {saldoProduto && (
                           <p className="text-xs text-muted-foreground">
-                            Máximo disponível: {formatKg(saldoProduto.saldo_a_emitir_kg)} kg
+                            Saldo disponível: {formatKg(saldoProduto.saldo_a_emitir_kg)} kg
                           </p>
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>Valor Total</Label>
-                        <Input
-                          type="text"
-                          value={quantidadeKg ? `R$ ${formatNumber(parseFloat(quantidadeKg))}` : "R$ 0,00"}
-                          disabled
-                          className="bg-muted"
-                        />
-                        <p className="text-xs text-muted-foreground">Valor simbólico (R$ 1,00/kg)</p>
-                      </div>
+                      <Button type="button" variant="secondary" onClick={handleAddItem} disabled={readOnly}>
+                        Adicionar variedade
+                      </Button>
                     </div>
+
+                    {/* Itens incluídos na nota */}
+                    {itens.length === 0 ? (
+                      <p className="text-sm text-muted-foreground border rounded-md p-4 text-center">
+                        Nenhuma variedade incluída. A nota pode conter mais de uma variedade.
+                      </p>
+                    ) : (
+                      <div className="border rounded-md divide-y">
+                        {itens.map((item) => {
+                          const saldoItem = getSaldo(item.produto_id);
+                          const excede = item.quantidade_kg > saldoItem;
+                          return (
+                            <div key={item.produto_id} className="flex items-center gap-3 p-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{getNomeProduto(item.produto_id)}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Saldo: {formatKg(saldoItem)} kg
+                                  {excede && (
+                                    <span className="text-destructive font-medium">
+                                      {" "}• quantidade acima do saldo entregue
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                className="w-36"
+                                value={String(item.quantidade_kg)}
+                                onChange={(e) => handleUpdateItemQtd(item.produto_id, e.target.value)}
+                                disabled={readOnly}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveItem(item.produto_id)}
+                                disabled={readOnly}
+                                aria-label="Remover variedade"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                        <div className="flex items-center justify-between p-3 bg-muted/50 text-sm font-medium">
+                          <span>Total da nota</span>
+                          <span>
+                            {formatKg(totalKg)} kg • R$ {formatNumber(totalKg)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">Valor simbólico (R$ 1,00/kg)</p>
                   </CardContent>
                 </Card>
               </>
@@ -1066,13 +1116,14 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
             </Button>
             {!readOnly && (
               <Button 
-                onClick={handleGerarNfe}
-                disabled={isGenerating || !produtoId || !quantidadeKg || !inscricaoId}
+                onClick={handleGerarNfeClick}
+                disabled={isGenerating || itens.length === 0 || !inscricaoId}
               >
                 {isGenerating ? "Gerando..." : "Gerar NFe"}
               </Button>
             )}
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
