@@ -1066,7 +1066,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Linha de inclusão de variedade */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                       <div className="space-y-2">
                         <Label>Variedade</Label>
                         <Select isSearchable value={produtoId} onValueChange={setProdutoId} disabled={!inscricaoId || readOnly}>
@@ -1103,10 +1103,25 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                         )}
                       </div>
 
+                      <div className="space-y-2">
+                        <Label>Valor Unitário (R$/kg)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={valorUnitario}
+                          onChange={(e) => setValorUnitario(e.target.value)}
+                          placeholder="1,00"
+                          disabled={!inscricaoId || !produtoId || readOnly}
+                        />
+                        <p className="text-xs text-muted-foreground">Padrão sugerido: R$ 1,00/kg</p>
+                      </div>
+
                       <Button type="button" variant="secondary" onClick={handleAddItem} disabled={readOnly}>
                         Adicionar variedade
                       </Button>
                     </div>
+
 
                     {/* Itens incluídos na nota */}
                     {itens.length === 0 ? (
