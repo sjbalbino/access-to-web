@@ -335,6 +335,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     setInscricaoId("");
     setProdutoId("");
     setQuantidadeKg("");
+    setValorUnitario("1");
     setItens([]);
     setNotasReferenciadas([]);
   };
