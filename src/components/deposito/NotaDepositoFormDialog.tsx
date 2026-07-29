@@ -561,8 +561,8 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
             cfop: cfop1905.codigo,
             unidade: 'KG',
             quantidade,
-            valor_unitario: 1, // Valor simbólico para depósito
-            valor_total: quantidade,
+            valor_unitario,
+            valor_total,
             origem: 0,
             cst_icms: cfop1905.cst_icms_padrao || '41',
             cst_pis: cfop1905.cst_pis_padrao || '08',
@@ -572,12 +572,12 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
             cst_is: tributos.cstIs,
             cclass_trib_ibs: tributos.cclassTribIbs,
             cclass_trib_cbs: tributos.cclassTribCbs,
-            base_ibs: quantidade,
+            base_ibs: valor_total,
             aliq_ibs: tributos.aliqIbs,
-            valor_ibs: Number(((quantidade * tributos.aliqIbs) / 100).toFixed(2)),
-            base_cbs: quantidade,
+            valor_ibs: Number(((valor_total * tributos.aliqIbs) / 100).toFixed(2)),
+            base_cbs: valor_total,
             aliq_cbs: tributos.aliqCbs,
-            valor_cbs: Number(((quantidade * tributos.aliqCbs) / 100).toFixed(2)),
+            valor_cbs: Number(((valor_total * tributos.aliqCbs) / 100).toFixed(2)),
           }))
         );
 
