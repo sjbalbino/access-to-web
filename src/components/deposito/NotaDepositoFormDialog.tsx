@@ -551,7 +551,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
       const { error: itemError } = await supabase
         .from('notas_fiscais_itens')
         .insert(
-          itensResolvidos.map(({ numero_item, produto_id, quantidade, produto, tributos }) => ({
+          itensResolvidos.map(({ numero_item, produto_id, quantidade, valor_unitario, valor_total, produto, tributos }) => ({
             nota_fiscal_id: notaFiscal.id,
             numero_item,
             produto_id,
