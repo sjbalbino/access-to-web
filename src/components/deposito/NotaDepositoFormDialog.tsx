@@ -1215,7 +1215,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
             {!readOnly && (
               <Button 
                 onClick={handleGerarNfeClick}
-                disabled={isGenerating || itens.length === 0 || !inscricaoId}
+                disabled={isGenerating || itens.length === 0 || !inscricaoId || temValorUnitarioInvalido}
               >
                 {isGenerating ? "Gerando..." : "Gerar NFe"}
               </Button>
