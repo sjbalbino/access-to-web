@@ -213,12 +213,26 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
         // Notas multi-variedade: buscar todos os registros da mesma NF-e.
         let registros = [data];
+        let valoresPorProduto = new Map<string, number>();
         if (data.nota_fiscal_id) {
           const { data: irmaos } = await supabase
             .from('notas_deposito_emitidas')
             .select('*')
             .eq('nota_fiscal_id', data.nota_fiscal_id);
           if (irmaos && irmaos.length > 0) registros = irmaos;
+
+          // Recuperar o valor unitário efetivamente gravado nos itens da NF-e
+          const { data: itensNf } = await supabase
+            .from('notas_fiscais_itens')
+            .select('produto_id, valor_unitario')
+            .eq('nota_fiscal_id', data.nota_fiscal_id);
+          if (itensNf) {
+            valoresPorProduto = new Map(
+              itensNf
+                .filter(i => i.produto_id)
+                .map(i => [i.produto_id as string, Number(i.valor_unitario) || 1])
+            );
+          }
         }
 
         setItens(
@@ -227,6 +241,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
             .map(r => ({
               produto_id: r.produto_id as string,
               quantidade_kg: Number(r.quantidade_kg) || 0,
+              valor_unitario: valoresPorProduto.get(r.produto_id as string) ?? 1,
             }))
         );
       };
