@@ -1133,9 +1133,11 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                         {itens.map((item) => {
                           const saldoItem = getSaldo(item.produto_id);
                           const excede = item.quantidade_kg > saldoItem;
+                          const valorItem = (Number(item.quantidade_kg) || 0) * (Number(item.valor_unitario) || 0);
+                          const valorInvalido = !(Number(item.valor_unitario) > 0);
                           return (
-                            <div key={item.produto_id} className="flex items-center gap-3 p-3">
-                              <div className="flex-1 min-w-0">
+                            <div key={item.produto_id} className="flex flex-wrap items-center gap-3 p-3">
+                              <div className="flex-1 min-w-[160px]">
                                 <p className="font-medium truncate">{getNomeProduto(item.produto_id)}</p>
                                 <p className="text-xs text-muted-foreground">
                                   Saldo: {formatKg(saldoItem)} kg
@@ -1146,15 +1148,34 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                                   )}
                                 </p>
                               </div>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                className="w-36"
-                                value={String(item.quantidade_kg)}
-                                onChange={(e) => handleUpdateItemQtd(item.produto_id, e.target.value)}
-                                disabled={readOnly}
-                              />
+                              <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">Qtd (kg)</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  className="w-32"
+                                  value={String(item.quantidade_kg)}
+                                  onChange={(e) => handleUpdateItemQtd(item.produto_id, e.target.value)}
+                                  disabled={readOnly}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">Vlr. Unit. (R$)</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  className={cn("w-32", valorInvalido && "border-destructive")}
+                                  value={String(item.valor_unitario)}
+                                  onChange={(e) => handleUpdateItemValor(item.produto_id, e.target.value)}
+                                  disabled={readOnly}
+                                />
+                              </div>
+                              <div className="w-32 text-right">
+                                <p className="text-xs text-muted-foreground">Total</p>
+                                <p className="text-sm font-medium">R$ {formatNumber(valorItem)}</p>
+                              </div>
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -1171,12 +1192,15 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                         <div className="flex items-center justify-between p-3 bg-muted/50 text-sm font-medium">
                           <span>Total da nota</span>
                           <span>
-                            {formatKg(totalKg)} kg • R$ {formatNumber(totalKg)}
+                            {formatKg(totalKg)} kg • R$ {formatNumber(totalValor)}
                           </span>
                         </div>
                       </div>
                     )}
-                    <p className="text-xs text-muted-foreground">Valor simbólico (R$ 1,00/kg)</p>
+                    <p className="text-xs text-muted-foreground">
+                      Valor unitário padrão sugerido: R$ 1,00/kg — editável por variedade.
+                    </p>
+
                   </CardContent>
                 </Card>
               </>
