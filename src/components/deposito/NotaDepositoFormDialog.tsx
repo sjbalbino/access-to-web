@@ -172,6 +172,22 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
     [itens]
   );
 
+  // Total financeiro da nota: Σ (quantidade × valor unitário)
+  const totalValor = useMemo(
+    () =>
+      itens.reduce(
+        (acc, i) => acc + (Number(i.quantidade_kg) || 0) * (Number(i.valor_unitario) || 0),
+        0
+      ),
+    [itens]
+  );
+
+  // Bloqueia a emissão enquanto houver item com valor unitário inválido
+  const temValorUnitarioInvalido = useMemo(
+    () => itens.some(i => !(Number(i.valor_unitario) > 0)),
+    [itens]
+  );
+
   // Itens cuja quantidade excede o saldo disponível (permitido, mas avisado)
   const itensExcedentes = useMemo(
     () => itens.filter(i => i.quantidade_kg > getSaldo(i.produto_id)),
