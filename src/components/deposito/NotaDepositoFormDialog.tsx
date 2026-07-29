@@ -81,6 +81,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
   const [itens, setItens] = useState<ItemNotaDeposito[]>([]);
   const [produtoId, setProdutoId] = useState<string>("");
   const [quantidadeKg, setQuantidadeKg] = useState<string>("");
+  const [valorUnitario, setValorUnitario] = useState<string>("1");
   const [confirmarExcedente, setConfirmarExcedente] = useState(false);
 
   
