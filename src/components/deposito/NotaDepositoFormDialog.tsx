@@ -51,6 +51,8 @@ type EmissionStep = "idle" | "validating" | "creating" | "sending" | "processing
 interface ItemNotaDeposito {
   produto_id: string;
   quantidade_kg: number;
+  /** Valor unitário em R$/kg. Sugerido 1,00, mas editável pelo operador. */
+  valor_unitario: number;
 }
 
 
