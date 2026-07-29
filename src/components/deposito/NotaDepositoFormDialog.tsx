@@ -679,7 +679,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
       };
 
       const itensParaEmissao: NotaFiscalItemData[] = itensResolvidos.map(
-        ({ numero_item, quantidade, produto, tributos }) => ({
+        ({ numero_item, quantidade, valor_unitario, valor_total, produto, tributos }) => ({
           numero_item,
           codigo: (produto as any)?.codigo || '',
           descricao: (produto as any)?.nome || 'Produto',
