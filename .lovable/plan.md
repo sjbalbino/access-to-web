@@ -1,24 +1,28 @@
 ## Objetivo
 
-Na tela **Notas Fiscais**, a coluna "Valor Total" fica parcialmente coberta e a barra de ações (até 8 ícones) força rolagem horizontal, cortando itens da linha. A meta é deixar todos os itens visíveis dentro da largura útil da tela.
+Na emissão de Notas de Depósito (contra-nota CFOP 1905), o valor unitário de cada variedade hoje é fixo em R$ 1,00/kg (hard-coded). Passará a ser um campo editável por item, pré-preenchido com 1,00.
 
-## Diagnóstico (verificado em `src/pages/NotasFiscais.tsx`, linhas 567–753)
+## Comportamento
 
-- A tabela usa `min-w-[600px]` dentro de `overflow-x-auto`, e a coluna de Ações é `sticky right-0` — ela flutua sobre a coluna "Valor Total" quando há rolagem, exatamente o efeito do print.
-- A célula de ações renderiza até 8 botões `size="icon"` (40px cada) em `flex gap-1`, o que soma ~330px só de ações.
-- Colunas como "Natureza Op." e "Série" ocupam espaço mas têm baixo valor informativo na listagem.
-
-## Mudanças propostas (apenas apresentação, em `src/pages/NotasFiscais.tsx`)
-
-1. **Remover o comportamento sticky** da coluna Ações (header e célula), eliminando a sobreposição sobre "Valor Total".
-2. **Compactar a barra de ações**: botões em tamanho reduzido (`h-7 w-7`, ícones `h-3.5 w-3.5`), `gap-0.5`, e `flex-nowrap` com alinhamento à direita — reduz a largura de ~330px para ~200px.
-3. **Agrupar ações secundárias em um menu "mais"** (ícone de três pontos, `DropdownMenu`): mantêm-se visíveis diretamente Visualizar, Duplicar, DANFE e Download; entram no menu XML, E-mail, Carta de Correção (e seus downloads), Cancelar e Excluir. Assim a linha nunca ultrapassa a largura, independentemente do status da nota.
-4. **Enxugar colunas**: "Série" passa a ser exibida junto ao Número (ex.: `104 / 930`) e a coluna "Natureza Op." fica apenas em telas `xl`. Larguras fixas para Número, Data e Status; Destinatário absorve o restante.
-5. **Ajustar o container**: manter `overflow-x-auto` como salvaguarda em telas muito estreitas, mas com `min-w-[640px]` e `table-fixed` para que em desktop (≥1000px, como no print) tudo caiba sem barra de rolagem.
+- Na linha de inclusão de variedade, ao lado de "Quantidade (kg)", entra o campo **Valor Unitário (R$/kg)**, já preenchido com `1,00`.
+- Na lista de itens já incluídos, cada linha ganha um input de valor unitário editável (mesma UX do input de quantidade), mostrando ao lado o **valor total do item** (quantidade × unitário).
+- O rodapé "Total da nota" passa a somar `Σ (quantidade × valor_unitario)` em vez de assumir R$ 1,00/kg.
+- Texto "Valor simbólico (R$ 1,00/kg)" vira uma orientação: valor padrão sugerido R$ 1,00/kg, editável pelo operador.
+- Validação: valor unitário deve ser > 0 ao adicionar o item; ao editar, valores inválidos caem para 0 e o botão "Gerar NFe" fica bloqueado enquanto houver item com valor unitário ≤ 0.
+- Modo `readOnly` (notas importadas/autorizadas) mantém os campos desabilitados.
+- Na edição de nota existente, o valor unitário é carregado dos itens da NF-e vinculada quando houver; caso não haja, assume 1,00.
 
 ## Detalhes técnicos
 
-- Nenhuma alteração em hooks, queries ou regras de negócio.
-- Reutilizar o `DropdownMenu` do shadcn já disponível em `@/components/ui/dropdown-menu`.
-- Tokens semânticos preservados; as cores por ação continuam nas classes existentes.
-- Validação: abrir `/notas-fiscais` no preview em 1012px de largura e conferir que Valor Total, Status e todas as ações aparecem sem rolagem horizontal.
+Arquivo: `src/components/deposito/NotaDepositoFormDialog.tsx`
+
+1. `interface ItemNotaDeposito` ganha `valor_unitario: number`.
+2. Novo estado `valorUnitario` (string, default `"1"`) na linha de inclusão; `handleAddItem` valida e grava o valor; reset volta para `"1"`.
+3. Novo `handleUpdateItemValor(produtoId, valor)` análogo ao `handleUpdateItemQtd`.
+4. `totalKg` é mantido para os avisos de saldo; adiciona-se `totalValor = Σ (quantidade_kg × valor_unitario)`.
+5. Em `itensResolvidos` (linha ~400) inclui-se `valor_unitario` e `valor_total = quantidade × valor_unitario`; `totalNotaKg` (usado como total financeiro) é substituído por `totalNotaValor`.
+6. Insert em `notas_fiscais`: `total_produtos` / `total_nota` passam a usar o total financeiro calculado.
+7. Insert em `notas_fiscais_itens` (linha ~507) e payload `itensParaEmissao` (linha ~633): `valor_unitario` e `valor_total` reais; as bases `base_ibs` / `base_cbs` e os respectivos `valor_ibs` / `valor_cbs` passam a ser calculados sobre `valor_total` do item (hoje usam `quantidade`, que só coincidia porque o unitário era 1).
+8. O registro em `notas_deposito_emitidas` continua guardando apenas `quantidade_kg` — sem mudança de schema no banco.
+
+Nenhuma alteração de banco de dados é necessária.
