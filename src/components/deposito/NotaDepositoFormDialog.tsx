@@ -252,10 +252,19 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
   /** Adiciona a variedade selecionada à lista de itens da nota. */
   const handleAddItem = () => {
     const qtd = parseFloat(quantidadeKg);
+    const vUnit = parseFloat(valorUnitario);
     if (!produtoId || !qtd || qtd <= 0) {
       toast({
         title: "Dados incompletos",
         description: "Selecione a variedade e informe uma quantidade maior que zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!Number.isFinite(vUnit) || vUnit <= 0) {
+      toast({
+        title: "Valor unitário inválido",
+        description: "Informe um valor unitário maior que zero (padrão R$ 1,00/kg).",
         variant: "destructive",
       });
       return;
@@ -268,15 +277,23 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
       });
       return;
     }
-    setItens(prev => [...prev, { produto_id: produtoId, quantidade_kg: qtd }]);
+    setItens(prev => [...prev, { produto_id: produtoId, quantidade_kg: qtd, valor_unitario: vUnit }]);
     setProdutoId("");
     setQuantidadeKg("");
+    setValorUnitario("1");
   };
 
   const handleUpdateItemQtd = (produtoIdItem: string, valor: string) => {
     const qtd = parseFloat(valor);
     setItens(prev =>
       prev.map(i => (i.produto_id === produtoIdItem ? { ...i, quantidade_kg: Number.isFinite(qtd) ? qtd : 0 } : i))
+    );
+  };
+
+  const handleUpdateItemValor = (produtoIdItem: string, valor: string) => {
+    const vUnit = parseFloat(valor);
+    setItens(prev =>
+      prev.map(i => (i.produto_id === produtoIdItem ? { ...i, valor_unitario: Number.isFinite(vUnit) ? vUnit : 0 } : i))
     );
   };
 
