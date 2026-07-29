@@ -537,9 +537,9 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           dest_cep: inscricaoSelecionada?.cep?.replace(/\D/g, '') || null,
           dest_telefone: inscricaoSelecionada?.telefone,
           dest_email: inscricaoSelecionada?.email,
-          // Totais calculados a partir dos itens (valor unitário simbólico R$ 1,00/kg)
-          total_produtos: totalNotaKg,
-          total_nota: totalNotaKg,
+          // Totais calculados a partir dos itens (quantidade × valor unitário)
+          total_produtos: totalNotaValor,
+          total_nota: totalNotaValor,
           status: 'rascunho',
         })
         .select()
