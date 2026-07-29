@@ -450,16 +450,22 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
       // Itens resolvidos (produto + tributos) — usados na persistência e na transmissão
       const itensResolvidos = itens.map((item, idx) => {
         const produto = produtos.find(p => p.id === item.produto_id);
+        const quantidade = Number(item.quantidade_kg) || 0;
+        const valorUnit = Number(item.valor_unitario) || 0;
         return {
           numero_item: idx + 1,
           produto_id: item.produto_id,
-          quantidade: Number(item.quantidade_kg) || 0,
+          quantidade,
+          valor_unitario: valorUnit,
+          valor_total: Number((quantidade * valorUnit).toFixed(2)),
           produto,
           tributos: resolverTributos(produto),
         };
       });
 
-      const totalNotaKg = itensResolvidos.reduce((acc, i) => acc + i.quantidade, 0);
+      const totalNotaValor = Number(
+        itensResolvidos.reduce((acc, i) => acc + i.valor_total, 0).toFixed(2)
+      );
 
 
       // Próximo número da nota
