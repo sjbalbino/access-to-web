@@ -771,6 +771,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
             // Limpar formulário
             setProdutoId("");
             setQuantidadeKg("");
+            setValorUnitario("1");
             setNotasReferenciadas([]);
           } else if (statusResult.data?.status === "erro_autorizacao" || statusResult.data?.status === "rejeitado") {
             setEmissionStatus({
