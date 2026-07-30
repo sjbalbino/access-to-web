@@ -23,6 +23,24 @@ const DEFAULTS: Required<ConfirmOptions> = {
   cancelText: 'Cancelar',
 };
 
+// Handler registrado pelo provider; permite chamar a confirmação fora de React.
+let globalConfirm: ConfirmFn | null = null;
+
+/**
+ * Confirmação de exclusão utilizável em qualquer lugar (dentro ou fora de componentes).
+ * Retorna `true` somente se o operador confirmar explicitamente.
+ * Fallback defensivo: se o provider não estiver montado, usa `window.confirm`.
+ */
+export const confirmarExclusao: ConfirmFn = async (options) => {
+  if (globalConfirm) return globalConfirm(options);
+  const message =
+    typeof options === 'string'
+      ? options
+      : options?.description ?? DEFAULTS.description;
+  return typeof window !== 'undefined' ? window.confirm(message) : false;
+};
+
+
 /**
  * Provider global de confirmação de exclusão.
  * Garante que toda ação destrutiva peça confirmação explícita ao operador.
