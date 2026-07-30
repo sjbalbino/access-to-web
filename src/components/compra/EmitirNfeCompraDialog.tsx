@@ -88,7 +88,8 @@ export function EmitirNfeCompraDialog({
     setNotasReferenciadas(prev => [...prev, nota]);
   };
 
-  const handleRemoveNotaReferenciada = (index: number) => {
+  const handleRemoveNotaReferenciada = async (index: number) => {
+    if (!(await confirmarExclusao('Remover esta nota referenciada?'))) return;
     setNotasReferenciadas(prev => prev.filter((_, i) => i !== index));
   };
 

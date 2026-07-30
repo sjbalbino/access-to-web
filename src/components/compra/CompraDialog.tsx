@@ -246,7 +246,8 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
     setShowNotaForm(false);
   };
 
-  const handleRemoveNotaReferenciada = (index: number) => {
+  const handleRemoveNotaReferenciada = async (index: number) => {
+    if (!(await confirmarExclusao('Remover esta nota referenciada?'))) return;
     setNotasReferenciadas(prev => prev.filter((_, i) => i !== index));
   };
 

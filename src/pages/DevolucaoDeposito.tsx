@@ -20,6 +20,7 @@ import { EmitirNfeDevolucaoDialog } from '@/components/devolucao/EmitirNfeDevolu
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ComboboxFilter } from '@/components/ui/combobox-filter';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function DevolucaoDeposito() {
   const [granjaId, setGranjaId] = useState<string>('');
@@ -227,7 +228,7 @@ export default function DevolucaoDeposito() {
                               <Button variant="ghost" size="icon" onClick={() => handleEditarDevolucao(d)} disabled={!!d.nota_fiscal_id}>
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => deleteDevolucao.mutate(d.id)} disabled={!!d.nota_fiscal_id}>
+                              <Button variant="ghost" size="icon" onClick={async () => { if (await confirmarExclusao('Tem certeza que deseja excluir esta devolução?')) deleteDevolucao.mutate(d.id); }} disabled={!!d.nota_fiscal_id}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </>

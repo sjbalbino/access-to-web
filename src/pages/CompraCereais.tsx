@@ -197,7 +197,7 @@ export default function CompraCereais() {
                               <Button variant="ghost" size="icon" onClick={() => handleEditarCompra(c)} disabled={!!c.nota_fiscal_id}>
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => deleteCompra.mutate(c.id)} disabled={!!c.nota_fiscal_id}>
+                              <Button variant="ghost" size="icon" onClick={async () => { if (await confirmarExclusao('Tem certeza que deseja excluir esta compra?')) deleteCompra.mutate(c.id); }} disabled={!!c.nota_fiscal_id}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </>

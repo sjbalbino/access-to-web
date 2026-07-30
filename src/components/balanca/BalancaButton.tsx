@@ -123,7 +123,7 @@ export function BalancaButton({ onPeso, size = "sm" }: Props) {
               </Button>
               <Button
                 type="button" variant="ghost" size="sm" className="gap-2 text-destructive"
-                onClick={balanca.esquecerArquivo}
+                onClick={async () => { if (await confirmarExclusao({ title: 'Esquecer arquivo', description: 'Deseja esquecer o arquivo da balança selecionado?', confirmText: 'Esquecer' })) balanca.esquecerArquivo(); }}
                 title="Esquecer arquivo"
               >
                 <Trash2 className="h-3 w-3" />

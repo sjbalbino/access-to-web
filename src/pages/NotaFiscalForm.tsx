@@ -1924,7 +1924,7 @@ export default function NotaFiscalForm() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => deleteItem.mutate(item.id)}
+                              onClick={async () => { if (await confirmarExclusao('Tem certeza que deseja excluir este item da nota?')) deleteItem.mutate(item.id); }}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -2034,6 +2034,7 @@ export default function NotaFiscalForm() {
 
   const handleDeleteNotaReferenciada = async (notaRefId: string) => {
     if (!id) return;
+    if (!(await confirmarExclusao('Tem certeza que deseja excluir esta nota referenciada?'))) return;
     try {
       await deleteNotaReferenciada.mutateAsync({ id: notaRefId, notaFiscalId: id });
     } catch (error) {
@@ -2435,6 +2436,7 @@ export default function NotaFiscalForm() {
   };
 
   const handleDeleteDuplicata = async (duplicataId: string) => {
+    if (!(await confirmarExclusao('Tem certeza que deseja excluir esta duplicata?'))) return;
     await deleteDuplicata.mutateAsync(duplicataId);
   };
 

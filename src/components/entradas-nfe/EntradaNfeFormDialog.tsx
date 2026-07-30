@@ -298,7 +298,10 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   };
 
   const addItem = () => setItens((prev) => [...prev, emptyItem()]);
-  const removeItem = (idx: number) => setItens((prev) => prev.filter((_, i) => i !== idx));
+  const removeItem = async (idx: number) => {
+    if (!(await confirmarExclusao('Remover este item da entrada?'))) return;
+    setItens((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const calcTotalNfe = () => {
     const totalItens = itens.reduce((s, i) => s + toNumber(i.valor_total), 0);
