@@ -25,6 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Plus, Trash2, Link2, X } from "lucide-react";
 import { VincularProdutoDialog } from "./VincularProdutoDialog";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface Props {
   open: boolean;
@@ -298,7 +299,10 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
   };
 
   const addItem = () => setItens((prev) => [...prev, emptyItem()]);
-  const removeItem = (idx: number) => setItens((prev) => prev.filter((_, i) => i !== idx));
+  const removeItem = async (idx: number) => {
+    if (!(await confirmarExclusao('Remover este item da entrada?'))) return;
+    setItens((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const calcTotalNfe = () => {
     const totalItens = itens.reduce((s, i) => s + toNumber(i.valor_total), 0);

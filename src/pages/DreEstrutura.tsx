@@ -13,6 +13,7 @@ import { Plus, Pencil, Trash2, GitBranch, ChevronDown, ChevronRight } from 'luci
 import { useDreContas, useCreateDreConta, useUpdateDreConta, useDeleteDreConta, DreContaInput, DreConta } from '@/hooks/useDreContas';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function DreEstrutura() {
   const { canEdit } = useAuth();
@@ -41,7 +42,7 @@ export default function DreEstrutura() {
     resetForm();
   };
 
-  const handleEdit = (item: DreConta) => {
+  const handleEdit = async (item: DreConta) => {
     setEditingItem(item);
     setFormData({
       codigo: item.codigo, descricao: item.descricao, nivel: item.nivel,
@@ -52,7 +53,7 @@ export default function DreEstrutura() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta conta DRE?')) await deleteMutation.mutateAsync(id);
+    if (await confirmarExclusao('Tem certeza que deseja excluir esta conta DRE?')) await deleteMutation.mutateAsync(id);
   };
 
   const openNewChild = (parentId: string | null, parentNivel: number) => {

@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function GruposProdutos() {
   const { canEdit } = useAuth();
@@ -69,7 +70,7 @@ export default function GruposProdutos() {
     resetForm();
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = async (item: any) => {
     setEditingItem(item);
     setFormData({
       nome: item.nome,
@@ -87,7 +88,7 @@ export default function GruposProdutos() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este grupo?')) {
+    if (await confirmarExclusao('Tem certeza que deseja excluir este grupo?')) {
       await deleteMutation.mutateAsync(id);
     }
   };

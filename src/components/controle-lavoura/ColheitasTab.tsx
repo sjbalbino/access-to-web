@@ -25,6 +25,7 @@ import { useLocaisEntrega } from '@/hooks/useLocaisEntrega';
 import { format, parseISO } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface ColheitasTabProps {
   controleLavouraId: string | null;
@@ -311,8 +312,8 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta colheita?')) {
+  const handleDelete = async (id: string) => {
+    if (await confirmarExclusao('Tem certeza que deseja excluir esta colheita?')) {
       deleteMutation.mutate(id);
     }
   };

@@ -59,6 +59,7 @@ import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
 import { CLASSIFICACAO_TRIBUTARIA, getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function Produtos() {
   const { canEdit } = useAuth();
@@ -198,7 +199,7 @@ export default function Produtos() {
     }
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = async (item: any) => {
     setEditingItem(item);
     setFormData({
       granja_id: item.granja_id,
@@ -245,7 +246,7 @@ export default function Produtos() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este produto?')) {
+    if (await confirmarExclusao('Tem certeza que deseja excluir este produto?')) {
       await deleteMutation.mutateAsync(id);
     }
   };

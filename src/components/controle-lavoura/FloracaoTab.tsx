@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useFloracoes, useCreateFloracao, useUpdateFloracao, useDeleteFloracao, FloracaoInput } from '@/hooks/useFloracoes';
 import { format, parseISO } from 'date-fns';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface FloracaoTabProps {
   controleLavouraId: string | null;
@@ -51,8 +52,8 @@ export function FloracaoTab({ controleLavouraId, canEdit }: FloracaoTabProps) {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Deseja excluir este registro?')) {
+  const handleDelete = async (id: string) => {
+    if (await confirmarExclusao('Deseja excluir este registro?')) {
       deleteMutation.mutate(id);
     }
   };

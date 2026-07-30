@@ -34,6 +34,7 @@ import { useGranjas } from "@/hooks/useGranjas";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 const TIPOS: { value: ContaBancariaInput["tipo"]; label: string }[] = [
   { value: "corrente", label: "Corrente" },
@@ -101,7 +102,7 @@ export default function ContasBancarias() {
     setOpen(true);
   };
 
-  const handleEdit = (c: any) => {
+  const handleEdit = async (c: any) => {
     setEditingId(c.id);
     setForm({
       codigo_legado: c.codigo_legado,
@@ -138,7 +139,7 @@ export default function ContasBancarias() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Excluir esta conta bancária?")) return;
+    if (!(await confirmarExclusao("Excluir esta conta bancária?"))) return;
     await del.mutateAsync(id);
   };
 

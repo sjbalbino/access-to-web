@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Spinner } from '@/components/ui/spinner';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function Ncm() {
   const { canEdit } = useAuth();
@@ -54,7 +55,7 @@ export default function Ncm() {
     resetForm();
   };
 
-  const handleEdit = (item: NcmType) => {
+  const handleEdit = async (item: NcmType) => {
     setEditingItem(item);
     setFormData({
       codigo: item.codigo,
@@ -65,7 +66,7 @@ export default function Ncm() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este NCM?')) {
+    if (await confirmarExclusao('Tem certeza que deseja excluir este NCM?')) {
       await deleteNcm.mutateAsync(id);
     }
   };

@@ -18,6 +18,7 @@ import { usePlacas, useCreatePlaca, useUpdatePlaca, useDeletePlaca, PlacaInsert 
 import { formatPlaca } from '@/lib/formatters';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function Placas() {
   const { canEdit } = useAuth();
@@ -75,7 +76,7 @@ export default function Placas() {
     resetForm();
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = async (item: any) => {
     setEditingItem(item);
     setFormData({
       placa: item.placa,
@@ -96,7 +97,7 @@ export default function Placas() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta placa?')) {
+    if (await confirmarExclusao('Tem certeza que deseja excluir esta placa?')) {
       await deleteMutation.mutateAsync(id);
     }
   };

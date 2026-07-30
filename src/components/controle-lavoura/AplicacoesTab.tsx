@@ -13,6 +13,7 @@ import { useAplicacoes, useCreateAplicacao, useUpdateAplicacao, useDeleteAplicac
 import { useProdutosByGrupo, TIPO_GRUPO_MAP } from '@/hooks/useProdutosByGrupo';
 import { format, parseISO } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface AplicacoesTabProps {
   tipo: TipoAplicacao;
@@ -119,8 +120,8 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm(`Tem certeza que deseja excluir esta ${tipoLabel.toLowerCase()}?`)) {
+  const handleDelete = async (id: string) => {
+    if (await confirmarExclusao(`Tem certeza que deseja excluir esta ${tipoLabel.toLowerCase()}?`)) {
       deleteMutation.mutate(id);
     }
   };

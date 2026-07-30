@@ -55,6 +55,7 @@ import ConciliacaoBancaria from "./pages/ConciliacaoBancaria";
 import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TicketDepositoPreview } from "@/components/shared/TicketDepositoPreview";
+import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog-provider";
 
 
 
@@ -63,6 +64,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <ConfirmDialogProvider>
       <Toaster />
       <Sonner />
       <TicketDepositoPreview />
@@ -131,6 +133,7 @@ const App = () => (
           </TabsProvider>
         </AuthProvider>
       </BrowserRouter>
+      </ConfirmDialogProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

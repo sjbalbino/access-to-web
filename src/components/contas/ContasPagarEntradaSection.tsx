@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useContasPagar, useDeleteContaPagar, useGerarParcelasPagar, useUpdateContaPagar } from '@/hooks/useContasPagar';
 import { GerarParcelasDialog } from './GerarParcelasDialog';
 import { BaixasDialog } from './BaixasDialog';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 const formatBR = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -147,7 +148,7 @@ export function ContasPagarEntradaSection({ entrada }: Props) {
                               </Button>
                             )}
                             {podeEditar && (
-                              <Button size="icon" variant="ghost" onClick={() => { if (confirm('Excluir parcela?')) del.mutate(c.id); }}>
+                              <Button size="icon" variant="ghost" onClick={async () => { if (await confirmarExclusao('Excluir parcela?')) del.mutate(c.id); }}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             )}

@@ -11,6 +11,7 @@ import { GerarParcelasDialog } from './GerarParcelasDialog';
 import { BaixasDialog } from './BaixasDialog';
 import { VincularContraNotaDialog } from './VincularContraNotaDialog';
 import { useContraNotaPorContrato, useDesvincularContraNota } from '@/hooks/useContraNotaVenda';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 const formatBR = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -92,7 +93,7 @@ export function ContasReceberContratoSection({ contrato }: Props) {
                 </div>
               </div>
               {canEdit && (
-                <Button size="sm" variant="ghost" onClick={() => { if (confirm('Desvincular contra-nota?')) desvincular.mutate(contraNota.id); }}>
+                <Button size="sm" variant="ghost" onClick={async () => { if (await confirmarExclusao('Desvincular contra-nota?')) desvincular.mutate(contraNota.id); }}>
                   <Unlink className="h-4 w-4 mr-1" /> Desvincular
                 </Button>
               )}
@@ -142,7 +143,7 @@ export function ContasReceberContratoSection({ contrato }: Props) {
                           <DollarSign className="h-4 w-4 text-emerald-600" />
                         </Button>
                         {canEdit && Number(c.valor_pago) === 0 && (
-                          <Button size="icon" variant="ghost" onClick={() => { if (confirm('Excluir parcela?')) del.mutate(c.id); }}>
+                          <Button size="icon" variant="ghost" onClick={async () => { if (await confirmarExclusao('Excluir parcela?')) del.mutate(c.id); }}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         )}

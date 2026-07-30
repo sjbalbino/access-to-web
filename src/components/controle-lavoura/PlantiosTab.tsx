@@ -13,6 +13,7 @@ import { usePlantios, useCreatePlantio, useUpdatePlantio, useDeletePlantio, Plan
 import { useProdutosSementes } from '@/hooks/useProdutosSementes';
 import { format, parseISO } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface PlantiosTabProps {
   controleLavouraId: string | null;
@@ -107,8 +108,8 @@ export function PlantiosTab({ controleLavouraId, canEdit }: PlantiosTabProps) {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este plantio?')) {
+  const handleDelete = async (id: string) => {
+    if (await confirmarExclusao('Tem certeza que deseja excluir este plantio?')) {
       deleteMutation.mutate(id);
     }
   };
