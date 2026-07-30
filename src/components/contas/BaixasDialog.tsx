@@ -21,11 +21,11 @@ import {
   useDeleteBaixaReceber,
 } from '@/hooks/useContasReceber';
 import {
-import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
   useBaixasContaPagar,
   useCreateBaixaPagar,
   useDeleteBaixaPagar,
 } from '@/hooks/useContasPagar';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 const formatBR = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
