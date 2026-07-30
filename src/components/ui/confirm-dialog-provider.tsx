@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog';
 
 export interface ConfirmOptions {
