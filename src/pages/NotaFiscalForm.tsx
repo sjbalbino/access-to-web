@@ -70,6 +70,7 @@ import { useNotasFiscaisDuplicatas } from "@/hooks/useNotasFiscaisDuplicatas";
 import { useNotasReferenciadas, useCreateNotaReferenciada, useDeleteNotaReferenciada, useUpdateNotaReferenciada } from "@/hooks/useNotasReferenciadas";
 import { NotaReferenciadaForm, NotaReferenciadaTemp, NotaReferenciadaEdit } from "@/components/deposito/NotaReferenciadaForm";
 import type { ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 const OPERACOES = [
   { value: 0, label: "Entrada" },
   { value: 1, label: "Saída" },

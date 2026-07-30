@@ -19,6 +19,7 @@ import { EmitirNfeCompraDialog } from '@/components/compra/EmitirNfeCompraDialog
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ComboboxFilter } from '@/components/ui/combobox-filter';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function CompraCereais() {
   const [granjaId, setGranjaId] = useState<string>('');

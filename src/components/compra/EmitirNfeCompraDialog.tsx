@@ -18,6 +18,7 @@ import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { CompraCereal, useUpdateCompraCereal } from "@/hooks/useComprasCereais";
 import { formatNumber, formatKg, formatCpf, formatCnpj } from "@/lib/formatters";
 import { NotaReferenciadaForm, NotaReferenciadaTemp } from "@/components/deposito/NotaReferenciadaForm";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface EmitirNfeCompraDialogProps {
   compra: CompraCereal | null;

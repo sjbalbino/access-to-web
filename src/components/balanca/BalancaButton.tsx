@@ -11,6 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useBalanca, BalancaConfig } from "@/hooks/useBalanca";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface Props {
   onPeso: (kg: number) => void;

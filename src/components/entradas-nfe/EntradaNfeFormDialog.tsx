@@ -25,6 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Plus, Trash2, Link2, X } from "lucide-react";
 import { VincularProdutoDialog } from "./VincularProdutoDialog";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface Props {
   open: boolean;

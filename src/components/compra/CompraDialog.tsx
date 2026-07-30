@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils';
 import { labelInscricao } from '@/lib/inscricaoLabel';
 import type { NotaFiscalData, NotaFiscalItemData } from '@/lib/focusNfeMapper';
 import { Plus, Trash2, Loader2, CheckCircle2, XCircle, Check, Send } from 'lucide-react';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 type EmissionStep = "idle" | "validating" | "saving" | "creating" | "sending" | "processing" | "success" | "error";
 
