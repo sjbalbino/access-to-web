@@ -33,6 +33,7 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
   // Guarda o resolver da Promise em aberto para responder ao clique do usuário.
   const resolverRef = useRef<((value: boolean) => void) | null>(null);
 
+
   const confirm = useCallback<ConfirmFn>((opts) => {
     const normalized: Required<ConfirmOptions> =
       typeof opts === 'string'
