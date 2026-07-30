@@ -55,6 +55,7 @@ import ConciliacaoBancaria from "./pages/ConciliacaoBancaria";
 import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TicketDepositoPreview } from "@/components/shared/TicketDepositoPreview";
+import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog-provider";
 
 
 
