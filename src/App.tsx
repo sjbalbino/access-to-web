@@ -133,6 +133,7 @@ const App = () => (
           </TabsProvider>
         </AuthProvider>
       </BrowserRouter>
+      </ConfirmDialogProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
