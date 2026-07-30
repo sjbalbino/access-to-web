@@ -48,11 +48,21 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
     });
   }, []);
 
+  // Registra o handler globalmente para permitir uso fora de componentes React
+  // (handlers utilitários, callbacks inline etc.) sem exigir o hook.
+  useEffect(() => {
+    globalConfirm = confirm;
+    return () => {
+      if (globalConfirm === confirm) globalConfirm = null;
+    };
+  }, [confirm]);
+
   const settle = useCallback((value: boolean) => {
     const resolver = resolverRef.current;
     resolverRef.current = null;
     resolver?.(value);
   }, []);
+
 
   return (
     <ConfirmContext.Provider value={confirm}>
