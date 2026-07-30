@@ -19,6 +19,7 @@ import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 const UF_OPTIONS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", 
@@ -113,8 +114,8 @@ export default function LocaisEntrega() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este local de entrega?")) {
+  const handleDelete = async (id: string) => {
+    if (await confirmarExclusao("Tem certeza que deseja excluir este local de entrega?")) {
       deleteMutation.mutate(id);
     }
   };

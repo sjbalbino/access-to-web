@@ -21,6 +21,7 @@ import { useEstoqueSilos } from '@/hooks/useEstoqueSilos';
 import { SiloEstoqueVisual } from '@/components/silos/SiloEstoqueVisual';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function Silos() {
   const { canEdit } = useAuth();
@@ -89,7 +90,7 @@ export default function Silos() {
     resetForm();
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = async (item: any) => {
     setEditingItem(item);
     setFormData({
       granja_id: item.granja_id,
@@ -107,7 +108,7 @@ export default function Silos() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este silo?')) {
+    if (await confirmarExclusao('Tem certeza que deseja excluir este silo?')) {
       await deleteMutation.mutateAsync(id);
     }
   };

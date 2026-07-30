@@ -10,6 +10,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useInsetos, useCreateInseto, useUpdateInseto, useDeleteInseto, InsetoInput } from '@/hooks/useInsetos';
 import { format, parseISO } from 'date-fns';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface InsetosTabProps {
   controleLavouraId: string | null;
@@ -61,8 +62,8 @@ export function InsetosTab({ controleLavouraId, canEdit }: InsetosTabProps) {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Deseja excluir este registro?')) {
+  const handleDelete = async (id: string) => {
+    if (await confirmarExclusao('Deseja excluir este registro?')) {
       deleteMutation.mutate(id);
     }
   };

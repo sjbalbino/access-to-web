@@ -28,6 +28,7 @@ import { TablePagination } from "@/components/ui/table-pagination";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { AtribuicaoSocioSection } from "@/components/contas/AtribuicaoSocioSection";
 import { useSalvarRateioManual } from "@/hooks/useRateioSocios";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 
 export default function LancamentosFinanceiros() {
@@ -105,7 +106,7 @@ export default function LancamentosFinanceiros() {
     resetForm();
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = async (item: any) => {
     setEditingItem(item);
     setFormData({
       granja_id: item.granja_id, data_lancamento: item.data_lancamento,
@@ -122,7 +123,7 @@ export default function LancamentosFinanceiros() {
 
 
   const handleDelete = async (id: string) => {
-    if (confirm('Excluir este lançamento?')) await deleteMutation.mutateAsync(id);
+    if (await confirmarExclusao('Excluir este lançamento?')) await deleteMutation.mutateAsync(id);
   };
 
   const totalReceitas = lancamentos?.filter(l => l.tipo === 'receita').reduce((s, l) => s + Number(l.valor), 0) || 0;

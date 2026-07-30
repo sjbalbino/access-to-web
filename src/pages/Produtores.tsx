@@ -30,6 +30,7 @@ import { RecalcularRateioDialog } from "@/components/produtores/RecalcularRateio
 import { useCreateInscricao } from "@/hooks/useInscricoesProdutor";
 import { formatCpf, formatCpfCnpj, formatTelefone, validateCpf, validateCnpj } from "@/lib/formatters";
 import { toast } from "sonner";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 const TIPOS_PRODUTOR = [
   { value: "produtor", label: "Produtor" },
@@ -208,7 +209,7 @@ export default function Produtores() {
     }
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = async (item: any) => {
     setEditingItem(item);
     setFormData({
       nome: item.nome,
@@ -236,7 +237,7 @@ export default function Produtores() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este registro?")) {
+    if (await confirmarExclusao("Tem certeza que deseja excluir este registro?")) {
       await deleteProdutor.mutateAsync(id);
     }
   };

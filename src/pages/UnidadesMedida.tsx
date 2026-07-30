@@ -14,6 +14,7 @@ import { Plus, Pencil, Trash2, Ruler } from 'lucide-react';
 import { useUnidadesMedida, useCreateUnidadeMedida, useUpdateUnidadeMedida, useDeleteUnidadeMedida, UnidadeMedidaInsert } from '@/hooks/useUnidadesMedida';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function UnidadesMedida() {
   const { canEdit } = useAuth();
@@ -52,7 +53,7 @@ export default function UnidadesMedida() {
     resetForm();
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = async (item: any) => {
     setEditingItem(item);
     setFormData({
       codigo: item.codigo,
@@ -64,7 +65,7 @@ export default function UnidadesMedida() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta unidade de medida?')) {
+    if (await confirmarExclusao('Tem certeza que deseja excluir esta unidade de medida?')) {
       await deleteMutation.mutateAsync(id);
     }
   };

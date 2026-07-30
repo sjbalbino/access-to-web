@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useChuvas, useCreateChuva, useUpdateChuva, useDeleteChuva, ChuvaInput } from '@/hooks/useChuvas';
 import { format, parseISO } from 'date-fns';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface ChuvasTabProps {
   controleLavouraId: string | null;
@@ -51,8 +52,8 @@ export function ChuvasTab({ controleLavouraId, canEdit }: ChuvasTabProps) {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Deseja excluir este registro?')) {
+  const handleDelete = async (id: string) => {
+    if (await confirmarExclusao('Deseja excluir este registro?')) {
       deleteMutation.mutate(id);
     }
   };

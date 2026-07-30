@@ -40,6 +40,7 @@ import { formatCpf, formatCpfCnpj, formatPlaca, unformatDocument, validateCnpj, 
 import { toast } from "sonner";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 const UFS = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
@@ -121,7 +122,7 @@ export default function Transportadoras() {
     }
   };
 
-  const handleOpenDialog = (transportadora?: any) => {
+  const handleOpenDialog = async (transportadora?: any) => {
     if (transportadora) {
       setSelectedTransportadora(transportadora);
       setFormData({
@@ -209,7 +210,7 @@ export default function Transportadoras() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Deseja realmente excluir esta transportadora?")) {
+    if (await confirmarExclusao("Deseja realmente excluir esta transportadora?")) {
       await deleteTransportadora.mutateAsync(id);
     }
   };

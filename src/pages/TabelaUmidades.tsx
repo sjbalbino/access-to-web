@@ -23,6 +23,7 @@ import {
 import { useTabelaUmidades, useCreateTabelaUmidade, useUpdateTabelaUmidade, useDeleteTabelaUmidade, TabelaUmidadeInsert } from '@/hooks/useTabelaUmidades';
 import { useCulturas } from '@/hooks/useCulturas';
 import { ImportarUmidadesDialog } from '@/components/ImportarUmidadesDialog';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function TabelaUmidades() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -72,7 +73,7 @@ export default function TabelaUmidades() {
     resetForm();
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = async (item: any) => {
     setEditingItem(item);
     setFormData({
       cultura_id: item.cultura_id,
@@ -87,7 +88,7 @@ export default function TabelaUmidades() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta faixa de umidade?')) {
+    if (await confirmarExclusao('Tem certeza que deseja excluir esta faixa de umidade?')) {
       await deleteMutation.mutateAsync(id);
     }
   };

@@ -21,6 +21,7 @@ import {
   useDeleteBaixaReceber,
 } from '@/hooks/useContasReceber';
 import {
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
   useBaixasContaPagar,
   useCreateBaixaPagar,
   useDeleteBaixaPagar,
@@ -112,7 +113,7 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
     })();
   }, [open, tipo, conta, baixasRec.data]);
 
-  const resetForm = () => {
+  const resetForm = async () => {
     setValorPago('');
     setJuros('0');
     setMulta('0');
@@ -219,7 +220,7 @@ export function BaixasDialog({ open, onOpenChange, tipo, conta }: Props) {
 
   const handleDelete = async (id: string) => {
     if (!conta) return;
-    if (!confirm('Excluir esta baixa?')) return;
+    if (!(await confirmarExclusao('Excluir esta baixa?'))) return;
     if (tipo === 'receber') await deleteRec.mutateAsync({ id, conta_id: conta.id });
     else await deletePag.mutateAsync({ id, conta_id: conta.id });
   };

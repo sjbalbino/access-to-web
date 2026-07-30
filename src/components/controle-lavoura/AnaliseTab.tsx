@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useAnalisesSolo, useCreateAnaliseSolo, useUpdateAnaliseSolo, useDeleteAnaliseSolo, AnaliseSoloInput } from '@/hooks/useAnalisesSolo';
 import { format, parseISO } from 'date-fns';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface AnaliseTabProps {
   controleLavouraId: string | null;
@@ -61,8 +62,8 @@ export function AnaliseTab({ controleLavouraId, canEdit }: AnaliseTabProps) {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Deseja excluir esta análise?')) {
+  const handleDelete = async (id: string) => {
+    if (await confirmarExclusao('Deseja excluir esta análise?')) {
       deleteMutation.mutate(id);
     }
   };

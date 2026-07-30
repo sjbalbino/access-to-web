@@ -10,6 +10,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { usePlantasInvasoras, useCreatePlantaInvasora, useUpdatePlantaInvasora, useDeletePlantaInvasora, PlantaInvasoraInput } from '@/hooks/usePlantasInvasoras';
 import { format, parseISO } from 'date-fns';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 interface PlantasInvasorasTabProps {
   controleLavouraId: string | null;
@@ -61,8 +62,8 @@ export function PlantasInvasorasTab({ controleLavouraId, canEdit }: PlantasInvas
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Deseja excluir este registro?')) {
+  const handleDelete = async (id: string) => {
+    if (await confirmarExclusao('Deseja excluir este registro?')) {
       deleteMutation.mutate(id);
     }
   };

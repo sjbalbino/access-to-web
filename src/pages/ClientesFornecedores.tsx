@@ -22,6 +22,7 @@ import { isIeGenerica, validarIeUF } from '@/lib/inscricaoEstadualValidator';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function ClientesFornecedores() {
   const { canEdit } = useAuth();
@@ -52,7 +53,7 @@ export default function ClientesFornecedores() {
     const msg = dryRun
       ? `Simular enriquecimento de ${semCidade} registro(s) sem cidade? Nada será gravado.`
       : `Enriquecer ${semCidade} registro(s) sem cidade via CEP/CNPJ? Isso pode levar alguns minutos.`;
-    if (!confirm(msg)) return;
+    if (!(await confirmarExclusao(msg))) return;
     setEnriquecendo(true);
     setResultadoEnriquecimento(null);
     try {
@@ -246,7 +247,7 @@ export default function ClientesFornecedores() {
     resetForm();
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = async (item: any) => {
     setEditingItem(item);
     setFormData({
       granja_id: item.granja_id,
@@ -274,7 +275,7 @@ export default function ClientesFornecedores() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este registro?')) {
+    if (await confirmarExclusao('Tem certeza que deseja excluir este registro?')) {
       await deleteMutation.mutateAsync(id);
     }
   };

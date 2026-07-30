@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function PlanoContasGerencial() {
   const { canEdit } = useAuth();
@@ -64,14 +65,14 @@ export default function PlanoContasGerencial() {
     resetForm();
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = async (item: any) => {
     setEditingItem(item);
     setFormData({ descricao: item.descricao, tipo: item.tipo || 'despesa', ativo: item.ativo ?? true });
     setIsDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este centro de custo?')) await deleteMutation.mutateAsync(id);
+    if (await confirmarExclusao('Tem certeza que deseja excluir este centro de custo?')) await deleteMutation.mutateAsync(id);
   };
 
   const handleSubSubmit = async (e: React.FormEvent) => {
@@ -82,14 +83,14 @@ export default function PlanoContasGerencial() {
     resetSubForm();
   };
 
-  const handleEditSub = (sub: any) => {
+  const handleEditSub = async (sub: any) => {
     setEditingSub(sub);
     setSubFormData({ centro_custo_id: sub.centro_custo_id, descricao: sub.descricao, codigo_dre: sub.codigo_dre, ativo: sub.ativo ?? true });
     setIsSubDialogOpen(true);
   };
 
   const handleDeleteSub = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este sub-centro?')) await deleteSubMutation.mutateAsync(id);
+    if (await confirmarExclusao('Tem certeza que deseja excluir este sub-centro?')) await deleteSubMutation.mutateAsync(id);
   };
 
   const openNewSub = (centroId: string) => {
