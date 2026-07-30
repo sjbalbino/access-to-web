@@ -53,7 +53,13 @@ export default function ClientesFornecedores() {
     const msg = dryRun
       ? `Simular enriquecimento de ${semCidade} registro(s) sem cidade? Nada será gravado.`
       : `Enriquecer ${semCidade} registro(s) sem cidade via CEP/CNPJ? Isso pode levar alguns minutos.`;
-    if (!(await confirmarExclusao(msg))) return;
+    // Ação não destrutiva: reaproveita o diálogo, mas com rótulos neutros.
+    const ok = await confirmarExclusao({
+      title: 'Confirmar Ação',
+      description: msg,
+      confirmText: 'Continuar',
+    });
+    if (!ok) return;
     setEnriquecendo(true);
     setResultadoEnriquecimento(null);
     try {
