@@ -906,8 +906,9 @@ export default function NotasFiscais() {
                   rows={4}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {justificativa.length}/15 caracteres mínimos
+                  {justificativa.trim().length}/15 caracteres mínimos
                 </p>
+
               </div>
             </div>
             <DialogFooter>
