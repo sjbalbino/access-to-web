@@ -91,7 +91,10 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
     safraId, 
     granjaId,
     incluirSemSaldo: true,
+    // Compra usa o saldo FÍSICO (igual ao Extrato do Produtor), não o saldo a contra-notar.
+    modo: 'fisico',
   });
+
   const { data: todasInscricoes } = useInscricoesCompletas();
   const { cfops } = useCfops();
   const { data: inscricaoPrincipal } = useInscricaoEmitentePrincipal(granjaId || undefined);
