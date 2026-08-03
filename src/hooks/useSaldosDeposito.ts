@@ -180,13 +180,16 @@ export function useInscricoesComSaldo(filters: {
   /**
    * 'emissao' (default): saldo elegível para EMITIR nota de depósito
    *   = Colheitas + Transf. Recebidas − Notas de Depósito Emitidas
-   * 'devolucao': saldo físico disponível para DEVOLVER ao produtor
+   * 'fisico' (alias legado: 'devolucao'): saldo físico realmente disponível em
+   * estoque, usado na DEVOLUÇÃO ao produtor e na COMPRA DE CEREAIS
    *   = Colheitas + Transf. Recebidas − Transf. Enviadas − Devoluções já feitas
    *   (Notas de Depósito emitidas NÃO reduzem esse saldo.)
    */
-  modo?: 'emissao' | 'devolucao';
+  modo?: 'emissao' | 'fisico' | 'devolucao';
 }) {
-  const modo = filters.modo || 'emissao';
+  // 'devolucao' é mantido como alias de 'fisico' para compatibilidade.
+  const modo: 'emissao' | 'devolucao' = filters.modo === 'emissao' || !filters.modo ? 'emissao' : 'devolucao';
+
   return useQuery({
     queryKey: ['inscricoes_com_saldo', filters],
     queryFn: async (): Promise<InscricaoComSaldoPorLocal[]> => {
