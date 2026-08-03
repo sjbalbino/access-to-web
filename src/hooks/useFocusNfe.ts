@@ -233,7 +233,9 @@ export function useFocusNfe() {
     setIsLoading(true);
 
     try {
-      if (justificativa.length < 15) {
+      // SEFAZ exige 15 caracteres úteis: espaços nas pontas não contam
+      const justificativaLimpa = (justificativa || "").trim();
+      if (justificativaLimpa.length < 15) {
         toast.error("Justificativa deve ter no mínimo 15 caracteres");
         return {
           success: false,
@@ -242,8 +244,9 @@ export function useFocusNfe() {
       }
 
       const { data, error } = await supabase.functions.invoke("focus-nfe-cancelar", {
-        body: { ref, notaFiscalId, justificativa },
+        body: { ref, notaFiscalId, justificativa: justificativaLimpa },
       });
+
 
       if (error) {
         throw new Error(error.message);
