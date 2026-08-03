@@ -50,15 +50,24 @@ serve(async (req) => {
       });
     }
 
-    const { ref, notaFiscalId, justificativa } = await req.json();
+    const { ref, notaFiscalId, justificativa: justificativaRaw } = await req.json();
 
     if (!ref) {
       throw new Error("ref é obrigatório");
     }
 
-    if (!justificativa || justificativa.length < 15) {
-      throw new Error("Justificativa é obrigatória e deve ter no mínimo 15 caracteres");
+    // A SEFAZ exige no mínimo 15 caracteres ÚTEIS na justificativa
+    const justificativa = typeof justificativaRaw === "string" ? justificativaRaw.trim() : "";
+    if (justificativa.length < 15) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Justificativa é obrigatória e deve ter no mínimo 15 caracteres (sem contar espaços no início/fim)",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
 
     // Tenant isolation: caller só pode cancelar notas do próprio tenant
     if (notaFiscalId) {
@@ -137,7 +146,45 @@ serve(async (req) => {
     const responseData = await response.json();
     console.log("Resposta Focus NFe:", JSON.stringify(responseData, null, 2));
 
-    // Atualizar no banco
+    // Só consideramos cancelado quando a Focus/SEFAZ confirma.
+    // Status como "erro_cancelamento" ou HTTP não-2xx significam que a nota
+    // CONTINUA autorizada — nesse caso nada pode ser propagado no banco.
+    const statusFocus: string = typeof responseData?.status === "string" ? responseData.status : "";
+    const cancelamentoConfirmado =
+      response.ok && statusFocus !== "" && !statusFocus.startsWith("erro");
+
+    const mensagemErro =
+      responseData?.mensagem_sefaz ||
+      responseData?.mensagem ||
+      responseData?.erros?.[0]?.mensagem ||
+      (statusFocus ? `Cancelamento não homologado (status: ${statusFocus})` : "Erro ao cancelar NF-e");
+
+    if (!cancelamentoConfirmado) {
+      console.error("Cancelamento NÃO confirmado pela SEFAZ:", mensagemErro);
+
+      // Registra apenas o motivo do erro, sem alterar status/vínculos
+      if (notaFiscalId && supabase) {
+        const { error: motivoErr } = await supabase
+          .from("notas_fiscais")
+          .update({ motivo_status: `Falha no cancelamento: ${mensagemErro}` })
+          .eq("id", notaFiscalId);
+        if (motivoErr) console.error("Erro ao gravar motivo_status:", motivoErr);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: mensagemErro,
+          details: responseData,
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Atualizar no banco (somente com cancelamento confirmado)
     if (notaFiscalId && supabase) {
       // Buscar nome do usuário que está cancelando (snapshot para auditoria)
       let canceladoPorNome: string | null = null;
@@ -151,7 +198,7 @@ serve(async (req) => {
       } catch (_) { /* ignore */ }
 
       const updateData: Record<string, unknown> = {
-        status: responseData.status || "cancelada",
+        status: statusFocus || "cancelada",
         motivo_status: justificativa,
         cancelado_por: _userData.user.id,
         cancelado_por_nome: canceladoPorNome,
@@ -220,19 +267,6 @@ serve(async (req) => {
       }
     }
 
-    if (!response.ok) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: responseData.mensagem || "Erro ao cancelar NF-e",
-          details: responseData,
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
 
     return new Response(
       JSON.stringify({

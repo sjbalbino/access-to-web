@@ -406,9 +406,11 @@ export default function NotasFiscais() {
   };
 
   const handleCancelar = async () => {
-    if (selectedNota && justificativa.length >= 15) {
+    // A SEFAZ exige no mínimo 15 caracteres ÚTEIS (espaços nas pontas são descartados)
+    const justificativaLimpa = justificativa.trim();
+    if (selectedNota && justificativaLimpa.length >= 15) {
       const ref = selectedNota.uuid_api || `nfe_${selectedNota.id}`;
-      await focusNfe.cancelarNfe(ref, selectedNota.id, justificativa);
+      await focusNfe.cancelarNfe(ref, selectedNota.id, justificativaLimpa);
       setIsCancelDialogOpen(false);
       setSelectedNota(null);
       setJustificativa("");
@@ -416,6 +418,7 @@ export default function NotasFiscais() {
       toast.error("Justificativa deve ter no mínimo 15 caracteres");
     }
   };
+
 
   const [cceResult, setCceResult] = useState<{ open: boolean; nota: any; data: any } | null>(null);
 
@@ -903,8 +906,9 @@ export default function NotasFiscais() {
                   rows={4}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {justificativa.length}/15 caracteres mínimos
+                  {justificativa.trim().length}/15 caracteres mínimos
                 </p>
+
               </div>
             </div>
             <DialogFooter>
@@ -914,7 +918,7 @@ export default function NotasFiscais() {
               <Button
                 variant="destructive"
                 onClick={handleCancelar}
-                disabled={justificativa.length < 15 || focusNfe.isLoading}
+                disabled={justificativa.trim().length < 15 || focusNfe.isLoading}
               >
                 Cancelar NF-e
               </Button>
