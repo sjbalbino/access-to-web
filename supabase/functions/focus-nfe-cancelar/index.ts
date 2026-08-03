@@ -50,15 +50,24 @@ serve(async (req) => {
       });
     }
 
-    const { ref, notaFiscalId, justificativa } = await req.json();
+    const { ref, notaFiscalId, justificativa: justificativaRaw } = await req.json();
 
     if (!ref) {
       throw new Error("ref é obrigatório");
     }
 
-    if (!justificativa || justificativa.length < 15) {
-      throw new Error("Justificativa é obrigatória e deve ter no mínimo 15 caracteres");
+    // A SEFAZ exige no mínimo 15 caracteres ÚTEIS na justificativa
+    const justificativa = typeof justificativaRaw === "string" ? justificativaRaw.trim() : "";
+    if (justificativa.length < 15) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Justificativa é obrigatória e deve ter no mínimo 15 caracteres (sem contar espaços no início/fim)",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
 
     // Tenant isolation: caller só pode cancelar notas do próprio tenant
     if (notaFiscalId) {
