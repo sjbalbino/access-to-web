@@ -1,28 +1,34 @@
-## Objetivo
+# Corrigir "Saldo Disponível" do vendedor na Compra de Cereais
 
-Na emissão de Notas de Depósito (contra-nota CFOP 1905), o valor unitário de cada variedade hoje é fixo em R$ 1,00/kg (hard-coded). Passará a ser um campo editável por item, pré-preenchido com 1,00.
+## Diagnóstico (confirmado no banco)
 
-## Comportamento
+Produtor **PEDRO PAULO RAMIRES MIDON** (IE 472.100.820-0), safra atual, local Márcio Grings:
 
-- Na linha de inclusão de variedade, ao lado de "Quantidade (kg)", entra o campo **Valor Unitário (R$/kg)**, já preenchido com `1,00`.
-- Na lista de itens já incluídos, cada linha ganha um input de valor unitário editável (mesma UX do input de quantidade), mostrando ao lado o **valor total do item** (quantidade × unitário).
-- O rodapé "Total da nota" passa a somar `Σ (quantidade × valor_unitario)` em vez de assumir R$ 1,00/kg.
-- Texto "Valor simbólico (R$ 1,00/kg)" vira uma orientação: valor padrão sugerido R$ 1,00/kg, editável pelo operador.
-- Validação: valor unitário deve ser > 0 ao adicionar o item; ao editar, valores inválidos caem para 0 e o botão "Gerar NFe" fica bloqueado enquanto houver item com valor unitário ≤ 0.
-- Modo `readOnly` (notas importadas/autorizadas) mantém os campos desabilitados.
-- Na edição de nota existente, o valor unitário é carregado dos itens da NF-e vinculada quando houver; caso não haja, assume 1,00.
+| Movimento | Kg |
+|---|---|
+| Colheitas | 33.720 |
+| Transferências recebidas | 24.000 |
+| Devoluções de depósito | -45.720 |
+| **Saldo físico (extrato)** | **12.000** |
+| Notas de depósito emitidas | 57.720 |
+
+O select de Vendedor em `CompraDialog` usa `useInscricoesComSaldo` no modo padrão `'emissao'`, cuja fórmula é
+`Colheitas + Transf. Recebidas − Notas de Depósito Emitidas` = 33.720 + 24.000 − 57.720 = **0**.
+
+Ou seja: o valor mostrado é o "saldo a contra-notar" (quanto ainda falta emitir nota de depósito), não o saldo físico disponível para compra. Como as notas de depósito do produtor já foram totalmente emitidas, aparece 0 — mesmo havendo 12.000 kg em estoque.
+
+Também verificado: as compras de cereais desse produtor não possuem `devolucao_id` e suas quantidades coincidem exatamente com as devoluções (27.720 + 18.000 = 45.720), isto é, cada compra corresponde a uma devolução já registrada. Portanto descontar compras *e* devoluções duplicaria a saída.
+
+## Correção proposta
+
+1. Em `src/components/compra/CompraDialog.tsx`, chamar `useInscricoesComSaldo` com `modo: 'devolucao'` (saldo físico: Colheitas + Transf. Recebidas − Transf. Enviadas − Devoluções), mantendo `incluirSemSaldo: true` para continuar listando todos os produtores da granja.
+2. Em `src/hooks/useSaldosDeposito.ts`, renomear conceitualmente o modo para deixar a intenção clara: aceitar `modo: 'emissao' | 'fisico'` com `'devolucao'` mantido como alias de `'fisico'` (compatibilidade com `DevolucaoDialog` e demais chamadas), e atualizar o comentário da fórmula para citar Compra de Cereais.
+3. No rótulo do select de Vendedor, exibir "(12.000 kg disponíveis)" em vez de apenas "kg", para diferenciar do saldo a emitir.
+
+Nenhuma alteração de dados no banco é necessária — os registros do produtor estão corretos; apenas a fórmula exibida na tela de compras está inadequada.
 
 ## Detalhes técnicos
 
-Arquivo: `src/components/deposito/NotaDepositoFormDialog.tsx`
-
-1. `interface ItemNotaDeposito` ganha `valor_unitario: number`.
-2. Novo estado `valorUnitario` (string, default `"1"`) na linha de inclusão; `handleAddItem` valida e grava o valor; reset volta para `"1"`.
-3. Novo `handleUpdateItemValor(produtoId, valor)` análogo ao `handleUpdateItemQtd`.
-4. `totalKg` é mantido para os avisos de saldo; adiciona-se `totalValor = Σ (quantidade_kg × valor_unitario)`.
-5. Em `itensResolvidos` (linha ~400) inclui-se `valor_unitario` e `valor_total = quantidade × valor_unitario`; `totalNotaKg` (usado como total financeiro) é substituído por `totalNotaValor`.
-6. Insert em `notas_fiscais`: `total_produtos` / `total_nota` passam a usar o total financeiro calculado.
-7. Insert em `notas_fiscais_itens` (linha ~507) e payload `itensParaEmissao` (linha ~633): `valor_unitario` e `valor_total` reais; as bases `base_ibs` / `base_cbs` e os respectivos `valor_ibs` / `valor_cbs` passam a ser calculados sobre `valor_total` do item (hoje usam `quantidade`, que só coincidia porque o unitário era 1).
-8. O registro em `notas_deposito_emitidas` continua guardando apenas `quantidade_kg` — sem mudança de schema no banco.
-
-Nenhuma alteração de banco de dados é necessária.
+- Arquivos alterados: `src/components/compra/CompraDialog.tsx`, `src/hooks/useSaldosDeposito.ts`.
+- O modo físico não consulta `notas_deposito_emitidas`, portanto o saldo passa a acompanhar exatamente o Extrato do Produtor / Saldo Disponível dos relatórios.
+- Sem impacto nas notas de depósito (`NotaDepositoFormDialog` continua no modo `'emissao'`).
