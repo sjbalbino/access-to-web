@@ -1012,7 +1012,7 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
                   <SelectContent>
                     {vendedoresOptions.map(i => (
                       <SelectItem key={i.id} value={i.id}>
-                        {labelInscricao(i)} ({i.saldo_disponivel?.toLocaleString('pt-BR')} kg)
+                        {labelInscricao(i)} ({Math.round(i.saldo_disponivel || 0).toLocaleString('pt-BR')} kg disponíveis)
                       </SelectItem>
                     ))}
                   </SelectContent>
