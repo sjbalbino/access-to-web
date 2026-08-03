@@ -918,7 +918,7 @@ export default function NotasFiscais() {
               <Button
                 variant="destructive"
                 onClick={handleCancelar}
-                disabled={justificativa.length < 15 || focusNfe.isLoading}
+                disabled={justificativa.trim().length < 15 || focusNfe.isLoading}
               >
                 Cancelar NF-e
               </Button>
