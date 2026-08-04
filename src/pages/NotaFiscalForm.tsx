@@ -324,6 +324,11 @@ export default function NotaFiscalForm() {
     : null;
   const autoEmitente = emitenteFromInscricao || emitenteFromId;
 
+  // Transporte: a SEFAZ rejeita a NF-e quando há placa sem UF (Rejeição 574)
+  const placaSemUf = !!(formData.veiculo_placa || "").trim() && !((formData as any).veiculo_uf || "").trim();
+
+
+
   // Tab progress calculation
   const getTabProgress = () => ({
     emitente: !!formData.inscricao_produtor_id && !!autoEmitente,
