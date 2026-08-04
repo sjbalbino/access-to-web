@@ -395,15 +395,24 @@ serve(async (req) => {
           console.log(`Numero_atual_nfe avançado de ${numeroAtualEmit} para ${novoNumeroAtual} (pulando número duplicado ${numeroQueimado})`);
         }
       } else {
-        // Atualizar nota com erro normal
+        // Atualizar nota com erro normal — preservar código e mensagem da SEFAZ
+        // para auditoria e para que a UI possa traduzir a rejeição.
+        const mensagemRejeicao =
+          responseData.mensagem_sefaz ||
+          responseData.mensagem ||
+          responseData.erros?.join("; ") ||
+          "Erro desconhecido";
+        const codigoRejeicao = responseData.status_sefaz ? `Rejeição ${responseData.status_sefaz}: ` : "";
+
         await supabase
           .from("notas_fiscais")
           .update({
             status: "rejeitada",
-            motivo_status: responseData.mensagem || responseData.erros?.join("; ") || "Erro desconhecido",
+            motivo_status: `${codigoRejeicao}${mensagemRejeicao}`.substring(0, 500),
           })
           .eq("id", notaFiscalId);
       }
+
 
       return new Response(
         JSON.stringify({
