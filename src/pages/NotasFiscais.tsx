@@ -43,6 +43,8 @@ import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeDialog";
 import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
+import { buildNotaFiscalAcoes } from "@/components/notas-fiscais/notaFiscalAcoes";
+import { NotasFiscaisMobileList } from "@/components/notas-fiscais/NotasFiscaisMobileList";
 
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useAuth } from "@/contexts/AuthContext";
