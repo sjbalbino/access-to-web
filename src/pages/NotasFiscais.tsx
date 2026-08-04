@@ -447,6 +447,32 @@ export default function NotasFiscais() {
     await focusNfe.downloadArquivo(ref, tipo, nota.id);
   };
 
+  // Fonte única de verdade das ações da NF-e (usada pela tabela e pelos cards mobile)
+  const getAcoesNota = (nota: any) =>
+    buildNotaFiscalAcoes(nota, {
+      onVisualizar: () => navigate(`/notas-fiscais/${nota.id}`),
+      onDuplicar: () => handleDuplicar(nota),
+      onVisualizarDanfe: () => handleVisualizarDanfe(nota),
+      onDownload: (tipo) => handleDownload(nota, tipo),
+      onEnviarEmail: () => { setSelectedNota(nota); setIsEnviarEmailDialogOpen(true); },
+      onCartaCorrecao: () => { setSelectedNota(nota); setIsCartaCorrecaoDialogOpen(true); },
+      onCancelar: () => { setSelectedNota(nota); setIsCancelDialogOpen(true); },
+      onConsultarRejeicao: () => handleConsultarRejeicao(nota),
+      onCorrigirReenviar: () => navigate(`/notas-fiscais/${nota.id}`),
+      onExcluir: () => {
+        setSelectedNota(nota);
+        setAlsoInutilizar(
+          ["erro_autorizacao", "rejeitada", "rejeitado"].includes(nota.status) &&
+            !!nota.numero &&
+            !isEmitenteCpf(nota.emitente_id)
+        );
+        setIsDeleteDialogOpen(true);
+      },
+      consultaLoading: focusNfe.isLoading,
+    });
+
+
+
 
   const {
     dadosPaginados,
