@@ -35,7 +35,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban, Printer } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, MapPin, Scale, Pencil, Truck, FileText, Package, Eye, ExternalLink, Ban, Printer, Link2 } from "lucide-react";
 import { gerarRomaneioVendaPdf } from "@/lib/romaneioVendaPdf";
 import { useContratoVenda } from "@/hooks/useContratosVenda";
 import { buildInfoComplementarRemessa } from "@/lib/infoComplementarRemessa";
@@ -57,6 +57,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PesarBrutoDialog } from "@/components/remessas/PesarBrutoDialog";
 import { EditarRemessaDialog } from "@/components/remessas/EditarRemessaDialog";
+import { VincularNfeRemessaDialog } from "@/components/remessas/VincularNfeRemessaDialog";
 import { EmitirNfeAutomaticoDialog } from "@/components/remessas/EmitirNfeAutomaticoDialog";
 import { TransportadoraFormDialog } from "@/components/transportadoras/TransportadoraFormDialog";
 import { toast } from "sonner";
@@ -102,6 +103,7 @@ export default function RemessasVendaForm() {
   const [remessaPesar, setRemessaPesar] = useState<RemessaVenda | null>(null);
   const [remessaEditar, setRemessaEditar] = useState<RemessaVenda | null>(null);
   const [remessaEmitirNfe, setRemessaEmitirNfe] = useState<RemessaVenda | null>(null);
+  const [remessaVincularNfe, setRemessaVincularNfe] = useState<RemessaVenda | null>(null);
   const [transportadoraDialogOpen, setTransportadoraDialogOpen] = useState(false);
   const [pesoLiquido, setPesoLiquido] = useState(0);
   const [kgRemessa, setKgRemessa] = useState(0);
@@ -1058,6 +1060,17 @@ export default function RemessasVendaForm() {
                                   <Receipt className="h-4 w-4 text-primary" />
                                 </Button>
                               )}
+                              {/* Botão Vincular NF-e existente (nota emitida/corrigida pelo painel de Notas Fiscais) */}
+                              {r.status === "carregado" && !r.nota_fiscal_id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setRemessaVincularNfe(r)}
+                                  title="Vincular NF-e já emitida"
+                                >
+                                  <Link2 className="h-4 w-4 text-blue-600" />
+                                </Button>
+                              )}
                               {/* Botões para status "carregado_nfe" - Visualizar Remessa e NFe */}
                               {(r.status === "carregado_nfe" || r.nota_fiscal_id) && (
                                 <>
@@ -1190,6 +1203,19 @@ export default function RemessasVendaForm() {
           local_entrega_cep: contrato?.local_entrega_cep || "",
         }}
         onClose={() => setRemessaEditar(null)}
+      />
+
+      {/* Dialog de Vincular NF-e existente à remessa */}
+      <VincularNfeRemessaDialog
+        open={!!remessaVincularNfe}
+        onOpenChange={(open) => { if (!open) setRemessaVincularNfe(null); }}
+        remessa={remessaVincularNfe}
+        granjaId={(contrato as any)?.granja_id}
+        cpfCnpjComprador={contrato?.comprador?.cpf_cnpj}
+        onVinculado={() => {
+          queryClient.invalidateQueries({ queryKey: ["remessas_venda", id] });
+          setRemessaVincularNfe(null);
+        }}
       />
 
       {/* Dialog de Emitir NFe Automático */}
