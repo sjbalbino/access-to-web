@@ -317,6 +317,8 @@ export default function Transferencias() {
               gerarNumerosPaginas={gerarNumerosPaginas}
             />
               </div>
+              </>
+
             )}
           </CardContent>
         </Card>
