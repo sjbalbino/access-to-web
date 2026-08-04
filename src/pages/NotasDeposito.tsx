@@ -234,7 +234,75 @@ export default function NotasDeposito() {
               </div>
             ) : (
               <>
+              {/* Mobile: cards com todas as ações */}
+              <div className="sm:hidden -mx-6">
+                <MobileRecordList
+                  emptyText="Nenhuma nota de depósito encontrada"
+                  items={dadosPaginados.map((nota) => {
+                    const nfStatus = nota.nota_fiscal?.status || nota.status;
+                    const isAutorizado = nfStatus === 'autorizado';
+                    const isRascunho = !nfStatus || nfStatus === 'rascunho';
+                    const isRejeitado = nfStatus === 'rejeitado' || nfStatus === 'erro_autorizacao';
+                    const canEdit = isRascunho || isRejeitado;
+                    const statusLabel = isAutorizado
+                      ? 'Autorizado'
+                      : isRejeitado
+                        ? 'Rejeitado'
+                        : nfStatus === 'cancelado'
+                          ? 'Cancelado'
+                          : nfStatus === 'processando'
+                            ? 'Processando'
+                            : 'Rascunho';
+
+                    const acoes = nota.importado
+                      ? [{
+                          key: 'ver',
+                          label: 'Visualizar (importado)',
+                          icon: Eye,
+                          onClick: () => { setEditNotaId(nota.id); setFormDialogReadOnly(true); setFormDialogOpen(true); },
+                        }]
+                      : [
+                          ...(isAutorizado && nota.nota_fiscal_id
+                            ? [{ key: 'ver-nfe', label: 'Visualizar nota fiscal', icon: Eye, onClick: () => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`) }]
+                            : []),
+                          ...(canEdit && nota.nota_fiscal_id
+                            ? [{ key: 'editar-nfe', label: 'Editar nota fiscal', icon: Pencil, onClick: () => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`) }]
+                            : []),
+                          ...(canEdit && !nota.nota_fiscal_id
+                            ? [{ key: 'editar', label: 'Editar / Emitir NF-e', icon: Pencil, onClick: () => { setEditNotaId(nota.id); setFormDialogReadOnly(false); setFormDialogOpen(true); } }]
+                            : []),
+                          ...(isRejeitado && nota.nota_fiscal_id
+                            ? [{ key: 'reemitir', label: 'Corrigir e reemitir NF-e', icon: RotateCw, onClick: () => navigate(`/notas-fiscais/${nota.nota_fiscal_id}`) }]
+                            : []),
+                          ...(isRascunho
+                            ? [{ key: 'excluir', label: 'Excluir', icon: Trash2, destructive: true, onClick: () => setDeleteNotaId(nota.id) }]
+                            : []),
+                        ];
+
+                    return {
+                      id: nota.id,
+                      titulo: nota.inscricao_produtor ? labelInscricao(nota.inscricao_produtor).toUpperCase() : "-",
+                      subtitulo: `${nota.data_emissao ? format(parseISO(nota.data_emissao), "dd/MM/yyyy") : "-"} — NF ${nota.nota_fiscal?.numero ? `${nota.nota_fiscal.numero}/${nota.nota_fiscal.serie || 1}` : "-"}`,
+                      badge: {
+                        label: statusLabel,
+                        variant: (isRejeitado ? 'destructive' : isAutorizado ? 'default' : 'outline') as
+                          | 'default'
+                          | 'outline'
+                          | 'destructive',
+                      },
+                      campos: [
+                        { label: "Produto", valor: nota.produto?.nome || "-" },
+                        { label: "Qtde", valor: `${formatKg(nota.quantidade_kg)} kg` },
+                      ],
+                      acoes,
+                    };
+                  })}
+                />
+              </div>
+
+              <div className="hidden sm:block">
               <Table>
+
                 <TableHeader>
                   <TableRow>
                     <TableHead>Data</TableHead>
