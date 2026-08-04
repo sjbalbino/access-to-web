@@ -3,6 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapNotaToFocusNfe, validateNotaForEmission, validarIbsCbsItens, type IbsCbsItemIssue, type NotaFiscalData, type NotaFiscalItemData, type NotaReferenciadaData } from "@/lib/focusNfeMapper";
+import { traduzirRejeicaoSefaz } from "@/lib/sefazRejeicoes";
+
 
 export interface FocusNfeResult {
   success: boolean;
@@ -58,7 +60,9 @@ export function useFocusNfe() {
       if (validationErrors.length > 0) {
         toast.error("Erros de validação", {
           description: validationErrors.join("\n"),
+          duration: 15000,
         });
+
         return {
           success: false,
           error: "Erros de validação",
@@ -174,11 +178,20 @@ export function useFocusNfe() {
 
       if (!data.success) {
         setStatus("erro");
+        const detalhes = (data.details || {}) as Record<string, unknown>;
+        const mensagemSefaz =
+          (detalhes.mensagem_sefaz as string) ||
+          (detalhes.mensagem as string) ||
+          (Array.isArray(detalhes.erros) ? (detalhes.erros as string[]).join("; ") : undefined) ||
+          data.error;
+        const codigoSefaz = (detalhes.status_sefaz as string) || undefined;
         toast.error("Erro ao emitir NF-e", {
-          description: data.error || "Erro desconhecido",
+          description: traduzirRejeicaoSefaz(mensagemSefaz, codigoSefaz),
+          duration: 15000,
         });
         return data;
       }
+
 
       setStatus("processando");
       toast.success("NF-e enviada para processamento", {

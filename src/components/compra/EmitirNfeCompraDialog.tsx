@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, CheckCircle2, XCircle, AlertCircle, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { traduzirRejeicaoSefaz } from "@/lib/sefazRejeicoes";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { CompraCereal, useUpdateCompraCereal } from "@/hooks/useComprasCereais";
@@ -550,12 +551,16 @@ export function EmitirNfeCompraDialog({
           const motivo = (pollResult.data as Record<string, unknown>)?.mensagem_sefaz as string ||
             (pollResult.data as Record<string, unknown>)?.motivo_status as string ||
             "NFe não foi autorizada";
+          const motivoTraduzido = traduzirRejeicaoSefaz(
+            motivo,
+            (pollResult.data as Record<string, unknown>)?.codigo_status as string
+          );
 
           setStatus({
             step: "error",
             message: "NFe rejeitada pela SEFAZ",
             progress: 100,
-            details: motivo,
+            details: motivoTraduzido,
             notaFiscalId: notaFiscal.id,
           });
         }

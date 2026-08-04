@@ -778,13 +778,64 @@ export function validarIbsCbsItens(itens: NotaFiscalItemData[]): IbsCbsItemIssue
   return issues;
 }
 
+/**
+ * Valida o grupo de Transporte (transportador + veículo) antes de transmitir.
+ * Evita rejeições genéricas da SEFAZ como a "Rejeição 574: UF do veículo não informada",
+ * apontando exatamente o campo a corrigir na aba Transporte.
+ */
+export function validarTransporte(nota: NotaFiscalData): string[] {
+  const errors: string[] = [];
+
+  const placa = (nota.veiculo_placa || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+  const ufPlaca = (nota.veiculo_uf || "").trim().toUpperCase();
+  const transpNome = (nota.transp_nome || "").trim();
+  const transpDoc = (nota.transp_cpf_cnpj || "").replace(/\D/g, "");
+  const transpUf = (nota.transp_uf || "").trim().toUpperCase();
+  const modalidade = nota.modalidade_frete ?? 9;
+
+  if (placa && !ufPlaca) {
+    errors.push(
+      "Aba Transporte > Veículo: informe a UF da Placa (obrigatória sempre que a placa é informada) — a SEFAZ rejeita a NF-e sem esse campo."
+    );
+  }
+  if (!placa && ufPlaca) {
+    errors.push("Aba Transporte > Veículo: a UF foi informada, mas a Placa está em branco. Informe a placa ou limpe a UF.");
+  }
+  if (placa && (placa.length < 7 || placa.length > 7)) {
+    errors.push(
+      "Aba Transporte > Veículo: Placa inválida. Informe 7 caracteres, sem pontos ou traços (ex.: ABC1D23 ou ABC1234)."
+    );
+  }
+
+  // Frete contratado (0=CIF, 1=FOB, 2=Terceiros, 3/4=próprio) exige identificar quem transporta
+  const freteContratado = [0, 1, 2, 3, 4].includes(Number(modalidade));
+  if (freteContratado && !transpNome && !transpDoc && !placa) {
+    errors.push(
+      "Aba Transporte: a Modalidade do Frete indica transporte contratado. Informe o Transportador (nome/CPF-CNPJ) ou, no mínimo, a Placa e a UF do veículo. Se não houver transporte, selecione 'Sem Frete'."
+    );
+  }
+
+  if ((transpNome || transpDoc) && !transpUf) {
+    errors.push("Aba Transporte > Transportador: informe a UF do transportador.");
+  }
+  if (transpDoc && transpDoc.length !== 11 && transpDoc.length !== 14) {
+    errors.push("Aba Transporte > Transportador: CPF/CNPJ inválido (informe 11 dígitos para CPF ou 14 para CNPJ).");
+  }
+
+  return errors;
+}
 
 export function validateNotaForEmission(nota: NotaFiscalData, itens: NotaFiscalItemData[]): string[] {
   const errors: string[] = [];
-  
+
   if (!nota.data_emissao) {
     errors.push("Data de emissão é obrigatória");
   }
+
+  // Transporte / Veículo
+  errors.push(...validarTransporte(nota));
+
+
   
   // Validar emitente (inscrição do produtor) - aceitar CPF ou CNPJ
   if (!nota.inscricaoProdutor?.cpf_cnpj) {
