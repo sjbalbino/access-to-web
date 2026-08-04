@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,7 @@ interface FormData {
 
 export default function RemessasVendaForm() {
   const { id } = useParams();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [remessaCancelar, setRemessaCancelar] = useState<RemessaVenda | null>(null);
