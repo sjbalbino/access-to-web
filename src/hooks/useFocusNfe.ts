@@ -60,7 +60,9 @@ export function useFocusNfe() {
       if (validationErrors.length > 0) {
         toast.error("Erros de validação", {
           description: validationErrors.join("\n"),
+          duration: 15000,
         });
+
         return {
           success: false,
           error: "Erros de validação",
