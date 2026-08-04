@@ -442,6 +442,7 @@ export default function NotasDeposito() {
                   })}
                 </TableBody>
               </Table>
+              </div>
               <TablePagination
                 paginaAtual={paginaAtual}
                 totalPaginas={totalPaginas}
@@ -450,6 +451,7 @@ export default function NotasDeposito() {
                 gerarNumerosPaginas={gerarNumerosPaginas}
               />
               </>
+
             )}
           </CardContent>
         </Card>
