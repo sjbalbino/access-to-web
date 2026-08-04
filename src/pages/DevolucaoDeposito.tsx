@@ -21,6 +21,8 @@ import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ComboboxFilter } from '@/components/ui/combobox-filter';
 import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
+import { MobileRecordList } from '@/components/shared/MobileRecordList';
+
 
 export default function DevolucaoDeposito() {
   const [granjaId, setGranjaId] = useState<string>('');
