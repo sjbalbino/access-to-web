@@ -174,11 +174,20 @@ export function useFocusNfe() {
 
       if (!data.success) {
         setStatus("erro");
+        const detalhes = (data.details || {}) as Record<string, unknown>;
+        const mensagemSefaz =
+          (detalhes.mensagem_sefaz as string) ||
+          (detalhes.mensagem as string) ||
+          (Array.isArray(detalhes.erros) ? (detalhes.erros as string[]).join("; ") : undefined) ||
+          data.error;
+        const codigoSefaz = (detalhes.status_sefaz as string) || undefined;
         toast.error("Erro ao emitir NF-e", {
-          description: data.error || "Erro desconhecido",
+          description: traduzirRejeicaoSefaz(mensagemSefaz, codigoSefaz),
+          duration: 15000,
         });
         return data;
       }
+
 
       setStatus("processando");
       toast.success("NF-e enviada para processamento", {
