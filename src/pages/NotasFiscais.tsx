@@ -255,9 +255,10 @@ export default function NotasFiscais() {
     setMotivoDialog({
       open: true,
       titulo: `NF-e nº ${nota.numero} — ${d.status || nota.status}${codigo}`,
-      mensagem: String(msg),
+      mensagem: traduzirRejeicaoSefaz(String(msg), d.codigo_status || d.status_sefaz),
     });
   };
+
 
   const handleDuplicar = async (nota: any) => {
     try {
