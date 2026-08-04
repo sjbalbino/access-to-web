@@ -20,6 +20,8 @@ import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ComboboxFilter } from '@/components/ui/combobox-filter';
 import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
+import { MobileRecordList } from '@/components/shared/MobileRecordList';
+
 
 export default function CompraCereais() {
   const [granjaId, setGranjaId] = useState<string>('');
@@ -149,7 +151,47 @@ export default function CompraCereais() {
             <CardTitle>Compras Registradas</CardTitle>
           </CardHeader>
           <CardContent className="p-0 overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* Mobile: cards com todas as ações */}
+            <div className="sm:hidden">
+              <MobileRecordList
+                loading={isLoading}
+                emptyText="Nenhuma compra encontrada"
+                items={dadosPaginados.map((c) => ({
+                  id: c.id,
+                  titulo: (c.inscricao_vendedor?.produtores?.nome || "-").toUpperCase(),
+                  subtitulo: `${format(parseISO(c.data_compra), 'dd/MM/yyyy')} — ${c.produto?.nome || "-"}`,
+                  badge: {
+                    label: c.status === 'nfe_emitida' ? 'NFe Emitida' : 'Pendente',
+                    variant: c.status === 'nfe_emitida' ? ('default' as const) : ('secondary' as const),
+                  },
+                  campos: [
+                    { label: "Qtde", valor: `${formatKg(c.quantidade_kg)} kg` },
+                    { label: "Valor", valor: `R$ ${formatNumber(c.valor_total, 2)}` },
+                  ],
+                  acoes: c.importado
+                    ? [{ key: 'ver', label: 'Visualizar (importado)', icon: Eye, onClick: () => handleVisualizarCompra(c) }]
+                    : [
+                        { key: 'nfe', label: c.nota_fiscal_id ? 'NF-e já emitida' : 'Emitir NF-e', icon: Send, onClick: () => handleEmitirNfe(c), disabled: !!c.nota_fiscal_id },
+                        ...(!c.nota_fiscal_id
+                          ? [{ key: 'vincular', label: 'Vincular NF-e existente', icon: Link2, onClick: () => setVincularCompra(c) }]
+                          : []),
+                        { key: 'editar', label: 'Editar', icon: Edit, onClick: () => handleEditarCompra(c), disabled: !!c.nota_fiscal_id },
+                        {
+                          key: 'excluir',
+                          label: 'Excluir',
+                          icon: Trash2,
+                          destructive: true,
+                          disabled: !!c.nota_fiscal_id,
+                          onClick: async () => {
+                            if (await confirmarExclusao('Tem certeza que deseja excluir esta compra?')) deleteCompra.mutate(c.id);
+                          },
+                        },
+                      ],
+                }))}
+              />
+            </div>
+
+            <div className="hidden sm:block overflow-x-auto">
               <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
@@ -210,6 +252,7 @@ export default function CompraCereais() {
                 </TableBody>
               </Table>
             </div>
+
             <div className="px-4">
               <TablePagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalRegistros={totalRegistros} setPaginaAtual={setPaginaAtual} gerarNumerosPaginas={gerarNumerosPaginas} />
             </div>

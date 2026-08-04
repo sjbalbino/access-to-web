@@ -21,6 +21,8 @@ import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ComboboxFilter } from '@/components/ui/combobox-filter';
 import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
+import { MobileRecordList } from '@/components/shared/MobileRecordList';
+
 
 export default function DevolucaoDeposito() {
   const [granjaId, setGranjaId] = useState<string>('');
@@ -179,8 +181,49 @@ export default function DevolucaoDeposito() {
             <CardTitle>Devoluções Registradas</CardTitle>
           </CardHeader>
           <CardContent className="p-0 overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* Mobile: cards com todas as ações */}
+            <div className="sm:hidden">
+              <MobileRecordList
+                loading={isLoading}
+                emptyText="Nenhuma devolução encontrada"
+                items={dadosPaginados.map((d) => ({
+                  id: d.id,
+                  titulo: (d.inscricao_produtor?.produtores?.nome || "-").toUpperCase(),
+                  subtitulo: `${format(new Date(d.data_devolucao), 'dd/MM/yyyy')} — ${d.produto?.nome || "-"}`,
+                  badge: {
+                    label: d.status === 'nfe_emitida' ? 'NFe Emitida' : 'Pendente',
+                    variant: d.status === 'nfe_emitida' ? ('default' as const) : ('secondary' as const),
+                  },
+                  campos: [
+                    { label: "Qtde", valor: `${formatKg(d.quantidade_kg)} kg` },
+                    { label: "Valor", valor: `R$ ${formatNumber(d.valor_total || 0, 2)}` },
+                  ],
+                  acoes: d.importado
+                    ? [{ key: 'ver', label: 'Visualizar (importado)', icon: Eye, onClick: () => handleVisualizarDevolucao(d) }]
+                    : [
+                        { key: 'nfe', label: d.nota_fiscal_id ? 'NF-e já emitida' : 'Emitir NF-e', icon: Send, onClick: () => setNfeDialogDevolucao(d), disabled: !!d.nota_fiscal_id },
+                        ...(!d.nota_fiscal_id
+                          ? [{ key: 'vincular', label: 'Vincular NF-e existente', icon: Link2, onClick: () => setVincularDevolucao(d) }]
+                          : []),
+                        { key: 'editar', label: 'Editar', icon: Edit, onClick: () => handleEditarDevolucao(d), disabled: !!d.nota_fiscal_id },
+                        {
+                          key: 'excluir',
+                          label: 'Excluir',
+                          icon: Trash2,
+                          destructive: true,
+                          disabled: !!d.nota_fiscal_id,
+                          onClick: async () => {
+                            if (await confirmarExclusao('Tem certeza que deseja excluir esta devolução?')) deleteDevolucao.mutate(d.id);
+                          },
+                        },
+                      ],
+                }))}
+              />
+            </div>
+
+            <div className="hidden sm:block overflow-x-auto">
               <Table className="min-w-[600px]">
+
                 <TableHeader>
                   <TableRow>
                     <TableHead>Data</TableHead>
