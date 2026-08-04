@@ -1144,7 +1144,12 @@ export default function NotasFiscais() {
                   <Spinner />
                 </div>
               ) : (
-                <DanfePdfViewer pdfData={danfePreview.pdfData} />
+                <DanfePdfViewer
+                  pdfData={danfePreview.pdfData}
+                  downloadUrl={danfePreview.downloadUrl}
+                  filename={danfePreview.filename}
+                />
+
               )}
             </div>
           </DialogContent>
