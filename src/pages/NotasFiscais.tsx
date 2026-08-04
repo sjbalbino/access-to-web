@@ -692,50 +692,31 @@ export default function NotasFiscais() {
                             )}
                           </TableCell>
                           {canEdit && (() => {
-                            const isAutorizada = nota.status === "autorizado" || nota.status === "autorizada";
-                            const isCancelada = nota.status === "cancelado" || nota.status === "cancelada";
-                            const isRejeitada = nota.status === "rejeitada" || nota.status === "rejeitado" || nota.status === "erro_autorizacao";
-                            const isRejeitadaOuProcessando = isRejeitada || nota.status === "processando";
-                            const podeExcluir = nota.status === "rascunho" || isRejeitada;
-                            const temCce = typeof nota.info_complementar === "string" && nota.info_complementar.includes("Carta de Correção");
-                            const temMenu = isAutorizada || isCancelada || podeExcluir;
+                            const acoes = getAcoesNota(nota);
+                            const primarias = acoes.filter((a) => a.group === "primary");
+                            const secundarias = acoes.filter((a) => a.group === "secondary");
                             const iconBtn = "h-7 w-7";
                             const iconSize = "h-3.5 w-3.5";
                             return (
                               <TableCell className="py-1 px-2">
                                 <div className="flex flex-nowrap items-center justify-end gap-0.5">
-                                  <Button variant="ghost" size="icon" className={`${iconBtn} text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950`} onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Visualizar/Editar">
-                                    <Eye className={iconSize} />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className={`${iconBtn} text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-950`} onClick={() => handleDuplicar(nota)} title="Duplicar NF-e (nova cópia como rascunho)">
-                                    <Copy className={iconSize} />
-                                  </Button>
-                                  {isAutorizada && (
-                                    <>
-                                      <Button variant="ghost" size="icon" className={`${iconBtn} text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950`} onClick={() => handleVisualizarDanfe(nota)} title="Visualizar DANFE">
-                                        <FileSearch className={iconSize} />
+                                  {primarias.map((acao) => {
+                                    const Icon = acao.icon;
+                                    return (
+                                      <Button
+                                        key={acao.key}
+                                        variant="ghost"
+                                        size="icon"
+                                        className={`${iconBtn} ${acao.buttonClass ?? ""}`}
+                                        onClick={acao.onClick}
+                                        title={acao.label}
+                                        disabled={acao.disabled}
+                                      >
+                                        <Icon className={iconSize} />
                                       </Button>
-                                      <Button variant="ghost" size="icon" className={`${iconBtn} text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950`} onClick={() => handleDownload(nota, "danfe")} title="Download DANFE">
-                                        <Download className={iconSize} />
-                                      </Button>
-                                    </>
-                                  )}
-                                  {isCancelada && (
-                                    <Button variant="ghost" size="icon" className={`${iconBtn} text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950`} onClick={() => handleDownload(nota, "danfe")} title="Baixar DANFE (com tarja CANCELADA)">
-                                      <Download className={iconSize} />
-                                    </Button>
-                                  )}
-                                  {isRejeitadaOuProcessando && (
-                                    <>
-                                      <Button variant="ghost" size="icon" className={`${iconBtn} text-destructive hover:text-destructive hover:bg-destructive/10`} onClick={() => handleConsultarRejeicao(nota)} title="Consultar motivo da rejeição" disabled={focusNfe.isLoading}>
-                                        <AlertCircle className={iconSize} />
-                                      </Button>
-                                      <Button variant="ghost" size="icon" className={`${iconBtn} text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950`} onClick={() => navigate(`/notas-fiscais/${nota.id}`)} title="Corrigir e reenviar">
-                                        <Send className={iconSize} />
-                                      </Button>
-                                    </>
-                                  )}
-                                  {temMenu && (
+                                    );
+                                  })}
+                                  {secundarias.length > 0 && (
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="icon" className={`${iconBtn} text-muted-foreground`} title="Mais ações" aria-label="Mais ações">
@@ -743,54 +724,18 @@ export default function NotasFiscais() {
                                         </Button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end" className="w-56 bg-popover">
-                                        {isAutorizada && (
-                                          <>
-                                            <DropdownMenuItem onClick={() => handleDownload(nota, "xml")}>
-                                              <FileText className="h-4 w-4 mr-2 text-teal-600" /> Download XML
+                                        {secundarias.map((acao) => {
+                                          const Icon = acao.icon;
+                                          return (
+                                            <DropdownMenuItem
+                                              key={acao.key}
+                                              onClick={acao.onClick}
+                                              className={acao.destructive ? "text-destructive focus:text-destructive" : undefined}
+                                            >
+                                              <Icon className={`h-4 w-4 mr-2 ${acao.iconClass ?? ""}`} /> {acao.label}
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => { setSelectedNota(nota); setIsEnviarEmailDialogOpen(true); }}>
-                                              <Mail className="h-4 w-4 mr-2 text-sky-600" /> Enviar por Email
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => { setSelectedNota(nota); setIsCartaCorrecaoDialogOpen(true); }}>
-                                              <FileEdit className="h-4 w-4 mr-2 text-amber-600" /> Carta de Correção
-                                            </DropdownMenuItem>
-                                            {temCce && (
-                                              <>
-                                                <DropdownMenuItem onClick={() => handleDownload(nota, "cce_pdf")}>
-                                                  <Download className="h-4 w-4 mr-2 text-amber-700" /> PDF da Carta de Correção
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDownload(nota, "cce_xml")}>
-                                                  <FileText className="h-4 w-4 mr-2 text-amber-700" /> XML da Carta de Correção
-                                                </DropdownMenuItem>
-                                              </>
-                                            )}
-                                            <DropdownMenuItem onClick={() => { setSelectedNota(nota); setIsCancelDialogOpen(true); }}>
-                                              <XCircle className="h-4 w-4 mr-2 text-orange-600" /> Cancelar NF-e
-                                            </DropdownMenuItem>
-                                          </>
-                                        )}
-                                        {isCancelada && (
-                                          <>
-                                            <DropdownMenuItem onClick={() => handleDownload(nota, "xml")}>
-                                              <FileText className="h-4 w-4 mr-2 text-teal-600" /> Baixar XML da NF-e
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleDownload(nota, "xml_cancelamento")}>
-                                              <FileText className="h-4 w-4 mr-2 text-rose-600" /> Baixar XML de Cancelamento
-                                            </DropdownMenuItem>
-                                          </>
-                                        )}
-                                        {podeExcluir && (
-                                          <DropdownMenuItem
-                                            className="text-destructive focus:text-destructive"
-                                            onClick={() => {
-                                              setSelectedNota(nota);
-                                              setAlsoInutilizar(["erro_autorizacao", "rejeitada", "rejeitado"].includes(nota.status) && !!nota.numero && !isEmitenteCpf(nota.emitente_id));
-                                              setIsDeleteDialogOpen(true);
-                                            }}
-                                          >
-                                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                                          </DropdownMenuItem>
-                                        )}
+                                          );
+                                        })}
                                       </DropdownMenuContent>
                                     </DropdownMenu>
                                   )}
