@@ -2331,16 +2331,33 @@ export default function NotaFiscalForm() {
                 <Input
                   id="veiculo_placa"
                   value={formData.veiculo_placa || ""}
-                  onChange={(e) => setFormData({ ...formData, veiculo_placa: e.target.value })}
+                  maxLength={7}
+                  placeholder="ABC1D23"
+                  onChange={(e) => {
+                    const placa = e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 7);
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      veiculo_placa: placa,
+                      // Sugere a UF automaticamente (transportador > emitente) para evitar
+                      // a Rejeição 574 (UF do veículo não informada)
+                      veiculo_uf:
+                        prev.veiculo_uf ||
+                        (placa
+                          ? prev.transp_uf || selectedInscricao?.uf || ""
+                          : ""),
+                    }));
+                  }}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="veiculo_uf">UF</Label>
+                <Label htmlFor="veiculo_uf" className={placaSemUf ? "text-destructive" : undefined}>
+                  UF {formData.veiculo_placa ? "*" : ""}
+                </Label>
                 <Select isSearchable
                   value={formData.veiculo_uf || ""}
                   onValueChange={(value) => setFormData({ ...formData, veiculo_uf: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={placaSemUf ? "border-destructive ring-1 ring-destructive" : undefined}>
                     <SelectValue placeholder="UF" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2351,7 +2368,13 @@ export default function NotaFiscalForm() {
                     ))}
                   </SelectContent>
                 </Select>
+                {placaSemUf && (
+                  <p className="text-xs text-destructive">
+                    Obrigatório quando a placa é informada — a SEFAZ rejeita a NF-e sem a UF do veículo (Rejeição 574).
+                  </p>
+                )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="veiculo_rntc">RNTC</Label>
                 <Input
