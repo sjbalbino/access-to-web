@@ -218,8 +218,41 @@ export default function Transferencias() {
                 Nenhuma transferência encontrada
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              {/* Mobile: cards com todas as ações */}
+              <div className="sm:hidden">
+                <MobileRecordList
+                  emptyText="Nenhuma transferência encontrada"
+                  items={dadosPaginados.map((t) => ({
+                    id: t.id,
+                    titulo: `${(t.inscricao_origem?.produtores?.nome || t.inscricao_origem?.inscricao_estadual || "-").toUpperCase()} → ${(t.inscricao_destino?.produtores?.nome || t.inscricao_destino?.inscricao_estadual || "-").toUpperCase()}`,
+                    subtitulo: `#${t.codigo} — ${new Date(t.data_transferencia).toLocaleDateString('pt-BR')}`,
+                    campos: [
+                      { label: "Safra", valor: t.safra?.nome || "-" },
+                      { label: "Produto", valor: t.produto?.nome || "-" },
+                      { label: "Tipo", valor: t.tipo === 'industria' ? 'Indústria' : t.tipo === 'semente' ? 'Semente' : '-' },
+                      { label: "Qtde", valor: `${formatKg(t.quantidade_kg)} kg` },
+                    ],
+                    acoes: t.importado
+                      ? [{ key: 'ver', label: 'Visualizar (importado)', icon: Eye, onClick: () => handleVisualizarTransferencia(t) }]
+                      : [
+                          { key: 'editar', label: 'Editar', icon: Pencil, onClick: () => handleEditarTransferencia(t) },
+                          { key: 'excluir', label: 'Excluir', icon: Trash2, destructive: true, onClick: () => setDeleteId(t.id) },
+                        ],
+                  }))}
+                />
+                <TablePagination
+                  paginaAtual={paginaAtual}
+                  totalPaginas={totalPaginas}
+                  totalRegistros={totalRegistros}
+                  setPaginaAtual={setPaginaAtual}
+                  gerarNumerosPaginas={gerarNumerosPaginas}
+                />
+              </div>
+
+              <div className="hidden sm:block overflow-x-auto">
                 <Table className="min-w-[600px]">
+
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-20">Código</TableHead>
