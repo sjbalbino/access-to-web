@@ -76,6 +76,7 @@ const formatDataEmissao = (dataEmissao: string | null | undefined, createdAt: st
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { toast } from "sonner";
 import { formatCpfCnpj } from "@/lib/formatters";
+import { traduzirRejeicaoSefaz } from "@/lib/sefazRejeicoes";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
