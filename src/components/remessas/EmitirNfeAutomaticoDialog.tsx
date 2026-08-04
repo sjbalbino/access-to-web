@@ -529,7 +529,7 @@ export function EmitirNfeAutomaticoDialog({
             step: "error",
             message: "NFe rejeitada pela SEFAZ",
             progress: 100,
-            details: motivo,
+            details: motivoTraduzido,
             notaFiscalId: notaFiscal.id,
           });
         }
