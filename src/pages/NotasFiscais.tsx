@@ -576,7 +576,21 @@ export default function NotasFiscais() {
         </div>
 
         <div className="border rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Mobile: cards com menu de ações completo */}
+          <div className="sm:hidden">
+            <NotasFiscaisMobileList
+              notas={dadosPaginados}
+              collapsedGroups={collapsedGroups}
+              toggleGroup={toggleGroup}
+              canEdit={canEdit}
+              getAcoes={getAcoesNota}
+              formatCurrency={formatCurrency}
+              formatStatusLabel={getStatusLabel}
+              getStatusVariant={getStatusBadgeVariant}
+              formatDataEmissao={formatDataEmissao}
+            />
+          </div>
+          <div className="overflow-x-auto hidden sm:block">
             <Table className="min-w-[620px] table-fixed">
               <TableHeader>
                 <TableRow>
