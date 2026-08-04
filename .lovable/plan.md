@@ -1,33 +1,34 @@
-# Cancelamento da NF-e 145 e vínculo com a Remessa
+# Remessa não atualiza para "Carregado/NFe" quando a NF-e é emitida pelo painel de Notas Fiscais
 
 ## Diagnóstico (confirmado no banco)
 
-- NF-e **145** (série 930, 33.640 kg, ADM DO BRASIL) foi criada às 12:36 e cancelada às 12:52 com a justificativa "essa nota esta om duplicidade". Status atual: `cancelado`.
-- Nenhuma remessa aponta para essa NF-e (`remessas_venda.nota_fiscal_id` = id da 145 retorna zero linhas).
-- A remessa que a gerou é a de **romaneio 8569 / código 64**, mesma quantidade (33.640 kg), criada às 12:36:09 — e o `updated_at` dela é idêntico ao `created_at`: **ela nunca foi atualizada**. Continua com `status = "carregado"` e `nota_fiscal_id = null`.
-- Em seguida foi emitida a NF-e **146** (mesma quantidade, criada 12:37, autorizada às 12:44) — também sem vínculo com a remessa 8569.
+- Remessa **romaneio 8569 (código 64)**, 33.640 kg, contrato c2f3a335…: `status = "carregado"`, `nota_fiscal_id = null`, `updated_at` igual ao `created_at` — nunca foi atualizada.
+- NF-e **146** (série 930, mesma quantidade, ADM DO BRASIL) foi rejeitada na primeira tentativa, corrigida e emitida pelo painel de **Notas Fiscais**; hoje está `autorizado`. A NF-e **145** foi cancelada por duplicidade.
+- A tabela `notas_fiscais` **não tem** nenhuma coluna que aponte para a remessa. O único vínculo é `remessas_venda.nota_fiscal_id`, e ele só é gravado pelo diálogo de emissão automática da remessa, depois do polling retornar "autorizado".
 
-Conclusão: o cancelamento da 145 não pôde "cancelar a remessa" porque a remessa **nunca ficou vinculada à nota**. O vínculo (`nota_fiscal_id` + status `carregado_nfe`) só é gravado no navegador, após o polling da SEFAZ retornar "autorizado" (limite de 30 tentativas × 3s ≈ 90s). A 145 e a 146 demoraram mais que isso / o diálogo foi fechado antes, então a gravação nunca ocorreu — e a remessa permaneceu "carregado", permitindo a segunda emissão que gerou a duplicidade.
+Ou seja: quando a nota é rejeitada e depois reemitida/corrigida fora do fluxo da remessa, ninguém grava o vínculo — a remessa fica presa em "Carregado" para sempre.
 
 ## O que será feito
 
-### 1. Vincular a NF-e à remessa no momento da criação (causa raiz)
-Na emissão automática de remessa, gravar `nota_fiscal_id` na remessa e mudar o status para "carregado_nfe" **imediatamente após criar a nota / enviar para a SEFAZ**, sem depender do polling. Assim:
-- a remessa deixa de aceitar uma segunda emissão (evita duplicidade como 145/146);
-- qualquer cancelamento posterior encontra a remessa e propaga corretamente.
+### 1. Vincular a remessa à NF-e no momento da criação da nota
+No diálogo de emissão automática, gravar `nota_fiscal_id` na remessa assim que a nota é criada (antes do resultado da SEFAZ), mantendo o status como "carregado" até a autorização. Assim o vínculo existe mesmo em caso de rejeição, e qualquer correção/reemissão posterior é reconhecida.
 
-Se a emissão falhar antes de ir para a SEFAZ (erro de validação/rejeição imediata), o vínculo é desfeito e a remessa volta para "carregado".
+### 2. Sincronizar o status automaticamente quando a NF-e for autorizada
+Trigger no banco em `notas_fiscais`: quando o `status` passar para `autorizado`/`autorizada`, toda remessa vinculada àquela nota vai para `carregado_nfe`. Quando a nota for cancelada/inutilizada, a remessa volta para `carregado` e é desvinculada, liberando a reemissão.
 
-### 2. Cancelamento libera a remessa para reemissão
-Na função de cancelamento, remessas vinculadas passam a voltar para `status = "carregado"` com `nota_fiscal_id = null` (hoje ficam "cancelada"). Motivo: o caso típico é cancelamento por duplicidade/erro fiscal, em que a carga física existe e precisa de nova NF-e. O cancelamento da remessa em si continua disponível manualmente na tela de remessas.
+Com isso, tanto a emissão pelo painel de Notas Fiscais quanto a correção de uma rejeição atualizam a remessa sozinhas, sem depender do navegador ficar aberto.
 
-### 3. Saneamento dos dados atuais
-- Vincular a remessa **romaneio 8569** à NF-e **146** (autorizada) e marcar como `carregado_nfe`.
-- Conferir se existem outras remessas em "carregado" com NF-e autorizada de mesma quantidade/data sem vínculo e reportar a lista antes de qualquer ajuste adicional.
+### 3. Vinculação manual para casos órfãos (como a 8569)
+Na lista de remessas, para remessas em "Carregado" sem NF-e, um botão **"Vincular NF-e"** abre um seletor com as notas autorizadas compatíveis (mesmo destinatário/quantidade/período) para vincular manualmente. Ao vincular, o status vai para "Carregado/NFe".
+
+### 4. Saneamento dos dados atuais
+Vincular a remessa **8569** à NF-e **146** (autorizada) e marcar como `carregado_nfe`. Verificar e listar outras remessas em "Carregado" com nota autorizada compatível sem vínculo antes de qualquer outro ajuste.
 
 ## Detalhes técnicos
 
-- `src/components/remessas/EmitirNfeAutomaticoDialog.tsx`: mover o `updateRemessa.mutateAsync({ nota_fiscal_id, status: "carregado_nfe" })` para logo após o insert em `notas_fiscais` / retorno positivo de `emitirNfe`; adicionar rollback (`nota_fiscal_id: null`, `status: "carregado"`) nos ramos de erro e no `catch`.
-- `supabase/functions/focus-nfe-cancelar/index.ts` (bloco "4. Cancelar remessas de venda"): trocar `{ status: "cancelada", nota_fiscal_id: null }` por `{ status: "carregado", nota_fiscal_id: null }`, mantendo o log.
-- Saneamento via migração de UPDATE pontual na remessa 8569.
-- Sem alterações de schema, RLS ou grants.
+- `src/components/remessas/EmitirNfeAutomaticoDialog.tsx`: gravar `{ nota_fiscal_id }` na remessa logo após o insert em `notas_fiscais`; manter a mudança para `carregado_nfe` no sucesso (redundante com o trigger, mas mantém a UI imediata) e desfazer o vínculo se a nota falhar antes de ir à SEFAZ.
+- Migração: função `trg_sync_remessa_status_nfe()` (SECURITY DEFINER, `search_path = public`) + trigger `AFTER UPDATE OF status ON notas_fiscais` atualizando `remessas_venda` por `nota_fiscal_id`.
+- `supabase/functions/focus-nfe-cancelar/index.ts`: remessas vinculadas voltam para `status = "carregado"` com `nota_fiscal_id = null` (hoje ficam "cancelada"), coerente com o trigger.
+- Novo `src/components/remessas/VincularNfeRemessaDialog.tsx` + botão em `src/pages/RemessasVendaForm.tsx`.
+- Migração pontual de UPDATE para a remessa 8569 → NF-e 146.
+- Sem novas tabelas; sem mudança de RLS ou grants.
