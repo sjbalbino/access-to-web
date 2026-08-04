@@ -31,6 +31,8 @@ import { NotaDepositoFormDialog } from "@/components/deposito/NotaDepositoFormDi
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
+import { MobileRecordList } from "@/components/shared/MobileRecordList";
+
 
 export default function NotasDeposito() {
   const navigate = useNavigate();
