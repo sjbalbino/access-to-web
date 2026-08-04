@@ -3,6 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapNotaToFocusNfe, validateNotaForEmission, validarIbsCbsItens, type IbsCbsItemIssue, type NotaFiscalData, type NotaFiscalItemData, type NotaReferenciadaData } from "@/lib/focusNfeMapper";
+import { traduzirRejeicaoSefaz } from "@/lib/sefazRejeicoes";
+
 
 export interface FocusNfeResult {
   success: boolean;
