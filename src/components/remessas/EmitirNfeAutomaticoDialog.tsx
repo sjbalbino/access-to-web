@@ -312,6 +312,18 @@ export function EmitirNfeAutomaticoDialog({
         throw new Error(`Erro ao criar nota fiscal: ${nfError?.message}`);
       }
 
+      // Vincular a nota à remessa IMEDIATAMENTE (antes do retorno da SEFAZ).
+      // Isso evita emissões duplicadas e garante que correções/reemissões feitas
+      // pelo painel de Notas Fiscais atualizem o status da remessa via trigger.
+      try {
+        await supabase
+          .from("remessas_venda")
+          .update({ nota_fiscal_id: notaFiscal.id })
+          .eq("id", remessa.id);
+      } catch (linkError) {
+        console.error("Falha ao vincular NFe à remessa:", linkError);
+      }
+
       setStatus({ step: "creating_item", message: "Adicionando item à nota...", progress: 45, notaFiscalId: notaFiscal.id });
 
       // 3. Criar o item da nota fiscal
@@ -479,6 +491,11 @@ export function EmitirNfeAutomaticoDialog({
       const emitResult = await focusNfe.emitirNfe(notaFiscal.id, notaDataForEmission, itensDataForEmission);
 
       if (!emitResult.success) {
+        // Não foi para a SEFAZ: desfazer o vínculo para permitir nova tentativa
+        await supabase
+          .from("remessas_venda")
+          .update({ nota_fiscal_id: null, status: "carregado" })
+          .eq("id", remessa.id);
         setStatus({
           step: "error",
           message: "Erro ao emitir NFe",
