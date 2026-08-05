@@ -382,6 +382,16 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
                               )}
                             />
                             <span className="truncate">{getInscricaoLabel(i)}</span>
+                            {safraId && produtoId && (
+                              <span
+                                className={cn(
+                                  "ml-auto pl-2 text-xs whitespace-nowrap",
+                                  (saldoMap.get(i.id) || 0) > 0 ? "text-muted-foreground" : "text-destructive font-medium"
+                                )}
+                              >
+                                {formatKg(saldoMap.get(i.id) || 0)} kg
+                              </span>
+                            )}
                           </CommandItem>
                         ))}
                       </CommandGroup>
