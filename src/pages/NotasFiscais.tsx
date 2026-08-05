@@ -491,6 +491,36 @@ export default function NotasFiscais() {
     gerarNumerosPaginas,
   } = usePaginacao(filteredNotas || []);
 
+  /**
+   * Agrupa as notas da página por emitente, garantindo UM único grupo
+   * (e um único cabeçalho) por emitente, mesmo que as notas apareçam
+   * intercaladas na ordenação por data de emissão.
+   */
+  const grupos: GrupoEmitenteNotas[] = useMemo(() => {
+    const mapa = new Map<string, GrupoEmitenteNotas>();
+    (dadosPaginados as any[]).forEach((nota) => {
+      const emitenteId = (nota.emitente_id ?? null) as string | null;
+      const key = emitenteId ?? "__none__";
+      let grupo = mapa.get(key);
+      if (!grupo) {
+        grupo = {
+          key,
+          emitenteId,
+          nome: nota.emitente?.inscricao?.nome || "Sem emitente",
+          ie: nota.emitente?.inscricao?.inscricao_estadual || "-",
+          notas: [],
+          total: 0,
+        };
+        mapa.set(key, grupo);
+      }
+      grupo.notas.push(nota);
+      grupo.total += nota.total_nota || 0;
+    });
+    return Array.from(mapa.values());
+  }, [dadosPaginados]);
+
+
+
   if (isLoading) {
     return (
       <AppLayout>
