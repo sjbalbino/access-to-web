@@ -570,6 +570,13 @@ export function EmitirNfeDevolucaoDialog({
                   </div>
                 </div>
 
+                {status.step === "error" && (
+                  <div className="text-left">
+                    <DetalhesErrosSefaz erros={status.erros} defaultAberto />
+                  </div>
+                )}
+
+
                 {status.step !== "success" && status.step !== "error" && (
                   <Progress value={status.progress} className="h-2" />
                 )}
