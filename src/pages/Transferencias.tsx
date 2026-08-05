@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Plus, Pencil, Trash2, Eye } from "lucide-react";
+import { ArrowRight, Plus, Pencil, Trash2, Eye, Users } from "lucide-react";
 import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useProdutos } from "@/hooks/useProdutos";
@@ -16,6 +16,7 @@ import { useTransferenciasDeposito, useDeleteTransferenciaDeposito, Transferenci
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { formatNumber, formatKg } from "@/lib/formatters";
 import { TransferenciaDialog } from "@/components/transferencias/TransferenciaDialog";
+import { ReatribuirInscricaoDialog } from "@/components/importacao/ReatribuirInscricaoDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +45,7 @@ export default function Transferencias() {
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [reatribuirOpen, setReatribuirOpen] = useState(false);
   const [editingTransferencia, setEditingTransferencia] = useState<TransferenciaDeposito | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
