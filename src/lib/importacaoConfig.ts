@@ -1147,6 +1147,9 @@ export async function resolveReferences(
 ): Promise<{ resolved: Record<string, any>[]; errors: string[] }> {
   const errors: string[] = [];
   const lookupCache: Record<string, Record<string, string>> = {};
+  // Chaves simples (ex. IE) que apontam para MAIS DE UM registro do cadastro.
+  // Nesses casos não podemos escolher um id "no chute": exigimos desempate por nome.
+  const ambiguousCache: Record<string, Set<string>> = {};
 
   // Build lookup caches (skip self-references)
   for (const ref of references) {
