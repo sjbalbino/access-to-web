@@ -910,7 +910,8 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                       </SelectTrigger>
                       <SelectContent>
                         {inscricoesOpcoes.map((i) => (
-                          <SelectItem key={i.id} value={i.id}>
+                          <SelectItem key={i.id} value={i.id} searchText={i.searchText}>
+
                             <span className="flex items-center gap-2">
                               <span className="truncate">{i.label}</span>
                               <span className={i.saldo > 0 ? "text-xs text-muted-foreground" : "text-xs text-destructive font-medium"}>
