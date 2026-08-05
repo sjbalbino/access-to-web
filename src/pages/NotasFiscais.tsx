@@ -645,7 +645,7 @@ export default function NotasFiscais() {
           {/* Mobile: cards com menu de ações completo */}
           <div className="sm:hidden">
             <NotasFiscaisMobileList
-              notas={dadosPaginados}
+              grupos={grupos}
               collapsedGroups={collapsedGroups}
               toggleGroup={toggleGroup}
               canEdit={canEdit}
