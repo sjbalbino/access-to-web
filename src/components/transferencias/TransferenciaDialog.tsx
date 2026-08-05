@@ -150,42 +150,12 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     ? getInscricaoLabel(todasInscricoes.find(i => i.id === inscricaoDestinoId)!)
     : "Selecione a inscrição...";
 
-  const handleSubmit = async () => {
-    if (!dataTransferencia || !safraId || !produtoId || !inscricaoOrigemId || !inscricaoDestinoId || !localSaidaId || !localEntradaId || !quantidadeKg) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (inscricaoOrigemId === inscricaoDestinoId) {
-      toast({
-        title: "Erro",
-        description: "A inscrição de origem deve ser diferente da inscrição de destino.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const quantidade = parseFloat(quantidadeKg);
-    
-    // Validar saldo apenas para nova transferência ou se mudou origem/quantidade
-    if (!isEditing && saldoOrigem && quantidade > saldoOrigem.saldo) {
-      toast({
-        title: "Saldo insuficiente",
-        description: `Saldo disponível: ${formatKg(saldoOrigem.saldo)} kg`,
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const persistirTransferencia = async (quantidade: number) => {
     const inscricaoOrigem = todasInscricoes.find(i => i.id === inscricaoOrigemId);
     const inscricaoDestino = todasInscricoes.find(i => i.id === inscricaoDestinoId);
 
     const data = {
-      data_transferencia: format(dataTransferencia, "yyyy-MM-dd"),
+      data_transferencia: format(dataTransferencia!, "yyyy-MM-dd"),
       granja_origem_id: inscricaoOrigem?.granja_id || null,
       inscricao_origem_id: inscricaoOrigemId,
       granja_destino_id: inscricaoDestino?.granja_id || null,
@@ -209,6 +179,38 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     onOpenChange(false);
     resetForm();
   };
+
+  const handleSubmit = async () => {
+    if (!dataTransferencia || !safraId || !produtoId || !inscricaoOrigemId || !inscricaoDestinoId || !localSaidaId || !localEntradaId || !quantidadeKg) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (inscricaoOrigemId === inscricaoDestinoId) {
+      toast({
+        title: "Erro",
+        description: "A inscrição de origem deve ser diferente da inscrição de destino.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const quantidade = parseFloat(quantidadeKg);
+
+    // Saldo insuficiente não bloqueia: pede confirmação explícita ao operador
+    if (!isEditing && quantidade > saldoDisponivelOrigem) {
+      setQuantidadePendente(quantidade);
+      setConfirmSaldoOpen(true);
+      return;
+    }
+
+    await persistirTransferencia(quantidade);
+  };
+
 
   const isPending = createTransferencia.isPending || updateTransferencia.isPending;
 
