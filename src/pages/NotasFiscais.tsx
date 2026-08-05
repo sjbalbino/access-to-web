@@ -672,54 +672,46 @@ export default function NotasFiscais() {
 
               </TableHeader>
               <TableBody>
-                {(() => {
+                {grupos.flatMap((grupo) => {
                   const totalCols = canEdit ? 7 : 6;
-                  const rows: React.ReactNode[] = [];
-                  let lastEmitenteId: string | null | undefined = undefined;
-                  const groupNotas = (id: string | null | undefined) =>
-                    dadosPaginados.filter((n) => (n.emitente_id ?? null) === (id ?? null));
+                  const isCollapsed = collapsedGroups.has(grupo.key);
                   const fmtBRL = (v: number) =>
                     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
-                  dadosPaginados.forEach((nota) => {
-                    const emitId = nota.emitente_id ?? null;
-                    const groupKey = emitId ?? "__none__";
-                    const isCollapsed = collapsedGroups.has(groupKey);
-                    if (emitId !== lastEmitenteId) {
-                      lastEmitenteId = emitId;
-                      const grupo = groupNotas(emitId);
-                      const totalGrupo = grupo.reduce((acc, n) => acc + (n.total_nota || 0), 0);
-                      const nomeEmit = nota.emitente?.inscricao?.nome || "Sem emitente";
-                      const ieEmit = (nota.emitente?.inscricao as any)?.inscricao_estadual || "-";
-                      rows.push(
-                        <TableRow key={`grp-${emitId ?? "none"}`} className="bg-muted/60 hover:bg-muted/60">
-                          <TableCell colSpan={totalCols} className="py-2">
-                            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 p-0"
-                                  onClick={() => toggleGroup(emitId)}
-                                  title={isCollapsed ? "Expandir grupo" : "Recolher grupo"}
-                                  aria-label={isCollapsed ? "Expandir grupo" : "Recolher grupo"}
-                                >
-                                  {isCollapsed ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                </Button>
-                                <div className="font-semibold uppercase">
-                                  {nomeEmit}
-                                  <span className="ml-2 text-xs font-normal text-muted-foreground font-mono">IE: {ieEmit}</span>
-                                </div>
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {grupo.length} nota(s) — Total: <span className="font-semibold text-foreground">{fmtBRL(totalGrupo)}</span>
+                  const rows: React.ReactNode[] = [
+                    <TableRow key={`grp-${grupo.key}`} className="bg-muted/60 hover:bg-muted/60">
+                      <TableCell colSpan={totalCols} className="py-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(grupo.key)}
+                          aria-expanded={!isCollapsed}
+                          title={isCollapsed ? "Expandir grupo" : "Recolher grupo"}
+                          className="w-full text-left"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              {isCollapsed ? (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <div className="font-semibold uppercase">
+                                {grupo.nome}
+                                <span className="ml-2 text-xs font-normal text-muted-foreground font-mono">IE: {grupo.ie}</span>
                               </div>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    }
-                    if (!isCollapsed) {
+                            <div className="text-xs text-muted-foreground">
+                              {grupo.notas.length} nota(s) — Total: <span className="font-semibold text-foreground">{fmtBRL(grupo.total)}</span>
+                            </div>
+                          </div>
+                        </button>
+                      </TableCell>
+                    </TableRow>,
+                  ];
+
+                  if (isCollapsed) return rows;
+
+                  grupo.notas.forEach((nota: any) => {
                       rows.push(
                         <TableRow key={nota.id}>
                           <TableCell className="font-mono whitespace-nowrap px-2">
