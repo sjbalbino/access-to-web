@@ -115,10 +115,16 @@ export default function Transferencias() {
           title="Transferências de Depósito"
           description="Registrar transferências de saldo entre produtores/inscrições"
           actions={
-            <Button onClick={handleNovaTransferencia}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Transferência
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setReatribuirOpen(true)}>
+                <Users className="h-4 w-4 mr-2" />
+                Reatribuir Inscrição
+              </Button>
+              <Button onClick={handleNovaTransferencia}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Transferência
+              </Button>
+            </div>
           }
         />
 
