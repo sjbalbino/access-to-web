@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapNotaToFocusNfe, validateNotaForEmission, validarIbsCbsItens, type IbsCbsItemIssue, type NotaFiscalData, type NotaFiscalItemData, type NotaReferenciadaData } from "@/lib/focusNfeMapper";
-import { traduzirRejeicaoSefaz } from "@/lib/sefazRejeicoes";
+import { traduzirRejeicaoSefaz, extrairErrosDetalhados } from "@/lib/sefazRejeicoes";
 
 
 export interface FocusNfeResult {
@@ -179,18 +179,28 @@ export function useFocusNfe() {
       if (!data.success) {
         setStatus("erro");
         const detalhes = (data.details || {}) as Record<string, unknown>;
+        const errosDetalhados = extrairErrosDetalhados(data);
         const mensagemSefaz =
           (detalhes.mensagem_sefaz as string) ||
           (detalhes.mensagem as string) ||
           (Array.isArray(detalhes.erros) ? (detalhes.erros as string[]).join("; ") : undefined) ||
           data.error;
         const codigoSefaz = (detalhes.status_sefaz as string) || undefined;
+        // Quando a SEFAZ devolve apenas "erro de schema", os detalhes por campo
+        // são o que realmente permite ao operador corrigir o cadastro.
+        const resumoCampos = errosDetalhados
+          .slice(0, 3)
+          .map((e) => (e.campo ? `${e.campo}: ${e.mensagem}` : e.mensagem))
+          .join("\n");
         toast.error("Erro ao emitir NF-e", {
-          description: traduzirRejeicaoSefaz(mensagemSefaz, codigoSefaz),
+          description: [traduzirRejeicaoSefaz(mensagemSefaz, codigoSefaz), resumoCampos]
+            .filter(Boolean)
+            .join("\n\n"),
           duration: 15000,
         });
         return data;
       }
+
 
 
       setStatus("processando");

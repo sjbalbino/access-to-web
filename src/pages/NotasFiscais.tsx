@@ -45,6 +45,9 @@ import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeD
 import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
 import { buildNotaFiscalAcoes } from "@/components/notas-fiscais/notaFiscalAcoes";
 import { NotasFiscaisMobileList } from "@/components/notas-fiscais/NotasFiscaisMobileList";
+import { DetalhesErrosSefaz } from "@/components/notas-fiscais/DetalhesErrosSefaz";
+import type { ErroDetalhadoSefaz } from "@/lib/sefazRejeicoes";
+import { extrairErrosDetalhados } from "@/lib/sefazRejeicoes";
 
 import { useNotasFiscais } from "@/hooks/useNotasFiscais";
 import { useAuth } from "@/contexts/AuthContext";
@@ -177,7 +180,7 @@ export default function NotasFiscais() {
   const [justificativa, setJustificativa] = useState("");
   const [correcao, setCorrecao] = useState("");
   const [inutForm, setInutForm] = useState({ emitenteId: "", serie: "1", numeroInicial: "", numeroFinal: "", justificativa: "" });
-  const [motivoDialog, setMotivoDialog] = useState<{ open: boolean; titulo: string; mensagem: string }>({ open: false, titulo: "", mensagem: "" });
+  const [motivoDialog, setMotivoDialog] = useState<{ open: boolean; titulo: string; mensagem: string; erros?: ErroDetalhadoSefaz[] }>({ open: false, titulo: "", mensagem: "", erros: [] });
   const [danfePreview, setDanfePreview] = useState<{ open: boolean; downloadUrl: string | null; pdfData: Uint8Array | null; filename: string; titulo: string; loading: boolean }>({ open: false, downloadUrl: null, pdfData: null, filename: "danfe.pdf", titulo: "", loading: false });
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
@@ -253,14 +256,22 @@ export default function NotasFiscais() {
     const ref = nota.uuid_api || `nfe_${nota.id}`;
     const result = await focusNfe.consultarNfe(ref, nota.id);
     const d = (result.data || {}) as Record<string, any>;
-    const msg = d.mensagem_sefaz || d.motivo_status || d.erros?.[0]?.mensagem || result.error || "Sem detalhes retornados pela SEFAZ.";
+    // Detalhamento vem do retorno da consulta ou do que já ficou salvo na nota
+    const errosDetalhados = (() => {
+      const doRetorno = extrairErrosDetalhados(result);
+      if (doRetorno.length > 0) return doRetorno;
+      return extrairErrosDetalhados((nota as { erros_api?: unknown }).erros_api);
+    })();
+    const msg = d.mensagem_sefaz || d.motivo_status || errosDetalhados[0]?.mensagem || nota.motivo_status || result.error || "Sem detalhes retornados pela SEFAZ.";
     const codigo = d.codigo_status ? ` (código ${d.codigo_status})` : "";
     setMotivoDialog({
       open: true,
       titulo: `NF-e nº ${nota.numero} — ${d.status || nota.status}${codigo}`,
       mensagem: traduzirRejeicaoSefaz(String(msg), d.codigo_status || d.status_sefaz),
+      erros: errosDetalhados,
     });
   };
+
 
 
   const handleDuplicar = async (nota: any) => {
@@ -1097,7 +1108,7 @@ export default function NotasFiscais() {
 
         {/* Dialog de Motivo da Rejeição */}
         <Dialog open={motivoDialog.open} onOpenChange={(open) => setMotivoDialog((prev) => ({ ...prev, open }))}>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-destructive" />
@@ -1108,10 +1119,12 @@ export default function NotasFiscais() {
             <div className="rounded-md bg-muted p-4 text-sm whitespace-pre-wrap break-words">
               {motivoDialog.mensagem}
             </div>
+            <DetalhesErrosSefaz erros={motivoDialog.erros} defaultAberto />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setMotivoDialog({ open: false, titulo: "", mensagem: "" })}>Fechar</Button>
+              <Button variant="outline" onClick={() => setMotivoDialog({ open: false, titulo: "", mensagem: "", erros: [] })}>Fechar</Button>
             </DialogFooter>
           </DialogContent>
+
         </Dialog>
 
         {/* Dialog de Visualização da DANFE */}
