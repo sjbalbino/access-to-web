@@ -900,11 +900,17 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                         <SelectValue placeholder={!localEntregaId || !safraId ? "Selecione local e safra" : "Selecione a inscrição"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {inscricoesComSaldo.map((i) => (
+                        {inscricoesOpcoes.map((i) => (
                           <SelectItem key={i.id} value={i.id}>
-                            {labelInscricao(i) || `${i.inscricao_estadual || i.cpf_cnpj} - ${i.produtor_nome || i.granja}`}
+                            <span className="flex items-center gap-2">
+                              <span className="truncate">{i.label}</span>
+                              <span className={i.saldo > 0 ? "text-xs text-muted-foreground" : "text-xs text-destructive font-medium"}>
+                                · saldo {formatKg(i.saldo)} kg
+                              </span>
+                            </span>
                           </SelectItem>
                         ))}
+
                       </SelectContent>
                     </Select>
                   </div>
