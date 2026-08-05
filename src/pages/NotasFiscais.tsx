@@ -826,10 +826,9 @@ export default function NotasFiscais() {
 
                         </TableRow>
                       );
-                    }
                   });
                   return rows;
-                })()}
+                })}
                 {filteredNotas.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={canEdit ? 7 : 6} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal encontrada</TableCell>
