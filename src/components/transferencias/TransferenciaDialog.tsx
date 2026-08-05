@@ -136,11 +136,25 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     return label || ie || "Sem nome";
   };
 
+  // Saldo físico por inscrição (para exibir na lista de origem)
+  const { data: saldosPorInscricao = [] } = useInscricoesComSaldo({
+    safraId: safraId || undefined,
+    produtoId: produtoId || undefined,
+    modo: "fisico",
+    incluirSemSaldo: true,
+  });
+
+  const saldoMap = new Map<string, number>();
+  saldosPorInscricao.forEach((s) => {
+    saldoMap.set(s.id, (saldoMap.get(s.id) || 0) + Number(s.saldo_disponivel || 0));
+  });
+
   const inscricoesOrdenadas = [...todasInscricoes].sort((a, b) => {
     const na = (a.produtores?.nome || a.nome || a.inscricao_estadual || "").toLowerCase();
     const nb = (b.produtores?.nome || b.nome || b.inscricao_estadual || "").toLowerCase();
     return na.localeCompare(nb, "pt-BR");
   });
+
 
   const filteredInscricoesOrigem = inscricoesOrdenadas.filter((i) => {
     const label = getInscricaoLabel(i).toLowerCase();
