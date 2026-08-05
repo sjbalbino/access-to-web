@@ -122,6 +122,13 @@ export default function LocaisEntrega() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Bairro é obrigatório no schema da NF-e (SEFAZ rejeita bairro vazio)
+    if (!formData.bairro?.trim()) {
+      toast.error("Bairro é obrigatório", {
+        description: "A SEFAZ rejeita NF-e com bairro em branco. Informe o bairro (ex.: INTERIOR para área rural).",
+      });
+      return;
+    }
     if (editingId) {
       updateMutation.mutate({ id: editingId, ...formData }, {
         onSuccess: () => setIsDialogOpen(false),
