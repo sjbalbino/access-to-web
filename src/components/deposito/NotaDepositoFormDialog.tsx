@@ -118,11 +118,30 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
   );
   const granjaId = localSelecionado?.granja_id || "";
 
-  // Buscar inscrições com saldo disponível
+  // Buscar inscrições do local/granja — inclusive com saldo zerado ou negativo,
+  // pois a emissão acima do saldo é permitida (apenas exige confirmação).
   const { data: inscricoesComSaldo = [] } = useInscricoesComSaldo({
     safraId: safraId || undefined,
     localEntregaId: localEntregaId || undefined,
+    granjaId: granjaId || undefined,
+    incluirSemSaldo: true,
   });
+
+  // Consolida uma única linha por inscrição (o hook pode retornar um bucket por local)
+  const inscricoesOpcoes = useMemo(() => {
+    const mapa = new Map<string, { id: string; label: string; saldo: number }>();
+    inscricoesComSaldo.forEach((i) => {
+      const label = labelInscricao(i) || `${i.inscricao_estadual || i.cpf_cnpj} - ${i.produtor_nome || i.granja}`;
+      const existente = mapa.get(i.id);
+      const saldo = Number(i.saldo_disponivel || 0);
+      if (existente) existente.saldo += saldo;
+      else mapa.set(i.id, { id: i.id, label, saldo });
+    });
+    return Array.from(mapa.values()).sort((a, b) =>
+      a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" })
+    );
+  }, [inscricoesComSaldo]);
+
 
   // Buscar saldos por produto para a inscrição selecionada
   const { data: saldos = [], isLoading: loadingSaldos } = useSaldosDeposito({
