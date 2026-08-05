@@ -20,6 +20,7 @@ import { useSiloPadraoId } from "@/hooks/useSiloPadrao";
 import { useProdutosCereais } from "@/hooks/useProdutosCereais";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useAllInscricoes, InscricaoComProdutor } from "@/hooks/useAllInscricoes";
+import { useGranjas } from "@/hooks/useGranjas";
 import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useSaldoProdutor } from "@/hooks/useSaldoProdutor";
 import { useInscricoesComSaldo } from "@/hooks/useSaldosDeposito";
