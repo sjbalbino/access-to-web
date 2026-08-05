@@ -33,6 +33,7 @@ interface EmissionStatus {
   message: string;
   progress: number;
   details?: string;
+  erros?: ErroDetalhadoSefaz[];
   notaFiscalId?: string;
 }
 
