@@ -17,18 +17,21 @@ Causa raiz: o cache de busca da importação indexa `IE -> id`; com IEs repetida
 - Quando a IE da planilha for ambígua (mais de uma inscrição com a mesma IE) e não houver nome para desempatar, **não escolher nenhuma**: gerar erro de validação na linha ("IE 111.111.111-1 ambígua — informe o nome do produtor"), em vez de vincular ao produtor errado silenciosamente.
 - Mesma proteção aplicada às demais importações que buscam inscrição (compras, notas de depósito) para não repetir o problema.
 
-### 2. Reparar os dados já importados
+### 2. Reparar os dados já importados pela tela de reatribuição manual
 
-- Nova tela/diálogo **"Reatribuir Inscrição"** em Transferências e Devoluções: lista os registros vinculados a uma inscrição escolhida (ex. cleomar teckio), mostrando data, quantidade, produto, local, e permite selecionar em lote o produtor/inscrição correto para cada registro.
-- Alternativa mais rápida e segura, se as planilhas originais de Transferências e Devoluções estiverem disponíveis com o nome do produtor: apagar os 64 + 45 registros importados dessas duas tabelas e reimportar já com o importador corrigido, restaurando o vínculo correto em massa.
+Nenhum registro será apagado nem reimportado (já existem lançamentos novos no sistema). A correção é feita registro a registro por uma nova tela:
+
+- Novo diálogo **"Reatribuir Inscrição"**, aberto a partir das páginas de Transferências e de Devolução de Depósito.
+- Passo 1: escolher a inscrição de origem do problema (ex. CLEOMAR TECKIO — IE 111.111.111-1). A tela mostra quantos registros estão vinculados a ela.
+- Passo 2: lista dos registros (código, data, produto, quantidade em KG, safra, local de saída/entrada, e se é origem ou destino), com paginação de 20 itens e ordenação por data.
+- Passo 3: para cada linha, um combobox pesquisável (nome / IE / CPF) para indicar a inscrição correta. Também há ação "aplicar a inscrição selecionada às linhas marcadas" para corrigir em lote os casos do mesmo produtor.
+- Botão **Salvar reatribuições** grava só as linhas alteradas, dentro de confirmação de segurança, e invalida os caches de saldo (`saldos_deposito`, `saldo_produtor`, `saldo_disponivel_produtor`, `inscricoes_com_saldo`, `saldo_socio`) para os extratos refletirem na hora.
+- Registros com NF-e autorizada permanecem bloqueados (política de imutabilidade fiscal) e aparecem marcados como não editáveis.
 
 ## Detalhes técnicos
 
-- `src/lib/importacaoConfig.ts`: acrescentar `compositeSourceColumn` nas referências de inscrição de `transferencias` e `devolucoes`; no resolvedor de referências, marcar chaves de IE duplicadas como ambíguas (mapa `IE -> [ids]`) e só resolver por chave composta.
-- `src/components/importacao/ImportacaoDialog.tsx`: exibir os novos erros de ambiguidade na etapa de validação, com número de linha.
-- Novo componente de reatribuição reutilizável (`src/components/importacao/ReatribuirInscricaoDialog.tsx`) usado nas páginas Transferências e Devolução de Depósito, atualizando `inscricao_origem_id` / `inscricao_destino_id` / `inscricao_produtor_id`.
+- `src/lib/importacaoConfig.ts`: acrescentar coluna de desempate por nome nas referências de inscrição de `transferencias` e `devolucoes`; no resolvedor de referências, marcar IEs duplicadas como ambíguas (mapa `IE -> [ids]`) e só resolver por chave composta `IE + nome`.
+- `src/components/importacao/ImportacaoDialog.tsx`: exibir os erros de ambiguidade na etapa de validação, com número de linha.
+- Novo componente `src/components/importacao/ReatribuirInscricaoDialog.tsx` (reutilizável), usado em `src/pages/Transferencias.tsx` e `src/pages/DevolucaoDeposito.tsx`, atualizando `inscricao_origem_id` / `inscricao_destino_id` (transferências) e `inscricao_produtor_id` (devoluções).
+- Inscrições listadas via `useInscricoesCompletas`; updates em lote pelo cliente Supabase, com relatório final de sucesso/erros por linha.
 - Nenhuma alteração de esquema é necessária.
-
-## Antes de implementar
-
-Preciso saber se você tem as planilhas originais de Transferências e Devoluções com o nome do produtor em cada linha (caminho de reimportação em massa) ou se a correção deve ser feita pela tela de reatribuição manual.
