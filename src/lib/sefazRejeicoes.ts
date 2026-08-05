@@ -59,10 +59,16 @@ const REGRAS: RegraRejeicao[] = [
       "Município inválido: o código IBGE ou o nome do município não coincidem. Revise Cidade/UF no cadastro do destinatário, emitente ou local de entrega.",
   },
   {
+    padroes: [/\bbairro\b/i, /\bxBairro\b/i],
+    orientacao:
+      "Bairro não informado. O Bairro é obrigatório na NF-e: preencha o campo Bairro no cadastro do destinatário (Clientes/Fornecedores ou Local de Entrega) ou do emitente (Produtores > Inscrições) e emita novamente.",
+  },
+  {
     padroes: [/\bCEP\b/i],
     orientacao:
       "CEP inválido. Informe um CEP válido (8 dígitos) no cadastro do emitente/destinatário.",
   },
+
 
   // ---------- Itens / Tributos ----------
   {
