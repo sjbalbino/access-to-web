@@ -373,11 +373,15 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
                 </PopoverContent>
               </Popover>
               
-              {safraId && produtoId && inscricaoOrigemId && saldoOrigem && (
+              {safraId && produtoId && inscricaoOrigemId && (
                 <p className="text-sm text-muted-foreground">
-                  Saldo disponível: <span className="font-medium text-foreground">{formatKg(saldoOrigem.saldo)} kg</span>
+                  Saldo disponível:{" "}
+                  <span className={cn("font-medium", saldoDisponivelOrigem > 0 ? "text-foreground" : "text-destructive")}>
+                    {formatKg(saldoDisponivelOrigem)} kg
+                  </span>
                 </p>
               )}
+
             </div>
 
             <div className="space-y-2">
