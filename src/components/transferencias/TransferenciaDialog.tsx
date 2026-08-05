@@ -33,9 +33,11 @@ interface TransferenciaDialogProps {
   onOpenChange: (open: boolean) => void;
   transferencia?: TransferenciaDeposito | null;
   readOnly?: boolean;
+  /** Chamado após gravar com sucesso (usado para garantir que o registro apareça na lista). */
+  onSaved?: (dataTransferencia: string) => void;
 }
 
-export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnly = false }: TransferenciaDialogProps) {
+export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnly = false, onSaved }: TransferenciaDialogProps) {
   const [dataTransferencia, setDataTransferencia] = useState<Date | undefined>(undefined);
   const [safraId, setSafraId] = useState("");
   const [produtoId, setProdutoId] = useState("");
