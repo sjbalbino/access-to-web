@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -31,7 +31,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban, RefreshCw, Send, AlertCircle, Copy, FileSearch, ChevronDown, ChevronUp, ChevronsDown, ChevronsUp, MoreHorizontal } from "lucide-react";
+import { Plus, Search, Eye, Trash2, Download, XCircle, FileText, FileEdit, RotateCcw, Mail, Ban, RefreshCw, Send, AlertCircle, Copy, FileSearch, ChevronDown, ChevronUp, ChevronRight, ChevronsDown, ChevronsUp, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +44,7 @@ import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/Con
 import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeDialog";
 import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
 import { buildNotaFiscalAcoes } from "@/components/notas-fiscais/notaFiscalAcoes";
-import { NotasFiscaisMobileList } from "@/components/notas-fiscais/NotasFiscaisMobileList";
+import { NotasFiscaisMobileList, type GrupoEmitenteNotas } from "@/components/notas-fiscais/NotasFiscaisMobileList";
 import { DetalhesErrosSefaz } from "@/components/notas-fiscais/DetalhesErrosSefaz";
 import type { ErroDetalhadoSefaz } from "@/lib/sefazRejeicoes";
 import { extrairErrosDetalhados } from "@/lib/sefazRejeicoes";
@@ -184,21 +184,18 @@ export default function NotasFiscais() {
   const [danfePreview, setDanfePreview] = useState<{ open: boolean; downloadUrl: string | null; pdfData: Uint8Array | null; filename: string; titulo: string; loading: boolean }>({ open: false, downloadUrl: null, pdfData: null, filename: "danfe.pdf", titulo: "", loading: false });
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  const toggleGroup = (emitenteId: string | null) => {
-    const key = emitenteId ?? "__none__";
+  const toggleGroup = (groupKey: string) => {
     setCollapsedGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      if (next.has(groupKey)) next.delete(groupKey);
+      else next.add(groupKey);
       return next;
     });
   };
 
   const expandAllGroups = () => setCollapsedGroups(new Set());
   const collapseAllGroups = () => {
-    const keys = new Set<string>();
-    dadosPaginados.forEach((n) => keys.add(n.emitente_id ?? "__none__"));
-    setCollapsedGroups(keys);
+    setCollapsedGroups(new Set(grupos.map((g) => g.key)));
   };
 
   const handleVisualizarDanfe = async (nota: any) => {
@@ -494,6 +491,36 @@ export default function NotasFiscais() {
     gerarNumerosPaginas,
   } = usePaginacao(filteredNotas || []);
 
+  /**
+   * Agrupa as notas da página por emitente, garantindo UM único grupo
+   * (e um único cabeçalho) por emitente, mesmo que as notas apareçam
+   * intercaladas na ordenação por data de emissão.
+   */
+  const grupos: GrupoEmitenteNotas[] = useMemo(() => {
+    const mapa = new Map<string, GrupoEmitenteNotas>();
+    (dadosPaginados as any[]).forEach((nota) => {
+      const emitenteId = (nota.emitente_id ?? null) as string | null;
+      const key = emitenteId ?? "__none__";
+      let grupo = mapa.get(key);
+      if (!grupo) {
+        grupo = {
+          key,
+          emitenteId,
+          nome: nota.emitente?.inscricao?.nome || "Sem emitente",
+          ie: nota.emitente?.inscricao?.inscricao_estadual || "-",
+          notas: [],
+          total: 0,
+        };
+        mapa.set(key, grupo);
+      }
+      grupo.notas.push(nota);
+      grupo.total += nota.total_nota || 0;
+    });
+    return Array.from(mapa.values());
+  }, [dadosPaginados]);
+
+
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -618,7 +645,7 @@ export default function NotasFiscais() {
           {/* Mobile: cards com menu de ações completo */}
           <div className="sm:hidden">
             <NotasFiscaisMobileList
-              notas={dadosPaginados}
+              grupos={grupos}
               collapsedGroups={collapsedGroups}
               toggleGroup={toggleGroup}
               canEdit={canEdit}
@@ -645,54 +672,46 @@ export default function NotasFiscais() {
 
               </TableHeader>
               <TableBody>
-                {(() => {
+                {grupos.flatMap((grupo) => {
                   const totalCols = canEdit ? 7 : 6;
-                  const rows: React.ReactNode[] = [];
-                  let lastEmitenteId: string | null | undefined = undefined;
-                  const groupNotas = (id: string | null | undefined) =>
-                    dadosPaginados.filter((n) => (n.emitente_id ?? null) === (id ?? null));
+                  const isCollapsed = collapsedGroups.has(grupo.key);
                   const fmtBRL = (v: number) =>
                     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
-                  dadosPaginados.forEach((nota) => {
-                    const emitId = nota.emitente_id ?? null;
-                    const groupKey = emitId ?? "__none__";
-                    const isCollapsed = collapsedGroups.has(groupKey);
-                    if (emitId !== lastEmitenteId) {
-                      lastEmitenteId = emitId;
-                      const grupo = groupNotas(emitId);
-                      const totalGrupo = grupo.reduce((acc, n) => acc + (n.total_nota || 0), 0);
-                      const nomeEmit = nota.emitente?.inscricao?.nome || "Sem emitente";
-                      const ieEmit = (nota.emitente?.inscricao as any)?.inscricao_estadual || "-";
-                      rows.push(
-                        <TableRow key={`grp-${emitId ?? "none"}`} className="bg-muted/60 hover:bg-muted/60">
-                          <TableCell colSpan={totalCols} className="py-2">
-                            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 p-0"
-                                  onClick={() => toggleGroup(emitId)}
-                                  title={isCollapsed ? "Expandir grupo" : "Recolher grupo"}
-                                  aria-label={isCollapsed ? "Expandir grupo" : "Recolher grupo"}
-                                >
-                                  {isCollapsed ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                </Button>
-                                <div className="font-semibold uppercase">
-                                  {nomeEmit}
-                                  <span className="ml-2 text-xs font-normal text-muted-foreground font-mono">IE: {ieEmit}</span>
-                                </div>
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {grupo.length} nota(s) — Total: <span className="font-semibold text-foreground">{fmtBRL(totalGrupo)}</span>
+                  const rows: React.ReactNode[] = [
+                    <TableRow key={`grp-${grupo.key}`} className="bg-muted/60 hover:bg-muted/60">
+                      <TableCell colSpan={totalCols} className="py-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(grupo.key)}
+                          aria-expanded={!isCollapsed}
+                          title={isCollapsed ? "Expandir grupo" : "Recolher grupo"}
+                          className="w-full text-left"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              {isCollapsed ? (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <div className="font-semibold uppercase">
+                                {grupo.nome}
+                                <span className="ml-2 text-xs font-normal text-muted-foreground font-mono">IE: {grupo.ie}</span>
                               </div>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    }
-                    if (!isCollapsed) {
+                            <div className="text-xs text-muted-foreground">
+                              {grupo.notas.length} nota(s) — Total: <span className="font-semibold text-foreground">{fmtBRL(grupo.total)}</span>
+                            </div>
+                          </div>
+                        </button>
+                      </TableCell>
+                    </TableRow>,
+                  ];
+
+                  if (isCollapsed) return rows;
+
+                  grupo.notas.forEach((nota: any) => {
                       rows.push(
                         <TableRow key={nota.id}>
                           <TableCell className="font-mono whitespace-nowrap px-2">
@@ -799,10 +818,9 @@ export default function NotasFiscais() {
 
                         </TableRow>
                       );
-                    }
                   });
                   return rows;
-                })()}
+                })}
                 {filteredNotas.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={canEdit ? 7 : 6} className="text-center py-8 text-muted-foreground">Nenhuma nota fiscal encontrada</TableCell>
