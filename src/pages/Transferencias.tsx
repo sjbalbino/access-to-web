@@ -373,6 +373,8 @@ export default function Transferencias() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ReatribuirInscricaoDialog open={reatribuirOpen} onOpenChange={setReatribuirOpen} modulo="transferencias" />
     </AppLayout>
   );
 }

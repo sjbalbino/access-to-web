@@ -324,6 +324,8 @@ export default function DevolucaoDeposito() {
             dataOperacao={vincularDevolucao.data_devolucao}
           />
         )}
+
+        <ReatribuirInscricaoDialog open={reatribuirOpen} onOpenChange={setReatribuirOpen} modulo="devolucoes" />
       </div>
     </AppLayout>
   );
