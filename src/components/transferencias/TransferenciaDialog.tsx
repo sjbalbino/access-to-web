@@ -73,6 +73,11 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     produtoId,
   });
 
+  // Saldo numérico da origem (pode ser zero ou negativo — não bloqueia a operação)
+  const saldoDisponivelOrigem = Number(saldoOrigem?.saldo ?? 0);
+
+
+
   const createTransferencia = useCreateTransferenciaDeposito();
   const updateTransferencia = useUpdateTransferenciaDeposito();
 
