@@ -35,6 +35,7 @@ export default function DevolucaoDeposito() {
   
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [reatribuirOpen, setReatribuirOpen] = useState(false);
   const [devolucaoSelecionada, setDevolucaoSelecionada] = useState<DevolucaoDeposito | null>(null);
   const [dialogReadOnly, setDialogReadOnly] = useState(false);
 
@@ -103,9 +104,14 @@ export default function DevolucaoDeposito() {
           title="Devolução de Depósito"
           description="CFOP 5949 - Devolução de mercadoria depositada (baixa saldo produtor)"
           actions={
-            <Button onClick={handleNovaDevolucao}>
-              <Plus className="h-4 w-4 mr-2" /> Nova Devolução
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setReatribuirOpen(true)}>
+                <Users className="h-4 w-4 mr-2" /> Reatribuir Inscrição
+              </Button>
+              <Button onClick={handleNovaDevolucao}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Devolução
+              </Button>
+            </div>
           }
         />
 
