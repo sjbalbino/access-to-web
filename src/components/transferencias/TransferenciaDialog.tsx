@@ -20,6 +20,7 @@ import { useSiloPadraoId } from "@/hooks/useSiloPadrao";
 import { useProdutosCereais } from "@/hooks/useProdutosCereais";
 import { useProdutos } from "@/hooks/useProdutos";
 import { useAllInscricoes, InscricaoComProdutor } from "@/hooks/useAllInscricoes";
+import { useGranjas } from "@/hooks/useGranjas";
 import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useSaldoProdutor } from "@/hooks/useSaldoProdutor";
 import { useInscricoesComSaldo } from "@/hooks/useSaldosDeposito";
@@ -32,9 +33,11 @@ interface TransferenciaDialogProps {
   onOpenChange: (open: boolean) => void;
   transferencia?: TransferenciaDeposito | null;
   readOnly?: boolean;
+  /** Chamado após gravar com sucesso (usado para garantir que o registro apareça na lista). */
+  onSaved?: (dataTransferencia: string) => void;
 }
 
-export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnly = false }: TransferenciaDialogProps) {
+export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnly = false, onSaved }: TransferenciaDialogProps) {
   const [dataTransferencia, setDataTransferencia] = useState<Date | undefined>(undefined);
   const [safraId, setSafraId] = useState("");
   const [produtoId, setProdutoId] = useState("");
@@ -67,8 +70,21 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     }
     return produtosCereais;
   })();
-  const { data: todasInscricoes = [] } = useAllInscricoes();
+  const { data: inscricoesGlobais = [] } = useAllInscricoes();
+  const { data: granjasDoTenant = [] } = useGranjas();
   const { data: locaisEntrega = [] } = useLocaisEntrega();
+
+  /**
+   * Somente inscrições vinculadas a granjas da empresa do usuário podem ser usadas:
+   * as políticas de segurança da tabela exigem que a granja de origem OU de destino
+   * pertença ao tenant, caso contrário a gravação é recusada e o registro não aparece.
+   * Em edição, a inscrição já salva é injetada para não "desaparecer" do select.
+   */
+  const granjaIdsTenant = new Set(granjasDoTenant.map((g) => g.id));
+  const todasInscricoes = inscricoesGlobais.filter((i) => {
+    if (i.granja_id && granjaIdsTenant.has(i.granja_id)) return true;
+    return i.id === transferencia?.inscricao_origem_id || i.id === transferencia?.inscricao_destino_id;
+  });
 
   const { data: saldoOrigem } = useSaldoProdutor({
     inscricaoProdutorId: inscricaoOrigemId,
@@ -179,11 +195,26 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     const inscricaoOrigem = todasInscricoes.find(i => i.id === inscricaoOrigemId);
     const inscricaoDestino = todasInscricoes.find(i => i.id === inscricaoDestinoId);
 
+    const granjaOrigemId = inscricaoOrigem?.granja_id || null;
+    const granjaDestinoId = inscricaoDestino?.granja_id || null;
+
+    // Sem granja em nenhuma das pontas, a política de segurança recusa a gravação
+    // (e o registro nunca apareceria na lista). Bloqueia antes de enviar.
+    if (!granjaOrigemId && !granjaDestinoId) {
+      toast({
+        title: "Inscrição sem granja vinculada",
+        description:
+          "A inscrição de origem ou de destino precisa estar vinculada a uma granja da empresa. Ajuste o cadastro da inscrição e tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const data = {
       data_transferencia: format(dataTransferencia!, "yyyy-MM-dd"),
-      granja_origem_id: inscricaoOrigem?.granja_id || null,
+      granja_origem_id: granjaOrigemId,
       inscricao_origem_id: inscricaoOrigemId,
-      granja_destino_id: inscricaoDestino?.granja_id || null,
+      granja_destino_id: granjaDestinoId,
       inscricao_destino_id: inscricaoDestinoId,
       safra_id: safraId,
       produto_id: produtoId,
@@ -201,6 +232,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
       await createTransferencia.mutateAsync(data);
     }
 
+    onSaved?.(data.data_transferencia);
     onOpenChange(false);
     resetForm();
   };
