@@ -481,11 +481,11 @@ export default function LocaisEntrega() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Bairro</Label>
+                    <Label>Bairro <span className="text-destructive">*</span></Label>
                     <Input
                       value={formData.bairro || ""}
                       onChange={(e) => setFormData({ ...formData, bairro: e.target.value || null })}
-                      placeholder="Bairro"
+                      placeholder="Ex.: INTERIOR"
                     />
                   </div>
 
