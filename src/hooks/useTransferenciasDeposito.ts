@@ -147,7 +147,7 @@ export function useCreateTransferenciaDeposito() {
     onError: (error: any) => {
       toast({
         title: 'Erro ao registrar transferência',
-        description: error.message,
+        description: descreverErro('criar', error),
         variant: 'destructive',
       });
     },
@@ -184,7 +184,7 @@ export function useUpdateTransferenciaDeposito() {
     onError: (error: any) => {
       toast({
         title: 'Erro ao atualizar transferência',
-        description: error.message,
+        description: descreverErro('atualizar', error),
         variant: 'destructive',
       });
     },
@@ -218,7 +218,7 @@ export function useDeleteTransferenciaDeposito() {
     onError: (error: any) => {
       toast({
         title: 'Erro ao excluir transferência',
-        description: error.message,
+        description: descreverErro('excluir', error),
         variant: 'destructive',
       });
     },
