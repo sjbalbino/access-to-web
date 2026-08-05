@@ -67,8 +67,21 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     }
     return produtosCereais;
   })();
-  const { data: todasInscricoes = [] } = useAllInscricoes();
+  const { data: inscricoesGlobais = [] } = useAllInscricoes();
+  const { data: granjasDoTenant = [] } = useGranjas();
   const { data: locaisEntrega = [] } = useLocaisEntrega();
+
+  /**
+   * Somente inscrições vinculadas a granjas da empresa do usuário podem ser usadas:
+   * as políticas de segurança da tabela exigem que a granja de origem OU de destino
+   * pertença ao tenant, caso contrário a gravação é recusada e o registro não aparece.
+   * Em edição, a inscrição já salva é injetada para não "desaparecer" do select.
+   */
+  const granjaIdsTenant = new Set(granjasDoTenant.map((g) => g.id));
+  const todasInscricoes = inscricoesGlobais.filter((i) => {
+    if (i.granja_id && granjaIdsTenant.has(i.granja_id)) return true;
+    return i.id === transferencia?.inscricao_origem_id || i.id === transferencia?.inscricao_destino_id;
+  });
 
   const { data: saldoOrigem } = useSaldoProdutor({
     inscricaoProdutorId: inscricaoOrigemId,
