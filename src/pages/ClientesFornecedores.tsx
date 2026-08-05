@@ -204,6 +204,15 @@ export default function ClientesFornecedores() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Bairro é obrigatório no schema da NF-e (SEFAZ rejeita bairro vazio)
+    if (!formData.bairro?.trim()) {
+      toast.error('Bairro é obrigatório', {
+        description: 'A SEFAZ rejeita NF-e com bairro do destinatário em branco. Informe o bairro (ex.: INTERIOR para área rural).',
+      });
+      return;
+    }
+
+
     // Validar CPF/CNPJ se informado (pular para estrangeiro)
     if (formData.cpf_cnpj && formData.cpf_cnpj.length > 0 && formData.tipo_pessoa !== 'estrangeiro') {
       const doc = formData.cpf_cnpj.replace(/\D/g, "");
@@ -441,8 +450,8 @@ export default function ClientesFornecedores() {
                       <Input value={formData.complemento || ''} onChange={(e) => setFormData({ ...formData, complemento: e.target.value })} />
                     </div>
                     <div className="space-y-2">
-                      <Label>Bairro</Label>
-                      <Input value={formData.bairro || ''} onChange={(e) => setFormData({ ...formData, bairro: e.target.value })} />
+                      <Label>Bairro <span className="text-destructive">*</span></Label>
+                      <Input value={formData.bairro || ''} onChange={(e) => setFormData({ ...formData, bairro: e.target.value })} placeholder="Ex.: INTERIOR" />
                     </div>
                     <div className="space-y-2">
                       <Label>Cidade</Label>
