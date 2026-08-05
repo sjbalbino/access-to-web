@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +22,7 @@ import { useProdutos } from "@/hooks/useProdutos";
 import { useAllInscricoes, InscricaoComProdutor } from "@/hooks/useAllInscricoes";
 import { useLocaisEntrega } from "@/hooks/useLocaisEntrega";
 import { useSaldoProdutor } from "@/hooks/useSaldoProdutor";
+import { useInscricoesComSaldo } from "@/hooks/useSaldosDeposito";
 import { useCreateTransferenciaDeposito, useUpdateTransferenciaDeposito, TransferenciaDeposito } from "@/hooks/useTransferenciasDeposito";
 import { formatNumber, formatKg } from "@/lib/formatters";
 import { toast } from "@/hooks/use-toast";
@@ -48,6 +51,9 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
   const [destinoOpen, setDestinoOpen] = useState(false);
   const [origemSearch, setOrigemSearch] = useState("");
   const [destinoSearch, setDestinoSearch] = useState("");
+  const [confirmSaldoOpen, setConfirmSaldoOpen] = useState(false);
+  const [quantidadePendente, setQuantidadePendente] = useState<number | null>(null);
+
 
   const { data: safras = [] } = useSafras();
   const { data: silos = [] } = useSilos();
@@ -69,6 +75,11 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     safraId,
     produtoId,
   });
+
+  // Saldo numérico da origem (pode ser zero ou negativo — não bloqueia a operação)
+  const saldoDisponivelOrigem = Number(saldoOrigem?.saldo ?? 0);
+
+
 
   const createTransferencia = useCreateTransferenciaDeposito();
   const updateTransferencia = useUpdateTransferenciaDeposito();
@@ -126,11 +137,25 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     return label || ie || "Sem nome";
   };
 
+  // Saldo físico por inscrição (para exibir na lista de origem)
+  const { data: saldosPorInscricao = [] } = useInscricoesComSaldo({
+    safraId: safraId || undefined,
+    produtoId: produtoId || undefined,
+    modo: "fisico",
+    incluirSemSaldo: true,
+  });
+
+  const saldoMap = new Map<string, number>();
+  saldosPorInscricao.forEach((s) => {
+    saldoMap.set(s.id, (saldoMap.get(s.id) || 0) + Number(s.saldo_disponivel || 0));
+  });
+
   const inscricoesOrdenadas = [...todasInscricoes].sort((a, b) => {
     const na = (a.produtores?.nome || a.nome || a.inscricao_estadual || "").toLowerCase();
     const nb = (b.produtores?.nome || b.nome || b.inscricao_estadual || "").toLowerCase();
     return na.localeCompare(nb, "pt-BR");
   });
+
 
   const filteredInscricoesOrigem = inscricoesOrdenadas.filter((i) => {
     const label = getInscricaoLabel(i).toLowerCase();
@@ -150,42 +175,12 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     ? getInscricaoLabel(todasInscricoes.find(i => i.id === inscricaoDestinoId)!)
     : "Selecione a inscrição...";
 
-  const handleSubmit = async () => {
-    if (!dataTransferencia || !safraId || !produtoId || !inscricaoOrigemId || !inscricaoDestinoId || !localSaidaId || !localEntradaId || !quantidadeKg) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (inscricaoOrigemId === inscricaoDestinoId) {
-      toast({
-        title: "Erro",
-        description: "A inscrição de origem deve ser diferente da inscrição de destino.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const quantidade = parseFloat(quantidadeKg);
-    
-    // Validar saldo apenas para nova transferência ou se mudou origem/quantidade
-    if (!isEditing && saldoOrigem && quantidade > saldoOrigem.saldo) {
-      toast({
-        title: "Saldo insuficiente",
-        description: `Saldo disponível: ${formatKg(saldoOrigem.saldo)} kg`,
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const persistirTransferencia = async (quantidade: number) => {
     const inscricaoOrigem = todasInscricoes.find(i => i.id === inscricaoOrigemId);
     const inscricaoDestino = todasInscricoes.find(i => i.id === inscricaoDestinoId);
 
     const data = {
-      data_transferencia: format(dataTransferencia, "yyyy-MM-dd"),
+      data_transferencia: format(dataTransferencia!, "yyyy-MM-dd"),
       granja_origem_id: inscricaoOrigem?.granja_id || null,
       inscricao_origem_id: inscricaoOrigemId,
       granja_destino_id: inscricaoDestino?.granja_id || null,
@@ -209,6 +204,38 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     onOpenChange(false);
     resetForm();
   };
+
+  const handleSubmit = async () => {
+    if (!dataTransferencia || !safraId || !produtoId || !inscricaoOrigemId || !inscricaoDestinoId || !localSaidaId || !localEntradaId || !quantidadeKg) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (inscricaoOrigemId === inscricaoDestinoId) {
+      toast({
+        title: "Erro",
+        description: "A inscrição de origem deve ser diferente da inscrição de destino.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const quantidade = parseFloat(quantidadeKg);
+
+    // Saldo insuficiente não bloqueia: pede confirmação explícita ao operador
+    if (!isEditing && quantidade > saldoDisponivelOrigem) {
+      setQuantidadePendente(quantidade);
+      setConfirmSaldoOpen(true);
+      return;
+    }
+
+    await persistirTransferencia(quantidade);
+  };
+
 
   const isPending = createTransferencia.isPending || updateTransferencia.isPending;
 
@@ -355,6 +382,16 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
                               )}
                             />
                             <span className="truncate">{getInscricaoLabel(i)}</span>
+                            {safraId && produtoId && (
+                              <span
+                                className={cn(
+                                  "ml-auto pl-2 text-xs whitespace-nowrap",
+                                  (saldoMap.get(i.id) || 0) > 0 ? "text-muted-foreground" : "text-destructive font-medium"
+                                )}
+                              >
+                                {formatKg(saldoMap.get(i.id) || 0)} kg
+                              </span>
+                            )}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -363,11 +400,15 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
                 </PopoverContent>
               </Popover>
               
-              {safraId && produtoId && inscricaoOrigemId && saldoOrigem && (
+              {safraId && produtoId && inscricaoOrigemId && (
                 <p className="text-sm text-muted-foreground">
-                  Saldo disponível: <span className="font-medium text-foreground">{formatKg(saldoOrigem.saldo)} kg</span>
+                  Saldo disponível:{" "}
+                  <span className={cn("font-medium", saldoDisponivelOrigem > 0 ? "text-foreground" : "text-destructive")}>
+                    {formatKg(saldoDisponivelOrigem)} kg
+                  </span>
                 </p>
               )}
+
             </div>
 
             <div className="space-y-2">
@@ -497,7 +538,33 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
             </Button>
           )}
         </DialogFooter>
+
+        <AlertDialog open={confirmSaldoOpen} onOpenChange={setConfirmSaldoOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Quantidade acima do saldo disponível</AlertDialogTitle>
+              <AlertDialogDescription>
+                O saldo disponível da origem é de {formatKg(saldoDisponivelOrigem)} kg e a transferência
+                é de {formatKg(quantidadePendente ?? 0)} kg. Deseja transferir mesmo assim?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setQuantidadePendente(null)}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  const qtd = quantidadePendente;
+                  setConfirmSaldoOpen(false);
+                  setQuantidadePendente(null);
+                  if (qtd != null) await persistirTransferencia(qtd);
+                }}
+              >
+                Transferir mesmo assim
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
+
   );
 }
