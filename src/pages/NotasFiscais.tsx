@@ -184,21 +184,18 @@ export default function NotasFiscais() {
   const [danfePreview, setDanfePreview] = useState<{ open: boolean; downloadUrl: string | null; pdfData: Uint8Array | null; filename: string; titulo: string; loading: boolean }>({ open: false, downloadUrl: null, pdfData: null, filename: "danfe.pdf", titulo: "", loading: false });
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  const toggleGroup = (emitenteId: string | null) => {
-    const key = emitenteId ?? "__none__";
+  const toggleGroup = (groupKey: string) => {
     setCollapsedGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      if (next.has(groupKey)) next.delete(groupKey);
+      else next.add(groupKey);
       return next;
     });
   };
 
   const expandAllGroups = () => setCollapsedGroups(new Set());
   const collapseAllGroups = () => {
-    const keys = new Set<string>();
-    dadosPaginados.forEach((n) => keys.add(n.emitente_id ?? "__none__"));
-    setCollapsedGroups(keys);
+    setCollapsedGroups(new Set(grupos.map((g) => g.key)));
   };
 
   const handleVisualizarDanfe = async (nota: any) => {
