@@ -48,6 +48,9 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
   const [destinoOpen, setDestinoOpen] = useState(false);
   const [origemSearch, setOrigemSearch] = useState("");
   const [destinoSearch, setDestinoSearch] = useState("");
+  const [confirmSaldoOpen, setConfirmSaldoOpen] = useState(false);
+  const [quantidadePendente, setQuantidadePendente] = useState<number | null>(null);
+
 
   const { data: safras = [] } = useSafras();
   const { data: silos = [] } = useSilos();
