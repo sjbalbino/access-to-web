@@ -232,6 +232,7 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
       await createTransferencia.mutateAsync(data);
     }
 
+    onSaved?.(data.data_transferencia);
     onOpenChange(false);
     resetForm();
   };
