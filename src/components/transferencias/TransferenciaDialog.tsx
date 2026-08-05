@@ -511,7 +511,33 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
             </Button>
           )}
         </DialogFooter>
+
+        <AlertDialog open={confirmSaldoOpen} onOpenChange={setConfirmSaldoOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Quantidade acima do saldo disponível</AlertDialogTitle>
+              <AlertDialogDescription>
+                O saldo disponível da origem é de {formatKg(saldoDisponivelOrigem)} kg e a transferência
+                é de {formatKg(quantidadePendente ?? 0)} kg. Deseja transferir mesmo assim?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setQuantidadePendente(null)}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  const qtd = quantidadePendente;
+                  setConfirmSaldoOpen(false);
+                  setQuantidadePendente(null);
+                  if (qtd != null) await persistirTransferencia(qtd);
+                }}
+              >
+                Transferir mesmo assim
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
+
   );
 }
