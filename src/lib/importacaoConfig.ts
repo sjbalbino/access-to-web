@@ -1182,22 +1182,30 @@ export async function resolveReferences(
         from += PAGE;
       }
       const cache: Record<string, string> = {};
+      // key simples -> conjunto de ids distintos encontrados (detecção de ambiguidade)
+      const idsPorChave: Record<string, Set<string>> = {};
+      const registrarChave = (chave: string, id: string) => {
+        if (!chave) return;
+        cache[chave] = cache[chave] ?? id;
+        if (!idsPorChave[chave]) idsPorChave[chave] = new Set<string>();
+        idsPorChave[chave].add(id);
+      };
       allData.forEach((item: any) => {
         // Index by primary column
         for (const col of allColumns) {
           const key = String(item[col] || '').trim();
           if (key) {
-            cache[key] = item.id;
-            cache[key.toLowerCase()] = item.id;
+            registrarChave(key, item.id);
+            registrarChave(key.toLowerCase(), item.id);
             const noLeadingZeros = key.replace(/^0+/, '');
             if (noLeadingZeros && noLeadingZeros !== key) {
-              cache[noLeadingZeros] = item.id;
-              cache[noLeadingZeros.toLowerCase()] = item.id;
+              registrarChave(noLeadingZeros, item.id);
+              registrarChave(noLeadingZeros.toLowerCase(), item.id);
             }
             // Index by digits-only version (e.g. "472.101.688-2" -> "4721016882")
             const digitsOnly = key.replace(/\D/g, '');
             if (digitsOnly && digitsOnly !== key && digitsOnly !== noLeadingZeros) {
-              cache[digitsOnly] = item.id;
+              registrarChave(digitsOnly, item.id);
             }
             // Build composite keys (e.g. "IE|nome") for disambiguation
             if (compositeExtraCols.length > 0) {
@@ -1215,6 +1223,11 @@ export async function resolveReferences(
         }
       });
       lookupCache[cacheKey] = cache;
+      const ambiguas = new Set<string>();
+      Object.entries(idsPorChave).forEach(([chave, ids]) => {
+        if (ids.size > 1) ambiguas.add(chave);
+      });
+      ambiguousCache[cacheKey] = ambiguas;
     }
 
   }
