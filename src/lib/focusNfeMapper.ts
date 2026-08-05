@@ -415,6 +415,22 @@ export async function mapNotaToFocusNfe(
   if (itens.length === 0) {
     throw new Error("A nota deve ter pelo menos um item");
   }
+
+  // Bairro é obrigatório no schema da NF-e (SEFAZ rejeita valores vazios).
+  // Validamos aqui para evitar consumir número na SEFAZ com rejeição garantida.
+  if (!inscricao.bairro?.trim()) {
+    throw new Error(
+      "Bairro do emitente não informado. Preencha o campo Bairro no cadastro da Inscrição do Produtor (Produtores > Inscrições) e emita novamente."
+    );
+  }
+  if (!nota.dest_bairro?.trim()) {
+    throw new Error(
+      `Bairro do destinatário não informado${nota.dest_nome ? ` (${nota.dest_nome})` : ""}. Preencha o campo Bairro no cadastro de Clientes/Fornecedores (ou no Local de Entrega utilizado) e emita novamente.`
+    );
+  }
+  if (nota.transp_nome?.trim() && nota.transp_cidade && !nota.transp_bairro?.trim?.()) {
+    // Bairro do transportador é opcional no schema; não bloqueia.
+  }
   
   // Determinar se é CPF ou CNPJ do destinatário
   const cpfCnpjLimpo = nota.dest_cpf_cnpj.replace(/\D/g, "");
