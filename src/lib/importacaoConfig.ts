@@ -1280,34 +1280,51 @@ export async function resolveReferences(
       const scopeTenant = tenantId && TENANT_SCOPED_LOOKUP_TABLES.has(ref.lookupTable);
       const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}${scopeTenant ? ':t=' + tenantId : ''}`;
       const cache = lookupCache[cacheKey];
+      const ambiguas = ambiguousCache[cacheKey];
 
       let uuid: string | undefined;
+      let ambigua = false;
 
       // Try composite key first if available
       if (compositeValue && compositeExtraCols.length > 0) {
         const compKey = `${sourceValue.toLowerCase()}|${compositeValue}`;
         uuid = cache?.[compKey];
+        if (!uuid) {
+          const digitsComp = sourceValue.replace(/\D/g, '');
+          if (digitsComp) uuid = cache?.[`${digitsComp}|${compositeValue}`];
+        }
       }
 
-      // Fallback to simple key
+      // Fallback para a chave simples — só quando ela NÃO é ambígua
       if (!uuid) {
-        uuid = cache?.[sourceValue] || cache?.[sourceValue.toLowerCase()] || cache?.[sourceValue.replace(/^0+/, '')] || cache?.[sourceValue.replace(/^0+/, '').toLowerCase()];
-      }
+        const variantes = [
+          sourceValue,
+          sourceValue.toLowerCase(),
+          sourceValue.replace(/^0+/, ''),
+          sourceValue.replace(/^0+/, '').toLowerCase(),
+          sourceValue.replace(/\D/g, ''),
+        ].filter(Boolean);
 
-      // Try digits-only version (e.g. "472.101.688-2" -> "4721016882")
-      if (!uuid) {
-        const sourceDigits = sourceValue.replace(/\D/g, '');
-        if (sourceDigits && sourceDigits !== sourceValue) {
-          uuid = cache?.[sourceDigits];
-          // Also try composite with digits-only
-          if (!uuid && compositeValue && compositeExtraCols.length > 0) {
-            uuid = cache?.[`${sourceDigits}|${compositeValue}`];
+        for (const variante of variantes) {
+          if (ambiguas?.has(variante)) {
+            ambigua = true;
+            continue;
+          }
+          if (cache?.[variante]) {
+            uuid = cache[variante];
+            break;
           }
         }
       }
 
       if (uuid) {
         newRow[ref.dbColumn] = uuid;
+      } else if (ambigua) {
+        // Nunca escolher "no chute": vincularia o lançamento ao produtor errado.
+        errors.push(
+          `Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" está duplicado no cadastro (mais de um registro com esse valor). ` +
+          `Informe também a coluna de nome${ref.compositeSourceColumn ? ` "${ref.compositeSourceColumn}"` : ''} para desempatar.`
+        );
       } else if (!ref.optional) {
         errors.push(`Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" não encontrado`);
       }
