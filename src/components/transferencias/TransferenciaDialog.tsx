@@ -193,11 +193,26 @@ export function TransferenciaDialog({ open, onOpenChange, transferencia, readOnl
     const inscricaoOrigem = todasInscricoes.find(i => i.id === inscricaoOrigemId);
     const inscricaoDestino = todasInscricoes.find(i => i.id === inscricaoDestinoId);
 
+    const granjaOrigemId = inscricaoOrigem?.granja_id || null;
+    const granjaDestinoId = inscricaoDestino?.granja_id || null;
+
+    // Sem granja em nenhuma das pontas, a política de segurança recusa a gravação
+    // (e o registro nunca apareceria na lista). Bloqueia antes de enviar.
+    if (!granjaOrigemId && !granjaDestinoId) {
+      toast({
+        title: "Inscrição sem granja vinculada",
+        description:
+          "A inscrição de origem ou de destino precisa estar vinculada a uma granja da empresa. Ajuste o cadastro da inscrição e tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const data = {
       data_transferencia: format(dataTransferencia!, "yyyy-MM-dd"),
-      granja_origem_id: inscricaoOrigem?.granja_id || null,
+      granja_origem_id: granjaOrigemId,
       inscricao_origem_id: inscricaoOrigemId,
-      granja_destino_id: inscricaoDestino?.granja_id || null,
+      granja_destino_id: granjaDestinoId,
       inscricao_destino_id: inscricaoDestinoId,
       safra_id: safraId,
       produto_id: produtoId,
