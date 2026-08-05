@@ -13,7 +13,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, CheckCircle2, XCircle, AlertCircle, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { traduzirRejeicaoSefaz } from "@/lib/sefazRejeicoes";
+import { traduzirRejeicaoSefaz, extrairErrosDetalhados, type ErroDetalhadoSefaz } from "@/lib/sefazRejeicoes";
+import { DetalhesErrosSefaz } from "@/components/notas-fiscais/DetalhesErrosSefaz";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { RemessaVenda, useUpdateRemessaVenda } from "@/hooks/useRemessasVenda";
@@ -35,6 +36,7 @@ interface EmissionStatus {
   message: string;
   progress: number;
   details?: string;
+  erros?: ErroDetalhadoSefaz[];
   notaFiscalId?: string;
 }
 
@@ -501,6 +503,7 @@ export function EmitirNfeAutomaticoDialog({
           message: "Erro ao emitir NFe",
           progress: 100,
           details: emitResult.error || "Erro desconhecido",
+          erros: extrairErrosDetalhados(emitResult),
           notaFiscalId: notaFiscal.id,
         });
         return;
@@ -547,6 +550,7 @@ export function EmitirNfeAutomaticoDialog({
             message: "NFe rejeitada pela SEFAZ",
             progress: 100,
             details: motivoTraduzido,
+            erros: extrairErrosDetalhados(pollResult),
             notaFiscalId: notaFiscal.id,
           });
         }
@@ -639,6 +643,13 @@ export function EmitirNfeAutomaticoDialog({
                   )}
                 </div>
               </div>
+
+              {status.step === "error" && (
+                <div className="text-left">
+                  <DetalhesErrosSefaz erros={status.erros} defaultAberto />
+                </div>
+              )}
+
 
               {status.step !== "success" && status.step !== "error" && (
                 <Progress value={status.progress} className="h-2" />

@@ -56,6 +56,7 @@ import { toast } from "sonner";
 import { vincularNfeAutorizada } from "@/lib/nfeVinculo";
 import { useFocusNfe } from "@/hooks/useFocusNfe";
 import { ValidacaoIbsCbsDialog } from "@/components/notas-fiscais/ValidacaoIbsCbsDialog";
+import { DetalhesErrosSefaz } from "@/components/notas-fiscais/DetalhesErrosSefaz";
 import { useFocusNfeVerificarEmpresa } from "@/hooks/useFocusNfeVerificarEmpresa";
 import type { NotaFiscalData, NotaFiscalItemData } from "@/lib/focusNfeMapper";
 import { CurrencyInput, formatBrazilianNumber } from "@/components/ui/currency-input";
@@ -3200,6 +3201,7 @@ export default function NotaFiscalForm() {
                         </p>
                       </div>
                     )}
+                    <DetalhesErrosSefaz fonte={(existingNota as { erros_api?: unknown }).erros_api} />
                   </AlertDescription>
                 </Alert>
               );

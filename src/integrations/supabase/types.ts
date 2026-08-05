@@ -3526,6 +3526,7 @@ export type Database = {
           dest_tipo: string | null
           dest_uf: string | null
           emitente_id: string | null
+          erros_api: Json | null
           finalidade: number | null
           forma_pagamento: number | null
           granja_id: string | null
@@ -3631,6 +3632,7 @@ export type Database = {
           dest_tipo?: string | null
           dest_uf?: string | null
           emitente_id?: string | null
+          erros_api?: Json | null
           finalidade?: number | null
           forma_pagamento?: number | null
           granja_id?: string | null
@@ -3736,6 +3738,7 @@ export type Database = {
           dest_tipo?: string | null
           dest_uf?: string | null
           emitente_id?: string | null
+          erros_api?: Json | null
           finalidade?: number | null
           forma_pagamento?: number | null
           granja_id?: string | null

@@ -1,0 +1,2 @@
+ALTER TABLE public.notas_fiscais ADD COLUMN IF NOT EXISTS erros_api jsonb;
+COMMENT ON COLUMN public.notas_fiscais.erros_api IS 'Detalhamento dos erros retornados pela API Focus NFe / SEFAZ (schema, rejeicoes).';

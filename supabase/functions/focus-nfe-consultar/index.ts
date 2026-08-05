@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
+import { montarErrosApi, normalizarErrosFocus, resumirErros } from "../_shared/nfe-erros.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -149,9 +150,15 @@ serve(async (req) => {
       if (responseData.caminho_danfe) {
         updateData.danfe_url = responseData.caminho_danfe;
       }
-      if (responseData.mensagem_sefaz) {
-        updateData.motivo_status = responseData.mensagem_sefaz;
+      const errosDetalhados = normalizarErrosFocus(responseData);
+      if (responseData.mensagem_sefaz || errosDetalhados.length > 0) {
+        updateData.motivo_status = resumirErros(
+          responseData.mensagem_sefaz || responseData.mensagem,
+          errosDetalhados,
+        ).substring(0, 1000);
       }
+      updateData.erros_api = montarErrosApi(responseData);
+
 
       const { error: updateError } = await supabase
         .from("notas_fiscais")
@@ -169,6 +176,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         data: responseData,
+        erros: normalizarErrosFocus(responseData),
+        errosApi: montarErrosApi(responseData),
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

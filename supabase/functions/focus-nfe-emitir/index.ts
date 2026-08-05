@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
+import { montarErrosApi, normalizarErrosFocus, resumirErros } from "../_shared/nfe-erros.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -360,6 +361,11 @@ serve(async (req) => {
     console.log("Resposta Focus NFe:", JSON.stringify(responseData, null, 2));
 
     if (!response.ok) {
+      // Detalhamento completo dos erros (schema inválido, rejeições, etc.)
+      const errosDetalhados = normalizarErrosFocus(responseData);
+      const errosApi = montarErrosApi(responseData);
+      console.log("Erros detalhados normalizados:", JSON.stringify(errosDetalhados));
+
       // Verificar se é erro de duplicidade (código 539)
       const isDuplicidade = responseData.status_sefaz === "539" || 
         responseData.mensagem_sefaz?.includes("Duplicidade");
@@ -380,6 +386,7 @@ serve(async (req) => {
           .update({
             status: "erro_autorizacao",
             motivo_status: responseData.mensagem_sefaz || "NFe com número duplicado na SEFAZ. Número liberado — tente emitir novamente para receber um novo número.",
+            erros_api: errosApi,
             numero: null, // libera o número queimado
             uuid_api: null, // força nova referência
             chave_acesso: null,
@@ -395,20 +402,20 @@ serve(async (req) => {
           console.log(`Numero_atual_nfe avançado de ${numeroAtualEmit} para ${novoNumeroAtual} (pulando número duplicado ${numeroQueimado})`);
         }
       } else {
-        // Atualizar nota com erro normal — preservar código e mensagem da SEFAZ
-        // para auditoria e para que a UI possa traduzir a rejeição.
-        const mensagemRejeicao =
-          responseData.mensagem_sefaz ||
-          responseData.mensagem ||
-          responseData.erros?.join("; ") ||
-          "Erro desconhecido";
+        // Atualizar nota com erro normal — preservar código, mensagem e o
+        // detalhamento dos erros para auditoria e correção pelo usuário.
+        const mensagemRejeicao = resumirErros(
+          responseData.mensagem_sefaz || responseData.mensagem,
+          errosDetalhados,
+        );
         const codigoRejeicao = responseData.status_sefaz ? `Rejeição ${responseData.status_sefaz}: ` : "";
 
         await supabase
           .from("notas_fiscais")
           .update({
             status: "rejeitada",
-            motivo_status: `${codigoRejeicao}${mensagemRejeicao}`.substring(0, 500),
+            motivo_status: `${codigoRejeicao}${mensagemRejeicao}`.substring(0, 1000),
+            erros_api: errosApi,
           })
           .eq("id", notaFiscalId);
       }
@@ -421,6 +428,8 @@ serve(async (req) => {
             ? "Duplicidade na SEFAZ: já existe uma NF-e autorizada com este número. O número foi liberado e o próximo será usado — clique em Emitir NF-e novamente."
             : (responseData.mensagem || "Erro ao emitir NF-e"),
           details: responseData,
+          erros: errosDetalhados,
+          errosApi,
           isDuplicidade,
         }),
         {
@@ -429,6 +438,7 @@ serve(async (req) => {
         }
       );
     }
+
 
     // Atualizar nota com dados da API
     const updateData: Record<string, unknown> = {
@@ -459,6 +469,9 @@ serve(async (req) => {
     if (responseData.mensagem_sefaz) {
       updateData.motivo_status = responseData.mensagem_sefaz;
     }
+    // Mesmo com HTTP 200 a Focus pode devolver rejeições detalhadas
+    updateData.erros_api = montarErrosApi(responseData);
+
 
     const { error: updateError } = await supabase
       .from("notas_fiscais")
