@@ -129,18 +129,27 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
   // Consolida uma única linha por inscrição (o hook pode retornar um bucket por local)
   const inscricoesOpcoes = useMemo(() => {
-    const mapa = new Map<string, { id: string; label: string; saldo: number }>();
+    const mapa = new Map<string, { id: string; label: string; saldo: number; searchText: string }>();
     inscricoesComSaldo.forEach((i) => {
       const label = labelInscricao(i) || `${i.inscricao_estadual || i.cpf_cnpj} - ${i.produtor_nome || i.granja}`;
       const existente = mapa.get(i.id);
       const saldo = Number(i.saldo_disponivel || 0);
       if (existente) existente.saldo += saldo;
-      else mapa.set(i.id, { id: i.id, label, saldo });
+      else
+        mapa.set(i.id, {
+          id: i.id,
+          label,
+          saldo,
+          searchText: [i.produtor_nome, i.granja, i.inscricao_estadual, i.cpf_cnpj]
+            .filter(Boolean)
+            .join(" "),
+        });
     });
     return Array.from(mapa.values()).sort((a, b) =>
       a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" })
     );
   }, [inscricoesComSaldo]);
+
 
 
   // Buscar saldos por produto para a inscrição selecionada
@@ -901,7 +910,8 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
                       </SelectTrigger>
                       <SelectContent>
                         {inscricoesOpcoes.map((i) => (
-                          <SelectItem key={i.id} value={i.id}>
+                          <SelectItem key={i.id} value={i.id} searchText={i.searchText}>
+
                             <span className="flex items-center gap-2">
                               <span className="truncate">{i.label}</span>
                               <span className={i.saldo > 0 ? "text-xs text-muted-foreground" : "text-xs text-destructive font-medium"}>

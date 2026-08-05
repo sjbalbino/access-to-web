@@ -147,30 +147,66 @@ const SelectLabel = React.forwardRef<
 ));
 SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
+/**
+ * Extrai recursivamente todo o texto de uma árvore React (strings, números,
+ * arrays, fragmentos e elementos com children). Necessário porque itens de
+ * select frequentemente são compostos por JSX (spans, badges, ícones).
+ */
+function extractText(node: React.ReactNode): string {
+  if (node === null || node === undefined || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(extractText).join(" ");
+  if (React.isValidElement(node)) {
+    const props = node.props as { children?: React.ReactNode };
+    return extractText(props?.children);
+  }
+  return "";
+}
+
+/** Normaliza para comparação: sem acentos, minúsculo, espaços colapsados. */
+function normalizeForSearch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Mantém apenas dígitos (para casar IE/CPF/CNPJ com ou sem pontuação). */
+function digitsOnly(value: string): string {
+  return value.replace(/\D+/g, "");
+}
+
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & { children: React.ReactNode }
->(({ className, children, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {
+    children: React.ReactNode;
+    /** Texto adicional pesquisável (ex.: CPF/CNPJ não exibido no rótulo). */
+    searchText?: string;
+  }
+>(({ className, children, searchText, ...props }, ref) => {
   const context = React.useContext(SelectContext);
-  
+
   const isVisible = React.useMemo(() => {
     if (!context?.isSearchable || !context?.searchValue) return true;
-    
-    const search = context.searchValue.toLowerCase();
-    
-    // Check if children contains the search string
-    if (typeof children === "string") {
-      return children.toLowerCase().includes(search);
+
+    const haystackRaw = `${extractText(children)} ${searchText ?? ""}`;
+    const haystack = normalizeForSearch(haystackRaw);
+    const needle = normalizeForSearch(context.searchValue);
+
+    if (!needle) return true;
+    if (haystack.includes(needle)) return true;
+
+    // Busca numérica tolerante a pontuação (IE, CPF/CNPJ)
+    const needleDigits = digitsOnly(context.searchValue);
+    if (needleDigits.length >= 2) {
+      return digitsOnly(haystackRaw).includes(needleDigits);
     }
-    
-    // Fallback for more complex children
-    const textContent = React.Children.toArray(children)
-      .filter(child => typeof child === "string" || typeof child === "number")
-      .join("")
-      .toLowerCase();
-      
-    return textContent.includes(search);
-  }, [context?.searchValue, context?.isSearchable, children]);
+
+    return false;
+  }, [context?.searchValue, context?.isSearchable, children, searchText]);
+
 
   return (
     <SelectPrimitive.Item
