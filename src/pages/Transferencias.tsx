@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Plus, Pencil, Trash2, Eye } from "lucide-react";
+import { ArrowRight, Plus, Pencil, Trash2, Eye, Users } from "lucide-react";
 import { useSafras } from "@/hooks/useSafras";
 import { useSilos } from "@/hooks/useSilos";
 import { useProdutos } from "@/hooks/useProdutos";
@@ -16,6 +16,7 @@ import { useTransferenciasDeposito, useDeleteTransferenciaDeposito, Transferenci
 import { useAllInscricoes } from "@/hooks/useAllInscricoes";
 import { formatNumber, formatKg } from "@/lib/formatters";
 import { TransferenciaDialog } from "@/components/transferencias/TransferenciaDialog";
+import { ReatribuirInscricaoDialog } from "@/components/importacao/ReatribuirInscricaoDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +45,7 @@ export default function Transferencias() {
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [reatribuirOpen, setReatribuirOpen] = useState(false);
   const [editingTransferencia, setEditingTransferencia] = useState<TransferenciaDeposito | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -115,10 +117,16 @@ export default function Transferencias() {
           title="Transferências de Depósito"
           description="Registrar transferências de saldo entre produtores/inscrições"
           actions={
-            <Button onClick={handleNovaTransferencia}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Transferência
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => setReatribuirOpen(true)}>
+                <Users className="h-4 w-4 mr-2" />
+                Reatribuir Inscrição
+              </Button>
+              <Button onClick={handleNovaTransferencia}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Transferência
+              </Button>
+            </div>
           }
         />
 
@@ -365,6 +373,8 @@ export default function Transferencias() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ReatribuirInscricaoDialog open={reatribuirOpen} onOpenChange={setReatribuirOpen} modulo="transferencias" />
     </AppLayout>
   );
 }

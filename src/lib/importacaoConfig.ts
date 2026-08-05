@@ -660,7 +660,7 @@ export const tableConfigs: TableConfig[] = [
     ],
     references: [
       { dbColumn: '_granja_id', sourceColumn: '_granja_codigo_raw', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', optional: true },
-      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_codigo', sourceColumnAliases: ['insccodigo', 'inscricao_ie', 'inscricao_estadual'], compositeSourceColumn: 'inscricao_nome', lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', optional: true },
+      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_codigo', sourceColumnAliases: ['insccodigo', 'inscricao_ie', 'inscricao_estadual'], compositeSourceColumn: 'inscricao_nome', compositeColumns: ['nome'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', optional: true },
       { dbColumn: 'silo_id', sourceColumn: 'silo_codigo', lookupTable: 'silos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
       { dbColumn: 'variedade_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
       { dbColumn: 'placa_id', sourceColumn: 'placa', lookupTable: 'placas', lookupColumn: 'placa', lookupLabel: 'placa', optional: true },
@@ -727,7 +727,7 @@ export const tableConfigs: TableConfig[] = [
     references: [
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', sourceColumnAliases: ['granja', 'codigo_granja', 'cod_granja', 'granjacodigo'], lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
-      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_codigo', sourceColumnAliases: ['insccodigo', 'inscricao_ie', 'inscricao_estadual'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
+      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_codigo', sourceColumnAliases: ['insccodigo', 'inscricao_ie', 'inscricao_estadual'], compositeSourceColumn: 'inscricao_nome', compositeColumns: ['nome'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
       { dbColumn: 'comprador_id', sourceColumn: 'comprador_codigo', lookupTable: 'clientes_fornecedores', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
     ],
@@ -823,8 +823,8 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'observacoes', dbName: 'observacoes', transform: toStr },
     ],
     references: [
-      { dbColumn: 'inscricao_origem_id', sourceColumn: 'inscricao_origem_codigo', sourceColumnAliases: ['inscricao_origem_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
-      { dbColumn: 'inscricao_destino_id', sourceColumn: 'inscricao_destino_codigo', sourceColumnAliases: ['inscricao_destino_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
+      { dbColumn: 'inscricao_origem_id', sourceColumn: 'inscricao_origem_codigo', sourceColumnAliases: ['inscricao_origem_ie'], compositeSourceColumn: 'inscricao_origem_nome', compositeColumns: ['nome'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
+      { dbColumn: 'inscricao_destino_id', sourceColumn: 'inscricao_destino_codigo', sourceColumnAliases: ['inscricao_destino_ie'], compositeSourceColumn: 'inscricao_destino_nome', compositeColumns: ['nome'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'granja_origem_id', sourceColumn: 'granja_origem_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
@@ -864,9 +864,9 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'DevEmitida', dbName: '_dev_emitida_ignore', transform: () => undefined },
     ],
     references: [
-      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_codigo', sourceColumnAliases: ['inscricao_produtor_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
-      { dbColumn: 'inscricao_emitente_id', sourceColumn: 'inscricao_emitente_codigo', sourceColumnAliases: ['inscricao_emitente_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
-      { dbColumn: 'inscricao_recebe_taxa_id', sourceColumn: 'inscricao_recebe_taxa_codigo', sourceColumnAliases: ['inscricao_recebe_taxa_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
+      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_codigo', sourceColumnAliases: ['inscricao_produtor_ie'], compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
+      { dbColumn: 'inscricao_emitente_id', sourceColumn: 'inscricao_emitente_codigo', sourceColumnAliases: ['inscricao_emitente_ie'], compositeSourceColumn: 'inscricao_emitente_nome', compositeColumns: ['nome'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
+      { dbColumn: 'inscricao_recebe_taxa_id', sourceColumn: 'inscricao_recebe_taxa_codigo', sourceColumnAliases: ['inscricao_recebe_taxa_ie'], compositeSourceColumn: 'inscricao_recebe_taxa_nome', compositeColumns: ['nome'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
@@ -887,7 +887,7 @@ export const tableConfigs: TableConfig[] = [
       { accessName: 'status', dbName: 'status', transform: () => 'autorizado' },
     ],
     references: [
-      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_codigo', sourceColumnAliases: ['inscricao_produtor_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
+      { dbColumn: 'inscricao_produtor_id', sourceColumn: 'inscricao_produtor_codigo', sourceColumnAliases: ['inscricao_produtor_ie'], compositeSourceColumn: 'inscricao_produtor_nome', compositeColumns: ['nome'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo' },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome' },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social' },
@@ -921,8 +921,8 @@ export const tableConfigs: TableConfig[] = [
       }},
     ],
     references: [
-      { dbColumn: 'inscricao_comprador_id', sourceColumn: 'inscricao_comprador_codigo', sourceColumnAliases: ['inscricao_comprador_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
-      { dbColumn: 'inscricao_vendedor_id', sourceColumn: 'inscricao_vendedor_codigo', sourceColumnAliases: ['inscricao_vendedor_ie'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
+      { dbColumn: 'inscricao_comprador_id', sourceColumn: 'inscricao_comprador_codigo', sourceColumnAliases: ['inscricao_comprador_ie'], compositeSourceColumn: 'inscricao_comprador_nome', compositeColumns: ['nome'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
+      { dbColumn: 'inscricao_vendedor_id', sourceColumn: 'inscricao_vendedor_codigo', sourceColumnAliases: ['inscricao_vendedor_ie'], compositeSourceColumn: 'inscricao_vendedor_nome', compositeColumns: ['nome'], lookupTable: 'inscricoes_produtor', lookupColumn: 'codigo', required: true },
       { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'produto_id', sourceColumn: 'produto_codigo', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
       { dbColumn: 'granja_id', sourceColumn: 'granja_codigo', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', required: true },
@@ -1147,6 +1147,9 @@ export async function resolveReferences(
 ): Promise<{ resolved: Record<string, any>[]; errors: string[] }> {
   const errors: string[] = [];
   const lookupCache: Record<string, Record<string, string>> = {};
+  // Chaves simples (ex. IE) que apontam para MAIS DE UM registro do cadastro.
+  // Nesses casos não podemos escolher um id "no chute": exigimos desempate por nome.
+  const ambiguousCache: Record<string, Set<string>> = {};
 
   // Build lookup caches (skip self-references)
   for (const ref of references) {
@@ -1179,22 +1182,30 @@ export async function resolveReferences(
         from += PAGE;
       }
       const cache: Record<string, string> = {};
+      // key simples -> conjunto de ids distintos encontrados (detecção de ambiguidade)
+      const idsPorChave: Record<string, Set<string>> = {};
+      const registrarChave = (chave: string, id: string) => {
+        if (!chave) return;
+        cache[chave] = cache[chave] ?? id;
+        if (!idsPorChave[chave]) idsPorChave[chave] = new Set<string>();
+        idsPorChave[chave].add(id);
+      };
       allData.forEach((item: any) => {
         // Index by primary column
         for (const col of allColumns) {
           const key = String(item[col] || '').trim();
           if (key) {
-            cache[key] = item.id;
-            cache[key.toLowerCase()] = item.id;
+            registrarChave(key, item.id);
+            registrarChave(key.toLowerCase(), item.id);
             const noLeadingZeros = key.replace(/^0+/, '');
             if (noLeadingZeros && noLeadingZeros !== key) {
-              cache[noLeadingZeros] = item.id;
-              cache[noLeadingZeros.toLowerCase()] = item.id;
+              registrarChave(noLeadingZeros, item.id);
+              registrarChave(noLeadingZeros.toLowerCase(), item.id);
             }
             // Index by digits-only version (e.g. "472.101.688-2" -> "4721016882")
             const digitsOnly = key.replace(/\D/g, '');
             if (digitsOnly && digitsOnly !== key && digitsOnly !== noLeadingZeros) {
-              cache[digitsOnly] = item.id;
+              registrarChave(digitsOnly, item.id);
             }
             // Build composite keys (e.g. "IE|nome") for disambiguation
             if (compositeExtraCols.length > 0) {
@@ -1212,6 +1223,11 @@ export async function resolveReferences(
         }
       });
       lookupCache[cacheKey] = cache;
+      const ambiguas = new Set<string>();
+      Object.entries(idsPorChave).forEach(([chave, ids]) => {
+        if (ids.size > 1) ambiguas.add(chave);
+      });
+      ambiguousCache[cacheKey] = ambiguas;
     }
 
   }
@@ -1264,34 +1280,51 @@ export async function resolveReferences(
       const scopeTenant = tenantId && TENANT_SCOPED_LOOKUP_TABLES.has(ref.lookupTable);
       const cacheKey = `${ref.lookupTable}:${ref.lookupColumn}${compositeExtraCols.length ? ':' + compositeExtraCols.join(',') : ''}${scopeTenant ? ':t=' + tenantId : ''}`;
       const cache = lookupCache[cacheKey];
+      const ambiguas = ambiguousCache[cacheKey];
 
       let uuid: string | undefined;
+      let ambigua = false;
 
       // Try composite key first if available
       if (compositeValue && compositeExtraCols.length > 0) {
         const compKey = `${sourceValue.toLowerCase()}|${compositeValue}`;
         uuid = cache?.[compKey];
+        if (!uuid) {
+          const digitsComp = sourceValue.replace(/\D/g, '');
+          if (digitsComp) uuid = cache?.[`${digitsComp}|${compositeValue}`];
+        }
       }
 
-      // Fallback to simple key
+      // Fallback para a chave simples — só quando ela NÃO é ambígua
       if (!uuid) {
-        uuid = cache?.[sourceValue] || cache?.[sourceValue.toLowerCase()] || cache?.[sourceValue.replace(/^0+/, '')] || cache?.[sourceValue.replace(/^0+/, '').toLowerCase()];
-      }
+        const variantes = [
+          sourceValue,
+          sourceValue.toLowerCase(),
+          sourceValue.replace(/^0+/, ''),
+          sourceValue.replace(/^0+/, '').toLowerCase(),
+          sourceValue.replace(/\D/g, ''),
+        ].filter(Boolean);
 
-      // Try digits-only version (e.g. "472.101.688-2" -> "4721016882")
-      if (!uuid) {
-        const sourceDigits = sourceValue.replace(/\D/g, '');
-        if (sourceDigits && sourceDigits !== sourceValue) {
-          uuid = cache?.[sourceDigits];
-          // Also try composite with digits-only
-          if (!uuid && compositeValue && compositeExtraCols.length > 0) {
-            uuid = cache?.[`${sourceDigits}|${compositeValue}`];
+        for (const variante of variantes) {
+          if (ambiguas?.has(variante)) {
+            ambigua = true;
+            continue;
+          }
+          if (cache?.[variante]) {
+            uuid = cache[variante];
+            break;
           }
         }
       }
 
       if (uuid) {
         newRow[ref.dbColumn] = uuid;
+      } else if (ambigua) {
+        // Nunca escolher "no chute": vincularia o lançamento ao produtor errado.
+        errors.push(
+          `Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" está duplicado no cadastro (mais de um registro com esse valor). ` +
+          `Informe também a coluna de nome${ref.compositeSourceColumn ? ` "${ref.compositeSourceColumn}"` : ''} para desempatar.`
+        );
       } else if (!ref.optional) {
         errors.push(`Linha ${idx + 1}: ${ref.lookupTable}.${ref.lookupColumn} = "${sourceValue}" não encontrado`);
       }
