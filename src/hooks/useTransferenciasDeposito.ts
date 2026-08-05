@@ -2,6 +2,28 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+/**
+ * Constrói uma mensagem de erro detalhada (código, detalhes e dica do PostgREST/Postgres)
+ * e registra no console, para que falhas silenciosas de gravação sejam diagnosticáveis.
+ */
+function descreverErro(contexto: string, error: any): string {
+  // eslint-disable-next-line no-console
+  console.error(`[transferencias_deposito] ${contexto}`, {
+    message: error?.message,
+    code: error?.code,
+    details: error?.details,
+    hint: error?.hint,
+  });
+
+  if (error?.code === '42501' || String(error?.message || '').includes('row-level security')) {
+    return 'Permissão negada pela política de segurança: a granja de origem ou de destino não pertence à sua empresa. Verifique a granja vinculada às inscrições selecionadas.';
+  }
+
+  const partes = [error?.message, error?.details, error?.hint].filter(Boolean);
+  const base = partes.length ? partes.join(' — ') : 'Erro desconhecido.';
+  return error?.code ? `${base} (código ${error.code})` : base;
+}
+
 export interface TransferenciaDeposito {
   id: string;
   codigo: number;
