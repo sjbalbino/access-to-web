@@ -450,8 +450,8 @@ export default function ClientesFornecedores() {
                       <Input value={formData.complemento || ''} onChange={(e) => setFormData({ ...formData, complemento: e.target.value })} />
                     </div>
                     <div className="space-y-2">
-                      <Label>Bairro</Label>
-                      <Input value={formData.bairro || ''} onChange={(e) => setFormData({ ...formData, bairro: e.target.value })} />
+                      <Label>Bairro <span className="text-destructive">*</span></Label>
+                      <Input value={formData.bairro || ''} onChange={(e) => setFormData({ ...formData, bairro: e.target.value })} placeholder="Ex.: INTERIOR" />
                     </div>
                     <div className="space-y-2">
                       <Label>Cidade</Label>
