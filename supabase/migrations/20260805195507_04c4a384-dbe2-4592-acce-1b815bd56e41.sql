@@ -1,0 +1,1 @@
+SELECT setval('public.transferencias_deposito_codigo_seq', (SELECT GREATEST(COALESCE(MAX(codigo), 0), 1) FROM public.transferencias_deposito), true);
