@@ -419,6 +419,7 @@ export function EmitirNfeDevolucaoDialog({
           message: "Erro ao emitir NFe",
           progress: 100,
           details: emitResult.error || "Erro desconhecido",
+          erros: extrairErrosDetalhados(emitResult),
           notaFiscalId: notaFiscal.id,
         });
         return;
