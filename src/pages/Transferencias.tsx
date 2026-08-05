@@ -329,6 +329,17 @@ export default function Transferencias() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         transferencia={editingTransferencia}
+        onSaved={() => {
+          // Garante que o lançamento recém-gravado apareça na lista
+          setFiltroSafraId("");
+          setFiltroProdutoId("");
+          setFiltroSiloId("");
+          setFiltroOrigemId("");
+          setFiltroDestinoId("");
+          setFiltroDataInicio("");
+          setFiltroDataFim("");
+          setPaginaAtual(1);
+        }}
       />
 
       {/* Dialog de Visualização (importados) */}
