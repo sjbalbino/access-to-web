@@ -464,6 +464,7 @@ export function EmitirNfeDevolucaoDialog({
             message: "NFe rejeitada pela SEFAZ",
             progress: 100,
             details: motivoTraduzido,
+            erros: extrairErrosDetalhados(pollResult),
             notaFiscalId: notaFiscal.id,
           });
         }
