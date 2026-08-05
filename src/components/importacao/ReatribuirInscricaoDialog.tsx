@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertTriangle, Loader2, Save, Users } from 'lucide-react';
 import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 import { useInscricoesCompletas } from '@/hooks/useInscricoesCompletas';
-import { formatDateBR } from '@/lib/datetime';
+import { formatDateSP } from '@/lib/datetime';
 
 /** Módulos que suportam reatribuição de inscrição em lançamentos importados. */
 export type ReatribuicaoModulo = 'transferencias' | 'devolucoes';
@@ -326,7 +326,7 @@ export function ReatribuirInscricaoDialog({ open, onOpenChange, modulo }: Reatri
                             <span className="font-medium">#{r.codigo ?? '—'}</span>
                             <Badge variant="secondary">{r.papel}</Badge>
                             <span className="text-muted-foreground">
-                              {r.data ? formatDateBR(r.data) : '—'}
+                              {r.data ? formatDateSP(r.data) : '—'}
                             </span>
                             <span className="font-mono">{kg(r.quantidade_kg)} kg</span>
                             {r.bloqueado && (
