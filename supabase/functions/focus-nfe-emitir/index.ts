@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
 import { montarErrosApi, normalizarErrosFocus, resumirErros } from "../_shared/nfe-erros.ts";
+import { extrairDatasNfe } from "../_shared/nfe-datas.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
