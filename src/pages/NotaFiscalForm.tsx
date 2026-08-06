@@ -2329,7 +2329,10 @@ export default function NotaFiscalForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="transp_uf">UF</Label>
+                  <Label htmlFor="transp_uf">
+                    UF {formData.transp_nome || formData.transp_cpf_cnpj ? "*" : ""}
+                  </Label>
+
                   <Select isSearchable
                     value={formData.transp_uf || ""}
                     onValueChange={(value) => setFormData({ ...formData, transp_uf: value })}
