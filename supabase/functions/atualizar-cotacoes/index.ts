@@ -117,14 +117,16 @@ async function coletarCepea(): Promise<CotacaoColetada[]> {
     throw new Error('Não foi possível interpretar nenhum indicador no retorno do CEPEA');
   }
 
-  // O widget devolve os indicadores na ordem em que foram pedidos por id crescente.
-  // Para não depender da ordem, casamos por palavra-chave do nome retornado.
-  const ordenados = [...INDICADORES_CEPEA].sort((a, b) => a.id - b.id);
+  // A ordem devolvida pelo widget não é confiável: casamos pelo nome do indicador.
+  // Se um indicador não for encontrado, ele simplesmente não é gravado (nunca chutamos valor).
   const resultado: CotacaoColetada[] = [];
 
-  ordenados.forEach((cfg, idx) => {
-    const item = encontrados[idx];
-    if (!item) return;
+  for (const cfg of INDICADORES_CEPEA) {
+    const item = encontrados.find((e) => cfg.match.test(e.nome));
+    if (!item) {
+      console.warn(`Indicador ${cfg.slug} não encontrado no retorno do CEPEA`);
+      continue;
+    }
     resultado.push({
       slug: cfg.slug,
       nome: cfg.nome,
@@ -136,7 +138,8 @@ async function coletarCepea(): Promise<CotacaoColetada[]> {
       fonte_url: CEPEA_FONTE_URL,
       data_referencia: item.data,
     });
-  });
+  }
+
 
   return resultado;
 }
