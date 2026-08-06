@@ -78,19 +78,8 @@ function stripTags(html: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 }
 
-async function coletarCepea(): Promise<CotacaoColetada[]> {
-  const params = INDICADORES_CEPEA.map((i) => `id_indicador%5B%5D=${i.id}`).join('&');
-  const url = `${CEPEA_URL}?fonte=arial&tamanho=10&largura=400px&${params}`;
-
-  const resp = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SisAgroPortal/1.0)' },
-  });
-  if (!resp.ok) {
-    throw new Error(`CEPEA respondeu ${resp.status}: ${await resp.text()}`);
-  }
-  const body = await resp.text();
-
-  // Cada indicador vira uma <tr> com: data | nome (+unidade) | valor
+/** Extrai (nome, data, valor) das linhas da tabela devolvida pelo widget do CEPEA. */
+function parseLinhasCepea(body: string) {
   const linhas = body.split(/<tr[^>]*>/i).slice(1);
   const encontrados: { nome: string; data: string; valor: number }[] = [];
 
@@ -113,32 +102,56 @@ async function coletarCepea(): Promise<CotacaoColetada[]> {
     encontrados.push({ nome, data, valor });
   }
 
-  if (encontrados.length === 0) {
-    throw new Error('Não foi possível interpretar nenhum indicador no retorno do CEPEA');
-  }
+  return encontrados;
+}
 
-  // A ordem devolvida pelo widget não é confiável: casamos pelo nome do indicador.
-  // Se um indicador não for encontrado, ele simplesmente não é gravado (nunca chutamos valor).
+async function coletarCepea(): Promise<CotacaoColetada[]> {
+  // O widget do CEPEA trunca respostas com muitos indicadores por requisição,
+  // por isso cada indicador é buscado individualmente e casado pelo nome retornado.
   const resultado: CotacaoColetada[] = [];
+  const falhas: string[] = [];
 
   for (const cfg of INDICADORES_CEPEA) {
-    const item = encontrados.find((e) => cfg.match.test(e.nome));
-    if (!item) {
-      console.warn(`Indicador ${cfg.slug} não encontrado no retorno do CEPEA`);
-      continue;
+    try {
+      const url = `${CEPEA_URL}?fonte=arial&tamanho=10&largura=400px&id_indicador%5B%5D=${cfg.id}`;
+      const resp = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SisAgroPortal/1.0)' },
+      });
+      if (!resp.ok) {
+        falhas.push(`${cfg.slug}: HTTP ${resp.status}`);
+        continue;
+      }
+
+      const encontrados = parseLinhasCepea(await resp.text());
+      const item = encontrados.find((e) => cfg.match.test(e.nome)) ?? encontrados[0];
+      if (!item) {
+        falhas.push(`${cfg.slug}: indicador não retornado`);
+        continue;
+      }
+
+      resultado.push({
+        slug: cfg.slug,
+        nome: cfg.nome,
+        categoria: cfg.categoria,
+        regiao: cfg.regiao,
+        unidade: cfg.unidade,
+        valor: item.valor,
+        fonte: CEPEA_FONTE,
+        fonte_url: CEPEA_FONTE_URL,
+        data_referencia: item.data,
+      });
+    } catch (e) {
+      falhas.push(`${cfg.slug}: ${e instanceof Error ? e.message : String(e)}`);
     }
-    resultado.push({
-      slug: cfg.slug,
-      nome: cfg.nome,
-      categoria: cfg.categoria,
-      regiao: cfg.regiao,
-      unidade: cfg.unidade,
-      valor: item.valor,
-      fonte: CEPEA_FONTE,
-      fonte_url: CEPEA_FONTE_URL,
-      data_referencia: item.data,
-    });
   }
+
+  if (resultado.length === 0) {
+    throw new Error(`Nenhum indicador do CEPEA pôde ser coletado. ${falhas.join(' | ')}`);
+  }
+  if (falhas.length > 0) {
+    console.warn('Indicadores CEPEA não coletados:', falhas.join(' | '));
+  }
+
 
 
   return resultado;
