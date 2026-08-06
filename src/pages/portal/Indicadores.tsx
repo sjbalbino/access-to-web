@@ -62,10 +62,10 @@ export default function PortalIndicadores() {
     valor: h.valor,
   }));
 
-  const dataMaisRecente = (cotacoes ?? [])
-    .map((c) => c.data_referencia)
-    .sort()
-    .at(-1);
+  const datasOrdenadas = (cotacoes ?? []).map((c) => c.data_referencia).sort();
+  const dataMaisRecente =
+    datasOrdenadas.length > 0 ? datasOrdenadas[datasOrdenadas.length - 1] : undefined;
+
 
   return (
     <PortalLayout>
