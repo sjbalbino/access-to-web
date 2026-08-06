@@ -24,14 +24,15 @@ interface IndicadorCepea {
 }
 
 const INDICADORES_CEPEA: IndicadorCepea[] = [
-  { id: 78, slug: 'soja-paranagua', nome: 'Soja', categoria: 'graos', regiao: 'Paranaguá (PR)', unidade: 'sc 60 kg' },
-  { id: 77, slug: 'milho', nome: 'Milho', categoria: 'graos', regiao: 'Campinas (SP)', unidade: 'sc 60 kg' },
-  { id: 179, slug: 'trigo-rs', nome: 'Trigo', categoria: 'graos', regiao: 'RS', unidade: 'tonelada' },
-  { id: 178, slug: 'trigo-pr', nome: 'Trigo', categoria: 'graos', regiao: 'PR', unidade: 'tonelada' },
-  { id: 126, slug: 'arroz-casca-rs', nome: 'Arroz em casca', categoria: 'graos', regiao: 'RS', unidade: 'sc 50 kg' },
-  { id: 2, slug: 'boi-gordo', nome: 'Boi gordo', categoria: 'pecuaria', regiao: 'SP', unidade: 'arroba' },
-  { id: 23, slug: 'cafe-arabica', nome: 'Café arábica', categoria: 'graos', regiao: 'Brasil', unidade: 'sc 60 kg' },
+  { id: 78, slug: 'soja-paranagua', nome: 'Soja', categoria: 'graos', regiao: 'Paranaguá (PR)', unidade: 'sc 60 kg', match: /soja/i },
+  { id: 77, slug: 'milho', nome: 'Milho', categoria: 'graos', regiao: 'Campinas (SP)', unidade: 'sc 60 kg', match: /milho/i },
+  { id: 179, slug: 'trigo-rs', nome: 'Trigo', categoria: 'graos', regiao: 'RS', unidade: 'tonelada', match: /trigo\s*-\s*rs/i },
+  { id: 178, slug: 'trigo-pr', nome: 'Trigo', categoria: 'graos', regiao: 'PR', unidade: 'tonelada', match: /trigo\s*-\s*pr/i },
+  { id: 126, slug: 'arroz-casca-rs', nome: 'Arroz em casca', categoria: 'graos', regiao: 'RS', unidade: 'sc 50 kg', match: /arroz/i },
+  { id: 2, slug: 'boi-gordo', nome: 'Boi gordo', categoria: 'pecuaria', regiao: 'SP', unidade: 'arroba', match: /boi\s*gordo/i },
+  { id: 23, slug: 'cafe-arabica', nome: 'Café arábica', categoria: 'graos', regiao: 'Brasil', unidade: 'sc 60 kg', match: /caf(é|e)/i },
 ];
+
 
 const CEPEA_URL = 'https://www.cepea.org.br/br/widgetproduto.js.php';
 const CEPEA_FONTE = 'CEPEA/ESALQ-USP';
