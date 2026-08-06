@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
 import { montarErrosApi, normalizarErrosFocus, resumirErros } from "../_shared/nfe-erros.ts";
+import { extrairDatasNfe, extrairDatasDoXml } from "../_shared/nfe-datas.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -126,6 +127,28 @@ serve(async (req) => {
     const responseData = await response.json();
     console.log("Resposta Focus NFe:", JSON.stringify(responseData, null, 2));
 
+    // A consulta da Focus não devolve a data/hora de emissão; quando a nota está
+    // autorizada, buscamos dhEmi/dhRecbto no XML autorizado (fonte oficial).
+    let datasDoXml: { data_emissao?: string; data_autorizacao?: string } = {};
+    const caminhoXml = responseData?.caminho_xml_nota_fiscal as string | undefined;
+    if (caminhoXml) {
+      try {
+        const xmlUrl = caminhoXml.startsWith("http") ? caminhoXml : `${baseUrl}${caminhoXml}`;
+        const xmlResp = await fetch(xmlUrl, {
+          headers: { Authorization: `Basic ${btoa(`${emitenteToken}:`)}` },
+        });
+        if (xmlResp.ok) {
+          datasDoXml = extrairDatasDoXml(await xmlResp.text());
+          console.log("Datas extraídas do XML autorizado:", JSON.stringify(datasDoXml));
+        } else {
+          console.warn("Não foi possível baixar o XML para ler as datas:", xmlResp.status);
+        }
+      } catch (e) {
+        console.warn("Erro ao ler datas do XML:", e);
+      }
+    }
+
+
     // Se temos o ID da nota, atualizar no banco
     if (notaFiscalId && supabase) {
       const updateData: Record<string, unknown> = {
@@ -158,6 +181,17 @@ serve(async (req) => {
         ).substring(0, 1000);
       }
       updateData.erros_api = montarErrosApi(responseData);
+
+      // Data/hora oficiais: prioridade para o XML autorizado, depois a resposta da API.
+      const datasOficiais = { ...extrairDatasNfe(responseData), ...datasDoXml };
+      if (datasOficiais.data_emissao) {
+        updateData.data_emissao = datasOficiais.data_emissao;
+      }
+      if (datasOficiais.data_autorizacao) {
+        updateData.data_autorizacao = datasOficiais.data_autorizacao;
+      }
+      console.log("Datas oficiais gravadas:", JSON.stringify(datasOficiais));
+
 
 
       const { error: updateError } = await supabase

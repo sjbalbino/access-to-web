@@ -16,6 +16,8 @@ export interface NotaFiscal {
   status: string | null;
   motivo_status: string | null;
   data_emissao: string | null;
+  /** Instante em que a SEFAZ autorizou o documento (retornado no XML). */
+  data_autorizacao?: string | null;
   data_saida_entrada: string | null;
   operacao: number | null;
   natureza_operacao: string;

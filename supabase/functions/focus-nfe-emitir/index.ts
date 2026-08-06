@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
 import { montarErrosApi, normalizarErrosFocus, resumirErros } from "../_shared/nfe-erros.ts";
+import { extrairDatasNfe } from "../_shared/nfe-datas.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -471,6 +472,18 @@ serve(async (req) => {
     }
     // Mesmo com HTTP 200 a Focus pode devolver rejeições detalhadas
     updateData.erros_api = montarErrosApi(responseData);
+
+    // Data/hora oficiais do documento: a estimativa gerada no navegador é
+    // substituída pelo valor retornado pela API/SEFAZ quando disponível.
+    const datasOficiais = extrairDatasNfe(responseData);
+    if (datasOficiais.data_emissao) {
+      updateData.data_emissao = datasOficiais.data_emissao;
+    }
+    if (datasOficiais.data_autorizacao) {
+      updateData.data_autorizacao = datasOficiais.data_autorizacao;
+    }
+    console.log("Datas oficiais extraídas da API:", JSON.stringify(datasOficiais));
+
 
 
     const { error: updateError } = await supabase
