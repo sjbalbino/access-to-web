@@ -251,7 +251,13 @@ export function EmitirNfeAutomaticoDialog({
         ? `${transportadora.logradouro}, ${transportadora.numero || "S/N"}`
         : null;
       const transpCidade = transportadora?.cidade || null;
-      const transpUf = transportadora?.uf || null;
+      // UF do transportador é obrigatória para a SEFAZ sempre que houver transportador.
+      // Quando o transportador é o próprio motorista (sem cadastro), usamos como
+      // fallback a UF da placa e, na falta dela, a UF da inscrição/emitente.
+      const transpUf = transpNome
+        ? transportadora?.uf || remessa.uf_placa || inscricao?.uf || null
+        : null;
+
 
       const notaFiscalData = {
         emitente_id: emitente.id,

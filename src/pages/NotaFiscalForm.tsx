@@ -2269,7 +2269,17 @@ export default function NotaFiscalForm() {
                 <Input
                   id="transp_nome"
                   value={formData.transp_nome || ""}
-                  onChange={(e) => setFormData({ ...formData, transp_nome: e.target.value })}
+                  onChange={(e) => {
+                    const nome = e.target.value;
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      transp_nome: nome,
+                      // A SEFAZ exige UF do transportador: sugere UF da placa/emitente
+                      transp_uf:
+                        prev.transp_uf ||
+                        (nome ? prev.veiculo_uf || selectedInscricao?.uf || "" : ""),
+                    }));
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -2277,9 +2287,19 @@ export default function NotaFiscalForm() {
                 <Input
                   id="transp_cpf_cnpj"
                   value={formData.transp_cpf_cnpj || ""}
-                  onChange={(e) => setFormData({ ...formData, transp_cpf_cnpj: e.target.value })}
+                  onChange={(e) => {
+                    const doc = e.target.value;
+                    setFormData((prev: any) => ({
+                      ...prev,
+                      transp_cpf_cnpj: doc,
+                      transp_uf:
+                        prev.transp_uf ||
+                        (doc ? prev.veiculo_uf || selectedInscricao?.uf || "" : ""),
+                    }));
+                  }}
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="transp_ie">IE</Label>
                 <Input
@@ -2309,7 +2329,10 @@ export default function NotaFiscalForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="transp_uf">UF</Label>
+                  <Label htmlFor="transp_uf">
+                    UF {formData.transp_nome || formData.transp_cpf_cnpj ? "*" : ""}
+                  </Label>
+
                   <Select isSearchable
                     value={formData.transp_uf || ""}
                     onValueChange={(value) => setFormData({ ...formData, transp_uf: value })}
