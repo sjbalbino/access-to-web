@@ -75,7 +75,7 @@ export function useFocusNfe() {
       // Buscar numero e serie da nota fiscal do banco para garantir que estamos usando os valores corretos
       const { data: notaCompleta, error: notaError } = await supabase
         .from("notas_fiscais")
-        .select("numero, serie")
+        .select("numero, serie, data_emissao")
         .eq("id", notaFiscalId)
         .single();
 
