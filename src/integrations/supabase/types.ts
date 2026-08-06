@@ -3628,6 +3628,7 @@ export type Database = {
           colheita_id: string | null
           created_at: string
           danfe_url: string | null
+          data_autorizacao: string | null
           data_emissao: string | null
           data_saida_entrada: string | null
           dest_bairro: string | null
@@ -3734,6 +3735,7 @@ export type Database = {
           colheita_id?: string | null
           created_at?: string
           danfe_url?: string | null
+          data_autorizacao?: string | null
           data_emissao?: string | null
           data_saida_entrada?: string | null
           dest_bairro?: string | null
@@ -3840,6 +3842,7 @@ export type Database = {
           colheita_id?: string | null
           created_at?: string
           danfe_url?: string | null
+          data_autorizacao?: string | null
           data_emissao?: string | null
           data_saida_entrada?: string | null
           dest_bairro?: string | null
