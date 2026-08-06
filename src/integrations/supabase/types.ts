@@ -1725,6 +1725,81 @@ export type Database = {
           },
         ]
       }
+      cotacoes_mercado: {
+        Row: {
+          categoria: string
+          created_at: string
+          data_referencia: string
+          fonte: string
+          fonte_url: string | null
+          id: string
+          nome: string
+          regiao: string | null
+          slug: string
+          unidade: string
+          updated_at: string
+          valor: number
+          variacao_percentual: number | null
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          data_referencia: string
+          fonte: string
+          fonte_url?: string | null
+          id?: string
+          nome: string
+          regiao?: string | null
+          slug: string
+          unidade: string
+          updated_at?: string
+          valor: number
+          variacao_percentual?: number | null
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          data_referencia?: string
+          fonte?: string
+          fonte_url?: string | null
+          id?: string
+          nome?: string
+          regiao?: string | null
+          slug?: string
+          unidade?: string
+          updated_at?: string
+          valor?: number
+          variacao_percentual?: number | null
+        }
+        Relationships: []
+      }
+      cotacoes_status_coleta: {
+        Row: {
+          created_at: string
+          detalhe: string | null
+          fonte: string
+          id: string
+          itens_gravados: number
+          sucesso: boolean
+        }
+        Insert: {
+          created_at?: string
+          detalhe?: string | null
+          fonte: string
+          id?: string
+          itens_gravados?: number
+          sucesso: boolean
+        }
+        Update: {
+          created_at?: string
+          detalhe?: string | null
+          fonte?: string
+          id?: string
+          itens_gravados?: number
+          sucesso?: boolean
+        }
+        Relationships: []
+      }
       culturas: {
         Row: {
           ativa: boolean | null
@@ -3294,6 +3369,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      leads_portal: {
+        Row: {
+          cidade: string | null
+          created_at: string
+          email: string
+          empresa: string | null
+          id: string
+          mensagem: string | null
+          nome: string
+          origem: string
+          qtd_produtores: string | null
+          status: string
+          telefone: string | null
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string
+          email: string
+          empresa?: string | null
+          id?: string
+          mensagem?: string | null
+          nome: string
+          origem?: string
+          qtd_produtores?: string | null
+          status?: string
+          telefone?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string
+          email?: string
+          empresa?: string | null
+          id?: string
+          mensagem?: string | null
+          nome?: string
+          origem?: string
+          qtd_produtores?: string | null
+          status?: string
+          telefone?: string | null
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       locais_entrega: {
         Row: {

@@ -56,6 +56,10 @@ import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TicketDepositoPreview } from "@/components/shared/TicketDepositoPreview";
 import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog-provider";
+import PortalHome from "./pages/portal/Home";
+import PortalIndicadores from "./pages/portal/Indicadores";
+import PortalContato from "./pages/portal/Contato";
+
 
 
 
@@ -73,11 +77,20 @@ const App = () => (
           <TabsProvider>
             <ErrorBoundary>
             <Routes>
+              {/* Portal público */}
+              <Route path="/" element={<PortalHome />} />
+              <Route path="/indicadores" element={<PortalIndicadores />} />
+              <Route path="/contato" element={<PortalContato />} />
+
+              {/* Autenticação */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+
+              {/* Sistema */}
+              <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/granjas" element={<ProtectedRoute><Granjas /></ProtectedRoute>} />
+
               <Route path="/culturas" element={<ProtectedRoute><Culturas /></ProtectedRoute>} />
               <Route path="/safras" element={<ProtectedRoute><Safras /></ProtectedRoute>} />
               <Route path="/produtores" element={<ProtectedRoute><Produtores /></ProtectedRoute>} />

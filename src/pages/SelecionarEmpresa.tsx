@@ -29,7 +29,7 @@ export default function SelecionarEmpresa() {
   }
 
   if (!isSuperAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const tenantAtivoId = profile?.tenant_id ?? null;

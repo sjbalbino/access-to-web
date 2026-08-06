@@ -33,7 +33,7 @@ export interface RouteInfo {
 }
 
 export const routeMap: Record<string, RouteInfo> = {
-  "/": { title: "Dashboard", icon: LayoutDashboard, color: "text-primary" },
+  "/dashboard": { title: "Dashboard", icon: LayoutDashboard, color: "text-primary" },
   "/granjas": { title: "Granjas", icon: Building2, color: "text-info" },
   "/culturas": { title: "Culturas", icon: Leaf, color: "text-success" },
   "/safras": { title: "Safras", icon: Calendar, color: "text-warning" },
