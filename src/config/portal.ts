@@ -29,6 +29,36 @@ export const PORTAL_DESCRICAO_CURTA =
   "Sistema de gestão agropecuária para cerealistas, armazéns e produtores rurais.";
 
 export function whatsappLink(mensagem: string): string | null {
-  if (!PORTAL_CONTATO.whatsapp) return null;
-  return `https://wa.me/${PORTAL_CONTATO.whatsapp}?text=${encodeURIComponent(mensagem)}`;
+  const numero = PORTAL_CONTATO.whatsapp.replace(/\D/g, "");
+  if (!numero) return null;
+  return `https://api.whatsapp.com/send?phone=${numero}&text=${encodeURIComponent(mensagem)}`;
 }
+
+/**
+ * Abre o WhatsApp em uma aba nova real.
+ *
+ * O WhatsApp envia cabeçalhos que impedem a navegação dentro de iframes
+ * (ERR_BLOCKED_BY_RESPONSE na pré-visualização). Por isso forçamos
+ * window.open e, se o navegador bloquear o popup, navegamos a janela de topo.
+ */
+export function abrirWhatsapp(
+  url: string,
+  evento?: { preventDefault: () => void },
+): void {
+  evento?.preventDefault();
+
+  try {
+    const janela = window.open(url, "_blank", "noopener,noreferrer");
+    if (janela) return;
+  } catch {
+    // ignora e usa o fallback abaixo
+  }
+
+  try {
+    // Escapa do iframe da pré-visualização quando possível
+    (window.top ?? window).location.href = url;
+  } catch {
+    window.location.href = url;
+  }
+}
+
