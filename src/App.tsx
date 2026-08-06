@@ -56,6 +56,10 @@ import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TicketDepositoPreview } from "@/components/shared/TicketDepositoPreview";
 import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog-provider";
+import PortalHome from "./pages/portal/Home";
+import PortalIndicadores from "./pages/portal/Indicadores";
+import PortalContato from "./pages/portal/Contato";
+
 
 
 
