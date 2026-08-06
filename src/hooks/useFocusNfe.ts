@@ -75,7 +75,7 @@ export function useFocusNfe() {
       // Buscar numero e serie da nota fiscal do banco para garantir que estamos usando os valores corretos
       const { data: notaCompleta, error: notaError } = await supabase
         .from("notas_fiscais")
-        .select("numero, serie")
+        .select("numero, serie, data_emissao")
         .eq("id", notaFiscalId)
         .single();
 
@@ -159,10 +159,29 @@ export function useFocusNfe() {
         console.log("Observações tributárias dos produtos adicionadas:", observacoesTributarias);
       }
 
+      // O formulário grava a data de emissão sem horário (00:00), o que faz a nota
+      // "afundar" nas listagens ordenadas por data/hora de emissão. Ao emitir,
+      // normalizamos para o instante real da autorização.
+      try {
+        const dataEmissaoAtual = notaCompleta?.data_emissao as string | null | undefined;
+        const semHorario =
+          !!dataEmissaoAtual &&
+          (dataEmissaoAtual.length <= 10 || /T00:00:00(\.0+)?(Z|[+-]\d{2}:?\d{2})?$/.test(dataEmissaoAtual));
+        if (!dataEmissaoAtual || semHorario) {
+          await supabase
+            .from("notas_fiscais")
+            .update({ data_emissao: new Date().toISOString() })
+            .eq("id", notaFiscalId);
+        }
+      } catch (e) {
+        console.warn("Não foi possível normalizar a data de emissão:", e);
+      }
+
       // Mapear para formato Focus NFe (incluindo notas referenciadas)
       const focusNfeData = await mapNotaToFocusNfe(notaDataComNumero, itens, notasReferenciadasMapeadas);
 
       setStatus("enviando");
+
 
       // Enviar para edge function
       const { data, error } = await supabase.functions.invoke("focus-nfe-emitir", {
