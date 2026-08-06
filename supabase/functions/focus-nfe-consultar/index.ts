@@ -182,15 +182,15 @@ serve(async (req) => {
       }
       updateData.erros_api = montarErrosApi(responseData);
 
-      // Data/hora oficiais do documento vindas da consulta à API/SEFAZ.
-      const datasOficiais = extrairDatasNfe(responseData);
+      // Data/hora oficiais: prioridade para o XML autorizado, depois a resposta da API.
+      const datasOficiais = { ...extrairDatasNfe(responseData), ...datasDoXml };
       if (datasOficiais.data_emissao) {
         updateData.data_emissao = datasOficiais.data_emissao;
       }
       if (datasOficiais.data_autorizacao) {
         updateData.data_autorizacao = datasOficiais.data_autorizacao;
       }
-      console.log("Datas oficiais extraídas da API:", JSON.stringify(datasOficiais));
+      console.log("Datas oficiais gravadas:", JSON.stringify(datasOficiais));
 
 
 
