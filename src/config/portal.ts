@@ -14,12 +14,13 @@ export interface PortalContato {
 }
 
 export const PORTAL_CONTATO: PortalContato = {
-  whatsapp: "",
-  telefoneExibicao: "",
-  email: "",
-  cidade: "",
-  uf: "",
+  whatsapp: "5555991411755",
+  telefoneExibicao: "(55) 99141-1755",
+  email: "contato@dygitusinformatica.com.br",
+  cidade: "Cruz Alta",
+  uf: "RS",
 };
+
 
 export const PORTAL_URL = "https://sisagro.app";
 
