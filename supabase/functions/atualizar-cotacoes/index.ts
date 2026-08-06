@@ -21,7 +21,10 @@ interface IndicadorCepea {
   categoria: string;
   regiao: string | null;
   unidade: string;
+  /** Padrão usado para casar o indicador pelo nome devolvido pela fonte. */
+  match: RegExp;
 }
+
 
 const INDICADORES_CEPEA: IndicadorCepea[] = [
   { id: 78, slug: 'soja-paranagua', nome: 'Soja', categoria: 'graos', regiao: 'Paranaguá (PR)', unidade: 'sc 60 kg', match: /soja/i },
