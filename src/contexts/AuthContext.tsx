@@ -181,6 +181,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
     setRole(null);
     setIsSuperAdmin(false);
+    // Após o logout o usuário deve cair no portal público, não na tela de login.
+    navigate("/", { replace: true });
   };
 
   const isAdmin = role === "admin";
