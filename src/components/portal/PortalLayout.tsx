@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { Menu, Wheat, X, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PORTAL_CONTATO, PORTAL_NOME, whatsappLink } from "@/config/portal";
+import { abrirWhatsapp, PORTAL_CONTATO, PORTAL_NOME, whatsappLink } from "@/config/portal";
 
 interface PortalLayoutProps {
   children: ReactNode;
@@ -208,6 +208,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
           href={wa}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => abrirWhatsapp(wa, e)}
           aria-label="Falar no WhatsApp"
           className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-primary-foreground shadow-lg hover:opacity-90 transition-opacity"
         >

@@ -2,7 +2,7 @@ import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Seo } from "@/components/portal/Seo";
 import { LeadForm } from "@/components/portal/LeadForm";
-import { PORTAL_CONTATO, PORTAL_NOME, whatsappLink } from "@/config/portal";
+import { abrirWhatsapp, PORTAL_CONTATO, PORTAL_NOME, whatsappLink } from "@/config/portal";
 import { Button } from "@/components/ui/button";
 
 export default function PortalContato() {
@@ -59,7 +59,12 @@ export default function PortalContato() {
 
             {wa ? (
               <Button asChild variant="outline" className="w-full">
-                <a href={wa} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={wa}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => abrirWhatsapp(wa, e)}
+                >
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Falar no WhatsApp
                 </a>
