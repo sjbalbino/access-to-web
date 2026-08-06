@@ -73,11 +73,20 @@ const App = () => (
           <TabsProvider>
             <ErrorBoundary>
             <Routes>
+              {/* Portal público */}
+              <Route path="/" element={<PortalHome />} />
+              <Route path="/indicadores" element={<PortalIndicadores />} />
+              <Route path="/contato" element={<PortalContato />} />
+
+              {/* Autenticação */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+
+              {/* Sistema */}
+              <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/granjas" element={<ProtectedRoute><Granjas /></ProtectedRoute>} />
+
               <Route path="/culturas" element={<ProtectedRoute><Culturas /></ProtectedRoute>} />
               <Route path="/safras" element={<ProtectedRoute><Safras /></ProtectedRoute>} />
               <Route path="/produtores" element={<ProtectedRoute><Produtores /></ProtectedRoute>} />
