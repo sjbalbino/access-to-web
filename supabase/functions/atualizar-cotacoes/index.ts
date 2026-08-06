@@ -27,7 +27,7 @@ interface IndicadorCepea {
 
 
 const INDICADORES_CEPEA: IndicadorCepea[] = [
-  { id: 78, slug: 'soja-paranagua', nome: 'Soja', categoria: 'graos', regiao: 'Paranaguá (PR)', unidade: 'sc 60 kg', match: /soja/i },
+  { id: 92, slug: 'soja-paranagua', nome: 'Soja', categoria: 'graos', regiao: 'Paranaguá (PR)', unidade: 'sc 60 kg', match: /soja/i },
   { id: 77, slug: 'milho', nome: 'Milho', categoria: 'graos', regiao: 'Campinas (SP)', unidade: 'sc 60 kg', match: /milho/i },
   { id: 179, slug: 'trigo-rs', nome: 'Trigo', categoria: 'graos', regiao: 'RS', unidade: 'tonelada', match: /trigo\s*-\s*rs/i },
   { id: 178, slug: 'trigo-pr', nome: 'Trigo', categoria: 'graos', regiao: 'PR', unidade: 'tonelada', match: /trigo\s*-\s*pr/i },
