@@ -53,9 +53,10 @@ export function TabsProvider({ children }: { children: ReactNode }) {
   // Helper: get the base route segment (e.g. "/vendas-producao/nova" → "/vendas-producao")
   const getBaseRoute = useCallback((path: string) => {
     if (path === "/dashboard") return "/dashboard";
-    const segments = path.split("/dashboard").filter(Boolean);
-    return "/dashboard" + segments[0];
+    const segments = path.split("/").filter(Boolean);
+    return "/" + segments[0];
   }, []);
+
 
   // Sync active tab with current route on mount and browser navigation
   useEffect(() => {
