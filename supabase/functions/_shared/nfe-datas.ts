@@ -77,3 +77,23 @@ export function extrairDatasNfe(
 
   return resultado;
 }
+
+/**
+ * Extrai dhEmi/dhRecbto do XML autorizado. A consulta da Focus não devolve a
+ * data de emissão, então o XML é a única fonte oficial do instante do documento.
+ */
+export function extrairDatasDoXml(xml: string): {
+  data_emissao?: string;
+  data_autorizacao?: string;
+} {
+  const resultado: { data_emissao?: string; data_autorizacao?: string } = {};
+  const dhEmi = xml.match(/<dhEmi>([^<]+)<\/dhEmi>/)?.[1];
+  const dhRecbto = xml.match(/<dhRecbto>([^<]+)<\/dhRecbto>/)?.[1];
+
+  const emissao = normalizarDataApi(dhEmi);
+  if (emissao) resultado.data_emissao = emissao;
+  const autorizacao = normalizarDataApi(dhRecbto);
+  if (autorizacao) resultado.data_autorizacao = autorizacao;
+
+  return resultado;
+}
