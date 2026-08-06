@@ -473,6 +473,18 @@ serve(async (req) => {
     // Mesmo com HTTP 200 a Focus pode devolver rejeições detalhadas
     updateData.erros_api = montarErrosApi(responseData);
 
+    // Data/hora oficiais do documento: a estimativa gerada no navegador é
+    // substituída pelo valor retornado pela API/SEFAZ quando disponível.
+    const datasOficiais = extrairDatasNfe(responseData);
+    if (datasOficiais.data_emissao) {
+      updateData.data_emissao = datasOficiais.data_emissao;
+    }
+    if (datasOficiais.data_autorizacao) {
+      updateData.data_autorizacao = datasOficiais.data_autorizacao;
+    }
+    console.log("Datas oficiais extraídas da API:", JSON.stringify(datasOficiais));
+
+
 
     const { error: updateError } = await supabase
       .from("notas_fiscais")
