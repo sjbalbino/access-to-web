@@ -41,6 +41,17 @@ function saveTabs(tabs: TabItem[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tabs.map((t) => t.path)));
 }
 
+/** Rotas públicas do portal/autenticação — não geram abas no sistema interno */
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/indicadores",
+  "/contato",
+  "/auth",
+  "/reset-password",
+  "/unsubscribe",
+]);
+
+
 export function TabsProvider({ children }: { children: ReactNode }) {
   const [tabs, setTabs] = useState<TabItem[]>(loadTabs);
   const [activeTab, setActiveTabState] = useState<string>(() => {
