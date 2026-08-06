@@ -61,6 +61,9 @@ export function TabsProvider({ children }: { children: ReactNode }) {
   // Sync active tab with current route on mount and browser navigation
   useEffect(() => {
     const currentPath = location.pathname;
+    // Rotas públicas (portal/autenticação) não fazem parte do sistema em abas
+    if (PUBLIC_PATHS.has(currentPath)) return;
+
     
     setTabs((prev) => {
       const exactMatch = prev.find((t) => t.path === currentPath);
