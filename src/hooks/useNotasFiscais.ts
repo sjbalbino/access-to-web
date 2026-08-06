@@ -176,9 +176,32 @@ export function useNotasFiscais() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as unknown as NotaFiscal[];
+
+      // Notas gravadas pelo formulário ficam com data_emissao sem horário (00:00),
+      // o que as jogaria para o fim do dia na ordenação. Usamos o instante efetivo:
+      // data_emissao quando tem horário, senão created_at.
+      const momentoEfetivo = (nota: NotaFiscal): number => {
+        const de = nota.data_emissao;
+        if (de) {
+          const semHorario =
+            de.length <= 10 || /T00:00:00(\.0+)?(Z|[+-]\d{2}:?\d{2})?$/.test(de);
+          if (!semHorario) return new Date(de).getTime();
+          const criado = nota.created_at ? new Date(nota.created_at) : null;
+          const dataBase = new Date(`${de.slice(0, 10)}T00:00:00`);
+          // Se a nota foi criada no mesmo dia, o created_at é o melhor horário disponível.
+          if (criado && criado.toISOString().slice(0, 10) === de.slice(0, 10)) {
+            return criado.getTime();
+          }
+          return dataBase.getTime();
+        }
+        return nota.created_at ? new Date(nota.created_at).getTime() : 0;
+      };
+
+      const notas = (data as unknown as NotaFiscal[]) ?? [];
+      return [...notas].sort((a, b) => momentoEfetivo(b) - momentoEfetivo(a));
     },
   });
+
 
 
   const createNotaFiscal = useMutation({
