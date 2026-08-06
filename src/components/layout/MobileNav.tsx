@@ -64,7 +64,7 @@ const menuGroups: MenuGroup[] = [
   {
     title: "Principal",
     items: [
-      { title: "Dashboard", icon: LayoutDashboard, path: "/", color: "text-primary" },
+      { title: "Dashboard", icon: LayoutDashboard, path: "/dashboard", color: "text-primary" },
     ],
   },
   {
