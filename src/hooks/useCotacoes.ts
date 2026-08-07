@@ -49,6 +49,50 @@ export function useCotacoesAtuais() {
   });
 }
 
+export interface UltimaColeta {
+  fonte: string;
+  created_at: string;
+  itens_gravados: number;
+}
+
+/**
+ * Horário da última coleta bem-sucedida de cada fonte.
+ * Serve para diferenciar "data de referência publicada pela fonte" de
+ * "momento em que o portal buscou os dados".
+ * Leitura pública (a tabela permite SELECT para visitantes não autenticados).
+ */
+export function useUltimaColetaCotacoes() {
+  return useQuery({
+    queryKey: ["cotacoes_status_coleta", "ultimas"],
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<Record<string, UltimaColeta>> => {
+      const { data, error } = await supabase
+        .from("cotacoes_status_coleta")
+        .select("fonte, created_at, itens_gravados, sucesso")
+        .eq("sucesso", true)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      // Mantém somente a coleta mais recente de cada fonte.
+      const porFonte: Record<string, UltimaColeta> = {};
+      (data ?? []).forEach((row) => {
+        if (porFonte[row.fonte]) return;
+        porFonte[row.fonte] = {
+          fonte: row.fonte,
+          created_at: row.created_at,
+          itens_gravados: Number(row.itens_gravados ?? 0),
+        };
+      });
+
+      return porFonte;
+    },
+  });
+}
+
+
+
 /** Histórico de um indicador, para o gráfico da página de indicadores. */
 export function useHistoricoCotacao(slug: string | null, dias = 60) {
   return useQuery({

@@ -18,8 +18,11 @@ export function formatarDataReferencia(data: string): string {
 
 interface CotacaoCardProps {
   cotacao: CotacaoMercado;
+  /** Momento da última coleta bem-sucedida da fonte (ISO). Opcional. */
+  atualizadoEm?: string | null;
   className?: string;
 }
+
 
 export function CotacaoCard({ cotacao, className }: CotacaoCardProps) {
   const variacao = cotacao.variacao_percentual;
