@@ -245,19 +245,24 @@ export function useInscricoesComSaldo(filters: {
       // (comportam-se como saída futura / saldo disponível, mas o depósito
       // físico ainda pode ser contra-notado).
 
-      // Notas de depósito emitidas: reduzem o saldo por inscrição (agregado,
-      // pois a tabela não guarda local_entrega_id). Usadas apenas no modo 'emissao'.
+      // Notas de depósito emitidas: reduzem o saldo por (inscrição, local).
+      // Registros legados sem local_entrega_id continuam sendo distribuídos
+      // proporcionalmente entre os locais da inscrição. Só no modo 'emissao'.
       const emitidasPromise = (async () => {
         if (modo !== 'emissao') return [] as any[];
         let q = supabase
           .from('notas_deposito_emitidas')
-          .select('inscricao_produtor_id, quantidade_kg, nota_fiscal_id')
+          .select('inscricao_produtor_id, quantidade_kg, nota_fiscal_id, local_entrega_id')
           .eq('safra_id', filters.safraId);
         if (produtoIds?.length) q = q.in('produto_id', produtoIds);
+        if (localFilter) {
+          q = q.or(`local_entrega_id.eq.${localFilter},local_entrega_id.is.null`);
+        }
         const { data, error } = await q;
         if (error) throw error;
         return data || [];
       })();
+
 
       // Transferências enviadas: reduzem o saldo físico para devolução.
       const enviadasPromise = (async () => {
@@ -373,14 +378,32 @@ export function useInscricoesComSaldo(filters: {
         });
       }
 
-      // Modo 'emissao': subtrair notas de depósito emitidas do bucket. Como a tabela
-      // não guarda local_entrega_id, distribui o total emitido por inscrição
-      // proporcionalmente entre os buckets (locais) existentes daquela inscrição.
+      // Modo 'emissao': subtrair notas de depósito emitidas.
+      // Notas com local definido abatem diretamente o bucket (inscrição, local).
+      // Notas legadas sem local são distribuídas proporcionalmente entre os
+      // buckets (locais) existentes daquela inscrição.
       if (modo === 'emissao') {
-        emitidoPorInscricao.forEach((qtdEmitida, inscId) => {
+        const emitidoSemLocalPorInscricao = new Map<string, number>();
+
+        emitidasValidas.forEach((n: any) => {
+          if (!n.inscricao_produtor_id) return;
+          const kg = round(n.quantidade_kg);
+          if (kg <= 0) return;
+          if (n.local_entrega_id) {
+            const b = getBucket(n.inscricao_produtor_id, n.local_entrega_id, null);
+            b.saldo -= kg;
+          } else {
+            emitidoSemLocalPorInscricao.set(
+              n.inscricao_produtor_id,
+              (emitidoSemLocalPorInscricao.get(n.inscricao_produtor_id) || 0) + kg
+            );
+          }
+        });
+
+        emitidoSemLocalPorInscricao.forEach((qtdEmitida, inscId) => {
           if (qtdEmitida <= 0) return;
           const bucketsInsc = Array.from(buckets.values()).filter((b) => b.inscId === inscId);
-          const totalSaldo = bucketsInsc.reduce((acc, b) => acc + b.saldo, 0);
+          const totalSaldo = bucketsInsc.reduce((acc, b) => acc + Math.max(b.saldo, 0), 0);
           if (bucketsInsc.length === 0) return;
           if (totalSaldo <= 0) {
             // Sem base positiva: subtrai igualmente entre os buckets.
@@ -388,12 +411,13 @@ export function useInscricoesComSaldo(filters: {
             bucketsInsc.forEach((b) => { b.saldo -= parte; });
           } else {
             bucketsInsc.forEach((b) => {
-              const proporcao = b.saldo / totalSaldo;
+              const proporcao = Math.max(b.saldo, 0) / totalSaldo;
               b.saldo -= qtdEmitida * proporcao;
             });
           }
         });
       }
+
 
       // Quando incluirSemSaldo estiver ligado, também trazemos inscrições da granja
       // que não tenham nenhuma movimentação na safra — com saldo 0.
