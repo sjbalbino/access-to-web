@@ -2250,7 +2250,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
               <ComboboxFilter
                 value={localEntregaId}
                 onValueChange={setLocalEntregaId}
-                options={(locaisEntrega || []).map(l => ({ value: l.id, label: l.nome }))}
+                options={(locaisEntrega || []).filter(l => l.ativo !== false).map(l => ({ value: l.id, label: `${l.nome}${l.is_sede ? " (Sede)" : ""}` }))}
                 placeholder="Todos os locais"
                 searchPlaceholder="Buscar local..."
                 emptyText="Nenhum local encontrado."
