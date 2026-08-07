@@ -1256,8 +1256,12 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     if (localEntregaId) {
       const localSel = locaisEntrega?.find(l => l.id === localEntregaId);
-      if (localSel?.is_sede) q = q.is("local_entrega_terceiro_id", null);
-      else q = q.eq("local_entrega_terceiro_id", localEntregaId);
+      if (localSel?.is_sede) {
+        // Sede: registros do próprio local OU sem local definido (dados legados)
+        q = q.or(`local_entrega_terceiro_id.eq.${localEntregaId},local_entrega_terceiro_id.is.null`);
+      } else {
+        q = q.eq("local_entrega_terceiro_id", localEntregaId);
+      }
     }
 
     const { data, error } = await q;
