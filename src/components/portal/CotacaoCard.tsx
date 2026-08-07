@@ -1,6 +1,8 @@
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CotacaoMercado } from "@/hooks/useCotacoes";
+import { formatDateTimeSP } from "@/lib/datetime";
+
 
 /** Formata o valor conforme a grandeza (câmbio usa 4 casas). */
 export function formatarValorCotacao(c: CotacaoMercado): string {
@@ -18,10 +20,13 @@ export function formatarDataReferencia(data: string): string {
 
 interface CotacaoCardProps {
   cotacao: CotacaoMercado;
+  /** Momento da última coleta bem-sucedida da fonte (ISO). Opcional. */
+  atualizadoEm?: string | null;
   className?: string;
 }
 
-export function CotacaoCard({ cotacao, className }: CotacaoCardProps) {
+
+export function CotacaoCard({ cotacao, atualizadoEm, className }: CotacaoCardProps) {
   const variacao = cotacao.variacao_percentual;
   const subiu = typeof variacao === "number" && variacao > 0;
   const caiu = typeof variacao === "number" && variacao < 0;
@@ -66,8 +71,15 @@ export function CotacaoCard({ cotacao, className }: CotacaoCardProps) {
       </p>
 
       <p className="text-xs text-muted-foreground">
-        {formatarDataReferencia(cotacao.data_referencia)} • {cotacao.fonte}
+        Referência {formatarDataReferencia(cotacao.data_referencia)} • {cotacao.fonte}
       </p>
+
+      {atualizadoEm && (
+        <p className="text-xs text-muted-foreground/80">
+          Coletado em {formatDateTimeSP(atualizadoEm)}
+        </p>
+      )}
+
     </div>
   );
 }

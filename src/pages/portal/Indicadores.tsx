@@ -17,7 +17,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCotacoesAtuais, useHistoricoCotacao } from "@/hooks/useCotacoes";
+import {
+  useCotacoesAtuais,
+  useHistoricoCotacao,
+  useUltimaColetaCotacoes,
+} from "@/hooks/useCotacoes";
+import { formatDateTimeSP } from "@/lib/datetime";
+
 import {
   Select,
   SelectContent,
@@ -43,7 +49,9 @@ const rotulosCategoria: Record<string, string> = {
 
 export default function PortalIndicadores() {
   const { data: cotacoes, isLoading, refetch, isFetching } = useCotacoesAtuais();
+  const { data: coletas, refetch: refetchColetas } = useUltimaColetaCotacoes();
   const [slugGrafico, setSlugGrafico] = useState<string | undefined>(undefined);
+
 
   const slugAtivo = slugGrafico ?? cotacoes?.[0]?.slug;
   const { data: historico } = useHistoricoCotacao(slugAtivo ?? null);
@@ -66,6 +74,14 @@ export default function PortalIndicadores() {
   const dataMaisRecente =
     datasOrdenadas.length > 0 ? datasOrdenadas[datasOrdenadas.length - 1] : undefined;
 
+  // Coleta mais recente entre todas as fontes.
+  const ultimaColeta = Object.values(coletas ?? {})
+    .map((c) => c.created_at)
+    .sort()
+    .pop();
+
+
+
 
   return (
     <PortalLayout>
@@ -85,22 +101,37 @@ export default function PortalIndicadores() {
             grãos. Os dados são coletados automaticamente de fontes públicas e a data de
             referência exibida é sempre a informada pela própria fonte.
           </p>
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
             {dataMaisRecente && (
-              <span className="text-sm text-muted-foreground">
-                Última referência: {formatarDataReferencia(dataMaisRecente)}
+              <span className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground">
+                Última referência das fontes:{" "}
+                <strong className="text-foreground">
+                  {formatarDataReferencia(dataMaisRecente)}
+                </strong>
+              </span>
+            )}
+            {ultimaColeta && (
+              <span className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground">
+                Última coleta do portal:{" "}
+                <strong className="text-foreground">
+                  {formatDateTimeSP(ultimaColeta)}
+                </strong>
               </span>
             )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => refetch()}
+              onClick={() => {
+                refetch();
+                refetchColetas();
+              }}
               disabled={isFetching}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Atualizar
             </Button>
           </div>
+
         </div>
       </section>
 
@@ -128,7 +159,12 @@ export default function PortalIndicadores() {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {(itens ?? []).map((c) => (
-                    <CotacaoCard key={c.slug} cotacao={c} />
+                    <CotacaoCard
+                      key={c.slug}
+                      cotacao={c}
+                      atualizadoEm={coletas?.[c.fonte]?.created_at ?? null}
+                    />
+
                   ))}
                 </div>
               </div>
@@ -253,10 +289,32 @@ export default function PortalIndicadores() {
               </Table>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Os valores são indicativos e servem apenas como referência de mercado. Para
-              negociações, consulte diretamente a fonte oficial de cada indicador.
-            </p>
+            <div className="space-y-2 text-xs text-muted-foreground">
+              <p>
+                <strong className="text-foreground">
+                  Por que a data de referência pode ser do dia anterior?
+                </strong>{" "}
+                O portal busca os dados três vezes por dia (10:05, 14:05 e 18:05, horário
+                de Brasília), mas o CEPEA/ESALQ divulga o indicador de grãos apenas no fim
+                da tarde e o PTAX do Banco Central é publicado após as 13h. Enquanto a
+                fonte não publica o valor do dia, exibimos o último valor realmente
+                divulgado, com a data original dele — nunca uma data ou um valor
+                estimado.
+              </p>
+              {Object.values(coletas ?? {}).length > 0 && (
+                <p>
+                  Últimas coletas por fonte:{" "}
+                  {Object.values(coletas ?? {})
+                    .map((c) => `${c.fonte} — ${formatDateTimeSP(c.created_at)}`)
+                    .join(" • ")}
+                </p>
+              )}
+              <p>
+                Os valores são indicativos e servem apenas como referência de mercado.
+                Para negociações, consulte diretamente a fonte oficial de cada indicador.
+              </p>
+            </div>
+
           </>
         )}
 

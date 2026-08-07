@@ -18,7 +18,7 @@ import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Seo } from "@/components/portal/Seo";
 import { CotacaoCard } from "@/components/portal/CotacaoCard";
 import { LeadForm } from "@/components/portal/LeadForm";
-import { useCotacoesAtuais } from "@/hooks/useCotacoes";
+import { useCotacoesAtuais, useUltimaColetaCotacoes } from "@/hooks/useCotacoes";
 import { PORTAL_NOME, PORTAL_URL } from "@/config/portal";
 import heroImg from "@/assets/portal-hero.jpg";
 
@@ -97,10 +97,12 @@ const beneficios = [
 
 export default function PortalHome() {
   const { data: cotacoes, isLoading } = useCotacoesAtuais();
+  const { data: coletas } = useUltimaColetaCotacoes();
 
   const destaques = ["soja-paranagua", "milho", "trigo-rs", "dolar-ptax"]
     .map((slug) => cotacoes?.find((c) => c.slug === slug))
     .filter((c): c is NonNullable<typeof c> => !!c);
+
 
   return (
     <PortalLayout>
@@ -168,9 +170,11 @@ export default function PortalHome() {
                 Indicadores do mercado agrícola
               </h2>
               <p className="text-sm text-muted-foreground">
-                Atualizados diariamente a partir de fontes públicas (CEPEA/ESALQ e Banco
-                Central).
+                Coletados automaticamente 3x ao dia de fontes públicas (CEPEA/ESALQ e
+                Banco Central). A data de referência é sempre a publicada pela fonte —
+                grãos e câmbio saem no fim do dia.
               </p>
+
             </div>
             <Button asChild variant="ghost" size="sm">
               <Link to="/indicadores">
@@ -192,8 +196,13 @@ export default function PortalHome() {
           ) : destaques.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {destaques.map((c) => (
-                <CotacaoCard key={c.slug} cotacao={c} />
+                <CotacaoCard
+                  key={c.slug}
+                  cotacao={c}
+                  atualizadoEm={coletas?.[c.fonte]?.created_at ?? null}
+                />
               ))}
+
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
