@@ -101,22 +101,37 @@ export default function PortalIndicadores() {
             grãos. Os dados são coletados automaticamente de fontes públicas e a data de
             referência exibida é sempre a informada pela própria fonte.
           </p>
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
             {dataMaisRecente && (
-              <span className="text-sm text-muted-foreground">
-                Última referência: {formatarDataReferencia(dataMaisRecente)}
+              <span className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground">
+                Última referência das fontes:{" "}
+                <strong className="text-foreground">
+                  {formatarDataReferencia(dataMaisRecente)}
+                </strong>
+              </span>
+            )}
+            {ultimaColeta && (
+              <span className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground">
+                Última coleta do portal:{" "}
+                <strong className="text-foreground">
+                  {formatDateTimeSP(ultimaColeta)}
+                </strong>
               </span>
             )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => refetch()}
+              onClick={() => {
+                refetch();
+                refetchColetas();
+              }}
               disabled={isFetching}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Atualizar
             </Button>
           </div>
+
         </div>
       </section>
 
