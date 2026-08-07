@@ -3546,6 +3546,7 @@ export type Database = {
           id: string
           importado: boolean
           inscricao_produtor_id: string | null
+          local_entrega_id: string | null
           nota_fiscal_id: string | null
           produto_id: string | null
           quantidade_kg: number
@@ -3559,6 +3560,7 @@ export type Database = {
           id?: string
           importado?: boolean
           inscricao_produtor_id?: string | null
+          local_entrega_id?: string | null
           nota_fiscal_id?: string | null
           produto_id?: string | null
           quantidade_kg?: number
@@ -3572,6 +3574,7 @@ export type Database = {
           id?: string
           importado?: boolean
           inscricao_produtor_id?: string | null
+          local_entrega_id?: string | null
           nota_fiscal_id?: string | null
           produto_id?: string | null
           quantidade_kg?: number
@@ -3591,6 +3594,13 @@ export type Database = {
             columns: ["inscricao_produtor_id"]
             isOneToOne: false
             referencedRelation: "inscricoes_produtor"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_deposito_emitidas_local_entrega_id_fkey"
+            columns: ["local_entrega_id"]
+            isOneToOne: false
+            referencedRelation: "locais_entrega"
             referencedColumns: ["id"]
           },
           {
