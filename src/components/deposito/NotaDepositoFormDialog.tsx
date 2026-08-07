@@ -235,8 +235,9 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
         if (!data) return;
 
-        // granja é derivada do local selecionado; não precisamos setá-la
-        // diretamente aqui (o registro legado pode não ter local_entrega_id).
+        // granja é derivada do local selecionado; registros legados podem não
+        // ter local_entrega_id — nesse caso o campo permanece vazio.
+        if (data.local_entrega_id) setLocalEntregaId(data.local_entrega_id);
         if (data.safra_id) setSafraId(data.safra_id);
         if (data.inscricao_produtor_id) setInscricaoId(data.inscricao_produtor_id);
 
