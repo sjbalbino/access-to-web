@@ -656,6 +656,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
         safra_id: safraId,
         produto_id,
         quantidade_kg: quantidade,
+        local_entrega_id: localEntregaId || null,
         data_emissao: new Date().toISOString().split('T')[0],
       }));
 
