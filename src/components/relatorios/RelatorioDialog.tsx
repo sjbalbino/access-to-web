@@ -494,8 +494,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const entriesFiltradas = Object.entries(rowMap).filter(([inscId]) => {
       if (!localEntregaId) return true;
       const localId = localIdPorInscricao[inscId] ?? null;
-      // Sede: inscrições sem local de terceiro (ou sem colheitas) pertencem à sede
-      if (localSelecionado?.is_sede) return localId === null;
+      // Sede: inscrições do próprio local OU sem local de terceiro (dados legados)
+      if (localSelecionado?.is_sede) return localId === localEntregaId || localId === null;
       return localId === localEntregaId;
     });
 
@@ -1144,7 +1144,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     if (localEntregaId) {
       const localSel = locaisEntrega?.find(l => l.id === localEntregaId);
       if (localSel?.is_sede) {
-        q = q.is("local_entrega_terceiro_id", null);
+        // Sede: registros do próprio local OU sem local definido (dados legados)
+        q = q.or(`local_entrega_terceiro_id.eq.${localEntregaId},local_entrega_terceiro_id.is.null`);
       } else {
         q = q.eq("local_entrega_terceiro_id", localEntregaId);
       }
@@ -1255,8 +1256,12 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     if (localEntregaId) {
       const localSel = locaisEntrega?.find(l => l.id === localEntregaId);
-      if (localSel?.is_sede) q = q.is("local_entrega_terceiro_id", null);
-      else q = q.eq("local_entrega_terceiro_id", localEntregaId);
+      if (localSel?.is_sede) {
+        // Sede: registros do próprio local OU sem local definido (dados legados)
+        q = q.or(`local_entrega_terceiro_id.eq.${localEntregaId},local_entrega_terceiro_id.is.null`);
+      } else {
+        q = q.eq("local_entrega_terceiro_id", localEntregaId);
+      }
     }
 
     const { data, error } = await q;
@@ -2245,7 +2250,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
               <ComboboxFilter
                 value={localEntregaId}
                 onValueChange={setLocalEntregaId}
-                options={(locaisEntrega || []).map(l => ({ value: l.id, label: l.nome }))}
+                options={(locaisEntrega || []).filter(l => l.ativo !== false).map(l => ({ value: l.id, label: `${l.nome}${l.is_sede ? " (Sede)" : ""}` }))}
                 placeholder="Todos os locais"
                 searchPlaceholder="Buscar local..."
                 emptyText="Nenhum local encontrado."
