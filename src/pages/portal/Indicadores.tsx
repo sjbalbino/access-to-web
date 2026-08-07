@@ -289,10 +289,32 @@ export default function PortalIndicadores() {
               </Table>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Os valores são indicativos e servem apenas como referência de mercado. Para
-              negociações, consulte diretamente a fonte oficial de cada indicador.
-            </p>
+            <div className="space-y-2 text-xs text-muted-foreground">
+              <p>
+                <strong className="text-foreground">
+                  Por que a data de referência pode ser do dia anterior?
+                </strong>{" "}
+                O portal busca os dados três vezes por dia (10:05, 14:05 e 18:05, horário
+                de Brasília), mas o CEPEA/ESALQ divulga o indicador de grãos apenas no fim
+                da tarde e o PTAX do Banco Central é publicado após as 13h. Enquanto a
+                fonte não publica o valor do dia, exibimos o último valor realmente
+                divulgado, com a data original dele — nunca uma data ou um valor
+                estimado.
+              </p>
+              {Object.values(coletas ?? {}).length > 0 && (
+                <p>
+                  Últimas coletas por fonte:{" "}
+                  {Object.values(coletas ?? {})
+                    .map((c) => `${c.fonte} — ${formatDateTimeSP(c.created_at)}`)
+                    .join(" • ")}
+                </p>
+              )}
+              <p>
+                Os valores são indicativos e servem apenas como referência de mercado.
+                Para negociações, consulte diretamente a fonte oficial de cada indicador.
+              </p>
+            </div>
+
           </>
         )}
 
