@@ -49,7 +49,9 @@ const rotulosCategoria: Record<string, string> = {
 
 export default function PortalIndicadores() {
   const { data: cotacoes, isLoading, refetch, isFetching } = useCotacoesAtuais();
+  const { data: coletas, refetch: refetchColetas } = useUltimaColetaCotacoes();
   const [slugGrafico, setSlugGrafico] = useState<string | undefined>(undefined);
+
 
   const slugAtivo = slugGrafico ?? cotacoes?.[0]?.slug;
   const { data: historico } = useHistoricoCotacao(slugAtivo ?? null);
