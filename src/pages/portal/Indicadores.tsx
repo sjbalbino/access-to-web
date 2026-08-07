@@ -159,7 +159,12 @@ export default function PortalIndicadores() {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {(itens ?? []).map((c) => (
-                    <CotacaoCard key={c.slug} cotacao={c} />
+                    <CotacaoCard
+                      key={c.slug}
+                      cotacao={c}
+                      atualizadoEm={coletas?.[c.fonte]?.created_at ?? null}
+                    />
+
                   ))}
                 </div>
               </div>
