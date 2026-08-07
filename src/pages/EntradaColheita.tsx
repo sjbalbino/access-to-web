@@ -802,6 +802,7 @@ export default function EntradaColheita() {
           safra_id: safraId,
           produto_id: formEntrada.variedade_id || null,
           quantidade_kg: calculos.liquidoFinal,
+          local_entrega_id: localEntregaId || null,
           data_emissao: formContraNota.tipo === "bloco" 
             ? formContraNota.data_emissao_nfp 
             : format(new Date(), "yyyy-MM-dd"),
