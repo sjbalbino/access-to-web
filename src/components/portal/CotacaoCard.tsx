@@ -1,6 +1,8 @@
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CotacaoMercado } from "@/hooks/useCotacoes";
+import { formatDateTimeSP } from "@/lib/datetime";
+
 
 /** Formata o valor conforme a grandeza (câmbio usa 4 casas). */
 export function formatarValorCotacao(c: CotacaoMercado): string {
