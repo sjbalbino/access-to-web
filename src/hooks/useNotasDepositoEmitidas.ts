@@ -39,6 +39,7 @@ export function useNotasDepositoEmitidas(filters?: {
   safraId?: string;
   produtoId?: string;
   granjaId?: string;
+  localEntregaId?: string;
   dataInicial?: string;
   dataFinal?: string;
 }) {
@@ -53,8 +54,8 @@ export function useNotasDepositoEmitidas(filters?: {
           granja:granjas(razao_social, nome_fantasia, inscricoes_produtor(is_emitente_principal, produtores(nome))),
           inscricao_produtor:inscricoes_produtor(inscricao_estadual, cpf_cnpj, granja, produtores(nome)),
           safra:safras(nome),
-          produto:produtos(nome)
-
+          produto:produtos(nome),
+          local_entrega:locais_entrega(id, nome)
         `)
         .order('data_emissao', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false });
@@ -70,6 +71,10 @@ export function useNotasDepositoEmitidas(filters?: {
       }
       if (filters?.granjaId) {
         query = query.eq('granja_id', filters.granjaId);
+      }
+      if (filters?.localEntregaId) {
+        // Registros legados sem local continuam visíveis ao filtrar por local.
+        query = query.or(`local_entrega_id.eq.${filters.localEntregaId},local_entrega_id.is.null`);
       }
       if (filters?.dataInicial) {
         query = query.gte('data_emissao', filters.dataInicial);
