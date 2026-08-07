@@ -245,19 +245,24 @@ export function useInscricoesComSaldo(filters: {
       // (comportam-se como saída futura / saldo disponível, mas o depósito
       // físico ainda pode ser contra-notado).
 
-      // Notas de depósito emitidas: reduzem o saldo por inscrição (agregado,
-      // pois a tabela não guarda local_entrega_id). Usadas apenas no modo 'emissao'.
+      // Notas de depósito emitidas: reduzem o saldo por (inscrição, local).
+      // Registros legados sem local_entrega_id continuam sendo distribuídos
+      // proporcionalmente entre os locais da inscrição. Só no modo 'emissao'.
       const emitidasPromise = (async () => {
         if (modo !== 'emissao') return [] as any[];
         let q = supabase
           .from('notas_deposito_emitidas')
-          .select('inscricao_produtor_id, quantidade_kg, nota_fiscal_id')
+          .select('inscricao_produtor_id, quantidade_kg, nota_fiscal_id, local_entrega_id')
           .eq('safra_id', filters.safraId);
         if (produtoIds?.length) q = q.in('produto_id', produtoIds);
+        if (localFilter) {
+          q = q.or(`local_entrega_id.eq.${localFilter},local_entrega_id.is.null`);
+        }
         const { data, error } = await q;
         if (error) throw error;
         return data || [];
       })();
+
 
       // Transferências enviadas: reduzem o saldo físico para devolução.
       const enviadasPromise = (async () => {
