@@ -24,7 +24,7 @@ interface CotacaoCardProps {
 }
 
 
-export function CotacaoCard({ cotacao, className }: CotacaoCardProps) {
+export function CotacaoCard({ cotacao, atualizadoEm, className }: CotacaoCardProps) {
   const variacao = cotacao.variacao_percentual;
   const subiu = typeof variacao === "number" && variacao > 0;
   const caiu = typeof variacao === "number" && variacao < 0;
