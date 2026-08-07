@@ -69,8 +69,15 @@ export function CotacaoCard({ cotacao, atualizadoEm, className }: CotacaoCardPro
       </p>
 
       <p className="text-xs text-muted-foreground">
-        {formatarDataReferencia(cotacao.data_referencia)} • {cotacao.fonte}
+        Referência {formatarDataReferencia(cotacao.data_referencia)} • {cotacao.fonte}
       </p>
+
+      {atualizadoEm && (
+        <p className="text-xs text-muted-foreground/80">
+          Coletado em {formatDateTimeSP(atualizadoEm)}
+        </p>
+      )}
+
     </div>
   );
 }
