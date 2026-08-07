@@ -9,6 +9,7 @@ export interface NotaDepositoEmitida {
   inscricao_produtor_id: string | null;
   safra_id: string | null;
   produto_id: string | null;
+  local_entrega_id: string | null;
   quantidade_kg: number;
   data_emissao: string | null;
   status: string | null;
@@ -27,8 +28,9 @@ export interface NotaDepositoEmitida {
   inscricao_produtor?: { inscricao_estadual: string | null; cpf_cnpj: string | null; granja: string | null; produtores?: { nome: string } | null } | null;
   safra?: { nome: string } | null;
   produto?: { nome: string } | null;
-
+  local_entrega?: { id: string; nome: string } | null;
 }
+
 
 export type NotaDepositoInput = Omit<NotaDepositoEmitida, 'id' | 'importado' | 'created_at' | 'status' | 'nota_fiscal' | 'granja' | 'inscricao_produtor' | 'safra' | 'produto'> & { status?: string | null };
 
