@@ -494,8 +494,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     const entriesFiltradas = Object.entries(rowMap).filter(([inscId]) => {
       if (!localEntregaId) return true;
       const localId = localIdPorInscricao[inscId] ?? null;
-      // Sede: inscrições sem local de terceiro (ou sem colheitas) pertencem à sede
-      if (localSelecionado?.is_sede) return localId === null;
+      // Sede: inscrições do próprio local OU sem local de terceiro (dados legados)
+      if (localSelecionado?.is_sede) return localId === localEntregaId || localId === null;
       return localId === localEntregaId;
     });
 
