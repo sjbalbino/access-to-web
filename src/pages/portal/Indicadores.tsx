@@ -74,6 +74,14 @@ export default function PortalIndicadores() {
   const dataMaisRecente =
     datasOrdenadas.length > 0 ? datasOrdenadas[datasOrdenadas.length - 1] : undefined;
 
+  // Coleta mais recente entre todas as fontes.
+  const ultimaColeta = Object.values(coletas ?? {})
+    .map((c) => c.created_at)
+    .sort()
+    .pop();
+
+
+
 
   return (
     <PortalLayout>
