@@ -18,7 +18,7 @@ import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Seo } from "@/components/portal/Seo";
 import { CotacaoCard } from "@/components/portal/CotacaoCard";
 import { LeadForm } from "@/components/portal/LeadForm";
-import { useCotacoesAtuais } from "@/hooks/useCotacoes";
+import { useCotacoesAtuais, useUltimaColetaCotacoes } from "@/hooks/useCotacoes";
 import { PORTAL_NOME, PORTAL_URL } from "@/config/portal";
 import heroImg from "@/assets/portal-hero.jpg";
 
