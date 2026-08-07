@@ -17,7 +17,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCotacoesAtuais, useHistoricoCotacao } from "@/hooks/useCotacoes";
+import {
+  useCotacoesAtuais,
+  useHistoricoCotacao,
+  useUltimaColetaCotacoes,
+} from "@/hooks/useCotacoes";
+import { formatDateTimeSP } from "@/lib/datetime";
+
 import {
   Select,
   SelectContent,
