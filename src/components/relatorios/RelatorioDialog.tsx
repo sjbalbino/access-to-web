@@ -789,16 +789,16 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       if (!c.safra_id || !c.inscricao_produtor_id) return;
       const key = `${c.safra_id}::${c.inscricao_produtor_id}`;
       if (!localFallback.has(key)) {
-        localFallback.set(key, c.locais_entrega?.nome || "Sede");
+        localFallback.set(key, c.locais_entrega?.nome || tenantSedeNome);
       }
     });
     const resolveLocal = (safra: string, insc: string, movLocal: string | null | undefined): string => {
-      return movLocal || localFallback.get(`${safra}::${insc}`) || "Sede";
+      return movLocal || localFallback.get(`${safra}::${insc}`) || tenantSedeNome;
     };
 
     (colheitas || []).forEach((c: any) => {
       if (!c.safra_id || !c.inscricao_produtor_id) return;
-      const local = c.locais_entrega?.nome || "Sede";
+      const local = c.locais_entrega?.nome || tenantSedeNome;
       const r = getRow(c.safra_id, c.inscricao_produtor_id, local);
       if (!r) return;
       r.depositos += Number(c.producao_liquida_kg) || 0;
