@@ -126,7 +126,10 @@ export function gerarExtratoProdutorPdf(data: ExtratoData): void {
   const PESO_SACA = 60;
   const toSacas = (kg: number | null | undefined) => formatNumber((Number(kg) || 0) / PESO_SACA, 1);
 
-  const localOf = (l: string | null | undefined) => (l && l.trim()) || "Sede";
+  // Nome real da sede do tenant (ex.: "Márcio Grings"). Nunca usar o rótulo
+  // genérico "Sede", que criava um local fantasma nos agrupamentos.
+  const sedeNome = (data.sedeNome && data.sedeNome.trim()) || "Sede";
+  const localOf = (l: string | null | undefined) => (l && l.trim()) || sedeNome;
 
   // Trunca textos longos para garantir uma única linha por célula
   const trunc = (s: string, n: number) => {
