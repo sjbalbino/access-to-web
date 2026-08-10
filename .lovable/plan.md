@@ -29,5 +29,3 @@ O local inativo GRANDESPE e seus lançamentos permanecem exatamente como estão 
 - Arquivos de exibição: `src/lib/relatoriosPdf.ts` (`localOf(...) || "Sede"`), `src/components/relatorios/RelatorioDialog.tsx` (`tenantSedeNome` já existe; remover os `|| "Sede"` literais restantes), `src/lib/relatoriosEstoque.ts` (`"Sem local definido"` passa a usar o nome da sede).
 - Hook de saldo: `src/hooks/useSaldosDeposito.ts` — resolver `localNome` faltante também para locais inativos, mantendo a lógica de buckets `(inscrição, local)` intacta.
 - Nenhum UPDATE no banco de dados; nenhuma mudança de schema; nenhum impacto em documentos fiscais já autorizados.
-- Migração de dados via UPDATE nas tabelas `colheitas.local_entrega_terceiro_id`, `devolucoes_deposito.local_entrega_id`, `transferencias_deposito.local_saida_id` / `local_entrada_id`, filtrando pelas inscrições do LAIR BEHNEN e pelo id do local GRANDESPE.
-- Nenhuma mudança de schema; nenhum impacto em documentos fiscais já autorizados.
