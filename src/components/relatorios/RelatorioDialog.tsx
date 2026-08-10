@@ -1078,7 +1078,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       ] },
     ]);
 
-    gerarExtratoProdutorPdf(extratoData);
+    gerarExtratoProdutorPdf({ ...extratoData, sedeNome: tenantSedeNome });
   };
 
   const gerarColheitas = async () => {
