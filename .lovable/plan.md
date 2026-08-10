@@ -17,18 +17,15 @@
 - Nos relatórios/extratos, quando um movimento não tiver local resolvido, ele passa a somar no bucket da sede real em vez de criar um grupo separado "Sede". Assim entradas e saídas caem no mesmo grupo e o saldo deixa de ficar negativo.
 - Garantir que os joins de local sejam feitos em todos os tipos de movimento usados nos extratos (colheitas, notas de depósito, transferências saída/entrada, devoluções, compras, vendas), inclusive para locais **inativos** — hoje um local inativo pode não ser resolvido e cair no fallback.
 
-### 2. Consolidar os lançamentos do LAIR BEHNEN que estão no local inativo GRANDESPE
-Migração de dados restrita às duas inscrições do LAIR BEHNEN, movendo o local GRANDESPE para Márcio Grings:
-- 1 colheita, 1 devolução e o par de transferências (saída e entrada).
-- Os lançamentos de outros produtores em GRANDESPE **não** serão alterados (histórico de local de terceiro preservado).
+### 2. Não alterar o local GRANDESPE
+O local inativo GRANDESPE e seus lançamentos permanecem exatamente como estão — nenhuma migração de dados será feita.
 
 ### 3. Validação
-- Recalcular e conferir, por inscrição e por local, o saldo do LAIR BEHNEN: deve aparecer apenas em **Márcio Grings**, sem grupo "SEDE" e sem valor negativo.
+- Recalcular e conferir, por inscrição e por local, o saldo do LAIR BEHNEN: nenhum grupo "SEDE" deve aparecer; movimentos sem local resolvido passam a somar em **Márcio Grings**.
 - Conferir na tela de Notas de Depósito e no Extrato do Produtor/Saldo Disponível.
 
 ## Detalhes técnicos
 
-- Arquivos de exibição: `src/lib/relatoriosPdf.ts` (`localOf(...) || "Sede"`), `src/components/relatorios/RelatorioDialog.tsx` (`tenantSedeNome` já existe; remover os `|| "Sede"` literais restantes), `src/lib/relatoriosEstoque.ts`.
+- Arquivos de exibição: `src/lib/relatoriosPdf.ts` (`localOf(...) || "Sede"`), `src/components/relatorios/RelatorioDialog.tsx` (`tenantSedeNome` já existe; remover os `|| "Sede"` literais restantes), `src/lib/relatoriosEstoque.ts` (`"Sem local definido"` passa a usar o nome da sede).
 - Hook de saldo: `src/hooks/useSaldosDeposito.ts` — resolver `localNome` faltante também para locais inativos, mantendo a lógica de buckets `(inscrição, local)` intacta.
-- Migração de dados via UPDATE nas tabelas `colheitas.local_entrega_terceiro_id`, `devolucoes_deposito.local_entrega_id`, `transferencias_deposito.local_saida_id` / `local_entrada_id`, filtrando pelas inscrições do LAIR BEHNEN e pelo id do local GRANDESPE.
-- Nenhuma mudança de schema; nenhum impacto em documentos fiscais já autorizados.
+- Nenhum UPDATE no banco de dados; nenhuma mudança de schema; nenhum impacto em documentos fiscais já autorizados.
