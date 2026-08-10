@@ -259,6 +259,8 @@ export interface ResumoLocalData {
   safraNome: string;
   produtoNome: string | null;
   pesoSaco: number;
+  /** Nome real da sede do tenant, usado quando o registro não tem local definido. */
+  sedeNome?: string | null;
   rows: ResumoLocalRow[];
 }
 
@@ -279,9 +281,10 @@ export function gerarResumoProdutoresLocalPdf(data: ResumoLocalData): void {
   const toSacos = (kg: number) => Math.round(kg / ps);
 
   // Group by local_entrega
+  const sedeNome = (data.sedeNome && data.sedeNome.trim()) || "Sem local definido";
   const locais: Record<string, ResumoLocalRow[]> = {};
   data.rows.forEach(r => {
-    const key = r.local_entrega || "Sem local definido";
+    const key = r.local_entrega || sedeNome;
     if (!locais[key]) locais[key] = [];
     locais[key].push(r);
   });

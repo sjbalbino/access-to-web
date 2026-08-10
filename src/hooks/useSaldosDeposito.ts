@@ -465,7 +465,7 @@ export function useInscricoesComSaldo(filters: {
         }
       });
 
-      // Buscar nomes de locais que ainda não temos.
+      // Buscar nomes de locais que ainda não temos (inclui locais inativos).
       const localIdsSemNome = Array.from(
         new Set(
           Array.from(buckets.values())
@@ -482,6 +482,23 @@ export function useInscricoesComSaldo(filters: {
         buckets.forEach((b) => {
           if (b.localId && !b.localNome) b.localNome = locaisMap.get(b.localId) || null;
         });
+      }
+
+      // Buckets sem local definido (dados legados) recebem o nome real da sede
+      // do tenant — nunca o rótulo genérico "Sede".
+      const precisaSede = Array.from(buckets.values()).some((b) => !b.localNome);
+      if (precisaSede) {
+        const { data: sede } = await supabase
+          .from('locais_entrega')
+          .select('nome')
+          .eq('is_sede', true)
+          .limit(1)
+          .maybeSingle();
+        if (sede?.nome) {
+          buckets.forEach((b) => {
+            if (!b.localNome) b.localNome = sede.nome;
+          });
+        }
       }
 
       // Saldo total por inscrição (soma de todos os locais - notas emitidas)
