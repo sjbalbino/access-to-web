@@ -259,6 +259,8 @@ export interface ResumoLocalData {
   safraNome: string;
   produtoNome: string | null;
   pesoSaco: number;
+  /** Nome real da sede do tenant, usado quando o registro não tem local definido. */
+  sedeNome?: string | null;
   rows: ResumoLocalRow[];
 }
 
