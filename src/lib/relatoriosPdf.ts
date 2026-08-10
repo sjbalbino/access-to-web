@@ -85,6 +85,8 @@ export interface ExtratoVenda {
 }
 
 export interface ExtratoData {
+  /** Nome real da sede do tenant, usado como local padrão quando o movimento não tem local. */
+  sedeNome?: string | null;
   produtorNome: string;
   cpfCnpj: string | null;
   inscricaoEstadual: string | null;
