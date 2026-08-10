@@ -1485,21 +1485,28 @@ export default function NotaFiscalForm() {
                     </div>
                   );
                 }
-                return lista.map((inscricao) => (
-                  <SelectItem key={inscricao.id} value={inscricao.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">
-                        {inscricao.is_emitente_principal && "★ "}
-                        {!inscricao.emitente_id && "⚠ "}
-                        {inscricao.nome_fantasia ? `${inscricao.nome_fantasia} — ` : ""}
-                        Sócio: {inscricao.produtores?.nome}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        IE {inscricao.inscricao_estadual} • Granja: {inscricao.granjas?.razao_social || inscricao.granja}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ));
+                return lista.map((inscricao) => {
+                  const emitenteInsc = inscricao.emitente_id
+                    ? emitentes.find((e) => e.id === inscricao.emitente_id)
+                    : null;
+                  const semApi = !emitenteInsc?.api_configurada;
+                  return (
+                    <SelectItem key={inscricao.id} value={inscricao.id} disabled={semApi}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {inscricao.is_emitente_principal && "★ "}
+                          {semApi && "⚠ "}
+                          {inscricao.nome_fantasia ? `${inscricao.nome_fantasia} — ` : ""}
+                          Sócio: {inscricao.produtores?.nome}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          IE {inscricao.inscricao_estadual} • Granja: {inscricao.granjas?.razao_social || inscricao.granja}
+                          {semApi && " • sem emissor configurado"}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  );
+                });
               })()}
             </SelectContent>
           </Select>
