@@ -667,6 +667,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       safraNome: safra?.nome || "-",
       produtoNome: produto?.nome || null,
       pesoSaco: 60,
+      sedeNome: tenantSedeNome,
       rows,
     });
   };
