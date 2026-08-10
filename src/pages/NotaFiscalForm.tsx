@@ -3338,20 +3338,43 @@ export default function NotaFiscalForm() {
                 {(() => {
                   const emitente = emitentes.find((e) => e.id === formData.emitente_id);
                   const canEmit = isEditing && itens.length > 0 && emitente?.api_configurada && existingNota?.status === "rascunho";
-                  
+
+                  // Motivo explícito do bloqueio (o botão cinza sem explicação confundia o usuário)
+                  const motivo: string | null = canEmit
+                    ? null
+                    : !isEditing
+                      ? "Salve o rascunho antes de emitir."
+                      : existingNota?.status !== "rascunho"
+                        ? "Esta nota não está mais em rascunho (já emitida, cancelada ou em processamento)."
+                        : itens.length === 0
+                          ? "Adicione pelo menos um item à nota."
+                          : !formData.emitente_id
+                            ? "Selecione a inscrição do sócio emitente na aba Emitente."
+                            : !emitente
+                              ? "O emitente vinculado a esta nota não foi encontrado nos Emitentes NF-e."
+                              : "Emitente sem API configurada. Configure as credenciais em Emitentes NF-e.";
+
                   return (
-                    <Button 
-                      onClick={handleEmitirNfe} 
-                      disabled={!canEmit || isEmitting || focusNfe.isLoading}
-                      variant={canEmit ? "default" : "secondary"}
-                    >
-                      {isEmitting || focusNfe.isLoading ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4 mr-2" />
+                    <div className="flex flex-col items-end gap-1">
+                      <Button
+                        onClick={handleEmitirNfe}
+                        disabled={!canEmit || isEmitting || focusNfe.isLoading}
+                        variant={canEmit ? "default" : "secondary"}
+                        title={motivo ?? "Emitir NF-e"}
+                      >
+                        {isEmitting || focusNfe.isLoading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4 mr-2" />
+                        )}
+                        {isEmitting ? "Emitindo..." : focusNfe.status === "processando" ? "Processando..." : "Emitir NF-e"}
+                      </Button>
+                      {motivo && (
+                        <span className="text-xs text-muted-foreground max-w-[18rem] text-right">
+                          {motivo}
+                        </span>
                       )}
-                      {isEmitting ? "Emitindo..." : focusNfe.status === "processando" ? "Processando..." : "Emitir NF-e"}
-                    </Button>
+                    </div>
                   );
                 })()}
               </>
