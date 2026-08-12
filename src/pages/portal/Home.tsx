@@ -265,29 +265,18 @@ export default function PortalHome() {
           </p>
         </div>
 
-        <ol className="grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-0 md:items-stretch">
+        <ol className="grid grid-cols-1 md:grid-cols-5 gap-3">
           {fluxo.map((f, i) => (
-            <li key={f.titulo} className="flex md:flex-col md:items-stretch gap-4">
-              <div className="flex-1 rounded-xl border border-border bg-card p-4">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary mb-3">
-                  {i + 1}
-                </span>
-                <h3 className="font-semibold text-foreground text-sm mb-1">{f.titulo}</h3>
-                <p className="text-xs text-muted-foreground">{f.texto}</p>
-              </div>
-              {i < fluxo.length - 1 && (
-                <div className="flex items-center justify-center md:hidden">
-                  <ArrowRight className="h-4 w-4 rotate-90 text-primary" />
-                </div>
-              )}
-              {i < fluxo.length - 1 && (
-                <div className="hidden md:flex items-center justify-center px-1">
-                  <ArrowRight className="h-4 w-4 text-primary" />
-                </div>
-              )}
+            <li key={f.titulo} className="rounded-xl border border-border bg-card p-4">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary mb-3">
+                {i + 1}
+              </span>
+              <h3 className="font-semibold text-foreground text-sm mb-1">{f.titulo}</h3>
+              <p className="text-xs text-muted-foreground">{f.texto}</p>
             </li>
           ))}
         </ol>
+
       </section>
 
       {/* Módulos */}
