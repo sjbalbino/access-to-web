@@ -253,17 +253,55 @@ export default function PortalHome() {
         </div>
       </section>
 
-      {/* Módulos */}
-      <section id="solucoes" className="container max-w-6xl px-4 py-16 md:py-20">
+      {/* Fluxo integrado */}
+      <section className="container max-w-6xl px-4 py-16 md:py-20">
         <div className="max-w-2xl mb-10">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-            Tudo o que a operação de grãos precisa
+            Do plantio ao caixa, sem retrabalho
           </h2>
           <p className="text-muted-foreground">
-            Módulos integrados que conversam entre si: o que entra na balança reflete no
-            depósito, no fiscal e no financeiro.
+            Cada etapa alimenta a próxima: o custo da lavoura chega até a venda, e a nota
+            fiscal chega até o contas a pagar e a receber.
           </p>
         </div>
+
+        <ol className="grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-0 md:items-stretch">
+          {fluxo.map((f, i) => (
+            <li key={f.titulo} className="flex md:flex-col md:items-stretch gap-4">
+              <div className="flex-1 rounded-xl border border-border bg-card p-4">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary mb-3">
+                  {i + 1}
+                </span>
+                <h3 className="font-semibold text-foreground text-sm mb-1">{f.titulo}</h3>
+                <p className="text-xs text-muted-foreground">{f.texto}</p>
+              </div>
+              {i < fluxo.length - 1 && (
+                <div className="flex items-center justify-center md:hidden">
+                  <ArrowRight className="h-4 w-4 rotate-90 text-primary" />
+                </div>
+              )}
+              {i < fluxo.length - 1 && (
+                <div className="hidden md:flex items-center justify-center px-1">
+                  <ArrowRight className="h-4 w-4 text-primary" />
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* Módulos */}
+      <section id="solucoes" className="container max-w-6xl px-4 pb-16 md:pb-20">
+        <div className="max-w-2xl mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+            Tudo o que a operação agrícola precisa
+          </h2>
+          <p className="text-muted-foreground">
+            Módulos integrados que conversam entre si: lavoura, balança, depósito,
+            contratos e remessas, fiscal e financeiro em uma única base.
+          </p>
+        </div>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {modulos.map((m) => {
