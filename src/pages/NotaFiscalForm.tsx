@@ -3524,7 +3524,9 @@ export default function NotaFiscalForm() {
                   <Input
                     id="item_unidade"
                     value={itemFormData.unidade || ""}
-                    onChange={(e) => setItemFormData({ ...itemFormData, unidade: e.target.value })}
+                    disabled
+                    title="Unidade vinculada ao produto selecionado"
+                    className="bg-muted cursor-not-allowed"
                     maxLength={6}
                   />
                 </div>
