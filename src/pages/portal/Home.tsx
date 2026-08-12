@@ -148,7 +148,7 @@ export default function PortalHome() {
     <PortalLayout>
       <Seo
         title="SisAgro — Sistema de gestão para cerealistas e produtores rurais"
-        description="Gestão agropecuária completa: depósito de grãos, balança, NF-e, comercialização, financeiro e relatórios. Acompanhe também os indicadores diários do mercado agrícola."
+        description="Do plantio à colheita, depósito de grãos, contratos e remessas, NF-e, entrada por XML e financeiro. Com indicadores diários do mercado agrícola."
         path="/"
         jsonLd={{
           "@context": "https://schema.org",
