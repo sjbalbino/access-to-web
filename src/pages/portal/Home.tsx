@@ -12,6 +12,8 @@ import {
   CloudCog,
   Users,
   CheckCircle2,
+  Sprout,
+  FileInput,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PortalLayout } from "@/components/portal/PortalLayout";
@@ -24,10 +26,10 @@ import heroImg from "@/assets/portal-hero.jpg";
 
 const modulos = [
   {
-    icon: Warehouse,
-    titulo: "Depósito e armazenagem",
+    icon: Sprout,
+    titulo: "Controle de lavoura",
     texto:
-      "Controle de saldos por produtor, inscrição estadual, safra e produto. Notas de depósito, transferências, devoluções e extratos de movimentação.",
+      "Do plantio à colheita: aplicações de defensivos e fertilizantes, análises de solo, chuvas, floração, pragas, plantas invasoras e pivôs — com custo e produtividade por safra e por lavoura.",
   },
   {
     icon: Scale,
@@ -36,28 +38,63 @@ const modulos = [
       "Entrada de colheita com peso bruto, tara, umidade, impurezas e descontos por tabela. Tickets e romaneios impressos na hora.",
   },
   {
-    icon: Receipt,
-    titulo: "Fiscal e NF-e",
+    icon: Warehouse,
+    titulo: "Depósito e armazenagem",
     texto:
-      "Emissão de NF-e integrada, contra-notas, cartas de correção, cancelamentos, manifestação de destinatário e importação de XML.",
+      "Controle de saldos por produtor, inscrição estadual, safra e produto. Notas de depósito, transferências, devoluções e extratos de movimentação.",
   },
   {
     icon: ShoppingCart,
     titulo: "Comercialização",
     texto:
-      "Contratos de venda, remessas, compra de cereais e acompanhamento de cada carga do carregamento até a autorização fiscal.",
+      "Contratos de venda com quantidade, preço e saldo a entregar; remessas carga por carga, romaneios e acompanhamento do carregamento até a autorização fiscal. Inclui compra de cereais.",
+  },
+  {
+    icon: Receipt,
+    titulo: "Fiscal e NF-e",
+    texto:
+      "Emissão de NF-e integrada, contra-notas, cartas de correção, cancelamentos e manifestação de destinatário (DF-e) das notas recebidas.",
+  },
+  {
+    icon: FileInput,
+    titulo: "Entrada por XML da NF-e",
+    texto:
+      "Importe o XML da nota do fornecedor e gere, em um só passo, a entrada no estoque e as parcelas no contas a pagar — sem digitar itens, impostos ou duplicatas.",
   },
   {
     icon: Landmark,
     titulo: "Financeiro",
     texto:
-      "Contas a pagar e receber, baixas, contas bancárias, conciliação, lançamentos, rateio entre sócios e estrutura de DRE.",
+      "Contas a pagar e receber (geradas automaticamente pelas notas de entrada), baixas, contas bancárias, conciliação, lançamentos, rateio entre sócios e estrutura de DRE.",
   },
   {
     icon: BarChart3,
     titulo: "Relatórios gerenciais",
     texto:
       "Colheita diária, resumo por lavoura, extratos por produtor, saldo disponível, entregas por variedade e relatórios de IR.",
+  },
+];
+
+const fluxo = [
+  {
+    titulo: "Lavoura",
+    texto: "Plantio, aplicações e acompanhamento por área",
+  },
+  {
+    titulo: "Colheita",
+    texto: "Balança, umidade e descontos",
+  },
+  {
+    titulo: "Depósito",
+    texto: "Saldo por produtor e inscrição",
+  },
+  {
+    titulo: "Comercialização",
+    texto: "Contratos, remessas e NF-e",
+  },
+  {
+    titulo: "Financeiro",
+    texto: "Contas a pagar/receber e DRE",
   },
 ];
 
@@ -89,11 +126,14 @@ const diferenciais = [
 ];
 
 const beneficios = [
+  "Custo da lavoura rastreado do plantio até a venda da produção",
   "Saldo de depósito confiável por produtor e inscrição estadual",
+  "Entrada de nota por XML: estoque e contas a pagar sem digitação",
   "Emissão fiscal sem retrabalho e com rastreamento de rejeições da SEFAZ",
   "Fechamento de safra e apuração de IR com relatórios prontos",
   "Menos planilhas: uma única base para produção, fiscal e financeiro",
 ];
+
 
 export default function PortalHome() {
   const { data: cotacoes, isLoading } = useCotacoesAtuais();
@@ -108,7 +148,7 @@ export default function PortalHome() {
     <PortalLayout>
       <Seo
         title="SisAgro — Sistema de gestão para cerealistas e produtores rurais"
-        description="Gestão agropecuária completa: depósito de grãos, balança, NF-e, comercialização, financeiro e relatórios. Acompanhe também os indicadores diários do mercado agrícola."
+        description="Do plantio à colheita, depósito de grãos, contratos e remessas, NF-e, entrada por XML e financeiro. Com indicadores diários do mercado agrícola."
         path="/"
         jsonLd={{
           "@context": "https://schema.org",
@@ -213,17 +253,44 @@ export default function PortalHome() {
         </div>
       </section>
 
-      {/* Módulos */}
-      <section id="solucoes" className="container max-w-6xl px-4 py-16 md:py-20">
+      {/* Fluxo integrado */}
+      <section className="container max-w-6xl px-4 py-16 md:py-20">
         <div className="max-w-2xl mb-10">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-            Tudo o que a operação de grãos precisa
+            Do plantio ao caixa, sem retrabalho
           </h2>
           <p className="text-muted-foreground">
-            Módulos integrados que conversam entre si: o que entra na balança reflete no
-            depósito, no fiscal e no financeiro.
+            Cada etapa alimenta a próxima: o custo da lavoura chega até a venda, e a nota
+            fiscal chega até o contas a pagar e a receber.
           </p>
         </div>
+
+        <ol className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          {fluxo.map((f, i) => (
+            <li key={f.titulo} className="rounded-xl border border-border bg-card p-4">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary mb-3">
+                {i + 1}
+              </span>
+              <h3 className="font-semibold text-foreground text-sm mb-1">{f.titulo}</h3>
+              <p className="text-xs text-muted-foreground">{f.texto}</p>
+            </li>
+          ))}
+        </ol>
+
+      </section>
+
+      {/* Módulos */}
+      <section id="solucoes" className="container max-w-6xl px-4 pb-16 md:pb-20">
+        <div className="max-w-2xl mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+            Tudo o que a operação agrícola precisa
+          </h2>
+          <p className="text-muted-foreground">
+            Módulos integrados que conversam entre si: lavoura, balança, depósito,
+            contratos e remessas, fiscal e financeiro em uma única base.
+          </p>
+        </div>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {modulos.map((m) => {
