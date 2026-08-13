@@ -76,7 +76,6 @@ export function RelatorioControleDialog({
         dataFinal: dataFinal || undefined,
       };
 
-      const somenteMarcados = modo === "somente_marcados";
       const marcadosPorTipo = (tipo: DocumentoTipoMarcavel) =>
         new Set((marcacoes ?? []).filter((m) => m.documento_tipo === tipo).map((m) => m.documento_id));
 
@@ -99,7 +98,7 @@ export function RelatorioControleDialog({
           : "Período: Todos",
       ].join("          ");
 
-      const opcoes = { conjuntoNome, subtitulo, orientacao, tamanho, somenteMarcados };
+      const opcoes = { conjuntoNome, subtitulo, orientacao, tamanho };
 
       if (escopo === "consolidado") {
         const blocos = [];
@@ -132,8 +131,7 @@ export function RelatorioControleDialog({
           <DialogHeader>
             <DialogTitle>Relatórios do Controle Gerencial</DialogTitle>
             <DialogDescription>
-              Conjunto: <span className="font-medium">{conjuntoNome}</span>. Os lançamentos marcados são
-              desconsiderados do relatório (ou listados isoladamente, para conferência).
+              Conjunto: <span className="font-medium">{conjuntoNome}</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -151,19 +149,6 @@ export function RelatorioControleDialog({
                       {labelTipo(t.tipo)}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Conteúdo</Label>
-              <Select value={modo} onValueChange={(v) => setModo(v as typeof modo)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sem_marcados">Desconsiderando os lançamentos marcados</SelectItem>
-                  <SelectItem value="somente_marcados">Conferência — somente os marcados</SelectItem>
                 </SelectContent>
               </Select>
             </div>
