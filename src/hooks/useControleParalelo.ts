@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /**
- * Módulo Controle Paralelo.
+ * Módulo Controle Gerencial.
  *
  * Camada de dados totalmente isolada dos módulos existentes: apenas LÊ as tabelas
  * de origem (transferências, compras, vendas, depósitos e devoluções) e GRAVA nas

@@ -45,8 +45,8 @@ export default function ControleParalelo() {
   return (
     <AppLayout>
       <PageHeader
-        title="Controle Paralelo"
-        description="Conjuntos de marcações para relatórios que desconsideram lançamentos selecionados"
+        title="Controle Gerencial"
+        description="Conjuntos de marcações para relatórios gerenciais que desconsideram lançamentos selecionados"
         icon={<ClipboardCheck className="h-6 w-6" />}
         actions={
           <Button onClick={abrirNovo}>

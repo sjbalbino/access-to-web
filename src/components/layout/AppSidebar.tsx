@@ -122,7 +122,7 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    title: "Controle Paralelo",
+    title: "Controle Gerencial",
     items: [
       { title: "Conjuntos de Controle", icon: ClipboardCheck, path: "/controle-paralelo", color: "text-fuchsia-600" },
     ],

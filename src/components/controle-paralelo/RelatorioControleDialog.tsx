@@ -133,7 +133,7 @@ export function RelatorioControleDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Relatórios do Controle Paralelo</DialogTitle>
+            <DialogTitle>Relatórios do Controle Gerencial</DialogTitle>
             <DialogDescription>
               Conjunto: <span className="font-medium">{conjuntoNome}</span>. Os lançamentos marcados são
               desconsiderados do relatório (ou listados isoladamente, para conferência).
