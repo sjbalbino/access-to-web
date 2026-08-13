@@ -127,18 +127,23 @@ function desenharResumoProduto(doc: jsPDF, startY: number, docs: DocumentoContro
   const comProduto = docs.filter((d) => (d.produto ?? "").trim() && d.produto !== "-");
   if (comProduto.length === 0) return startY;
 
-  const mapa = new Map<string, { qtd: number; kg: number }>();
+  /** Só exibe a coluna de valor quando os lançamentos possuem valor financeiro (compras/contratos). */
+  const incluirValor = comProduto.some((d) => (d.valor ?? 0) > 0);
+
+  const mapa = new Map<string, { qtd: number; kg: number; valor: number }>();
   comProduto.forEach((d) => {
     const chave = d.produto.trim();
-    const atual = mapa.get(chave) ?? { qtd: 0, kg: 0 };
+    const atual = mapa.get(chave) ?? { qtd: 0, kg: 0, valor: 0 };
     atual.qtd += 1;
     atual.kg += d.quantidade_kg;
+    atual.valor += d.valor ?? 0;
     mapa.set(chave, atual);
   });
 
   const linhas = [...mapa.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
   const totalKg = linhas.reduce((s, [, v]) => s + v.kg, 0);
   const totalQtd = linhas.reduce((s, [, v]) => s + v.qtd, 0);
+  const totalValor = linhas.reduce((s, [, v]) => s + v.valor, 0);
 
   const pageHeight = doc.internal.pageSize.getHeight();
   let y = startY;
@@ -153,14 +158,21 @@ function desenharResumoProduto(doc: jsPDF, startY: number, docs: DocumentoContro
 
   autoTable(doc, {
     startY: y + 2,
-    head: [["Produto", "Lançamentos", "Qtde (kg)", "Sacos"]],
+    head: [["Produto", "Lançamentos", "Qtde (kg)", "Sacos", ...(incluirValor ? ["Valor Total"] : [])]],
     body: linhas.map(([produto, v]) => [
       produto,
       nf(v.qtd),
       nf(v.kg),
       nf(Math.round(v.kg / 60)),
+      ...(incluirValor ? [brl(v.valor)] : []),
     ]),
-    foot: [["TOTAL", nf(totalQtd), nf(totalKg), nf(Math.round(totalKg / 60))]],
+    foot: [[
+      "TOTAL",
+      nf(totalQtd),
+      nf(totalKg),
+      nf(Math.round(totalKg / 60)),
+      ...(incluirValor ? [brl(totalValor)] : []),
+    ]],
     showFoot: "lastPage",
     theme: "grid",
     styles: { fontSize: 8, cellPadding: 1.6 },
@@ -170,6 +182,7 @@ function desenharResumoProduto(doc: jsPDF, startY: number, docs: DocumentoContro
       1: { halign: "right" },
       2: { halign: "right" },
       3: { halign: "right" },
+      4: { halign: "right" },
     },
     didParseCell: (data) => {
       if (data.section === "foot" && data.column.index > 0) {
@@ -178,6 +191,7 @@ function desenharResumoProduto(doc: jsPDF, startY: number, docs: DocumentoContro
     },
     margin: { left: 8, right: 8, bottom: 16 },
   });
+
 
   return (doc as any).lastAutoTable.finalY + 8;
 }
