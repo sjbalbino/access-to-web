@@ -218,8 +218,11 @@ export function gerarRelatorioControlePdf(
     doc.text("Nenhum lançamento encontrado com os filtros informados.", 12, y + 6);
   } else {
     y = desenharBloco(doc, y, { tipo, docs });
-    desenharResumoProduto(doc, y, docs);
+    if (tipo !== "compra_cereal") {
+      desenharResumoProduto(doc, y, docs);
+    }
   }
+
 
 
   desenharRodapeBrand(doc);
@@ -301,9 +304,14 @@ export function gerarConsolidadoControlePdf(
       margin: { left: 8, right: 8, bottom: 16 },
     });
 
-    // Resumo geral por produto (todos os tipos)
-    const todosDocs = comDados.flatMap((b) => b.docs);
-    desenharResumoProduto(doc, (doc as any).lastAutoTable.finalY + 8, todosDocs, "Resumo Geral por Produto");
+    // Resumo geral por produto (todos os tipos, exceto compras de cereais)
+    const todosDocs = comDados
+      .flatMap((b) => b.docs)
+      .filter((d) => d.tipo !== "compra_cereal");
+    if (todosDocs.length > 0) {
+      desenharResumoProduto(doc, (doc as any).lastAutoTable.finalY + 8, todosDocs, "Resumo Geral por Produto");
+    }
+
   }
 
 
