@@ -38,13 +38,14 @@ export const TIPOS_DOCUMENTO: { tipo: DocumentoTipoMarcavel; label: string; plur
   "contrato_venda",
 ].map((t) => ({ tipo: t as DocumentoTipoMarcavel, ...LABELS[t as DocumentoTipo] }));
 
-/** Tipos disponíveis nos relatórios (inclui remessas, filtradas pelos contratos marcados). */
-export const TIPOS_RELATORIO: { tipo: DocumentoTipo; label: string; plural: string }[] = [
+/** Tipos disponíveis nos relatórios do Controle Gerencial. */
+export const TIPOS_RELATORIO: { tipo: DocumentoTipoMarcavel; label: string; plural: string }[] = [
   "transferencia_deposito",
   "compra_cereal",
   "contrato_venda",
-  "remessa_venda",
-].map((t) => ({ tipo: t as DocumentoTipo, ...LABELS[t as DocumentoTipo] }));
+].map((t) => ({ tipo: t as DocumentoTipoMarcavel, ...LABELS[t as DocumentoTipo] }));
+
+
 
 export function labelTipo(tipo: DocumentoTipo): string {
   return LABELS[tipo]?.plural ?? tipo;

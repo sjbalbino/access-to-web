@@ -34,7 +34,7 @@ export interface RelatorioControleDialogProps {
   conjuntoNome: string;
 }
 
-type Escopo = DocumentoTipo | "consolidado";
+type Escopo = DocumentoTipoMarcavel | "consolidado";
 
 export function RelatorioControleDialog({
   open,
@@ -79,15 +79,11 @@ export function RelatorioControleDialog({
       const marcadosPorTipo = (tipo: DocumentoTipoMarcavel) =>
         new Set((marcacoes ?? []).filter((m) => m.documento_tipo === tipo).map((m) => m.documento_id));
 
-      // Remessas não são marcáveis: herdam a marcação do contrato de venda.
-      const contratosMarcados = marcadosPorTipo("contrato_venda");
-      const filtrarDocs = (tipo: DocumentoTipo, docs: DocumentoControle[]): DocumentoControle[] => {
-        if (tipo === "remessa_venda") {
-          return docs.filter((d) => !(!!d.contrato_id && contratosMarcados.has(d.contrato_id)));
-        }
-        const marcados = marcadosPorTipo(tipo as DocumentoTipoMarcavel);
+      const filtrarDocs = (tipo: DocumentoTipoMarcavel, docs: DocumentoControle[]): DocumentoControle[] => {
+        const marcados = marcadosPorTipo(tipo);
         return docs.filter((d) => !marcados.has(d.id));
       };
+
 
       const subtitulo = [
         safraId ? `Safra: ${safras?.find((s: any) => s.id === safraId)?.nome ?? "-"}` : "Safra: Todas",
