@@ -19,18 +19,41 @@ export type DocumentoTipo =
   | "nota_deposito"
   | "devolucao_deposito";
 
-export const TIPOS_DOCUMENTO: { tipo: DocumentoTipo; label: string; plural: string }[] = [
-  { tipo: "transferencia_deposito", label: "Transferência", plural: "Transferências de Depósito" },
-  { tipo: "compra_cereal", label: "Compra", plural: "Compras de Cereais" },
-  { tipo: "contrato_venda", label: "Contrato", plural: "Contratos de Venda" },
-  { tipo: "remessa_venda", label: "Remessa", plural: "Remessas de Venda" },
-  { tipo: "nota_deposito", label: "Nota de Depósito", plural: "Notas de Depósito" },
-  { tipo: "devolucao_deposito", label: "Devolução", plural: "Devoluções de Depósito" },
-];
+/** Tipo marcável pelo usuário (remessa_venda NÃO é marcável: segue o contrato). */
+export type DocumentoTipoMarcavel = Exclude<DocumentoTipo, "remessa_venda">;
+
+const LABELS: Record<DocumentoTipo, { label: string; plural: string }> = {
+  transferencia_deposito: { label: "Transferência", plural: "Transferências de Depósito" },
+  compra_cereal: { label: "Compra", plural: "Compras de Cereais" },
+  contrato_venda: { label: "Contrato", plural: "Contratos de Venda" },
+  remessa_venda: { label: "Remessa", plural: "Remessas de Venda (derivadas dos contratos)" },
+  nota_deposito: { label: "Nota de Depósito", plural: "Notas de Depósito" },
+  devolucao_deposito: { label: "Devolução", plural: "Devoluções de Depósito" },
+};
+
+/** Tipos que o usuário marca manualmente (abas de marcação). */
+export const TIPOS_DOCUMENTO: { tipo: DocumentoTipoMarcavel; label: string; plural: string }[] = [
+  "transferencia_deposito",
+  "compra_cereal",
+  "contrato_venda",
+  "nota_deposito",
+  "devolucao_deposito",
+].map((t) => ({ tipo: t as DocumentoTipoMarcavel, ...LABELS[t as DocumentoTipo] }));
+
+/** Tipos disponíveis nos relatórios (inclui remessas, filtradas pelos contratos marcados). */
+export const TIPOS_RELATORIO: { tipo: DocumentoTipo; label: string; plural: string }[] = [
+  "transferencia_deposito",
+  "compra_cereal",
+  "contrato_venda",
+  "remessa_venda",
+  "nota_deposito",
+  "devolucao_deposito",
+].map((t) => ({ tipo: t as DocumentoTipo, ...LABELS[t as DocumentoTipo] }));
 
 export function labelTipo(tipo: DocumentoTipo): string {
-  return TIPOS_DOCUMENTO.find((t) => t.tipo === tipo)?.plural ?? tipo;
+  return LABELS[tipo]?.plural ?? tipo;
 }
+
 
 export interface ControleConjunto {
   id: string;
