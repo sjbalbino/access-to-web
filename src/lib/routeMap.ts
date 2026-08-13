@@ -23,6 +23,7 @@ import {
   BarChart3,
   DatabaseBackup,
   Landmark,
+  ClipboardCheck,
   LucideIcon,
 } from "lucide-react";
 
@@ -57,6 +58,7 @@ export const routeMap: Record<string, RouteInfo> = {
   "/lancamentos-financeiros": { title: "Lançamentos Financeiros", icon: DollarSign, color: "text-emerald-600" },
   "/dre-estrutura": { title: "Estrutura DRE", icon: GitBranch, color: "text-blue-600" },
   "/contas-bancarias": { title: "Contas Bancárias", icon: Landmark, color: "text-emerald-600" },
+  "/controle-paralelo": { title: "Controle Paralelo", icon: ClipboardCheck, color: "text-fuchsia-600" },
   "/produtos": { title: "Produtos", icon: Package, color: "text-amber-500" },
   "/grupos-produtos": { title: "Grupos Produtos", icon: FolderOpen, color: "text-violet-500" },
   "/plano-contas-gerencial": { title: "Plano Contas", icon: FileText, color: "text-emerald-600" },
