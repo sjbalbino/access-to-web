@@ -16,7 +16,7 @@ import {
   TIPOS_DOCUMENTO,
   useControleConjunto,
   useControleMarcacoes,
-  type DocumentoTipo,
+  type DocumentoTipoMarcavel,
 } from "@/hooks/useControleParalelo";
 
 export default function ControleParaleloConjunto() {
@@ -30,7 +30,7 @@ export default function ControleParaleloConjunto() {
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
   const [busca, setBusca] = useState("");
-  const [aba, setAba] = useState<DocumentoTipo>("transferencia_deposito");
+  const [aba, setAba] = useState<DocumentoTipoMarcavel>("transferencia_deposito");
   const [relatorioOpen, setRelatorioOpen] = useState(false);
 
   const filtros = useMemo(
@@ -44,7 +44,7 @@ export default function ControleParaleloConjunto() {
   );
 
   const marcadosPorTipo = useMemo(() => {
-    const mapa = new Map<DocumentoTipo, Set<string>>();
+    const mapa = new Map<DocumentoTipoMarcavel, Set<string>>();
     TIPOS_DOCUMENTO.forEach((t) => mapa.set(t.tipo, new Set<string>()));
     (marcacoes ?? []).forEach((m) => {
       mapa.get(m.documento_tipo)?.add(m.documento_id);
@@ -110,7 +110,7 @@ export default function ControleParaleloConjunto() {
         </CardContent>
       </Card>
 
-      <Tabs value={aba} onValueChange={(v) => setAba(v as DocumentoTipo)} className="mt-6">
+      <Tabs value={aba} onValueChange={(v) => setAba(v as DocumentoTipoMarcavel)} className="mt-6">
         <TabsList className="flex flex-wrap h-auto">
           {TIPOS_DOCUMENTO.map((t) => (
             <TabsTrigger key={t.tipo} value={t.tipo}>

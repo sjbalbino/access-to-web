@@ -13,12 +13,12 @@ import {
   useMarcarLote,
   useToggleMarcacao,
   type DocumentoFiltros,
-  type DocumentoTipo,
+  type DocumentoTipoMarcavel,
 } from "@/hooks/useControleParalelo";
 
 export interface MarcacoesTabProps {
   conjuntoId: string;
-  tipo: DocumentoTipo;
+  tipo: DocumentoTipoMarcavel;
   filtros: DocumentoFiltros;
   /** IDs de documentos já marcados neste conjunto para este tipo. */
   marcados: Set<string>;
