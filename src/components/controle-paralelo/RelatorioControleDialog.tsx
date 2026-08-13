@@ -13,10 +13,13 @@ import { PreviewRelatorioDialog } from "@/components/relatorios/PreviewRelatorio
 import {
   carregarDocumentos,
   labelTipo,
-  TIPOS_DOCUMENTO,
+  TIPOS_RELATORIO,
   useControleMarcacoes,
+  type DocumentoControle,
   type DocumentoTipo,
+  type DocumentoTipoMarcavel,
 } from "@/hooks/useControleParalelo";
+
 import {
   gerarConsolidadoControlePdf,
   gerarRelatorioControlePdf,
@@ -74,8 +77,21 @@ export function RelatorioControleDialog({
       };
 
       const somenteMarcados = modo === "somente_marcados";
-      const marcadosPorTipo = (tipo: DocumentoTipo) =>
+      const marcadosPorTipo = (tipo: DocumentoTipoMarcavel) =>
         new Set((marcacoes ?? []).filter((m) => m.documento_tipo === tipo).map((m) => m.documento_id));
+
+      // Remessas não são marcáveis: herdam a marcação do contrato de venda.
+      const contratosMarcados = marcadosPorTipo("contrato_venda");
+      const filtrarDocs = (tipo: DocumentoTipo, docs: DocumentoControle[]): DocumentoControle[] => {
+        if (tipo === "remessa_venda") {
+          return docs.filter((d) => {
+            const doContratoMarcado = !!d.contrato_id && contratosMarcados.has(d.contrato_id);
+            return somenteMarcados ? doContratoMarcado : !doContratoMarcado;
+          });
+        }
+        const marcados = marcadosPorTipo(tipo as DocumentoTipoMarcavel);
+        return docs.filter((d) => (somenteMarcados ? marcados.has(d.id) : !marcados.has(d.id)));
+      };
 
       const subtitulo = [
         safraId ? `Safra: ${safras?.find((s: any) => s.id === safraId)?.nome ?? "-"}` : "Safra: Todas",
@@ -90,21 +106,16 @@ export function RelatorioControleDialog({
 
       if (escopo === "consolidado") {
         const blocos = [];
-        for (const t of TIPOS_DOCUMENTO) {
+        for (const t of TIPOS_RELATORIO) {
           const docs = await carregarDocumentos(t.tipo, filtros);
-          const marcados = marcadosPorTipo(t.tipo);
-          blocos.push({
-            tipo: t.tipo,
-            docs: docs.filter((d) => (somenteMarcados ? marcados.has(d.id) : !marcados.has(d.id))),
-          });
+          blocos.push({ tipo: t.tipo, docs: filtrarDocs(t.tipo, docs) });
         }
         gerarConsolidadoControlePdf(blocos, opcoes);
       } else {
         const docs = await carregarDocumentos(escopo, filtros);
-        const marcados = marcadosPorTipo(escopo);
-        const filtrados = docs.filter((d) => (somenteMarcados ? marcados.has(d.id) : !marcados.has(d.id)));
-        gerarRelatorioControlePdf(escopo, filtrados, opcoes);
+        gerarRelatorioControlePdf(escopo, filtrarDocs(escopo, docs), opcoes);
       }
+
 
       const payload = await capture;
       setPreviewPayload(payload);
@@ -138,7 +149,7 @@ export function RelatorioControleDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="consolidado">Consolidado (todos os tipos)</SelectItem>
-                  {TIPOS_DOCUMENTO.map((t) => (
+                  {TIPOS_RELATORIO.map((t) => (
                     <SelectItem key={t.tipo} value={t.tipo}>
                       {labelTipo(t.tipo)}
                     </SelectItem>
