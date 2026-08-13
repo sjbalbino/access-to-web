@@ -39,11 +39,12 @@ export const TIPOS_DOCUMENTO: { tipo: DocumentoTipoMarcavel; label: string; plur
 ].map((t) => ({ tipo: t as DocumentoTipoMarcavel, ...LABELS[t as DocumentoTipo] }));
 
 /** Tipos disponíveis nos relatórios do Controle Gerencial. */
-export const TIPOS_RELATORIO: { tipo: DocumentoTipo; label: string; plural: string }[] = [
+export const TIPOS_RELATORIO: { tipo: DocumentoTipoMarcavel; label: string; plural: string }[] = [
   "transferencia_deposito",
   "compra_cereal",
   "contrato_venda",
-].map((t) => ({ tipo: t as DocumentoTipo, ...LABELS[t as DocumentoTipo] }));
+].map((t) => ({ tipo: t as DocumentoTipoMarcavel, ...LABELS[t as DocumentoTipo] }));
+
 
 
 export function labelTipo(tipo: DocumentoTipo): string {
