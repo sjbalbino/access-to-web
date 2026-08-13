@@ -384,9 +384,11 @@ async function buscarRemessas(f: DocumentoFiltros): Promise<DocumentoControle[]>
     .from("remessas_venda")
     .select(`
       id, codigo, data_remessa, kg_nota, kg_remessa, valor_nota, valor_remessa, local_entrega_nome,
+      contrato_venda_id,
       variedade:produtos(nome),
       contrato:contratos_venda(
-        numero, safra_id,
+        id, numero, safra_id,
+
         safra:safras(nome),
         comprador:clientes_fornecedores(nome),
         inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome))
