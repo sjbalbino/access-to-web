@@ -171,6 +171,11 @@ function desenharResumoProduto(doc: jsPDF, startY: number, docs: DocumentoContro
       2: { halign: "right" },
       3: { halign: "right" },
     },
+    didParseCell: (data) => {
+      if (data.section === "foot" && data.column.index > 0) {
+        data.cell.styles.halign = "right";
+      }
+    },
     margin: { left: 8, right: 8, bottom: 16 },
   });
 
