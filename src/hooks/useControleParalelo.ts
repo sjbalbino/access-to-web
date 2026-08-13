@@ -68,7 +68,7 @@ export interface ControleConjunto {
 export interface ControleMarcacao {
   id: string;
   conjunto_id: string;
-  documento_tipo: DocumentoTipo;
+  documento_tipo: DocumentoTipoMarcavel;
   documento_id: string;
   observacao: string | null;
   created_at: string;
@@ -88,6 +88,9 @@ export interface DocumentoControle {
   valor: number;
   safra: string;
   safra_id: string | null;
+  /** Preenchido apenas em remessas: contrato de origem (usado para herdar a marcação). */
+  contrato_id?: string | null;
+
 }
 
 export interface DocumentoFiltros {
@@ -198,7 +201,8 @@ export function useToggleMarcacao() {
   return useMutation({
     mutationFn: async (params: {
       conjuntoId: string;
-      documentoTipo: DocumentoTipo;
+      documentoTipo: DocumentoTipoMarcavel;
+
       documentoId: string;
       marcar: boolean;
     }) => {
@@ -231,7 +235,7 @@ export function useMarcarLote() {
   return useMutation({
     mutationFn: async (params: {
       conjuntoId: string;
-      documentoTipo: DocumentoTipo;
+      documentoTipo: DocumentoTipoMarcavel;
       documentoIds: string[];
       marcar: boolean;
     }) => {
