@@ -218,8 +218,11 @@ export function gerarRelatorioControlePdf(
     doc.text("Nenhum lançamento encontrado com os filtros informados.", 12, y + 6);
   } else {
     y = desenharBloco(doc, y, { tipo, docs });
-    desenharResumoProduto(doc, y, docs);
+    if (tipo !== "compra_cereal") {
+      desenharResumoProduto(doc, y, docs);
+    }
   }
+
 
 
   desenharRodapeBrand(doc);
