@@ -36,8 +36,6 @@ export const TIPOS_DOCUMENTO: { tipo: DocumentoTipoMarcavel; label: string; plur
   "transferencia_deposito",
   "compra_cereal",
   "contrato_venda",
-  "nota_deposito",
-  "devolucao_deposito",
 ].map((t) => ({ tipo: t as DocumentoTipoMarcavel, ...LABELS[t as DocumentoTipo] }));
 
 /** Tipos disponíveis nos relatórios (inclui remessas, filtradas pelos contratos marcados). */
@@ -46,8 +44,6 @@ export const TIPOS_RELATORIO: { tipo: DocumentoTipo; label: string; plural: stri
   "compra_cereal",
   "contrato_venda",
   "remessa_venda",
-  "nota_deposito",
-  "devolucao_deposito",
 ].map((t) => ({ tipo: t as DocumentoTipo, ...LABELS[t as DocumentoTipo] }));
 
 export function labelTipo(tipo: DocumentoTipo): string {
