@@ -8,10 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ClipboardCheck, FileDown } from "lucide-react";
+import { ArrowLeft, ClipboardCheck } from "lucide-react";
 import { useSafras } from "@/hooks/useSafras";
 import { MarcacoesTab } from "@/components/controle-paralelo/MarcacoesTab";
-import { RelatorioControleDialog } from "@/components/controle-paralelo/RelatorioControleDialog";
 import {
   TIPOS_DOCUMENTO,
   useControleConjunto,
@@ -31,7 +30,6 @@ export default function ControleParaleloConjunto() {
   const [dataFinal, setDataFinal] = useState("");
   const [busca, setBusca] = useState("");
   const [aba, setAba] = useState<DocumentoTipoMarcavel>("transferencia_deposito");
-  const [relatorioOpen, setRelatorioOpen] = useState(false);
 
   const filtros = useMemo(
     () => ({
@@ -59,16 +57,10 @@ export default function ControleParaleloConjunto() {
         description={conjunto?.descricao || "Marque os lançamentos que devem ser desconsiderados nos relatórios deste controle"}
         icon={<ClipboardCheck className="h-6 w-6" />}
         actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/controle-paralelo")}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-            <Button onClick={() => setRelatorioOpen(true)} disabled={!id}>
-              <FileDown className="h-4 w-4 mr-2" />
-              Relatórios
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => navigate("/controle-paralelo")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
         }
       />
 
@@ -132,15 +124,6 @@ export default function ControleParaleloConjunto() {
           </TabsContent>
         ))}
       </Tabs>
-
-      {id && (
-        <RelatorioControleDialog
-          open={relatorioOpen}
-          onOpenChange={setRelatorioOpen}
-          conjuntoId={id}
-          conjuntoNome={conjunto?.nome ?? "-"}
-        />
-      )}
     </AppLayout>
   );
 }

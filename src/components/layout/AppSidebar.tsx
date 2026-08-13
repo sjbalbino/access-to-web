@@ -125,6 +125,7 @@ const menuGroups: MenuGroup[] = [
     title: "Controle Gerencial",
     items: [
       { title: "Conjuntos de Controle", icon: ClipboardCheck, path: "/controle-paralelo", color: "text-fuchsia-600" },
+      { title: "Relatórios Gerenciais", icon: BarChart3, path: "/controle-paralelo/relatorios", color: "text-fuchsia-600" },
     ],
   },
   {
