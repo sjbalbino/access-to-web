@@ -139,6 +139,8 @@ const App = () => (
 
               <Route path="/locais-entrega" element={<ProtectedRoute><LocaisEntrega /></ProtectedRoute>} />
               <Route path="/importar-dados" element={<ProtectedRoute requireAdmin><ImportarDados /></ProtectedRoute>} />
+              <Route path="/controle-paralelo" element={<ProtectedRoute><ControleParalelo /></ProtectedRoute>} />
+              <Route path="/controle-paralelo/:id" element={<ProtectedRoute><ControleParaleloConjunto /></ProtectedRoute>} />
               <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />
               <Route path="/tenants" element={<ProtectedRoute requireSuperAdmin><Tenants /></ProtectedRoute>} />
               <Route path="/selecionar-empresa" element={<ProtectedRoute><SelecionarEmpresa /></ProtectedRoute>} />
