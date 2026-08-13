@@ -52,6 +52,8 @@ import ContasPagar from "./pages/ContasPagar";
 import ContasBancarias from "./pages/ContasBancarias";
 import RelatoriosIR from "./pages/RelatoriosIR";
 import ConciliacaoBancaria from "./pages/ConciliacaoBancaria";
+import ControleParalelo from "./pages/ControleParalelo";
+import ControleParaleloConjunto from "./pages/ControleParaleloConjunto";
 import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TicketDepositoPreview } from "@/components/shared/TicketDepositoPreview";
@@ -137,6 +139,8 @@ const App = () => (
 
               <Route path="/locais-entrega" element={<ProtectedRoute><LocaisEntrega /></ProtectedRoute>} />
               <Route path="/importar-dados" element={<ProtectedRoute requireAdmin><ImportarDados /></ProtectedRoute>} />
+              <Route path="/controle-paralelo" element={<ProtectedRoute><ControleParalelo /></ProtectedRoute>} />
+              <Route path="/controle-paralelo/:id" element={<ProtectedRoute><ControleParaleloConjunto /></ProtectedRoute>} />
               <Route path="/usuarios" element={<ProtectedRoute requireAdmin><Usuarios /></ProtectedRoute>} />
               <Route path="/tenants" element={<ProtectedRoute requireSuperAdmin><Tenants /></ProtectedRoute>} />
               <Route path="/selecionar-empresa" element={<ProtectedRoute><SelecionarEmpresa /></ProtectedRoute>} />

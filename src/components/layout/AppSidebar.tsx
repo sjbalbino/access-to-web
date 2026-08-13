@@ -35,6 +35,7 @@ import {
   CheckCircle2,
   KeyRound,
   LucideIcon,
+  ClipboardCheck,
 } from "lucide-react";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -118,6 +119,12 @@ const menuGroups: MenuGroup[] = [
       { title: "Estrutura DRE", icon: GitBranch, path: "/dre-estrutura", color: "text-blue-600" },
       { title: "Relatórios Financeiros", icon: BarChart3, path: "/relatorios/financeiro", color: "text-purple-600" },
       { title: "Relatórios IR (Sócios)", icon: FileText, path: "/relatorios-ir", color: "text-amber-600" },
+    ],
+  },
+  {
+    title: "Controle Paralelo",
+    items: [
+      { title: "Conjuntos de Controle", icon: ClipboardCheck, path: "/controle-paralelo", color: "text-fuchsia-600" },
     ],
   },
   {
