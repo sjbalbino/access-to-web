@@ -272,6 +272,7 @@ export function gerarConsolidadoControlePdf(
         nf(Math.round(totalGeralKg / 60)),
         brl(totalGeralValor),
       ]],
+      showFoot: "lastPage",
       theme: "grid",
       styles: { fontSize: 8, cellPadding: 1.6 },
       headStyles: { fillColor: [34, 87, 51], textColor: 255, fontStyle: "bold", halign: "center" },
@@ -284,7 +285,12 @@ export function gerarConsolidadoControlePdf(
       },
       margin: { left: 8, right: 8, bottom: 16 },
     });
+
+    // Resumo geral por produto (todos os tipos)
+    const todosDocs = comDados.flatMap((b) => b.docs);
+    desenharResumoProduto(doc, (doc as any).lastAutoTable.finalY + 8, todosDocs, "Resumo Geral por Produto");
   }
+
 
   desenharRodapeBrand(doc);
   entregarRelatorio(doc, `controle-consolidado-${format(new Date(), "yyyyMMdd-HHmm")}.pdf`);
