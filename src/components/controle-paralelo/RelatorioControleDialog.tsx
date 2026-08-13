@@ -13,10 +13,13 @@ import { PreviewRelatorioDialog } from "@/components/relatorios/PreviewRelatorio
 import {
   carregarDocumentos,
   labelTipo,
-  TIPOS_DOCUMENTO,
+  TIPOS_RELATORIO,
   useControleMarcacoes,
+  type DocumentoControle,
   type DocumentoTipo,
+  type DocumentoTipoMarcavel,
 } from "@/hooks/useControleParalelo";
+
 import {
   gerarConsolidadoControlePdf,
   gerarRelatorioControlePdf,
