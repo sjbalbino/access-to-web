@@ -46,7 +46,7 @@ export function RelatorioControleDialog({
   const [safraId, setSafraId] = useState<string | undefined>(undefined);
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
-  const [modo, setModo] = useState<"sem_marcados" | "somente_marcados">("sem_marcados");
+  
   const [orientacao, setOrientacao] = useState<Orientacao>("landscape");
   const [tamanho, setTamanho] = useState<TamanhoPagina>("a4");
   const [loading, setLoading] = useState(false);
@@ -84,13 +84,10 @@ export function RelatorioControleDialog({
       const contratosMarcados = marcadosPorTipo("contrato_venda");
       const filtrarDocs = (tipo: DocumentoTipo, docs: DocumentoControle[]): DocumentoControle[] => {
         if (tipo === "remessa_venda") {
-          return docs.filter((d) => {
-            const doContratoMarcado = !!d.contrato_id && contratosMarcados.has(d.contrato_id);
-            return somenteMarcados ? doContratoMarcado : !doContratoMarcado;
-          });
+          return docs.filter((d) => !(!!d.contrato_id && contratosMarcados.has(d.contrato_id)));
         }
         const marcados = marcadosPorTipo(tipo as DocumentoTipoMarcavel);
-        return docs.filter((d) => (somenteMarcados ? marcados.has(d.id) : !marcados.has(d.id)));
+        return docs.filter((d) => !marcados.has(d.id));
       };
 
       const subtitulo = [
