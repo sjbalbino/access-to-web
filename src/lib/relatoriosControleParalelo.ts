@@ -6,7 +6,7 @@ import { entregarRelatorio } from "./relatorioViewer";
 import { labelTipo, type DocumentoControle, type DocumentoTipo } from "@/hooks/useControleParalelo";
 
 /**
- * Geradores de PDF exclusivos do módulo Controle Paralelo.
+ * Geradores de PDF exclusivos do módulo Controle Gerencial.
  * Nenhum gerador existente é reaproveitado ou alterado.
  */
 
