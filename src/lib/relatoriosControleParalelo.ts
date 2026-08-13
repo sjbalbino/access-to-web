@@ -127,19 +127,17 @@ function desenharResumoProduto(doc: jsPDF, startY: number, docs: DocumentoContro
   const comProduto = docs.filter((d) => (d.produto ?? "").trim() && d.produto !== "-");
   if (comProduto.length === 0) return startY;
 
-  const mapa = new Map<string, { qtd: number; kg: number; valor: number }>();
+  const mapa = new Map<string, { qtd: number; kg: number }>();
   comProduto.forEach((d) => {
     const chave = d.produto.trim();
-    const atual = mapa.get(chave) ?? { qtd: 0, kg: 0, valor: 0 };
+    const atual = mapa.get(chave) ?? { qtd: 0, kg: 0 };
     atual.qtd += 1;
     atual.kg += d.quantidade_kg;
-    atual.valor += d.valor;
     mapa.set(chave, atual);
   });
 
   const linhas = [...mapa.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
   const totalKg = linhas.reduce((s, [, v]) => s + v.kg, 0);
-  const totalValor = linhas.reduce((s, [, v]) => s + v.valor, 0);
   const totalQtd = linhas.reduce((s, [, v]) => s + v.qtd, 0);
 
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -155,15 +153,14 @@ function desenharResumoProduto(doc: jsPDF, startY: number, docs: DocumentoContro
 
   autoTable(doc, {
     startY: y + 2,
-    head: [["Produto", "Lançamentos", "Qtde (kg)", "Sacos", "Valor"]],
+    head: [["Produto", "Lançamentos", "Qtde (kg)", "Sacos"]],
     body: linhas.map(([produto, v]) => [
       produto,
       nf(v.qtd),
       nf(v.kg),
       nf(Math.round(v.kg / 60)),
-      brl(v.valor),
     ]),
-    foot: [["TOTAL", nf(totalQtd), nf(totalKg), nf(Math.round(totalKg / 60)), brl(totalValor)]],
+    foot: [["TOTAL", nf(totalQtd), nf(totalKg), nf(Math.round(totalKg / 60))]],
     showFoot: "lastPage",
     theme: "grid",
     styles: { fontSize: 8, cellPadding: 1.6 },
@@ -173,7 +170,6 @@ function desenharResumoProduto(doc: jsPDF, startY: number, docs: DocumentoContro
       1: { halign: "right" },
       2: { halign: "right" },
       3: { halign: "right" },
-      4: { halign: "right" },
     },
     margin: { left: 8, right: 8, bottom: 16 },
   });
