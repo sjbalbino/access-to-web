@@ -52,6 +52,8 @@ import ContasPagar from "./pages/ContasPagar";
 import ContasBancarias from "./pages/ContasBancarias";
 import RelatoriosIR from "./pages/RelatoriosIR";
 import ConciliacaoBancaria from "./pages/ConciliacaoBancaria";
+import ControleParalelo from "./pages/ControleParalelo";
+import ControleParaleloConjunto from "./pages/ControleParaleloConjunto";
 import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { TicketDepositoPreview } from "@/components/shared/TicketDepositoPreview";
