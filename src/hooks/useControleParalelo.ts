@@ -416,6 +416,8 @@ async function buscarRemessas(f: DocumentoFiltros): Promise<DocumentoControle[]>
       valor: num(r.valor_nota) || num(r.valor_remessa),
       safra: r.contrato?.safra?.nome ?? "-",
       safra_id: r.contrato?.safra_id ?? null,
+      contrato_id: r.contrato?.id ?? r.contrato_venda_id ?? null,
+
     }));
 }
 
