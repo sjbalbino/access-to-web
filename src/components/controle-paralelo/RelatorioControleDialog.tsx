@@ -34,7 +34,7 @@ export interface RelatorioControleDialogProps {
   conjuntoNome: string;
 }
 
-type Escopo = DocumentoTipo | "consolidado";
+type Escopo = DocumentoTipoMarcavel | "consolidado";
 
 export function RelatorioControleDialog({
   open,
