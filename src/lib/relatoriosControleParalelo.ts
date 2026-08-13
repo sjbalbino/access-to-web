@@ -54,15 +54,21 @@ function desenharTitulo(doc: jsPDF, yPos: number, titulo: string, linhas: string
   return y + 2;
 }
 
+/** Ordena os lançamentos por data crescente (mais antigo primeiro). */
+function ordenarPorData(docs: DocumentoControle[]): DocumentoControle[] {
+  return [...docs].sort((a, b) => String(a.data ?? "").localeCompare(String(b.data ?? "")));
+}
+
 function desenharBloco(doc: jsPDF, startY: number, bloco: Bloco): number {
-  const totalKg = bloco.docs.reduce((s, d) => s + d.quantidade_kg, 0);
-  const totalValor = bloco.docs.reduce((s, d) => s + d.valor, 0);
-  const temValor = bloco.docs.some((d) => d.valor > 0);
+  const docs = ordenarPorData(bloco.docs);
+  const totalKg = docs.reduce((s, d) => s + d.quantidade_kg, 0);
+  const totalValor = docs.reduce((s, d) => s + d.valor, 0);
+  const temValor = docs.some((d) => d.valor > 0);
 
   const head = [["Data", "Referência", "Produtor / Inscrição", "Contraparte", "Produto", "Local", "Qtde (kg)", "Sacos"]];
   if (temValor) head[0].push("Valor");
 
-  const body = bloco.docs.map((d) => {
+  const body = docs.map((d) => {
     const row: (string | number)[] = [
       dataBr(d.data),
       d.referencia,
@@ -83,7 +89,7 @@ function desenharBloco(doc: jsPDF, startY: number, bloco: Bloco): number {
     "",
     "",
     "",
-    `TOTAL (${bloco.docs.length})`,
+    `TOTAL (${docs.length})`,
     nf(totalKg),
     nf(Math.round(totalKg / 60)),
   ];
@@ -94,6 +100,8 @@ function desenharBloco(doc: jsPDF, startY: number, bloco: Bloco): number {
     head,
     body,
     foot: [footRow],
+    // Totalizador apenas no final da tabela (sem totais por página)
+    showFoot: "lastPage",
     theme: "grid",
     styles: { fontSize: 7.5, cellPadding: 1.4 },
     headStyles: { fillColor: [34, 87, 51], textColor: 255, fontStyle: "bold", halign: "center" },
@@ -113,6 +121,66 @@ function desenharBloco(doc: jsPDF, startY: number, bloco: Bloco): number {
 
   return (doc as any).lastAutoTable.finalY + 8;
 }
+
+/** Resumo por produto, impresso no final do relatório. */
+function desenharResumoProduto(doc: jsPDF, startY: number, docs: DocumentoControle[], titulo = "Resumo por Produto"): number {
+  const comProduto = docs.filter((d) => (d.produto ?? "").trim() && d.produto !== "-");
+  if (comProduto.length === 0) return startY;
+
+  const mapa = new Map<string, { qtd: number; kg: number; valor: number }>();
+  comProduto.forEach((d) => {
+    const chave = d.produto.trim();
+    const atual = mapa.get(chave) ?? { qtd: 0, kg: 0, valor: 0 };
+    atual.qtd += 1;
+    atual.kg += d.quantidade_kg;
+    atual.valor += d.valor;
+    mapa.set(chave, atual);
+  });
+
+  const linhas = [...mapa.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
+  const totalKg = linhas.reduce((s, [, v]) => s + v.kg, 0);
+  const totalValor = linhas.reduce((s, [, v]) => s + v.valor, 0);
+  const totalQtd = linhas.reduce((s, [, v]) => s + v.qtd, 0);
+
+  const pageHeight = doc.internal.pageSize.getHeight();
+  let y = startY;
+  if (y > pageHeight - 45) {
+    doc.addPage();
+    y = desenharCabecalhoBrand(doc);
+  }
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text(titulo, 8, y);
+
+  autoTable(doc, {
+    startY: y + 2,
+    head: [["Produto", "Lançamentos", "Qtde (kg)", "Sacos", "Valor"]],
+    body: linhas.map(([produto, v]) => [
+      produto,
+      nf(v.qtd),
+      nf(v.kg),
+      nf(Math.round(v.kg / 60)),
+      brl(v.valor),
+    ]),
+    foot: [["TOTAL", nf(totalQtd), nf(totalKg), nf(Math.round(totalKg / 60)), brl(totalValor)]],
+    showFoot: "lastPage",
+    theme: "grid",
+    styles: { fontSize: 8, cellPadding: 1.6 },
+    headStyles: { fillColor: [34, 87, 51], textColor: 255, fontStyle: "bold", halign: "center" },
+    footStyles: { fillColor: [235, 235, 235], textColor: 20, fontStyle: "bold" },
+    columnStyles: {
+      1: { halign: "right" },
+      2: { halign: "right" },
+      3: { halign: "right" },
+      4: { halign: "right" },
+    },
+    margin: { left: 8, right: 8, bottom: 16 },
+  });
+
+  return (doc as any).lastAutoTable.finalY + 8;
+}
+
 
 /** Relatório de um único tipo de operação. */
 export function gerarRelatorioControlePdf(
@@ -134,8 +202,10 @@ export function gerarRelatorioControlePdf(
     doc.setFontSize(10);
     doc.text("Nenhum lançamento encontrado com os filtros informados.", 12, y + 6);
   } else {
-    desenharBloco(doc, y, { tipo, docs });
+    y = desenharBloco(doc, y, { tipo, docs });
+    desenharResumoProduto(doc, y, docs);
   }
+
 
   desenharRodapeBrand(doc);
   entregarRelatorio(doc, `controle-${tipo}-${format(new Date(), "yyyyMMdd-HHmm")}.pdf`);
@@ -202,6 +272,7 @@ export function gerarConsolidadoControlePdf(
         nf(Math.round(totalGeralKg / 60)),
         brl(totalGeralValor),
       ]],
+      showFoot: "lastPage",
       theme: "grid",
       styles: { fontSize: 8, cellPadding: 1.6 },
       headStyles: { fillColor: [34, 87, 51], textColor: 255, fontStyle: "bold", halign: "center" },
@@ -214,7 +285,12 @@ export function gerarConsolidadoControlePdf(
       },
       margin: { left: 8, right: 8, bottom: 16 },
     });
+
+    // Resumo geral por produto (todos os tipos)
+    const todosDocs = comDados.flatMap((b) => b.docs);
+    desenharResumoProduto(doc, (doc as any).lastAutoTable.finalY + 8, todosDocs, "Resumo Geral por Produto");
   }
+
 
   desenharRodapeBrand(doc);
   entregarRelatorio(doc, `controle-consolidado-${format(new Date(), "yyyyMMdd-HHmm")}.pdf`);
