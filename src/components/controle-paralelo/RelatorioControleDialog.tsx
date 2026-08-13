@@ -149,7 +149,7 @@ export function RelatorioControleDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="consolidado">Consolidado (todos os tipos)</SelectItem>
-                  {TIPOS_DOCUMENTO.map((t) => (
+                  {TIPOS_RELATORIO.map((t) => (
                     <SelectItem key={t.tipo} value={t.tipo}>
                       {labelTipo(t.tipo)}
                     </SelectItem>
