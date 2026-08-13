@@ -1654,6 +1654,36 @@ export type Database = {
           },
         ]
       }
+      controle_conjuntos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       controle_lavouras: {
         Row: {
           area_total: number | null
@@ -1721,6 +1751,47 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      controle_marcacoes: {
+        Row: {
+          conjunto_id: string
+          created_at: string
+          documento_id: string
+          documento_tipo: string
+          id: string
+          observacao: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          conjunto_id: string
+          created_at?: string
+          documento_id: string
+          documento_tipo: string
+          id?: string
+          observacao?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Update: {
+          conjunto_id?: string
+          created_at?: string
+          documento_id?: string
+          documento_tipo?: string
+          id?: string
+          observacao?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "controle_marcacoes_conjunto_id_fkey"
+            columns: ["conjunto_id"]
+            isOneToOne: false
+            referencedRelation: "controle_conjuntos"
             referencedColumns: ["id"]
           },
         ]
