@@ -202,8 +202,10 @@ export function gerarRelatorioControlePdf(
     doc.setFontSize(10);
     doc.text("Nenhum lançamento encontrado com os filtros informados.", 12, y + 6);
   } else {
-    desenharBloco(doc, y, { tipo, docs });
+    y = desenharBloco(doc, y, { tipo, docs });
+    desenharResumoProduto(doc, y, docs);
   }
+
 
   desenharRodapeBrand(doc);
   entregarRelatorio(doc, `controle-${tipo}-${format(new Date(), "yyyyMMdd-HHmm")}.pdf`);
