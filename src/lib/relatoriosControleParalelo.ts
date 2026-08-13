@@ -32,8 +32,6 @@ export interface RelatorioControleOpcoes {
   subtitulo?: string;
   orientacao: Orientacao;
   tamanho: TamanhoPagina;
-  /** Quando verdadeiro, o PDF é a relação dos itens marcados (conferência). */
-  somenteMarcados?: boolean;
 }
 
 interface Bloco {
@@ -125,9 +123,7 @@ export function gerarRelatorioControlePdf(
   const doc = new jsPDF({ orientation: opcoes.orientacao, format: opcoes.tamanho });
   let y = desenharCabecalhoBrand(doc);
 
-  const titulo = opcoes.somenteMarcados
-    ? `${labelTipo(tipo)} — Somente Lançamentos Marcados`
-    : `${labelTipo(tipo)} — Desconsiderando Marcados`;
+  const titulo = labelTipo(tipo);
 
   y = desenharTitulo(doc, y, titulo, [
     `Conjunto de controle: ${opcoes.conjuntoNome}`,
@@ -156,9 +152,7 @@ export function gerarConsolidadoControlePdf(
   y = desenharTitulo(
     doc,
     y,
-    opcoes.somenteMarcados
-      ? "Consolidado do Controle — Somente Marcados"
-      : "Consolidado do Controle — Desconsiderando Marcados",
+    "Consolidado do Controle",
     [`Conjunto de controle: ${opcoes.conjuntoNome}`, opcoes.subtitulo || ""]
   );
 

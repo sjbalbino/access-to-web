@@ -46,7 +46,7 @@ export function RelatorioControleDialog({
   const [safraId, setSafraId] = useState<string | undefined>(undefined);
   const [dataInicial, setDataInicial] = useState("");
   const [dataFinal, setDataFinal] = useState("");
-  const [modo, setModo] = useState<"sem_marcados" | "somente_marcados">("sem_marcados");
+  
   const [orientacao, setOrientacao] = useState<Orientacao>("landscape");
   const [tamanho, setTamanho] = useState<TamanhoPagina>("a4");
   const [loading, setLoading] = useState(false);
@@ -76,7 +76,6 @@ export function RelatorioControleDialog({
         dataFinal: dataFinal || undefined,
       };
 
-      const somenteMarcados = modo === "somente_marcados";
       const marcadosPorTipo = (tipo: DocumentoTipoMarcavel) =>
         new Set((marcacoes ?? []).filter((m) => m.documento_tipo === tipo).map((m) => m.documento_id));
 
@@ -84,13 +83,10 @@ export function RelatorioControleDialog({
       const contratosMarcados = marcadosPorTipo("contrato_venda");
       const filtrarDocs = (tipo: DocumentoTipo, docs: DocumentoControle[]): DocumentoControle[] => {
         if (tipo === "remessa_venda") {
-          return docs.filter((d) => {
-            const doContratoMarcado = !!d.contrato_id && contratosMarcados.has(d.contrato_id);
-            return somenteMarcados ? doContratoMarcado : !doContratoMarcado;
-          });
+          return docs.filter((d) => !(!!d.contrato_id && contratosMarcados.has(d.contrato_id)));
         }
         const marcados = marcadosPorTipo(tipo as DocumentoTipoMarcavel);
-        return docs.filter((d) => (somenteMarcados ? marcados.has(d.id) : !marcados.has(d.id)));
+        return docs.filter((d) => !marcados.has(d.id));
       };
 
       const subtitulo = [
@@ -102,7 +98,7 @@ export function RelatorioControleDialog({
           : "Período: Todos",
       ].join("          ");
 
-      const opcoes = { conjuntoNome, subtitulo, orientacao, tamanho, somenteMarcados };
+      const opcoes = { conjuntoNome, subtitulo, orientacao, tamanho };
 
       if (escopo === "consolidado") {
         const blocos = [];
@@ -135,8 +131,7 @@ export function RelatorioControleDialog({
           <DialogHeader>
             <DialogTitle>Relatórios do Controle Gerencial</DialogTitle>
             <DialogDescription>
-              Conjunto: <span className="font-medium">{conjuntoNome}</span>. Os lançamentos marcados são
-              desconsiderados do relatório (ou listados isoladamente, para conferência).
+              Conjunto: <span className="font-medium">{conjuntoNome}</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -154,19 +149,6 @@ export function RelatorioControleDialog({
                       {labelTipo(t.tipo)}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Conteúdo</Label>
-              <Select value={modo} onValueChange={(v) => setModo(v as typeof modo)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sem_marcados">Desconsiderando os lançamentos marcados</SelectItem>
-                  <SelectItem value="somente_marcados">Conferência — somente os marcados</SelectItem>
                 </SelectContent>
               </Select>
             </div>
