@@ -402,25 +402,26 @@ async function buscarContratos(f: DocumentoFiltros): Promise<DocumentoControle[]
 }
 
 async function buscarRemessas(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("remessas_venda")
-    .select(`
-      id, codigo, data_remessa, kg_nota, kg_remessa, valor_nota, valor_remessa, local_entrega_nome,
-      contrato_venda_id,
-      variedade:produtos(nome),
-      contrato:contratos_venda(
-        id, numero, safra_id,
-
-        safra:safras(nome),
-        comprador:clientes_fornecedores(nome),
-        inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome))
-      )
-    `)
-    .order("data_remessa", { ascending: false });
-  if (f.dataInicial) q = q.gte("data_remessa", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_remessa", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("remessas_venda")
+      .select(`
+        id, codigo, data_remessa, kg_nota, kg_remessa, valor_nota, valor_remessa, local_entrega_nome,
+        contrato_venda_id,
+        variedade:produtos(nome),
+        contrato:contratos_venda(
+          id, numero, safra_id,
+          safra:safras(nome),
+          comprador:clientes_fornecedores(nome),
+          inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome))
+        )
+      `)
+      .order("data_remessa", { ascending: false })
+      .order("id", { ascending: true });
+    if (f.dataInicial) q = q.gte("data_remessa", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_remessa", f.dataFinal);
+    return q;
+  });
   return (data ?? [])
     .filter((r: any) => !f.safraId || r.contrato?.safra_id === f.safraId)
     .map((r: any) => ({
