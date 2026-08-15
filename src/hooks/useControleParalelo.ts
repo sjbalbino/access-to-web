@@ -276,6 +276,25 @@ const nomeInscricao = (i: any): string => {
 
 const num = (v: any): number => (typeof v === "number" ? v : Number(v) || 0);
 
+/**
+ * PostgREST limita cada resposta a 1.000 linhas. Como os relatórios gerenciais
+ * precisam da base completa, paginamos explicitamente até esgotar os registros.
+ * `build` deve retornar uma query nova a cada chamada (com ordenação estável).
+ */
+const PAGINA_SUPABASE = 1000;
+
+async function fetchAllRows(build: () => any): Promise<any[]> {
+  const todos: any[] = [];
+  for (let inicio = 0; ; inicio += PAGINA_SUPABASE) {
+    const { data, error } = await build().range(inicio, inicio + PAGINA_SUPABASE - 1);
+    if (error) throw error;
+    const lote = data ?? [];
+    todos.push(...lote);
+    if (lote.length < PAGINA_SUPABASE) break;
+  }
+  return todos;
+}
+
 async function buscarTransferencias(f: DocumentoFiltros): Promise<DocumentoControle[]> {
   let q = supabase
     .from("transferencias_deposito")
