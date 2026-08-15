@@ -296,23 +296,25 @@ async function fetchAllRows(build: () => any): Promise<any[]> {
 }
 
 async function buscarTransferencias(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("transferencias_deposito")
-    .select(`
-      id, codigo, data_transferencia, quantidade_kg, safra_id,
-      safra:safras(nome),
-      produto:produtos(nome),
-      inscricao_origem:inscricoes_produtor!transferencias_deposito_inscricao_origem_id_fkey(inscricao_estadual, granja, produtores(nome)),
-      inscricao_destino:inscricoes_produtor!transferencias_deposito_inscricao_destino_id_fkey(inscricao_estadual, granja, produtores(nome)),
-      local_saida:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome),
-      local_entrada:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome)
-    `)
-    .order("data_transferencia", { ascending: false });
-  if (f.safraId) q = q.eq("safra_id", f.safraId);
-  if (f.dataInicial) q = q.gte("data_transferencia", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_transferencia", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("transferencias_deposito")
+      .select(`
+        id, codigo, data_transferencia, quantidade_kg, safra_id,
+        safra:safras(nome),
+        produto:produtos(nome),
+        inscricao_origem:inscricoes_produtor!transferencias_deposito_inscricao_origem_id_fkey(inscricao_estadual, granja, produtores(nome)),
+        inscricao_destino:inscricoes_produtor!transferencias_deposito_inscricao_destino_id_fkey(inscricao_estadual, granja, produtores(nome)),
+        local_saida:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome),
+        local_entrada:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome)
+      `)
+      .order("data_transferencia", { ascending: false })
+      .order("id", { ascending: true });
+    if (f.safraId) q = q.eq("safra_id", f.safraId);
+    if (f.dataInicial) q = q.gte("data_transferencia", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_transferencia", f.dataFinal);
+    return q;
+  });
   return (data ?? []).map((r: any) => ({
     id: r.id,
     tipo: "transferencia_deposito" as DocumentoTipo,
