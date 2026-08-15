@@ -308,6 +308,15 @@ export function gerarRelatorioControlePdf(
 
 
 
+  if (docs.length > 0) {
+    const sheets: RelatorioSheet[] = [sheetLancamentos(tipo, docs)];
+    if (tipo !== "compra_cereal") {
+      const resumo = sheetResumoProduto(docs, "Resumo por Produto");
+      if (resumo) sheets.push(resumo);
+    }
+    setPendingSheets(sheets);
+  }
+
   desenharRodapeBrand(doc);
   entregarRelatorio(doc, `controle-${tipo}-${format(new Date(), "yyyyMMdd-HHmm")}.pdf`);
 }
