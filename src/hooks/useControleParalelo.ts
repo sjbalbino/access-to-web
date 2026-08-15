@@ -183,11 +183,14 @@ export function useControleMarcacoes(conjuntoId: string | undefined) {
     queryKey: ["controle_marcacoes", conjuntoId],
     enabled: !!conjuntoId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("controle_marcacoes")
-        .select("id, conjunto_id, documento_tipo, documento_id, observacao, created_at")
-        .eq("conjunto_id", conjuntoId!);
-      if (error) throw error;
+      // Paginado: um conjunto pode ter mais de 1.000 marcações.
+      const data = await fetchAllRows(() =>
+        supabase
+          .from("controle_marcacoes")
+          .select("id, conjunto_id, documento_tipo, documento_id, observacao, created_at")
+          .eq("conjunto_id", conjuntoId!)
+          .order("id", { ascending: true })
+      );
       return (data ?? []) as ControleMarcacao[];
     },
   });
