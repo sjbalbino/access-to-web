@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format, parseISO } from "date-fns";
 import { desenharCabecalhoBrand, desenharRodapeBrand } from "./pdfBrand";
-import { entregarRelatorio } from "./relatorioViewer";
+import { entregarRelatorio, setPendingSheets, type RelatorioSheet } from "./relatorioViewer";
 import { labelTipo, type DocumentoControle, type DocumentoTipo } from "@/hooks/useControleParalelo";
 
 /**
