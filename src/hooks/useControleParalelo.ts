@@ -445,22 +445,24 @@ async function buscarRemessas(f: DocumentoFiltros): Promise<DocumentoControle[]>
 }
 
 async function buscarNotasDeposito(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("notas_deposito_emitidas")
-    .select(`
-      id, data_emissao, quantidade_kg, safra_id,
-      nota_fiscal:notas_fiscais(numero, serie),
-      safra:safras(nome),
-      produto:produtos(nome),
-      inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome)),
-      local_entrega:locais_entrega(nome)
-    `)
-    .order("data_emissao", { ascending: false, nullsFirst: false });
-  if (f.safraId) q = q.eq("safra_id", f.safraId);
-  if (f.dataInicial) q = q.gte("data_emissao", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_emissao", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("notas_deposito_emitidas")
+      .select(`
+        id, data_emissao, quantidade_kg, safra_id,
+        nota_fiscal:notas_fiscais(numero, serie),
+        safra:safras(nome),
+        produto:produtos(nome),
+        inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome)),
+        local_entrega:locais_entrega(nome)
+      `)
+      .order("data_emissao", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: true });
+    if (f.safraId) q = q.eq("safra_id", f.safraId);
+    if (f.dataInicial) q = q.gte("data_emissao", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_emissao", f.dataFinal);
+    return q;
+  });
   return (data ?? []).map((r: any) => ({
     id: r.id,
     tipo: "nota_deposito" as DocumentoTipo,
