@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format, parseISO } from "date-fns";
 import { desenharCabecalhoBrand, desenharRodapeBrand } from "./pdfBrand";
-import { entregarRelatorio } from "./relatorioViewer";
+import { entregarRelatorio, setPendingSheets, type RelatorioSheet } from "./relatorioViewer";
 import { labelTipo, type DocumentoControle, type DocumentoTipo } from "@/hooks/useControleParalelo";
 
 /**
@@ -197,6 +197,89 @@ function desenharResumoProduto(doc: jsPDF, startY: number, docs: DocumentoContro
 }
 
 
+/* ============================================================
+ * Estruturas tabulares para exportação Excel (valores numéricos crus)
+ * ============================================================ */
+
+/** Limite do Excel para nome de planilha. */
+const nomeSheet = (s: string) => s.replace(/[\\/?*[\]:]/g, "-").substring(0, 31);
+
+function sheetLancamentos(tipo: DocumentoTipo, docs: DocumentoControle[]): RelatorioSheet {
+  const ordenados = ordenarPorData(docs);
+  const temValor = ordenados.some((d) => (d.valor ?? 0) > 0);
+
+  const header = ["Data", "Referência", "Produtor / Inscrição", "Contraparte", "Produto", "Local", "Qtde (kg)", "Sacos"];
+  if (temValor) header.push("Valor (R$)");
+
+  const rows = ordenados.map((d) => {
+    const row: (string | number)[] = [
+      dataBr(d.data),
+      d.referencia,
+      d.produtor,
+      d.contraparte,
+      d.produto,
+      d.local,
+      Math.round(d.quantidade_kg),
+      Math.round(d.quantidade_kg / 60),
+    ];
+    if (temValor) row.push(Number((d.valor ?? 0).toFixed(2)));
+    return row;
+  });
+
+  const totalKg = ordenados.reduce((s, d) => s + d.quantidade_kg, 0);
+  const totalValor = ordenados.reduce((s, d) => s + (d.valor ?? 0), 0);
+  const totalRow: (string | number)[] = [
+    "",
+    "",
+    "",
+    "",
+    "",
+    `TOTAL (${ordenados.length})`,
+    Math.round(totalKg),
+    Math.round(totalKg / 60),
+  ];
+  if (temValor) totalRow.push(Number(totalValor.toFixed(2)));
+  rows.push(totalRow);
+
+  return { name: nomeSheet(labelTipo(tipo)), header, rows };
+}
+
+function sheetResumoProduto(docs: DocumentoControle[], nome: string): RelatorioSheet | null {
+  const comProduto = docs.filter((d) => (d.produto ?? "").trim() && d.produto !== "-");
+  if (comProduto.length === 0) return null;
+
+  const incluirValor = comProduto.some((d) => (d.valor ?? 0) > 0);
+  const mapa = new Map<string, { qtd: number; kg: number; valor: number }>();
+  comProduto.forEach((d) => {
+    const chave = d.produto.trim();
+    const atual = mapa.get(chave) ?? { qtd: 0, kg: 0, valor: 0 };
+    atual.qtd += 1;
+    atual.kg += d.quantidade_kg;
+    atual.valor += d.valor ?? 0;
+    mapa.set(chave, atual);
+  });
+
+  const linhas = [...mapa.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
+  const header = ["Produto", "Lançamentos", "Qtde (kg)", "Sacos", ...(incluirValor ? ["Valor Total (R$)"] : [])];
+  const rows: (string | number)[][] = linhas.map(([produto, v]) => [
+    produto,
+    v.qtd,
+    Math.round(v.kg),
+    Math.round(v.kg / 60),
+    ...(incluirValor ? [Number(v.valor.toFixed(2))] : []),
+  ]);
+  const totalKg = linhas.reduce((s, [, v]) => s + v.kg, 0);
+  rows.push([
+    "TOTAL",
+    linhas.reduce((s, [, v]) => s + v.qtd, 0),
+    Math.round(totalKg),
+    Math.round(totalKg / 60),
+    ...(incluirValor ? [Number(linhas.reduce((s, [, v]) => s + v.valor, 0).toFixed(2))] : []),
+  ]);
+
+  return { name: nomeSheet(nome), header, rows };
+}
+
 /** Relatório de um único tipo de operação. */
 export function gerarRelatorioControlePdf(
   tipo: DocumentoTipo,
@@ -224,6 +307,15 @@ export function gerarRelatorioControlePdf(
   }
 
 
+
+  if (docs.length > 0) {
+    const sheets: RelatorioSheet[] = [sheetLancamentos(tipo, docs)];
+    if (tipo !== "compra_cereal") {
+      const resumo = sheetResumoProduto(docs, "Resumo por Produto");
+      if (resumo) sheets.push(resumo);
+    }
+    setPendingSheets(sheets);
+  }
 
   desenharRodapeBrand(doc);
   entregarRelatorio(doc, `controle-${tipo}-${format(new Date(), "yyyyMMdd-HHmm")}.pdf`);
@@ -312,6 +404,30 @@ export function gerarConsolidadoControlePdf(
       desenharResumoProduto(doc, (doc as any).lastAutoTable.finalY + 8, todosDocs, "Resumo Geral por Produto");
     }
 
+    const sheets: RelatorioSheet[] = comDados.map((b) => sheetLancamentos(b.tipo, b.docs));
+    sheets.push({
+      name: "Resumo por Tipo",
+      header: ["Tipo de Operação", "Lançamentos", "Qtde (kg)", "Sacos", "Valor (R$)"],
+      rows: [
+        ...comDados.map((b) => {
+          const kg = b.docs.reduce((s, d) => s + d.quantidade_kg, 0);
+          const val = b.docs.reduce((s, d) => s + (d.valor ?? 0), 0);
+          return [labelTipo(b.tipo), b.docs.length, Math.round(kg), Math.round(kg / 60), Number(val.toFixed(2))];
+        }),
+        [
+          "TOTAL GERAL",
+          comDados.reduce((s, b) => s + b.docs.length, 0),
+          Math.round(totalGeralKg),
+          Math.round(totalGeralKg / 60),
+          Number(totalGeralValor.toFixed(2)),
+        ],
+      ],
+    });
+    if (todosDocs.length > 0) {
+      const resumo = sheetResumoProduto(todosDocs, "Resumo Geral por Produto");
+      if (resumo) sheets.push(resumo);
+    }
+    setPendingSheets(sheets);
   }
 
 
