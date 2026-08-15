@@ -367,22 +367,24 @@ async function buscarCompras(f: DocumentoFiltros): Promise<DocumentoControle[]> 
 }
 
 async function buscarContratos(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("contratos_venda")
-    .select(`
-      id, numero, numero_contrato_comprador, data_contrato, quantidade_kg, valor_total, safra_id,
-      local_entrega_nome,
-      safra:safras(nome),
-      produto:produtos(nome),
-      comprador:clientes_fornecedores(nome, nome_fantasia),
-      inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome))
-    `)
-    .order("data_contrato", { ascending: false });
-  if (f.safraId) q = q.eq("safra_id", f.safraId);
-  if (f.dataInicial) q = q.gte("data_contrato", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_contrato", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("contratos_venda")
+      .select(`
+        id, numero, numero_contrato_comprador, data_contrato, quantidade_kg, valor_total, safra_id,
+        local_entrega_nome,
+        safra:safras(nome),
+        produto:produtos(nome),
+        comprador:clientes_fornecedores(nome, nome_fantasia),
+        inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome))
+      `)
+      .order("data_contrato", { ascending: false })
+      .order("id", { ascending: true });
+    if (f.safraId) q = q.eq("safra_id", f.safraId);
+    if (f.dataInicial) q = q.gte("data_contrato", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_contrato", f.dataFinal);
+    return q;
+  });
   return (data ?? []).map((r: any) => ({
     id: r.id,
     tipo: "contrato_venda" as DocumentoTipo,
