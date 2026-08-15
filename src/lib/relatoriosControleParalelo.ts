@@ -404,6 +404,30 @@ export function gerarConsolidadoControlePdf(
       desenharResumoProduto(doc, (doc as any).lastAutoTable.finalY + 8, todosDocs, "Resumo Geral por Produto");
     }
 
+    const sheets: RelatorioSheet[] = comDados.map((b) => sheetLancamentos(b.tipo, b.docs));
+    sheets.push({
+      name: "Resumo por Tipo",
+      header: ["Tipo de Operação", "Lançamentos", "Qtde (kg)", "Sacos", "Valor (R$)"],
+      rows: [
+        ...comDados.map((b) => {
+          const kg = b.docs.reduce((s, d) => s + d.quantidade_kg, 0);
+          const val = b.docs.reduce((s, d) => s + (d.valor ?? 0), 0);
+          return [labelTipo(b.tipo), b.docs.length, Math.round(kg), Math.round(kg / 60), Number(val.toFixed(2))];
+        }),
+        [
+          "TOTAL GERAL",
+          comDados.reduce((s, b) => s + b.docs.length, 0),
+          Math.round(totalGeralKg),
+          Math.round(totalGeralKg / 60),
+          Number(totalGeralValor.toFixed(2)),
+        ],
+      ],
+    });
+    if (todosDocs.length > 0) {
+      const resumo = sheetResumoProduto(todosDocs, "Resumo Geral por Produto");
+      if (resumo) sheets.push(resumo);
+    }
+    setPendingSheets(sheets);
   }
 
 
