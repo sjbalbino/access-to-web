@@ -332,22 +332,24 @@ async function buscarTransferencias(f: DocumentoFiltros): Promise<DocumentoContr
 }
 
 async function buscarCompras(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("compras_cereais")
-    .select(`
-      id, codigo, data_compra, quantidade_kg, valor_total, safra_id,
-      safra:safras(nome),
-      produto:produtos(nome),
-      inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, granja, produtores(nome)),
-      inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, granja, produtores(nome)),
-      local_entrega:locais_entrega(nome)
-    `)
-    .order("data_compra", { ascending: false });
-  if (f.safraId) q = q.eq("safra_id", f.safraId);
-  if (f.dataInicial) q = q.gte("data_compra", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_compra", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("compras_cereais")
+      .select(`
+        id, codigo, data_compra, quantidade_kg, valor_total, safra_id,
+        safra:safras(nome),
+        produto:produtos(nome),
+        inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, granja, produtores(nome)),
+        inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, granja, produtores(nome)),
+        local_entrega:locais_entrega(nome)
+      `)
+      .order("data_compra", { ascending: false })
+      .order("id", { ascending: true });
+    if (f.safraId) q = q.eq("safra_id", f.safraId);
+    if (f.dataInicial) q = q.gte("data_compra", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_compra", f.dataFinal);
+    return q;
+  });
   return (data ?? []).map((r: any) => ({
     id: r.id,
     tipo: "compra_cereal" as DocumentoTipo,
