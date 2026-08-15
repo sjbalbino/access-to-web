@@ -183,11 +183,14 @@ export function useControleMarcacoes(conjuntoId: string | undefined) {
     queryKey: ["controle_marcacoes", conjuntoId],
     enabled: !!conjuntoId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("controle_marcacoes")
-        .select("id, conjunto_id, documento_tipo, documento_id, observacao, created_at")
-        .eq("conjunto_id", conjuntoId!);
-      if (error) throw error;
+      // Paginado: um conjunto pode ter mais de 1.000 marcações.
+      const data = await fetchAllRows(() =>
+        supabase
+          .from("controle_marcacoes")
+          .select("id, conjunto_id, documento_tipo, documento_id, observacao, created_at")
+          .eq("conjunto_id", conjuntoId!)
+          .order("id", { ascending: true })
+      );
       return (data ?? []) as ControleMarcacao[];
     },
   });
@@ -276,24 +279,45 @@ const nomeInscricao = (i: any): string => {
 
 const num = (v: any): number => (typeof v === "number" ? v : Number(v) || 0);
 
+/**
+ * PostgREST limita cada resposta a 1.000 linhas. Como os relatórios gerenciais
+ * precisam da base completa, paginamos explicitamente até esgotar os registros.
+ * `build` deve retornar uma query nova a cada chamada (com ordenação estável).
+ */
+const PAGINA_SUPABASE = 1000;
+
+async function fetchAllRows(build: () => any): Promise<any[]> {
+  const todos: any[] = [];
+  for (let inicio = 0; ; inicio += PAGINA_SUPABASE) {
+    const { data, error } = await build().range(inicio, inicio + PAGINA_SUPABASE - 1);
+    if (error) throw error;
+    const lote = data ?? [];
+    todos.push(...lote);
+    if (lote.length < PAGINA_SUPABASE) break;
+  }
+  return todos;
+}
+
 async function buscarTransferencias(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("transferencias_deposito")
-    .select(`
-      id, codigo, data_transferencia, quantidade_kg, safra_id,
-      safra:safras(nome),
-      produto:produtos(nome),
-      inscricao_origem:inscricoes_produtor!transferencias_deposito_inscricao_origem_id_fkey(inscricao_estadual, granja, produtores(nome)),
-      inscricao_destino:inscricoes_produtor!transferencias_deposito_inscricao_destino_id_fkey(inscricao_estadual, granja, produtores(nome)),
-      local_saida:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome),
-      local_entrada:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome)
-    `)
-    .order("data_transferencia", { ascending: false });
-  if (f.safraId) q = q.eq("safra_id", f.safraId);
-  if (f.dataInicial) q = q.gte("data_transferencia", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_transferencia", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("transferencias_deposito")
+      .select(`
+        id, codigo, data_transferencia, quantidade_kg, safra_id,
+        safra:safras(nome),
+        produto:produtos(nome),
+        inscricao_origem:inscricoes_produtor!transferencias_deposito_inscricao_origem_id_fkey(inscricao_estadual, granja, produtores(nome)),
+        inscricao_destino:inscricoes_produtor!transferencias_deposito_inscricao_destino_id_fkey(inscricao_estadual, granja, produtores(nome)),
+        local_saida:locais_entrega!transferencias_deposito_local_saida_id_fkey(nome),
+        local_entrada:locais_entrega!transferencias_deposito_local_entrada_id_fkey(nome)
+      `)
+      .order("data_transferencia", { ascending: false })
+      .order("id", { ascending: true });
+    if (f.safraId) q = q.eq("safra_id", f.safraId);
+    if (f.dataInicial) q = q.gte("data_transferencia", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_transferencia", f.dataFinal);
+    return q;
+  });
   return (data ?? []).map((r: any) => ({
     id: r.id,
     tipo: "transferencia_deposito" as DocumentoTipo,
@@ -311,22 +335,24 @@ async function buscarTransferencias(f: DocumentoFiltros): Promise<DocumentoContr
 }
 
 async function buscarCompras(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("compras_cereais")
-    .select(`
-      id, codigo, data_compra, quantidade_kg, valor_total, safra_id,
-      safra:safras(nome),
-      produto:produtos(nome),
-      inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, granja, produtores(nome)),
-      inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, granja, produtores(nome)),
-      local_entrega:locais_entrega(nome)
-    `)
-    .order("data_compra", { ascending: false });
-  if (f.safraId) q = q.eq("safra_id", f.safraId);
-  if (f.dataInicial) q = q.gte("data_compra", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_compra", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("compras_cereais")
+      .select(`
+        id, codigo, data_compra, quantidade_kg, valor_total, safra_id,
+        safra:safras(nome),
+        produto:produtos(nome),
+        inscricao_vendedor:inscricoes_produtor!compras_cereais_inscricao_vendedor_id_fkey(inscricao_estadual, granja, produtores(nome)),
+        inscricao_comprador:inscricoes_produtor!compras_cereais_inscricao_comprador_id_fkey(inscricao_estadual, granja, produtores(nome)),
+        local_entrega:locais_entrega(nome)
+      `)
+      .order("data_compra", { ascending: false })
+      .order("id", { ascending: true });
+    if (f.safraId) q = q.eq("safra_id", f.safraId);
+    if (f.dataInicial) q = q.gte("data_compra", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_compra", f.dataFinal);
+    return q;
+  });
   return (data ?? []).map((r: any) => ({
     id: r.id,
     tipo: "compra_cereal" as DocumentoTipo,
@@ -344,22 +370,24 @@ async function buscarCompras(f: DocumentoFiltros): Promise<DocumentoControle[]> 
 }
 
 async function buscarContratos(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("contratos_venda")
-    .select(`
-      id, numero, numero_contrato_comprador, data_contrato, quantidade_kg, valor_total, safra_id,
-      local_entrega_nome,
-      safra:safras(nome),
-      produto:produtos(nome),
-      comprador:clientes_fornecedores(nome, nome_fantasia),
-      inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome))
-    `)
-    .order("data_contrato", { ascending: false });
-  if (f.safraId) q = q.eq("safra_id", f.safraId);
-  if (f.dataInicial) q = q.gte("data_contrato", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_contrato", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("contratos_venda")
+      .select(`
+        id, numero, numero_contrato_comprador, data_contrato, quantidade_kg, valor_total, safra_id,
+        local_entrega_nome,
+        safra:safras(nome),
+        produto:produtos(nome),
+        comprador:clientes_fornecedores(nome, nome_fantasia),
+        inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome))
+      `)
+      .order("data_contrato", { ascending: false })
+      .order("id", { ascending: true });
+    if (f.safraId) q = q.eq("safra_id", f.safraId);
+    if (f.dataInicial) q = q.gte("data_contrato", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_contrato", f.dataFinal);
+    return q;
+  });
   return (data ?? []).map((r: any) => ({
     id: r.id,
     tipo: "contrato_venda" as DocumentoTipo,
@@ -377,25 +405,26 @@ async function buscarContratos(f: DocumentoFiltros): Promise<DocumentoControle[]
 }
 
 async function buscarRemessas(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("remessas_venda")
-    .select(`
-      id, codigo, data_remessa, kg_nota, kg_remessa, valor_nota, valor_remessa, local_entrega_nome,
-      contrato_venda_id,
-      variedade:produtos(nome),
-      contrato:contratos_venda(
-        id, numero, safra_id,
-
-        safra:safras(nome),
-        comprador:clientes_fornecedores(nome),
-        inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome))
-      )
-    `)
-    .order("data_remessa", { ascending: false });
-  if (f.dataInicial) q = q.gte("data_remessa", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_remessa", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("remessas_venda")
+      .select(`
+        id, codigo, data_remessa, kg_nota, kg_remessa, valor_nota, valor_remessa, local_entrega_nome,
+        contrato_venda_id,
+        variedade:produtos(nome),
+        contrato:contratos_venda(
+          id, numero, safra_id,
+          safra:safras(nome),
+          comprador:clientes_fornecedores(nome),
+          inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome))
+        )
+      `)
+      .order("data_remessa", { ascending: false })
+      .order("id", { ascending: true });
+    if (f.dataInicial) q = q.gte("data_remessa", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_remessa", f.dataFinal);
+    return q;
+  });
   return (data ?? [])
     .filter((r: any) => !f.safraId || r.contrato?.safra_id === f.safraId)
     .map((r: any) => ({
@@ -419,22 +448,24 @@ async function buscarRemessas(f: DocumentoFiltros): Promise<DocumentoControle[]>
 }
 
 async function buscarNotasDeposito(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("notas_deposito_emitidas")
-    .select(`
-      id, data_emissao, quantidade_kg, safra_id,
-      nota_fiscal:notas_fiscais(numero, serie),
-      safra:safras(nome),
-      produto:produtos(nome),
-      inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome)),
-      local_entrega:locais_entrega(nome)
-    `)
-    .order("data_emissao", { ascending: false, nullsFirst: false });
-  if (f.safraId) q = q.eq("safra_id", f.safraId);
-  if (f.dataInicial) q = q.gte("data_emissao", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_emissao", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("notas_deposito_emitidas")
+      .select(`
+        id, data_emissao, quantidade_kg, safra_id,
+        nota_fiscal:notas_fiscais(numero, serie),
+        safra:safras(nome),
+        produto:produtos(nome),
+        inscricao_produtor:inscricoes_produtor(inscricao_estadual, granja, produtores(nome)),
+        local_entrega:locais_entrega(nome)
+      `)
+      .order("data_emissao", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: true });
+    if (f.safraId) q = q.eq("safra_id", f.safraId);
+    if (f.dataInicial) q = q.gte("data_emissao", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_emissao", f.dataFinal);
+    return q;
+  });
   return (data ?? []).map((r: any) => ({
     id: r.id,
     tipo: "nota_deposito" as DocumentoTipo,
@@ -452,22 +483,24 @@ async function buscarNotasDeposito(f: DocumentoFiltros): Promise<DocumentoContro
 }
 
 async function buscarDevolucoes(f: DocumentoFiltros): Promise<DocumentoControle[]> {
-  let q = supabase
-    .from("devolucoes_deposito")
-    .select(`
-      id, codigo, data_devolucao, quantidade_kg, valor_total, safra_id,
-      safra:safras(nome),
-      produto:produtos(nome),
-      inscricao_produtor:inscricoes_produtor!devolucoes_deposito_inscricao_produtor_id_fkey(inscricao_estadual, granja, produtores(nome)),
-      inscricao_emitente:inscricoes_produtor!devolucoes_deposito_inscricao_emitente_id_fkey(inscricao_estadual, granja, produtores(nome)),
-      local_entrega:locais_entrega(nome)
-    `)
-    .order("data_devolucao", { ascending: false });
-  if (f.safraId) q = q.eq("safra_id", f.safraId);
-  if (f.dataInicial) q = q.gte("data_devolucao", f.dataInicial);
-  if (f.dataFinal) q = q.lte("data_devolucao", f.dataFinal);
-  const { data, error } = await q;
-  if (error) throw error;
+  const data = await fetchAllRows(() => {
+    let q = supabase
+      .from("devolucoes_deposito")
+      .select(`
+        id, codigo, data_devolucao, quantidade_kg, valor_total, safra_id,
+        safra:safras(nome),
+        produto:produtos(nome),
+        inscricao_produtor:inscricoes_produtor!devolucoes_deposito_inscricao_produtor_id_fkey(inscricao_estadual, granja, produtores(nome)),
+        inscricao_emitente:inscricoes_produtor!devolucoes_deposito_inscricao_emitente_id_fkey(inscricao_estadual, granja, produtores(nome)),
+        local_entrega:locais_entrega(nome)
+      `)
+      .order("data_devolucao", { ascending: false })
+      .order("id", { ascending: true });
+    if (f.safraId) q = q.eq("safra_id", f.safraId);
+    if (f.dataInicial) q = q.gte("data_devolucao", f.dataInicial);
+    if (f.dataFinal) q = q.lte("data_devolucao", f.dataFinal);
+    return q;
+  });
   return (data ?? []).map((r: any) => ({
     id: r.id,
     tipo: "devolucao_deposito" as DocumentoTipo,
