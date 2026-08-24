@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Save, Trash2, Wheat, Sprout, Droplets, Leaf, Bug, Skull, Beaker, Pill, FlaskConical, Mountain, BugOff, CloudRain, TreeDeciduous, Flower2, TestTube, CircleDot } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Wheat, Sprout, Droplets, Leaf, Bug, Skull, Beaker, Pill, FlaskConical, Mountain, BugOff, CloudRain, TreeDeciduous, Flower2, TestTube, CircleDot, DollarSign } from 'lucide-react';
 import { ControleLavoura, useUpdateControleLavoura, useDeleteControleLavoura } from '@/hooks/useControleLavouras';
 import { PlantiosTab } from './PlantiosTab';
 import { AplicacoesTab } from './AplicacoesTab';
@@ -17,6 +17,7 @@ import { PlantasInvasorasTab } from './PlantasInvasorasTab';
 import { FloracaoTab } from './FloracaoTab';
 import { AnaliseTab } from './AnaliseTab';
 import { PivosTab } from './PivosTab';
+import { CustosTab } from './CustosTab';
 import { toast } from '@/hooks/use-toast';
 
 interface ControleLavouraDetalheProps {
@@ -243,6 +244,10 @@ export function ControleLavouraDetalhe({ controleLavoura, onBack, canEdit }: Con
               <CircleDot className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Pivôs</span>
             </TabsTrigger>
+            <TabsTrigger value="custos" className="gap-1.5 text-xs">
+              <DollarSign className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Custos</span>
+            </TabsTrigger>
           </TabsList>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
@@ -295,6 +300,9 @@ export function ControleLavouraDetalhe({ controleLavoura, onBack, canEdit }: Con
           </TabsContent>
           <TabsContent value="pivos">
             <PivosTab controleLavouraId={controleLavoura.id} canEdit={canEdit} />
+          </TabsContent>
+          <TabsContent value="custos">
+            <CustosTab controleLavouraId={controleLavoura.id} />
           </TabsContent>
         </div>
       </Tabs>

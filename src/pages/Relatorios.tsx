@@ -6,12 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import {
   BarChart3, FileText, Wheat, ShoppingCart, PieChart, TrendingUp,
-  Truck, Package, MapPin, Warehouse, Users, ClipboardList, LucideIcon,
+  Truck, Package, MapPin, Warehouse, Users, ClipboardList, DollarSign, LucideIcon,
 } from "lucide-react";
 import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
 
 type TipoRelatorio =
-  | "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "extrato_depositos" | "vendas"
+  | "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "custos_lavoura" | "extrato_depositos" | "vendas"
   | "extrato_venda_producao" | "demonstrativo_gerencial" | "dre" | "bens_moveis"
   | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
@@ -62,6 +62,9 @@ const GRUPOS: Grupo[] = [
       { tipo: "resumo_colheita_lavoura", titulo: "Resumo da Colheita por Lavoura", descricao: "Totais consolidados por lavoura na safra",
         detalhe: "Agrupado por cultura e local de entrega, com médias ponderadas de impureza/umidade/avaria e média em sacos/HA.",
         icon: Wheat, iconBg: "bg-success/10", iconColor: "text-success", primario: true },
+      { tipo: "custos_lavoura", titulo: "Custos da Lavoura", descricao: "Custos de produção por lavoura",
+        detalhe: "Composição por tipo (sementes, adubos, herbicidas, fungicidas...) com R$ total, R$/ha, R$/saca e resumo geral por lavoura.",
+        icon: DollarSign, iconBg: "bg-amber-500/10", iconColor: "text-amber-600", primario: true },
       { tipo: "extrato_depositos", titulo: "Extrato de Depósitos", descricao: "Recebimento detalhado por produtor e IE",
         detalhe: "Agrupado por Local -> Inscrição -> Dia com acumulados, médias ponderadas e totais gerais. Filtro opcional por IE.",
         icon: Wheat, iconBg: "bg-emerald-500/10", iconColor: "text-emerald-600", primario: true },

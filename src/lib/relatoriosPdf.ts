@@ -2564,3 +2564,170 @@ export function gerarExtratoVendaProducaoPdf(data: ExtratoVendaProducaoData): vo
   desenharRodapeBrand(doc);
   downloadPdf(doc, "extrato_venda_producao.pdf");
 }
+
+// ==================== CUSTOS DA LAVOURA ====================
+
+export interface RelCustoLinha {
+  label: string;
+  lancamentos: number;
+  total: number;
+  custoHa: number | null;
+  percentual: number;
+}
+
+export interface RelCustoLavoura {
+  lavouraNome: string;
+  areaHa: number | null;
+  producaoKg: number;
+  sacas: number;
+  custoTotal: number;
+  custoHa: number | null;
+  custoSaca: number | null;
+  linhas: RelCustoLinha[];
+}
+
+export interface RelCustosLavouraParams {
+  safraNome: string;
+  lavouraFiltroLabel: string;
+  lavouras: RelCustoLavoura[];
+}
+
+/** Custos da Lavoura — composição por tipo (sementes + aplicações), R$/ha e R$/saca. */
+export function gerarCustosLavouraPdf(params: RelCustosLavouraParams): void {
+  const doc = new jsPDF({ orientation: "portrait", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  desenharCabecalhoBrand(doc);
+
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("CUSTOS DA LAVOURA", pageWidth / 2, 34, { align: "center" });
+
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "normal");
+  doc.text(`SAFRA: ${params.safraNome}`, 14, 41);
+  doc.text(`Lavoura: ${params.lavouraFiltroLabel}`, pageWidth - 14, 41, { align: "right" });
+
+  const NUM_COLS = 5;
+  const body: any[] = [];
+  const groupHeaderRows: number[] = [];
+  const subtotalRows: number[] = [];
+  const boldRows: number[] = [];
+
+  const spacer = (label: string): any[] => [{ content: label, colSpan: NUM_COLS }];
+
+  params.lavouras.forEach((lav) => {
+    const areaTxt = lav.areaHa ? `${formatNumber(lav.areaHa, 2)} ha` : "área não informada";
+    body.push(spacer(
+      `Lavoura: ${lav.lavouraNome}  |  ${areaTxt}  |  Produção: ${formatNumber(lav.producaoKg, 0)} kg (${formatNumber(lav.sacas, 0)} sc)`
+    ));
+    groupHeaderRows.push(body.length - 1);
+
+    lav.linhas.forEach((l) => {
+      body.push([
+        l.label,
+        formatNumber(l.lancamentos, 0),
+        formatCurrency(l.total),
+        l.custoHa === null ? "-" : formatCurrency(l.custoHa),
+        `${formatNumber(l.percentual, 1)}%`,
+      ]);
+    });
+
+    body.push([
+      { content: `Total ${lav.lavouraNome} -->`, styles: { halign: "right" as const } },
+      formatNumber(lav.linhas.reduce((a, l) => a + l.lancamentos, 0), 0),
+      formatCurrency(lav.custoTotal),
+      lav.custoHa === null ? "-" : formatCurrency(lav.custoHa),
+      lav.custoSaca === null ? "-" : `${formatCurrency(lav.custoSaca)}/sc`,
+    ]);
+    subtotalRows.push(body.length - 1);
+  });
+
+  // Resumo consolidado por tipo de custo (quando há mais de uma lavoura)
+  if (params.lavouras.length > 1) {
+    const consolidado = new Map<string, { total: number; lancamentos: number }>();
+    params.lavouras.forEach((lav) => lav.linhas.forEach((l) => {
+      const atual = consolidado.get(l.label) || { total: 0, lancamentos: 0 };
+      atual.total += l.total;
+      atual.lancamentos += l.lancamentos;
+      consolidado.set(l.label, atual);
+    }));
+    const totalGeral = Array.from(consolidado.values()).reduce((a, v) => a + v.total, 0);
+    const areaGeral = params.lavouras.reduce((a, l) => a + (l.areaHa || 0), 0);
+
+    body.push(spacer("RESUMO POR TIPO DE CUSTO"));
+    groupHeaderRows.push(body.length - 1);
+    Array.from(consolidado.entries())
+      .sort((a, b) => b[1].total - a[1].total)
+      .forEach(([label, v]) => {
+        body.push([
+          label,
+          formatNumber(v.lancamentos, 0),
+          formatCurrency(v.total),
+          areaGeral > 0 ? formatCurrency(v.total / areaGeral) : "-",
+          totalGeral > 0 ? `${formatNumber((v.total / totalGeral) * 100, 1)}%` : "-",
+        ]);
+      });
+  }
+
+  // Resumo geral por lavoura
+  const totalGeral = params.lavouras.reduce((a, l) => a + l.custoTotal, 0);
+  const areaGeral = params.lavouras.reduce((a, l) => a + (l.areaHa || 0), 0);
+  const sacasGeral = params.lavouras.reduce((a, l) => a + l.sacas, 0);
+
+  body.push(spacer("RESUMO GERAL POR LAVOURA"));
+  groupHeaderRows.push(body.length - 1);
+  params.lavouras.forEach((lav) => {
+    body.push([
+      lav.lavouraNome,
+      lav.areaHa ? formatNumber(lav.areaHa, 2) : "-",
+      formatCurrency(lav.custoTotal),
+      lav.custoHa === null ? "-" : formatCurrency(lav.custoHa),
+      lav.custoSaca === null ? "-" : formatCurrency(lav.custoSaca),
+    ]);
+  });
+  body.push([
+    { content: "Total Geral -->", styles: { halign: "right" as const } },
+    areaGeral > 0 ? formatNumber(areaGeral, 2) : "-",
+    formatCurrency(totalGeral),
+    areaGeral > 0 ? formatCurrency(totalGeral / areaGeral) : "-",
+    sacasGeral > 0 ? formatCurrency(totalGeral / sacasGeral) : "-",
+  ]);
+  boldRows.push(body.length - 1);
+
+  autoTable(doc, {
+    startY: 47,
+    head: [[
+      "Tipo / Lavoura",
+      { content: "Lanç. / ha", styles: { halign: "right" } },
+      { content: "Total (R$)", styles: { halign: "right" } },
+      { content: "R$/ha", styles: { halign: "right" } },
+      { content: "% / R$/sc", styles: { halign: "right" } },
+    ]],
+    body,
+    styles: { fontSize: 7.5, cellPadding: 1.4, overflow: "hidden" },
+    headStyles: { fillColor: [66, 66, 66], textColor: 255, fontSize: 7.5 },
+    columnStyles: {
+      0: { halign: "left", cellWidth: 62 },
+      1: { halign: "right", cellWidth: 24 },
+      2: { halign: "right" },
+      3: { halign: "right" },
+      4: { halign: "right" },
+    },
+    didParseCell: (d) => {
+      if (d.section !== "body") return;
+      if (groupHeaderRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [220, 230, 241];
+      } else if (boldRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [200, 200, 200];
+      } else if (subtotalRows.includes(d.row.index)) {
+        d.cell.styles.fontStyle = "bold";
+        d.cell.styles.fillColor = [235, 235, 235];
+      }
+    },
+  });
+
+  desenharRodapeBrand(doc);
+  downloadPdf(doc, "custos_lavoura.pdf");
+}

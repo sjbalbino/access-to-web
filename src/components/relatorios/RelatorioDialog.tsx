@@ -12,6 +12,8 @@ import { useClientesFornecedores } from "@/hooks/useClientesFornecedores";
 import { useGranjas } from "@/hooks/useGranjas";
 import { useLocaisEntrega, useLocalSede } from "@/hooks/useLocaisEntrega";
 import { useProdutores } from "@/hooks/useProdutores";
+import { useLavouras } from "@/hooks/useLavouras";
+import { fetchCustosLavouraSafra } from "@/hooks/useCustosLavoura";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { FileDown, Loader2 } from "lucide-react";
@@ -26,6 +28,7 @@ import {
   gerarExtratoDepositosProdutorPdf,
   gerarExtratoMovimentacaoPdf,
   gerarExtratoVendaProducaoPdf,
+  gerarCustosLavouraPdf,
   type ExtratoMovRow,
   type ExtratoData,
   type RelColheita,
@@ -36,6 +39,7 @@ import {
   type RelResumoColheitaRow,
   type RelExtratoDepRow,
   type ResumoProdutorRow,
+  type RelCustoLavoura,
 } from "@/lib/relatoriosPdf";
 
 import {
@@ -60,7 +64,7 @@ import { captureNextRelatorio, cancelPendingCapture, setPendingSheets, type Rela
 import { loadPdfBrand } from "@/lib/pdfBrand";
 import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
 
-export type TipoRelatorio = "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "extrato_depositos" | "vendas" | "extrato_venda_producao" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+export type TipoRelatorio = "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "custos_lavoura" | "extrato_depositos" | "vendas" | "extrato_venda_producao" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
 
 interface Props {
@@ -78,6 +82,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [compradorId, setCompradorId] = useState("");
   const [granjaId, setGranjaId] = useState("");
   const [localEntregaId, setLocalEntregaId] = useState("");
+  const [lavouraId, setLavouraId] = useState("");
   const [clienteFornecedorId, setClienteFornecedorId] = useState("");
   const [tipoExtratoCf, setTipoExtratoCf] = useState<"ambos" | "receber" | "pagar">("ambos");
   const [dataInicial, setDataInicial] = useState("");
@@ -108,6 +113,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const { data: clientes } = useClientesFornecedores();
   const { data: granjas } = useGranjas();
   const { data: locaisEntrega } = useLocaisEntrega();
+  const { data: lavouras } = useLavouras();
   const { data: localSede } = useLocalSede();
   const tenantSedeNome = localSede?.nome ?? "Sede";
 
@@ -251,6 +257,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     entrega_variedade: "Entrega por Variedade",
 
     resumo_colheita_lavoura: "Resumo da Colheita por Lavoura",
+    custos_lavoura: "Custos da Lavoura",
     extrato_depositos: "Extrato de Depósitos por Produtor",
     vendas: "Relatório de Vendas",
     extrato_venda_producao: "Extrato Venda da Produção",
@@ -286,6 +293,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       else if (tipo === "colheita_diaria") await gerarColheitaDiaria();
       else if (tipo === "entrega_variedade") await gerarEntregaVariedade();
       else if (tipo === "resumo_colheita_lavoura") await gerarResumoColheitaLavoura();
+      else if (tipo === "custos_lavoura") await gerarCustosLavoura();
       else if (tipo === "extrato_depositos") await gerarExtratoDepositos();
 
 
@@ -1226,6 +1234,68 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       localFiltroLabel,
       rows,
     });
+  };
+
+  // ========== CUSTOS DA LAVOURA ==========
+  const gerarCustosLavoura = async () => {
+    if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
+
+    const safraNome = safras?.find(s => s.id === safraId)?.nome || "-";
+    const lavouraFiltroLabel = lavouraId
+      ? (lavouras?.find(l => l.id === lavouraId)?.nome || "-")
+      : "Todas";
+
+    const custos = await fetchCustosLavouraSafra(safraId, lavouraId || null);
+
+    if (custos.length === 0) {
+      toast({ title: "Sem dados", description: "Nenhum custo lançado para os filtros selecionados." });
+      return;
+    }
+
+    const lavourasPdf: RelCustoLavoura[] = custos.map(c => ({
+      lavouraNome: c.lavouraNome,
+      areaHa: c.areaHa,
+      producaoKg: c.producaoKg,
+      sacas: c.sacas,
+      custoTotal: c.custoTotal,
+      custoHa: c.custoHa,
+      custoSaca: c.custoSaca,
+      linhas: c.linhas.map(l => ({
+        label: l.label,
+        lancamentos: l.lancamentos,
+        total: l.total,
+        custoHa: l.custoHa,
+        percentual: l.percentual,
+      })),
+    }));
+
+    setPendingSheets([
+      {
+        name: "Custos por Tipo",
+        header: ["Lavoura", "Tipo", "Lançamentos", "Total (R$)", "R$/ha", "% do Total"],
+        rows: lavourasPdf.flatMap(lav => lav.linhas.map(l => [
+          lav.lavouraNome, l.label, l.lancamentos,
+          Number(l.total.toFixed(2)),
+          l.custoHa === null ? null : Number(l.custoHa.toFixed(2)),
+          Number(l.percentual.toFixed(1)),
+        ])),
+      },
+      {
+        name: "Resumo por Lavoura",
+        header: ["Lavoura", "Área (ha)", "Produção (kg)", "Sacas", "Custo Total (R$)", "R$/ha", "R$/saca"],
+        rows: lavourasPdf.map(lav => [
+          lav.lavouraNome,
+          lav.areaHa === null ? null : Number(lav.areaHa.toFixed(2)),
+          Math.round(lav.producaoKg),
+          Math.round(lav.sacas),
+          Number(lav.custoTotal.toFixed(2)),
+          lav.custoHa === null ? null : Number(lav.custoHa.toFixed(2)),
+          lav.custoSaca === null ? null : Number(lav.custoSaca.toFixed(2)),
+        ]),
+      },
+    ]);
+
+    gerarCustosLavouraPdf({ safraNome, lavouraFiltroLabel, lavouras: lavourasPdf });
   };
 
   // ========== ENTREGA POR VARIEDADE ==========
@@ -2220,6 +2290,22 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 placeholder="Selecione a safra"
                 searchPlaceholder="Buscar safra..."
                 emptyText="Nenhuma safra encontrada."
+                allLabel="Todas"
+              />
+            </div>
+          )}
+
+          {/* Lavoura - custos da lavoura */}
+          {tipo === "custos_lavoura" && (
+            <div>
+              <Label>Lavoura</Label>
+              <ComboboxFilter
+                value={lavouraId}
+                onValueChange={setLavouraId}
+                options={lavouras?.map(l => ({ value: l.id, label: l.nome })) || []}
+                placeholder="Todas as lavouras"
+                searchPlaceholder="Buscar lavoura..."
+                emptyText="Nenhuma lavoura encontrada."
                 allLabel="Todas"
               />
             </div>
