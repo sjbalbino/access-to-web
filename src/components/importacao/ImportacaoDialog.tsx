@@ -878,12 +878,18 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
 
         const resolveTargetIds = async (table: string): Promise<string[] | null> => {
           if (TENANT_COL_TABLES.has(table) && tenantId) {
-            const { data, error } = await supabase.from(table as any).select('id').eq('tenant_id', tenantId);
+            let q = supabase.from(table as any).select('id').eq('tenant_id', tenantId);
+            // Aplicações compartilham a mesma tabela: limpar somente o tipo importado
+            if (table === 'aplicacoes' && CHAVES_APLICACAO.has(config.key)) {
+              q = q.eq('tipo', config.key.replace('aplicacoes_', ''));
+            }
+            const { data, error } = await q;
             if (error) throw error;
             return (data || []).map((r: any) => r.id);
           }
           return null;
         };
+
 
         const deleteInChunks = async (table: string, col: string, ids: string[]) => {
           const CHUNK = 300;
