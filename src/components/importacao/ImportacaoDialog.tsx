@@ -20,7 +20,14 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import * as XLSX from 'xlsx';
-import { TableConfig, transformRow, resolveReferences } from '@/lib/importacaoConfig';
+import { TableConfig, transformRow, resolveReferences, APLICACAO_IMPORT_KEYS } from '@/lib/importacaoConfig';
+
+// Importações que herdam safra/lavoura do Controle de Lavoura (via código do controle)
+const CHAVES_APLICACAO = new Set(APLICACAO_IMPORT_KEYS);
+const ehFilhoControleLavoura = (key: string) =>
+  key === 'colheitas' || key === 'plantios' || CHAVES_APLICACAO.has(key);
+// Nessas chaves o lavoura_id resolvido pelo controle deve ser mantido no insert
+const mantemLavouraId = (key: string) => key === 'plantios' || CHAVES_APLICACAO.has(key);
 
 interface ImportacaoDialogProps {
   open: boolean;
@@ -285,7 +292,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           );
 
           // colheitas e plantios NÃO possuem granja_id na tabela — manter apenas em _granja_id auxiliar
-          if (config.key === 'colheitas' || config.key === 'plantios') {
+          if (ehFilhoControleLavoura(config.key)) {
             if (!row._granja_id && selectedGranjaId && selectedGranjaId !== 'none') {
               row._granja_id = selectedGranjaId;
             }
@@ -353,7 +360,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           setReferenceErrors([...refErrors, ...compositeErrors]);
         }
         // Composite lookup: controle_lavoura_id for colheitas and plantios (via safra_codigo)
-        else if (config.key === 'colheitas' || config.key === 'plantios') {
+        else if (ehFilhoControleLavoura(config.key)) {
           // Buscar controle_lavouras pelo campo codigo para cache direto (paginado — Supabase corta em 1000 por padrão)
           const controles: any[] = [];
           const PAGE = 1000;
@@ -423,7 +430,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
                 }
 
                 // Em plantios, o lavoura_id deve ser preenchido com o valor vindo do controle_lavoura
-                if (config.key === 'plantios' && match.lavoura_id) {
+                if (mantemLavouraId(config.key) && match.lavoura_id) {
                   row.lavoura_id = match.lavoura_id;
                 }
               } else {
@@ -437,7 +444,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
             delete (row as any)._granja_codigo_raw;
             delete (row as any)._produto_codigo_raw;
             delete (row as any).granja_id;
-            if (config.key !== 'plantios') {
+            if (!mantemLavouraId(config.key)) {
                delete (row as any).lavoura_id;
             }
           }
@@ -925,7 +932,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         config.interactiveColumns.forEach(c => validDbColumns.add(c));
       }
       // Incluir campos calculados ou injetados
-      if (config.key === 'colheitas' || config.key === 'plantios') {
+      if (ehFilhoControleLavoura(config.key)) {
         // Tabela colheitas e plantios NÃO possuem granja_id nem lavoura_id (esses ficam em controle_lavouras)
         validDbColumns.add('controle_lavoura_id');
         validDbColumns.add('safra_id');
@@ -938,6 +945,9 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
         } else if (config.key === 'plantios') {
           validDbColumns.add('cultura_id');
           validDbColumns.add('variedade_id');
+        } else if (CHAVES_APLICACAO.has(config.key)) {
+          validDbColumns.add('lavoura_id');
+          validDbColumns.add('produto_id');
         }
       }
       if (config.key === 'controle_lavouras') {
@@ -975,7 +985,7 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           delete clean._granja_id;
           delete clean._granja_codigo_raw;
           delete clean._safra_codigo;
-        } else if (config.key === 'plantios') {
+        } else if (mantemLavouraId(config.key)) {
           delete clean.granja_id;
           // Mantemos lavoura_id se ele existir (pode ter vindo do match ou da planilha)
           delete clean._granja_id;
@@ -1058,6 +1068,12 @@ export function ImportacaoDialog({ open, onOpenChange, config, tenantId, onImpor
           return;
         }
         // 3. Colheitas: exigem controle_lavoura_id (não têm granja_id)
+        if (CHAVES_APLICACAO.has(config.key) && (!row['controle_lavoura_id'] || !row['lavoura_id'])) {
+          validationErrors.push(
+            `Linha ${lineNum}: Controle de Lavoura não resolvido — verifique se "safra_codigo" da planilha corresponde ao código de um Controle de Lavoura da granja selecionada.`
+          );
+          return;
+        }
         if (config.tableName === 'colheitas' && !row['controle_lavoura_id']) {
           validationErrors.push(
             `Linha ${lineNum}: controle_lavoura_id não resolvido — verifique se "safra_codigo" da planilha corresponde ao código de um Controle de Lavoura cadastrado.`
