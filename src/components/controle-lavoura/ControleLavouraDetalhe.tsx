@@ -244,6 +244,10 @@ export function ControleLavouraDetalhe({ controleLavoura, onBack, canEdit }: Con
               <CircleDot className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Pivôs</span>
             </TabsTrigger>
+            <TabsTrigger value="custos" className="gap-1.5 text-xs">
+              <DollarSign className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Custos</span>
+            </TabsTrigger>
           </TabsList>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
