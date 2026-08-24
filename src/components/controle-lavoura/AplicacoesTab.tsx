@@ -203,8 +203,8 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
                     <TableCell className="text-right">{aplicacao.area_aplicada?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{aplicacao.dose_ha?.toLocaleString('pt-BR') || '0'}</TableCell>
                     <TableCell className="text-right">{aplicacao.quantidade_total?.toLocaleString('pt-BR') || '0'}</TableCell>
-                    <TableCell className="text-right">{aplicacao.valor_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</TableCell>
-                    <TableCell className="text-right">{aplicacao.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</TableCell>
+                    <TableCell className="text-right">{aplicacao.valor_unitario?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00'}</TableCell>
+                    <TableCell className="text-right">{aplicacao.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00'}</TableCell>
                     {canEdit && (
                       <TableCell>
                         <div className="flex gap-1">
@@ -225,11 +225,11 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
               <TableFooter>
                 <TableRow className="bg-muted/50 font-medium">
                   <TableCell colSpan={3}>Totais</TableCell>
-                  <TableCell className="text-right">{totais.area.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell className="text-right font-bold">{totais.doseHa.toLocaleString('pt-BR', { minimumFractionDigits: 3 })}</TableCell>
-                  <TableCell className="text-right">{totais.quantidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right">{totais.area.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right font-bold">{totais.doseHa.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</TableCell>
+                  <TableCell className="text-right">{totais.quantidade.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell></TableCell>
-                  <TableCell className="text-right font-bold">{totais.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right font-bold">{totais.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   {canEdit && <TableCell></TableCell>}
                 </TableRow>
               </TableFooter>
