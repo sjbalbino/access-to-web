@@ -310,14 +310,32 @@ export default function ImportarDados() {
   const selectedTenant = tenants?.find(t => t.id === selectedTenantId);
 
   const handleDownloadTemplate = (config: TableConfig) => {
-    const headers = config.columns.map(c => c.accessName);
-    const refHeaders = (config.references || []).flatMap(r => 
-      r.compositeSourceColumn 
-        ? [r.sourceColumn, r.compositeSourceColumn] 
-        : [r.sourceColumn]
-    );
+    // Colunas com valor fixo pela importação não precisam ser preenchidas no modelo
+    const hiddenColumns = config.key.startsWith('aplicacoes_') ? new Set(['tipo']) : new Set<string>();
+    const headers = config.columns
+      .filter(c => !hiddenColumns.has(c.accessName))
+      .map(c => c.accessName);
+    const headerSet = new Set(headers.map(h => h.toLowerCase()));
+
+    const refHeaders = (config.references || []).flatMap(r => {
+      const cols = r.compositeSourceColumn
+        ? [r.sourceColumn, r.compositeSourceColumn]
+        : [r.sourceColumn];
+      return cols
+        .map(col => {
+          // Evita duplicar caso o accessName já exista (ex: safra_codigo)
+          if (headerSet.has(col.toLowerCase())) return null;
+          // Evita expor nomes técnicos como _granja_codigo_raw quando já existe
+          // uma coluna legível com o mesmo dbName (ex: granja_codigo)
+          const matchingColumn = config.columns.find(c => c.dbName === col);
+          if (matchingColumn && headerSet.has(matchingColumn.accessName.toLowerCase())) return null;
+          return col;
+        })
+        .filter((col): col is string => col !== null);
+    });
+
     const allHeaders = [...headers, ...refHeaders];
-    
+
     const ws = XLSX.utils.aoa_to_sheet([allHeaders]);
     const wb = XLSX.utils.book_new();
     const safeSheetName = config.label.replace(/[:\\/?*[\]]/g, '-').slice(0, 31);
