@@ -54,7 +54,7 @@ export const TIPOS_APLICACAO: { value: TipoAplicacao; label: string }[] = [
   { value: 'herbicida', label: 'Herbicida' },
   { value: 'fungicida', label: 'Fungicida' },
   { value: 'inseticida', label: 'Inseticida' },
-  { value: 'dessecacao', label: 'Dessecação' },
+  
   { value: 'adjuvante', label: 'Adjuvante' },
   { value: 'micronutriente', label: 'Micronutriente' },
   { value: 'inoculante', label: 'Inoculante' },
