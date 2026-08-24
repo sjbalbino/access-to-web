@@ -153,7 +153,7 @@ export const TIPOS_APLICACAO_IMPORT: { tipo: string; label: string }[] = [
   { tipo: 'herbicida', label: 'Herbicidas' },
   { tipo: 'fungicida', label: 'Fungicidas' },
   { tipo: 'inseticida', label: 'Inseticidas' },
-  { tipo: 'dessecacao', label: 'Dessecação' },
+  
   { tipo: 'adjuvante', label: 'Adjuvantes' },
   { tipo: 'micronutriente', label: 'Micronutrientes' },
   { tipo: 'inoculante', label: 'Inoculantes' },
