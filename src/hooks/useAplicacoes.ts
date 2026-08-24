@@ -77,7 +77,7 @@ export function useAplicacoes(tipo: TipoAplicacao, controleLavouraId: string | n
         `)
         .eq("tipo", tipo)
         .eq("controle_lavoura_id", controleLavouraId)
-        .order("data_aplicacao", { ascending: false });
+        .order("data_aplicacao", { ascending: true });
       
       if (error) throw error;
       return data;
