@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Save, Trash2, Wheat, Sprout, Droplets, Leaf, Bug, Skull, Beaker, Pill, FlaskConical, Mountain, BugOff, CloudRain, TreeDeciduous, Flower2, TestTube, CircleDot } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Wheat, Sprout, Droplets, Leaf, Bug, Skull, Beaker, Pill, FlaskConical, Mountain, BugOff, CloudRain, TreeDeciduous, Flower2, TestTube, CircleDot, DollarSign } from 'lucide-react';
 import { ControleLavoura, useUpdateControleLavoura, useDeleteControleLavoura } from '@/hooks/useControleLavouras';
 import { PlantiosTab } from './PlantiosTab';
 import { AplicacoesTab } from './AplicacoesTab';
