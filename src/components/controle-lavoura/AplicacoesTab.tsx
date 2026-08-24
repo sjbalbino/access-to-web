@@ -142,9 +142,10 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
   // Calcular totais do rodapé
   const totais = aplicacoes?.reduce((acc, a) => ({
     area: acc.area + (a.area_aplicada || 0),
+    doseHa: acc.doseHa + (a.dose_ha || 0),
     quantidade: acc.quantidade + (a.quantidade_total || 0),
     valorTotal: acc.valorTotal + (a.valor_total || 0),
-  }), { area: 0, quantidade: 0, valorTotal: 0 }) || { area: 0, quantidade: 0, valorTotal: 0 };
+  }), { area: 0, doseHa: 0, quantidade: 0, valorTotal: 0 }) || { area: 0, doseHa: 0, quantidade: 0, valorTotal: 0 };
 
   if (isLoading) {
     return (
@@ -225,7 +226,7 @@ export function AplicacoesTab({ tipo, controleLavouraId, canEdit }: AplicacoesTa
                 <TableRow className="bg-muted/50 font-medium">
                   <TableCell colSpan={3}>Totais</TableCell>
                   <TableCell className="text-right">{totais.area.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell className="text-right font-bold">{totais.doseHa.toLocaleString('pt-BR', { minimumFractionDigits: 3 })}</TableCell>
                   <TableCell className="text-right">{totais.quantidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                   <TableCell></TableCell>
                   <TableCell className="text-right font-bold">{totais.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
