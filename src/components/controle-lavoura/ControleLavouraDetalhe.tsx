@@ -301,6 +301,9 @@ export function ControleLavouraDetalhe({ controleLavoura, onBack, canEdit }: Con
           <TabsContent value="pivos">
             <PivosTab controleLavouraId={controleLavoura.id} canEdit={canEdit} />
           </TabsContent>
+          <TabsContent value="custos">
+            <CustosTab controleLavouraId={controleLavoura.id} />
+          </TabsContent>
         </div>
       </Tabs>
     </div>
