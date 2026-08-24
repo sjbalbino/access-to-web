@@ -143,7 +143,73 @@ const toFormaPagamento = (v: any): string | null => {
   return 'outro';
 };
 
+/**
+ * Tipos de aplicação do Controle de Lavoura habilitados para importação.
+ * Cada tipo vira um item separado no assistente (uma planilha por tipo),
+ * mas todos gravam na mesma tabela `aplicacoes` com o campo `tipo` fixo.
+ */
+export const TIPOS_APLICACAO_IMPORT: { tipo: string; label: string }[] = [
+  { tipo: 'adubacao', label: 'Adubação / Fertilizantes' },
+  { tipo: 'herbicida', label: 'Herbicidas' },
+  { tipo: 'fungicida', label: 'Fungicidas' },
+  { tipo: 'inseticida', label: 'Inseticidas' },
+  { tipo: 'dessecacao', label: 'Dessecação' },
+  { tipo: 'adjuvante', label: 'Adjuvantes' },
+  { tipo: 'micronutriente', label: 'Micronutrientes' },
+  { tipo: 'inoculante', label: 'Inoculantes' },
+  { tipo: 'calcario', label: 'Calcários' },
+];
+
+export const APLICACAO_IMPORT_KEYS: string[] = TIPOS_APLICACAO_IMPORT.map(
+  (t) => `aplicacoes_${t.tipo}`
+);
+
+function criarConfigAplicacao(
+  tipo: string,
+  label: string,
+  order: number
+): TableConfig {
+  return {
+    key: `aplicacoes_${tipo}`,
+    label: `Aplicações - ${label}`,
+    tableName: 'aplicacoes',
+    description: `Custos de ${label.toLowerCase()} vinculados ao Controle de Lavoura`,
+    order,
+    dependsOn: ['safras', 'lavouras', 'controle_lavouras', 'produtos'],
+    columns: [
+      // Tipo é fixo por planilha (não vem do Excel)
+      { accessName: 'tipo', dbName: 'tipo', transform: () => tipo },
+      { accessName: 'data_aplicacao', dbName: 'data_aplicacao', transform: toDate, required: true, sourceColumnAliases: ['data', 'dt_aplicacao', 'data_apl'] },
+      { accessName: 'area_aplicada', dbName: 'area_aplicada', transform: toNumber, sourceColumnAliases: ['area', 'ha_aplicado', 'ha'] },
+      { accessName: 'dose_ha', dbName: 'dose_ha', transform: toNumber, sourceColumnAliases: ['dose', 'dose_por_ha'] },
+      { accessName: 'quantidade_total', dbName: 'quantidade_total', transform: toNumber, sourceColumnAliases: ['quantidade', 'qtd', 'qtde'] },
+      { accessName: 'valor_unitario', dbName: 'valor_unitario', transform: toNumber, sourceColumnAliases: ['vlr_unitario', 'preco_unitario', 'valor_unit'] },
+      { accessName: 'valor_total', dbName: 'valor_total', transform: toNumber, sourceColumnAliases: ['vlr_total', 'custo_total', 'valor'] },
+      { accessName: 'aplicador', dbName: 'aplicador', transform: toStr, sourceColumnAliases: ['operador', 'responsavel'] },
+      { accessName: 'equipamento', dbName: 'equipamento', transform: toStr, sourceColumnAliases: ['maquina', 'implemento'] },
+      { accessName: 'condicao_climatica', dbName: 'condicao_climatica', transform: toStr, sourceColumnAliases: ['clima', 'condicao'] },
+      { accessName: 'observacoes', dbName: 'observacoes', transform: toStr, sourceColumnAliases: ['obs', 'observacao'] },
+      // Colunas auxiliares (usadas na resolução do Controle de Lavoura)
+      { accessName: 'safra_codigo', dbName: '_safra_codigo', transform: toStr, sourceColumnAliases: ['SAFRA_CODIGO', 'safras_codigo', 'CODIGO_SAFRA', 'controle_codigo'] },
+      { accessName: 'granja_codigo', dbName: '_granja_codigo_raw', transform: toStr, sourceColumnAliases: ['granja', 'codigo_granja', 'cod_granja', 'granjacodigo'] },
+      { accessName: 'produto_codigo', dbName: '_produto_codigo_raw', transform: toStr, sourceColumnAliases: ['produto', 'defensivo', 'fertilizante', 'insumo', 'codigo_produto'] },
+    ],
+    references: [
+      { dbColumn: '_granja_id', sourceColumn: '_granja_codigo_raw', lookupTable: 'granjas', lookupColumn: 'codigo', lookupLabel: 'razao_social', optional: true },
+      { dbColumn: 'safra_id', sourceColumn: 'safra_codigo', lookupTable: 'safras', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
+      { dbColumn: 'produto_id', sourceColumn: '_produto_codigo_raw', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
+    ],
+  };
+}
+
+function criarConfigsAplicacoes(): TableConfig[] {
+  return TIPOS_APLICACAO_IMPORT.map((t, idx) =>
+    criarConfigAplicacao(t.tipo, t.label, 12.1 + idx / 100)
+  );
+}
+
 export const tableConfigs: TableConfig[] = [
+
   {
     key: 'dre_contas',
     label: 'Estrutura DRE',
@@ -1129,7 +1195,9 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'variedade_id', sourceColumn: '_produto_codigo_raw', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
     ],
   },
+  ...criarConfigsAplicacoes(),
 ];
+
 
 // Tabelas que possuem coluna tenant_id (isoladas por empresa contratante)
 const TENANT_SCOPED_LOOKUP_TABLES = new Set([

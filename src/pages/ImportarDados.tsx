@@ -130,6 +130,11 @@ async function countRowsByTenant(tableName: ImportTableName, tenantId: string, c
     .select<{ id: string }>('id', { count: 'exact', head: true })
     .eq('tenant_id', tenantId);
 
+  // Cada tipo de aplicação é importado separadamente: conta apenas as linhas do tipo
+  if (configKey && configKey.startsWith('aplicacoes_')) {
+    query = query.eq('tipo', configKey.replace('aplicacoes_', ''));
+  }
+
   if (configKey === 'clientes_ie') {
     query = query.not('inscricao_estadual', 'is', null).neq('inscricao_estadual', '');
   }
