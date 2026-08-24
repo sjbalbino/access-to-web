@@ -17,6 +17,7 @@ import { PlantasInvasorasTab } from './PlantasInvasorasTab';
 import { FloracaoTab } from './FloracaoTab';
 import { AnaliseTab } from './AnaliseTab';
 import { PivosTab } from './PivosTab';
+import { CustosTab } from './CustosTab';
 import { toast } from '@/hooks/use-toast';
 
 interface ControleLavouraDetalheProps {
