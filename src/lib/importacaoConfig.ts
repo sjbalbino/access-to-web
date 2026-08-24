@@ -1129,7 +1129,9 @@ export const tableConfigs: TableConfig[] = [
       { dbColumn: 'variedade_id', sourceColumn: '_produto_codigo_raw', lookupTable: 'produtos', lookupColumn: 'codigo', lookupLabel: 'nome', optional: true },
     ],
   },
+  ...criarConfigsAplicacoes(),
 ];
+
 
 // Tabelas que possuem coluna tenant_id (isoladas por empresa contratante)
 const TENANT_SCOPED_LOOKUP_TABLES = new Set([
