@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import {
   BarChart3, FileText, Wheat, ShoppingCart, PieChart, TrendingUp,
-  Truck, Package, MapPin, Warehouse, Users, ClipboardList, LucideIcon,
+  Truck, Package, MapPin, Warehouse, Users, ClipboardList, DollarSign, LucideIcon,
 } from "lucide-react";
 import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
 
