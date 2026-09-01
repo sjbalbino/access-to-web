@@ -205,18 +205,39 @@ export function useMde() {
     setIsLoading(true);
     try {
       await invokeAction({ action: "manifestar", inscricaoId, chave, tipo });
+  const manifestar = async (inscricaoId: string, chave: string, tipo: string) => {
+    setIsLoading(true);
+    try {
+      await invokeAction({ action: "manifestar", inscricaoId, chave, tipo });
       const labels: Record<string, string> = {
         ciencia: "Ciência da Operação",
         confirmacao: "Confirmação da Operação",
         desconhecimento: "Desconhecimento da Operação",
         nao_realizada: "Operação Não Realizada",
       };
+
+      // Persiste imediatamente a manifestação: notas fora da janela do DFe
+      // (~90 dias) não voltam na listagem geral e ficariam eternamente "pendentes".
+      const { error: erroCache } = await supabase
+        .from("dfe_nfes_cache" as any)
+        .update({ manifestacao_destinatario: tipo })
+        .eq("inscricao_id", inscricaoId)
+        .eq("chave", chave);
+      if (erroCache) {
+        console.error("Falha ao gravar manifestação no cache do DFe:", erroCache.message);
+      }
+
+      setNfesRecebidas((prev) =>
+        prev.map((n) => (n.chave === chave ? { ...n, manifestacao_destinatario: tipo } : n))
+      );
+
       toast.success(`Manifestação "${labels[tipo] || tipo}" registrada com sucesso!`);
       return true;
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
       toast.error("Erro ao manifestar", { description: msg });
       return false;
+
     } finally {
       setIsLoading(false);
     }
