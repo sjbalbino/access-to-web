@@ -259,8 +259,11 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const handleManifestar = async (chave: string, tipo: string) => {
     if (!inscricaoId) return;
     const ok = await manifestar(inscricaoId, chave, tipo);
-    if (ok) consultarDestinatarias(inscricaoId);
+    // Reconsulta apenas a nota manifestada: a listagem geral do DFe não devolve
+    // notas fora da janela de ~90 dias e sobrescreveria o status recém-gravado.
+    if (ok) await consultarPorChave(inscricaoId, chave);
   };
+
 
   const handleImportar = async (nfe: NfeRecebida) => {
     if (!inscricaoId) return;
@@ -646,16 +649,38 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                   const jaTemEntrada = !!entradaExistente;
                   const manifestacaoProcessada = !!nfe.manifestacao_destinatario;
                   const xmlDisponivel = manifestacaoProcessada && !!nfe.nome;
-                  const statusProcessamento: "pendente" | "aguardando" | "pronto" | "entrada" = jaTemEntrada
+
+                  // A SEFAZ mantém o XML disponível no serviço de distribuição por
+                  // cerca de 90 dias após a emissão. Passado esse prazo, o XML só
+                  // pode ser obtido diretamente com o emitente.
+                  const DIAS_JANELA_DFE = 90;
+                  const emissaoMs = nfe.data_emissao ? new Date(nfe.data_emissao).getTime() : NaN;
+                  const diasDesdeEmissao = Number.isFinite(emissaoMs)
+                    ? Math.floor((Date.now() - emissaoMs) / 86_400_000)
+                    : null;
+                  const foraDaJanelaSefaz =
+                    diasDesdeEmissao !== null && diasDesdeEmissao > DIAS_JANELA_DFE;
+
+                  const statusProcessamento:
+                    | "pendente"
+                    | "aguardando"
+                    | "expirado"
+                    | "pronto"
+                    | "entrada" = jaTemEntrada
                     ? "entrada"
                     : !manifestacaoProcessada
-                      ? "pendente"
+                      ? foraDaJanelaSefaz
+                        ? "expirado"
+                        : "pendente"
                       : xmlDisponivel
                         ? "pronto"
-                        : "aguardando";
+                        : foraDaJanelaSefaz
+                          ? "expirado"
+                          : "aguardando";
                   const statusLabels: Record<typeof statusProcessamento, string> = {
                     pendente: "Manifestação pendente",
                     aguardando: "XML pendente na SEFAZ",
+                    expirado: "XML fora do prazo da SEFAZ",
                     pronto: "Pronto p/ entrada",
                     entrada: entradaExistente?.numero_nfe
                       ? `Entrada gerada Nº ${entradaExistente.numero_nfe}`
@@ -665,20 +690,24 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                   const statusClasses: Record<typeof statusProcessamento, string> = {
                     pendente: "text-amber-700 border-amber-300 bg-amber-50",
                     aguardando: "text-blue-700 border-blue-300 bg-blue-50",
+                    expirado: "text-slate-700 border-slate-300 bg-slate-100",
                     pronto: "text-emerald-700 border-emerald-300 bg-emerald-50",
                     entrada: "text-violet-700 border-violet-300 bg-violet-50",
                   };
-                  const bloqueioTitle = manifestacaoProcessada
-                    ? xmlDisponivel
-                      ? undefined
-                      : "Aguardando SEFAZ liberar o XML completo (nfeProc) após a manifestação"
-                    : "Manifeste a NF-e primeiro para liberar o XML completo";
+                  const bloqueioTitle = foraDaJanelaSefaz && !xmlDisponivel
+                    ? `Emitida há ${diasDesdeEmissao} dias: a SEFAZ não distribui mais o XML (limite de ~${DIAS_JANELA_DFE} dias). Solicite o arquivo XML ao emitente e importe por arquivo.`
+                    : manifestacaoProcessada
+                      ? xmlDisponivel
+                        ? undefined
+                        : "Aguardando SEFAZ liberar o XML completo (nfeProc) após a manifestação"
+                      : "Manifeste a NF-e primeiro para liberar o XML completo";
                   const entradaTitle = jaTemEntrada
                     ? `Entrada já gerada para esta NF-e${entradaExistente?.numero_nfe ? ` (Nº ${entradaExistente.numero_nfe})` : ""}`
                     : undefined;
                   const danfeBloqueioTitle = xmlDisponivel
                     ? undefined
                     : bloqueioTitle;
+
                   return (
                   <TableRow key={nfe.chave} className="hover:bg-blue-50/30 transition-colors border-b last:border-0">
                     <TableCell className="py-4 px-6">

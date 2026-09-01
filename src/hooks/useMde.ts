@@ -46,24 +46,33 @@ export function useMde() {
     if (items.length === 0) return;
     const tenantId = await getTenantFromInscricao(inscricaoId);
     if (!tenantId) return;
-    const rows = items.map((n) => ({
-      tenant_id: tenantId,
-      inscricao_id: inscricaoId,
-      chave: n.chave,
-      numero: n.numero || null,
-      serie: n.serie || null,
-      nome: n.nome || null,
-      cnpj: n.cnpj || null,
-      valor: n.valor || 0,
-      data_emissao: n.data_emissao || null,
-      situacao: n.situacao || null,
-      tipo_nfe: n.tipo_nfe || null,
-      manifestacao_destinatario: n.manifestacao_destinatario || null,
-    }));
+    // Preserva dados já gravados (nome do emitente e manifestação) quando a API
+    // retorna esses campos vazios — o DFe só entrega os detalhes por ~90 dias.
+    const existentes = await loadCache(inscricaoId);
+    const anteriores = new Map(existentes.map((n) => [n.chave, n]));
+    const rows = items.map((n) => {
+      const anterior = anteriores.get(n.chave);
+      return {
+        tenant_id: tenantId,
+        inscricao_id: inscricaoId,
+        chave: n.chave,
+        numero: n.numero || anterior?.numero || null,
+        serie: n.serie || anterior?.serie || null,
+        nome: n.nome || anterior?.nome || null,
+        cnpj: n.cnpj || anterior?.cnpj || null,
+        valor: n.valor || anterior?.valor || 0,
+        data_emissao: n.data_emissao || anterior?.data_emissao || null,
+        situacao: n.situacao || anterior?.situacao || null,
+        tipo_nfe: n.tipo_nfe || anterior?.tipo_nfe || null,
+        manifestacao_destinatario:
+          n.manifestacao_destinatario || anterior?.manifestacao_destinatario || null,
+      };
+    });
     await supabase
       .from("dfe_nfes_cache" as any)
       .upsert(rows, { onConflict: "inscricao_id,chave" });
   };
+
 
   const loadCache = async (inscricaoId: string): Promise<NfeRecebida[]> => {
     // Cache estritamente por inscrição selecionada — trocar de IE
@@ -101,7 +110,13 @@ export function useMde() {
       tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
       numero: String(r.numero ?? r.numero_nfe ?? r.numero_nfe_recebida ?? r.numero_nota ?? numeroFromChave ?? ""),
       serie: String(r.serie ?? r.serie_nfe ?? r.serie_nota ?? serieFromChave ?? ""),
-      manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
+      manifestacao_destinatario:
+        r.manifestacao_destinatario ??
+        r.ultima_manifestacao ??
+        r.manifesto ??
+        r.tipo_manifestacao ??
+        undefined,
+
     };
   };
 
@@ -190,18 +205,36 @@ export function useMde() {
     setIsLoading(true);
     try {
       await invokeAction({ action: "manifestar", inscricaoId, chave, tipo });
+
       const labels: Record<string, string> = {
         ciencia: "Ciência da Operação",
         confirmacao: "Confirmação da Operação",
         desconhecimento: "Desconhecimento da Operação",
         nao_realizada: "Operação Não Realizada",
       };
+
+      // Persiste imediatamente a manifestação: notas fora da janela do DFe
+      // (~90 dias) não voltam na listagem geral e ficariam eternamente "pendentes".
+      const { error: erroCache } = await supabase
+        .from("dfe_nfes_cache" as any)
+        .update({ manifestacao_destinatario: tipo })
+        .eq("inscricao_id", inscricaoId)
+        .eq("chave", chave);
+      if (erroCache) {
+        console.error("Falha ao gravar manifestação no cache do DFe:", erroCache.message);
+      }
+
+      setNfesRecebidas((prev) =>
+        prev.map((n) => (n.chave === chave ? { ...n, manifestacao_destinatario: tipo } : n))
+      );
+
       toast.success(`Manifestação "${labels[tipo] || tipo}" registrada com sucesso!`);
       return true;
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
       toast.error("Erro ao manifestar", { description: msg });
       return false;
+
     } finally {
       setIsLoading(false);
     }
