@@ -46,24 +46,33 @@ export function useMde() {
     if (items.length === 0) return;
     const tenantId = await getTenantFromInscricao(inscricaoId);
     if (!tenantId) return;
-    const rows = items.map((n) => ({
-      tenant_id: tenantId,
-      inscricao_id: inscricaoId,
-      chave: n.chave,
-      numero: n.numero || null,
-      serie: n.serie || null,
-      nome: n.nome || null,
-      cnpj: n.cnpj || null,
-      valor: n.valor || 0,
-      data_emissao: n.data_emissao || null,
-      situacao: n.situacao || null,
-      tipo_nfe: n.tipo_nfe || null,
-      manifestacao_destinatario: n.manifestacao_destinatario || null,
-    }));
+    // Preserva dados já gravados (nome do emitente e manifestação) quando a API
+    // retorna esses campos vazios — o DFe só entrega os detalhes por ~90 dias.
+    const existentes = await loadCache(inscricaoId);
+    const anteriores = new Map(existentes.map((n) => [n.chave, n]));
+    const rows = items.map((n) => {
+      const anterior = anteriores.get(n.chave);
+      return {
+        tenant_id: tenantId,
+        inscricao_id: inscricaoId,
+        chave: n.chave,
+        numero: n.numero || anterior?.numero || null,
+        serie: n.serie || anterior?.serie || null,
+        nome: n.nome || anterior?.nome || null,
+        cnpj: n.cnpj || anterior?.cnpj || null,
+        valor: n.valor || anterior?.valor || 0,
+        data_emissao: n.data_emissao || anterior?.data_emissao || null,
+        situacao: n.situacao || anterior?.situacao || null,
+        tipo_nfe: n.tipo_nfe || anterior?.tipo_nfe || null,
+        manifestacao_destinatario:
+          n.manifestacao_destinatario || anterior?.manifestacao_destinatario || null,
+      };
+    });
     await supabase
       .from("dfe_nfes_cache" as any)
       .upsert(rows, { onConflict: "inscricao_id,chave" });
   };
+
 
   const loadCache = async (inscricaoId: string): Promise<NfeRecebida[]> => {
     // Cache estritamente por inscrição selecionada — trocar de IE
