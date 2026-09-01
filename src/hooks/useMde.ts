@@ -110,7 +110,13 @@ export function useMde() {
       tipo_nfe: r.tipo_nfe ?? r.tipo ?? "",
       numero: String(r.numero ?? r.numero_nfe ?? r.numero_nfe_recebida ?? r.numero_nota ?? numeroFromChave ?? ""),
       serie: String(r.serie ?? r.serie_nfe ?? r.serie_nota ?? serieFromChave ?? ""),
-      manifestacao_destinatario: r.manifestacao_destinatario ?? r.ultima_manifestacao ?? undefined,
+      manifestacao_destinatario:
+        r.manifestacao_destinatario ??
+        r.ultima_manifestacao ??
+        r.manifesto ??
+        r.tipo_manifestacao ??
+        undefined,
+
     };
   };
 
