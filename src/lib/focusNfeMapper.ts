@@ -750,34 +750,46 @@ function mapItemToFocusNfe(
   // Reforma Tributária (NT 2025.002) - IBS/CBS/IS
   if (temIbsCbs) {
     const aliqIbsUf = item.aliq_ibs || 0;
+    const aliqIbsMun = 0;
     const aliqCbs = item.aliq_cbs || 0;
-    const percentualReducao = getPercentualReducaoIbsCbs(classTribIbsCbs);
-    const aliqEfetivaIbsUf = percentualReducao !== undefined
+    // Quando o CST exige o grupo de redução, ele NUNCA pode ser omitido —
+    // sem gRed a SEFAZ rejeita com 1033 ("grupo de redução não informado").
+    const exigeReducao = !!cstIbsCbs && CSTS_IBS_CBS_COM_REDUCAO.includes(cstIbsCbs);
+    const percentualMapeado = getPercentualReducaoIbsCbs(classTribIbsCbs, cstIbsCbs);
+    const percentualReducao = percentualMapeado ?? (exigeReducao ? 0 : undefined);
+    const enviarReducao = percentualReducao !== undefined;
+
+    const aliqEfetivaIbsUf = enviarReducao
       ? calcularAliquotaEfetiva(aliqIbsUf, percentualReducao)
       : aliqIbsUf;
-    const aliqEfetivaCbs = percentualReducao !== undefined
+    const aliqEfetivaIbsMun = enviarReducao
+      ? calcularAliquotaEfetiva(aliqIbsMun, percentualReducao)
+      : aliqIbsMun;
+    const aliqEfetivaCbs = enviarReducao
       ? calcularAliquotaEfetiva(aliqCbs, percentualReducao)
       : aliqCbs;
     const valorIbsUf = calcularValorTributo(baseIbsCbs, aliqEfetivaIbsUf);
+    const valorIbsMun = calcularValorTributo(baseIbsCbs, aliqEfetivaIbsMun);
     const valorCbs = calcularValorTributo(baseIbsCbs, aliqEfetivaCbs);
 
     focusItem.ibs_cbs_situacao_tributaria = cstIbsCbs;
     focusItem.ibs_cbs_classificacao_tributaria = classTribIbsCbs;
     focusItem.ibs_cbs_base_calculo = baseIbsCbs;
     focusItem.ibs_uf_aliquota = aliqIbsUf;
-    focusItem.ibs_uf_percentual_reducao_aliquota = percentualReducao;
-    focusItem.ibs_uf_aliquota_efetiva = percentualReducao !== undefined ? aliqEfetivaIbsUf : undefined;
+    focusItem.ibs_uf_percentual_reducao_aliquota = enviarReducao ? percentualReducao : undefined;
+    focusItem.ibs_uf_aliquota_efetiva = enviarReducao ? aliqEfetivaIbsUf : undefined;
     focusItem.ibs_uf_valor = valorIbsUf;
-    focusItem.ibs_mun_aliquota = 0;
-    focusItem.ibs_mun_percentual_reducao_aliquota = percentualReducao;
-    focusItem.ibs_mun_aliquota_efetiva = percentualReducao !== undefined ? 0 : undefined;
-    focusItem.ibs_mun_valor = 0;
-    focusItem.ibs_valor_total = valorIbsUf;
+    focusItem.ibs_mun_aliquota = aliqIbsMun;
+    focusItem.ibs_mun_percentual_reducao_aliquota = enviarReducao ? percentualReducao : undefined;
+    focusItem.ibs_mun_aliquota_efetiva = enviarReducao ? aliqEfetivaIbsMun : undefined;
+    focusItem.ibs_mun_valor = valorIbsMun;
+    focusItem.ibs_valor_total = roundCurrency(valorIbsUf + valorIbsMun);
     focusItem.cbs_aliquota = aliqCbs;
-    focusItem.cbs_percentual_reducao_aliquota = percentualReducao;
-    focusItem.cbs_aliquota_efetiva = percentualReducao !== undefined ? aliqEfetivaCbs : undefined;
+    focusItem.cbs_percentual_reducao_aliquota = enviarReducao ? percentualReducao : undefined;
+    focusItem.cbs_aliquota_efetiva = enviarReducao ? aliqEfetivaCbs : undefined;
     focusItem.cbs_valor = valorCbs;
   }
+
   if (temIs) {
     focusItem.is_situacao_tributaria = formatCst3Digits(item.cst_is);
     focusItem.is_classificacao_tributaria = classTribIs;
