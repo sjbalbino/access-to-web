@@ -561,7 +561,34 @@ function defaultClassTribIbsCbs(cst: string | null | undefined): string | undefi
   return "000001";
 }
 
-function getPercentualReducaoIbsCbs(classTrib: string | undefined): number | undefined {
+/**
+ * CSTs de IBS/CBS que EXIGEM o grupo de redução de alíquota (gRed / pRedAliq)
+ * no XML. Omitir o grupo nesses casos gera a Rejeição 1033
+ * ("Não informado o grupo de redução de alíquota Estadual").
+ */
+const CSTS_IBS_CBS_COM_REDUCAO = ["200", "210", "220", "221", "222", "510", "515"];
+
+/** Percentual de redução padrão por CST, usado quando o cClassTrib não está mapeado. */
+function percentualReducaoPadraoPorCst(cst: string | undefined): number | undefined {
+  if (!cst) return undefined;
+  switch (cst) {
+    case "200": // Alíquota reduzida (regra geral do agro: 60%)
+    case "210":
+    case "220":
+    case "221":
+    case "222":
+    case "510":
+    case "515": // Diferimento com redução de alíquota
+      return 60;
+    default:
+      return undefined;
+  }
+}
+
+function getPercentualReducaoIbsCbs(
+  classTrib: string | undefined,
+  cst?: string | undefined,
+): number | undefined {
   switch (classTrib) {
     // Produtos rurais/agro mais usados no sistema SisAgro
     case "200014": // Hortícolas, frutas e ovos — redução a zero
@@ -569,10 +596,18 @@ function getPercentualReducaoIbsCbs(classTrib: string | undefined): number | und
     case "200036": // Produtos agropecuários in natura
     case "200038": // Insumos agropecuários e aquícolas
       return 60;
+    // Família 515 — diferimento com redução de alíquota
+    case "515001": // Insumos agropecuários e aquícolas (Anexo IX)
+    case "515002":
+    case "515003":
+      return 60;
     default:
-      return undefined;
+      // Fallback por CST: garante que o grupo de redução nunca seja omitido
+      // quando o schema o exige.
+      return percentualReducaoPadraoPorCst(cst);
   }
 }
+
 
 function calcularAliquotaEfetiva(aliquota: number, percentualReducao: number): number {
   return Number((aliquota * (1 - percentualReducao / 100)).toFixed(4));
