@@ -561,7 +561,34 @@ function defaultClassTribIbsCbs(cst: string | null | undefined): string | undefi
   return "000001";
 }
 
-function getPercentualReducaoIbsCbs(classTrib: string | undefined): number | undefined {
+/**
+ * CSTs de IBS/CBS que EXIGEM o grupo de redução de alíquota (gRed / pRedAliq)
+ * no XML. Omitir o grupo nesses casos gera a Rejeição 1033
+ * ("Não informado o grupo de redução de alíquota Estadual").
+ */
+const CSTS_IBS_CBS_COM_REDUCAO = ["200", "210", "220", "221", "222", "510", "515"];
+
+/** Percentual de redução padrão por CST, usado quando o cClassTrib não está mapeado. */
+function percentualReducaoPadraoPorCst(cst: string | undefined): number | undefined {
+  if (!cst) return undefined;
+  switch (cst) {
+    case "200": // Alíquota reduzida (regra geral do agro: 60%)
+    case "210":
+    case "220":
+    case "221":
+    case "222":
+    case "510":
+    case "515": // Diferimento com redução de alíquota
+      return 60;
+    default:
+      return undefined;
+  }
+}
+
+function getPercentualReducaoIbsCbs(
+  classTrib: string | undefined,
+  cst?: string | undefined,
+): number | undefined {
   switch (classTrib) {
     // Produtos rurais/agro mais usados no sistema SisAgro
     case "200014": // Hortícolas, frutas e ovos — redução a zero
@@ -569,10 +596,18 @@ function getPercentualReducaoIbsCbs(classTrib: string | undefined): number | und
     case "200036": // Produtos agropecuários in natura
     case "200038": // Insumos agropecuários e aquícolas
       return 60;
+    // Família 515 — diferimento com redução de alíquota
+    case "515001": // Insumos agropecuários e aquícolas (Anexo IX)
+    case "515002":
+    case "515003":
+      return 60;
     default:
-      return undefined;
+      // Fallback por CST: garante que o grupo de redução nunca seja omitido
+      // quando o schema o exige.
+      return percentualReducaoPadraoPorCst(cst);
   }
 }
+
 
 function calcularAliquotaEfetiva(aliquota: number, percentualReducao: number): number {
   return Number((aliquota * (1 - percentualReducao / 100)).toFixed(4));
@@ -715,34 +750,46 @@ function mapItemToFocusNfe(
   // Reforma Tributária (NT 2025.002) - IBS/CBS/IS
   if (temIbsCbs) {
     const aliqIbsUf = item.aliq_ibs || 0;
+    const aliqIbsMun = 0;
     const aliqCbs = item.aliq_cbs || 0;
-    const percentualReducao = getPercentualReducaoIbsCbs(classTribIbsCbs);
-    const aliqEfetivaIbsUf = percentualReducao !== undefined
+    // Quando o CST exige o grupo de redução, ele NUNCA pode ser omitido —
+    // sem gRed a SEFAZ rejeita com 1033 ("grupo de redução não informado").
+    const exigeReducao = !!cstIbsCbs && CSTS_IBS_CBS_COM_REDUCAO.includes(cstIbsCbs);
+    const percentualMapeado = getPercentualReducaoIbsCbs(classTribIbsCbs, cstIbsCbs);
+    const percentualReducao = percentualMapeado ?? (exigeReducao ? 0 : undefined);
+    const enviarReducao = percentualReducao !== undefined;
+
+    const aliqEfetivaIbsUf = enviarReducao
       ? calcularAliquotaEfetiva(aliqIbsUf, percentualReducao)
       : aliqIbsUf;
-    const aliqEfetivaCbs = percentualReducao !== undefined
+    const aliqEfetivaIbsMun = enviarReducao
+      ? calcularAliquotaEfetiva(aliqIbsMun, percentualReducao)
+      : aliqIbsMun;
+    const aliqEfetivaCbs = enviarReducao
       ? calcularAliquotaEfetiva(aliqCbs, percentualReducao)
       : aliqCbs;
     const valorIbsUf = calcularValorTributo(baseIbsCbs, aliqEfetivaIbsUf);
+    const valorIbsMun = calcularValorTributo(baseIbsCbs, aliqEfetivaIbsMun);
     const valorCbs = calcularValorTributo(baseIbsCbs, aliqEfetivaCbs);
 
     focusItem.ibs_cbs_situacao_tributaria = cstIbsCbs;
     focusItem.ibs_cbs_classificacao_tributaria = classTribIbsCbs;
     focusItem.ibs_cbs_base_calculo = baseIbsCbs;
     focusItem.ibs_uf_aliquota = aliqIbsUf;
-    focusItem.ibs_uf_percentual_reducao_aliquota = percentualReducao;
-    focusItem.ibs_uf_aliquota_efetiva = percentualReducao !== undefined ? aliqEfetivaIbsUf : undefined;
+    focusItem.ibs_uf_percentual_reducao_aliquota = enviarReducao ? percentualReducao : undefined;
+    focusItem.ibs_uf_aliquota_efetiva = enviarReducao ? aliqEfetivaIbsUf : undefined;
     focusItem.ibs_uf_valor = valorIbsUf;
-    focusItem.ibs_mun_aliquota = 0;
-    focusItem.ibs_mun_percentual_reducao_aliquota = percentualReducao;
-    focusItem.ibs_mun_aliquota_efetiva = percentualReducao !== undefined ? 0 : undefined;
-    focusItem.ibs_mun_valor = 0;
-    focusItem.ibs_valor_total = valorIbsUf;
+    focusItem.ibs_mun_aliquota = aliqIbsMun;
+    focusItem.ibs_mun_percentual_reducao_aliquota = enviarReducao ? percentualReducao : undefined;
+    focusItem.ibs_mun_aliquota_efetiva = enviarReducao ? aliqEfetivaIbsMun : undefined;
+    focusItem.ibs_mun_valor = valorIbsMun;
+    focusItem.ibs_valor_total = roundCurrency(valorIbsUf + valorIbsMun);
     focusItem.cbs_aliquota = aliqCbs;
-    focusItem.cbs_percentual_reducao_aliquota = percentualReducao;
-    focusItem.cbs_aliquota_efetiva = percentualReducao !== undefined ? aliqEfetivaCbs : undefined;
+    focusItem.cbs_percentual_reducao_aliquota = enviarReducao ? percentualReducao : undefined;
+    focusItem.cbs_aliquota_efetiva = enviarReducao ? aliqEfetivaCbs : undefined;
     focusItem.cbs_valor = valorCbs;
   }
+
   if (temIs) {
     focusItem.is_situacao_tributaria = formatCst3Digits(item.cst_is);
     focusItem.is_classificacao_tributaria = classTribIs;
@@ -778,6 +825,16 @@ export function validarIbsCbsItens(itens: NotaFiscalItemData[]): IbsCbsItemIssue
       if (!item.aliq_ibs || item.aliq_ibs <= 0) faltantes.push("Alíquota IBS");
       if (!item.aliq_cbs || item.aliq_cbs <= 0) faltantes.push("Alíquota CBS");
     }
+
+    // CSTs com redução exigem o grupo gRed (pRedAliq) no XML — sem percentual
+    // determinável a SEFAZ rejeita com 1033.
+    if (cstIbsCbs && CSTS_IBS_CBS_COM_REDUCAO.includes(cstIbsCbs)) {
+      const percentual = getPercentualReducaoIbsCbs(classTribIbsCbs, cstIbsCbs);
+      if (percentual === undefined) {
+        faltantes.push("Percentual de redução da alíquota (grupo gRed)");
+      }
+    }
+
 
     if (faltantes.length > 0) {
       issues.push({
