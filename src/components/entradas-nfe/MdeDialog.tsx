@@ -259,8 +259,11 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const handleManifestar = async (chave: string, tipo: string) => {
     if (!inscricaoId) return;
     const ok = await manifestar(inscricaoId, chave, tipo);
-    if (ok) consultarDestinatarias(inscricaoId);
+    // Reconsulta apenas a nota manifestada: a listagem geral do DFe não devolve
+    // notas fora da janela de ~90 dias e sobrescreveria o status recém-gravado.
+    if (ok) await consultarPorChave(inscricaoId, chave);
   };
+
 
   const handleImportar = async (nfe: NfeRecebida) => {
     if (!inscricaoId) return;
