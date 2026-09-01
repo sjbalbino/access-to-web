@@ -205,10 +205,7 @@ export function useMde() {
     setIsLoading(true);
     try {
       await invokeAction({ action: "manifestar", inscricaoId, chave, tipo });
-  const manifestar = async (inscricaoId: string, chave: string, tipo: string) => {
-    setIsLoading(true);
-    try {
-      await invokeAction({ action: "manifestar", inscricaoId, chave, tipo });
+
       const labels: Record<string, string> = {
         ciencia: "Ciência da Operação",
         confirmacao: "Confirmação da Operação",
