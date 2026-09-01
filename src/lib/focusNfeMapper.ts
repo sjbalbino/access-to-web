@@ -826,6 +826,16 @@ export function validarIbsCbsItens(itens: NotaFiscalItemData[]): IbsCbsItemIssue
       if (!item.aliq_cbs || item.aliq_cbs <= 0) faltantes.push("Alíquota CBS");
     }
 
+    // CSTs com redução exigem o grupo gRed (pRedAliq) no XML — sem percentual
+    // determinável a SEFAZ rejeita com 1033.
+    if (cstIbsCbs && CSTS_IBS_CBS_COM_REDUCAO.includes(cstIbsCbs)) {
+      const percentual = getPercentualReducaoIbsCbs(classTribIbsCbs, cstIbsCbs);
+      if (percentual === undefined) {
+        faltantes.push("Percentual de redução da alíquota (grupo gRed)");
+      }
+    }
+
+
     if (faltantes.length > 0) {
       issues.push({
         numeroItem: index + 1,
