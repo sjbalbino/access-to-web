@@ -20,6 +20,91 @@ export interface TourDefinicao {
  */
 export const TOURS: TourDefinicao[] = [
   {
+    id: "granjas",
+    titulo: "Granjas",
+    rota: "/granjas",
+    passos: [
+      {
+        titulo: "Granjas",
+        texto:
+          "A granja é a fazenda/estabelecimento da empresa. Tudo no sistema (lavouras, colheitas, notas e relatórios) fica ligado a uma granja.",
+      },
+      {
+        selector: '[data-tour="acao-principal"]',
+        titulo: "Nova granja",
+        texto:
+          "Informe razão social, CNPJ/CPF (endereço e município vêm automáticos pelo CNPJ/CEP) e marque uma como Principal — ela já vem escolhida nas outras telas.",
+      },
+      {
+        titulo: "Status e vínculos",
+        texto:
+          "Granjas inativas deixam de aparecer nas listas. Cada granja também define a inscrição de produtor usada como emitente padrão nas notas.",
+      },
+      {
+        selector: '[data-tour="menu"]',
+        titulo: "Próximo passo",
+        texto: "Com a granja criada, cadastre as Lavouras e depois abra o Controle de Lavoura.",
+      },
+    ],
+  },
+  {
+    id: "lavouras",
+    titulo: "Lavouras",
+    rota: "/lavouras",
+    passos: [
+      {
+        titulo: "Lavouras",
+        texto: "Cada lavoura é uma área de plantio da granja, com o total de hectares usado nos cálculos por hectare.",
+      },
+      {
+        selector: '[data-tour="acao-principal"]',
+        titulo: "Nova lavoura",
+        texto:
+          "Informe nome, granja e o total de hectares. A área não aproveitável é descontada e o sistema calcula a área de plantio.",
+      },
+      {
+        titulo: "Terceiros e localização",
+        texto:
+          "Marque 'Recebe terceiros' quando a área recebe produção de outros produtores. Latitude e longitude são opcionais.",
+      },
+    ],
+  },
+  {
+    id: "controle-lavoura",
+    titulo: "Controle de Lavoura e Aplicações",
+    rota: "/controle-lavoura",
+    passos: [
+      {
+        titulo: "Controle de Lavoura",
+        texto:
+          "Cada linha é a lavoura em uma safra. É dentro dela que ficam plantio, aplicações, colheita e os custos.",
+      },
+      {
+        selector: '[data-tour="acao-principal"]',
+        titulo: "Novo controle",
+        texto: "Escolha a safra e a lavoura, informe a área total e salve para abrir as abas de lançamento.",
+      },
+      {
+        selector: '[data-tour="abas"]',
+        titulo: "As abas",
+        texto:
+          "Plantio (data, variedade, hectares plantados) · Adubação, Herbicidas, Fungicidas, Inseticidas, Adjuvantes, Micronutrientes, Inoculantes e Calcários (cada aplicação com data, área, dose por hectare, quantidade e valor) · Colheita (produção da área).",
+      },
+      {
+        selector: '[data-tour="abas"]',
+        titulo: "Acompanhamento e custos",
+        texto:
+          "Insetos, Plantas Invasoras, Floração, Chuvas, Análise de Solo e Pivôs registram o acompanhamento da área. A aba Custos soma tudo e mostra o custo por hectare e por saca.",
+      },
+      {
+        titulo: "Produtos das aplicações",
+        texto:
+          "A lista de produtos de cada aba vem dos Grupos de Produtos (Fungicidas, Herbicidas etc.). Se um produto não aparecer, confira se está ativo e no grupo certo em Cadastros › Produtos.",
+      },
+    ],
+  },
+
+  {
     id: "entrada-colheita",
     titulo: "Entrada de Colheita",
     rota: "/entrada-colheita",
@@ -125,18 +210,29 @@ export const TOURS: TourDefinicao[] = [
     passos: [
       {
         titulo: "Entradas de NF-e",
-        texto: "Aqui entram as notas emitidas contra a empresa e as entradas geradas a partir delas.",
+        texto:
+          "Esta tela reúne as notas que fornecedores emitiram contra a empresa (DFe) e as entradas já geradas a partir delas.",
       },
       {
         selector: '[data-tour="acao-principal"]',
-        titulo: "Buscar no SEFAZ e manifestar",
+        titulo: "1) Buscar no SEFAZ e manifestar",
         texto:
           "Busque as notas no SEFAZ e faça a manifestação para liberar o XML. Notas com mais de 90 dias aparecem como 'XML fora do prazo da SEFAZ'.",
       },
       {
-        titulo: "Gerar a entrada",
+        titulo: "2) Gerar a entrada",
         texto:
-          "Com o XML, gere a entrada no estoque e as parcelas do contas a pagar. As notas já usadas mostram o aviso 'Entrada gerada'.",
+          "Com o XML, gere a entrada. As notas já aproveitadas mostram o aviso 'Entrada gerada', evitando lançamento em dobro.",
+      },
+      {
+        titulo: "3) Itens da entrada",
+        texto:
+          "Na aba de itens confira produto, quantidade, unidade (vem do produto) e CFOP — sugerido conforme a UF do fornecedor e o grupo do produto.",
+      },
+      {
+        titulo: "4) Contas a pagar",
+        texto:
+          "Na aba de parcelas o sistema traz as duplicatas do XML; você pode editar vencimentos e valores antes de confirmar, gerando o contas a pagar.",
       },
     ],
   },
@@ -147,16 +243,28 @@ export const TOURS: TourDefinicao[] = [
     passos: [
       {
         titulo: "Relatórios",
-        texto:
-          "Cada card é um relatório em PDF. Ao abrir, escolha safra, período, local de entrega e, em alguns, a orientação e o tamanho da página.",
+        texto: "Cada card gera um relatório em PDF (e alguns também em Excel).",
       },
       {
         selector: '[data-tour="acao-principal"]',
-        titulo: "Gerar",
-        texto: "Use o botão do card para abrir os filtros e gerar o PDF.",
+        titulo: "Os grupos",
+        texto:
+          "Produção: colheitas, extratos de depósito e estoque por produtor. Comercial: contratos, remessas e entregas por variedade. Financeiro: DRE, demonstrativo gerencial, bens móveis e extrato de cliente/fornecedor.",
+      },
+      {
+        titulo: "Filtros",
+        texto:
+          "Ao abrir um card escolha safra, período e local de entrega; em vários deles também a orientação e o tamanho da página (A4, A3, Carta, Ofício).",
+      },
+      {
+        selector: '[data-tour="menu"]',
+        titulo: "Atalhos do menu",
+        texto:
+          "Pelo menu você entra direto em Relatórios de Produção, Comerciais ou Financeiros, além dos Relatórios de IR e do Controle Gerencial.",
       },
     ],
   },
+
 ];
 
 export const getTour = (id: string) => TOURS.find((t) => t.id === id);

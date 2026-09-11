@@ -153,7 +153,7 @@ export default function Lavouras() {
         iconColor="bg-chart-5/10 text-chart-5"
         actions={
           canEdit && (
-            <Button onClick={handleNew} className="gap-2">
+            <Button data-tour="acao-principal" onClick={handleNew} className="gap-2">
               <Plus className="h-4 w-4" />
               Nova Lavoura
             </Button>
