@@ -132,7 +132,14 @@ export function useMde() {
       const cached = await loadCache(inscricaoId);
       const byChave = new Map<string, NfeRecebida>();
       cached.forEach((n) => byChave.set(n.chave, n));
-      items.forEach((n) => byChave.set(n.chave, n)); // API prevalece
+      items.forEach((n) => {
+        const anterior = byChave.get(n.chave);
+        byChave.set(n.chave, {
+          ...n,
+          manifestacao_destinatario:
+            n.manifestacao_destinatario || anterior?.manifestacao_destinatario,
+        });
+      }); // API prevalece, exceto quando omite a manifestação já confirmada
       const merged = Array.from(byChave.values()).sort((a, b) =>
         (b.data_emissao || "").localeCompare(a.data_emissao || "")
       );
@@ -174,7 +181,14 @@ export function useMde() {
       setNfesRecebidas((prev) => {
         const byChave = new Map<string, NfeRecebida>();
         prev.forEach((n) => byChave.set(n.chave, n));
-        items.forEach((n) => byChave.set(n.chave, n));
+        items.forEach((n) => {
+          const anterior = byChave.get(n.chave);
+          byChave.set(n.chave, {
+            ...n,
+            manifestacao_destinatario:
+              n.manifestacao_destinatario || anterior?.manifestacao_destinatario,
+          });
+        });
         return Array.from(byChave.values()).sort((a, b) =>
           (b.data_emissao || "").localeCompare(a.data_emissao || "")
         );
