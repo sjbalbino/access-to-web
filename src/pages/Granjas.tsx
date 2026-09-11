@@ -424,13 +424,23 @@ export default function Granjas() {
               ) : null;
             })()}
           </div>
+          {semEmpresa && !selectedGranja && (
+            <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
+              Selecione uma empresa antes de cadastrar a granja.
+            </div>
+          )}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
             <Button
               onClick={handleSave}
-              disabled={!formData.razao_social || createGranja.isPending || updateGranja.isPending}
+              disabled={
+                !formData.razao_social ||
+                (semEmpresa && !selectedGranja) ||
+                createGranja.isPending ||
+                updateGranja.isPending
+              }
             >
               {createGranja.isPending || updateGranja.isPending ? "Salvando..." : "Salvar"}
             </Button>
