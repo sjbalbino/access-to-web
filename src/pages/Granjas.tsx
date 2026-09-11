@@ -160,7 +160,7 @@ export default function Granjas() {
         iconColor="bg-info/10 text-info"
         actions={
           canEdit && (
-            <Button onClick={handleNew} className="gap-2">
+            <Button data-tour="acao-principal" onClick={handleNew} className="gap-2">
               <Plus className="h-4 w-4" />
               Nova Granja
             </Button>

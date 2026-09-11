@@ -78,6 +78,9 @@ devoluções, compras e remessas. Por isso o saldo muda conforme o local de entr
 
 // Telas com tour guiado disponível no frontend (mantido em sincronia com src/lib/tours).
 export const TOURS_DISPONIVEIS = [
+  { id: "granjas", titulo: "Granjas", rota: "/granjas" },
+  { id: "lavouras", titulo: "Lavouras", rota: "/lavouras" },
+  { id: "controle-lavoura", titulo: "Controle de Lavoura e Aplicações", rota: "/controle-lavoura" },
   { id: "entrada-colheita", titulo: "Entrada de Colheita", rota: "/entrada-colheita" },
   { id: "notas-deposito", titulo: "Notas de Depósito", rota: "/notas-deposito" },
   { id: "transferencias", titulo: "Transferências de Depósito", rota: "/transferencias" },
@@ -86,3 +89,4 @@ export const TOURS_DISPONIVEIS = [
   { id: "entradas-nfe", titulo: "Entradas de NF-e (DFe)", rota: "/entradas-nfe" },
   { id: "relatorios", titulo: "Relatórios", rota: "/relatorios" },
 ];
+

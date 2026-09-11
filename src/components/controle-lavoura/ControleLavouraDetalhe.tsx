@@ -179,7 +179,7 @@ export function ControleLavouraDetalhe({ controleLavoura, onBack, canEdit }: Con
       {/* Abas de Detalhes */}
       <Tabs defaultValue="colheita" className="w-full">
         <ScrollArea className="w-full whitespace-nowrap">
-          <TabsList className="inline-flex h-10 w-max">
+          <TabsList data-tour="abas" className="inline-flex h-10 w-max">
             <TabsTrigger value="colheita" className="gap-1.5 text-xs">
               <Wheat className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Colheita</span>

@@ -129,7 +129,7 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
             Controles de Lavoura
           </CardTitle>
           {canEdit && (
-            <Button onClick={onNew} className="gap-2">
+            <Button data-tour="acao-principal" onClick={onNew} className="gap-2">
               <Plus className="h-4 w-4" />
               Novo Controle
             </Button>
