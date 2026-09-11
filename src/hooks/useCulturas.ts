@@ -14,7 +14,9 @@ export interface Cultura {
   updated_at: string;
 }
 
-export type CulturaInput = Omit<Cultura, "id" | "created_at" | "updated_at">;
+export type CulturaInput = Omit<Cultura, "id" | "created_at" | "updated_at" | "codigo"> & {
+  codigo?: string | null;
+};
 
 export function useCulturas() {
   return useQuery({

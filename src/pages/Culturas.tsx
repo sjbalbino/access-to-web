@@ -44,8 +44,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 
-const emptyCultura: CulturaInput = {
-  codigo: "",
+type CulturaForm = Omit<CulturaInput, "codigo">;
+
+const emptyCultura: CulturaForm = {
   nome: "",
   peso_saco_industria: 60,
   peso_saco_semente: 60,
@@ -64,18 +65,15 @@ export default function Culturas() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCultura, setSelectedCultura] = useState<Cultura | null>(null);
-  const [formData, setFormData] = useState<CulturaInput>(emptyCultura);
+  const [formData, setFormData] = useState<CulturaForm>(emptyCultura);
 
-  const filteredCulturas = culturas?.filter(
-    (c) =>
-      c.nome.toLowerCase().includes(search.toLowerCase()) ||
-      c.codigo?.toLowerCase().includes(search.toLowerCase())
+  const filteredCulturas = culturas?.filter((c) =>
+    c.nome.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleEdit = (cultura: Cultura) => {
     setSelectedCultura(cultura);
     setFormData({
-      codigo: cultura.codigo || "",
       nome: cultura.nome,
       peso_saco_industria: cultura.peso_saco_industria || 60,
       peso_saco_semente: cultura.peso_saco_semente || 60,
@@ -162,7 +160,6 @@ export default function Culturas() {
               <Table>
                 <TableHeader>
                    <TableRow>
-                    <TableHead>Código</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead className="hidden sm:table-cell">Peso Indústria</TableHead>
                     <TableHead className="hidden sm:table-cell">Peso Semente</TableHead>
@@ -174,7 +171,6 @@ export default function Culturas() {
                 <TableBody>
                   {dadosPaginados.map((cultura) => (
                     <TableRow key={cultura.id}>
-                      <TableCell className="font-medium">{cultura.codigo || "-"}</TableCell>
                       <TableCell className="font-medium">{cultura.nome}</TableCell>
                       <TableCell className="hidden sm:table-cell">{cultura.peso_saco_industria || 60} kg</TableCell>
                       <TableCell className="hidden sm:table-cell">{cultura.peso_saco_semente || 60} kg</TableCell>
@@ -250,24 +246,14 @@ export default function Culturas() {
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="codigo">Código</Label>
-                <Input
-                  id="codigo"
-                  value={formData.codigo || ""}
-                  onChange={(e) => setFormData({ ...formData, codigo: e.target.value.toUpperCase() })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nome">Nome *</Label>
-                <Input
-                  id="nome"
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value.toUpperCase() })}
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome *</Label>
+              <Input
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value.toUpperCase() })}
+                required
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
