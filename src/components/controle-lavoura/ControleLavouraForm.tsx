@@ -108,17 +108,6 @@ export function ControleLavouraForm({ mode, controleLavoura, onBack, onSaved }: 
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-          {/* Código */}
-          <div className="space-y-2">
-            <Label>Código</Label>
-            <Input
-              type="text"
-              value={codigo}
-              onChange={(e) => setCodigo(e.target.value)}
-              placeholder="Código legado"
-            />
-          </div>
-
           {/* Safra */}
           <div className="space-y-2">
             <Label>Safra *</Label>
