@@ -210,18 +210,29 @@ export const TOURS: TourDefinicao[] = [
     passos: [
       {
         titulo: "Entradas de NF-e",
-        texto: "Aqui entram as notas emitidas contra a empresa e as entradas geradas a partir delas.",
+        texto:
+          "Esta tela reúne as notas que fornecedores emitiram contra a empresa (DFe) e as entradas já geradas a partir delas.",
       },
       {
         selector: '[data-tour="acao-principal"]',
-        titulo: "Buscar no SEFAZ e manifestar",
+        titulo: "1) Buscar no SEFAZ e manifestar",
         texto:
           "Busque as notas no SEFAZ e faça a manifestação para liberar o XML. Notas com mais de 90 dias aparecem como 'XML fora do prazo da SEFAZ'.",
       },
       {
-        titulo: "Gerar a entrada",
+        titulo: "2) Gerar a entrada",
         texto:
-          "Com o XML, gere a entrada no estoque e as parcelas do contas a pagar. As notas já usadas mostram o aviso 'Entrada gerada'.",
+          "Com o XML, gere a entrada. As notas já aproveitadas mostram o aviso 'Entrada gerada', evitando lançamento em dobro.",
+      },
+      {
+        titulo: "3) Itens da entrada",
+        texto:
+          "Na aba de itens confira produto, quantidade, unidade (vem do produto) e CFOP — sugerido conforme a UF do fornecedor e o grupo do produto.",
+      },
+      {
+        titulo: "4) Contas a pagar",
+        texto:
+          "Na aba de parcelas o sistema traz as duplicatas do XML; você pode editar vencimentos e valores antes de confirmar, gerando o contas a pagar.",
       },
     ],
   },
@@ -232,16 +243,28 @@ export const TOURS: TourDefinicao[] = [
     passos: [
       {
         titulo: "Relatórios",
-        texto:
-          "Cada card é um relatório em PDF. Ao abrir, escolha safra, período, local de entrega e, em alguns, a orientação e o tamanho da página.",
+        texto: "Cada card gera um relatório em PDF (e alguns também em Excel).",
       },
       {
         selector: '[data-tour="acao-principal"]',
-        titulo: "Gerar",
-        texto: "Use o botão do card para abrir os filtros e gerar o PDF.",
+        titulo: "Os grupos",
+        texto:
+          "Produção: colheitas, extratos de depósito e estoque por produtor. Comercial: contratos, remessas e entregas por variedade. Financeiro: DRE, demonstrativo gerencial, bens móveis e extrato de cliente/fornecedor.",
+      },
+      {
+        titulo: "Filtros",
+        texto:
+          "Ao abrir um card escolha safra, período e local de entrega; em vários deles também a orientação e o tamanho da página (A4, A3, Carta, Ofício).",
+      },
+      {
+        selector: '[data-tour="menu"]',
+        titulo: "Atalhos do menu",
+        texto:
+          "Pelo menu você entra direto em Relatórios de Produção, Comerciais ou Financeiros, além dos Relatórios de IR e do Controle Gerencial.",
       },
     ],
   },
+
 ];
 
 export const getTour = (id: string) => TOURS.find((t) => t.id === id);
