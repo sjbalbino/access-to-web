@@ -67,7 +67,8 @@ export default function Granjas() {
   const createGranja = useCreateGranja();
   const updateGranja = useUpdateGranja();
   const deleteGranja = useDeleteGranja();
-  const { canEdit } = useAuth();
+  const { canEdit, profile } = useAuth();
+  const semEmpresa = !profile?.tenant_id;
   const { isLoading: cepLoading, fetchCep } = useCepLookup();
 
   const [search, setSearch] = useState("");
