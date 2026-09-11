@@ -250,7 +250,6 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Código</TableHead>
                    <TableHead>Safra</TableHead>
                   <TableHead>Granja</TableHead>
                   <TableHead>Lavoura</TableHead>
@@ -267,7 +266,6 @@ export function ControleLavouraList({ onNew, onEdit, canEdit }: ControleLavouraL
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => onEdit(controle.id)}
                   >
-                    <TableCell>{controle.codigo || controle.lavouras?.codigo || '-'}</TableCell>
                      <TableCell className="font-medium">{controle.safras?.nome || '-'}</TableCell>
                     <TableCell>{controle.granja?.nome_fantasia || controle.granja?.razao_social || controle.lavouras?.granjas?.nome_fantasia || controle.lavouras?.granjas?.razao_social || '-'}</TableCell>
                     <TableCell>{controle.lavouras?.nome || '-'}</TableCell>
