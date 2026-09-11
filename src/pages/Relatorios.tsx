@@ -154,7 +154,7 @@ export default function Relatorios() {
           {secao === "todos" && (
             <h3 className={`text-lg font-semibold mb-4 ${idx === 0 ? "mt-6" : "mt-8"}`}>{grupo.titulo}</h3>
           )}
-          <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 ${secao !== "todos" ? "mt-6" : ""}`}>
+          <div data-tour={idx === 0 ? "acao-principal" : undefined} className={`grid grid-cols-1 md:grid-cols-3 gap-6 ${secao !== "todos" ? "mt-6" : ""}`}>
             {grupo.cards.map((card) => {
               const Icon = card.icon;
               return (

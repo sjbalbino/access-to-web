@@ -6,6 +6,7 @@ import { TenantBadge } from "./TenantBadge";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Wheat } from "lucide-react";
 import { loadPdfBrand } from "@/lib/pdfBrand";
+import { AssistenteWidget } from "@/components/assistente/AssistenteWidget";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -52,6 +53,8 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
           </main>
         </div>
+
+        <AssistenteWidget />
       </div>
     </TooltipProvider>
   );

@@ -57,3 +57,6 @@ verify_jwt = false
 
 [functions.handle-email-suppression]
 verify_jwt = false
+
+[functions.assistente-ajuda]
+verify_jwt = true
