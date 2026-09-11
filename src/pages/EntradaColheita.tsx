@@ -1384,6 +1384,7 @@ export default function EntradaColheita() {
                   </div>
 
                   <Button 
+                    data-tour="acao-principal"
                     onClick={handleConfirmarEntrada}
                     disabled={!selectedLavouraId || formEntrada.peso_bruto <= 0 || createColheitaEntrada.isPending}
                     className="w-full"

@@ -108,7 +108,7 @@ export default function VendasProducao() {
               Contratos de venda e remessas de produção agrícola
             </p>
           </div>
-          <Button onClick={() => navigate("/vendas-producao/nova")} className="w-full sm:w-auto">
+          <Button data-tour="acao-principal" onClick={() => navigate("/vendas-producao/nova")} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Novo Contrato
           </Button>

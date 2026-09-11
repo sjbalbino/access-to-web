@@ -83,7 +83,7 @@ export default function CompraCereais() {
           title="Compra de Cereais"
           description="CFOP 1102 - Compra para comercialização (soma saldo sócio)"
           actions={
-            <Button onClick={handleNovaCompra}>
+            <Button data-tour="acao-principal" onClick={handleNovaCompra}>
               <Plus className="h-4 w-4 mr-2" /> Nova Compra
             </Button>
           }

@@ -136,7 +136,7 @@ export default function NotasDeposito() {
           description="Consulta e emissão de contra-notas (CFOP 1905) para entrada de mercadoria recebida para depósito"
           icon={<FileText className="h-5 w-5" />}
           actions={
-            <Button onClick={() => setFormDialogOpen(true)}>
+            <Button data-tour="acao-principal" onClick={() => setFormDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Nova Nota de Depósito
             </Button>

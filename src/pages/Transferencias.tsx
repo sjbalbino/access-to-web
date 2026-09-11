@@ -122,7 +122,7 @@ export default function Transferencias() {
                 <Users className="h-4 w-4 mr-2" />
                 Reatribuir Inscrição
               </Button>
-              <Button onClick={handleNovaTransferencia}>
+              <Button data-tour="acao-principal" onClick={handleNovaTransferencia}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Transferência
               </Button>

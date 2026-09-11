@@ -298,7 +298,7 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 overflow-y-auto">
+      <nav data-tour="menu" className="flex-1 py-4 overflow-y-auto">
         <div className="space-y-1 px-2">
           {menuGroups.map((group, groupIndex) => (
             <div key={group.title}>
