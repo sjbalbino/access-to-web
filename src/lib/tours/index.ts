@@ -20,6 +20,91 @@ export interface TourDefinicao {
  */
 export const TOURS: TourDefinicao[] = [
   {
+    id: "granjas",
+    titulo: "Granjas",
+    rota: "/granjas",
+    passos: [
+      {
+        titulo: "Granjas",
+        texto:
+          "A granja é a fazenda/estabelecimento da empresa. Tudo no sistema (lavouras, colheitas, notas e relatórios) fica ligado a uma granja.",
+      },
+      {
+        selector: '[data-tour="acao-principal"]',
+        titulo: "Nova granja",
+        texto:
+          "Informe razão social, CNPJ/CPF (endereço e município vêm automáticos pelo CNPJ/CEP) e marque uma como Principal — ela já vem escolhida nas outras telas.",
+      },
+      {
+        titulo: "Status e vínculos",
+        texto:
+          "Granjas inativas deixam de aparecer nas listas. Cada granja também define a inscrição de produtor usada como emitente padrão nas notas.",
+      },
+      {
+        selector: '[data-tour="menu"]',
+        titulo: "Próximo passo",
+        texto: "Com a granja criada, cadastre as Lavouras e depois abra o Controle de Lavoura.",
+      },
+    ],
+  },
+  {
+    id: "lavouras",
+    titulo: "Lavouras",
+    rota: "/lavouras",
+    passos: [
+      {
+        titulo: "Lavouras",
+        texto: "Cada lavoura é uma área de plantio da granja, com o total de hectares usado nos cálculos por hectare.",
+      },
+      {
+        selector: '[data-tour="acao-principal"]',
+        titulo: "Nova lavoura",
+        texto:
+          "Informe nome, granja e o total de hectares. A área não aproveitável é descontada e o sistema calcula a área de plantio.",
+      },
+      {
+        titulo: "Terceiros e localização",
+        texto:
+          "Marque 'Recebe terceiros' quando a área recebe produção de outros produtores. Latitude e longitude são opcionais.",
+      },
+    ],
+  },
+  {
+    id: "controle-lavoura",
+    titulo: "Controle de Lavoura e Aplicações",
+    rota: "/controle-lavoura",
+    passos: [
+      {
+        titulo: "Controle de Lavoura",
+        texto:
+          "Cada linha é a lavoura em uma safra. É dentro dela que ficam plantio, aplicações, colheita e os custos.",
+      },
+      {
+        selector: '[data-tour="acao-principal"]',
+        titulo: "Novo controle",
+        texto: "Escolha a safra e a lavoura, informe a área total e salve para abrir as abas de lançamento.",
+      },
+      {
+        selector: '[data-tour="abas"]',
+        titulo: "As abas",
+        texto:
+          "Plantio (data, variedade, hectares plantados) · Adubação, Herbicidas, Fungicidas, Inseticidas, Adjuvantes, Micronutrientes, Inoculantes e Calcários (cada aplicação com data, área, dose por hectare, quantidade e valor) · Colheita (produção da área).",
+      },
+      {
+        selector: '[data-tour="abas"]',
+        titulo: "Acompanhamento e custos",
+        texto:
+          "Insetos, Plantas Invasoras, Floração, Chuvas, Análise de Solo e Pivôs registram o acompanhamento da área. A aba Custos soma tudo e mostra o custo por hectare e por saca.",
+      },
+      {
+        titulo: "Produtos das aplicações",
+        texto:
+          "A lista de produtos de cada aba vem dos Grupos de Produtos (Fungicidas, Herbicidas etc.). Se um produto não aparecer, confira se está ativo e no grupo certo em Cadastros › Produtos.",
+      },
+    ],
+  },
+
+  {
     id: "entrada-colheita",
     titulo: "Entrada de Colheita",
     rota: "/entrada-colheita",
