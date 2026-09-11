@@ -56,6 +56,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { formatCpfCnpj, formatInscricaoEstadual } from "@/lib/formatters";
+import { validarAliquotasEmitente } from "@/lib/emitenteNfeValidation";
 
 
 const AMBIENTES = [
@@ -327,6 +328,17 @@ export default function EmitentesNfe() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validacaoAliquotas = validarAliquotasEmitente(formData);
+    if (!validacaoAliquotas.valido) {
+      toast.error("Revise as alíquotas informadas", {
+        description: validacaoAliquotas.mensagem,
+      });
+      if (validacaoAliquotas.campo) {
+        document.getElementById(validacaoAliquotas.campo)?.focus();
+      }
+      return;
+    }
 
     // Validação uniforme de IE: rejeita genéricas e confere DV por UF na inscrição vinculada
     const inscVinculada = inscricoes.find((i) => i.id === formData.inscricao_produtor_id);
@@ -741,6 +753,8 @@ export default function EmitentesNfe() {
                         id="aliq_icms_padrao"
                         type="number"
                         step="0.01"
+                        min="0"
+                        max="100"
                         value={formData.aliq_icms_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_icms_padrao: Number(e.target.value) })
@@ -753,6 +767,8 @@ export default function EmitentesNfe() {
                         id="aliq_pis_padrao"
                         type="number"
                         step="0.01"
+                        min="0"
+                        max="100"
                         value={formData.aliq_pis_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_pis_padrao: Number(e.target.value) })
@@ -765,6 +781,8 @@ export default function EmitentesNfe() {
                         id="aliq_cofins_padrao"
                         type="number"
                         step="0.01"
+                        min="0"
+                        max="100"
                         value={formData.aliq_cofins_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_cofins_padrao: Number(e.target.value) })
@@ -777,6 +795,8 @@ export default function EmitentesNfe() {
                         id="aliq_ibs_padrao"
                         type="number"
                         step="0.01"
+                        min="0"
+                        max="100"
                         value={formData.aliq_ibs_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_ibs_padrao: Number(e.target.value) })
@@ -789,6 +809,8 @@ export default function EmitentesNfe() {
                         id="aliq_cbs_padrao"
                         type="number"
                         step="0.01"
+                        min="0"
+                        max="100"
                         value={formData.aliq_cbs_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_cbs_padrao: Number(e.target.value) })
@@ -801,6 +823,8 @@ export default function EmitentesNfe() {
                         id="aliq_is_padrao"
                         type="number"
                         step="0.01"
+                        min="0"
+                        max="100"
                         value={formData.aliq_is_padrao || 0}
                         onChange={(e) =>
                           setFormData({ ...formData, aliq_is_padrao: Number(e.target.value) })

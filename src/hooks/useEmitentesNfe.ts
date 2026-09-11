@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { mensagemErroEmitente, validarAliquotasEmitente } from "@/lib/emitenteNfeValidation";
 
 export interface EmitenteNfe {
   id: string;
@@ -84,6 +85,9 @@ export function useEmitentesNfe() {
 
   const createEmitente = useMutation({
     mutationFn: async (emitente: EmitenteNfeInsert) => {
+      const validacao = validarAliquotasEmitente(emitente);
+      if (!validacao.valido) throw new Error(validacao.mensagem);
+
       const { data, error } = await supabase
         .from("emitentes_nfe")
         .insert(emitente)
@@ -109,12 +113,15 @@ export function useEmitentesNfe() {
       toast.success("Emitente NF-e criado com sucesso!");
     },
     onError: (error: Error) => {
-      toast.error(`Erro ao criar emitente: ${error.message}`);
+      toast.error(`Erro ao criar emitente: ${mensagemErroEmitente(error)}`);
     },
   });
 
   const updateEmitente = useMutation({
     mutationFn: async ({ id, ...emitente }: EmitenteNfeUpdate & { id: string }) => {
+      const validacao = validarAliquotasEmitente(emitente);
+      if (!validacao.valido) throw new Error(validacao.mensagem);
+
       const { data, error } = await supabase
         .from("emitentes_nfe")
         .update(emitente)
@@ -141,7 +148,7 @@ export function useEmitentesNfe() {
       toast.success("Emitente NF-e atualizado com sucesso!");
     },
     onError: (error: Error) => {
-      toast.error(`Erro ao atualizar emitente: ${error.message}`);
+      toast.error(`Erro ao atualizar emitente: ${mensagemErroEmitente(error)}`);
     },
   });
 
