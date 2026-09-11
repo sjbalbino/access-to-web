@@ -91,9 +91,21 @@ export function useCreateGranja() {
   
   return useMutation({
     mutationFn: async (granja: GranjaInput) => {
+      // Garante o vínculo com a empresa (tenant) ativa do usuário.
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("id", user?.id)
+        .maybeSingle();
+
+      if (!profile?.tenant_id) {
+        throw new Error("Selecione uma empresa antes de cadastrar a granja.");
+      }
+
       const { data, error } = await supabase
         .from("granjas")
-        .insert(granja)
+        .insert({ ...granja, tenant_id: profile.tenant_id })
         .select()
         .single();
       if (error) throw error;
