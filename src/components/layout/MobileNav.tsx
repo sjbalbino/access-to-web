@@ -38,6 +38,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTenants } from "@/hooks/useTenants";
 import { useTabs } from "@/contexts/TabsContext";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -149,6 +150,11 @@ export function MobileNav() {
   const location = useLocation();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
   const { openTab } = useTabs();
+  const navigate = useNavigate();
+  const { data: tenants = [] } = useTenants();
+  const empresaAtiva = profile?.tenant_id
+    ? tenants.find((t) => t.id === profile.tenant_id)
+    : null;
 
   // Função para verificar se um grupo contém a rota ativa
   const isGroupActive = (items: MenuItem[]) =>
