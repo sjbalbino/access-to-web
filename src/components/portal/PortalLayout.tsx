@@ -176,7 +176,9 @@ export function PortalLayout({ children }: PortalLayoutProps) {
             <h2 className="text-sm font-semibold text-foreground mb-3">Contato</h2>
             <ul className="space-y-2 text-sm text-muted-foreground">
               {PORTAL_CONTATO.email && <li>{PORTAL_CONTATO.email}</li>}
-              {PORTAL_CONTATO.telefoneExibicao && <li>{PORTAL_CONTATO.telefoneExibicao}</li>}
+              {PORTAL_CONTATO.telefones.map((tel) => (
+                <li key={tel.whatsapp}>{tel.exibicao}</li>
+              ))}
               {PORTAL_CONTATO.cidade && (
                 <li>
                   {PORTAL_CONTATO.cidade}
