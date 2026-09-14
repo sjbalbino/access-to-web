@@ -43,12 +43,15 @@ export default function PortalContato() {
                 {PORTAL_CONTATO.email}
               </p>
             )}
-            {PORTAL_CONTATO.telefoneExibicao && (
-              <p className="flex items-center gap-3 text-sm text-muted-foreground">
+            {PORTAL_CONTATO.telefones.map((tel) => (
+              <p
+                key={tel.whatsapp}
+                className="flex items-center gap-3 text-sm text-muted-foreground"
+              >
                 <Phone className="h-4 w-4 text-primary" />
-                {PORTAL_CONTATO.telefoneExibicao}
+                {tel.exibicao}
               </p>
-            )}
+            ))}
             {PORTAL_CONTATO.cidade && (
               <p className="flex items-center gap-3 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary" />
