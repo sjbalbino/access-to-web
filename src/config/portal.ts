@@ -4,10 +4,18 @@
  * Preencha os contatos abaixo com os dados reais da empresa.
  * Campos vazios simplesmente não são exibidos no site — nada é inventado.
  */
-export interface PortalContato {
+export interface PortalTelefone {
   /** Telefone no formato internacional, apenas dígitos. Ex.: 5551999999999 */
   whatsapp: string;
+  exibicao: string;
+}
+
+export interface PortalContato {
+  /** Telefone principal (usado nos botões de WhatsApp). */
+  whatsapp: string;
   telefoneExibicao: string;
+  /** Demais telefones/WhatsApp de contato. */
+  telefones: PortalTelefone[];
   email: string;
   cidade: string;
   uf: string;
@@ -16,6 +24,10 @@ export interface PortalContato {
 export const PORTAL_CONTATO: PortalContato = {
   whatsapp: "5555991411755",
   telefoneExibicao: "(55) 99141-1755",
+  telefones: [
+    { whatsapp: "5555991411755", exibicao: "(55) 99141-1755" },
+    { whatsapp: "5555996391464", exibicao: "(55) 99639-1464" },
+  ],
   email: "contato@dygitusinformatica.com.br",
   cidade: "Cruz Alta",
   uf: "RS",
