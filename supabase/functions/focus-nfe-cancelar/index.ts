@@ -254,16 +254,16 @@ serve(async (req) => {
           console.log("compras_cereais canceladas para NFe cancelada");
         }
 
-        // 4. Liberar remessas de venda vinculadas: voltam para "carregado" e são
-        // desvinculadas da NFe cancelada, permitindo nova emissão da nota.
+        // 4. Cancelar remessas de venda vinculadas: passam a "cancelada" para sair
+        // do saldo de carregados do contrato. O vínculo com a nota é mantido para rastreio.
         const { error: updRemessaError } = await supabase
           .from("remessas_venda")
-          .update({ status: "carregado", nota_fiscal_id: null })
+          .update({ status: "cancelada" })
           .eq("nota_fiscal_id", notaFiscalId);
         if (updRemessaError) {
-          console.error("Erro ao liberar remessas_venda:", updRemessaError);
+          console.error("Erro ao cancelar remessas_venda:", updRemessaError);
         } else {
-          console.log("remessas_venda liberadas (carregado) e desvinculadas para NFe cancelada");
+          console.log("remessas_venda canceladas para NFe cancelada");
         }
 
       }

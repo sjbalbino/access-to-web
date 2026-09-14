@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
   Leaf,
@@ -32,11 +32,13 @@ import {
   LucideIcon,
 
   ClipboardCheck,
+  Repeat,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTenants } from "@/hooks/useTenants";
 import { useTabs } from "@/contexts/TabsContext";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -148,6 +150,11 @@ export function MobileNav() {
   const location = useLocation();
   const { profile, role, isAdmin, isSuperAdmin, signOut } = useAuth();
   const { openTab } = useTabs();
+  const navigate = useNavigate();
+  const { data: tenants = [] } = useTenants();
+  const empresaAtiva = profile?.tenant_id
+    ? tenants.find((t) => t.id === profile.tenant_id)
+    : null;
 
   // Função para verificar se um grupo contém a rota ativa
   const isGroupActive = (items: MenuItem[]) =>
@@ -311,6 +318,29 @@ export function MobileNav() {
                   </ul>
                 </CollapsibleContent>
               </Collapsible>
+            )}
+
+            {/* Troca de empresa contratante (Super Admin) */}
+            {isSuperAdmin && (
+              <div className="mt-4 pt-4 border-t border-border space-y-2">
+                <div className="px-3">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Empresa ativa
+                  </span>
+                  <p className="text-sm font-medium mt-1 break-words">
+                    {empresaAtiva
+                      ? empresaAtiva.nome_fantasia || empresaAtiva.razao_social
+                      : "Todas as empresas (Super Admin)"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setOpen(false); navigate("/selecionar-empresa"); }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 w-full text-left hover:bg-accent text-foreground"
+                >
+                  <Repeat className="h-5 w-5 flex-shrink-0 text-primary" />
+                  <span className="font-medium">Trocar empresa contratante</span>
+                </button>
+              </div>
             )}
           </div>
         </nav>
