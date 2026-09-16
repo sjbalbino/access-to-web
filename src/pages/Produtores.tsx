@@ -27,6 +27,8 @@ import { useCepLookup, formatCep } from "@/hooks/useCepLookup";
 import { useCnpjLookup, formatCnpj } from "@/hooks/useCnpjLookup";
 import { InscricoesTab } from "@/components/produtores/InscricoesTab";
 import { RecalcularRateioDialog } from "@/components/produtores/RecalcularRateioDialog";
+import { ConferenciaIeGenericaDialog } from "@/components/produtores/ConferenciaIeGenericaDialog";
+
 import { useCreateInscricao } from "@/hooks/useInscricoesProdutor";
 import { formatCpf, formatCpfCnpj, formatTelefone, validateCpf, validateCnpj } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -92,6 +94,8 @@ export default function Produtores() {
   const [formData, setFormData] = useState<ProdutorInput>(emptyProdutor);
   const [activeTab, setActiveTab] = useState<string>("dados");
   const [isRecalcularOpen, setIsRecalcularOpen] = useState(false);
+  const [isConferenciaOpen, setIsConferenciaOpen] = useState(false);
+
 
   const dadosFiltrados = useMemo(() => {
     let dados = produtores || [];
@@ -274,10 +278,15 @@ export default function Produtores() {
             </CardTitle>
             {canEdit && (
               <div className="flex gap-2">
+                <Button variant="outline" className="gap-2" size="sm" onClick={() => setIsConferenciaOpen(true)}>
+                  <FileSearch className="h-4 w-4" />
+                  <span className="hidden sm:inline">Conferir Extrato Antigo</span>
+                </Button>
                 <Button variant="outline" className="gap-2" size="sm" onClick={() => setIsRecalcularOpen(true)}>
                   <RefreshCcw className="h-4 w-4" />
                   <span className="hidden sm:inline">Recalcular Rateios</span>
                 </Button>
+
                 <Button className="gap-2" size="sm" onClick={() => { resetForm(); setIsDialogOpen(true); }}>
                   <Plus className="h-4 w-4" />
                   <span className="hidden sm:inline">Novo Registro</span>
