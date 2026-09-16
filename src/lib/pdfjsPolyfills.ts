@@ -96,3 +96,47 @@ if (!mapPrototype.getOrInsert) {
     },
   });
 }
+/**
+ * Uint8Array.prototype.toHex / toBase64 (propostas recentes usadas pelo pdf.js).
+ * Navegadores sem suporte quebram a leitura do PDF com "toHex is not a function".
+ */
+type Uint8ArrayWithEncodings = Uint8Array & {
+  toHex?: () => string;
+  toBase64?: (options?: { alphabet?: "base64" | "base64url" }) => string;
+};
+
+const uint8Prototype = Uint8Array.prototype as Uint8ArrayWithEncodings;
+
+if (!uint8Prototype.toHex) {
+  Object.defineProperty(uint8Prototype, "toHex", {
+    configurable: true,
+    writable: true,
+    value: function toHex(this: Uint8Array): string {
+      let hex = "";
+      for (let i = 0; i < this.length; i++) {
+        hex += this[i].toString(16).padStart(2, "0");
+      }
+      return hex;
+    },
+  });
+}
+
+if (!uint8Prototype.toBase64) {
+  Object.defineProperty(uint8Prototype, "toBase64", {
+    configurable: true,
+    writable: true,
+    value: function toBase64(
+      this: Uint8Array,
+      options?: { alphabet?: "base64" | "base64url" },
+    ): string {
+      let binary = "";
+      for (let i = 0; i < this.length; i++) {
+        binary += String.fromCharCode(this[i]);
+      }
+      const base64 = btoa(binary);
+      return options?.alphabet === "base64url"
+        ? base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+        : base64;
+    },
+  });
+}
