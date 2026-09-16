@@ -5100,6 +5100,51 @@ export type Database = {
           },
         ]
       }
+      reatribuicoes_inscricao_log: {
+        Row: {
+          campo: string
+          created_at: string
+          descricao: string | null
+          desfeito_em: string | null
+          id: string
+          lote_id: string
+          registro_id: string
+          tabela: string
+          tenant_id: string | null
+          usuario_id: string | null
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          campo: string
+          created_at?: string
+          descricao?: string | null
+          desfeito_em?: string | null
+          id?: string
+          lote_id: string
+          registro_id: string
+          tabela: string
+          tenant_id?: string | null
+          usuario_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          campo?: string
+          created_at?: string
+          descricao?: string | null
+          desfeito_em?: string | null
+          id?: string
+          lote_id?: string
+          registro_id?: string
+          tabela?: string
+          tenant_id?: string | null
+          usuario_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: []
+      }
       remessas_venda: {
         Row: {
           balanceiro: string | null
