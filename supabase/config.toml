@@ -60,3 +60,7 @@ verify_jwt = false
 
 [functions.assistente-ajuda]
 verify_jwt = true
+
+[functions.interpretar-extrato-legado]
+verify_jwt = true
+
