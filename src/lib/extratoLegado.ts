@@ -42,48 +42,101 @@ export interface ExtratoLegado {
   origem: 'ia' | 'regex';
 }
 
+export type EtapaLeituraExtrato = 'lendo_pdfs' | 'interpretando_lancamentos';
+
+interface ProgressoLeituraExtrato {
+  etapa: EtapaLeituraExtrato;
+  arquivoAtual?: number;
+  totalArquivos?: number;
+  paginaAtual?: number;
+  totalPaginas?: number;
+}
+
+type AoProgresso = (progresso: ProgressoLeituraExtrato) => void;
+
+let pdfWorker: Worker | null = null;
+
+function obterPdfWorker(): Worker {
+  if (!pdfWorker) {
+    pdfWorker = new Worker(new URL('../workers/pdfWorker.ts', import.meta.url), {
+      type: 'module',
+      name: 'sisagro-pdf-reader',
+    });
+  }
+  return pdfWorker;
+}
+
+function comLimiteDeTempo<T>(promessa: Promise<T>, milissegundos: number, mensagem: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const temporizador = window.setTimeout(() => reject(new Error(mensagem)), milissegundos);
+    promessa.then(
+      (resultado) => {
+        window.clearTimeout(temporizador);
+        resolve(resultado);
+      },
+      (erro: unknown) => {
+        window.clearTimeout(temporizador);
+        reject(erro);
+      },
+    );
+  });
+}
+
 /** Extrai o texto de um PDF no navegador, página por página. */
-export async function extrairTextoPdf(arquivo: File): Promise<string> {
+export async function extrairTextoPdf(
+  arquivo: File,
+  aoProgresso?: (paginaAtual: number, totalPaginas: number) => void,
+): Promise<string> {
   await import('@/lib/pdfjsPolyfills');
   const pdfjs = await import('pdfjs-dist');
 
-  // Worker real: sem ele o pdf.js roda no thread principal ("fake worker"), o que travava a leitura.
-  try {
-    const worker = new Worker(new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url), {
-      type: 'module',
-    });
-    pdfjs.GlobalWorkerOptions.workerPort = worker;
-  } catch (erro) {
-    console.warn('[extratoLegado] worker dedicado indisponível:', erro);
-    const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
-    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-  }
+  // O wrapper instala as compatibilidades também dentro do Worker, que possui escopo próprio.
+  pdfjs.GlobalWorkerOptions.workerPort = obterPdfWorker();
 
   const buffer = await arquivo.arrayBuffer();
-  const doc = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
+  const tarefa = pdfjs.getDocument({ data: new Uint8Array(buffer) });
+  const doc = await comLimiteDeTempo(
+    tarefa.promise,
+    30_000,
+    `A leitura de ${arquivo.name} demorou mais de 30 segundos. Tente novamente.`,
+  );
 
-  const paginas: string[] = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    // Reconstrói as linhas agrupando os itens pela coordenada vertical.
-    const linhas = new Map<number, string[]>();
-    for (const item of content.items as Array<{ str?: string; transform?: number[] }>) {
-      if (!item.str || !item.transform) continue;
-      const y = Math.round(item.transform[5]);
-      const atual = linhas.get(y) || [];
-      atual.push(item.str);
-      linhas.set(y, atual);
+  try {
+    const paginas: string[] = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      aoProgresso?.(i, doc.numPages);
+      const page = await comLimiteDeTempo(
+        doc.getPage(i),
+        15_000,
+        `A página ${i} de ${arquivo.name} demorou demais para ser lida.`,
+      );
+      const content = await comLimiteDeTempo(
+        page.getTextContent(),
+        15_000,
+        `Não foi possível extrair o texto da página ${i} de ${arquivo.name}.`,
+      );
+      const linhas = new Map<number, string[]>();
+      for (const item of content.items as Array<{ str?: string; transform?: number[] }>) {
+        if (!item.str || !item.transform) continue;
+        const y = Math.round(item.transform[5]);
+        const atual = linhas.get(y) || [];
+        atual.push(item.str);
+        linhas.set(y, atual);
+      }
+      const ordenadas = [...linhas.entries()]
+        .sort((a, b) => b[0] - a[0])
+        .map(([, partes]) => partes.join(' ').replace(/\s+/g, ' ').trim())
+        .filter(Boolean);
+      paginas.push(ordenadas.join('\n'));
+
+      // Permite que a tela atualize o progresso entre páginas extensas.
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
     }
-    const ordenadas = [...linhas.entries()]
-      .sort((a, b) => b[0] - a[0])
-      .map(([, partes]) => partes.join(' ').replace(/\s+/g, ' ').trim())
-      .filter(Boolean);
-    paginas.push(ordenadas.join('\n'));
+    return paginas.join('\n');
+  } finally {
+    await doc.cleanup();
+    await tarefa.destroy();
   }
-
-  await (doc as unknown as { cleanup: () => Promise<void> }).cleanup();
-  return paginas.join('\n');
 }
 
 const parseNumeroBr = (valor: string) => {
@@ -175,11 +228,23 @@ export function interpretarExtratoPorLayout(texto: string): ExtratoLegado {
 }
 
 /** Lê os PDFs enviados e devolve o extrato estruturado. */
-export async function interpretarExtratoLegado(arquivos: File[]): Promise<ExtratoLegado> {
-  const textos: string[] = [];
-  for (const arquivo of arquivos) {
-    textos.push(await extrairTextoPdf(arquivo));
-  }
+export async function interpretarExtratoLegado(
+  arquivos: File[],
+  aoProgresso?: AoProgresso,
+): Promise<ExtratoLegado> {
+  const textos = await Promise.all(
+    arquivos.map((arquivo, indice) =>
+      extrairTextoPdf(arquivo, (paginaAtual, totalPaginas) => {
+        aoProgresso?.({
+          etapa: 'lendo_pdfs',
+          arquivoAtual: indice + 1,
+          totalArquivos: arquivos.length,
+          paginaAtual,
+          totalPaginas,
+        });
+      }),
+    ),
+  );
   const texto = textos.join('\n\n----\n\n').trim();
 
   if (texto.length < 20) {
@@ -187,9 +252,12 @@ export async function interpretarExtratoLegado(arquivos: File[]): Promise<Extrat
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke('interpretar-extrato-legado', {
-      body: { texto },
-    });
+    aoProgresso?.({ etapa: 'interpretando_lancamentos' });
+    const { data, error } = await comLimiteDeTempo(
+      supabase.functions.invoke('interpretar-extrato-legado', { body: { texto } }),
+      45_000,
+      'A interpretação demorou mais de 45 segundos. A leitura simples será usada.',
+    );
     if (error) throw error;
     const movimentos = Array.isArray(data?.movimentos) ? (data.movimentos as MovimentoLegado[]) : [];
     if (movimentos.length === 0) throw new Error('Nenhum movimento identificado.');

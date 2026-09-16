@@ -18,7 +18,10 @@ import { Loader2, FileSearch, Undo2, CheckCircle2, AlertTriangle } from "lucide-
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
-import { interpretarExtratoLegado, type ExtratoLegado } from "@/lib/extratoLegado";
+import {
+  interpretarExtratoLegado,
+  type ExtratoLegado,
+} from "@/lib/extratoLegado";
 import {
   useConferirExtrato, useAplicarCorrecoes, useHistoricoReatribuicoes, useDesfazerReatribuicao,
   useSaldoPorSafraInscricao, type MovimentoConferido, type CorrecaoAplicar,
@@ -61,6 +64,7 @@ export function ConferenciaIeGenericaDialog({ open, onOpenChange }: Props) {
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [extrato, setExtrato] = useState<ExtratoLegado | null>(null);
   const [lendo, setLendo] = useState(false);
+  const [statusLeitura, setStatusLeitura] = useState("Ler extrato");
   const [inscricaoDestino, setInscricaoDestino] = useState<string | undefined>(undefined);
   const [conferidos, setConferidos] = useState<MovimentoConferido[]>([]);
   const [selecoes, setSelecoes] = useState<Record<string, string | null>>({});
@@ -86,8 +90,20 @@ export function ConferenciaIeGenericaDialog({ open, onOpenChange }: Props) {
       return;
     }
     setLendo(true);
+    setStatusLeitura("Preparando PDFs...");
     try {
-      const resultado = await interpretarExtratoLegado(arquivos);
+      const resultado = await interpretarExtratoLegado(arquivos, (progresso) => {
+        if (progresso.etapa === 'interpretando_lancamentos') {
+          setStatusLeitura("Interpretando lançamentos...");
+          return;
+        }
+        const arquivo = progresso.totalArquivos && progresso.totalArquivos > 1
+          ? `Arquivo ${progresso.arquivoAtual}/${progresso.totalArquivos} — `
+          : '';
+        setStatusLeitura(
+          `${arquivo}página ${progresso.paginaAtual}/${progresso.totalPaginas}`,
+        );
+      });
       setExtrato(resultado);
       setConferidos([]);
       setSelecoes({});
@@ -96,6 +112,7 @@ export function ConferenciaIeGenericaDialog({ open, onOpenChange }: Props) {
       toast.error(erro instanceof Error ? erro.message : "Não foi possível ler o extrato.");
     } finally {
       setLendo(false);
+      setStatusLeitura("Ler extrato");
     }
   };
 
@@ -194,7 +211,7 @@ export function ConferenciaIeGenericaDialog({ open, onOpenChange }: Props) {
                 <div className="flex items-end">
                   <Button onClick={lerArquivos} disabled={lendo} className="gap-2 w-full">
                     {lendo ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSearch className="h-4 w-4" />}
-                    Ler extrato
+                    {lendo ? statusLeitura : "Ler extrato"}
                   </Button>
                 </div>
               </div>
