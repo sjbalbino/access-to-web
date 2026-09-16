@@ -573,6 +573,10 @@ export default function Produtores() {
         </DialogContent>
       </Dialog>
 
+      <ConferenciaIeGenericaDialog open={isConferenciaOpen} onOpenChange={setIsConferenciaOpen} />
+
+
+
       <RecalcularRateioDialog 
         open={isRecalcularOpen} 
         onOpenChange={setIsRecalcularOpen} 
