@@ -20,7 +20,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import {
   interpretarExtratoLegado,
-  type EtapaLeituraExtrato,
   type ExtratoLegado,
 } from "@/lib/extratoLegado";
 import {
