@@ -46,8 +46,18 @@ export interface ExtratoLegado {
 export async function extrairTextoPdf(arquivo: File): Promise<string> {
   await import('@/lib/pdfjsPolyfills');
   const pdfjs = await import('pdfjs-dist');
-  const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+
+  // Worker real: sem ele o pdf.js roda no thread principal ("fake worker"), o que travava a leitura.
+  try {
+    const worker = new Worker(new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url), {
+      type: 'module',
+    });
+    pdfjs.GlobalWorkerOptions.workerPort = worker;
+  } catch (erro) {
+    console.warn('[extratoLegado] worker dedicado indisponível:', erro);
+    const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
+    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  }
 
   const buffer = await arquivo.arrayBuffer();
   const doc = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;

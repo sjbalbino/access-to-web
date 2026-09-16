@@ -39,6 +39,31 @@ if (!promiseConstructor.withResolvers) {
   });
 }
 
+type PromiseConstructorWithTry = PromiseConstructor & {
+  try?: <T, A extends unknown[]>(fn: (...args: A) => T | PromiseLike<T>, ...args: A) => Promise<T>;
+};
+
+const promiseWithTry = Promise as PromiseConstructorWithTry;
+
+if (!promiseWithTry.try) {
+  Object.defineProperty(promiseWithTry, "try", {
+    configurable: true,
+    writable: true,
+    value: function tryPolyfill<T, A extends unknown[]>(
+      fn: (...args: A) => T | PromiseLike<T>,
+      ...args: A
+    ): Promise<T> {
+      return new Promise<T>((resolve, reject) => {
+        try {
+          resolve(fn(...args));
+        } catch (error) {
+          reject(error);
+        }
+      });
+    },
+  });
+}
+
 const mapPrototype = Map.prototype as MapPrototypeWithPdfHelpers;
 
 if (!mapPrototype.getOrInsertComputed) {
