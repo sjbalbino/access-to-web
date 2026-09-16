@@ -1,43 +1,40 @@
-# Inscrições estaduais repetidas — situação atual
+# Correção do produtor ANDREIA ROSSATO (IE genérica 111.111.111-1)
 
-Nenhuma alteração de dados será feita agora. O trabalho segue aguardando as informações que você vai trazer do sistema legado.
+## Formato de extrato que eu preciso (resposta à sua pergunta)
 
-## Resolvido (sem pendência)
+Mande sempre o **extrato discriminado** (como o que você enviou agora). O resumo sozinho não serve para corrigir, porque ele não mostra qual lançamento está no cadastro errado. O ideal é o par que você mandou: detalhado + resumo para conferência final.
 
-- **LUIS FELIPE BEHNEN (IE 472.101.308-5)** — saldo consolidado, conferido igual ao legado: Depósitos 81.401 kg, Devoluções 73.593 kg, Entrada 3.600 kg, Saída 11.408 kg (zero em todas as safras).
-- **MARIA SIRLENE (IE 472.101.722-6)** — conforme sua orientação, permanece como está. Nada será movido nem desativado.
-- **claurinei jardim (IE 090.103.090-2)** — inscrição sem movimentação desativada.
-- **TATIANE TRENHAGO WILGES (IE 472.101.609-2)** — inscrição duplicada vazia desativada.
+Do detalhado eu uso: data, operação (entrada/saída/devolução), safra, variedade, quilos e o nome do comprador/vendedor.
 
-## Aguardando você
+## O que encontrei no caso da ANDREIA ROSSATO
 
-1. **Inscrições genéricas** (111.111.111-1, 000.000.000-0, 555.555.555-5, 777.777.777-7): você vai conferir no legado. Como as transferências e devoluções dessas inscrições foram todas para uma IE só, a correção será feita **caso a caso**, quando você informar os valores do extrato de cada produtor.
-2. **ANTONELLO (IE 472.100.168-0)** e **SOARES/SILVA (IE 472.101.483-9)**: você vai revisar e depois informar como proceder.
+O cadastro da ANDREIA ROSSATO está **sem nenhum lançamento** no sistema atual. Os três movimentos do extrato dela foram lançados na IE genérica 111.111.111-1, mas no cadastro de **cleomar teckio** — que hoje funciona como um "saco" que recebeu os movimentos de vários produtores com IE genérica.
 
-## Formato do extrato que vou receber
+Movimentos localizados (SOJA 2022/2023, SOJA INDUSTRIA - KGS), todos batendo com o extrato legado:
 
-Prefiro sempre o **extrato discriminado por safra** (não só o resumo). Para reapontar cada devolução e transferência preciso conferir lançamento por lançamento — o resumo fechado não mostra qual movimento está na inscrição errada.
+| Data | Operação | Quilos | Contraparte |
+|---|---|---|---|
+| 18/04/2023 | Transferência de entrada | 30.000 | helio rossato |
+| 26/07/2023 | Devolução de depósito | 15.000 | — |
+| 27/09/2023 | Devolução de depósito | 15.000 | — |
 
-Idealmente cada item do extrato deve trazer:
+Nenhum dos três está ligado a NF-e no sistema (são registros importados do legado), então podem ser reapontados sem tocar em documento fiscal.
 
-- Safra e produto (variedade);
-- Data do movimento;
-- Tipo (colheita/depósito, transferência de entrada ou saída, devolução);
-- Quantidade em kg;
-- Número do ticket/documento, se houver (agiliza o cruzamento).
+## Correção proposta
 
-Se for mais fácil, mande os dois: o resumo geral do saldo para conferência rápida e o detalhado por safra para a correção.
+1. Reapontar a transferência de entrada de 30.000 kg do dia 18/04/2023 para o cadastro da ANDREIA ROSSATO.
+2. Reapontar as duas devoluções de 15.000 kg (26/07/2023 e 27/09/2023) para o cadastro da ANDREIA ROSSATO.
+3. Conferir o saldo dela depois: deve fechar em **zero** na SOJA 2022/2023, com 30.000 de entrada e 30.000 de devolução — igual ao resumo do legado.
+4. Conferir também o saldo do cleomar teckio, que deve reduzir exatamente esses mesmos valores.
 
-## Como vamos trabalhar cada caso
+Nada será excluído; apenas a inscrição vinculada de cada lançamento muda.
 
-Quando você enviar o extrato discriminado do produtor (do legado):
+## Detalhes técnicos
 
-- Comparo os lançamentos do sistema atual com o extrato informado;
-- Reaponto devoluções, transferências e entregas para a inscrição correta — sem excluir nada, preservando rastreabilidade;
-- Desativo a inscrição que ficar sem uso;
-- Conferimos juntos o saldo final antes de partir para o próximo produtor.
+- Atualização de `transferencias_deposito.inscricao_destino_id` no registro `2f76c479` para a inscrição `961e2fe6` (ANDREIA ROSSATO).
+- Atualização de `devolucoes_deposito.inscricao_produtor_id` nos registros `032294d7` e `5ed77e35` para a mesma inscrição.
+- Conferência posterior pela mesma fórmula de saldo usada pelo sistema (colheitas + entradas − saídas − devoluções − vendas).
 
-## Regra que se mantém
+## Como seguimos nos próximos produtores
 
-- Documentos com NF-e autorizada não são alterados (imutabilidade fiscal) — se aparecerem, serão reportados.
-- Nenhuma inscrição é excluída, apenas desativada.
+Você manda o par de extratos (detalhado + resumo), eu localizo os lançamentos no cadastro genérico, reaponto para o produtor correto e devolvo o saldo conferido antes de passar ao próximo.
