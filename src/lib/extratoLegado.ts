@@ -72,7 +72,7 @@ export async function extrairTextoPdf(arquivo: File): Promise<string> {
     paginas.push(ordenadas.join('\n'));
   }
 
-  await doc.destroy();
+  await (doc as unknown as { cleanup: () => Promise<void> }).cleanup();
   return paginas.join('\n');
 }
 
