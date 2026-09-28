@@ -264,10 +264,12 @@ export function useMde() {
 
       // Persiste imediatamente a manifestação: notas fora da janela do DFe
       // (~90 dias) não voltam na listagem geral e ficariam eternamente "pendentes".
+      // Aplica em todas as inscrições do mesmo titular (a nota pode estar gravada em outra IE).
+      const idsTitular = await getInscricoesDoTitular(inscricaoId);
       const { error: erroCache } = await supabase
         .from("dfe_nfes_cache" as any)
         .update({ manifestacao_destinatario: tipo })
-        .eq("inscricao_id", inscricaoId)
+        .in("inscricao_id", idsTitular)
         .eq("chave", chave);
       if (erroCache) {
         console.error("Falha ao gravar manifestação no cache do DFe:", erroCache.message);
