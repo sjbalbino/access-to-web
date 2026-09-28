@@ -59,17 +59,9 @@ export function DevolucaoCompraDialog({ entradaId, onOpenChange, onConfirm, gera
     supabase
       .from("entradas_nfe_itens")
       .select("id, quantidade, valor_unitario, unidade_medida, produto_xml_descricao, produto:produto_id(nome)")
-      .eq("entrada_id" as never, entradaId)
-      .then(async ({ data, error }) => {
-        let rows: any[] | null = data;
-        if (error) {
-          // fallback de nome de coluna FK
-          const r = await supabase
-            .from("entradas_nfe_itens")
-            .select("id, quantidade, valor_unitario, unidade_medida, produto_xml_descricao, produto:produto_id(nome)")
-            .eq("entrada_nfe_id" as never, entradaId);
-          rows = r.data;
-        }
+      .eq("entrada_nfe_id", entradaId)
+      .then(({ data }) => {
+        const rows: any[] | null = data;
         if (!ativo) return;
         const lista: ItemEntrada[] = (rows || []).map((it: any) => ({
           id: it.id,
