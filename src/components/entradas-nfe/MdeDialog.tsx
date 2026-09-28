@@ -224,6 +224,24 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     [inscricoesEmissoras, inscricaoId]
   );
 
+  // Uma linha por titular (CPF/CNPJ): nome do sócio + documento
+  const titulares = useMemo(() => {
+    const map = new Map<string, { key: string; nome: string; cpf: string; ids: string[] }>();
+    for (const i of inscricoesEmissoras as any[]) {
+      const key = (i.cpf_cnpj || "").replace(/\D/g, "");
+      const nomeBase = (i.produtores?.nome || String(i.nome || "").split(" - ")[0] || "").trim().toUpperCase();
+      const t = map.get(key);
+      if (t) t.ids.push(i.id);
+      else map.set(key, { key, nome: nomeBase, cpf: i.cpf_cnpj, ids: [i.id] });
+    }
+    return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [inscricoesEmissoras]);
+
+  const titularSelecionadoKey = useMemo(
+    () => titulares.find((t) => t.ids.includes(inscricaoId))?.key,
+    [titulares, inscricaoId]
+  );
+
   const handleConsultar = async () => {
     if (!inscricaoId) return;
     if (syncBloqueado) {
@@ -486,20 +504,27 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         <div className="flex flex-wrap gap-4 items-start mb-6 bg-slate-50 p-6 rounded-lg border">
           <div className="flex-1 min-w-[300px]">
             <label className="text-sm font-medium mb-1.5 block">Titular / Sócio (CPF ou CNPJ do Certificado)</label>
-            <Select isSearchable value={inscricaoId || undefined} onValueChange={setInscricaoId}>
+            <Select
+              isSearchable
+              value={titularSelecionadoKey || undefined}
+              onValueChange={(key) => {
+                const t = titulares.find((x) => x.key === key);
+                if (t && !t.ids.includes(inscricaoId)) setInscricaoId(t.ids[0]);
+              }}
+            >
               <SelectTrigger className="bg-white h-11">
                 <SelectValue placeholder="Selecione o titular para consultar" />
               </SelectTrigger>
 
               <SelectContent>
-                {inscricoesEmissoras.length === 0 ? (
+                {titulares.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-muted-foreground">
-                    Nenhuma inscrição com emitente NF-e configurado.
+                    Nenhum titular com emitente NF-e configurado.
                   </div>
                 ) : (
-                  inscricoesEmissoras.map((i: any) => (
-                    <SelectItem key={i.id} value={i.id}>
-                      {(i.nome || "").toUpperCase()} — {formatCpfCnpj(i.cpf_cnpj)}
+                  titulares.map((t) => (
+                    <SelectItem key={t.key} value={t.key}>
+                      {t.nome} — {formatCpfCnpj(t.cpf)}
                     </SelectItem>
                   ))
                 )}
@@ -507,9 +532,6 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
             </Select>
             <p className="text-xs text-muted-foreground mt-1.5 ml-1">
               A consulta na SEFAZ traz todas as notas emitidas contra este CPF/CNPJ, de todas as granjas.
-              {inscricaoSelecionada?.granjas?.razao_social && (
-                <> Granja vinculada: <span className="font-medium">{inscricaoSelecionada.granjas.razao_social}</span></>
-              )}
             </p>
 
           </div>
