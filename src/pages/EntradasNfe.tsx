@@ -51,6 +51,43 @@ const toEntradaCfop = (cfop?: string | null) => {
   return (map[codigo[0]] || codigo[0]) + codigo.slice(1);
 };
 
+/**
+ * Converte um CFOP de compra (entrada 1.xxx / 2.xxx) no CFOP de SAÍDA
+ * correspondente à devolução dessa compra.
+ * Interna (mesma UF) → 5.xxx | Interestadual → 6.xxx
+ */
+const DEVOLUCAO_COMPRA_SUFIXOS: Record<string, string> = {
+  '101': '201', // compra p/ industrialização → devolução
+  '102': '202', // compra p/ comercialização → devolução
+  '111': '201',
+  '113': '201',
+  '116': '201',
+  '117': '202',
+  '118': '202',
+  '120': '201',
+  '121': '202',
+  '122': '201',
+  '126': '201',
+  '128': '202',
+  '401': '410', // com substituição tributária
+  '403': '411',
+  '406': '413',
+  '407': '412',
+  '551': '553', // ativo imobilizado
+  '552': '554',
+  '556': '556', // uso e consumo
+  '557': '557',
+};
+
+const toDevolucaoCfop = (cfop?: string | null, interestadual = false) => {
+  const prefixo = interestadual ? '6' : '5';
+  const codigo = normalizeCfopCode(cfop);
+  const entrada = toEntradaCfop(codigo);
+  const sufixo = entrada.length === 4 ? DEVOLUCAO_COMPRA_SUFIXOS[entrada.slice(1)] : undefined;
+  return prefixo + (sufixo || '202');
+};
+
+
 const getMostUsedCfop = (cfops: string[]) => {
   const counts = cfops.reduce<Record<string, number>>((acc, cfop) => {
     if (cfop) acc[cfop] = (acc[cfop] || 0) + 1;
