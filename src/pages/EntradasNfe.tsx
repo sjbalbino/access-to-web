@@ -51,6 +51,43 @@ const toEntradaCfop = (cfop?: string | null) => {
   return (map[codigo[0]] || codigo[0]) + codigo.slice(1);
 };
 
+/**
+ * Converte um CFOP de compra (entrada 1.xxx / 2.xxx) no CFOP de SAÍDA
+ * correspondente à devolução dessa compra.
+ * Interna (mesma UF) → 5.xxx | Interestadual → 6.xxx
+ */
+const DEVOLUCAO_COMPRA_SUFIXOS: Record<string, string> = {
+  '101': '201', // compra p/ industrialização → devolução
+  '102': '202', // compra p/ comercialização → devolução
+  '111': '201',
+  '113': '201',
+  '116': '201',
+  '117': '202',
+  '118': '202',
+  '120': '201',
+  '121': '202',
+  '122': '201',
+  '126': '201',
+  '128': '202',
+  '401': '410', // com substituição tributária
+  '403': '411',
+  '406': '413',
+  '407': '412',
+  '551': '553', // ativo imobilizado
+  '552': '554',
+  '556': '556', // uso e consumo
+  '557': '557',
+};
+
+const toDevolucaoCfop = (cfop?: string | null, interestadual = false) => {
+  const prefixo = interestadual ? '6' : '5';
+  const codigo = normalizeCfopCode(cfop);
+  const entrada = toEntradaCfop(codigo);
+  const sufixo = entrada.length === 4 ? DEVOLUCAO_COMPRA_SUFIXOS[entrada.slice(1)] : undefined;
+  return prefixo + (sufixo || '202');
+};
+
+
 const getMostUsedCfop = (cfops: string[]) => {
   const counts = cfops.reduce<Record<string, number>>((acc, cfop) => {
     if (cfop) acc[cfop] = (acc[cfop] || 0) + 1;
@@ -112,6 +149,21 @@ export default function EntradasNfe() {
       const isDevolucao = modo === 'devolucao';
       const itensSrc: any[] = e.itens || [];
 
+      // Inscrição do produtor (destinatário da entrada) vira EMITENTE da nota gerada
+      let emitenteId: string | null = null;
+      let ufEmitente = '';
+      if (e.inscricao_produtor_id) {
+        const { data: insc } = await supabase
+          .from('inscricoes_produtor')
+          .select('emitente_id, uf')
+          .eq('id', e.inscricao_produtor_id)
+          .maybeSingle();
+        emitenteId = (insc as any)?.emitente_id || null;
+        ufEmitente = ((insc as any)?.uf || '').trim().toUpperCase();
+      }
+      const ufDestinatario = (f.uf || '').trim().toUpperCase();
+      const interestadual = !!ufEmitente && !!ufDestinatario && ufEmitente !== ufDestinatario;
+
       let cfopHeaderCodigo = '';
       if (e.cfop_id) {
         const { data: cfopHeader } = await supabase
@@ -119,20 +171,26 @@ export default function EntradasNfe() {
           .select('codigo')
           .eq('id', e.cfop_id)
           .maybeSingle();
-        cfopHeaderCodigo = toEntradaCfop((cfopHeader as any)?.codigo);
+        cfopHeaderCodigo = isDevolucao
+          ? toDevolucaoCfop((cfopHeader as any)?.codigo, interestadual)
+          : toEntradaCfop((cfopHeader as any)?.codigo);
       }
 
-      const itemCfopsEntrada = itensSrc.map((it) => toEntradaCfop(it.cfop || cfopHeaderCodigo));
+      // Devolução de compra é SAÍDA (5.xxx / 6.xxx); contra-nota é ENTRADA (1.xxx / 2.xxx)
+      const itemCfopsEntrada = itensSrc.map((it) => (isDevolucao
+        ? toDevolucaoCfop(it.cfop || cfopHeaderCodigo, interestadual)
+        : toEntradaCfop(it.cfop || cfopHeaderCodigo)));
       const cfopNotaCodigo = getMostUsedCfop(itemCfopsEntrada) || cfopHeaderCodigo;
+      const tipoCfopEsperado = isDevolucao ? 'saida' : 'entrada';
       let cfopNota: any = null;
       if (cfopNotaCodigo) {
-        const { data: cfopsEntrada } = await supabase
+        const { data: cfopsTipo } = await supabase
           .from('cfops')
           .select('id, codigo, natureza_operacao')
           .eq('codigo', cfopNotaCodigo)
-          .eq('tipo', 'entrada')
+          .eq('tipo', tipoCfopEsperado)
           .limit(1);
-        cfopNota = cfopsEntrada?.[0] || null;
+        cfopNota = cfopsTipo?.[0] || null;
 
         if (!cfopNota) {
           const { data: cfopsFallback } = await supabase
@@ -144,6 +202,7 @@ export default function EntradasNfe() {
         }
       }
 
+
       const totals = itensSrc.reduce((acc, it) => {
         acc.totalProdutos += Number(it.valor_total || 0);
         acc.totalIcms += Number(it.valor_icms || 0);
@@ -153,25 +212,16 @@ export default function EntradasNfe() {
       }, { totalProdutos: 0, totalIcms: 0, totalPis: 0, totalCofins: 0 });
       const totalNota = totals.totalProdutos;
 
-      // Inscrição do produtor (destinatário da entrada) vira EMITENTE da contra-nota
-      let emitenteId: string | null = null;
-      if (e.inscricao_produtor_id) {
-        const { data: insc } = await supabase
-          .from('inscricoes_produtor')
-          .select('emitente_id')
-          .eq('id', e.inscricao_produtor_id)
-          .maybeSingle();
-        emitenteId = (insc as any)?.emitente_id || null;
-      }
-
       const notaInsert: any = {
         tenant_id: e.granja?.tenant_id || null,
         granja_id: e.granja_id || null,
         inscricao_produtor_id: e.inscricao_produtor_id || null,
         emitente_id: emitenteId,
         status: 'rascunho',
-        operacao: 0,
+        // Devolução de compra = SAÍDA (1); contra-nota = ENTRADA (0)
+        operacao: isDevolucao ? 1 : 0,
         finalidade: isDevolucao ? 4 : 1,
+
         cfop_id: cfopNota?.id || null,
         natureza_operacao: (isDevolucao
           ? 'Devolução de ' + (e.natureza_operacao || 'mercadoria')
