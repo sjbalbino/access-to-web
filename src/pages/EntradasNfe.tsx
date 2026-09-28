@@ -149,6 +149,21 @@ export default function EntradasNfe() {
       const isDevolucao = modo === 'devolucao';
       const itensSrc: any[] = e.itens || [];
 
+      // Inscrição do produtor (destinatário da entrada) vira EMITENTE da nota gerada
+      let emitenteId: string | null = null;
+      let ufEmitente = '';
+      if (e.inscricao_produtor_id) {
+        const { data: insc } = await supabase
+          .from('inscricoes_produtor')
+          .select('emitente_id, uf')
+          .eq('id', e.inscricao_produtor_id)
+          .maybeSingle();
+        emitenteId = (insc as any)?.emitente_id || null;
+        ufEmitente = ((insc as any)?.uf || '').trim().toUpperCase();
+      }
+      const ufDestinatario = (f.uf || '').trim().toUpperCase();
+      const interestadual = !!ufEmitente && !!ufDestinatario && ufEmitente !== ufDestinatario;
+
       let cfopHeaderCodigo = '';
       if (e.cfop_id) {
         const { data: cfopHeader } = await supabase
@@ -156,20 +171,26 @@ export default function EntradasNfe() {
           .select('codigo')
           .eq('id', e.cfop_id)
           .maybeSingle();
-        cfopHeaderCodigo = toEntradaCfop((cfopHeader as any)?.codigo);
+        cfopHeaderCodigo = isDevolucao
+          ? toDevolucaoCfop((cfopHeader as any)?.codigo, interestadual)
+          : toEntradaCfop((cfopHeader as any)?.codigo);
       }
 
-      const itemCfopsEntrada = itensSrc.map((it) => toEntradaCfop(it.cfop || cfopHeaderCodigo));
+      // Devolução de compra é SAÍDA (5.xxx / 6.xxx); contra-nota é ENTRADA (1.xxx / 2.xxx)
+      const itemCfopsEntrada = itensSrc.map((it) => (isDevolucao
+        ? toDevolucaoCfop(it.cfop || cfopHeaderCodigo, interestadual)
+        : toEntradaCfop(it.cfop || cfopHeaderCodigo)));
       const cfopNotaCodigo = getMostUsedCfop(itemCfopsEntrada) || cfopHeaderCodigo;
+      const tipoCfopEsperado = isDevolucao ? 'saida' : 'entrada';
       let cfopNota: any = null;
       if (cfopNotaCodigo) {
-        const { data: cfopsEntrada } = await supabase
+        const { data: cfopsTipo } = await supabase
           .from('cfops')
           .select('id, codigo, natureza_operacao')
           .eq('codigo', cfopNotaCodigo)
-          .eq('tipo', 'entrada')
+          .eq('tipo', tipoCfopEsperado)
           .limit(1);
-        cfopNota = cfopsEntrada?.[0] || null;
+        cfopNota = cfopsTipo?.[0] || null;
 
         if (!cfopNota) {
           const { data: cfopsFallback } = await supabase
@@ -180,6 +201,7 @@ export default function EntradasNfe() {
           cfopNota = cfopsFallback?.[0] || null;
         }
       }
+
 
       const totals = itensSrc.reduce((acc, it) => {
         acc.totalProdutos += Number(it.valor_total || 0);
