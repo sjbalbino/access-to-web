@@ -485,11 +485,12 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
         <div className="flex flex-wrap gap-4 items-start mb-6 bg-slate-50 p-6 rounded-lg border">
           <div className="flex-1 min-w-[300px]">
-            <label className="text-sm font-medium mb-1.5 block">Inscrição do Produtor (CNPJ Destinatário)</label>
+            <label className="text-sm font-medium mb-1.5 block">Titular / Sócio (CPF ou CNPJ do Certificado)</label>
             <Select isSearchable value={inscricaoId || undefined} onValueChange={setInscricaoId}>
               <SelectTrigger className="bg-white h-11">
-                <SelectValue placeholder="Selecione a inscrição para consultar" />
+                <SelectValue placeholder="Selecione o titular para consultar" />
               </SelectTrigger>
+
               <SelectContent>
                 {inscricoesEmissoras.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-muted-foreground">
@@ -504,11 +505,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                 )}
               </SelectContent>
             </Select>
-            {inscricaoSelecionada?.granjas?.razao_social && (
-              <p className="text-xs text-muted-foreground mt-1.5 ml-1">
-                Granja vinculada: <span className="font-medium">{inscricaoSelecionada.granjas.razao_social}</span>
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground mt-1.5 ml-1">
+              A consulta na SEFAZ traz todas as notas emitidas contra este CPF/CNPJ, de todas as granjas.
+              {inscricaoSelecionada?.granjas?.razao_social && (
+                <> Granja vinculada: <span className="font-medium">{inscricaoSelecionada.granjas.razao_social}</span></>
+              )}
+            </p>
+
           </div>
           <Button
             onClick={handleConsultar}
