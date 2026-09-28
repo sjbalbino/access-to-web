@@ -505,11 +505,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                 )}
               </SelectContent>
             </Select>
-            {inscricaoSelecionada?.granjas?.razao_social && (
-              <p className="text-xs text-muted-foreground mt-1.5 ml-1">
-                Granja vinculada: <span className="font-medium">{inscricaoSelecionada.granjas.razao_social}</span>
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground mt-1.5 ml-1">
+              A consulta na SEFAZ traz todas as notas emitidas contra este CPF/CNPJ, de todas as granjas.
+              {inscricaoSelecionada?.granjas?.razao_social && (
+                <> Granja vinculada: <span className="font-medium">{inscricaoSelecionada.granjas.razao_social}</span></>
+              )}
+            </p>
+
           </div>
           <Button
             onClick={handleConsultar}
