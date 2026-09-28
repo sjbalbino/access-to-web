@@ -224,6 +224,24 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     [inscricoesEmissoras, inscricaoId]
   );
 
+  // Uma linha por titular (CPF/CNPJ): nome do sócio + documento
+  const titulares = useMemo(() => {
+    const map = new Map<string, { key: string; nome: string; cpf: string; ids: string[] }>();
+    for (const i of inscricoesEmissoras as any[]) {
+      const key = (i.cpf_cnpj || "").replace(/\D/g, "");
+      const nomeBase = (i.produtores?.nome || String(i.nome || "").split(" - ")[0] || "").trim().toUpperCase();
+      const t = map.get(key);
+      if (t) t.ids.push(i.id);
+      else map.set(key, { key, nome: nomeBase, cpf: i.cpf_cnpj, ids: [i.id] });
+    }
+    return Array.from(map.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [inscricoesEmissoras]);
+
+  const titularSelecionadoKey = useMemo(
+    () => titulares.find((t) => t.ids.includes(inscricaoId))?.key,
+    [titulares, inscricaoId]
+  );
+
   const handleConsultar = async () => {
     if (!inscricaoId) return;
     if (syncBloqueado) {
