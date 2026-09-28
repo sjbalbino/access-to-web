@@ -19,6 +19,7 @@ import { formatNumber } from "@/lib/formatters";
 import { EntradaNfeFormDialog } from "@/components/entradas-nfe/EntradaNfeFormDialog";
 import { ImportarXmlDialog } from "@/components/entradas-nfe/ImportarXmlDialog";
 import { MdeDialog } from "@/components/entradas-nfe/MdeDialog";
+import { DevolucaoCompraDialog, type DevolucaoCompraOpcoes } from "@/components/entradas-nfe/DevolucaoCompraDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -122,8 +123,9 @@ export default function EntradasNfe() {
   const { data: entradaEstorno } = useEntradaNfe(estornarId);
   const navigate = useNavigate();
   const [gerandoContraNota, setGerandoContraNota] = useState(false);
+  const [devolucaoEntradaId, setDevolucaoEntradaId] = useState<string | null>(null);
 
-  const handleGerarContraNota = async (entradaId: string, modo: 'contra' | 'devolucao') => {
+  const handleGerarContraNota = async (entradaId: string, modo: 'contra' | 'devolucao', opcoes?: DevolucaoCompraOpcoes) => {
     if (gerandoContraNota) return;
     setGerandoContraNota(true);
     const { supabase } = await import('@/integrations/supabase/client');
@@ -147,7 +149,24 @@ export default function EntradasNfe() {
       const f: any = e.fornecedor || {};
       const cpfCnpj = (f.cpf_cnpj || '').replace(/\D/g, '');
       const isDevolucao = modo === 'devolucao';
-      const itensSrc: any[] = e.itens || [];
+      // Na devolução, usa apenas os itens/quantidades escolhidos no diálogo (recalcula valores proporcionalmente)
+      const itensSrc: any[] = (e.itens || []).flatMap((it: any) => {
+        if (!isDevolucao || !opcoes) return [it];
+        const escolha = opcoes.itens.find((x) => x.id === it.id);
+        if (!escolha) return [];
+        const qOrig = Number(it.quantidade || 0);
+        const fator = qOrig > 0 ? Math.min(escolha.quantidade / qOrig, 1) : 1;
+        const r = (v: any) => Math.round(Number(v || 0) * fator * 100) / 100;
+        return [{
+          ...it,
+          quantidade: escolha.quantidade,
+          valor_total: r(it.valor_total), valor_desconto: r(it.valor_desconto),
+          base_icms: r(it.base_icms), valor_icms: r(it.valor_icms),
+          base_pis: r(it.base_pis), valor_pis: r(it.valor_pis),
+          base_cofins: r(it.base_cofins), valor_cofins: r(it.valor_cofins),
+          base_ipi: r(it.base_ipi), valor_ipi: r(it.valor_ipi),
+        }];
+      });
 
       // Inscrição do produtor (destinatário da entrada) vira EMITENTE da nota gerada
       let emitenteId: string | null = null;
@@ -208,8 +227,23 @@ export default function EntradasNfe() {
         acc.totalIcms += Number(it.valor_icms || 0);
         acc.totalPis += Number(it.valor_pis || 0);
         acc.totalCofins += Number(it.valor_cofins || 0);
+        acc.totalIpi += Number(it.valor_ipi || 0);
         return acc;
-      }, { totalProdutos: 0, totalIcms: 0, totalPis: 0, totalCofins: 0 });
+      }, { totalProdutos: 0, totalIcms: 0, totalPis: 0, totalCofins: 0, totalIpi: 0 });
+
+      // Informações complementares automáticas da devolução
+      let infoComplementar: string | null = null;
+      if (isDevolucao) {
+        const dataEmi = e.data_emissao ? String(e.data_emissao).slice(0, 10).split('-').reverse().join('/') : '';
+        const partes = [
+          `Devolução ${opcoes && opcoes.itens.length < (e.itens || []).length ? 'parcial' : 'referente'} da NF-e nº ${e.numero_nfe || ''}${e.serie ? ' série ' + e.serie : ''}${dataEmi ? ' de ' + dataEmi : ''}`,
+          e.chave_acesso ? `Chave de acesso: ${String(e.chave_acesso).replace(/\D/g, '')}` : '',
+          opcoes?.motivo ? `Motivo: ${opcoes.motivo}` : '',
+          totals.totalIcms > 0 ? `ICMS devolvido: R$ ${totals.totalIcms.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '',
+          totals.totalIpi > 0 ? `IPI devolvido: R$ ${totals.totalIpi.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '',
+        ].filter(Boolean);
+        infoComplementar = partes.join('. ') + '.';
+      }
       const totalNota = totals.totalProdutos;
 
       const notaInsert: any = {
@@ -246,6 +280,7 @@ export default function EntradasNfe() {
         total_pis: totals.totalPis,
         total_cofins: totals.totalCofins,
         valor_pagamento: totalNota,
+        ...(infoComplementar ? { info_complementar: infoComplementar } : {}),
       };
 
       const { data: novaNota, error: errNota } = await supabase
@@ -293,6 +328,7 @@ export default function EntradasNfe() {
         });
       }
 
+      setDevolucaoEntradaId(null);
       toast.success(`${isDevolucao ? 'Devolução' : 'Contra-nota'} gerada com sucesso!`);
       navigate(`/notas-fiscais/${novaNota.id}`);
     } catch (err: any) {
@@ -482,7 +518,7 @@ export default function EntradasNfe() {
                           size="icon"
                           variant="ghost"
                           disabled={gerandoContraNota || !!e.devolucao_nota}
-                          onClick={() => e.devolucao_nota ? navigate(`/notas-fiscais/${e.devolucao_nota.id}`) : handleGerarContraNota(e.id, 'devolucao')}
+                          onClick={() => e.devolucao_nota ? navigate(`/notas-fiscais/${e.devolucao_nota.id}`) : setDevolucaoEntradaId(e.id)}
                           title={e.devolucao_nota ? `Devolução já emitida (NF-e nº ${e.devolucao_nota.numero})` : 'Emitir NF-e de Devolução de compra'}
                         >
                           <FileOutput className={`h-4 w-4 ${e.devolucao_nota ? 'text-muted-foreground' : 'text-blue-600'}`} />
@@ -507,6 +543,12 @@ export default function EntradasNfe() {
 
       <ImportarXmlDialog open={xmlOpen} onOpenChange={setXmlOpen} />
       <MdeDialog open={mdeOpen} onOpenChange={setMdeOpen} />
+      <DevolucaoCompraDialog
+        entradaId={devolucaoEntradaId}
+        onOpenChange={(o) => { if (!o) setDevolucaoEntradaId(null); }}
+        onConfirm={(id, op) => handleGerarContraNota(id, 'devolucao', op)}
+        gerando={gerandoContraNota}
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
