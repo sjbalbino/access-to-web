@@ -74,14 +74,48 @@ export function useMde() {
   };
 
 
+  /**
+   * Retorna os ids das inscrições do mesmo titular (mesmo CPF/CNPJ) dentro da
+   * mesma empresa. As consultas de DFe na SEFAZ são feitas pelo documento do
+   * titular, portanto as notas pertencem a ele e não a uma única IE.
+   */
+  const getInscricoesDoTitular = async (inscricaoId: string): Promise<string[]> => {
+    const { data: atual } = await supabase
+      .from("inscricoes_produtor")
+      .select("id,cpf_cnpj,produtor_id")
+      .eq("id", inscricaoId)
+      .maybeSingle();
+    const doc = (atual?.cpf_cnpj || "").replace(/\D/g, "");
+    if (!doc) return [inscricaoId];
+    const { data: irmas } = await supabase
+      .from("inscricoes_produtor")
+      .select("id,cpf_cnpj")
+      .eq("produtor_id", atual?.produtor_id ?? "");
+    const ids = ((irmas as any[]) || [])
+      .filter((r) => (r.cpf_cnpj || "").replace(/\D/g, "") === doc)
+      .map((r) => r.id as string);
+    return ids.length > 0 ? Array.from(new Set([inscricaoId, ...ids])) : [inscricaoId];
+  };
+
   const loadCache = async (inscricaoId: string): Promise<NfeRecebida[]> => {
-    // Cache estritamente por inscrição selecionada — trocar de IE
-    // deve mostrar apenas as NF-es sincronizadas para aquela IE.
+    // As NF-es recebidas são distribuídas pela SEFAZ por CPF/CNPJ do titular,
+    // então exibimos as notas de todas as inscrições do mesmo documento.
+    const ids = await getInscricoesDoTitular(inscricaoId);
     const { data } = await supabase
       .from("dfe_nfes_cache" as any)
-      .select("chave,numero,serie,nome,cnpj,valor,data_emissao,situacao,tipo_nfe,manifestacao_destinatario")
-      .eq("inscricao_id", inscricaoId);
-    return ((data as any[]) || []).map((r) => ({
+      .select("chave,numero,serie,nome,cnpj,valor,data_emissao,situacao,tipo_nfe,manifestacao_destinatario,inscricao_id")
+      .in("inscricao_id", ids);
+    const porChave = new Map<string, any>();
+    ((data as any[]) || []).forEach((r) => {
+      const anterior = porChave.get(r.chave);
+      // Prioriza o registro da inscrição selecionada e o que tem manifestação
+      const prefere =
+        !anterior ||
+        (r.inscricao_id === inscricaoId && !anterior.manifestacao_destinatario) ||
+        (!anterior.manifestacao_destinatario && !!r.manifestacao_destinatario);
+      if (prefere) porChave.set(r.chave, r);
+    });
+    return Array.from(porChave.values()).map((r) => ({
       chave: r.chave,
       nome: r.nome ?? "",
       cnpj: r.cnpj ?? "",
@@ -94,6 +128,7 @@ export function useMde() {
       manifestacao_destinatario: r.manifestacao_destinatario ?? undefined,
     }));
   };
+
 
   const mapRaw = (r: any, fallbackChave = ""): NfeRecebida => {
     const chave = r.chave ?? r.chave_nfe ?? r.chaveNFe ?? fallbackChave;
