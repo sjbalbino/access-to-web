@@ -187,6 +187,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     });
   }, [nfesRecebidas, filtroBusca, filtroManifest, filtroDataIni, filtroDataFim]);
 
+  const temFiltroAtivo =
+    filtroBusca.trim() !== "" ||
+    filtroManifest !== "all" ||
+    filtroDataIni !== "" ||
+    filtroDataFim !== "";
+
+
   // Detecta quais chaves já possuem entrada gerada no sistema
   // (pareamento centralizado em useEntradasPorChaves — normaliza p/ 44 dígitos)
   const chavesDaLista = useMemo(
