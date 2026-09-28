@@ -212,25 +212,16 @@ export default function EntradasNfe() {
       }, { totalProdutos: 0, totalIcms: 0, totalPis: 0, totalCofins: 0 });
       const totalNota = totals.totalProdutos;
 
-      // Inscrição do produtor (destinatário da entrada) vira EMITENTE da contra-nota
-      let emitenteId: string | null = null;
-      if (e.inscricao_produtor_id) {
-        const { data: insc } = await supabase
-          .from('inscricoes_produtor')
-          .select('emitente_id')
-          .eq('id', e.inscricao_produtor_id)
-          .maybeSingle();
-        emitenteId = (insc as any)?.emitente_id || null;
-      }
-
       const notaInsert: any = {
         tenant_id: e.granja?.tenant_id || null,
         granja_id: e.granja_id || null,
         inscricao_produtor_id: e.inscricao_produtor_id || null,
         emitente_id: emitenteId,
         status: 'rascunho',
-        operacao: 0,
+        // Devolução de compra = SAÍDA (1); contra-nota = ENTRADA (0)
+        operacao: isDevolucao ? 1 : 0,
         finalidade: isDevolucao ? 4 : 1,
+
         cfop_id: cfopNota?.id || null,
         natureza_operacao: (isDevolucao
           ? 'Devolução de ' + (e.natureza_operacao || 'mercadoria')
