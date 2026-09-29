@@ -21,6 +21,7 @@ import { useInscricoesCompletas } from "@/hooks/useInscricoesCompletas";
 import { useMde, type NfeRecebida } from "@/hooks/useMde";
 import { formatNumber } from "@/lib/formatters";
 import { parseNfeXml } from "@/lib/nfeXmlParser";
+import { resolverInscricaoDestinatario } from "@/lib/inscricaoDestinatarioXml";
 import { useCreateEntradaNfe, useEntradasPorChaves, normalizarChaveAcesso } from "@/hooks/useEntradasNfe";
 import { supabase } from "@/integrations/supabase/client";
 import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
