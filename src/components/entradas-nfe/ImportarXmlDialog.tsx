@@ -172,7 +172,19 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
     for (const pf of validFiles) {
       const nfe = pf.nfe!;
       try {
-        const ufDestInsc = inscricoesFiltradas.find((i) => i.id === inscricaoId)?.uf || '';
+        // A nota pertence à IE indicada no destinatário do XML, não à IE
+        // pré-selecionada na tela (o titular pode ter várias granjas/IEs).
+        const resolucao = resolverInscricaoDestinatario(
+          (inscricoes || []) as any,
+          nfe.destinatario,
+          inscricaoId
+        );
+        const inscricaoDestinoId = resolucao.inscricaoId;
+        const inscricaoDestino = (inscricoes || []).find((i) => i.id === inscricaoDestinoId);
+        if (resolucao.trocou) {
+          toast.info(`NF-e ${nfe.numero}: vinculada à IE ${resolucao.ieXml} informada no XML.`);
+        }
+        const ufDestInsc = inscricaoDestino?.uf || '';
         const itens = vincularProdutos(nfe, ufDestInsc);
         // Deriva CFOP do cabeçalho a partir do CFOP mais frequente nos itens
         const cfopCounts: Record<string, number> = {};
