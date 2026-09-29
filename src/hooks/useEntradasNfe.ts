@@ -121,7 +121,14 @@ export function useEntradasNfe(granjaId?: string | null, safraId?: string | null
           const tipo = classify(nf.natureza_operacao);
           if (!tipo) return;
           const bucket = refsByChave[r.chave_nfe] || {};
-          const candidate = { id: nf.id, numero: nf.numero, status: nf.status, tipo, createdAt: nf.created_at };
+          const candidate = {
+            id: nf.id,
+            numero: nf.numero,
+            status: nf.status,
+            tipo,
+            createdAt: nf.created_at,
+            ativa: isNotaAtiva(nf.status),
+          };
           const current = bucket[tipo];
           if (
             !current ||
