@@ -468,20 +468,28 @@ export default function EntradasNfe() {
                         <button
                           type="button"
                           onClick={() => navigate(`/notas-fiscais/${e.contra_nota.id}`)}
-                          className="ml-1 inline-flex items-center rounded border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-100"
-                          title="Ver contra-nota emitida"
+                          className={`ml-1 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                            e.contra_nota.ativa
+                              ? 'border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              : 'border border-muted bg-muted text-muted-foreground line-through hover:bg-muted/80'
+                          }`}
+                          title={e.contra_nota.ativa ? 'Ver contra-nota emitida' : 'Contra-nota cancelada — ver histórico'}
                         >
-                          CN nº {e.contra_nota.numero}
+                          CN nº {e.contra_nota.numero}{e.contra_nota.ativa ? '' : ' (Canc.)'}
                         </button>
                       )}
                       {e.devolucao_nota && (
                         <button
                           type="button"
                           onClick={() => navigate(`/notas-fiscais/${e.devolucao_nota.id}`)}
-                          className="ml-1 inline-flex items-center rounded border border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-100"
-                          title="Ver devolução emitida"
+                          className={`ml-1 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                            e.devolucao_nota.ativa
+                              ? 'border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                              : 'border border-muted bg-muted text-muted-foreground line-through hover:bg-muted/80'
+                          }`}
+                          title={e.devolucao_nota.ativa ? 'Ver devolução emitida' : 'Devolução cancelada — ver histórico'}
                         >
-                          Dev nº {e.devolucao_nota.numero}
+                          Dev nº {e.devolucao_nota.numero}{e.devolucao_nota.ativa ? '' : ' (Canc.)'}
                         </button>
                       )}
                     </TableCell>
@@ -505,24 +513,40 @@ export default function EntradasNfe() {
                             <Undo2 className="h-4 w-4 text-amber-600" />
                           </Button>
                         )}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          disabled={gerandoContraNota || !!e.contra_nota}
-                          onClick={() => e.contra_nota ? navigate(`/notas-fiscais/${e.contra_nota.id}`) : handleGerarContraNota(e.id, 'contra')}
-                          title={e.contra_nota ? `Contra-nota já emitida (NF-e nº ${e.contra_nota.numero}) — clique no selo para abrir` : 'Emitir Contra-nota de entrada (NF-e do produtor para compra de máquinas/equipamentos)'}
-                        >
-                          <FileInput className={`h-4 w-4 ${e.contra_nota ? 'text-muted-foreground' : 'text-emerald-600'}`} />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          disabled={gerandoContraNota || !!e.devolucao_nota}
-                          onClick={() => e.devolucao_nota ? navigate(`/notas-fiscais/${e.devolucao_nota.id}`) : setDevolucaoEntradaId(e.id)}
-                          title={e.devolucao_nota ? `Devolução já emitida (NF-e nº ${e.devolucao_nota.numero})` : 'Emitir NF-e de Devolução de compra'}
-                        >
-                          <FileOutput className={`h-4 w-4 ${e.devolucao_nota ? 'text-muted-foreground' : 'text-blue-600'}`} />
-                        </Button>
+                        {(() => {
+                          const cnAtiva = !!e.contra_nota?.ativa;
+                          const devAtiva = !!e.devolucao_nota?.ativa;
+                          return (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                disabled={gerandoContraNota || cnAtiva}
+                                onClick={() => cnAtiva ? navigate(`/notas-fiscais/${e.contra_nota.id}`) : handleGerarContraNota(e.id, 'contra')}
+                                title={cnAtiva
+                                  ? `Contra-nota já emitida (NF-e nº ${e.contra_nota.numero}) — clique no selo para abrir`
+                                  : e.contra_nota
+                                    ? `Contra-nota anterior nº ${e.contra_nota.numero} foi cancelada. Clique para emitir nova contra-nota.`
+                                    : 'Emitir Contra-nota de entrada (NF-e do produtor para compra de máquinas/equipamentos)'}
+                              >
+                                <FileInput className={`h-4 w-4 ${cnAtiva ? 'text-muted-foreground' : 'text-emerald-600'}`} />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                disabled={gerandoContraNota || devAtiva}
+                                onClick={() => devAtiva ? navigate(`/notas-fiscais/${e.devolucao_nota.id}`) : setDevolucaoEntradaId(e.id)}
+                                title={devAtiva
+                                  ? `Devolução já emitida (NF-e nº ${e.devolucao_nota.numero})`
+                                  : e.devolucao_nota
+                                    ? `Devolução anterior nº ${e.devolucao_nota.numero} foi cancelada. Clique para emitir nova devolução.`
+                                    : 'Emitir NF-e de Devolução de compra'}
+                              >
+                                <FileOutput className={`h-4 w-4 ${devAtiva ? 'text-muted-foreground' : 'text-blue-600'}`} />
+                              </Button>
+                            </>
+                          );
+                        })()}
 
 
 
