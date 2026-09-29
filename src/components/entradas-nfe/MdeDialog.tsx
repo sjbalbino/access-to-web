@@ -321,11 +321,25 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
       const parsed = parseNfeXml(xmlText);
 
-      // 1. Buscar granja_id e tenant_id a partir da inscrição
+      // 1. A nota pertence à IE informada no destinatário do XML (a consulta do
+      // DFe é feita pelo CPF/CNPJ do titular e traz notas de todas as granjas).
+      const resolucao = resolverInscricaoDestinatario(
+        (inscricoes || []) as any,
+        parsed.destinatario,
+        inscricaoId
+      );
+      const inscricaoDestinoId = resolucao.inscricaoId;
+      if (resolucao.trocou) {
+        toast.info(
+          `Entrada vinculada à inscrição estadual do destinatário da nota (IE ${resolucao.ieXml}).`
+        );
+      }
+
+      // 2. Buscar granja_id e tenant_id a partir da inscrição de destino
       const { data: insc } = await supabase
         .from("inscricoes_produtor")
         .select("granja_id, granjas(tenant_id)")
-        .eq("id", inscricaoId)
+        .eq("id", inscricaoDestinoId)
         .maybeSingle();
 
       const granjaId = insc?.granja_id;
