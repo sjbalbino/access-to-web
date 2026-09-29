@@ -103,7 +103,11 @@ export function useEntradasNfe(granjaId?: string | null, safraId?: string | null
           .select('chave_nfe, nota_fiscal:notas_fiscais(id, numero, status, natureza_operacao, created_at)')
           .in('chave_nfe', chaves);
 
-        const statusRank = (s?: string) => (s === 'autorizado' || s === 'autorizada' ? 2 : 1);
+        const INATIVOS = ['cancelado', 'cancelada', 'inutilizado', 'inutilizada', 'rejeitado', 'rejeitada', 'erro_autorizacao'];
+        const isNotaAtiva = (s?: string) => !INATIVOS.includes((s || '').toLowerCase());
+        // Notas canceladas/rejeitadas não devem prevalecer sobre uma nota válida
+        const statusRank = (s?: string) =>
+          !isNotaAtiva(s) ? 0 : s === 'autorizado' || s === 'autorizada' ? 2 : 1;
         const classify = (nat?: string): 'contra' | 'devolucao' | null => {
           const n = (nat || '').toLowerCase();
           if (n.startsWith('contra-nota')) return 'contra';
