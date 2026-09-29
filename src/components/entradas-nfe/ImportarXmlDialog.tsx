@@ -15,6 +15,7 @@ import { useContasBancarias } from "@/hooks/useContasBancarias";
 import { useGruposProdutos } from "@/hooks/useGruposProdutos";
 import { parseNfeXml, NfeParsed } from "@/lib/nfeXmlParser";
 import { suggestCfopEntrada } from "@/lib/cfopEntradaSuggest";
+import { resolverInscricaoDestinatario } from "@/lib/inscricaoDestinatarioXml";
 import { toast } from "sonner";
 import { Upload, CheckCircle2, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -200,8 +201,8 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
 
 
         await createMutation.mutateAsync({
-          granja_id: granjaId,
-          inscricao_produtor_id: inscricaoId,
+          granja_id: inscricaoDestino?.granja_id || granjaId,
+          inscricao_produtor_id: inscricaoDestinoId,
           safra_id: safraId,
           forma_pagamento: formaPagamento,
           conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
