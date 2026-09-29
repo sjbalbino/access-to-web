@@ -15,6 +15,7 @@ import { useContasBancarias } from "@/hooks/useContasBancarias";
 import { useGruposProdutos } from "@/hooks/useGruposProdutos";
 import { parseNfeXml, NfeParsed } from "@/lib/nfeXmlParser";
 import { suggestCfopEntrada } from "@/lib/cfopEntradaSuggest";
+import { resolverInscricaoDestinatario } from "@/lib/inscricaoDestinatarioXml";
 import { toast } from "sonner";
 import { Upload, CheckCircle2, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -172,7 +173,19 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
     for (const pf of validFiles) {
       const nfe = pf.nfe!;
       try {
-        const ufDestInsc = inscricoesFiltradas.find((i) => i.id === inscricaoId)?.uf || '';
+        // A nota pertence à IE indicada no destinatário do XML, não à IE
+        // pré-selecionada na tela (o titular pode ter várias granjas/IEs).
+        const resolucao = resolverInscricaoDestinatario(
+          (inscricoes || []) as any,
+          nfe.destinatario,
+          inscricaoId
+        );
+        const inscricaoDestinoId = resolucao.inscricaoId;
+        const inscricaoDestino = (inscricoes || []).find((i) => i.id === inscricaoDestinoId);
+        if (resolucao.trocou) {
+          toast.info(`NF-e ${nfe.numero}: vinculada à IE ${resolucao.ieXml} informada no XML.`);
+        }
+        const ufDestInsc = inscricaoDestino?.uf || '';
         const itens = vincularProdutos(nfe, ufDestInsc);
         // Deriva CFOP do cabeçalho a partir do CFOP mais frequente nos itens
         const cfopCounts: Record<string, number> = {};
@@ -188,8 +201,8 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
 
 
         await createMutation.mutateAsync({
-          granja_id: granjaId,
-          inscricao_produtor_id: inscricaoId,
+          granja_id: inscricaoDestino?.granja_id || granjaId,
+          inscricao_produtor_id: inscricaoDestinoId,
           safra_id: safraId,
           forma_pagamento: formaPagamento,
           conta_bancaria_id: isAvista ? (contaBancariaId || null) : null,
