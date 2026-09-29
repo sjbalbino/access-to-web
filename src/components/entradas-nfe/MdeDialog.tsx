@@ -391,7 +391,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
 
       const header: Record<string, unknown> = {
         granja_id: granjaId,
-        inscricao_produtor_id: inscricaoId,
+        inscricao_produtor_id: inscricaoDestinoId,
         fornecedor_id: fornecedorId,
         numero_nfe: parsed.numero,
         serie: parsed.serie,
