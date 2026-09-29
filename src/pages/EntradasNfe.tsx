@@ -468,20 +468,28 @@ export default function EntradasNfe() {
                         <button
                           type="button"
                           onClick={() => navigate(`/notas-fiscais/${e.contra_nota.id}`)}
-                          className="ml-1 inline-flex items-center rounded border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-100"
-                          title="Ver contra-nota emitida"
+                          className={`ml-1 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                            e.contra_nota.ativa
+                              ? 'border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                              : 'border border-muted bg-muted text-muted-foreground line-through hover:bg-muted/80'
+                          }`}
+                          title={e.contra_nota.ativa ? 'Ver contra-nota emitida' : 'Contra-nota cancelada — ver histórico'}
                         >
-                          CN nº {e.contra_nota.numero}
+                          CN nº {e.contra_nota.numero}{e.contra_nota.ativa ? '' : ' (Canc.)'}
                         </button>
                       )}
                       {e.devolucao_nota && (
                         <button
                           type="button"
                           onClick={() => navigate(`/notas-fiscais/${e.devolucao_nota.id}`)}
-                          className="ml-1 inline-flex items-center rounded border border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-100"
-                          title="Ver devolução emitida"
+                          className={`ml-1 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                            e.devolucao_nota.ativa
+                              ? 'border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                              : 'border border-muted bg-muted text-muted-foreground line-through hover:bg-muted/80'
+                          }`}
+                          title={e.devolucao_nota.ativa ? 'Ver devolução emitida' : 'Devolução cancelada — ver histórico'}
                         >
-                          Dev nº {e.devolucao_nota.numero}
+                          Dev nº {e.devolucao_nota.numero}{e.devolucao_nota.ativa ? '' : ' (Canc.)'}
                         </button>
                       )}
                     </TableCell>
