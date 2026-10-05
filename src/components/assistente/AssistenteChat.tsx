@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Compass, RotateCcw, Wand2 } from "lucide-react";
@@ -112,12 +112,18 @@ export function AssistenteChat({ onFecharPainel }: AssistenteChatProps) {
 
   const tourDaTela = getTourDaRota(rotaAtual);
 
+  const navigate = useNavigate();
+
   const executarTour = useCallback(
     (id: string) => {
       onFecharPainel();
-      setTimeout(() => iniciarTour(id), 350);
+      const tour = getTour(id);
+      // Leva o usuário à tela do tour antes de iniciá-lo
+      const precisaNavegar = !!tour && rotaAtual !== tour.rota && !rotaAtual.startsWith(`${tour.rota}/`);
+      if (precisaNavegar && tour) navigate(tour.rota);
+      setTimeout(() => iniciarTour(id), precisaNavegar ? 1200 : 350);
     },
-    [onFecharPainel],
+    [onFecharPainel, navigate, rotaAtual],
   );
 
   return (

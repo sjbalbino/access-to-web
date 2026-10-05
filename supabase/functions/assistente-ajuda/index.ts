@@ -217,7 +217,7 @@ function criarFerramentas(db: Db) {
         "Use quando o usuário pedir para ser mostrado na tela ou quando o passo a passo ficar mais claro visualmente.",
       inputSchema: z.object({
         tour_id: z
-          .enum(["entrada-colheita", "notas-deposito", "transferencias", "compra-cereais", "vendas-producao", "entradas-nfe", "relatorios"])
+          .enum(TOURS_DISPONIVEIS.map((t) => t.id) as [string, ...string[]])
           .describe("Identificador do tour disponível."),
       }),
       execute: async ({ tour_id }) => {
