@@ -1000,7 +1000,9 @@ export default function RemessasVendaForm() {
                           <TableCell className="text-right">{formatCurrency(Number(r.valor_nota) > 0 ? r.valor_nota : r.valor_remessa)}</TableCell>
                           <TableCell>{r.silo?.nome || "-"}</TableCell>
                           <TableCell>
-                            {r.status === "carregado_nfe" || r.nota_fiscal_id ? (
+                            {r.status === "cancelada" ? (
+                              <Badge variant="destructive">Cancelada</Badge>
+                            ) : r.status === "carregado_nfe" || r.nota_fiscal_id ? (
                               <Badge className="bg-blue-500 text-white">Carregado/NFe</Badge>
                             ) : r.status === "carregado" ? (
                               <Badge className="bg-green-500 text-white">Carregado</Badge>
@@ -1074,7 +1076,7 @@ export default function RemessasVendaForm() {
                                 </Button>
                               )}
                               {/* Botões para status "carregado_nfe" - Visualizar Remessa e NFe */}
-                              {(r.status === "carregado_nfe" || r.nota_fiscal_id) && (
+                              {r.status !== "cancelada" && (r.status === "carregado_nfe" || r.nota_fiscal_id) && (
                                 <>
                                   <Button
                                     variant="ghost"
