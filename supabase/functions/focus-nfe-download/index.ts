@@ -67,6 +67,9 @@ serve(async (req) => {
     // Buscar ambiente e token do emitente
     let ambiente: number | null | undefined;
     let emitenteToken: string | null | undefined;
+    // Caminhos já gravados na nota (usados quando a Focus não localiza a ref)
+    let storedDanfe: string | null = null;
+    let storedXml: string | null = null;
 
     if (notaFiscalId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -74,11 +77,13 @@ serve(async (req) => {
       const { data: notaData } = await supabase
         .from("notas_fiscais")
         .select(`
-          emitente_id,
+          emitente_id, danfe_url, xml_url,
           emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao))
         `)
         .eq("id", notaFiscalId)
         .maybeSingle();
+      storedDanfe = (notaData as { danfe_url?: string | null } | null)?.danfe_url ?? null;
+      storedXml = (notaData as { xml_url?: string | null } | null)?.xml_url ?? null;
 
       // Verificar se a nota existe
       if (!notaData) {
