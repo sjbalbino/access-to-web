@@ -166,8 +166,12 @@ serve(async (req) => {
         break;
     }
 
-
-
+    // Fallback: caminhos gravados na nota (ex.: empresa recriada na Focus e ref não encontrada)
+    if (!downloadUrl) {
+      if (tipo === "danfe" && storedDanfe) downloadUrl = storedDanfe;
+      if (tipo === "xml" && storedXml) downloadUrl = storedXml;
+      if (downloadUrl) console.log("Usando caminho gravado na nota:", downloadUrl);
+    }
 
     if (!downloadUrl) {
       // Fallback: para DANFE de nota cancelada/autorizada, tentar endpoint direto .pdf
