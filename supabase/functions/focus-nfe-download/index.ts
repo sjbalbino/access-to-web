@@ -67,6 +67,9 @@ serve(async (req) => {
     // Buscar ambiente e token do emitente
     let ambiente: number | null | undefined;
     let emitenteToken: string | null | undefined;
+    // Caminhos já gravados na nota (usados quando a Focus não localiza a ref)
+    let storedDanfe: string | null = null;
+    let storedXml: string | null = null;
 
     if (notaFiscalId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -74,11 +77,13 @@ serve(async (req) => {
       const { data: notaData } = await supabase
         .from("notas_fiscais")
         .select(`
-          emitente_id,
+          emitente_id, danfe_url, xml_url,
           emitentes_nfe!notas_fiscais_emitente_id_fkey(ambiente, emitentes_nfe_credentials(api_access_token, api_access_token_homologacao))
         `)
         .eq("id", notaFiscalId)
         .maybeSingle();
+      storedDanfe = (notaData as { danfe_url?: string | null } | null)?.danfe_url ?? null;
+      storedXml = (notaData as { xml_url?: string | null } | null)?.xml_url ?? null;
 
       // Verificar se a nota existe
       if (!notaData) {
@@ -161,8 +166,12 @@ serve(async (req) => {
         break;
     }
 
-
-
+    // Fallback: caminhos gravados na nota (ex.: empresa recriada na Focus e ref não encontrada)
+    if (!downloadUrl) {
+      if (tipo === "danfe" && storedDanfe) downloadUrl = storedDanfe;
+      if (tipo === "xml" && storedXml) downloadUrl = storedXml;
+      if (downloadUrl) console.log("Usando caminho gravado na nota:", downloadUrl);
+    }
 
     if (!downloadUrl) {
       // Fallback: para DANFE de nota cancelada/autorizada, tentar endpoint direto .pdf
@@ -184,9 +193,15 @@ serve(async (req) => {
         }
         console.log("Fallback DANFE falhou:", altResp.status);
       }
+      const rotulo = tipo === "danfe" ? "DANFE" : tipo.toUpperCase().replace("_", " ");
+      if (consultaData?.codigo === "nao_encontrado") {
+        throw new Error(
+          `${rotulo} não encontrado: a Focus NFe não localiza esta nota (possivelmente a empresa foi recadastrada na Focus) e não há arquivo gravado no sistema.`
+        );
+      }
       const statusNota = consultaData.status || "desconhecido";
       throw new Error(
-        `DANFE não disponível na Focus NFe para esta nota (status: ${statusNota}). ` +
+        `${rotulo} não disponível na Focus NFe para esta nota (status: ${statusNota}). ` +
         `Aguarde alguns segundos após o cancelamento/autorização e tente novamente.`
       );
     }
