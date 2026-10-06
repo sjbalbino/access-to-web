@@ -193,9 +193,15 @@ serve(async (req) => {
         }
         console.log("Fallback DANFE falhou:", altResp.status);
       }
+      const rotulo = tipo === "danfe" ? "DANFE" : tipo.toUpperCase().replace("_", " ");
+      if (consultaData?.codigo === "nao_encontrado") {
+        throw new Error(
+          `${rotulo} não encontrado: a Focus NFe não localiza esta nota (possivelmente a empresa foi recadastrada na Focus) e não há arquivo gravado no sistema.`
+        );
+      }
       const statusNota = consultaData.status || "desconhecido";
       throw new Error(
-        `DANFE não disponível na Focus NFe para esta nota (status: ${statusNota}). ` +
+        `${rotulo} não disponível na Focus NFe para esta nota (status: ${statusNota}). ` +
         `Aguarde alguns segundos após o cancelamento/autorização e tente novamente.`
       );
     }
