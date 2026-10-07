@@ -51,6 +51,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { supabase } from "@/integrations/supabase/client";
 
 const emptySafra: SafraInput = {
   codigo: "",
@@ -112,6 +113,16 @@ export default function Safras() {
     setDialogOpen(true);
   };
 
+  /** Maior código numérico existente + 1 (prévia; recalculado no salvamento). */
+  const calcularProximo = (lista: Array<{ codigo: string | null }> | undefined): string => {
+    const max = (lista ?? []).reduce((acc, s) => {
+      const n = /^\d+$/.test((s.codigo ?? "").trim()) ? parseInt(s.codigo!.trim(), 10) : 0;
+      return n > acc ? n : acc;
+    }, 0);
+    return String(max + 1);
+  };
+  const proximoCodigo = calcularProximo(safras as any);
+
   const handleNew = () => {
     setSelectedSafra(null);
     setFormData(emptySafra);
@@ -120,9 +131,13 @@ export default function Safras() {
 
   const handleSave = async () => {
     if (selectedSafra) {
-      await updateSafra.mutateAsync({ id: selectedSafra.id, ...formData });
+      // Código não é editável: não envia para não alterar o vínculo legado.
+      const { codigo: _ignorado, ...resto } = formData;
+      await updateSafra.mutateAsync({ id: selectedSafra.id, ...resto } as any);
     } else {
-      await createSafra.mutateAsync(formData);
+      // Recalcula a partir do banco no momento do salvamento (RLS limita à empresa ativa).
+      const { data: existentes } = await supabase.from("safras").select("codigo");
+      await createSafra.mutateAsync({ ...formData, codigo: calcularProximo(existentes ?? []) });
     }
     setDialogOpen(false);
   };
@@ -303,11 +318,12 @@ export default function Safras() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="codigo">Código</Label>
+                <Label htmlFor="codigo">Código (automático)</Label>
                 <Input
                   id="codigo"
-                  value={formData.codigo || ""}
-                  onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+                  value={selectedSafra ? (formData.codigo || "-") : proximoCodigo}
+                  readOnly
+                  disabled
                 />
               </div>
               <div className="space-y-2">
