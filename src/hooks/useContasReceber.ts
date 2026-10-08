@@ -82,7 +82,9 @@ export function useCreateContaReceber() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: ContaReceberInput) => {
-      const { data, error } = await supabase.from('contas_receber' as any).insert(input as any).select().single();
+      // Remove campos de baixa/tela que não são colunas do título
+      const { ja_pago, data_pagamento, forma_pagamento, conta_bancaria_id, juros, multa, desconto, ...clean } = input as any;
+      const { data, error } = await supabase.from('contas_receber' as any).insert(clean).select().single();
       if (error) throw error;
       return data;
     },
@@ -98,7 +100,8 @@ export function useUpdateContaReceber() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...input }: Partial<ContaReceberInput> & { id: string; status?: string }) => {
-      const { data, error } = await supabase.from('contas_receber' as any).update(input as any).eq('id', id).select().single();
+      const { ja_pago, data_pagamento, forma_pagamento, conta_bancaria_id, juros, multa, desconto, ...clean } = input as any;
+      const { data, error } = await supabase.from('contas_receber' as any).update(clean).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },

@@ -232,7 +232,8 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
       };
       
       const {
-        ja_pago, num_parcelas, intervalo_dias, juros, multa, desconto, forma_pagamento, conta_bancaria_id,
+        // campos da baixa (não existem na tabela do título)
+        ja_pago, data_pagamento, num_parcelas, intervalo_dias, juros, multa, desconto, forma_pagamento, conta_bancaria_id,
         // remove relações embutidas e campos de leitura que não são colunas
         dre_conta, sub_centro_custo, granja, fornecedor, cliente, safra, produto, socio_produtor,
         entrada_nfe, contrato_venda, compra_cereais, baixas,
