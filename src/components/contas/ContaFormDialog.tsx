@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { Plus, Pencil } from 'lucide-react';
 import { CadastroRapidoDialog, CadastroRapidoTipo } from './CadastroRapidoDialog';
+import { ClienteFornecedorDialog } from '@/components/clientes-fornecedores/ClienteFornecedorDialog';
 
 interface Props {
   open: boolean;
@@ -318,12 +319,12 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
 
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-7xl max-h-[94dvh] flex flex-col gap-3 overflow-hidden">
         <DialogHeader>
           <DialogTitle>{initial?.id ? 'Editar' : 'Nova'} {tipo === 'receber' ? 'Conta a Receber' : 'Conta a Pagar'}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="min-h-0 overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 [&>div]:min-w-0">
           <div>
             <Label>Granja *</Label>
             <Select isSearchable value={form.granja_id || undefined} onValueChange={(v) => update('granja_id', v)} disabled={lockedByOrigem}>
@@ -413,8 +414,8 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             </Select>
           </div>
           {!initial?.id && (
-            <div className="col-span-2 grid grid-cols-2 gap-3 p-3 border rounded-md bg-muted/30">
-              <div className="col-span-2 text-sm font-semibold">
+            <div className="sm:col-span-2 lg:col-start-1 grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 border rounded-md bg-muted/30">
+              <div className="sm:col-span-2 text-sm font-semibold">
                 Gerar várias parcelas
                 <p className="text-xs font-normal text-muted-foreground">
                   Cria N contas com vencimentos espaçados. O valor original será dividido e o nº da parcela preenchido como 1/N, 2/N, …
@@ -443,7 +444,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             </div>
           )}
 
-          <div className={cn("col-span-2 flex items-center space-x-2 border rounded-md p-3 transition-colors", form.ja_pago ? "bg-emerald-50 border-emerald-200" : "bg-muted/30")}>
+          <div className={cn("sm:col-span-2 flex items-center space-x-2 border rounded-md p-3 transition-colors", form.ja_pago ? "bg-accent border-primary/30" : "bg-muted/30")}>
             <input
               type="checkbox"
               id="ja_pago"
@@ -463,8 +464,8 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
           </div>
 
           {form.ja_pago && (
-            <div className="col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3 p-4 border rounded-md bg-emerald-50/50 border-emerald-100">
-              <div className="col-span-2 md:col-span-4 font-semibold text-sm text-emerald-800 border-b border-emerald-100 pb-2 mb-1">
+            <div className="sm:col-span-2 lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 p-3 border rounded-md bg-accent/50 border-border">
+              <div className="sm:col-span-2 lg:col-span-6 font-semibold text-sm text-foreground border-b border-border pb-2">
                 Informações da Baixa
               </div>
               <div>
@@ -507,7 +508,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
                   </SelectContent>
                 </Select>
               </div>
-              <div className="col-span-2">
+              <div className="sm:col-span-2 lg:col-span-1">
                 <Label>Conta Bancária (para conciliação)</Label>
                 <Select value={form.conta_bancaria_id} onValueChange={(v) => update('conta_bancaria_id', v)}>
                   <SelectTrigger className="h-auto py-2">
@@ -541,11 +542,11 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
               </div>
             </div>
           )}
-          <div className="col-span-2">
+           <div className="sm:col-span-2">
             <Label>Observações</Label>
             <Textarea value={form.observacoes || ''} onChange={(e) => update('observacoes', e.target.value)} rows={2} />
           </div>
-          <div className="col-span-2">
+           <div className="sm:col-span-2">
             <AtribuicaoSocioSection
               granjaId={form.granja_id}
               valorTotal={parseFloat(form.valor_original) || 0}
@@ -562,7 +563,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         </div>
 
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0 border-t border-border pt-3">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={!form.granja_id || !form.data_vencimento || !form.valor_original}>
             Salvar
@@ -570,7 +571,15 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         </DialogFooter>
       </DialogContent>
     </Dialog>
-    {cadastro && (
+    {cadastro && (cadastro.tipo === 'fornecedor' || cadastro.tipo === 'cliente' ? (
+      <ClienteFornecedorDialog
+        open
+        onOpenChange={(v) => { if (!v) setCadastro(null); }}
+        registroId={cadastro.id}
+        tipoInicial={cadastro.tipo}
+        onSaved={(id) => update(cadastro.field, id)}
+      />
+    ) : (
       <CadastroRapidoDialog
         open={!!cadastro}
         onOpenChange={(v) => { if (!v) setCadastro(null); }}
@@ -578,7 +587,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         registroId={cadastro.id}
         onSaved={(id) => update(cadastro.field, id)}
       />
-    )}
+    ))}
     </>
   );
 }
