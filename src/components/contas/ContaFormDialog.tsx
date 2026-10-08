@@ -87,6 +87,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const [form, setForm] = useState<any>(initialDraft?.form || defaultForm());
   const [rateioManual, setRateioManual] = useState<RateioManualItem[]>([]);
   const salvarManual = useSalvarRateioManual();
+  const [cadastro, setCadastro] = useState<{ tipo: CadastroRapidoTipo; field: string; id?: string } | null>(null);
 
   // Reabre o dialog automaticamente se havia rascunho em edição antes do refresh
   useEffect(() => {
@@ -568,5 +569,15 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    {cadastro && (
+      <CadastroRapidoDialog
+        open={!!cadastro}
+        onOpenChange={(v) => { if (!v) setCadastro(null); }}
+        tipo={cadastro.tipo}
+        registroId={cadastro.id}
+        onSaved={(id) => update(cadastro.field, id)}
+      />
+    )}
+    </>
   );
 }
