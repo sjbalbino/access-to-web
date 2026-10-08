@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }: Props) {
+  const queryClient = useQueryClient();
   const { data: granjas } = useGranjas();
   const { data: clientes } = useClientesFornecedores();
   const { data: dreContas } = useDreContas();
