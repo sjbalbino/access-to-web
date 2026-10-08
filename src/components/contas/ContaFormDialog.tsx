@@ -110,7 +110,11 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
       });
     } else {
       const principal = granjas?.find(g => g.is_principal) || granjas?.[0];
-      setForm((f: any) => ({ ...f, granja_id: f.granja_id || principal?.id || '' }));
+      // Se o form ainda contém dados de uma edição anterior (tem id), reinicia do zero
+      setForm((f: any) => {
+        const base = f?.id ? defaultForm() : f;
+        return { ...base, granja_id: base.granja_id || principal?.id || '' };
+      });
     }
     // Intencionalmente sem `granjas` nas deps para não resetar o form quando refetch ocorrer
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -290,9 +294,9 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const partyLabel = tipo === 'receber' ? 'Cliente' : 'Fornecedor';
 
   const handleOpenChange = (v: boolean) => {
-    if (!v && !initial) {
-      // Fechamento manual → descarta rascunho
-      clearDraft();
+    if (!v) {
+      // Fechamento manual → descarta rascunho e dados da edição
+      if (!initial) clearDraft();
       setForm(defaultForm());
     }
     onOpenChange(v);
