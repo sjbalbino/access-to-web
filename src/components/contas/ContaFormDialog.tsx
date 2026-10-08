@@ -252,9 +252,11 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
       
       const saved: any = await onSubmit(restPayload);
 
-      // Se já pago, criar a baixa vinculada
+      // Baixa e rateio são independentes: executa em paralelo para reduzir espera
+      const tarefas: Promise<unknown>[] = [];
+
       if (form.ja_pago && saved?.id) {
-        const cbSelecionada = contasBancarias.find((c: any) => c.id === form.conta_bancaria_id);
+        const cbSelecionada = contasBancarias?.find((c: any) => c.id === form.conta_bancaria_id);
         const baixaPayload = {
           conta_id: saved.id,
           data_pagamento: form.data_pagamento || form.data_vencimento || form.data_emissao,
@@ -267,21 +269,33 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
           conta_bancaria: cbSelecionada ? cbSelecionada.nome : null,
           documento: form.documento || null,
         };
-        
         const table = tipo === 'receber' ? 'contas_receber_baixas' : 'contas_pagar_baixas';
-        await supabase.from(table as any).insert(baixaPayload);
+        tarefas.push(
+          (async () => {
+            const { error } = await supabase.from(table as any).insert(baixaPayload);
+            if (error) throw error;
+          })()
+        );
       }
 
       if (payload.rateio_modo === 'manual' && saved?.id) {
-        await salvarManual.mutateAsync({
-          origem_tipo: tipo === 'receber' ? 'cr' : 'cp',
-          origem_id: saved.id,
-          itens: rateioManual.map((i) => ({
-            socio_produtor_id: i.socio_produtor_id,
-            percentual: i.percentual,
-            valor: +((valorOriginal * i.percentual) / 100).toFixed(2),
-          })),
-        });
+        tarefas.push(
+          salvarManual.mutateAsync({
+            origem_tipo: tipo === 'receber' ? 'cr' : 'cp',
+            origem_id: saved.id,
+            itens: rateioManual.map((i) => ({
+              socio_produtor_id: i.socio_produtor_id,
+              percentual: i.percentual,
+              valor: +((valorOriginal * i.percentual) / 100).toFixed(2),
+            })),
+          })
+        );
+      }
+
+      if (tarefas.length) {
+        await Promise.all(tarefas);
+        // Baixa altera valor pago/status: atualiza a lista em segundo plano
+        queryClient.invalidateQueries({ queryKey: [tipo === 'receber' ? 'contas_receber' : 'contas_pagar'] });
       }
     }
     clearDraft();

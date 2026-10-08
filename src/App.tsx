@@ -66,7 +66,14 @@ import PortalContato from "./pages/portal/Contato";
 
 
 
-const queryClient = new QueryClient();
+// Cadastros auxiliares (granjas, fornecedores, produtos, DRE...) são reaproveitados
+// por 60s em vez de recarregados a cada abertura de formulário. Mutações continuam
+// invalidando as listas afetadas, então dados alterados aparecem na hora.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 60_000, refetchOnWindowFocus: false },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
