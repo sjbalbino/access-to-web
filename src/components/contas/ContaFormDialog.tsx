@@ -18,6 +18,8 @@ import { useSalvarRateioManual } from '@/hooks/useRateioSocios';
 import { useContasBancarias } from '@/hooks/useContasBancarias';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { Plus, Pencil } from 'lucide-react';
+import { CadastroRapidoDialog, CadastroRapidoTipo } from './CadastroRapidoDialog';
 
 interface Props {
   open: boolean;
@@ -85,6 +87,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   const [form, setForm] = useState<any>(initialDraft?.form || defaultForm());
   const [rateioManual, setRateioManual] = useState<RateioManualItem[]>([]);
   const salvarManual = useSalvarRateioManual();
+  const [cadastro, setCadastro] = useState<{ tipo: CadastroRapidoTipo; field: string; id?: string } | null>(null);
 
   // Reabre o dialog automaticamente se havia rascunho em edição antes do refresh
   useEffect(() => {
@@ -294,7 +297,25 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
     onOpenChange(v);
   };
 
+  /** Rótulo com atalho: "+" cadastra quando vazio; lápis edita o selecionado. */
+  const AtalhoLabel = ({ label, tipoCad, field }: { label: string; tipoCad: CadastroRapidoTipo; field: string }) => {
+    const selecionado = form[field] as string | undefined;
+    return (
+      <div className="flex items-center justify-between gap-2">
+        <Label>{label}</Label>
+        <Button
+          type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs"
+          aria-label={selecionado ? `Editar ${label}` : `Cadastrar ${label}`}
+          onClick={() => setCadastro({ tipo: tipoCad, field, id: selecionado })}
+        >
+          {selecionado ? <><Pencil className="h-3 w-3 mr-1" />Editar</> : <><Plus className="h-3 w-3 mr-1" />Novo</>}
+        </Button>
+      </div>
+    );
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
 
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -313,7 +334,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             </Select>
           </div>
           <div>
-            <Label>{partyLabel}</Label>
+            <AtalhoLabel label={partyLabel} tipoCad={tipo === 'receber' ? 'cliente' : 'fornecedor'} field={partyField} />
             <Select isSearchable value={form[partyField] || undefined} onValueChange={(v) => update(partyField, v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -365,7 +386,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             </Select>
           </div>
           <div>
-            <Label>Produto</Label>
+            <AtalhoLabel label="Produto" tipoCad="produto" field="produto_id" />
             <Select isSearchable value={form.produto_id || undefined} onValueChange={(v) => update('produto_id', v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -374,7 +395,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             </Select>
           </div>
           <div>
-            <Label>Sub-centro de custo</Label>
+            <AtalhoLabel label="Sub-centro de custo" tipoCad="sub_centro" field="sub_centro_custo_id" />
             <Select isSearchable value={form.sub_centro_custo_id || undefined} onValueChange={(v) => update('sub_centro_custo_id', v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -383,7 +404,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
             </Select>
           </div>
           <div>
-            <Label>Conta DRE</Label>
+            <AtalhoLabel label="Conta DRE" tipoCad="dre" field="dre_conta_id" />
             <Select isSearchable value={form.dre_conta_id || undefined} onValueChange={(v) => update('dre_conta_id', v)}>
               <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
@@ -549,5 +570,15 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    {cadastro && (
+      <CadastroRapidoDialog
+        open={!!cadastro}
+        onOpenChange={(v) => { if (!v) setCadastro(null); }}
+        tipo={cadastro.tipo}
+        registroId={cadastro.id}
+        onSaved={(id) => update(cadastro.field, id)}
+      />
+    )}
+    </>
   );
 }
