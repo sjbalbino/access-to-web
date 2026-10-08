@@ -315,6 +315,7 @@ export function ContaFormDialog({ open, onOpenChange, tipo, initial, onSubmit }:
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
 
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
