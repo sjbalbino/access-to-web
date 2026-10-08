@@ -6,19 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ClienteFornecedorDialog } from '@/components/clientes-fornecedores/ClienteFornecedorDialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Users, Building, Phone, Mail, Loader2, Sparkles } from 'lucide-react';
-import { useClientesFornecedores, useCreateClienteFornecedor, useUpdateClienteFornecedor, useDeleteClienteFornecedor, ClienteFornecedorInsert } from '@/hooks/useClientesFornecedores';
-import { useGranjas } from '@/hooks/useGranjas';
-import { useCepLookup, formatCep } from '@/hooks/useCepLookup';
-import { useCnpjLookup, formatCnpj } from '@/hooks/useCnpjLookup';
-import { formatCpf, validateCpf, validateCnpj } from '@/lib/formatters';
-import { isIeGenerica, validarIeUF } from '@/lib/inscricaoEstadualValidator';
+import { useClientesFornecedores, useDeleteClienteFornecedor, ClienteFornecedor } from '@/hooks/useClientesFornecedores';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -27,12 +20,7 @@ import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 export default function ClientesFornecedores() {
   const { canEdit } = useAuth();
   const { data: clientesFornecedores, isLoading } = useClientesFornecedores();
-  const { data: granjas } = useGranjas();
-  const createMutation = useCreateClienteFornecedor();
-  const updateMutation = useUpdateClienteFornecedor();
   const deleteMutation = useDeleteClienteFornecedor();
-  const { isLoading: cepLoading, fetchCep } = useCepLookup();
-  const { isLoading: cnpjLoading, fetchCnpj } = useCnpjLookup();
 
   const [filtroNome, setFiltroNome] = useState('');
   const [filtroCpfCnpj, setFiltroCpfCnpj] = useState('');
@@ -43,7 +31,7 @@ export default function ClientesFornecedores() {
   const itensPorPagina = 20;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<ClienteFornecedor | null>(null);
   const [enriquecendo, setEnriquecendo] = useState(false);
   const [resultadoEnriquecimento, setResultadoEnriquecimento] = useState<any>(null);
   const queryClient = useQueryClient();
@@ -108,184 +96,8 @@ export default function ClientesFornecedores() {
 
   const totalPaginas = Math.max(1, Math.ceil(dadosFiltrados.length / itensPorPagina));
   const dadosPaginados = dadosFiltrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
-  const [formData, setFormData] = useState<ClienteFornecedorInsert>({
-    granja_id: null,
-    tipo: 'ambos',
-    tipo_pessoa: 'juridica',
-    nome: '',
-    nome_fantasia: '',
-    cpf_cnpj: '',
-    inscricao_estadual: '',
-    logradouro: '',
-    numero: '',
-    complemento: '',
-    bairro: '',
-    cidade: '',
-    uf: '',
-    cep: '',
-    telefone: '',
-    celular: '',
-    email: '',
-    contato: '',
-    observacoes: '',
-    ativo: true,
-  });
-
-  const handleCepBlur = async (cep: string) => {
-    const data = await fetchCep(cep);
-    if (data) {
-      setFormData((prev) => ({
-        ...prev,
-        logradouro: data.logradouro || prev.logradouro,
-        bairro: data.bairro || prev.bairro,
-        cidade: data.localidade || prev.cidade,
-        uf: data.uf || prev.uf,
-      }));
-    }
-  };
-
-  const handleCnpjBlur = async (cnpj: string) => {
-    if (formData.tipo_pessoa !== 'juridica') return;
-    
-    const cnpjLimpo = cnpj.replace(/\D/g, '');
-    if (cnpjLimpo.length !== 14) return;
-    
-    const data = await fetchCnpj(cnpj);
-    if (data) {
-      setFormData((prev) => ({
-        ...prev,
-        cpf_cnpj: data.cnpj || prev.cpf_cnpj,
-        nome: data.razao_social || prev.nome,
-        nome_fantasia: data.nome_fantasia || prev.nome_fantasia,
-        logradouro: data.logradouro || prev.logradouro,
-        numero: data.numero || prev.numero,
-        complemento: data.complemento || prev.complemento,
-        bairro: data.bairro || prev.bairro,
-        cidade: data.cidade || prev.cidade,
-        uf: data.uf || prev.uf,
-        cep: data.cep || prev.cep,
-        telefone: data.telefone || prev.telefone,
-        email: data.email || prev.email,
-      }));
-      
-      // Buscar CEP no ViaCEP para complementar dados se necessário
-      if (data.cep) {
-        await handleCepBlur(data.cep);
-      }
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      granja_id: null,
-      tipo: 'ambos',
-      tipo_pessoa: 'juridica',
-      nome: '',
-      nome_fantasia: '',
-      cpf_cnpj: '',
-      inscricao_estadual: '',
-      logradouro: '',
-      numero: '',
-      complemento: '',
-      bairro: '',
-      cidade: '',
-      uf: '',
-      cep: '',
-      telefone: '',
-      celular: '',
-      email: '',
-      contato: '',
-      observacoes: '',
-      ativo: true,
-    });
-    setEditingItem(null);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Bairro é obrigatório no schema da NF-e (SEFAZ rejeita bairro vazio)
-    if (!formData.bairro?.trim()) {
-      toast.error('Bairro é obrigatório', {
-        description: 'A SEFAZ rejeita NF-e com bairro do destinatário em branco. Informe o bairro (ex.: INTERIOR para área rural).',
-      });
-      return;
-    }
-
-
-    // Validar CPF/CNPJ se informado (pular para estrangeiro)
-    if (formData.cpf_cnpj && formData.cpf_cnpj.length > 0 && formData.tipo_pessoa !== 'estrangeiro') {
-      const doc = formData.cpf_cnpj.replace(/\D/g, "");
-      if (formData.tipo_pessoa === "fisica") {
-        if (doc.length > 0 && !validateCpf(doc)) {
-          toast.error("CPF inválido!");
-          return;
-        }
-      } else {
-        if (doc.length > 0 && !validateCnpj(doc)) {
-          toast.error("CNPJ inválido!");
-          return;
-        }
-      }
-    }
-
-
-    // Validar Inscrição Estadual se informada (apenas para não-estrangeiro)
-    const ieRaw = (formData.inscricao_estadual || '').trim();
-    if (ieRaw && formData.tipo_pessoa !== 'estrangeiro') {
-      if (isIeGenerica(ieRaw)) {
-        toast.error('Inscrição Estadual inválida', {
-          description: 'Não é permitido cadastrar IE genérica (zeros, sequências ou repetições).',
-        });
-        return;
-      }
-      if (!formData.uf) {
-        toast.error('Informe a UF para validar a Inscrição Estadual.');
-        return;
-      }
-      const res = validarIeUF(ieRaw, formData.uf);
-      if (!res.valida) {
-        toast.error('Inscrição Estadual inválida', {
-          description: res.motivo ?? `A IE informada não é válida para ${formData.uf}.`,
-        });
-        return;
-      }
-    }
-
-
-    if (editingItem) {
-      await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
-    } else {
-      await createMutation.mutateAsync(formData);
-    }
-    setIsDialogOpen(false);
-    resetForm();
-  };
-
-  const handleEdit = async (item: any) => {
+  const handleEdit = (item: ClienteFornecedor) => {
     setEditingItem(item);
-    setFormData({
-      granja_id: item.granja_id,
-      tipo: item.tipo,
-      tipo_pessoa: item.tipo_pessoa,
-      nome: item.nome,
-      nome_fantasia: item.nome_fantasia || '',
-      cpf_cnpj: item.cpf_cnpj || '',
-      inscricao_estadual: item.inscricao_estadual || '',
-      logradouro: item.logradouro || '',
-      numero: item.numero || '',
-      complemento: item.complemento || '',
-      bairro: item.bairro || '',
-      cidade: item.cidade || '',
-      uf: item.uf || '',
-      cep: item.cep || '',
-      telefone: item.telefone || '',
-      celular: item.celular || '',
-      email: item.email || '',
-      contato: item.contato || '',
-      observacoes: item.observacoes || '',
-      ativo: item.ativo,
-    });
     setIsDialogOpen(true);
   };
 
@@ -338,167 +150,13 @@ export default function ClientesFornecedores() {
           </div>
           )}
           {canEdit && (
-            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-              <DialogTrigger asChild>
-                <Button className="gap-2" size="sm">
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Novo Registro</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{editingItem ? 'Editar' : 'Novo'} Cliente/Fornecedor</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Tipo</Label>
-                      <Select isSearchable value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cliente">Cliente</SelectItem>
-                          <SelectItem value="fornecedor">Fornecedor</SelectItem>
-                          <SelectItem value="ambos">Ambos</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Tipo Pessoa</Label>
-                      <Select isSearchable value={formData.tipo_pessoa || 'juridica'} onValueChange={(value) => setFormData({ ...formData, tipo_pessoa: value, cpf_cnpj: '' })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="fisica">Pessoa Física</SelectItem>
-                          <SelectItem value="juridica">Pessoa Jurídica</SelectItem>
-                          <SelectItem value="estrangeiro">Estrangeiro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>{formData.tipo_pessoa === 'fisica' ? 'CPF' : formData.tipo_pessoa === 'estrangeiro' ? 'ID Estrangeiro' : 'CNPJ'}</Label>
-                      <div className="relative">
-                        <Input 
-                          value={
-                            formData.tipo_pessoa === 'juridica'
-                              ? formatCnpj(formData.cpf_cnpj || '')
-                              : formData.tipo_pessoa === 'estrangeiro'
-                                ? (formData.cpf_cnpj || '')
-                                : formatCpf(formData.cpf_cnpj || '')
-                          } 
-                          onChange={(e) => setFormData({ 
-                            ...formData, 
-                            cpf_cnpj: formData.tipo_pessoa === 'estrangeiro' ? e.target.value : e.target.value.replace(/\D/g, '')
-                          })}
-                          onBlur={(e) => handleCnpjBlur(e.target.value)}
-                          placeholder={formData.tipo_pessoa === 'juridica' ? '00.000.000/0000-00' : formData.tipo_pessoa === 'estrangeiro' ? 'Identificação do estrangeiro' : '000.000.000-00'}
-                          maxLength={formData.tipo_pessoa === 'juridica' ? 18 : formData.tipo_pessoa === 'estrangeiro' ? 20 : 14}
-                        />
-                        {cnpjLoading && (
-                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>Nome / Razão Social *</Label>
-                      <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Nome Fantasia</Label>
-                      <Input value={formData.nome_fantasia || ''} onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Inscrição Estadual</Label>
-                      <Input value={formData.inscricao_estadual || ''} onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>CEP</Label>
-                      <div className="relative">
-                        <Input 
-                          value={formData.cep || ''} 
-                          onChange={(e) => setFormData({ ...formData, cep: formatCep(e.target.value) })} 
-                          onBlur={(e) => handleCepBlur(e.target.value)}
-                          placeholder="00000-000"
-                          maxLength={9}
-                        />
-                        {cepLoading && (
-                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>Logradouro</Label>
-                      <Input value={formData.logradouro || ''} onChange={(e) => setFormData({ ...formData, logradouro: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Número</Label>
-                      <Input value={formData.numero || ''} onChange={(e) => setFormData({ ...formData, numero: e.target.value })} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>Complemento</Label>
-                      <Input value={formData.complemento || ''} onChange={(e) => setFormData({ ...formData, complemento: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Bairro <span className="text-destructive">*</span></Label>
-                      <Input value={formData.bairro || ''} onChange={(e) => setFormData({ ...formData, bairro: e.target.value })} placeholder="Ex.: INTERIOR" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Cidade</Label>
-                      <Input value={formData.cidade || ''} onChange={(e) => setFormData({ ...formData, cidade: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>UF</Label>
-                      <Input value={formData.uf || ''} onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })} maxLength={2} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>Telefone</Label>
-                      <Input value={formData.telefone || ''} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Celular</Label>
-                      <Input value={formData.celular || ''} onChange={(e) => setFormData({ ...formData, celular: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Email</Label>
-                      <Input type="email" value={formData.email || ''} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Contato</Label>
-                      <Input value={formData.contato || ''} onChange={(e) => setFormData({ ...formData, contato: e.target.value })} />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Observações</Label>
-                    <Textarea value={formData.observacoes || ''} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Switch checked={formData.ativo ?? true} onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })} />
-                    <Label>Ativo</Label>
-                  </div>
-
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                    <Button type="submit">Salvar</Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <>
+              <Button className="gap-2" size="sm" onClick={() => { setEditingItem(null); setIsDialogOpen(true); }}>
+                <Plus className="h-4 w-4" /><span className="hidden sm:inline">Novo Registro</span>
+              </Button>
+              <ClienteFornecedorDialog open={isDialogOpen} registroId={editingItem?.id}
+                onOpenChange={open => { setIsDialogOpen(open); if (!open) setEditingItem(null); }} />
+            </>
           )}
         </CardHeader>
         <CardContent className="min-w-0 space-y-4">
