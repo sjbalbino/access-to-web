@@ -290,25 +290,33 @@ export function useFocusNfe() {
       });
 
 
+      // Quando a função responde com status != 2xx, a mensagem real fica no corpo
+      let payload = data as { success?: boolean; error?: string } | null;
       if (error) {
-        throw new Error(error.message);
+        const ctx = (error as { context?: Response }).context;
+        try {
+          if (ctx && typeof ctx.json === "function") payload = await ctx.json();
+        } catch { /* corpo não-JSON */ }
+        if (!payload?.error) throw new Error(error.message);
       }
 
-      if (data.success) {
+      if (payload?.success) {
         toast.success("NF-e cancelada com sucesso");
         setStatus("cancelada");
         invalidateNfeRelatedQueries();
       } else {
-        toast.error("Erro ao cancelar NF-e", {
-          description: data.error,
-        });
+        const { titulo, descricao } = traduzirErroCancelamento(payload?.error);
+        toast.error(titulo, { description: descricao, duration: 15000 });
+        invalidateNfeRelatedQueries();
       }
 
-      return data;
+      return { success: false, ...payload } as FocusNfeResult;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Erro desconhecido";
-      toast.error("Erro ao cancelar NF-e", { description: message });
-      return { success: false, error: message };
+      const { titulo, descricao } = traduzirErroCancelamento(
+        error instanceof Error ? error.message : undefined
+      );
+      toast.error(titulo, { description: descricao, duration: 15000 });
+      return { success: false, error: descricao };
     } finally {
       setIsLoading(false);
     }
