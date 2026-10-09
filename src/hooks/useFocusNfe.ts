@@ -562,3 +562,32 @@ export function useFocusNfe() {
     inutilizarNumeracao,
   };
 }
+
+/**
+ * Converte erros técnicos/SEFAZ do cancelamento em mensagens claras ao usuário.
+ */
+export function traduzirErroCancelamento(raw?: string | null): { titulo: string; descricao: string } {
+  const msg = (raw || "").trim();
+  const m = msg.toLowerCase();
+  const titulo = "Não foi possível cancelar a NF-e";
+
+  if (m.includes("confirmado o recebimento") || m.includes("confirmacao da operacao") || m.includes("confirmação da operação")) {
+    return { titulo, descricao: "O destinatário já confirmou o recebimento desta nota na SEFAZ, por isso ela não pode mais ser cancelada. Solicite ao destinatário uma NF-e de devolução referenciando esta nota." };
+  }
+  if (m.includes("prazo") || m.includes("fora do prazo") || m.includes("excedido")) {
+    return { titulo, descricao: "O prazo legal para cancelamento desta nota já terminou. Será necessário emitir uma NF-e de devolução/estorno." };
+  }
+  if (m.includes("ja cancelad") || m.includes("já cancelad") || m.includes("duplicidade de evento")) {
+    return { titulo: "NF-e já cancelada", descricao: "Esta nota já consta como cancelada na SEFAZ. Use \"Consultar\" para atualizar o status." };
+  }
+  if (m.includes("token")) {
+    return { titulo, descricao: "As credenciais de emissão deste emitente estão inválidas ou ausentes. Verifique o cadastro do Emitente de NF-e." };
+  }
+  if (m.includes("justificativa")) {
+    return { titulo, descricao: msg };
+  }
+  if (!msg || m.includes("non-2xx") || m.includes("failed to fetch") || m.includes("network")) {
+    return { titulo, descricao: "Falha de comunicação com o serviço de NF-e. Verifique sua conexão e tente novamente em alguns instantes." };
+  }
+  return { titulo, descricao: `Retorno da SEFAZ: ${msg.replace(/^rejeicao:\s*/i, "")}` };
+}
