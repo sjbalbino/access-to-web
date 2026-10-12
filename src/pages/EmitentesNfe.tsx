@@ -72,6 +72,7 @@ const REGIMES_TRIBUTARIOS = [
 
 const API_PROVIDERS = [
   { value: "focusnfe", label: "Focus NFe" },
+  { value: "acbrapi", label: "ACBr API Nuvem" },
 ];
 
 /**
@@ -164,6 +165,22 @@ export default function EmitentesNfe() {
         toast.error("Nenhuma inscrição vinculada a este emitente", {
           description: "Vincule este emitente a uma inscrição de produtor (com CPF/CNPJ) para poder verificar a habilitação.",
         });
+        return;
+      }
+
+      if (emitente.api_provider === "acbrapi") {
+        const { data, error } = await supabase.functions.invoke("acbr-api-verificar-empresa", {
+          body: { emitente_id: emitente.id, cpf_cnpj: cpfCnpj },
+        });
+        const r = (data ?? {}) as { success?: boolean; habilitada?: boolean; mensagem?: string; error?: string; nome?: string; ambiente_label?: string };
+        const consultadoA = `Consultado: ${nomeInscricao ?? "—"} • CPF/CNPJ ${cpfCnpj}`;
+        if (error || !r.success) {
+          toast.error("Não foi possível verificar na ACBr", { description: `${r.error || error?.message || "Erro desconhecido"}\n${consultadoA}` });
+        } else if (r.habilitada) {
+          toast.success(`Habilitada na ACBr API (${r.ambiente_label})`, { description: `${r.nome ?? cpfCnpj} está cadastrada.\n${consultadoA}` });
+        } else {
+          toast.warning("Empresa não habilitada na ACBr", { description: `${r.mensagem}\n${consultadoA}`, duration: 10000 });
+        }
         return;
       }
 
