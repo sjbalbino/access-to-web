@@ -78,7 +78,7 @@ const formatDataEmissao = (dataEmissao: string | null | undefined, createdAt: st
   }
   return `${dataPart} ${horaPart}`;
 };
-import { useFocusNfe } from "@/hooks/useFocusNfe";
+import { useFocusNfe, resolverFuncaoPorNota } from "@/hooks/useFocusNfe";
 import { toast } from "sonner";
 import { formatCpfCnpj } from "@/lib/formatters";
 import { traduzirRejeicaoSefaz } from "@/lib/sefazRejeicoes";
