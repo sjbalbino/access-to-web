@@ -290,7 +290,8 @@ export function useFocusNfe() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("focus-nfe-consultar", {
+      const fnConsultar = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-consultar");
+      const { data, error } = await supabase.functions.invoke(fnConsultar, {
         body: { ref, notaFiscalId },
       });
 
@@ -330,7 +331,8 @@ export function useFocusNfe() {
         };
       }
 
-      const { data, error } = await supabase.functions.invoke("focus-nfe-cancelar", {
+      const fnCancelar = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-cancelar");
+      const { data, error } = await supabase.functions.invoke(fnCancelar, {
         body: { ref, notaFiscalId, justificativa: justificativaLimpa },
       });
 
@@ -383,8 +385,9 @@ export function useFocusNfe() {
         };
       }
 
+      const fnCce = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-carta-correcao");
       const { data, error } = await supabase.functions.invoke(
-        "focus-nfe-carta-correcao",
+        fnCce,
         {
           body: { ref, notaFiscalId, correcao },
         }
@@ -420,7 +423,8 @@ export function useFocusNfe() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
+      const fnDownload = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-download");
+      const { data, error } = await supabase.functions.invoke(fnDownload, {
         body: { ref, tipo, notaFiscalId },
       });
 
@@ -572,7 +576,8 @@ export function useFocusNfe() {
         toast.error("Justificativa deve ter no mínimo 15 caracteres");
         return { success: false, error: "Justificativa deve ter no mínimo 15 caracteres" };
       }
-      const { data, error } = await supabase.functions.invoke("focus-nfe-inutilizar", {
+      const fnInutilizar = await resolverFuncaoPorEmitente(params.emitenteId, "focus-nfe-inutilizar");
+      const { data, error } = await supabase.functions.invoke(fnInutilizar, {
         body: params,
       });
       if (error) throw new Error(error.message);
