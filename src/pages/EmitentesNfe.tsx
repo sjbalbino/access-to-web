@@ -72,6 +72,7 @@ const REGIMES_TRIBUTARIOS = [
 
 const API_PROVIDERS = [
   { value: "focusnfe", label: "Focus NFe" },
+  { value: "acbrapi", label: "ACBr API Nuvem" },
 ];
 
 /**
@@ -164,6 +165,22 @@ export default function EmitentesNfe() {
         toast.error("Nenhuma inscrição vinculada a este emitente", {
           description: "Vincule este emitente a uma inscrição de produtor (com CPF/CNPJ) para poder verificar a habilitação.",
         });
+        return;
+      }
+
+      if (emitente.api_provider === "acbrapi") {
+        const { data, error } = await supabase.functions.invoke("acbr-api-verificar-empresa", {
+          body: { emitente_id: emitente.id, cpf_cnpj: cpfCnpj },
+        });
+        const r = (data ?? {}) as { success?: boolean; habilitada?: boolean; mensagem?: string; error?: string; nome?: string; ambiente_label?: string };
+        const consultadoA = `Consultado: ${nomeInscricao ?? "—"} • CPF/CNPJ ${cpfCnpj}`;
+        if (error || !r.success) {
+          toast.error("Não foi possível verificar na ACBr", { description: `${r.error || error?.message || "Erro desconhecido"}\n${consultadoA}` });
+        } else if (r.habilitada) {
+          toast.success(`Habilitada na ACBr API (${r.ambiente_label})`, { description: `${r.nome ?? cpfCnpj} está cadastrada.\n${consultadoA}` });
+        } else {
+          toast.warning("Empresa não habilitada na ACBr", { description: `${r.mensagem}\n${consultadoA}`, duration: 10000 });
+        }
         return;
       }
 
@@ -977,6 +994,37 @@ export default function EmitentesNfe() {
                         </SelectContent>
                       </Select>
                     </div>
+                    {formData.api_provider === "acbrapi" ? (
+                      <>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="acbr_client_id">Client ID (ACBr API)</Label>
+                          <Input
+                            id="acbr_client_id"
+                            value={credentials.api_consumer_key || ""}
+                            onChange={(e) => setCredentials({ ...credentials, api_consumer_key: e.target.value })}
+                            placeholder="Client ID da aplicação na ACBr API"
+                          />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="acbr_client_secret">Client Secret (ACBr API)</Label>
+                          <div className="relative">
+                            <Input
+                              id="acbr_client_secret"
+                              type={showToken ? "text" : "password"}
+                              value={credentials.api_consumer_secret || ""}
+                              onChange={(e) => setCredentials({ ...credentials, api_consumer_secret: e.target.value })}
+                              placeholder="Client Secret da aplicação na ACBr API"
+                              className="pr-10"
+                            />
+                            <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10"
+                              onClick={() => setShowToken((v) => !v)} title={showToken ? "Ocultar" : "Mostrar"}>
+                              {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                    <>
                     <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="api_access_token_principal_producao">Token Principal de Produção</Label>
                       <div className="relative">
@@ -1052,10 +1100,14 @@ export default function EmitentesNfe() {
                         </Button>
                       </div>
                     </div>
+                    </>
+                    )}
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    Verificação/cadastro de empresa e APIs acessórias usam o Token Principal de Produção. Emissão usa o token do ambiente configurado no emitente (1 = Produção, 2 = Homologação).
+                    {formData.api_provider === "acbrapi"
+                      ? "Use o Client ID e o Client Secret da aplicação criada no painel da ACBr API. O certificado digital deve estar cadastrado na ACBr. O ambiente (1 = Produção, 2 = Homologação) define o servidor usado."
+                      : "Verificação/cadastro de empresa e APIs acessórias usam o Token Principal de Produção. Emissão usa o token do ambiente configurado no emitente (1 = Produção, 2 = Homologação)."}
                   </p>
                   <div className="flex items-center space-x-2">
                     <Switch
