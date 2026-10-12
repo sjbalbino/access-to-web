@@ -994,6 +994,37 @@ export default function EmitentesNfe() {
                         </SelectContent>
                       </Select>
                     </div>
+                    {formData.api_provider === "acbrapi" ? (
+                      <>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="acbr_client_id">Client ID (ACBr API)</Label>
+                          <Input
+                            id="acbr_client_id"
+                            value={credentials.api_consumer_key || ""}
+                            onChange={(e) => setCredentials({ ...credentials, api_consumer_key: e.target.value })}
+                            placeholder="Client ID da aplicação na ACBr API"
+                          />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="acbr_client_secret">Client Secret (ACBr API)</Label>
+                          <div className="relative">
+                            <Input
+                              id="acbr_client_secret"
+                              type={showToken ? "text" : "password"}
+                              value={credentials.api_consumer_secret || ""}
+                              onChange={(e) => setCredentials({ ...credentials, api_consumer_secret: e.target.value })}
+                              placeholder="Client Secret da aplicação na ACBr API"
+                              className="pr-10"
+                            />
+                            <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10"
+                              onClick={() => setShowToken((v) => !v)} title={showToken ? "Ocultar" : "Mostrar"}>
+                              {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                    <>
                     <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="api_access_token_principal_producao">Token Principal de Produção</Label>
                       <div className="relative">
@@ -1069,10 +1100,14 @@ export default function EmitentesNfe() {
                         </Button>
                       </div>
                     </div>
+                    </>
+                    )}
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    Verificação/cadastro de empresa e APIs acessórias usam o Token Principal de Produção. Emissão usa o token do ambiente configurado no emitente (1 = Produção, 2 = Homologação).
+                    {formData.api_provider === "acbrapi"
+                      ? "Use o Client ID e o Client Secret da aplicação criada no painel da ACBr API. O certificado digital deve estar cadastrado na ACBr. O ambiente (1 = Produção, 2 = Homologação) define o servidor usado."
+                      : "Verificação/cadastro de empresa e APIs acessórias usam o Token Principal de Produção. Emissão usa o token do ambiente configurado no emitente (1 = Produção, 2 = Homologação)."}
                   </p>
                   <div className="flex items-center space-x-2">
                     <Switch
