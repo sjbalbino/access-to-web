@@ -78,7 +78,7 @@ const formatDataEmissao = (dataEmissao: string | null | undefined, createdAt: st
   }
   return `${dataPart} ${horaPart}`;
 };
-import { useFocusNfe } from "@/hooks/useFocusNfe";
+import { useFocusNfe, resolverFuncaoPorNota } from "@/hooks/useFocusNfe";
 import { toast } from "sonner";
 import { formatCpfCnpj } from "@/lib/formatters";
 import { traduzirRejeicaoSefaz } from "@/lib/sefazRejeicoes";
@@ -206,7 +206,8 @@ export default function NotasFiscais() {
       return { open: true, downloadUrl: null, pdfData: null, filename, titulo: `DANFE - NF-e nº ${nota.numero || ""}`, loading: true };
     });
     try {
-      const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
+      const fnDownload = await resolverFuncaoPorNota(nota.id, "focus-nfe-download");
+      const { data, error } = await supabase.functions.invoke(fnDownload, {
         body: { ref, tipo: "danfe", notaFiscalId: nota.id },
       });
       if (error) throw new Error(error.message);

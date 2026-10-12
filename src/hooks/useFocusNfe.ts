@@ -14,6 +14,50 @@ export interface FocusNfeResult {
   ref?: string;
 }
 
+// Roteamento multi-provedor: resolve o nome da edge function conforme o
+// api_provider do emitente da nota ("focusnfe" → focus-nfe-*, "acbrapi" → acbr-api-*).
+const providerCache = new Map<string, string>();
+
+function nomeFuncaoParaProvider(focusName: string, provider: string): string {
+  return provider === "acbrapi" ? focusName.replace("focus-nfe", "acbr-api") : focusName;
+}
+
+export async function resolverFuncaoPorNota(notaFiscalId: string | undefined, focusName: string): Promise<string> {
+  if (!notaFiscalId) return focusName;
+  const cached = providerCache.get(notaFiscalId);
+  if (cached) return nomeFuncaoParaProvider(focusName, cached);
+  try {
+    const { data } = await supabase
+      .from("notas_fiscais")
+      .select("emitente_id, emitentes_nfe!notas_fiscais_emitente_id_fkey(api_provider)")
+      .eq("id", notaFiscalId)
+      .maybeSingle();
+    const provider = (data as { emitentes_nfe?: { api_provider?: string | null } | null } | null)?.emitentes_nfe?.api_provider || "focusnfe";
+    providerCache.set(notaFiscalId, provider);
+    return nomeFuncaoParaProvider(focusName, provider);
+  } catch {
+    return focusName;
+  }
+}
+
+async function resolverFuncaoPorEmitente(emitenteId: string, focusName: string): Promise<string> {
+  const key = `emit:${emitenteId}`;
+  const cached = providerCache.get(key);
+  if (cached) return nomeFuncaoParaProvider(focusName, cached);
+  try {
+    const { data } = await supabase
+      .from("emitentes_nfe")
+      .select("api_provider")
+      .eq("id", emitenteId)
+      .maybeSingle();
+    const provider = (data as { api_provider?: string | null } | null)?.api_provider || "focusnfe";
+    providerCache.set(key, provider);
+    return nomeFuncaoParaProvider(focusName, provider);
+  } catch {
+    return focusName;
+  }
+}
+
 export function useFocusNfe() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -183,8 +227,9 @@ export function useFocusNfe() {
       setStatus("enviando");
 
 
-      // Enviar para edge function
-      const { data, error } = await supabase.functions.invoke("focus-nfe-emitir", {
+      // Enviar para edge function do provedor configurado no emitente
+      const fnEmitir = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-emitir");
+      const { data, error } = await supabase.functions.invoke(fnEmitir, {
         body: {
           notaFiscalId,
           notaData: focusNfeData,
@@ -245,7 +290,8 @@ export function useFocusNfe() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("focus-nfe-consultar", {
+      const fnConsultar = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-consultar");
+      const { data, error } = await supabase.functions.invoke(fnConsultar, {
         body: { ref, notaFiscalId },
       });
 
@@ -285,7 +331,8 @@ export function useFocusNfe() {
         };
       }
 
-      const { data, error } = await supabase.functions.invoke("focus-nfe-cancelar", {
+      const fnCancelar = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-cancelar");
+      const { data, error } = await supabase.functions.invoke(fnCancelar, {
         body: { ref, notaFiscalId, justificativa: justificativaLimpa },
       });
 
@@ -338,8 +385,9 @@ export function useFocusNfe() {
         };
       }
 
+      const fnCce = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-carta-correcao");
       const { data, error } = await supabase.functions.invoke(
-        "focus-nfe-carta-correcao",
+        fnCce,
         {
           body: { ref, notaFiscalId, correcao },
         }
@@ -375,7 +423,8 @@ export function useFocusNfe() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("focus-nfe-download", {
+      const fnDownload = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-download");
+      const { data, error } = await supabase.functions.invoke(fnDownload, {
         body: { ref, tipo, notaFiscalId },
       });
 
@@ -527,7 +576,8 @@ export function useFocusNfe() {
         toast.error("Justificativa deve ter no mínimo 15 caracteres");
         return { success: false, error: "Justificativa deve ter no mínimo 15 caracteres" };
       }
-      const { data, error } = await supabase.functions.invoke("focus-nfe-inutilizar", {
+      const fnInutilizar = await resolverFuncaoPorEmitente(params.emitenteId, "focus-nfe-inutilizar");
+      const { data, error } = await supabase.functions.invoke(fnInutilizar, {
         body: params,
       });
       if (error) throw new Error(error.message);
