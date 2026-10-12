@@ -14,6 +14,50 @@ export interface FocusNfeResult {
   ref?: string;
 }
 
+// Roteamento multi-provedor: resolve o nome da edge function conforme o
+// api_provider do emitente da nota ("focusnfe" → focus-nfe-*, "acbrapi" → acbr-api-*).
+const providerCache = new Map<string, string>();
+
+function nomeFuncaoParaProvider(focusName: string, provider: string): string {
+  return provider === "acbrapi" ? focusName.replace("focus-nfe", "acbr-api") : focusName;
+}
+
+async function resolverFuncaoPorNota(notaFiscalId: string | undefined, focusName: string): Promise<string> {
+  if (!notaFiscalId) return focusName;
+  const cached = providerCache.get(notaFiscalId);
+  if (cached) return nomeFuncaoParaProvider(focusName, cached);
+  try {
+    const { data } = await supabase
+      .from("notas_fiscais")
+      .select("emitente_id, emitentes_nfe!notas_fiscais_emitente_id_fkey(api_provider)")
+      .eq("id", notaFiscalId)
+      .maybeSingle();
+    const provider = (data as { emitentes_nfe?: { api_provider?: string | null } | null } | null)?.emitentes_nfe?.api_provider || "focusnfe";
+    providerCache.set(notaFiscalId, provider);
+    return nomeFuncaoParaProvider(focusName, provider);
+  } catch {
+    return focusName;
+  }
+}
+
+async function resolverFuncaoPorEmitente(emitenteId: string, focusName: string): Promise<string> {
+  const key = `emit:${emitenteId}`;
+  const cached = providerCache.get(key);
+  if (cached) return nomeFuncaoParaProvider(focusName, cached);
+  try {
+    const { data } = await supabase
+      .from("emitentes_nfe")
+      .select("api_provider")
+      .eq("id", emitenteId)
+      .maybeSingle();
+    const provider = (data as { api_provider?: string | null } | null)?.api_provider || "focusnfe";
+    providerCache.set(key, provider);
+    return nomeFuncaoParaProvider(focusName, provider);
+  } catch {
+    return focusName;
+  }
+}
+
 export function useFocusNfe() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -183,8 +227,9 @@ export function useFocusNfe() {
       setStatus("enviando");
 
 
-      // Enviar para edge function
-      const { data, error } = await supabase.functions.invoke("focus-nfe-emitir", {
+      // Enviar para edge function do provedor configurado no emitente
+      const fnEmitir = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-emitir");
+      const { data, error } = await supabase.functions.invoke(fnEmitir, {
         body: {
           notaFiscalId,
           notaData: focusNfeData,
