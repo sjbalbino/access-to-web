@@ -22,7 +22,7 @@ function nomeFuncaoParaProvider(focusName: string, provider: string): string {
   return provider === "acbrapi" ? focusName.replace("focus-nfe", "acbr-api") : focusName;
 }
 
-async function resolverFuncaoPorNota(notaFiscalId: string | undefined, focusName: string): Promise<string> {
+export async function resolverFuncaoPorNota(notaFiscalId: string | undefined, focusName: string): Promise<string> {
   if (!notaFiscalId) return focusName;
   const cached = providerCache.get(notaFiscalId);
   if (cached) return nomeFuncaoParaProvider(focusName, cached);
