@@ -939,17 +939,17 @@ export function gerarResumoProdutorPdf(data: ResumoProdutorData): void {
   };
 
   const flushSafra = () => {
-    if (currentSafra) pushSubtotal(`Total Safra ${currentSafra} →`, sumSafra);
+    if (currentSafra) pushSubtotal(`Total Safra ${currentSafra}`, sumSafra);
     sumSafra = blankAcc();
   };
   const flushCultura = () => {
     flushSafra();
-    if (currentCultura) pushSubtotal(`Total Cultura ${currentCultura} →`, sumCultura);
+    if (currentCultura) pushSubtotal(`Total Cultura ${currentCultura}`, sumCultura);
     sumCultura = blankAcc();
   };
   const flushLocal = () => {
     flushCultura();
-    if (currentLocal) pushSubtotal(`Total Local ${currentLocal} →`, sumLocal);
+    if (currentLocal) pushSubtotal(`Total Local ${currentLocal}`, sumLocal);
     sumLocal = blankAcc();
   };
 
@@ -993,7 +993,7 @@ export function gerarResumoProdutorPdf(data: ResumoProdutorData): void {
     addTo(sumSafra, r); addTo(sumCultura, r); addTo(sumLocal, r); addTo(sumGeral, r);
   });
   flushLocal();
-  pushSubtotal("TOTAL GERAL →", sumGeral);
+  pushSubtotal("TOTAL GERAL", sumGeral);
   const totalGeralIdx = body.length - 1;
 
   autoTable(doc, {
