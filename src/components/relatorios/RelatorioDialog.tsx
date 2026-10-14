@@ -245,7 +245,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     })
     .map((inscricao) => ({
       value: inscricao.id,
-      label: `${inscricao.produtores?.nome || inscricao.inscricao_estadual || "Sem nome"} - IE: ${inscricao.inscricao_estadual || "-"}`,
+      label: `${inscricao.nome?.trim() || inscricao.produtores?.nome || inscricao.inscricao_estadual || "Sem nome"} - IE: ${inscricao.inscricao_estadual || "-"}`,
     }));
 
   const titulos: Record<TipoRelatorio, string> = {
@@ -970,7 +970,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     }
 
     const extratoData: ExtratoData = {
-      produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
+      produtorNome: inscricao?.nome?.trim() || inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
       cpfCnpj: null, inscricaoEstadual: inscricao?.inscricao_estadual || null,
       safraNome: safra?.nome || "-", produtoNome: produto?.nome || null,
       colheitas: (colheitas || []).map((c: any) => ({ data_colheita: c.data_colheita, lavoura: c.controle_lavoura?.lavouras?.nome || null, variedade: c.variedade?.nome || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg, local_entrega: c.local_entrega?.nome || null })),
