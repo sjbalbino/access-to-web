@@ -12,7 +12,8 @@ export function labelInscricao(insc: {
 } | null | undefined): string {
   if (!insc) return "";
   const fantasia = insc.nome_fantasia?.trim();
-  const produtor = insc.produtor_nome || insc.produtores?.nome || insc.nome || "";
+  // Nome próprio da inscrição prevalece (IE compartilhada entre membros da família).
+  const produtor = insc.nome?.trim() || insc.produtor_nome || insc.produtores?.nome || "";
   const ie = insc.inscricao_estadual || insc.cpf_cnpj || "-";
   if (fantasia) {
     return produtor ? `${fantasia} - ${produtor} (IE: ${ie})` : `${fantasia} (IE: ${ie})`;
