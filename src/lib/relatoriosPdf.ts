@@ -1831,6 +1831,8 @@ export interface ExtratoMovParams {
   cpfCnpj: string | null;
   safraNome: string;
   filtroInscricao: string | null;
+  /** Título do relatório (padrão: EXTRATO DE MOVIMENTAÇÃO). */
+  titulo?: string;
   orientation?: "portrait" | "landscape";
   format?: "a4" | "a3" | "letter" | "legal";
   rows: ExtratoMovRow[];
@@ -1863,7 +1865,7 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
     doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
     doc.text(
-      cont ? "EXTRATO DE MOVIMENTAÇÃO (cont.)" : "EXTRATO DE MOVIMENTAÇÃO",
+      cont ? `${params.titulo || "EXTRATO DE MOVIMENTAÇÃO"} (cont.)` : (params.titulo || "EXTRATO DE MOVIMENTAÇÃO"),
       pageWidth / 2,
       34,
       { align: "center" },
