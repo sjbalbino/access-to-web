@@ -286,7 +286,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     setPreviewPayload(null);
     const capture = captureNextRelatorio();
     try {
-      if (tipo === "extrato") await gerarExtrato();
+      if (tipo === "extrato") await gerarExtratoMovimentacao("EXTRATO DE PRODUTOR");
       else if (tipo === "extrato_movimentacao") await gerarExtratoMovimentacao();
       else if (tipo === "resumo_produtor") await gerarResumoProdutor();
       else if (tipo === "colheitas") await gerarColheitas();
@@ -1501,6 +1501,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       safraNome,
       culturaNome,
       filtroInscricao: filtroInscLabel,
+      titulo,
       orientation: vendasOrientacao,
       format: vendasTamanho,
       rows,
@@ -1508,7 +1509,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   };
 
   // ========== EXTRATO DE MOVIMENTAÇÃO (livro-razão) ==========
-  const gerarExtratoMovimentacao = async () => {
+  const gerarExtratoMovimentacao = async (titulo?: string) => {
     if (!safraId) { toast({ title: "Filtro obrigatório", description: "Selecione a safra.", variant: "destructive" }); return; }
     if (!produtorId) { toast({ title: "Filtro obrigatório", description: "Selecione o produtor.", variant: "destructive" }); return; }
 
@@ -1545,7 +1546,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     // Índice para dados da IE
     const inscIdx = new Map<string, { ie: string; nome: string }>();
     inscricoesDoProdutor.forEach(i => {
-      const nm = i.produtores?.nome || "-";
+      // Nome próprio da inscrição (ex.: cônjuge com a mesma IE) tem prioridade.
+      const nm = (i.nome && i.nome.trim()) || i.produtores?.nome || "-";
       const fant = (i as any).nome_fantasia || "";
       inscIdx.set(i.id, { ie: i.inscricao_estadual || "-", nome: fant ? `${nm} - ${fant}` : nm });
     });
@@ -1775,6 +1777,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     gerarExtratoMovimentacaoPdf({
       produtorNome, cpfCnpj: produtorCpf, safraNome,
       filtroInscricao: filtroInscLabel,
+      titulo,
       orientation: vendasOrientacao, format: vendasTamanho,
       rows,
     });
@@ -2349,25 +2352,8 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
 
-          {/* Inscrição/Produtor - extrato */}
-          {tipo === "extrato" && (
-            <div>
-              <Label>Produtor/Inscrição *</Label>
-              <ComboboxFilter
-                value={inscricaoId}
-                onValueChange={setInscricaoId}
-                options={produtoresExtratoOptions}
-                placeholder={safraId ? "Selecione o produtor" : "Selecione a safra primeiro"}
-                searchPlaceholder="Buscar produtor..."
-                emptyText={safraId ? "Nenhum produtor com movimentação nesta safra." : "Selecione a safra primeiro."}
-                popoverWidth="w-[400px]"
-                disabled={!safraId || loadingProdutoresSafra}
-              />
-            </div>
-          )}
-
           {/* Produtor - resumo_produtor / extrato_depositos / extrato_movimentacao */}
-          {(tipo === "resumo_produtor" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
+          {(tipo === "extrato" || tipo === "resumo_produtor" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
             <div>
               <Label>Produtor *</Label>
               <ComboboxFilter
@@ -2387,7 +2373,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
           {/* Inscrição (IE) opcional - extrato_depositos / extrato_movimentacao */}
-          {(tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
+          {(tipo === "extrato" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
             <div>
               <Label>Inscrição (IE) — opcional</Label>
               <ComboboxFilter
@@ -2397,7 +2383,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                   .filter(i => i.produtores?.id === produtorId || i.produtor_id === produtorId)
                   .map(i => ({
                     value: i.id,
-                    label: `${i.inscricao_estadual || "-"}${i.nome_fantasia ? ` - ${i.nome_fantasia}` : ''}`,
+                    label: `${i.inscricao_estadual || "-"}${i.nome ? ` - ${i.nome}` : ''}${i.nome_fantasia ? ` (${i.nome_fantasia})` : ''}`,
                   }))}
                 placeholder="Todas as IEs (relatório geral)"
                 searchPlaceholder="Buscar IE..."
@@ -2410,7 +2396,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
           )}
 
           {/* Orientação e Tamanho da Página - vendas / extrato_depositos / extrato_movimentacao */}
-          {(tipo === "vendas" || tipo === "extrato_venda_producao" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
+          {(tipo === "extrato" || tipo === "vendas" || tipo === "extrato_venda_producao" || tipo === "extrato_depositos" || tipo === "extrato_movimentacao") && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="min-w-0">
                 <Label>Orientação</Label>
