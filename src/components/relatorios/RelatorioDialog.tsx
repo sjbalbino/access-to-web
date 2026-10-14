@@ -1501,7 +1501,6 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       safraNome,
       culturaNome,
       filtroInscricao: filtroInscLabel,
-      titulo,
       orientation: vendasOrientacao,
       format: vendasTamanho,
       rows,
