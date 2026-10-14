@@ -245,7 +245,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     })
     .map((inscricao) => ({
       value: inscricao.id,
-      label: `${inscricao.produtores?.nome || inscricao.inscricao_estadual || "Sem nome"} - IE: ${inscricao.inscricao_estadual || "-"}`,
+      label: `${inscricao.nome?.trim() || inscricao.produtores?.nome || inscricao.inscricao_estadual || "Sem nome"} - IE: ${inscricao.inscricao_estadual || "-"}`,
     }));
 
   const titulos: Record<TipoRelatorio, string> = {
@@ -692,7 +692,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     // Inscrições do produtor
     const { data: inscricoesProdutor, error: incErr } = await supabase
       .from("inscricoes_produtor")
-      .select("id, inscricao_estadual, granja, produtores:produtor_id(nome)")
+      .select("id, nome, inscricao_estadual, granja, produtores:produtor_id(nome)")
       .eq("produtor_id", produtorId);
     if (incErr) throw incErr;
     if (!inscricoesProdutor || inscricoesProdutor.length === 0) {
@@ -783,7 +783,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       if (!r) {
         r = {
           safra: s.nome, cultura: s.cultura, psInd: s.psInd, psSem: s.psSem,
-          insc: inscKey, local, nome: insc.produtores?.nome || produtor.nome, ie: insc.inscricao_estadual || "-",
+          // Nome próprio da inscrição (ex.: membro da família com a mesma IE) tem prioridade,
+          // replicando o Resumo do Extrato do sistema legado.
+          insc: inscKey, local, nome: insc.nome?.trim() || insc.produtores?.nome || produtor.nome, ie: insc.inscricao_estadual || "-",
           tipo: "INDUST",
           depositos: 0, compras: 0, vendas: 0, devolucao: 0, tr_saida: 0, tr_entrada: 0, ent_armaz: 0,
         };
@@ -968,7 +970,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     }
 
     const extratoData: ExtratoData = {
-      produtorNome: inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
+      produtorNome: inscricao?.nome?.trim() || inscricao?.produtores?.nome || inscricao?.inscricao_estadual || "-",
       cpfCnpj: null, inscricaoEstadual: inscricao?.inscricao_estadual || null,
       safraNome: safra?.nome || "-", produtoNome: produto?.nome || null,
       colheitas: (colheitas || []).map((c: any) => ({ data_colheita: c.data_colheita, lavoura: c.controle_lavoura?.lavouras?.nome || null, variedade: c.variedade?.nome || null, peso_bruto: c.peso_bruto, peso_tara: c.peso_tara, producao_kg: c.producao_kg, umidade: c.umidade, impureza: c.impureza, kg_desconto_total: c.kg_desconto_total, producao_liquida_kg: c.producao_liquida_kg, local_entrega: c.local_entrega?.nome || null })),
