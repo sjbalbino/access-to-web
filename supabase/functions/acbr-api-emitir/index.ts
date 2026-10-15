@@ -225,14 +225,18 @@ serve(async (req) => {
       );
     }
 
+    // Nota já autorizada (ex.: clique duplo / reenvio): não reemite e não trata
+    // como erro — devolve sucesso para a tela apenas atualizar o status.
     if (existingNota?.status === "autorizada") {
       return new Response(
         JSON.stringify({
-          success: false,
-          error: "Esta nota já foi autorizada anteriormente",
-          details: { status: existingNota.status },
+          success: true,
+          jaAutorizada: true,
+          ref: existingNota.uuid_api,
+          data: { status: "autorizado", mensagem_sefaz: existingNota.motivo_status },
+          provedor: "acbrapi",
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -439,6 +443,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        ref: updateData.uuid_api,
         data: responseData,
         ambiente: ambienteLabel,
         provedor: "acbrapi",
