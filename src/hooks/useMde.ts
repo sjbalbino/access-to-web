@@ -30,19 +30,26 @@ export function useMde() {
    * Escolhe a função de DF-e conforme o provedor fiscal do emitente da inscrição:
    * ACBr API Nuvem → acbr-api-dfe; demais (Focus NFe) → focus-nfe-mde.
    */
-  const funcaoDfe = async (inscricaoId: string): Promise<string> => {
+  const rotaDfe = async (inscricaoId: string): Promise<{ fn: string; inscricaoId: string }> => {
+    // O DF-e é por CPF/CNPJ: se a IE selecionada não tem emitente ACBr, usa
+    // outra IE do mesmo titular que tenha (ex.: titular com várias inscrições).
+    const ids = await getInscricoesDoTitular(inscricaoId);
     const { data } = await supabase
       .from("inscricoes_produtor")
-      .select("emitentes_nfe(api_provider)")
-      .eq("id", inscricaoId)
-      .maybeSingle();
-    const provider = (data?.emitentes_nfe as { api_provider?: string } | null)?.api_provider;
-    return provider === "acbrapi" ? "acbr-api-dfe" : "focus-nfe-mde";
+      .select("id, emitentes_nfe(api_provider)")
+      .in("id", ids);
+    const lista = (data as Array<{ id: string; emitentes_nfe: { api_provider?: string } | null }>) || [];
+    const acbr =
+      lista.find((r) => r.id === inscricaoId && r.emitentes_nfe?.api_provider === "acbrapi") ??
+      lista.find((r) => r.emitentes_nfe?.api_provider === "acbrapi");
+    return acbr ? { fn: "acbr-api-dfe", inscricaoId: acbr.id } : { fn: "focus-nfe-mde", inscricaoId };
   };
+  let rota: { fn: string; inscricaoId: string };
 
   const invokeAction = async (body: Record<string, unknown>) => {
-    const fn = await funcaoDfe(String(body.inscricaoId ?? ""));
-    const { data, error } = await supabase.functions.invoke(fn, { body });
+    const rota = await rotaDfe(String(body.inscricaoId ?? ""));
+    const fn = rota.fn;
+    const { data, error } = await supabase.functions.invoke(fn, { body: { ...body, inscricaoId: rota.inscricaoId } });
     if (error) {
       // Extrai a mensagem real do corpo da resposta de erro
       const ctx = (error as { context?: Response }).context;
@@ -336,14 +343,14 @@ export function useMde() {
   const downloadXml = async (inscricaoId: string, chave: string): Promise<string | null> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
-        body: { action: "download_xml", inscricaoId, chave },
+      const { data, error } = await supabase.functions.invoke((rota = await rotaDfe(inscricaoId)).fn, {
+        body: { action: "download_xml", inscricaoId: rota.inscricaoId, chave },
       });
       if (error) throw new Error(error.message);
       if (!data?.success) {
         const msg = data?.error || "Erro ao baixar XML";
         setReturnMessage({
-          title: "Retorno da Focus NFe",
+          title: "Retorno do provedor fiscal",
           message: msg,
           details: [
             data?.situacao ? `Situação: ${data.situacao}` : null,
@@ -372,7 +379,7 @@ export function useMde() {
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
       setReturnMessage({
-        title: "Retorno da Focus NFe",
+        title: "Retorno do provedor fiscal",
         message: msg,
       });
       toast.error("Erro ao baixar XML", { description: msg });
@@ -385,8 +392,8 @@ export function useMde() {
   const downloadDanfe = async (inscricaoId: string, chave: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
-        body: { action: "download_danfe", inscricaoId, chave },
+      const { data, error } = await supabase.functions.invoke((rota = await rotaDfe(inscricaoId)).fn, {
+        body: { action: "download_danfe", inscricaoId: rota.inscricaoId, chave },
       });
       if (error) throw new Error(error.message);
 
