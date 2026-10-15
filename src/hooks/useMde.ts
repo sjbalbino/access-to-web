@@ -359,7 +359,9 @@ export function useMde() {
     }
   };
 
-  const downloadXml = async (inscricaoId: string, chave: string): Promise<string | null> => {
+  // Busca o XML completo (nfeProc) no provedor fiscal SEM baixar o arquivo.
+  // Usado pelo visualizador de XML e pelo downloadXml.
+  const obterXml = async (inscricaoId: string, chave: string): Promise<string | null> => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke((rota = await rotaDfe(inscricaoId)).fn, {
