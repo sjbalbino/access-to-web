@@ -239,7 +239,9 @@ serve(async (req) => {
     // Referência única para evitar cache do provedor
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 8);
-    const ref = `nfe_${notaFiscalId}_${timestamp}_${randomSuffix}`;
+    // ACBr limita "referencia" a 50 caracteres
+    const ref = `${String(notaFiscalId).replace(/-/g, "")}${timestamp.toString(36)}`.slice(0, 50);
+    void randomSuffix;
 
     console.log("Gerando NOVA referência única (ACBr):", ref);
     console.log("Status anterior:", existingNota?.status);
