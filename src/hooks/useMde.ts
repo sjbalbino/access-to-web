@@ -26,10 +26,32 @@ export function useMde() {
   const [nfesRecebidas, setNfesRecebidas] = useState<NfeRecebida[]>([]);
   const [returnMessage, setReturnMessage] = useState<MdeReturnMessage | null>(null);
 
+  /**
+   * Escolhe a função de DF-e conforme o provedor fiscal do emitente da inscrição:
+   * ACBr API Nuvem → acbr-api-dfe; demais (Focus NFe) → focus-nfe-mde.
+   */
+  const funcaoDfe = async (inscricaoId: string): Promise<string> => {
+    const { data } = await supabase
+      .from("inscricoes_produtor")
+      .select("emitentes_nfe(api_provider)")
+      .eq("id", inscricaoId)
+      .maybeSingle();
+    const provider = (data?.emitentes_nfe as { api_provider?: string } | null)?.api_provider;
+    return provider === "acbrapi" ? "acbr-api-dfe" : "focus-nfe-mde";
+  };
+
   const invokeAction = async (body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke("focus-nfe-mde", { body });
-    if (error) throw new Error(error.message);
+    const fn = await funcaoDfe(String(body.inscricaoId ?? ""));
+    const { data, error } = await supabase.functions.invoke(fn, { body });
+    if (error) {
+      // Extrai a mensagem real do corpo da resposta de erro
+      const ctx = (error as { context?: Response }).context;
+      let msg = error.message;
+      try { const j = await ctx?.json(); if (j?.error) msg = j.error; } catch { /* ignore */ }
+      throw new Error(msg);
+    }
     if (data && !data.success) throw new Error(data.error || "Erro desconhecido");
+    if (data?.warning) toast.warning("Aviso da SEFAZ", { description: data.warning });
     return data;
   };
 
