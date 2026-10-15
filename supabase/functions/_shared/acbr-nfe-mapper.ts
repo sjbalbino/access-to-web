@@ -313,5 +313,5 @@ export function mensagemErroAcbr(d: Rec | null | undefined): string {
   if (aut?.motivo_status) partes.push(`Rejeição ${aut.codigo_status ?? ""}: ${aut.motivo_status}`.trim());
   if (d.mensagem_sefaz) partes.push(d.mensagem_sefaz);
   if (d.mensagem) partes.push(d.mensagem);
-  return partes.filter(Boolean).join(" | ") || "Erro desconhecido na ACBr API";
+  return [...new Set(partes.filter(Boolean))].join(" | ") || "Erro desconhecido na ACBr API";
 }
