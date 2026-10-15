@@ -267,6 +267,14 @@ export function useFocusNfe() {
 
 
 
+      if (data.jaAutorizada) {
+        setStatus("autorizada");
+        toast.info("Esta NF-e já está autorizada", {
+          description: "Nenhum novo envio foi feito. Atualizando o status da nota.",
+        });
+        return data;
+      }
+
       setStatus("processando");
       toast.success("NF-e enviada para processamento", {
         description: "Aguarde a autorização da SEFAZ",
