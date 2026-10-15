@@ -78,6 +78,18 @@ function grupoIcms(it: Rec, crt: number): Rec {
   return { ICMS90: { orig, CST: "90", modBC, vBC, pICMS, vICMS } };
 }
 
+/** Soma um campo (ex.: vBC) dentro do grupo de imposto (ICMS/PIS/COFINS) já montado em cada item. */
+function somaGrupo(det: Array<{ imposto: Record<string, unknown> }>, imposto: string, campo: string): number {
+  const total = det.reduce((t, d) => {
+    const grupo = d.imposto?.[imposto] as Record<string, Record<string, unknown>> | undefined;
+    if (!grupo) return t;
+    const sub = Object.values(grupo)[0];
+    const v = Number(sub?.[campo]);
+    return Number.isFinite(v) ? t + v : t;
+  }, 0);
+  return Number(total.toFixed(2));
+}
+
 function grupoPisCofins(it: Rec, tipo: "pis" | "cofins"): Rec {
   const P = tipo === "pis" ? "PIS" : "COFINS";
   const cst = dig(it[`${tipo}_situacao_tributaria`]).padStart(2, "0") || "07";
@@ -288,9 +300,11 @@ export async function montarPayloadAcbr(
       det,
       total: {
         ICMSTot: {
-          vBC: soma("icms_base_calculo"), vICMS: soma("icms_valor"), vICMSDeson: 0, vFCP: 0,
+          // Totais calculados a partir dos grupos efetivamente enviados nos itens
+          // (ex.: CST 40/41/50 não têm vBC) — evita Rejeição 531/532.
+          vBC: somaGrupo(det, "ICMS", "vBC"), vICMS: somaGrupo(det, "ICMS", "vICMS"), vICMSDeson: 0, vFCP: 0,
           vBCST: 0, vST: 0, vFCPST: 0, vFCPSTRet: 0, vProd, vFrete, vSeg, vDesc, vII: 0,
-          vIPI, vIPIDevol: 0, vPIS: soma("pis_valor"), vCOFINS: soma("cofins_valor"), vOutro, vNF,
+          vIPI, vIPIDevol: 0, vPIS: somaGrupo(det, "PIS", "vPIS"), vCOFINS: somaGrupo(det, "COFINS", "vCOFINS"), vOutro, vNF,
         },
         IBSCBSTot,
       },
