@@ -336,14 +336,14 @@ export function useMde() {
   const downloadXml = async (inscricaoId: string, chave: string): Promise<string | null> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
+      const { data, error } = await supabase.functions.invoke(await funcaoDfe(inscricaoId), {
         body: { action: "download_xml", inscricaoId, chave },
       });
       if (error) throw new Error(error.message);
       if (!data?.success) {
         const msg = data?.error || "Erro ao baixar XML";
         setReturnMessage({
-          title: "Retorno da Focus NFe",
+          title: "Retorno do provedor fiscal",
           message: msg,
           details: [
             data?.situacao ? `Situação: ${data.situacao}` : null,
@@ -372,7 +372,7 @@ export function useMde() {
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
       setReturnMessage({
-        title: "Retorno da Focus NFe",
+        title: "Retorno do provedor fiscal",
         message: msg,
       });
       toast.error("Erro ao baixar XML", { description: msg });
@@ -385,7 +385,7 @@ export function useMde() {
   const downloadDanfe = async (inscricaoId: string, chave: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("focus-nfe-mde", {
+      const { data, error } = await supabase.functions.invoke(await funcaoDfe(inscricaoId), {
         body: { action: "download_danfe", inscricaoId, chave },
       });
       if (error) throw new Error(error.message);
