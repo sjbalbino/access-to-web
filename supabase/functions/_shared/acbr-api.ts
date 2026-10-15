@@ -49,7 +49,7 @@ export async function buscarCredenciaisAcbr(
  * Obtém access_token OAuth2 da ACBr API (client_credentials).
  * Lança Error com mensagem amigável quando as credenciais são recusadas.
  */
-export async function obterTokenAcbr(cred: AcbrCredentials): Promise<string> {
+export async function obterTokenAcbr(cred: AcbrCredentials, scope = "nfe"): Promise<string> {
   const resp = await fetch(AUTH_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -57,7 +57,7 @@ export async function obterTokenAcbr(cred: AcbrCredentials): Promise<string> {
       grant_type: "client_credentials",
       client_id: cred.clientId,
       client_secret: cred.clientSecret,
-      scope: "nfe",
+      scope,
     }),
   });
   if (!resp.ok) {
