@@ -101,18 +101,47 @@ function grupoPisCofins(it: Rec, tipo: "pis" | "cofins"): Rec {
   return { [`${P}Outr`]: { CST: cst, vBC, [`p${P}`]: aliq, [`v${P}`]: valor } };
 }
 
+/**
+ * CSTs de IBS/CBS que exigem o grupo de redução (gRed/pRedAliq).
+ * Sem ele a SEFAZ rejeita com 1033 ("Não informado o grupo de redução de alíquota").
+ * Mantido em sincronia com src/lib/focusNfeMapper.ts.
+ */
+const CSTS_IBS_CBS_COM_REDUCAO = ["200", "210", "220", "221", "222", "510", "515"];
+
+function percentualReducaoPadrao(classTrib: string, cst: string): number | undefined {
+  if (classTrib === "200014") return 100;
+  if (["200036", "200038", "515001", "515002", "515003"].includes(classTrib)) return 60;
+  return CSTS_IBS_CBS_COM_REDUCAO.includes(cst) ? 60 : undefined;
+}
+
 function grupoIbsCbs(it: Rec): Rec | undefined {
   if (!it.ibs_cbs_situacao_tributaria) return undefined;
+  const cst = dig(it.ibs_cbs_situacao_tributaria).padStart(3, "0");
+  const classTrib = dig(it.ibs_cbs_classificacao_tributaria).padStart(6, "0");
   const vIBSUF = num(it.ibs_uf_valor), vIBSMun = num(it.ibs_mun_valor);
+  const pIBSUF = num(it.ibs_uf_aliquota), pIBSMun = num(it.ibs_mun_aliquota), pCBS = num(it.cbs_aliquota);
+
+  // Percentual de redução: usa o enviado pelo frontend; senão, tabela/CST.
+  const informado = [it.ibs_uf_percentual_reducao_aliquota, it.cbs_percentual_reducao_aliquota]
+    .map((v) => (v === null || v === undefined || v === "" ? NaN : Number(v)))
+    .find((v) => Number.isFinite(v));
+  const pRed = informado ?? percentualReducaoPadrao(classTrib, cst);
+  const exige = CSTS_IBS_CBS_COM_REDUCAO.includes(cst);
+  const red = pRed !== undefined ? pRed : exige ? 0 : undefined;
+
+  // Ordem do schema: pAliq → gDif → gDevTrib → gRed → vTributo
+  const gRed = (aliq: number) =>
+    red === undefined ? undefined : { pRedAliq: red, pAliqEfet: Number((aliq * (1 - red / 100)).toFixed(4)) };
+
   return {
-    CST: String(it.ibs_cbs_situacao_tributaria),
-    cClassTrib: it.ibs_cbs_classificacao_tributaria,
+    CST: cst,
+    cClassTrib: classTrib,
     gIBSCBS: {
       vBC: num(it.ibs_cbs_base_calculo),
-      gIBSUF: { pIBSUF: num(it.ibs_uf_aliquota), vIBSUF },
-      gIBSMun: { pIBSMun: num(it.ibs_mun_aliquota), vIBSMun },
+      gIBSUF: { pIBSUF, gRed: gRed(pIBSUF), vIBSUF },
+      gIBSMun: { pIBSMun, gRed: gRed(pIBSMun), vIBSMun },
       vIBS: r2(vIBSUF + vIBSMun),
-      gCBS: { pCBS: num(it.cbs_aliquota), vCBS: num(it.cbs_valor) },
+      gCBS: { pCBS, gRed: gRed(pCBS), vCBS: num(it.cbs_valor) },
     },
   };
 }
