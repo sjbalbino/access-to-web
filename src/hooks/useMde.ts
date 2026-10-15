@@ -44,7 +44,7 @@ export function useMde() {
       lista.find((r) => r.emitentes_nfe?.api_provider === "acbrapi");
     return acbr ? { fn: "acbr-api-dfe", inscricaoId: acbr.id } : { fn: "focus-nfe-mde", inscricaoId };
   };
-  const funcaoDfe = async (inscricaoId: string) => (await rotaDfe(inscricaoId)).fn;
+  let rota: { fn: string; inscricaoId: string };
 
   const invokeAction = async (body: Record<string, unknown>) => {
     const rota = await rotaDfe(String(body.inscricaoId ?? ""));
@@ -343,8 +343,8 @@ export function useMde() {
   const downloadXml = async (inscricaoId: string, chave: string): Promise<string | null> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke(await funcaoDfe(inscricaoId), {
-        body: { action: "download_xml", inscricaoId, chave },
+      const { data, error } = await supabase.functions.invoke((rota = await rotaDfe(inscricaoId)).fn, {
+        body: { action: "download_xml", inscricaoId: rota.inscricaoId, chave },
       });
       if (error) throw new Error(error.message);
       if (!data?.success) {
@@ -392,8 +392,8 @@ export function useMde() {
   const downloadDanfe = async (inscricaoId: string, chave: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke(await funcaoDfe(inscricaoId), {
-        body: { action: "download_danfe", inscricaoId, chave },
+      const { data, error } = await supabase.functions.invoke((rota = await rotaDfe(inscricaoId)).fn, {
+        body: { action: "download_danfe", inscricaoId: rota.inscricaoId, chave },
       });
       if (error) throw new Error(error.message);
 
