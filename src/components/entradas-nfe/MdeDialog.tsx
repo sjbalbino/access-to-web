@@ -927,7 +927,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction onClick={clearReturnMessage}>OK</AlertDialogAction>
+          <AlertDialogAction onClick={clearReturnMessage}>Entendi</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
