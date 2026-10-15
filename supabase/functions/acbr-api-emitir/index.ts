@@ -284,7 +284,6 @@ serve(async (req) => {
     console.log("Emitindo NF-e via ACBr API:", notaFiscalId);
     console.log("Referência:", ref);
 
-    normalizeReformaTributariaPayload(notaData as Record<string, unknown>);
     const payloadAcbr = await montarPayloadAcbr(supabase, notaData as Record<string, unknown>, ambiente, ref);
     console.log("Payload ACBr infNFe:", JSON.stringify(payloadAcbr));
     const response = await acbrFetch(cred, `/nfe`, { method: "POST", body: payloadAcbr });
@@ -397,7 +396,7 @@ serve(async (req) => {
     }
     const updateData: Record<string, unknown> = {
       status: statusMap[statusAcbr] || "processando",
-      uuid_api: ref,
+      uuid_api: responseData.id || ref,
     };
 
     if (responseData.chave_nfe) updateData.chave_acesso = responseData.chave_nfe;
