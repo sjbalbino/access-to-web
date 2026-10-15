@@ -74,7 +74,7 @@ export function useMde() {
       throw new Error(msg);
     }
     if (data && !data.success) throw new Error(data.error || "Erro desconhecido");
-    if (data?.warning) toast.warning("Aviso da SEFAZ", { description: data.warning });
+    if (data?.warning) notificar("Aviso da SEFAZ", data.warning);
     return data;
   };
 
@@ -132,7 +132,7 @@ export function useMde() {
         .upsert(unicos.slice(i, i + 500), { onConflict: "inscricao_id,chave" });
       if (error) {
         console.error("Falha ao gravar NF-es recebidas:", error.message);
-        toast.error("Não foi possível gravar as NF-es sincronizadas", { description: error.message });
+        notificar("Não foi possível gravar as NF-es sincronizadas", error.message);
         return;
       }
     }
