@@ -33,15 +33,23 @@ export function useMde() {
   const rotaDfe = async (inscricaoId: string): Promise<{ fn: string; inscricaoId: string }> => {
     // O DF-e é por CPF/CNPJ: se a IE selecionada não tem emitente ACBr, usa
     // outra IE do mesmo titular que tenha (ex.: titular com várias inscrições).
+    // Consulta em dois passos: há duas ligações entre inscrições e emitentes
+    // (emitente_id e inscricao_produtor_id), o que torna o join automático ambíguo.
     const ids = await getInscricoesDoTitular(inscricaoId);
-    const { data } = await supabase
+    const { data: inscs, error: e1 } = await supabase
       .from("inscricoes_produtor")
-      .select("id, emitentes_nfe(api_provider)")
+      .select("id, emitente_id")
       .in("id", ids);
-    const lista = (data as Array<{ id: string; emitentes_nfe: { api_provider?: string } | null }>) || [];
-    const acbr =
-      lista.find((r) => r.id === inscricaoId && r.emitentes_nfe?.api_provider === "acbrapi") ??
-      lista.find((r) => r.emitentes_nfe?.api_provider === "acbrapi");
+    if (e1) console.error("DF-e: falha ao ler inscrições do titular:", e1.message);
+    const emitIds = Array.from(new Set(((inscs as any[]) || []).map((r) => r.emitente_id).filter(Boolean)));
+    const { data: emits, error: e2 } = emitIds.length
+      ? await supabase.from("emitentes_nfe").select("id, api_provider").in("id", emitIds)
+      : { data: [], error: null };
+    if (e2) console.error("DF-e: falha ao ler emitentes:", e2.message);
+    const acbrEmit = new Set(((emits as any[]) || []).filter((e) => e.api_provider === "acbrapi").map((e) => e.id));
+    const lista = ((inscs as any[]) || []) as Array<{ id: string; emitente_id: string | null }>;
+    const ehAcbr = (r: { emitente_id: string | null }) => !!r.emitente_id && acbrEmit.has(r.emitente_id);
+    const acbr = lista.find((r) => r.id === inscricaoId && ehAcbr(r)) ?? lista.find(ehAcbr);
     return acbr ? { fn: "acbr-api-dfe", inscricaoId: acbr.id } : { fn: "focus-nfe-mde", inscricaoId };
   };
   let rota: { fn: string; inscricaoId: string };
