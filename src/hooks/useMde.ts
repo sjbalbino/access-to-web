@@ -27,6 +27,14 @@ export function useMde() {
   const [returnMessage, setReturnMessage] = useState<MdeReturnMessage | null>(null);
 
   /**
+   * Exibe a mensagem em um popup que permanece aberto até o usuário fechar,
+   * em vez de um aviso rápido (toast) que some sozinho da tela.
+   */
+  const notificar = (title: string, message: string, details?: string[]) => {
+    setReturnMessage({ title, message, details });
+  };
+
+  /**
    * Escolhe a função de DF-e conforme o provedor fiscal do emitente da inscrição:
    * ACBr API Nuvem → acbr-api-dfe; demais (Focus NFe) → focus-nfe-mde.
    */
