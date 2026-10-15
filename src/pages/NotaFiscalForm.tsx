@@ -865,16 +865,20 @@ export default function NotaFiscalForm() {
       return;
     }
 
+    // Provedor fiscal configurado no emitente (Focus NFe ou ACBr API)
+    const isAcbr = (emitente as { api_provider?: string | null }).api_provider === "acbrapi";
+    const nomeProvedor = isAcbr ? "ACBr API" : "Focus NFe";
+
     // Open emission dialog
     setIsEmissionDialogOpen(true);
-    setEmissionStatus({ step: "validating", message: "Verificando habilitação do emitente na Focus NFe...", progress: 5 });
+    setEmissionStatus({ step: "validating", message: `Verificando habilitação do emitente na ${nomeProvedor}...`, progress: 5 });
 
-    // Validação prévia: o CPF/CNPJ do emitente está habilitado na Focus NFe?
+    // Validação prévia (somente Focus NFe): o CPF/CNPJ está habilitado na conta?
     // OBS: a Focus NFe pode retornar 404 em homologação mesmo para empresas
     // cadastradas no painel. Por isso só bloqueamos quando o erro é claramente
     // de token inválido; nos demais casos avisamos e seguimos, deixando o SEFAZ
-    // retornar o erro definitivo.
-    if (inscricao.cpf_cnpj) {
+    // retornar o erro definitivo. Na ACBr API a habilitação é validada na emissão.
+    if (!isAcbr && inscricao.cpf_cnpj) {
       const verif = await verificarEmpresa.verificar({
         emitente_id: emitente.id,
         cpf_cnpj: inscricao.cpf_cnpj,
@@ -3185,6 +3189,9 @@ export default function NotaFiscalForm() {
 
             {existingNota.motivo_status && (() => {
               const motivo = existingNota.motivo_status.toLowerCase();
+              const emitenteNota = emitentes.find((e) => e.id === formData.emitente_id);
+              const isAcbrNota = (emitenteNota as { api_provider?: string | null } | undefined)?.api_provider === "acbrapi";
+              const nomeProvedorNota = isAcbrNota ? "ACBr API" : "Focus NFe";
               const isEmitenteNaoAutorizado =
                 motivo.includes("cnpj do emitente não autorizado") ||
                 motivo.includes("cnpj do emitente nao autorizado") ||
@@ -3209,7 +3216,7 @@ export default function NotaFiscalForm() {
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>
                     {isEmitenteNaoAutorizado
-                      ? "Emitente não habilitado na Focus NFe"
+                      ? `Emitente não habilitado na ${nomeProvedorNota}`
                       : "Retorno SEFAZ"}
                   </AlertTitle>
                   <AlertDescription className="mt-2 space-y-2">
@@ -3220,14 +3227,14 @@ export default function NotaFiscalForm() {
                       <div className="text-sm space-y-1 border-t pt-2 mt-2">
                         <p className="font-semibold">Como resolver:</p>
                         <ol className="list-decimal pl-5 space-y-1">
-                          <li>Acesse o painel da Focus NFe (mesmo ambiente do emitente — homologação ou produção).</li>
+                          <li>Acesse o painel da {nomeProvedorNota} (mesmo ambiente do emitente — homologação ou produção).</li>
                           <li>Cadastre uma <strong>nova empresa</strong> com o CPF/CNPJ do emitente desta NF-e.</li>
                           <li>Anexe o <strong>certificado digital A1</strong> (.pfx) e informe a senha.</li>
                           <li>Marque a empresa como <strong>habilitada para emissão</strong> de NF-e no ambiente correto.</li>
                           <li>Volte aqui e tente emitir novamente.</li>
                         </ol>
                         <p className="text-xs text-muted-foreground pt-1">
-                          Você também pode usar o botão "Verificar habilitação" no cadastro do Emitente NF-e para checar o status na Focus.
+                          Você também pode usar o botão "Verificar habilitação" no cadastro do Emitente NF-e para checar o status na {nomeProvedorNota}.
                         </p>
                       </div>
                     )}
