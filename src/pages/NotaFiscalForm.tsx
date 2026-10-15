@@ -3216,7 +3216,7 @@ export default function NotaFiscalForm() {
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>
                     {isEmitenteNaoAutorizado
-                      ? "Emitente não habilitado na Focus NFe"
+                      ? `Emitente não habilitado na ${nomeProvedorNota}`
                       : "Retorno SEFAZ"}
                   </AlertTitle>
                   <AlertDescription className="mt-2 space-y-2">
@@ -3227,14 +3227,14 @@ export default function NotaFiscalForm() {
                       <div className="text-sm space-y-1 border-t pt-2 mt-2">
                         <p className="font-semibold">Como resolver:</p>
                         <ol className="list-decimal pl-5 space-y-1">
-                          <li>Acesse o painel da Focus NFe (mesmo ambiente do emitente — homologação ou produção).</li>
+                          <li>Acesse o painel da {nomeProvedorNota} (mesmo ambiente do emitente — homologação ou produção).</li>
                           <li>Cadastre uma <strong>nova empresa</strong> com o CPF/CNPJ do emitente desta NF-e.</li>
                           <li>Anexe o <strong>certificado digital A1</strong> (.pfx) e informe a senha.</li>
                           <li>Marque a empresa como <strong>habilitada para emissão</strong> de NF-e no ambiente correto.</li>
                           <li>Volte aqui e tente emitir novamente.</li>
                         </ol>
                         <p className="text-xs text-muted-foreground pt-1">
-                          Você também pode usar o botão "Verificar habilitação" no cadastro do Emitente NF-e para checar o status na Focus.
+                          Você também pode usar o botão "Verificar habilitação" no cadastro do Emitente NF-e para checar o status na {nomeProvedorNota}.
                         </p>
                       </div>
                     )}

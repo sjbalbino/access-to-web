@@ -1133,7 +1133,7 @@ export default function NotasFiscais() {
                 <AlertCircle className="h-5 w-5 text-destructive" />
                 {motivoDialog.titulo}
               </DialogTitle>
-              <DialogDescription>Detalhes retornados pela SEFAZ / Focus NFe</DialogDescription>
+              <DialogDescription>Detalhes retornados pela SEFAZ / provedor fiscal</DialogDescription>
             </DialogHeader>
             <div className="rounded-md bg-muted p-4 text-sm whitespace-pre-wrap break-words">
               {motivoDialog.mensagem}
