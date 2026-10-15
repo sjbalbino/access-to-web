@@ -359,7 +359,9 @@ export function useMde() {
     }
   };
 
-  const downloadXml = async (inscricaoId: string, chave: string): Promise<string | null> => {
+  // Busca o XML completo (nfeProc) no provedor fiscal SEM baixar o arquivo.
+  // Usado pelo visualizador de XML e pelo downloadXml.
+  const obterXml = async (inscricaoId: string, chave: string): Promise<string | null> => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke((rota = await rotaDfe(inscricaoId)).fn, {
@@ -380,27 +382,32 @@ export function useMde() {
         return null;
       }
 
-      const xmlText = data.xml;
-
-      const blob = new Blob([xmlText], { type: "application/xml" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `nfe_${chave}.xml`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => window.URL.revokeObjectURL(url), 3000);
-
-      toast.success("Download do XML iniciado");
-      return xmlText;
+      return data.xml as string;
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
-      notificar("Erro ao baixar XML", msg);
+      notificar("Erro ao obter XML", msg);
       return null;
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const downloadXml = async (inscricaoId: string, chave: string): Promise<string | null> => {
+    const xmlText = await obterXml(inscricaoId, chave);
+    if (!xmlText) return null;
+
+    const blob = new Blob([xmlText], { type: "application/xml" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `nfe_${chave}.xml`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => window.URL.revokeObjectURL(url), 3000);
+
+    toast.success("Download do XML iniciado");
+    return xmlText;
   };
 
   const downloadDanfe = async (inscricaoId: string, chave: string) => {
@@ -447,6 +454,7 @@ export function useMde() {
     consultarPorChave,
     carregarCache,
     manifestar,
+    obterXml,
     downloadXml,
     downloadDanfe,
   };
