@@ -97,6 +97,28 @@ serve(async (req) => {
     const responseData = await response.json();
     console.log("Resposta ACBr API:", JSON.stringify(responseData, null, 2));
 
+    if (!response.ok) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: responseData?.error?.message || responseData?.message || `ACBr API retornou HTTP ${response.status}`,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Normaliza o formato ACBr para os campos esperados pela tela (padrão Focus)
+    const aut = responseData?.autorizacao || {};
+    if (!responseData.chave_nfe && (responseData.chave || aut.chave_acesso)) {
+      responseData.chave_nfe = responseData.chave || aut.chave_acesso;
+    }
+    if (!responseData.protocolo && aut.numero_protocolo) responseData.protocolo = aut.numero_protocolo;
+    if (!responseData.mensagem_sefaz && aut.motivo_status) responseData.mensagem_sefaz = aut.motivo_status;
+    if (!responseData.status_sefaz && aut.codigo_status) responseData.status_sefaz = String(aut.codigo_status);
+    if (responseData.status === "autorizado") responseData.status = "autorizada";
+    if (responseData.status === "rejeitado") responseData.status = "rejeitada";
+    if (responseData.status === "cancelado") responseData.status = "cancelada";
+
     // Quando autorizada, buscar dhEmi/dhRecbto no XML autorizado (fonte oficial)
     let datasDoXml: { data_emissao?: string; data_autorizacao?: string } = {};
     const caminhoXml = responseData?.caminho_xml_nota_fiscal as string | undefined;
