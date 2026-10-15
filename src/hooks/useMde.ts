@@ -30,19 +30,26 @@ export function useMde() {
    * Escolhe a função de DF-e conforme o provedor fiscal do emitente da inscrição:
    * ACBr API Nuvem → acbr-api-dfe; demais (Focus NFe) → focus-nfe-mde.
    */
-  const funcaoDfe = async (inscricaoId: string): Promise<string> => {
+  const rotaDfe = async (inscricaoId: string): Promise<{ fn: string; inscricaoId: string }> => {
+    // O DF-e é por CPF/CNPJ: se a IE selecionada não tem emitente ACBr, usa
+    // outra IE do mesmo titular que tenha (ex.: titular com várias inscrições).
+    const ids = await getInscricoesDoTitular(inscricaoId);
     const { data } = await supabase
       .from("inscricoes_produtor")
-      .select("emitentes_nfe(api_provider)")
-      .eq("id", inscricaoId)
-      .maybeSingle();
-    const provider = (data?.emitentes_nfe as { api_provider?: string } | null)?.api_provider;
-    return provider === "acbrapi" ? "acbr-api-dfe" : "focus-nfe-mde";
+      .select("id, emitentes_nfe(api_provider)")
+      .in("id", ids);
+    const lista = (data as Array<{ id: string; emitentes_nfe: { api_provider?: string } | null }>) || [];
+    const acbr =
+      lista.find((r) => r.id === inscricaoId && r.emitentes_nfe?.api_provider === "acbrapi") ??
+      lista.find((r) => r.emitentes_nfe?.api_provider === "acbrapi");
+    return acbr ? { fn: "acbr-api-dfe", inscricaoId: acbr.id } : { fn: "focus-nfe-mde", inscricaoId };
   };
+  const funcaoDfe = async (inscricaoId: string) => (await rotaDfe(inscricaoId)).fn;
 
   const invokeAction = async (body: Record<string, unknown>) => {
-    const fn = await funcaoDfe(String(body.inscricaoId ?? ""));
-    const { data, error } = await supabase.functions.invoke(fn, { body });
+    const rota = await rotaDfe(String(body.inscricaoId ?? ""));
+    const fn = rota.fn;
+    const { data, error } = await supabase.functions.invoke(fn, { body: { ...body, inscricaoId: rota.inscricaoId } });
     if (error) {
       // Extrai a mensagem real do corpo da resposta de erro
       const ctx = (error as { context?: Response }).context;
