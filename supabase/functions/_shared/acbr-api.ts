@@ -78,9 +78,9 @@ export async function obterTokenAcbr(cred: AcbrCredentials, scope = "nfe"): Prom
 export async function acbrFetch(
   cred: AcbrCredentials,
   path: string,
-  options: { method?: string; body?: unknown; accept?: string } = {},
+  options: { method?: string; body?: unknown; accept?: string; scope?: string; token?: string } = {},
 ): Promise<Response> {
-  const token = await obterTokenAcbr(cred);
+  const token = options.token ?? await obterTokenAcbr(cred, options.scope);
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
     Accept: options.accept ?? "application/json",
