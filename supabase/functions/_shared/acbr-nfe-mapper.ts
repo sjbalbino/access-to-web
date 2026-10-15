@@ -222,7 +222,7 @@ export async function montarPayloadAcbr(
   const indIEDest = num(n.indicador_inscricao_estadual_destinatario, 9);
 
   const formaPag = num(n.forma_pagamento, 0);
-  const tPag = num(n.meio_pagamento, formaPag === 9 || [5, 9].includes(num(n.finalidade_emissao, 1)) ? 90 : 90);
+  const tPag = num(n.meio_pagamento, 90); // 90 = sem pagamento (padrão)
   const detPag = tPag === 90
     ? [{ indPag: 0, tPag: "90", vPag: 0 }]
     : [{ indPag: formaPag === 1 ? 1 : 0, tPag: String(tPag).padStart(2, "0"), vPag: vNF }];

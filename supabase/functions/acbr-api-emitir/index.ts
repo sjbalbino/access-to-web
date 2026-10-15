@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
 import { montarErrosApi, normalizarErrosFocus, resumirErros } from "../_shared/nfe-erros.ts";
 import { extrairDatasNfe } from "../_shared/nfe-datas.ts";
+import { montarPayloadAcbr, mensagemErroAcbr } from "../_shared/acbr-nfe-mapper.ts";
 import { acbrAmbienteLabel, acbrFetch, buscarCredenciaisAcbr } from "../_shared/acbr-api.ts";
 
 const corsHeaders = {
@@ -283,7 +284,10 @@ serve(async (req) => {
     console.log("Emitindo NF-e via ACBr API:", notaFiscalId);
     console.log("Referência:", ref);
 
-    const response = await acbrFetch(cred, `/nfe?ref=${ref}`, { method: "POST", body: notaData });
+    normalizeReformaTributariaPayload(notaData as Record<string, unknown>);
+    const payloadAcbr = await montarPayloadAcbr(supabase, notaData as Record<string, unknown>, ambiente, ref);
+    console.log("Payload ACBr infNFe:", JSON.stringify(payloadAcbr));
+    const response = await acbrFetch(cred, `/nfe`, { method: "POST", body: payloadAcbr });
 
     const responseText = await response.text();
     console.log("Resposta bruta ACBr API:", responseText);
@@ -349,7 +353,7 @@ serve(async (req) => {
         }
       } else {
         const mensagemRejeicao = resumirErros(
-          responseData.mensagem_sefaz || responseData.mensagem,
+          mensagemErroAcbr(responseData),
           errosDetalhados,
         );
         const codigoRejeicao = responseData.status_sefaz ? `Rejeição ${responseData.status_sefaz}: ` : "";
@@ -369,7 +373,7 @@ serve(async (req) => {
           success: false,
           error: isDuplicidade
             ? "Duplicidade na SEFAZ: já existe uma NF-e autorizada com este número. O número foi liberado e o próximo será usado — clique em Emitir NF-e novamente."
-            : (responseData.mensagem || "Erro ao emitir NF-e"),
+            : mensagemErroAcbr(responseData),
           details: responseData,
           erros: errosDetalhados,
           errosApi,
@@ -380,8 +384,19 @@ serve(async (req) => {
     }
 
     // Atualizar nota com dados da API
+    const statusAcbr = String(responseData.status || "").toLowerCase();
+    const statusMap: Record<string, string> = {
+      autorizado: "autorizada", autorizada: "autorizada", rejeitado: "rejeitada", rejeitada: "rejeitada",
+      denegado: "denegada", cancelado: "cancelada", pendente: "processando", erro: "rejeitada",
+    };
+    const aut = responseData.autorizacao || {};
+    if (responseData.chave && !responseData.chave_nfe) responseData.chave_nfe = responseData.chave;
+    if (aut.numero_protocolo && !responseData.protocolo) responseData.protocolo = aut.numero_protocolo;
+    if (aut.motivo_status && !responseData.mensagem_sefaz) {
+      responseData.mensagem_sefaz = `${aut.codigo_status ?? ""} ${aut.motivo_status}`.trim();
+    }
     const updateData: Record<string, unknown> = {
-      status: responseData.status || "processando",
+      status: statusMap[statusAcbr] || "processando",
       uuid_api: ref,
     };
 
