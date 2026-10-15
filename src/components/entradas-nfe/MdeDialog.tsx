@@ -25,6 +25,7 @@ import { resolverInscricaoDestinatario } from "@/lib/inscricaoDestinatarioXml";
 import { useCreateEntradaNfe, useEntradasPorChaves, normalizarChaveAcesso } from "@/hooks/useEntradasNfe";
 import { supabase } from "@/integrations/supabase/client";
 import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
+import { XmlViewerDialog, xmlViewerInitialState, type XmlViewerState } from "@/components/entradas-nfe/XmlViewerDialog";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 
@@ -59,7 +60,7 @@ function formatCpfCnpj(value?: string | null) {
 export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const [inscricaoId, setInscricaoId] = useState<string>("");
   const { data: inscricoes } = useInscricoesCompletas();
-  const { isLoading, nfesRecebidas, returnMessage, clearReturnMessage, consultarDestinatarias, consultarPorChave, carregarCache, manifestar, downloadXml, downloadDanfe } = useMde();
+  const { isLoading, nfesRecebidas, returnMessage, clearReturnMessage, consultarDestinatarias, consultarPorChave, carregarCache, manifestar, obterXml, downloadXml, downloadDanfe } = useMde();
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
   const [chaveBusca, setChaveBusca] = useState("");
@@ -124,6 +125,19 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   };
 
   const [danfePreview, setDanfePreview] = useState<{ open: boolean; loading: boolean; pdfData: Uint8Array | null; downloadUrl: string | null; filename: string; titulo: string; chave: string; manifestacao_destinatario: string | null }>({ open: false, loading: false, pdfData: null, downloadUrl: null, filename: "danfe.pdf", titulo: "", chave: "", manifestacao_destinatario: null });
+  const [xmlViewer, setXmlViewer] = useState<XmlViewerState>(xmlViewerInitialState);
+
+  const handleVisualizarXml = async (chave: string, numero?: string | null) => {
+    setXmlViewer({ open: true, loading: true, xml: null, filename: `nfe_${chave}.xml`, titulo: `XML - NF-e nº ${numero || chave}` });
+    const xml = await obterXml(inscricaoId, chave);
+    setXmlViewer((prev) => {
+      if (!prev.open) return prev;
+      if (!xml) return xmlViewerInitialState;
+      return { ...prev, loading: false, xml };
+    });
+  };
+
+  const closeXmlViewer = () => setXmlViewer(xmlViewerInitialState);
 
   const handleVisualizarDanfe = async (nfe: NfeRecebida) => {
     const filename = `DANFE-${nfe.numero || nfe.chave}.pdf`;
@@ -816,9 +830,9 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                           className="h-9 px-3 flex items-center gap-2 text-xs font-semibold hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={!manifestacaoProcessada || isLoading || jaTemEntrada}
                           title={jaTemEntrada ? entradaTitle : bloqueioTitle}
-                          onClick={() => downloadXml(inscricaoId, nfe.chave)}
-                        >
-                          <Download className="h-4 w-4" /> XML
+                          onClick={() => handleVisualizarXml(nfe.chave, nfe.numero)}
+                         >
+                          <FileCode className="h-4 w-4" /> XML
                         </Button>
 
                         <Button
@@ -953,7 +967,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => danfePreview.chave && downloadXml(inscricaoId, danfePreview.chave)}
+              onClick={() => danfePreview.chave && handleVisualizarXml(danfePreview.chave)}
               disabled={!danfePreview.manifestacao_destinatario || !danfePreview.chave || isLoading}
               title={danfePreview.manifestacao_destinatario ? undefined : "Manifeste a NF-e primeiro para liberar o XML completo"}
             >
@@ -977,6 +991,8 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         </div>
       </DialogContent>
     </Dialog>
+
+    <XmlViewerDialog state={xmlViewer} onClose={closeXmlViewer} />
     </>
   );
 }
