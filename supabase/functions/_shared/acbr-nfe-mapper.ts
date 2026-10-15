@@ -16,7 +16,20 @@ const num = (v: unknown, d = 0) => {
   return Number.isFinite(n) ? n : d;
 };
 const r2 = (v: number) => Number(v.toFixed(2));
+// O schema da NF-e só aceita caracteres Latin-1 (espaço até ÿ), sem quebras de
+// linha nem espaços nas pontas. Convertemos travessões, aspas tipográficas etc.
+const textoSefaz = (s: string): string =>
+  s
+    .replace(/[\u2013\u2014\u2212]/g, "-")
+    .replace(/[\u2018\u2019\u201A\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u2033]/g, '"')
+    .replace(/\u2026/g, "...")
+    .replace(/[\u2022\u00B7]/g, "-")
+    .replace(/\s+/g, " ")
+    .replace(/[^\x20-\xFF]/g, "")
+    .trim();
 const clean = <T>(obj: T): T => {
+  if (typeof obj === "string") return textoSefaz(obj) as unknown as T;
   if (Array.isArray(obj)) return obj.map(clean).filter((v) => v !== undefined) as unknown as T;
   if (obj && typeof obj === "object") {
     const out: Rec = {};
