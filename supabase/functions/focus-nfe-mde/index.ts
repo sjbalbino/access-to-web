@@ -209,14 +209,32 @@ async function getInscricaoContext(inscricaoId: string) {
     .maybeSingle();
 
   if (credErr) throw new Error("Erro ao buscar credenciais: " + credErr.message);
-  const tokens = [
-    ...(emitente.ambiente === 2
-      ? [cred?.api_access_token_homologacao, cred?.api_access_token_principal_producao, cred?.api_access_token]
-      : [cred?.api_access_token_principal_producao, cred?.api_access_token, cred?.api_access_token_homologacao]),
-  ].filter((value, index, arr): value is string => !!value && arr.indexOf(value) === index);
+  type Cred = { api_access_token_principal_producao?: string | null; api_access_token?: string | null; api_access_token_homologacao?: string | null };
+  const ordenar = (c: Cred | null | undefined) =>
+    emitente.ambiente === 2
+      ? [c?.api_access_token_homologacao, c?.api_access_token_principal_producao, c?.api_access_token]
+      : [c?.api_access_token_principal_producao, c?.api_access_token, c?.api_access_token_homologacao];
+  let candidatos: (string | null | undefined)[] = ordenar(cred);
+
+  // A consulta de DF-e (MD-e) é feita via Focus NFe. Emitentes configurados com
+  // outro provedor (ex.: ACBr API) podem não ter token Focus: nesse caso usamos
+  // o token principal da conta Focus de outro emitente da mesma granja.
+  if (!candidatos.some(Boolean) && insc.granja_id) {
+    const { data: outros } = await supabase
+      .from("emitentes_nfe")
+      .select("id, emitentes_nfe_credentials(api_access_token_principal_producao, api_access_token, api_access_token_homologacao)")
+      .eq("granja_id", insc.granja_id)
+      .neq("id", insc.emitente_id);
+    for (const o of (outros || []) as Array<{ emitentes_nfe_credentials: Cred | Cred[] | null }>) {
+      const c = Array.isArray(o.emitentes_nfe_credentials) ? o.emitentes_nfe_credentials[0] : o.emitentes_nfe_credentials;
+      candidatos = candidatos.concat(ordenar(c));
+    }
+  }
+
+  const tokens = candidatos.filter((value, index, arr): value is string => !!value && arr.indexOf(value) === index);
   const token = tokens[0];
   if (!token) {
-    throw new Error(`Token ${emitente.ambiente === 2 ? "de homologação" : "principal de produção"} da Focus NFe não configurado para este emitente.`);
+    throw new Error(`A consulta de NF-es recebidas usa a Focus NFe, mas o emitente deste titular não possui token ${emitente.ambiente === 2 ? "de homologação" : "de produção"} da Focus NFe. Cadastre o token Focus no Emitente de NF-e.`);
   }
 
   return {
