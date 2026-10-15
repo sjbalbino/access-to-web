@@ -68,9 +68,29 @@ export function useMde() {
           n.manifestacao_destinatario || anterior?.manifestacao_destinatario || null,
       };
     });
-    await supabase
-      .from("dfe_nfes_cache" as any)
-      .upsert(rows, { onConflict: "inscricao_id,chave" });
+    // Deduplica por chave: a SEFAZ pode devolver a mesma NF-e mais de uma vez
+    // (resumo + completa / eventos). Chaves repetidas no mesmo upsert fazem o
+    // banco rejeitar o lote inteiro e nada era gravado.
+    const porChave = new Map<string, (typeof rows)[number]>();
+    for (const r of rows) {
+      if (!r.chave) continue;
+      const ant = porChave.get(r.chave);
+      porChave.set(r.chave, ant ? {
+        ...ant,
+        ...Object.fromEntries(Object.entries(r).filter(([, v]) => v !== null && v !== "" && v !== 0)),
+      } as typeof r : r);
+    }
+    const unicos = Array.from(porChave.values());
+    for (let i = 0; i < unicos.length; i += 500) {
+      const { error } = await supabase
+        .from("dfe_nfes_cache" as any)
+        .upsert(unicos.slice(i, i + 500), { onConflict: "inscricao_id,chave" });
+      if (error) {
+        console.error("Falha ao gravar NF-es recebidas:", error.message);
+        toast.error("Não foi possível gravar as NF-es sincronizadas", { description: error.message });
+        return;
+      }
+    }
   };
 
 
