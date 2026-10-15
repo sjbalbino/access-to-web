@@ -455,10 +455,10 @@ export default function EmitentesNfe() {
 
         <Alert className="border-blue-600 bg-blue-50 dark:bg-blue-950">
           <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertTitle className="text-blue-700">Configuração Focus NFe</AlertTitle>
+          <AlertTitle className="text-blue-700">Configuração do Provedor Fiscal</AlertTitle>
           <AlertDescription>
-            Configure o token da API Focus NFe em cada emitente, correspondendo ao ambiente (homologação ou produção).
-            Certifique-se de que o certificado A1 foi enviado no painel da Focus NFe.
+            Configure as credenciais da API fiscal de cada emitente conforme o provedor definido na coluna API (Focus NFe ou ACBr API Nuvem), correspondendo ao ambiente (homologação ou produção).
+            No Focus NFe, cadastre o token da empresa e envie o certificado A1 no painel da Focus; no ACBr API Nuvem, informe o Client ID e o Client Secret (o certificado fica gerenciado na ACBr).
             Para vincular um emitente a uma inscrição do produtor (NFP-e), acesse o cadastro da inscrição na aba do produtor.
           </AlertDescription>
         </Alert>
@@ -1127,7 +1127,7 @@ export default function EmitentesNfe() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Certificado Digital</CardTitle>
                   <CardDescription>
-                    O certificado A1 deve ser enviado no painel da Focus NFe
+                    No Focus NFe o certificado A1 é enviado no painel da Focus; no ACBr API Nuvem é gerenciado pela ACBr
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
