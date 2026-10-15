@@ -261,6 +261,10 @@ export async function montarPayloadAcbr(
         finNFe: num(n.finalidade_emissao, 1),
         indFinal: num(n.consumidor_final, 0),
         indPres: num(n.presenca_comprador, 0),
+        // NT 2020.006: obrigatório quando indPres ∈ {2,3,4,9}. 0 = sem intermediador.
+        ...([2, 3, 4, 9].includes(num(n.presenca_comprador, 0))
+          ? { indIntermed: num(n.indicador_intermediador, 0) }
+          : {}),
         procEmi: 0,
         verProc: "Sisagro 1.0",
         NFref: nfRef && nfRef.length ? nfRef : undefined,
