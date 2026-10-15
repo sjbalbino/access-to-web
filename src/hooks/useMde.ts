@@ -454,6 +454,7 @@ export function useMde() {
     consultarPorChave,
     carregarCache,
     manifestar,
+    obterXml,
     downloadXml,
     downloadDanfe,
   };
