@@ -27,6 +27,14 @@ export function useMde() {
   const [returnMessage, setReturnMessage] = useState<MdeReturnMessage | null>(null);
 
   /**
+   * Exibe a mensagem em um popup que permanece aberto até o usuário fechar,
+   * em vez de um aviso rápido (toast) que some sozinho da tela.
+   */
+  const notificar = (title: string, message: string, details?: string[]) => {
+    setReturnMessage({ title, message, details });
+  };
+
+  /**
    * Escolhe a função de DF-e conforme o provedor fiscal do emitente da inscrição:
    * ACBr API Nuvem → acbr-api-dfe; demais (Focus NFe) → focus-nfe-mde.
    */
@@ -66,7 +74,7 @@ export function useMde() {
       throw new Error(msg);
     }
     if (data && !data.success) throw new Error(data.error || "Erro desconhecido");
-    if (data?.warning) toast.warning("Aviso da SEFAZ", { description: data.warning });
+    if (data?.warning) notificar("Aviso da SEFAZ", data.warning);
     return data;
   };
 
@@ -124,7 +132,7 @@ export function useMde() {
         .upsert(unicos.slice(i, i + 500), { onConflict: "inscricao_id,chave" });
       if (error) {
         console.error("Falha ao gravar NF-es recebidas:", error.message);
-        toast.error("Não foi possível gravar as NF-es sincronizadas", { description: error.message });
+        notificar("Não foi possível gravar as NF-es sincronizadas", error.message);
         return;
       }
     }
@@ -237,19 +245,20 @@ export function useMde() {
       );
       setNfesRecebidas(merged);
       if (merged.length === 0) {
-        toast.info("Nenhuma NF-e destinada encontrada.");
+        notificar("Sincronização concluída", "Nenhuma NF-e destinada encontrada.");
       } else {
-        toast.success(
+        notificar(
+          "Sincronização concluída",
           `${items.length} NF-e(s) retornada(s) pela SEFAZ.`,
           merged.length > items.length
-            ? { description: `${merged.length} no total exibidas (incluindo ${merged.length - items.length} do cache local).` }
+            ? [`${merged.length} no total exibidas (incluindo ${merged.length - items.length} do cache local).`]
             : undefined
         );
       }
       return merged;
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
-      toast.error("Erro ao consultar NF-es destinadas", { description: msg });
+      notificar("Erro ao consultar NF-es destinadas", msg);
       return [];
     } finally {
       setIsLoading(false);
@@ -261,7 +270,7 @@ export function useMde() {
     try {
       const cleanChave = (chave || "").replace(/\D/g, "");
       if (cleanChave.length !== 44) {
-        toast.error("Chave de acesso inválida", { description: "A chave deve conter 44 dígitos." });
+        notificar("Chave de acesso inválida", "A chave deve conter 44 dígitos.");
         return [];
       }
       const result = await invokeAction({ action: "consultar_chave", inscricaoId, chave: cleanChave });
@@ -286,19 +295,21 @@ export function useMde() {
         );
       });
       if (items.length === 0) {
-        toast.info("NF-e não encontrada para esta chave.", {
-          description: result?.warning || "Confira o CNPJ/CPF do destinatário e o ambiente (produção × homologação). A SEFAZ pode levar alguns minutos para distribuir a NF-e.",
-        });
+        notificar(
+          "NF-e não encontrada para esta chave",
+          result?.warning || "Confira o CNPJ/CPF do destinatário e o ambiente (produção × homologação). A SEFAZ pode levar alguns minutos para distribuir a NF-e."
+        );
       } else {
-        toast.success(
+        notificar(
+          "Consulta por chave concluída",
           `${items.length} NF-e localizada(s) na SEFAZ e adicionada(s) à lista.`,
-          { description: "Para baixar o XML, manifeste a NF-e (Ciência da Operação) e use a opção Importar." }
+          ["Para baixar o XML, manifeste a NF-e (Ciência da Operação) e use a opção Importar."]
         );
       }
       return items;
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
-      toast.error("Erro ao consultar por chave", { description: msg });
+      notificar("Erro ao consultar por chave", msg);
       return [];
     } finally {
       setIsLoading(false);
@@ -336,11 +347,11 @@ export function useMde() {
         prev.map((n) => (n.chave === chave ? { ...n, manifestacao_destinatario: tipo } : n))
       );
 
-      toast.success(`Manifestação "${labels[tipo] || tipo}" registrada com sucesso!`);
+      notificar("Manifestação registrada", `Manifestação "${labels[tipo] || tipo}" registrada com sucesso!`);
       return true;
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
-      toast.error("Erro ao manifestar", { description: msg });
+      notificar("Erro ao manifestar", msg);
       return false;
 
     } finally {
@@ -366,7 +377,6 @@ export function useMde() {
             typeof data?.nfe_completa !== "undefined" ? `XML completo liberado: ${data.nfe_completa ? "Sim" : "Não"}` : null,
           ].filter(Boolean) as string[],
         });
-        toast.error("XML completo não disponível", { description: "Leia o retorno completo na janela aberta." });
         return null;
       }
 
@@ -386,11 +396,7 @@ export function useMde() {
       return xmlText;
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
-      setReturnMessage({
-        title: "Retorno do provedor fiscal",
-        message: msg,
-      });
-      toast.error("Erro ao baixar XML", { description: msg });
+      notificar("Erro ao baixar XML", msg);
       return null;
     } finally {
       setIsLoading(false);
@@ -418,7 +424,7 @@ export function useMde() {
       toast.success("Download do DANFe iniciado");
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro desconhecido";
-      toast.error("Erro ao baixar DANFe", { description: msg });
+      notificar("Erro ao baixar DANFe", msg);
     } finally {
       setIsLoading(false);
     }
