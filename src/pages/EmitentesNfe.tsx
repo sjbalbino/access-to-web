@@ -1127,7 +1127,7 @@ export default function EmitentesNfe() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Certificado Digital</CardTitle>
                   <CardDescription>
-                    O certificado A1 deve ser enviado no painel da Focus NFe
+                    No Focus NFe o certificado A1 é enviado no painel da Focus; no ACBr API Nuvem é gerenciado pela ACBr
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
