@@ -224,7 +224,7 @@ export function EmitirNfeAutomaticoDialog({
       setStatus({ step: "creating_nfe", message: "Criando nota fiscal...", progress: 30 });
 
       // 3. Criar a nota fiscal
-      const valorTotal = remessa.valor_nota || (remessa.kg_nota || 0) * (contrato.preco_kg || 0);
+      const valorTotal = Number((Number(remessa.valor_nota) || (remessa.kg_nota || 0) * (contrato.preco_kg || 0)).toFixed(2));
       const kgNota = remessa.kg_nota || remessa.kg_remessa || 0;
 
       // Montar informações complementares (função utilitária compartilhada com o dialog de edição)

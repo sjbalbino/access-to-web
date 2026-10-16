@@ -16,6 +16,8 @@ const num = (v: unknown, d = 0) => {
   return Number.isFinite(n) ? n : d;
 };
 const r2 = (v: number) => Number(v.toFixed(2));
+/** Valor monetário: sempre 2 casas (schema SEFAZ TDec_1302). */
+const m = (v: unknown, d = 0) => r2(num(v, d));
 // O schema da NF-e só aceita caracteres Latin-1 (espaço até ÿ), sem quebras de
 // linha nem espaços nas pontas. Convertemos travessões, aspas tipográficas etc.
 const textoSefaz = (s: string): string =>
@@ -68,7 +70,7 @@ function grupoIcms(it: Rec, crt: number): Rec {
     return { ICMSSN102: { orig, CSOSN: csosn } };
   }
   const c = cst.padStart(2, "0");
-  const vBC = num(it.icms_base_calculo), pICMS = num(it.icms_aliquota), vICMS = num(it.icms_valor);
+  const vBC = m(it.icms_base_calculo), pICMS = num(it.icms_aliquota), vICMS = m(it.icms_valor);
   const modBC = num(it.icms_modalidade_base_calculo, 3);
   if (c === "00") return { ICMS00: { orig, CST: c, modBC, vBC, pICMS, vICMS } };
   if (c === "20") return { ICMS20: { orig, CST: c, modBC, pRedBC: num(it.icms_reducao_base_calculo), vBC, pICMS, vICMS } };
@@ -93,9 +95,9 @@ function somaGrupo(det: Array<{ imposto: Record<string, unknown> }>, imposto: st
 function grupoPisCofins(it: Rec, tipo: "pis" | "cofins"): Rec {
   const P = tipo === "pis" ? "PIS" : "COFINS";
   const cst = dig(it[`${tipo}_situacao_tributaria`]).padStart(2, "0") || "07";
-  const vBC = num(it[`${tipo}_base_calculo`]);
+  const vBC = m(it[`${tipo}_base_calculo`]);
   const aliq = num(it[`${tipo}_aliquota`]);
-  const valor = num(it[`${tipo}_valor`]);
+  const valor = m(it[`${tipo}_valor`]);
   if (["01", "02"].includes(cst)) return { [`${P}Aliq`]: { CST: cst, vBC, [`p${P}`]: aliq, [`v${P}`]: valor } };
   if (["04", "05", "06", "07", "08", "09"].includes(cst)) return { [`${P}NT`]: { CST: cst } };
   return { [`${P}Outr`]: { CST: cst, vBC, [`p${P}`]: aliq, [`v${P}`]: valor } };
@@ -118,7 +120,7 @@ function grupoIbsCbs(it: Rec): Rec | undefined {
   if (!it.ibs_cbs_situacao_tributaria) return undefined;
   const cst = dig(it.ibs_cbs_situacao_tributaria).padStart(3, "0");
   const classTrib = dig(it.ibs_cbs_classificacao_tributaria).padStart(6, "0");
-  const vIBSUF = num(it.ibs_uf_valor), vIBSMun = num(it.ibs_mun_valor);
+  const vIBSUF = m(it.ibs_uf_valor), vIBSMun = m(it.ibs_mun_valor);
   const pIBSUF = num(it.ibs_uf_aliquota), pIBSMun = num(it.ibs_mun_aliquota), pCBS = num(it.cbs_aliquota);
 
   // Percentual de redução: usa o enviado pelo frontend; senão, tabela/CST.
@@ -137,11 +139,11 @@ function grupoIbsCbs(it: Rec): Rec | undefined {
     CST: cst,
     cClassTrib: classTrib,
     gIBSCBS: {
-      vBC: num(it.ibs_cbs_base_calculo),
+      vBC: m(it.ibs_cbs_base_calculo),
       gIBSUF: { pIBSUF, gRed: gRed(pIBSUF), vIBSUF },
       gIBSMun: { pIBSMun, gRed: gRed(pIBSMun), vIBSMun },
       vIBS: r2(vIBSUF + vIBSMun),
-      gCBS: { pCBS, gRed: gRed(pCBS), vCBS: num(it.cbs_valor) },
+      gCBS: { pCBS, gRed: gRed(pCBS), vCBS: m(it.cbs_valor) },
     },
   };
 }
@@ -192,7 +194,7 @@ export async function montarPayloadAcbr(
       ? {
         cEnq: it.ipi_codigo_enquadramento || "999",
         ...(["00", "49", "50", "99"].includes(dig(it.ipi_situacao_tributaria).padStart(2, "0"))
-          ? { IPITrib: { CST: dig(it.ipi_situacao_tributaria).padStart(2, "0"), vBC: num(it.ipi_base_calculo), pIPI: num(it.ipi_aliquota), vIPI: num(it.ipi_valor) } }
+          ? { IPITrib: { CST: dig(it.ipi_situacao_tributaria).padStart(2, "0"), vBC: m(it.ipi_base_calculo), pIPI: num(it.ipi_aliquota), vIPI: m(it.ipi_valor) } }
           : { IPINT: { CST: dig(it.ipi_situacao_tributaria).padStart(2, "0") } }),
       }
       : undefined;
@@ -212,10 +214,10 @@ export async function montarPayloadAcbr(
         uTrib: it.unidade_tributavel || it.unidade_comercial || "UN",
         qTrib: num(it.quantidade_tributavel, qCom),
         vUnTrib: num(it.valor_unitario_tributavel, vUnCom),
-        vFrete: num(it.valor_frete) || undefined,
-        vSeg: num(it.valor_seguro) || undefined,
-        vDesc: num(it.valor_desconto) || undefined,
-        vOutro: num(it.valor_outras_despesas) || undefined,
+        vFrete: m(it.valor_frete) || undefined,
+        vSeg: m(it.valor_seguro) || undefined,
+        vDesc: m(it.valor_desconto) || undefined,
+        vOutro: m(it.valor_outras_despesas) || undefined,
         indTot: 1,
       },
       imposto: {
