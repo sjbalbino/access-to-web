@@ -30,7 +30,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Pencil, Trash2, Building2, AlertCircle, ShieldCheck, Loader2, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2, AlertCircle, ShieldCheck, Loader2, Eye, EyeOff, KeyRound } from "lucide-react";
+import { CertificadoA1Dialog } from "@/components/emitentes/CertificadoA1Dialog";
+import { CertificadoBadge } from "@/components/emitentes/certificadoUtils";
 import { useEmitentesNfe, EmitenteNfe, EmitenteNfeInsert } from "@/hooks/useEmitentesNfe";
 import { useEmitenteCredentials, useUpsertEmitenteCredentials } from "@/hooks/useEmitenteCredentials";
 import { useFocusNfeVerificarEmpresa } from "@/hooks/useFocusNfeVerificarEmpresa";
@@ -145,6 +147,7 @@ export default function EmitentesNfe() {
   const [showTokenHom, setShowTokenHom] = useState(false);
   const [showTokenPrincipal, setShowTokenPrincipal] = useState(false);
   const [nomeFantasia, setNomeFantasia] = useState<string>("");
+  const [certEmitente, setCertEmitente] = useState<EmitenteNfe | null>(null);
 
   const handleVerificarHabilitacao = async (emitente: EmitenteNfe) => {
     setVerificandoId(emitente.id);
@@ -486,6 +489,7 @@ export default function EmitentesNfe() {
                   <TableHead className="hidden sm:table-cell">Ambiente</TableHead>
                   <TableHead className="hidden md:table-cell">Série</TableHead>
                   <TableHead className="hidden md:table-cell">API</TableHead>
+                  <TableHead className="hidden md:table-cell">Certificado A1</TableHead>
                   <TableHead className="hidden sm:table-cell">Status</TableHead>
                   {canEdit && <TableHead className="w-32 sticky right-0 bg-background">Ações</TableHead>}
                 </TableRow>
@@ -544,6 +548,9 @@ export default function EmitentesNfe() {
                         <Badge variant="outline">Não configurada</Badge>
                       )}
                     </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <CertificadoBadge validade={emitente.certificado_validade} titular={emitente.certificado_nome} />
+                    </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Badge variant={emitente.ativo ? "default" : "secondary"}>{emitente.ativo ? "Ativo" : "Inativo"}</Badge>
                     </TableCell>
@@ -561,6 +568,8 @@ export default function EmitentesNfe() {
                               ? <Loader2 className="h-4 w-4 animate-spin" />
                               : <ShieldCheck className="h-4 w-4" />}
                           </Button>
+                          <Button variant="ghost" size="icon" title="Enviar certificado A1" aria-label="Enviar certificado A1"
+                            onClick={() => setCertEmitente(emitente)}><KeyRound className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" title="Editar" onClick={() => handleOpenDialog(emitente)}><Pencil className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" title="Excluir" onClick={() => { setSelectedEmitente(emitente); setIsDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
                         </div>
