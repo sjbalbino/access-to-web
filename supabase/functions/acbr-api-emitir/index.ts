@@ -329,7 +329,9 @@ serve(async (req) => {
       console.log("Erros detalhados normalizados:", JSON.stringify(errosDetalhados));
 
       const isDuplicidade = responseData.status_sefaz === "539" ||
-        responseData.mensagem_sefaz?.includes("Duplicidade");
+        responseData.mensagem_sefaz?.includes("Duplicidade") ||
+        String(responseData.autorizacao?.codigo_status ?? "") === "539" ||
+        /duplicidade/i.test(String(responseData.autorizacao?.motivo_status ?? ""));
 
       if (isDuplicidade) {
         const numeroQueimado = Number((existingNota as { numero?: number | null }).numero ?? 0);
@@ -400,6 +402,35 @@ serve(async (req) => {
     if (aut.motivo_status && !responseData.mensagem_sefaz) {
       responseData.mensagem_sefaz = `${aut.codigo_status ?? ""} ${aut.motivo_status}`.trim();
     }
+
+    // Duplicidade (539) devolvida pela ACBr com HTTP 200: liberar o número e avançar o contador
+    const duplicidadeAcbr = String(aut.codigo_status ?? "") === "539" ||
+      /duplicidade/i.test(String(aut.motivo_status ?? ""));
+    if (duplicidadeAcbr) {
+      const numeroQueimado = Number(responseData.numero ?? (existingNota as { numero?: number | null }).numero ?? 0);
+      const numeroAtualEmit = Number(emitenteData?.numero_atual_nfe ?? 0);
+      await supabase
+        .from("notas_fiscais")
+        .update({
+          status: "rascunho",
+          motivo_status: `${aut.motivo_status} — número ${numeroQueimado} liberado; emita novamente para usar o próximo número.`.substring(0, 1000),
+          erros_api: montarErrosApi(responseData),
+          numero: null, uuid_api: null, chave_acesso: null, protocolo: null,
+        })
+        .eq("id", notaFiscalId);
+      if (emitenteData?.id && numeroQueimado > numeroAtualEmit) {
+        await supabase.from("emitentes_nfe").update({ numero_atual_nfe: numeroQueimado }).eq("id", emitenteData.id);
+      }
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Duplicidade na SEFAZ: já existe uma NF-e autorizada com este número. O número foi liberado e o próximo será usado — clique em Emitir NF-e novamente.",
+          details: responseData,
+          isDuplicidade: true,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const updateData: Record<string, unknown> = {
       status: statusMap[statusAcbr] || "processando",
       uuid_api: responseData.id || ref,
@@ -427,6 +458,14 @@ serve(async (req) => {
       .from("notas_fiscais")
       .update(updateData)
       .eq("id", notaFiscalId);
+
+    // Avança o contador do emitente quando a nota é autorizada
+    const numeroUsado = Number(updateData.numero ?? proximoNumero ?? 0);
+    if (!updateError && updateData.status === "autorizada" && emitenteData?.id &&
+        numeroUsado > Number(emitenteData?.numero_atual_nfe ?? 0)) {
+      await supabase.from("emitentes_nfe").update({ numero_atual_nfe: numeroUsado }).eq("id", emitenteData.id);
+      console.log(`numero_atual_nfe avançado para ${numeroUsado}`);
+    }
 
     if (updateError) {
       console.error("Erro ao atualizar nota fiscal no banco:", updateError);
