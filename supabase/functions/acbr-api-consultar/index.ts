@@ -175,6 +175,16 @@ serve(async (req) => {
         console.error("Erro ao atualizar nota fiscal no banco:", updateError);
       } else {
         console.log("Nota fiscal atualizada com sucesso no banco de dados");
+        // Avança o contador do emitente quando a nota está autorizada
+        const numeroAut = Number(responseData.numero ?? 0);
+        if (responseData.status === "autorizada" && numeroAut > 0) {
+          const { data: emit } = await supabase
+            .from("emitentes_nfe").select("numero_atual_nfe, serie_nfe").eq("id", emitenteId).maybeSingle();
+          const mesmaSerie = !responseData.serie || !emit?.serie_nfe || Number(emit.serie_nfe) === Number(responseData.serie);
+          if (emit && mesmaSerie && numeroAut > Number(emit.numero_atual_nfe ?? 0)) {
+            await supabase.from("emitentes_nfe").update({ numero_atual_nfe: numeroAut }).eq("id", emitenteId);
+          }
+        }
       }
     }
 

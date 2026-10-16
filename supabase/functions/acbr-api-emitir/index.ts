@@ -459,6 +459,14 @@ serve(async (req) => {
       .update(updateData)
       .eq("id", notaFiscalId);
 
+    // Avança o contador do emitente quando a nota é autorizada
+    const numeroUsado = Number(updateData.numero ?? proximoNumero ?? 0);
+    if (!updateError && updateData.status === "autorizada" && emitenteData?.id &&
+        numeroUsado > Number(emitenteData?.numero_atual_nfe ?? 0)) {
+      await supabase.from("emitentes_nfe").update({ numero_atual_nfe: numeroUsado }).eq("id", emitenteData.id);
+      console.log(`numero_atual_nfe avançado para ${numeroUsado}`);
+    }
+
     if (updateError) {
       console.error("Erro ao atualizar nota fiscal no banco:", updateError);
       return new Response(
