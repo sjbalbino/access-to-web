@@ -237,7 +237,7 @@ export function useFocusNfe() {
       });
 
       // Respostas HTTP != 2xx: a mensagem real fica no corpo (error.context)
-      let data = rawData as Record<string, any> | null;
+      let data = rawData as (FocusNfeResult & Record<string, any>) | null;
       if (error) {
         const ctx = (error as { context?: Response }).context;
         try {
@@ -256,7 +256,7 @@ export function useFocusNfe() {
               "Falha de comunicação com o serviço de NF-e. Tente novamente em instantes.",
           };
         }
-        data = { ...data, success: false };
+        data = { ...(data as Record<string, any>), success: false } as FocusNfeResult & Record<string, any>;
       }
       if (!data) throw new Error("Resposta vazia do serviço de NF-e");
 
