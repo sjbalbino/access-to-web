@@ -1117,12 +1117,18 @@ export default function NotaFiscalForm() {
             details: "Verifique os dados informados e tente novamente."
           });
         }
+      } else if (result.success && (result as { jaAutorizada?: boolean }).jaAutorizada) {
+        queryClient.invalidateQueries({ queryKey: ["notas-fiscais"] });
+        setEmissionStatus({ step: "success", message: "Esta NF-e já está autorizada", progress: 100 });
       } else {
+        const r = result as { error?: string; details?: Record<string, unknown> };
+        const motivoSefaz = (r.details?.mensagem_sefaz as string) || (r.details?.motivo_status as string);
+        const motivo = motivoSefaz && motivoSefaz !== r.error ? motivoSefaz : undefined;
         setEmissionStatus({ 
           step: "error", 
-          message: result.error || "Erro ao emitir NF-e", 
+          message: "NF-e não emitida", 
           progress: 100,
-          details: "Verifique os dados informados e tente novamente."
+          details: [r.error, motivo].filter(Boolean).join("\n") || "Verifique os dados informados e tente novamente."
         });
       }
     } catch (error) {
