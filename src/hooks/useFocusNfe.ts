@@ -229,16 +229,36 @@ export function useFocusNfe() {
 
       // Enviar para edge function do provedor configurado no emitente
       const fnEmitir = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-emitir");
-      const { data, error } = await supabase.functions.invoke(fnEmitir, {
+      const { data: rawData, error } = await supabase.functions.invoke(fnEmitir, {
         body: {
           notaFiscalId,
           notaData: focusNfeData,
         },
       });
 
+      // Respostas HTTP != 2xx: a mensagem real fica no corpo (error.context)
+      let data = rawData as (FocusNfeResult & Record<string, any>) | null;
       if (error) {
-        throw new Error(error.message);
+        const ctx = (error as { context?: Response }).context;
+        try {
+          if (ctx && typeof ctx.json === "function") data = await ctx.json();
+        } catch { /* corpo não-JSON */ }
+        if (!data || typeof data !== "object" || !("success" in data || "error" in data)) {
+          // Último recurso: motivo gravado pelo backend na própria nota
+          const { data: nota } = await supabase
+            .from("notas_fiscais")
+            .select("motivo_status")
+            .eq("id", notaFiscalId)
+            .maybeSingle();
+          data = {
+            success: false,
+            error: (nota as { motivo_status?: string } | null)?.motivo_status ||
+              "Falha de comunicação com o serviço de NF-e. Tente novamente em instantes.",
+          };
+        }
+        data = { ...(data as Record<string, any>), success: false } as FocusNfeResult & Record<string, any>;
       }
+      if (!data) throw new Error("Resposta vazia do serviço de NF-e");
 
       if (!data.success) {
         setStatus("erro");
