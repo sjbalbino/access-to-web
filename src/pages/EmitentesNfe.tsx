@@ -590,6 +590,14 @@ export default function EmitentesNfe() {
           </div>
         </div>
 
+        <CertificadoA1Dialog
+          open={!!certEmitente}
+          onOpenChange={(v) => { if (!v) setCertEmitente(null); }}
+          emitenteId={certEmitente?.id ?? null}
+          emitenteNome={certEmitente?.inscricao?.nome_fantasia || certEmitente?.inscricao?.produtores?.nome || certEmitente?.inscricao?.nome || "Emitente"}
+          providerLabel={API_PROVIDERS.find((p) => p.value === certEmitente?.api_provider)?.label || "Focus NFe"}
+        />
+
         {/* Dialog de Criação/Edição */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
