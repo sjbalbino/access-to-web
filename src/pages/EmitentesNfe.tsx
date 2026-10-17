@@ -32,7 +32,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Plus, Pencil, Trash2, Building2, AlertCircle, ShieldCheck, Loader2, Eye, EyeOff, KeyRound } from "lucide-react";
 import { CertificadoA1Dialog } from "@/components/emitentes/CertificadoA1Dialog";
-import { CertificadoBadge } from "@/components/emitentes/certificadoUtils";
+import { CertificadoBadge, certificadoVencido, diasParaVencerCertificado } from "@/components/emitentes/certificadoUtils";
 import { useEmitentesNfe, EmitenteNfe, EmitenteNfeInsert } from "@/hooks/useEmitentesNfe";
 import { useEmitenteCredentials, useUpsertEmitenteCredentials } from "@/hooks/useEmitenteCredentials";
 import { useFocusNfeVerificarEmpresa } from "@/hooks/useFocusNfeVerificarEmpresa";
@@ -466,6 +466,40 @@ export default function EmitentesNfe() {
           </AlertDescription>
         </Alert>
 
+        {(() => {
+          const nomeEmitente = (e: EmitenteNfe) =>
+            e.inscricao?.nome_fantasia || e.inscricao?.produtores?.nome || e.inscricao?.nome || "Emitente";
+          const vencidos = emitentes.filter((e) => certificadoVencido(e.certificado_validade));
+          const vencendo = emitentes.filter((e) => {
+            const d = diasParaVencerCertificado(e.certificado_validade);
+            return d !== null && d >= 0 && d <= 30;
+          });
+          return (
+            <>
+              {vencidos.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Certificado vencido — emissão bloqueada</AlertTitle>
+                  <AlertDescription>
+                    {vencidos.map((e) => nomeEmitente(e)).join(", ")}: o certificado A1 venceu.
+                    Enquanto um novo certificado não for enviado (botão da chave), este emitente não consegue emitir NF-e.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {vencendo.length > 0 && (
+                <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <AlertTitle className="text-amber-700">Certificado perto do vencimento</AlertTitle>
+                  <AlertDescription>
+                    {vencendo.map((e) => `${nomeEmitente(e)} (vence em ${diasParaVencerCertificado(e.certificado_validade)} dia(s))`).join(", ")}.
+                    Providencie a renovação para evitar o bloqueio da emissão de NF-e.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
+          );
+        })()}
+
         <div className="flex justify-between items-center">
           <div className="text-sm text-muted-foreground">
             {emitentes.length} emitente(s) configurado(s)
@@ -552,7 +586,11 @@ export default function EmitentesNfe() {
                       <CertificadoBadge validade={emitente.certificado_validade} titular={emitente.certificado_nome} />
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      <Badge variant={emitente.ativo ? "default" : "secondary"}>{emitente.ativo ? "Ativo" : "Inativo"}</Badge>
+                      {certificadoVencido(emitente.certificado_validade) ? (
+                        <Badge variant="destructive">Bloqueado</Badge>
+                      ) : (
+                        <Badge variant={emitente.ativo ? "default" : "secondary"}>{emitente.ativo ? "Ativo" : "Inativo"}</Badge>
+                      )}
                     </TableCell>
                     {canEdit && (
                       <TableCell className="sticky right-0 bg-background">
