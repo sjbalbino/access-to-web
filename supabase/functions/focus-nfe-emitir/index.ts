@@ -221,7 +221,17 @@ serve(async (req) => {
     }
 
     // Obter ambiente e token do emitente
-    const emitenteData = (existingNota as unknown as { emitente_id?: string; emitentes_nfe?: { id?: string; ambiente: number | null; numero_atual_nfe?: number | null; serie_nfe?: number | string | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null; api_access_token_homologacao: string | null }> | { api_access_token: string | null; api_access_token_homologacao: string | null } | null } })?.emitentes_nfe;
+    const emitenteData = (existingNota as unknown as { emitente_id?: string; emitentes_nfe?: { id?: string; ambiente: number | null; numero_atual_nfe?: number | null; serie_nfe?: number | string | null; certificado_validade?: string | null; emitentes_nfe_credentials?: Array<{ api_access_token: string | null; api_access_token_homologacao: string | null }> | { api_access_token: string | null; api_access_token_homologacao: string | null } | null } })?.emitentes_nfe;
+    // Bloqueio: certificado A1 vencido impede a emissão
+    if (emitenteData?.certificado_validade && new Date(emitenteData.certificado_validade) < new Date()) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `O certificado digital A1 deste emitente venceu em ${new Date(emitenteData.certificado_validade).toLocaleDateString("pt-BR")}. Envie um novo certificado na tela de Emitentes NF-e (botão da chave) para liberar a emissão.`,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const ambiente = emitenteData?.ambiente;
     const credObj = Array.isArray(emitenteData?.emitentes_nfe_credentials) ? emitenteData?.emitentes_nfe_credentials?.[0] : emitenteData?.emitentes_nfe_credentials;
     const emitenteToken = ambiente === 2 ? credObj?.api_access_token_homologacao : credObj?.api_access_token;
