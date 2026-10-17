@@ -16,6 +16,18 @@ export async function extrairMensagemEdge(error: unknown): Promise<string | null
 
 export interface CertificadoBadgeProps { validade: string | null; titular?: string | null }
 
+/** Dias até o vencimento do certificado (negativo = vencido). null quando não há certificado. */
+export function diasParaVencerCertificado(validade: string | null): number | null {
+  if (!validade) return null;
+  return differenceInCalendarDays(parseISO(validade), new Date());
+}
+
+/** Certificado vencido: emissão de NF-e deve ser bloqueada. */
+export function certificadoVencido(validade: string | null): boolean {
+  const dias = diasParaVencerCertificado(validade);
+  return dias !== null && dias < 0;
+}
+
 /** Selo de situação do certificado A1: verde (válido), amarelo (vence em 30 dias), vermelho (vencido). */
 export function CertificadoBadge({ validade, titular }: CertificadoBadgeProps) {
   if (!validade) return <Badge variant="outline">Sem certificado</Badge>;
