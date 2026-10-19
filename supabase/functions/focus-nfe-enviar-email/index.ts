@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { acbrFetch, buscarCredenciaisAcbr } from "../_shared/acbr-api.ts";
 import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
 
 const corsHeaders = {
@@ -81,6 +82,7 @@ serve(async (req) => {
         emitente_id,
         emitentes_nfe!notas_fiscais_emitente_id_fkey(
           ambiente,
+          api_provider,
           emitentes_nfe_credentials(api_access_token, api_access_token_homologacao)
         )
       `)
@@ -109,6 +111,37 @@ serve(async (req) => {
     }
 
     const emit = (nota as any).emitentes_nfe;
+
+    // Emitentes da ACBr API: o envio de email é feito pela própria ACBr (não pela Focus).
+    if (String(emit?.api_provider ?? "").toLowerCase().startsWith("acbr")) {
+      const credAcbr = await buscarCredenciaisAcbr(supabase, nota.emitente_id);
+      if (!credAcbr) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Client ID / Client Secret da ACBr API não configurados para este emitente." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      console.log("Enviando email NFe via ACBr:", nota.uuid_api, "Para:", emailsLimpos);
+      const r = await acbrFetch(credAcbr, `/nfe/${nota.uuid_api}/email`, {
+        method: "POST",
+        body: { para: emailsLimpos, anexar_pdf: true, anexar_xml: true },
+      });
+      const t = await r.text();
+      let d: any = {};
+      try { d = t ? JSON.parse(t) : {}; } catch { d = { raw: t }; }
+      console.log("Resposta ACBr:", r.status, t);
+      if (!r.ok) {
+        const err = d?.error?.message || d?.mensagem || d?.message || t || "Erro ao enviar email pela ACBr API";
+        return new Response(
+          JSON.stringify({ success: false, error: err, details: d }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      return new Response(
+        JSON.stringify({ success: true, data: d, emails: emailsLimpos, provider: "acbr" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const ambiente: number | null = emit?.ambiente ?? null;
     const cred = Array.isArray(emit?.emitentes_nfe_credentials)
       ? emit?.emitentes_nfe_credentials?.[0]
