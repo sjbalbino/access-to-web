@@ -396,7 +396,11 @@ export function useCreateEntradaNfe() {
         const { error: itensError } = await supabase
           .from('entradas_nfe_itens')
           .insert(itensWithId);
-        if (itensError) throw itensError;
+        if (itensError) {
+          // Desfaz o cabeçalho para não deixar uma entrada sem itens.
+          await supabase.from('entradas_nfe').delete().eq('id', data.id);
+          throw new Error('Falha ao gravar os itens da nota: ' + itensError.message);
+        }
       }
 
       // Gera Contas a Pagar automaticamente
