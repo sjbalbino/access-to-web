@@ -124,7 +124,7 @@ serve(async (req) => {
       console.log("Enviando email NFe via ACBr:", nota.uuid_api, "Para:", emailsLimpos);
       const r = await acbrFetch(credAcbr, `/nfe/${nota.uuid_api}/email`, {
         method: "POST",
-        body: { para: emailsLimpos, anexar_pdf: true, anexar_xml: true },
+        body: { destinatarios: emailsLimpos.slice(0, 10).map((email) => ({ email })) },
       });
       const t = await r.text();
       let d: any = {};
