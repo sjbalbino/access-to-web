@@ -396,7 +396,11 @@ export function useCreateEntradaNfe() {
         const { error: itensError } = await supabase
           .from('entradas_nfe_itens')
           .insert(itensWithId);
-        if (itensError) throw itensError;
+        if (itensError) {
+          // Desfaz o cabeçalho para não deixar uma entrada sem itens.
+          await supabase.from('entradas_nfe').delete().eq('id', data.id);
+          throw new Error('Falha ao gravar os itens da nota: ' + itensError.message);
+        }
       }
 
       // Gera Contas a Pagar automaticamente
@@ -441,15 +445,29 @@ export function useUpdateEntradaNfe() {
       // Só substitui itens quando a lista vier preenchida — evita apagar itens
       // existentes caso o formulário ainda não tenha carregado os itens.
       if (Array.isArray(itens) && itens.length > 0) {
-        await supabase.from('entradas_nfe_itens').delete().eq('entrada_nfe_id', id);
-        const itensWithId = itens.map((item: any) => ({
+        // Grava os novos itens ANTES de remover os antigos: se a gravação
+        // falhar, os itens já existentes são preservados.
+        const { data: antigos, error: errAntigos } = await supabase
+          .from('entradas_nfe_itens')
+          .select('id')
+          .eq('entrada_nfe_id', id);
+        if (errAntigos) throw errAntigos;
+        const itensWithId = itens.map(({ id: _oldId, ...item }: any) => ({
           ...item,
           entrada_nfe_id: id,
         }));
         const { error: itensError } = await supabase
           .from('entradas_nfe_itens')
           .insert(itensWithId);
-        if (itensError) throw itensError;
+        if (itensError) throw new Error('Falha ao gravar os itens da nota: ' + itensError.message);
+        const idsAntigos = (antigos || []).map((a: any) => a.id);
+        if (idsAntigos.length) {
+          const { error: errDel } = await supabase
+            .from('entradas_nfe_itens')
+            .delete()
+            .in('id', idsAntigos);
+          if (errDel) throw new Error('Falha ao substituir os itens anteriores: ' + errDel.message);
+        }
       }
 
       // Regenera contas a pagar se o total mudou e não há baixas registradas.
