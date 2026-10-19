@@ -298,9 +298,10 @@ export default function EntradasNfe() {
           nota_fiscal_id: novaNota.id,
           numero_item: idx + 1,
           produto_id: it.produto?.id || null,
-          codigo: it.produto?.codigo || it.produto_xml_codigo || '',
-          descricao: it.produto?.nome || it.produto_xml_descricao || '',
-          ncm: it.produto?.ncm || it.produto_xml_ncm || '',
+          // Contra-nota/devolução espelha fielmente o item do XML de origem
+          codigo: it.produto_xml_codigo || it.produto?.codigo || '',
+          descricao: it.produto_xml_descricao || it.produto?.nome || '',
+          ncm: it.produto_xml_ncm || it.produto?.ncm || '',
           cfop: itemCfopsEntrada[idx] || cfopNotaCodigo || '',
           unidade: it.unidade_medida || '',
           quantidade: Number(it.quantidade || 0),

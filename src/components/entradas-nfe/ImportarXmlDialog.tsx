@@ -123,9 +123,9 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
     const ufEmit = nfe.emitente.uf || '';
     const ufDest = (ufDestOverride || nfe.destinatario.uf || '').toUpperCase();
     return nfe.itens.map((item) => {
-      const prodByCod = produtos?.find((p: any) => p.cod_fornecedor && p.cod_fornecedor === item.codigoProduto);
-      const prodByNcm = !prodByCod ? produtos?.find((p: any) => p.ncm && p.ncm === item.ncm) : null;
-      const prod: any = prodByCod || prodByNcm;
+      // Vínculo automático somente por código do fornecedor. NCM é genérico
+      // (vários produtos distintos compartilham o mesmo NCM) e NÃO pode ser critério.
+      const prod: any = produtos?.find((p: any) => p.cod_fornecedor && p.cod_fornecedor === item.codigoProduto) || null;
       const grupo = prod?.grupo_id ? grupos?.find((g: any) => g.id === prod.grupo_id) : null;
       const temClassificacao = !!(grupo && (grupo.insumos || grupo.maquinas_implementos || grupo.bens_benfeitorias));
       const cfopFinal = temClassificacao
