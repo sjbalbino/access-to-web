@@ -789,6 +789,22 @@ export default function NotasFiscais() {
                                       </Button>
                                     );
                                   })}
+                                  {secundarias.filter((a) => a.key === "excluir").map((acao) => {
+                                    const Icon = acao.icon;
+                                    return (
+                                      <Button
+                                        key={`direct-${acao.key}`}
+                                        variant="ghost"
+                                        size="icon"
+                                        className={`${iconBtn} hidden lg:inline-flex text-destructive hover:text-destructive`}
+                                        onClick={acao.onClick}
+                                        title={acao.label}
+                                        aria-label={acao.label}
+                                      >
+                                        <Icon className={iconSize} />
+                                      </Button>
+                                    );
+                                  })}
                                   {secundarias.length > 0 && (
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
@@ -803,7 +819,7 @@ export default function NotasFiscais() {
                                             <DropdownMenuItem
                                               key={acao.key}
                                               onClick={acao.onClick}
-                                              className={acao.destructive ? "text-destructive focus:text-destructive" : undefined}
+                                              className={`${acao.destructive ? "text-destructive focus:text-destructive" : ""} ${acao.key === "excluir" ? "lg:hidden" : ""}`}
                                             >
                                               <Icon className={`h-4 w-4 mr-2 ${acao.iconClass ?? ""}`} /> {acao.label}
                                             </DropdownMenuItem>
