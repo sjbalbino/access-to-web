@@ -263,6 +263,14 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
       toast.warning(`Aguarde ${formatMmSs(msRestantesSync)} para nova sincronização (NT SEFAZ: 1x por hora).`);
       return;
     }
+    // Trava de créditos: a sincronização geral consome 1 crédito por documento
+    // no provedor (ACBr). Confirma antes e sugere a busca por chave.
+    const ok = window.confirm(
+      "A sincronização busca até 50 documentos da SEFAZ e pode consumir até 50 créditos na ACBr API.\n\n" +
+      "Precisa apenas de uma nota específica? Cancele e use a busca por Chave de Acesso (1 crédito).\n\n" +
+      "Deseja continuar com a sincronização?"
+    );
+    if (!ok) return;
     writeLastSync(inscricaoId);
     setNowTs(Date.now());
     await consultarDestinatarias(inscricaoId);

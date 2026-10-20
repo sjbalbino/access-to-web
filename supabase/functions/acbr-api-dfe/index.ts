@@ -138,15 +138,32 @@ serve(async (req) => {
         // 1) Descobre o último NSU já recebido para não consumir indevidamente (rejeição 656).
         const antes = await listarDocumentos(cred, token, doc, amb);
         const ultNsu = antes.reduce((m, d) => Math.max(m, Number(d?.nsu ?? 0) || 0), 0);
-        // 2) Pede novos documentos à SEFAZ (a ACBr respeita o intervalo de 1h).
+        // 2) TRAVA DE CRÉDITOS: exatamente UM lote por clique (máx. 50 documentos),
+        //    sem loop automático. Só refaz uma vez se a ACBr exigir outro dist_nsu.
         let aviso: string | undefined;
-        const pr = await acbrFetch(cred, "/distribuicao/nfe", {
+        const pedir = (nsu: number) => acbrFetch(cred, "/distribuicao/nfe", {
           method: "POST", token,
-          body: { cpf_cnpj: doc, ambiente: amb, tipo_consulta: "dist-nsu", dist_nsu: ultNsu },
+          body: { cpf_cnpj: doc, ambiente: amb, tipo_consulta: "dist-nsu", dist_nsu: nsu },
         });
-        const pd = await lerJson(pr);
-        if (!pr.ok) aviso = `SEFAZ/ACBr: ${erroAcbr(pd, pr.status)}`;
+        let pr = await pedir(ultNsu);
+        let pd = await lerJson(pr);
+        const exigido = /dist_nsu.*?igual a\s*(\d+)/i.exec(erroAcbr(pd, pr.status));
+        if (!pr.ok && exigido) {
+          pr = await pedir(Number(exigido[1]));
+          pd = await lerJson(pr);
+        }
+        const msgErro = erroAcbr(pd, pr.status);
+        if (!pr.ok && /cr[eé]dito/i.test(msgErro)) {
+          aviso = "Os créditos da sua conta ACBr API acabaram. Faça uma recarga no painel da ACBr para continuar sincronizando. As notas já baixadas continuam disponíveis, e a busca por chave de acesso pode ser usada após a recarga.";
+        } else if (!pr.ok) aviso = `SEFAZ/ACBr: ${msgErro}`;
         else if (pd?.codigo_status && ![137, 138].includes(Number(pd.codigo_status))) aviso = `SEFAZ: ${pd.codigo_status} - ${pd.motivo_status ?? ""}`;
+        else {
+          const ult = Number(pd?.ultimo_nsu ?? 0), max = Number(pd?.max_nsu ?? 0);
+          if (max > ult && ult > 0) {
+            const faltam = max - ult;
+            aviso = `Lote processado. Ainda há cerca de ${faltam} documento(s) na fila da SEFAZ (consumo estimado de ${faltam} crédito(s)). Clique em Sincronizar novamente após 1 hora para buscar o próximo lote, ou use a busca por chave de acesso.`;
+          }
+        }
         // 3) Lista tudo o que já está disponível.
         const docs = pr.ok ? await listarDocumentos(cred, token, doc, amb) : antes;
         const manifest = await listarManifestacoes(cred, token, doc, amb);
