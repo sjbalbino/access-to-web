@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { usePaginacao } from "@/hooks/usePaginacao";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -182,8 +183,10 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     setTimeout(() => { try { document.body.removeChild(frame); } catch { /* ignore */ } }, 60000);
   };
 
+  // Valor adiado: a digitação responde na hora e o filtro roda em segundo plano
+  const filtroBuscaAdiado = useDeferredValue(filtroBusca);
   const nfesFiltradas = useMemo(() => {
-    const term = filtroBusca.trim().toLowerCase();
+    const term = filtroBuscaAdiado.trim().toLowerCase();
     return nfesRecebidas.filter((n) => {
       if (term) {
         const hay = `${n.nome} ${n.cnpj} ${n.chave} ${n.numero} ${n.serie}`.toLowerCase();
@@ -200,7 +203,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
       }
       return true;
     });
-  }, [nfesRecebidas, filtroBusca, filtroManifest, filtroDataIni, filtroDataFim]);
+  }, [nfesRecebidas, filtroBuscaAdiado, filtroManifest, filtroDataIni, filtroDataFim]);
 
   const temFiltroAtivo =
     filtroBusca.trim() !== "" ||
@@ -209,11 +212,14 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     filtroDataFim !== "";
 
 
+  // Paginação padrão (20 por página) — evita renderizar milhares de linhas
+  const { dadosPaginados: nfesPagina, paginaAtual, totalPaginas, setPaginaAtual } = usePaginacao(nfesFiltradas, 20);
+
   // Detecta quais chaves já possuem entrada gerada no sistema
   // (pareamento centralizado em useEntradasPorChaves — normaliza p/ 44 dígitos)
   const chavesDaLista = useMemo(
-    () => nfesRecebidas.map((n) => normalizarChaveAcesso(n.chave)).filter(Boolean),
-    [nfesRecebidas]
+    () => nfesPagina.map((n) => normalizarChaveAcesso(n.chave)).filter(Boolean),
+    [nfesPagina]
   );
   const { data: entradasExistentes } = useEntradasPorChaves(chavesDaLista);
 
@@ -730,7 +736,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                nfesFiltradas.map((nfe) => {
+                nfesPagina.map((nfe) => {
                   const chaveLimpa = normalizarChaveAcesso(nfe.chave);
                   const entradaExistente = chaveLimpa ? entradasExistentes?.[chaveLimpa] : undefined;
 
@@ -933,6 +939,15 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
               )}
             </TableBody>
           </Table>
+          {totalPaginas > 1 && (
+            <div className="flex items-center justify-between gap-2 border-t p-3 text-sm">
+              <span className="text-muted-foreground">Página {paginaAtual} de {totalPaginas}</span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={paginaAtual <= 1} onClick={() => setPaginaAtual(paginaAtual - 1)}>Anterior</Button>
+                <Button variant="outline" size="sm" disabled={paginaAtual >= totalPaginas} onClick={() => setPaginaAtual(paginaAtual + 1)}>Próxima</Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
