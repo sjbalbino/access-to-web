@@ -166,10 +166,23 @@ export function useMde() {
     // As NF-es recebidas são distribuídas pela SEFAZ por CPF/CNPJ do titular,
     // então exibimos as notas de todas as inscrições do mesmo documento.
     const ids = await getInscricoesDoTitular(inscricaoId);
-    const { data } = await supabase
-      .from("dfe_nfes_cache" as any)
-      .select("chave,numero,serie,nome,cnpj,valor,data_emissao,situacao,tipo_nfe,manifestacao_destinatario,inscricao_id")
-      .in("inscricao_id", ids);
+    // O banco devolve no máximo 1.000 linhas por consulta: pagina e ordena
+    // pelas mais recentes para nunca esconder notas novas.
+    const data: any[] = [];
+    const PAGE = 1000;
+    for (let from = 0; from < 20000; from += PAGE) {
+      const { data: page, error } = await supabase
+        .from("dfe_nfes_cache" as any)
+        .select("chave,numero,serie,nome,cnpj,valor,data_emissao,situacao,tipo_nfe,manifestacao_destinatario,inscricao_id")
+        .in("inscricao_id", ids)
+        .order("data_emissao", { ascending: false, nullsFirst: false })
+        .order("chave", { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (error) break;
+      const rows = (page as any[]) || [];
+      data.push(...rows);
+      if (rows.length < PAGE) break;
+    }
     const porChave = new Map<string, any>();
     ((data as any[]) || []).forEach((r) => {
       const anterior = porChave.get(r.chave);

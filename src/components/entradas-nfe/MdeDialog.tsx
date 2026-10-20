@@ -298,10 +298,17 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inscricaoId, open]);
 
-  const handleConsultarChave = () => {
+  const handleConsultarChave = async () => {
     if (!inscricaoId || !chaveBusca) return;
     salvarChaveRecente(chaveBusca);
-    consultarPorChave(inscricaoId, chaveBusca);
+    const encontrados = await consultarPorChave(inscricaoId, chaveBusca);
+    if (encontrados.length > 0) {
+      // Mostra a nota localizada na tabela, sem filtros que a escondam
+      setFiltroManifest("all");
+      setFiltroDataIni("");
+      setFiltroDataFim("");
+      setFiltroBusca(chaveBusca);
+    }
   };
 
   const handleManifestar = async (chave: string, tipo: string) => {
