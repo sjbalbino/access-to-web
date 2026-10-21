@@ -253,6 +253,9 @@ export default function EmitentesNfe() {
     ativo: true,
     email_emitente: null,
     email_contador: null,
+    email_auto_envio: false,
+    email_auto_copia_emitente: true,
+    email_auto_copia_contador: true,
   });
 
   // Inscrições que ainda não têm emitente (ou é a inscrição do emitente sendo editado)
@@ -278,6 +281,9 @@ export default function EmitentesNfe() {
       ativo: true,
       email_emitente: null,
       email_contador: null,
+      email_auto_envio: false,
+      email_auto_copia_emitente: true,
+      email_auto_copia_contador: true,
     });
     setSelectedEmitente(null);
   };
@@ -316,6 +322,9 @@ export default function EmitentesNfe() {
         ativo: emitente.ativo ?? true,
         email_emitente: (emitente as any).email_emitente ?? null,
         email_contador: (emitente as any).email_contador ?? null,
+        email_auto_envio: emitente.email_auto_envio ?? false,
+        email_auto_copia_emitente: emitente.email_auto_copia_emitente ?? true,
+        email_auto_copia_contador: emitente.email_auto_copia_contador ?? true,
       });
     } else {
       resetForm();
@@ -1241,6 +1250,34 @@ export default function EmitentesNfe() {
                       onChange={(e) => setFormData({ ...formData, email_contador: e.target.value || null })}
                       placeholder="contador@dominio.com"
                     />
+                  </div>
+                  <div className="md:col-span-2 space-y-3 rounded-md border p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <Label htmlFor="email_auto_envio">Enviar DANFE/XML por e-mail automaticamente ao autorizar</Label>
+                      <Switch
+                        id="email_auto_envio"
+                        checked={!!formData.email_auto_envio}
+                        onCheckedChange={(v) => setFormData({ ...formData, email_auto_envio: v })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <Label htmlFor="email_auto_copia_emitente" className="text-muted-foreground">Enviar cópia ao e-mail do emitente</Label>
+                      <Switch
+                        id="email_auto_copia_emitente"
+                        checked={formData.email_auto_copia_emitente !== false}
+                        disabled={!formData.email_auto_envio}
+                        onCheckedChange={(v) => setFormData({ ...formData, email_auto_copia_emitente: v })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <Label htmlFor="email_auto_copia_contador" className="text-muted-foreground">Enviar cópia ao e-mail do contador</Label>
+                      <Switch
+                        id="email_auto_copia_contador"
+                        checked={formData.email_auto_copia_contador !== false}
+                        disabled={!formData.email_auto_envio}
+                        onCheckedChange={(v) => setFormData({ ...formData, email_auto_copia_contador: v })}
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
