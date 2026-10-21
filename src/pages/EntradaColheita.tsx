@@ -1604,6 +1604,12 @@ export default function EntradaColheita() {
                         onChange={e => setFormSaida(prev => ({ ...prev, ph: Number(e.target.value) }))}
                         placeholder="0.0"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        PHC (corrigido): {calculos.phCorrigido != null
+                          ? calculos.phCorrigido.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 2 })
+                          : "-"}
+                        {calculos.melhoriaPh > 0 && ` (+${calculos.melhoriaPh.toLocaleString("pt-BR")})`}
+                      </p>
                     </div>
 
                     <div className="space-y-2">
