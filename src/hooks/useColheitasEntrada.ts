@@ -49,6 +49,8 @@ export interface ColheitaSaidaInput {
   producao_liquida_kg: number;
   total_sacos: number;
   ph: number | null;
+  /** PH corrigido (PHC) = PH + melhoria da faixa de umidade */
+  ph_corrigido: number | null;
 }
 
 // Buscar colheitas pendentes (com peso_bruto mas sem peso_tara)

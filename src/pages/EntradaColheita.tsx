@@ -395,6 +395,7 @@ export default function EntradaColheita() {
 
     // Melhoria PH (para cálculo do PHC = PH corrigido)
     const melhoriaPh = faixaUmidade?.melhoria_ph || 0;
+    const phCorrigido = formSaida.ph > 0 ? Math.round((formSaida.ph + melhoriaPh) * 100) / 100 : null;
 
     return {
       pesoLiquido,
@@ -407,6 +408,7 @@ export default function EntradaColheita() {
       liquidoFinal,
       totalSacos,
       melhoriaPh,
+      phCorrigido,
     };
   }, [pesoBrutoSelecionado, formSaida, formEntrada.tipo_colheita, tabelaUmidades, culturaId]);
 
@@ -539,6 +541,7 @@ export default function EntradaColheita() {
         producao_liquida_kg: calculos.liquidoFinal,
         total_sacos: calculos.totalSacos,
         ph: formSaida.ph || null,
+        ph_corrigido: calculos.phCorrigido,
       });
 
       // Se emitir contra nota
