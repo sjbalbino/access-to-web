@@ -289,6 +289,9 @@ export default function EntradaColheita() {
   );
   
   const culturaId = safraSelecionada?.cultura_id;
+  // PH só é exigido para a cultura TRIGO
+  const culturaNome = String((safraSelecionada as { culturas?: { nome?: string } | null } | undefined)?.culturas?.nome ?? "");
+  const exigePh = culturaNome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().includes("TRIGO");
 
   // Filtrar inscrições ativas de produtores ativos com busca
   // Ordenação: alfabética pelo nome do produtor e, em seguida, IE decrescente
@@ -395,7 +398,7 @@ export default function EntradaColheita() {
 
     // Melhoria PH (para cálculo do PHC = PH corrigido)
     const melhoriaPh = faixaUmidade?.melhoria_ph || 0;
-    const phCorrigido = formSaida.ph > 0 ? Math.round((formSaida.ph + melhoriaPh) * 100) / 100 : null;
+    const phCorrigido = exigePh && formSaida.ph > 0 ? Math.round((formSaida.ph + melhoriaPh) * 100) / 100 : null;
 
     return {
       pesoLiquido,
@@ -410,7 +413,7 @@ export default function EntradaColheita() {
       melhoriaPh,
       phCorrigido,
     };
-  }, [pesoBrutoSelecionado, formSaida, formEntrada.tipo_colheita, tabelaUmidades, culturaId]);
+  }, [pesoBrutoSelecionado, formSaida, formEntrada.tipo_colheita, tabelaUmidades, culturaId, exigePh]);
 
   // Resetar seleções quando muda a safra
   useEffect(() => {
@@ -506,6 +509,10 @@ export default function EntradaColheita() {
       toast.error("Informe o peso da tara");
       return;
     }
+    if (exigePh && !(formSaida.ph > 0)) {
+      toast.error("Informe o PH (obrigatório para TRIGO)");
+      return;
+    }
 
     // Validar contra nota se marcado
     if (formContraNota.emitir) {
@@ -540,7 +547,7 @@ export default function EntradaColheita() {
         kg_desconto_total: calculos.totalDescontos,
         producao_liquida_kg: calculos.liquidoFinal,
         total_sacos: calculos.totalSacos,
-        ph: formSaida.ph || null,
+        ph: exigePh ? (formSaida.ph || null) : null,
         ph_corrigido: calculos.phCorrigido,
       });
 
@@ -697,7 +704,7 @@ export default function EntradaColheita() {
               }
               
               // PH e PHC (se produto tiver PH informado)
-              if (formSaida.ph && formSaida.ph > 0) {
+              if (exigePh && formSaida.ph && formSaida.ph > 0) {
                 const phCorrigido = formSaida.ph + calculos.melhoriaPh;
                 partes.push(`PH: ${formSaida.ph} / PHC: ${phCorrigido.toFixed(1)}`);
               }
@@ -1595,8 +1602,8 @@ export default function EntradaColheita() {
                       </p>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>PH</Label>
+                    {exigePh && (<div className="space-y-2">
+                      <Label>PH *</Label>
                       <Input
                         type="number"
                         step="0.1"
@@ -1610,7 +1617,7 @@ export default function EntradaColheita() {
                           : "-"}
                         {calculos.melhoriaPh > 0 && ` (+${calculos.melhoriaPh.toLocaleString("pt-BR")})`}
                       </p>
-                    </div>
+                    </div>)}
 
                     <div className="space-y-2">
                       <Label>Total Descontos</Label>
