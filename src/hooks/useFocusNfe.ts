@@ -525,7 +525,7 @@ export function useFocusNfe() {
         .select("email_auto_envio, email_auto_copia_emitente, email_auto_copia_contador, email_emitente, email_contador")
         .eq("id", nota.emitente_id)
         .maybeSingle();
-      const e = emit as Record<string, unknown> | null;
+      const e = emit as unknown as Record<string, unknown> | null;
       if (!e?.email_auto_envio) return;
 
       const lista: string[] = [];
