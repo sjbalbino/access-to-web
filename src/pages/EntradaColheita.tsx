@@ -1617,7 +1617,7 @@ export default function EntradaColheita() {
                           : "-"}
                         {calculos.melhoriaPh > 0 && ` (+${calculos.melhoriaPh.toLocaleString("pt-BR")})`}
                       </p>
-                    </div>
+                    </div>)}
 
                     <div className="space-y-2">
                       <Label>Total Descontos</Label>
