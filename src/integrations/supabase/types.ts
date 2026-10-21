@@ -2295,6 +2295,9 @@ export type Database = {
           cst_ipi_padrao: string | null
           cst_is_padrao: string | null
           cst_pis_padrao: string | null
+          email_auto_copia_contador: boolean
+          email_auto_copia_emitente: boolean
+          email_auto_envio: boolean
           email_contador: string | null
           email_emitente: string | null
           granja_id: string | null
@@ -2328,6 +2331,9 @@ export type Database = {
           cst_ipi_padrao?: string | null
           cst_is_padrao?: string | null
           cst_pis_padrao?: string | null
+          email_auto_copia_contador?: boolean
+          email_auto_copia_emitente?: boolean
+          email_auto_envio?: boolean
           email_contador?: string | null
           email_emitente?: string | null
           granja_id?: string | null
@@ -2361,6 +2367,9 @@ export type Database = {
           cst_ipi_padrao?: string | null
           cst_is_padrao?: string | null
           cst_pis_padrao?: string | null
+          email_auto_copia_contador?: boolean
+          email_auto_copia_emitente?: boolean
+          email_auto_envio?: boolean
           email_contador?: string | null
           email_emitente?: string | null
           granja_id?: string | null
