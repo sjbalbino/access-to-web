@@ -547,7 +547,7 @@ export default function EntradaColheita() {
         kg_desconto_total: calculos.totalDescontos,
         producao_liquida_kg: calculos.liquidoFinal,
         total_sacos: calculos.totalSacos,
-        ph: formSaida.ph || null,
+        ph: exigePh ? (formSaida.ph || null) : null,
         ph_corrigido: calculos.phCorrigido,
       });
 
@@ -704,7 +704,7 @@ export default function EntradaColheita() {
               }
               
               // PH e PHC (se produto tiver PH informado)
-              if (formSaida.ph && formSaida.ph > 0) {
+              if (exigePh && formSaida.ph && formSaida.ph > 0) {
                 const phCorrigido = formSaida.ph + calculos.melhoriaPh;
                 partes.push(`PH: ${formSaida.ph} / PHC: ${phCorrigido.toFixed(1)}`);
               }
@@ -1602,8 +1602,8 @@ export default function EntradaColheita() {
                       </p>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>PH</Label>
+                    {exigePh && (<div className="space-y-2">
+                      <Label>PH *</Label>
                       <Input
                         type="number"
                         step="0.1"
