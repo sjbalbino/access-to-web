@@ -508,6 +508,47 @@ export function useFocusNfe() {
     }
   };
 
+  /**
+   * Envia DANFE/XML automaticamente após autorização, se o emitente tiver a opção ligada.
+   * Destinatário + cópias opcionais para emitente e contador. Falhas apenas avisam.
+   */
+  const enviarEmailAutomatico = async (notaFiscalId: string): Promise<void> => {
+    try {
+      const { data: nota } = await supabase
+        .from("notas_fiscais")
+        .select("dest_email, emitente_id")
+        .eq("id", notaFiscalId)
+        .maybeSingle();
+      if (!nota?.emitente_id) return;
+      const { data: emit } = await supabase
+        .from("emitentes_nfe")
+        .select("email_auto_envio, email_auto_copia_emitente, email_auto_copia_contador, email_emitente, email_contador")
+        .eq("id", nota.emitente_id)
+        .maybeSingle();
+      const e = emit as unknown as Record<string, unknown> | null;
+      if (!e?.email_auto_envio) return;
+
+      const lista: string[] = [];
+      const add = (v: unknown) => {
+        if (typeof v !== "string") return;
+        v.split(/[;,\s]+/).map((s) => s.trim().toLowerCase())
+          .filter((s) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s))
+          .forEach((s) => { if (!lista.includes(s)) lista.push(s); });
+      };
+      add(nota.dest_email);
+      if (e.email_auto_copia_emitente !== false) add(e.email_emitente);
+      if (e.email_auto_copia_contador !== false) add(e.email_contador);
+      if (lista.length === 0) {
+        toast.info("E-mail automático não enviado", { description: "Nenhum e-mail de destinatário, emitente ou contador cadastrado." });
+        return;
+      }
+      await enviarEmail(notaFiscalId, lista.slice(0, 10));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error("Falha no envio automático do e-mail", { description: message });
+    }
+  };
+
   // Polling para acompanhar status (até ~5 min: 60 tentativas × 5s)
   const pollStatus = async (
     ref: string,
@@ -534,6 +575,8 @@ export function useFocusNfe() {
       if (["autorizado", "autorizada", "cancelado", "cancelada", "rejeitado", "rejeitada", "erro_autorizacao"].includes(currentStatus)) {
         if (currentStatus === "autorizado" || currentStatus === "autorizada") {
           toast.success("NF-e autorizada pela SEFAZ!");
+          // Envio automático da DANFE/XML conforme configuração do emitente (não bloqueia o fluxo)
+          void enviarEmailAutomatico(notaFiscalId);
         } else if (currentStatus === "rejeitado" || currentStatus === "rejeitada" || currentStatus === "erro_autorizacao") {
           const motivo = (result.data as Record<string, unknown>)?.mensagem_sefaz as string || 
                          (result.data as Record<string, unknown>)?.motivo_status as string;

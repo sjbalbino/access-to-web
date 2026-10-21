@@ -34,6 +34,9 @@ export interface EmitenteNfe {
   ativo: boolean | null;
   email_emitente: string | null;
   email_contador: string | null;
+  email_auto_envio?: boolean | null;
+  email_auto_copia_emitente?: boolean | null;
+  email_auto_copia_contador?: boolean | null;
   created_at: string;
   updated_at: string;
   granja?: {
