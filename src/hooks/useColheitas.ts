@@ -30,6 +30,7 @@ export interface Colheita {
   kg_desconto_total: number | null;
   total_sacos: number | null;
   ph: number | null;
+  ph_corrigido?: number | null;
   variedade_id: string | null;
   tipo_colheita: string | null;
   inscricao_produtor_id: string | null;
