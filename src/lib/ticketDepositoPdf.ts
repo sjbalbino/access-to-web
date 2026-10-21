@@ -181,7 +181,11 @@ export async function gerarTicketDepositoPdf(colheitaId: string): Promise<void> 
   add(row2("  Outros:", `${fmtNum(c.percentual_outros, 2)}  ${fmtNum(c.percentual_outros, 2)} %   ${fmtNum(c.kg_outros)}`));
   add(row2("  Total Desc.:", fmtNum(c.kg_desconto_total)));
   const pctDescTotal = pesoLiq > 0 ? (Number(c.kg_desconto_total || 0) / pesoLiq) * 100 : 0;
-  add(row2("  % Desc.:", `${fmtNum(pctDescTotal, 2)} %   PH  ${fmtNum(c.ph, 2)}`));
+  add(row2("  % Desc.:", `${fmtNum(pctDescTotal, 2)} %`));
+  if (c.ph != null && Number(c.ph) > 0) {
+    const phc = c.ph_corrigido != null ? `   PHC  ${fmtNum(c.ph_corrigido, 2)}` : "";
+    add(row2("  PH:", `${fmtNum(c.ph, 2)}${phc}`));
+  }
   sep();
 
   // Líquido final

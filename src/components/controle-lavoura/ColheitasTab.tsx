@@ -189,6 +189,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
         mediaImpureza: 0,
         mediaUmidade: 0,
         mediaPh: 0,
+        mediaPhc: 0,
         mediaPorHa: 0,
       };
     }
@@ -203,6 +204,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
     const mediaImpureza = colheitas.reduce((sum, c) => sum + (c.impureza || 0), 0) / colheitas.length;
     const mediaUmidade = colheitas.reduce((sum, c) => sum + (c.umidade || 0), 0) / colheitas.length;
     const mediaPh = colheitas.reduce((sum, c) => sum + (c.ph || 0), 0) / colheitas.length;
+    const mediaPhc = colheitas.reduce((sum, c) => sum + Number(c.ph_corrigido ?? c.ph ?? 0), 0) / colheitas.length;
     const mediaPorHa = totalAreaColhida > 0 ? totalSacos / totalAreaColhida : 0;
 
     return {
@@ -215,6 +217,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
       mediaImpureza,
       mediaUmidade,
       mediaPh,
+      mediaPhc,
       mediaPorHa,
     };
   }, [colheitas]);
@@ -245,7 +248,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   // Reset page when filters change
   useEffect(() => { setCurrentPage(1); }, [searchTerm, filterDateFrom, filterDateTo]);
 
-  const colCount = 1 + (informarPh ? 19 : 18); // sempre 1 coluna (Ações/Ticket)
+  const colCount = 1 + (informarPh ? 20 : 18); // sempre 1 coluna (Ações/Ticket)
 
   if (!controleLavouraId) {
     return (
@@ -402,6 +405,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                     <TableHead className="text-right w-16">Sacos</TableHead>
                     <TableHead className="text-right w-16">Sc/Ha</TableHead>
                     {informarPh && <TableHead className="text-right w-12">PH</TableHead>}
+                    {informarPh && <TableHead className="text-right w-12">PHC</TableHead>}
                     <TableHead className="w-24">Destino</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -464,6 +468,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                         <TableCell className="text-right text-sm font-medium">{formatNumber(colheita.total_sacos, 2)}</TableCell>
                         <TableCell className="text-right text-sm">{formatNumber(colheita.produtividade_sacas_ha, 2)}</TableCell>
                         {informarPh && <TableCell className="text-right text-sm">{formatNumber(colheita.ph, 1)}</TableCell>}
+                        {informarPh && <TableCell className="text-right text-sm font-medium">{colheita.ph_corrigido != null ? formatNumber(colheita.ph_corrigido, 1) : '-'}</TableCell>}
                         <TableCell className="text-sm">
                           {colheita.local_entrega_terceiro?.nome || colheita.silos?.nome || '-'}
                         </TableCell>
@@ -535,6 +540,12 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                 <div className="space-y-1">
                   <span className="text-muted-foreground">Média PH:</span>
                   <p className="font-semibold">{formatNumber(totais.mediaPh, 2)}</p>
+                </div>
+              )}
+              {informarPh && (
+                <div className="space-y-1">
+                  <span className="text-muted-foreground">Média PHC:</span>
+                  <p className="font-semibold">{formatNumber(totais.mediaPhc, 2)}</p>
                 </div>
               )}
               <div className="space-y-1">
@@ -870,6 +881,12 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                     value={formData.ph || ''}
                     onChange={(e) => setFormData({ ...formData, ph: parseFloat(e.target.value) || 0 })}
                   />
+                  {editingId && (() => {
+                    const atual = colheitas.find((c) => c.id === editingId);
+                    return atual?.ph_corrigido != null ? (
+                      <p className="text-xs text-muted-foreground">PH Corrigido (gravado): <span className="font-semibold text-foreground">{formatNumber(atual.ph_corrigido, 1)}</span></p>
+                    ) : null;
+                  })()}
                 </div>
               )}
 
