@@ -374,6 +374,25 @@ export const tableConfigs: TableConfig[] = [
     ],
   },
   {
+    key: 'tabela_umidades',
+    label: 'Tabela de Desconto de Umidades',
+    tableName: 'tabela_umidades',
+    description: 'Faixas de umidade e % de desconto por cultura (um_produto = código da cultura)',
+    order: 2.5,
+    dependsOn: ['culturas'],
+    columns: [
+      { accessName: 'Umidade de', dbName: 'umidade_minima', required: true, transform: toNumber, sourceColumnAliases: ['umidade_de', 'umidade_minima'] },
+      { accessName: 'Umidade Até', dbName: 'umidade_maxima', required: true, transform: toNumber, sourceColumnAliases: ['Umidade Ate', 'umidade_ate', 'umidade_maxima'] },
+      { accessName: 'Desconto', dbName: 'desconto_percentual', transform: (v: any) => toNumber(v) ?? 0, sourceColumnAliases: ['desconto_percentual'] },
+      { accessName: 'Melhoria do PH', dbName: 'melhoria_ph', transform: (v: any) => toNumber(v) ?? 0, sourceColumnAliases: ['melhoria_ph'] },
+      { accessName: 'ativa', dbName: 'ativa', transform: () => true },
+      { accessName: 'um_produto', dbName: '_cultura_codigo', transform: toStr, sourceColumnAliases: ['cultura_codigo'] },
+    ],
+    references: [
+      { dbColumn: 'cultura_id', sourceColumn: '_cultura_codigo', lookupTable: 'culturas', lookupColumn: 'codigo', lookupLabel: 'nome', required: true },
+    ],
+  },
+  {
     key: 'produtos',
     label: 'Produtos',
     tableName: 'produtos',
