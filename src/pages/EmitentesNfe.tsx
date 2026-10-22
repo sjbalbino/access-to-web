@@ -75,6 +75,7 @@ const REGIMES_TRIBUTARIOS = [
 const API_PROVIDERS = [
   { value: "focusnfe", label: "Focus NFe" },
   { value: "acbrapi", label: "ACBr API Nuvem" },
+  { value: "unimake", label: "Unimake (UniNFe Cloud)" },
 ];
 
 /**
@@ -183,6 +184,22 @@ export default function EmitentesNfe() {
           toast.success(`Habilitada na ACBr API (${r.ambiente_label})`, { description: `${r.nome ?? cpfCnpj} está cadastrada.\n${consultadoA}` });
         } else {
           toast.warning("Empresa não habilitada na ACBr", { description: `${r.mensagem}\n${consultadoA}`, duration: 10000 });
+        }
+        return;
+      }
+
+      if (emitente.api_provider === "unimake") {
+        const { data, error } = await supabase.functions.invoke("unimake-api-verificar", {
+          body: { emitente_id: emitente.id, cpf_cnpj: cpfCnpj },
+        });
+        const r = (data ?? {}) as { success?: boolean; habilitada?: boolean; mensagem?: string; error?: string; nome?: string; ambiente_label?: string };
+        const consultadoU = `Consultado: ${nomeInscricao ?? "—"} • CPF/CNPJ ${cpfCnpj}`;
+        if (error || !r.success) {
+          toast.error("Não foi possível verificar na Unimake", { description: `${r.error || error?.message || "Erro desconhecido"}\n${consultadoU}` });
+        } else if (r.habilitada) {
+          toast.success(`Habilitada na Unimake (${r.ambiente_label})`, { description: `${r.mensagem ?? "Certificado ativo."}\n${consultadoU}` });
+        } else {
+          toast.warning("Emitente não habilitado na Unimake", { description: `${r.mensagem}\n${consultadoU}`, duration: 10000 });
         }
         return;
       }
@@ -469,8 +486,8 @@ export default function EmitentesNfe() {
           <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertTitle className="text-blue-700">Configuração do Provedor Fiscal</AlertTitle>
           <AlertDescription>
-            Configure as credenciais da API fiscal de cada emitente conforme o provedor definido na coluna API (Focus NFe ou ACBr API Nuvem), correspondendo ao ambiente (homologação ou produção).
-            No Focus NFe, cadastre o token da empresa e envie o certificado A1 no painel da Focus; no ACBr API Nuvem, informe o Client ID e o Client Secret (o certificado fica gerenciado na ACBr).
+            Configure as credenciais da API fiscal de cada emitente conforme o provedor definido na coluna API (Focus NFe, ACBr API Nuvem ou Unimake), correspondendo ao ambiente (homologação ou produção).
+            No Focus NFe, cadastre o token da empresa e envie o certificado A1 no painel da Focus; no ACBr API Nuvem, informe o Client ID e o Client Secret (o certificado fica gerenciado na ACBr); na Unimake, informe o App ID e o Secret e envie o certificado A1 pelo botão Certificado A1.
             Para vincular um emitente a uma inscrição do produtor (NFP-e), acesse o cadastro da inscrição na aba do produtor.
           </AlertDescription>
         </Alert>
@@ -1058,7 +1075,36 @@ export default function EmitentesNfe() {
                         </SelectContent>
                       </Select>
                     </div>
-                    {formData.api_provider === "acbrapi" ? (
+                    {formData.api_provider === "unimake" ? (
+                      <>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="unimake_app_id">App ID (Unimake)</Label>
+                          <Input
+                            id="unimake_app_id"
+                            value={credentials.api_consumer_key || ""}
+                            onChange={(e) => setCredentials({ ...credentials, api_consumer_key: e.target.value })}
+                            placeholder="App ID da aplicação na Unimake (unmk-app-...)"
+                          />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="unimake_secret">Secret (Unimake)</Label>
+                          <div className="relative">
+                            <Input
+                              id="unimake_secret"
+                              type={showToken ? "text" : "password"}
+                              value={credentials.api_consumer_secret || ""}
+                              onChange={(e) => setCredentials({ ...credentials, api_consumer_secret: e.target.value })}
+                              placeholder="Secret da aplicação na Unimake (unmk-sct-...)"
+                              className="pr-10"
+                            />
+                            <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-10"
+                              onClick={() => setShowToken((v) => !v)} title={showToken ? "Ocultar" : "Mostrar"}>
+                              {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    ) : formData.api_provider === "acbrapi" ? (
                       <>
                         <div className="space-y-2 md:col-span-2">
                           <Label htmlFor="acbr_client_id">Client ID (ACBr API)</Label>
@@ -1169,9 +1215,11 @@ export default function EmitentesNfe() {
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    {formData.api_provider === "acbrapi"
-                      ? "Use o Client ID e o Client Secret da aplicação criada no painel da ACBr API. O certificado digital deve estar cadastrado na ACBr. O ambiente (1 = Produção, 2 = Homologação) define o servidor usado."
-                      : "Verificação/cadastro de empresa e APIs acessórias usam o Token Principal de Produção. Emissão usa o token do ambiente configurado no emitente (1 = Produção, 2 = Homologação)."}
+                    {formData.api_provider === "unimake"
+                      ? "Use o App ID e o Secret da aplicação criada no portal da Unimake. O certificado A1 é enviado pelo botão Certificado A1 desta tela. O ambiente (1 = Produção, 2 = Homologação) define o servidor usado (sandbox em homologação)."
+                      : formData.api_provider === "acbrapi"
+                        ? "Use o Client ID e o Client Secret da aplicação criada no painel da ACBr API. O certificado digital deve estar cadastrado na ACBr. O ambiente (1 = Produção, 2 = Homologação) define o servidor usado."
+                        : "Verificação/cadastro de empresa e APIs acessórias usam o Token Principal de Produção. Emissão usa o token do ambiente configurado no emitente (1 = Produção, 2 = Homologação)."}
                   </p>
                   <div className="flex items-center space-x-2">
                     <Switch
@@ -1191,7 +1239,7 @@ export default function EmitentesNfe() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Certificado Digital</CardTitle>
                   <CardDescription>
-                    No Focus NFe o certificado A1 é enviado no painel da Focus; no ACBr API Nuvem é gerenciado pela ACBr
+                    No Focus NFe o certificado A1 é enviado no painel da Focus; no ACBr API Nuvem é gerenciado pela ACBr; na Unimake é enviado pelo botão Certificado A1 desta tela
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
