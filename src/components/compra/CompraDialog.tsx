@@ -692,13 +692,14 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
         return;
       }
 
-      if (resultEmissao.data?.ref) {
+      const refEmissao = (resultEmissao as any).ref ?? resultEmissao.data?.ref;
+      if (refEmissao) {
         // Step 5: Polling de status
         setEmissionStatus({ step: "processing", message: "Aguardando retorno da SEFAZ...", progress: 70 });
         
-        const statusResult = await pollStatus(String(resultEmissao.data.ref), notaFiscal.id, 30, 3000);
+        const statusResult = await pollStatus(String(refEmissao), notaFiscal.id, 30, 3000);
         
-        if (statusResult.success && statusResult.data?.status === "autorizado") {
+        if (statusResult.success && ["autorizado", "autorizada"].includes(String(statusResult.data?.status))) {
           // Atualizar compra com nota_fiscal_id e status
           await supabase
             .from('compras_cereais')

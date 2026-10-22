@@ -777,13 +777,14 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
           return;
         }
 
-        if (resultEmissao.data?.ref) {
+        const refEmissao = (resultEmissao as any).ref ?? resultEmissao.data?.ref;
+        if (refEmissao) {
           setEmissionStatus({ step: "processing", message: "Aguardando retorno da SEFAZ...", progress: 70 });
           
           // Polling de status
-          const statusResult = await pollStatus(String(resultEmissao.data.ref), notaFiscal.id, 30, 3000);
+          const statusResult = await pollStatus(String(refEmissao), notaFiscal.id, 30, 3000);
           
-          if (statusResult.success && statusResult.data?.status === "autorizado") {
+          if (statusResult.success && ["autorizado", "autorizada"].includes(String(statusResult.data?.status))) {
             // REGISTRAR NOTA DE DEPÓSITO APENAS APÓS AUTORIZAÇÃO
             try {
               await supabase.from('notas_deposito_emitidas').insert(dadosNotaDeposito);
