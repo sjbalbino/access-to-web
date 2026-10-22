@@ -92,7 +92,57 @@ serve(async (req) => {
     }
 
     // 2) Envio ao provedor
-    if (em.api_provider === "acbrapi") {
+    if (em.api_provider === "unimake") {
+      // deno-lint-ignore no-explicit-any
+      const credRaw = (em as any).emitentes_nfe_credentials;
+      const cred = Array.isArray(credRaw) ? credRaw[0] : credRaw;
+      if (!cred?.api_consumer_key || !cred?.api_consumer_secret) {
+        return json({ success: false, error: "Informe e salve o App ID e o Secret da Unimake antes de enviar o certificado." });
+      }
+      const { obterTokenUnimake, unimakeBaseUrl, unimakeErrorMessage } = await import("../_shared/unimake-api.ts");
+      const uniCred = { appId: cred.api_consumer_key, secret: cred.api_consumer_secret, ambiente: em.ambiente };
+      let token: string;
+      try {
+        token = await obterTokenUnimake(uniCred);
+      } catch (e) {
+        return json({ success: false, error: (e as Error).message });
+      }
+      const base = unimakeBaseUrl(em.ambiente);
+      // 2a) Cadastra o certificado (metadados)
+      const add = await fetch(`${base}/api/v1/Certificate/Add`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          certificateType: "A1",
+          cpfcnpj: doc,
+          description: info.titular,
+          expiresOn: info.validade,
+          password: senha,
+          privateKey: certificado,
+        }),
+      });
+      if (!add.ok) {
+        return json({ success: false, error: `A Unimake não aceitou o certificado: ${await unimakeErrorMessage(add)}` });
+      }
+      const addResp = await add.json().catch(() => ({}));
+      const certId = addResp?.id;
+      if (!certId) {
+        return json({ success: false, error: "A Unimake cadastrou o certificado, mas não retornou o identificador para o envio do arquivo." });
+      }
+      // 2b) Envia o arquivo .pfx (multipart)
+      const pfxBytes = Uint8Array.from(atob(certificado), (c) => c.charCodeAt(0));
+      const form = new FormData();
+      form.append("Filename", new Blob([pfxBytes], { type: "application/x-pkcs12" }), "certificado.pfx");
+      form.append("Password", senha);
+      const up = await fetch(`${base}/api/v1/Certificate/Upload/${certId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      if (!up.ok) {
+        return json({ success: false, error: `A Unimake não aceitou o arquivo do certificado: ${await unimakeErrorMessage(up)}` });
+      }
+    } else if (em.api_provider === "acbrapi") {
       // deno-lint-ignore no-explicit-any
       const credRaw = (em as any).emitentes_nfe_credentials;
       const cred = Array.isArray(credRaw) ? credRaw[0] : credRaw;
