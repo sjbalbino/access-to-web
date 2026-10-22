@@ -624,7 +624,7 @@ export default function EmitentesNfe() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="Verificar habilitação na Focus NFe"
+                            title={`Verificar habilitação na ${API_PROVIDERS.find((p) => p.value === emitente.api_provider)?.label || "API fiscal"}`}
                             disabled={verificandoId === emitente.id || !emitente.api_configurada}
                             onClick={() => handleVerificarHabilitacao(emitente)}
                           >
@@ -676,7 +676,7 @@ export default function EmitentesNfe() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Inscrição do Produtor</CardTitle>
                   <CardDescription>
-                    Selecione a inscrição do sócio (CPF/CNPJ + IE) que será o emitente desta NF-e. Cada sócio deve ter seu próprio emitente, espelhando o cadastro na Focus NFe.
+                    Selecione a inscrição do sócio (CPF/CNPJ + IE) que será o emitente desta NF-e. Cada sócio deve ter seu próprio emitente, espelhando o cadastro no provedor fiscal.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
