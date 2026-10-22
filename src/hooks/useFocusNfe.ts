@@ -563,6 +563,27 @@ export function useFocusNfe() {
       const result = await consultarNfe(ref, notaFiscalId);
 
       if (!result.success) {
+        // Falha de rede/consulta: antes de acusar erro, confere o status já gravado no banco
+        // (provedores síncronos como a ACBr podem já ter autorizado a nota).
+        const { data: local } = await supabase
+          .from("notas_fiscais")
+          .select("status, chave_acesso, motivo_status")
+          .eq("id", notaFiscalId)
+          .maybeSingle();
+        const st = String(local?.status ?? "");
+        if (st === "autorizada" || st === "autorizado") {
+          invalidateNfeRelatedQueries();
+          toast.success("NF-e autorizada pela SEFAZ!");
+          void enviarEmailAutomatico(notaFiscalId);
+          return {
+            success: true,
+            data: { status: "autorizado", chave_nfe: local?.chave_acesso, protocolo: local?.chave_acesso ? undefined : undefined },
+          } as FocusNfeResult;
+        }
+        if (attempts < Math.min(maxAttempts, 5)) {
+          await new Promise((resolve) => setTimeout(resolve, intervalMs));
+          return poll();
+        }
         return result;
       }
 
