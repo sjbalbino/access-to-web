@@ -3057,6 +3057,21 @@ export type Database = {
         }
         Relationships: []
       }
+      import_colheita_placa: {
+        Row: {
+          codigo: number
+          placa: string
+        }
+        Insert: {
+          codigo: number
+          placa: string
+        }
+        Update: {
+          codigo?: number
+          placa?: string
+        }
+        Relationships: []
+      }
       inscricoes_produtor: {
         Row: {
           ativa: boolean | null
