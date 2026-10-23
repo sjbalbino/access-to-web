@@ -102,7 +102,7 @@ export function gerarExtratoPlacaPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo
     ...estilo, startY: 29,
     head: [["Data", "Romaneio", "Bruto", "Sacos", "Desc.", "Líquido", "Sc. Líq.", "Inscrição", "Produtor", "Granja/Local"]],
     body: body as never,
-    columnStyles: { 0: { halign: "center" }, 1: { halign: "center" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" } },
+    ...(alinhar({ 0: "center", 1: "center", 2: "right", 3: "right", 4: "right", 5: "right", 6: "right" }) as object),
   });
   doc.save(`extrato_placas_${f.safra.replace(/\W+/g, "_")}.pdf`);
 }
@@ -138,7 +138,7 @@ export function gerarResumoPlacasPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo
     ...estilo, startY: 29,
     head: [["Placa", "Bruto", "Sacos", "Desc.", "Líquido", "Sc. Líq."]],
     body: body as never,
-    columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" } },
+    ...(alinhar({ 1: "right", 2: "right", 3: "right", 4: "right", 5: "right" }) as object),
   });
   doc.save(`resumo_placas_${f.safra.replace(/\W+/g, "_")}.pdf`);
 }

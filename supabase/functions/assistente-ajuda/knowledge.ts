@@ -64,6 +64,20 @@ Traz as notas emitidas contra a empresa. É preciso **manifestar** (confirmar a 
 A SEFAZ só disponibiliza o XML por cerca de 90 dias; notas antigas aparecem como "XML fora do prazo da SEFAZ".
 Com o XML é possível gerar a entrada no estoque e as parcelas do contas a pagar; as notas já usadas mostram "Entrada gerada".
 
+### Relatórios (menu Relatórios)
+- **Extrato do Produtor**: em Relatórios, card "Extrato do Produtor". Escolha Safra, Produtor e, opcionalmente, uma IE
+  (Inscrição Estadual) — sem IE lista todas as inscrições do titular, separadas por IE com subtotais.
+  O campo **"Tipo de operação"** permite gerar somente Depósitos (extrato de depósitos), Transferências (entrada/saída),
+  Devoluções, Vendas ou Compras. O Resumo Geral mostra Entradas, Saídas, Saldo e Sacos.
+- **Extrato de Depósitos**: card "Extrato de Depósitos" em Relatórios (detalhe técnico das cargas com descontos);
+  para o modelo simples só com depósitos use o Extrato do Produtor com Tipo de operação = Depósitos.
+- **Extrato de Movimentação**: mesmo filtro de Tipo de operação.
+- **Controle de Placas**: card "Controle de Placas" em Relatórios. Filtros: Safra, Placa (opcional) e Lavoura (opcional).
+  Três opções: **Extrato da Placa** (cargas por lavoura e dia, com romaneio, bruto, sacos, descontos, líquido, inscrição e produtor),
+  **Resumo por Granja** (totais por placa com subtotais de veículos Próprios e Terceiros) e **Resumo Geral**. Exporta PDF e Excel.
+  Só entram cargas de colheita que têm placa informada; cargas sem placa não aparecem.
+- Outros: Colheita diária, Resumo por lavoura, Saldo disponível, Entrega por variedade, Vendas, Custos da lavoura, IR.
+
 ### Saldos
 Não existe estoque gravado: o saldo é calculado a partir de colheitas, transferências, notas de depósito,
 devoluções, compras e remessas. Por isso o saldo muda conforme o local de entrega e a inscrição estadual.
