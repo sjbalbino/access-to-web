@@ -33,7 +33,9 @@ serve(async (req) => {
       .select("id, numero_atual_nfe, inscricao:inscricoes_produtor!emitentes_nfe_inscricao_produtor_id_fkey(cpf_cnpj, uf)")
       .eq("id", emitenteId).maybeSingle();
     if (!emit) return jsonResp({ success: false, error: "Emitente não encontrado" }, 404);
-    const doc = String(emit.inscricao?.cpf_cnpj ?? "").replace(/\D/g, "");
+    // deno-lint-ignore no-explicit-any
+    const insc = (Array.isArray((emit as any).inscricao) ? (emit as any).inscricao[0] : (emit as any).inscricao) as { cpf_cnpj?: string; uf?: string } | null;
+    const doc = String(insc?.cpf_cnpj ?? "").replace(/\D/g, "");
     if (doc.length !== 14) {
       return jsonResp({ success: false, error: "Inutilização só é permitida para emitente com CNPJ (NT 2018/001). Para produtor pessoa física basta seguir a numeração." }, 400);
     }
@@ -41,7 +43,7 @@ serve(async (req) => {
     if (!cred) return jsonResp({ success: false, error: "App ID / Secret da Unimake não configurados para este emitente." }, 400);
 
     const xml = montarInutNFe({
-      uf: String(emit.inscricao?.uf ?? ""), cnpj: doc, tpAmb: tpAmbUnimake(cred.ambiente),
+      uf: String(insc?.uf ?? ""), cnpj: doc, tpAmb: tpAmbUnimake(cred.ambiente),
       serie: s, nIni, nFin, justificativa,
     });
     const r = await unimakeXmlPost(cred, `/api/v1/${doc}/NFe/Inutilizacao`, xml);
