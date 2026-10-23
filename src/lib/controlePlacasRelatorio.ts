@@ -1,3 +1,4 @@
+import type { RelatorioPayload, RelatorioSheet } from "@/lib/relatorioViewer";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -77,7 +78,7 @@ const negrito = (row: (string | number)[]) =>
   row.map((c) => ({ content: String(c), styles: { fontStyle: "bold" as const } }));
 
 /** 1. Extrato da Placa: por placa → lavoura → dia, com cada carga. */
-export function gerarExtratoPlacaPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo) {
+export function gerarExtratoPlacaPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo): RelatorioPayload {
   const doc = new jsPDF({ orientation: "landscape" });
   cabecalho(doc, "Extrato de Placas - Colheita por Lavoura", f);
   const body: unknown[][] = [];
@@ -104,7 +105,7 @@ export function gerarExtratoPlacaPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo
     body: body as never,
     ...(alinhar({ 0: "center", 1: "center", 2: "right", 3: "right", 4: "right", 5: "right", 6: "right" }) as object),
   });
-  doc.save(`extrato_placas_${f.safra.replace(/\W+/g, "_")}.pdf`);
+  return { doc, filename: `extrato_placas_${f.safra.replace(/\W+/g, "_")}.pdf`, sheets: planilhasPlacas(movs) };
 }
 
 /** 2/3. Resumo por placa — por Granja (com totais Próprias/Terceiros) ou geral. */
@@ -120,7 +121,7 @@ function linhasResumo(movs: PlacaMovimento[]) {
   return { linhasProprias, linhasTerceiros, proprias, terceiros, total };
 }
 
-export function gerarResumoPlacasPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo, porGranja: boolean) {
+export function gerarResumoPlacasPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo, porGranja: boolean): RelatorioPayload {
   const doc = new jsPDF();
   cabecalho(doc, porGranja ? "Resumo de Placas por Granja/Local" : "Resumo Geral de Placas", f);
   const body: unknown[][] = [];
@@ -147,7 +148,36 @@ export function gerarResumoPlacasPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo
     body: body as never,
     ...(alinhar({ 1: "right", 2: "right", 3: "right", 4: "right", 5: "right" }) as object),
   });
-  doc.save(`resumo_placas_${f.safra.replace(/\W+/g, "_")}.pdf`);
+  return { doc, filename: `resumo_placas_${f.safra.replace(/\W+/g, "_")}.pdf`, sheets: planilhasPlacas(movs) };
+}
+
+/** Planilhas para o botão Excel da prévia: extrato detalhado + resumo por tipo/placa. */
+export function planilhasPlacas(movs: PlacaMovimento[]): RelatorioSheet[] {
+  const tipo = (m: PlacaMovimento) => (m.propriedade === "propria" ? "Própria" : "Terceiros");
+  const det = movs.map((m) => [m.placa, tipo(m), m.granja, m.lavoura, dataBR(m.data), m.romaneio ?? "",
+    Math.round(m.bruto), Math.round(m.bruto / KG_SACO), Math.round(m.desconto), Math.round(m.liquido),
+    Math.round(m.liquido / KG_SACO), m.inscricao, m.produtor]);
+  const linha = (rot: string, tp: string, t: ReturnType<typeof zero>) => [rot, tp, t.cargas, Math.round(t.bruto),
+    Math.round(t.bruto / KG_SACO), Math.round(t.desconto), Math.round(t.liquido), Math.round(t.liquido / KG_SACO)];
+  const r = linhasResumoNumerico(movs);
+  const res = [...r.proprias.map((x) => linha(x[0], "Própria", x[1])), linha("PRÓPRIA", "", r.totP),
+    ...r.terceiros.map((x) => linha(x[0], "Terceiros", x[1])), linha("TERCEIROS", "", r.totT), linha("TOTAL GERAL", "", r.total)];
+  return [
+    { name: "Extrato", header: ["Placa", "Tipo", "Granja/Local", "Lavoura", "Data", "Romaneio", "Bruto (kg)", "Sacos", "Desconto (kg)", "Líquido (kg)", "Sacos Líq.", "Inscrição", "Produtor"], rows: det },
+    { name: "Resumo", header: ["Placa", "Tipo", "Cargas", "Bruto (kg)", "Sacos", "Desconto (kg)", "Líquido (kg)", "Sacos Líq."], rows: res },
+  ];
+}
+
+function linhasResumoNumerico(movs: PlacaMovimento[]) {
+  const proprias: [string, ReturnType<typeof zero>][] = [], terceiros: [string, ReturnType<typeof zero>][] = [];
+  const totP = zero(), totT = zero(), total = zero();
+  const placas = [...agrupar(movs, (m) => m.placa)].sort(([a], [b]) => a.localeCompare(b, "pt-BR", { sensitivity: "base" }));
+  for (const [placa, lp] of placas) {
+    const propria = lp[0].propriedade === "propria";
+    const t = zero(); lp.forEach((m) => { somar(t, m); somar(total, m); somar(propria ? totP : totT, m); });
+    (propria ? proprias : terceiros).push([placa, t]);
+  }
+  return { proprias, terceiros, totP, totT, total };
 }
 
 /** Excel: planilha detalhada + resumo por placa. */
