@@ -55,7 +55,7 @@ Compra do produto do produtor. Impostos: ICMS com diferimento, PIS/COFINS CST 08
 
 ### Notas Fiscais
 Lista ordenada pela data/hora de emissão (mais recentes primeiro), com filtros por número, emitente, período e status.
-Emissão pelo provedor Focus NF-e. Rascunhos só liberam a emissão quando o emitente tem token configurado e os dados
+Emissão pelo provedor fiscal configurado no emitente (Focus NFe, ACBr API ou Unimake). Rascunhos só liberam a emissão quando o emitente tem credenciais e certificado A1 válidos e os dados
 obrigatórios estão completos (destinatário, itens, placa e UF do transportador quando exigido).
 Rejeições da SEFAZ aparecem detalhadas na própria nota.
 
