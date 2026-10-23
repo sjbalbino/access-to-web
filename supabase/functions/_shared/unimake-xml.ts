@@ -175,3 +175,52 @@ export function campoResposta(texto: string, nome: string): string | undefined {
   for (const m of texto.matchAll(re)) ultimo = m[1];
   return ultimo;
 }
+
+const DESCS_MANIFESTACAO: Record<string, string> = {
+  "210200": "Confirmacao da Operacao",
+  "210210": "Ciencia da Operacao",
+  "210220": "Desconhecimento da Operacao",
+  "210240": "Operacao nao Realizada",
+};
+
+/** XML <distDFeInt> de pedido de distribuição de DF-e (consulta por NSU ou por chave de acesso). */
+export function montarDistDFeInt(p: {
+  doc: string;
+  tpAmb: number;
+  cUfAutor: number;
+  tipo: "dist_nsu" | "chave";
+  ultNsu?: number;
+  chave?: string;
+}): string {
+  const corpo = p.tipo === "chave"
+    ? `<consChNFe><chNFe>${dig(p.chave ?? "")}</chNFe></consChNFe>`
+    : `<distNSU><ultNSU>${String(Math.max(0, Math.floor(p.ultNsu ?? 0))).padStart(15, "0")}</ultNSU></distNSU>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><distDFeInt xmlns="${NS}" versao="1.01">` +
+    `<tpAmb>${p.tpAmb}</tpAmb><cUFAutor>${p.cUfAutor}</cUFAutor>${docTag(p.doc)}${corpo}</distDFeInt>`;
+}
+
+/** XML <envEvento> de manifestação do destinatário (eventos 210200–210240, cOrgao = AN). */
+export function montarEventoManifestacao(p: {
+  tipoEvento: string;
+  chave: string;
+  doc: string;
+  tpAmb: number;
+  nSeq?: number;
+  justificativa?: string;
+}): string {
+  const desc = DESCS_MANIFESTACAO[p.tipoEvento];
+  if (!desc) throw new Error(`Tipo de manifestação inválido (${p.tipoEvento}).`);
+  const seq = p.nSeq ?? 1;
+  const id = `ID${p.tipoEvento}${p.chave}${String(seq).padStart(2, "0")}`;
+  const just = p.tipoEvento === "210240" || p.tipoEvento === "210220"
+    ? `<xJust>${escXml((p.justificativa ?? "").slice(0, 255))}</xJust>`
+    : "";
+  return `<?xml version="1.0" encoding="UTF-8"?><envEvento xmlns="${NS}" versao="1.00">` +
+    `<idLote>${String(Date.now()).slice(-15)}</idLote>` +
+    `<evento versao="1.00"><infEvento Id="${id}">` +
+    `<cOrgao>91</cOrgao><tpAmb>${p.tpAmb}</tpAmb>${docTag(p.doc)}` +
+    `<chNFe>${p.chave}</chNFe><dhEvento>${dataHoraSefaz()}</dhEvento><tpEvento>${p.tipoEvento}</tpEvento>` +
+    `<nSeqEvento>${seq}</nSeqEvento><verEvento>1.00</verEvento>` +
+    `<detEvento versao="1.00"><descEvento>${desc}</descEvento>${just}</detEvento>` +
+    `</infEvento></evento></envEvento>`;
+}
