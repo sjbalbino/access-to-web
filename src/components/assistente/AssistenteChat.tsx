@@ -41,7 +41,11 @@ const SUGESTOES_POR_ROTA: Record<string, string[]> = {
   "/compra-cereais": ["Como lanço uma compra de cereais?", "Quais impostos são aplicados na compra?"],
   "/vendas-producao": ["Como funciona contrato e remessa?", "Como emito a NF-e da remessa?"],
   "/entradas-nfe": ["Como manifestar uma nota recebida?", "Por que o XML não está disponível?"],
-  "/relatorios": ["Quais relatórios existem?", "Como gerar o relatório de colheita diária?"],
+  "/relatorios": [
+    "Onde emito o Extrato de Depósitos?",
+    "Como gerar o Controle de Placas?",
+    "Quais relatórios existem?",
+  ],
 };
 
 const SUGESTOES_PADRAO = [

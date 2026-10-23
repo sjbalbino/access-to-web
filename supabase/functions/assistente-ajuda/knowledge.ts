@@ -55,7 +55,7 @@ Compra do produto do produtor. Impostos: ICMS com diferimento, PIS/COFINS CST 08
 
 ### Notas Fiscais
 Lista ordenada pela data/hora de emissão (mais recentes primeiro), com filtros por número, emitente, período e status.
-Emissão pelo provedor Focus NF-e. Rascunhos só liberam a emissão quando o emitente tem token configurado e os dados
+Emissão pelo provedor fiscal configurado no emitente (Focus NFe, ACBr API ou Unimake). Rascunhos só liberam a emissão quando o emitente tem credenciais e certificado A1 válidos e os dados
 obrigatórios estão completos (destinatário, itens, placa e UF do transportador quando exigido).
 Rejeições da SEFAZ aparecem detalhadas na própria nota.
 
@@ -63,6 +63,20 @@ Rejeições da SEFAZ aparecem detalhadas na própria nota.
 Traz as notas emitidas contra a empresa. É preciso **manifestar** (confirmar a operação) para baixar o XML.
 A SEFAZ só disponibiliza o XML por cerca de 90 dias; notas antigas aparecem como "XML fora do prazo da SEFAZ".
 Com o XML é possível gerar a entrada no estoque e as parcelas do contas a pagar; as notas já usadas mostram "Entrada gerada".
+
+### Relatórios (menu Relatórios)
+- **Extrato do Produtor**: em Relatórios, card "Extrato do Produtor". Escolha Safra, Produtor e, opcionalmente, uma IE
+  (Inscrição Estadual) — sem IE lista todas as inscrições do titular, separadas por IE com subtotais.
+  O campo **"Tipo de operação"** permite gerar somente Depósitos (extrato de depósitos), Transferências (entrada/saída),
+  Devoluções, Vendas ou Compras. O Resumo Geral mostra Entradas, Saídas, Saldo e Sacos.
+- **Extrato de Depósitos**: card "Extrato de Depósitos" em Relatórios (detalhe técnico das cargas com descontos);
+  para o modelo simples só com depósitos use o Extrato do Produtor com Tipo de operação = Depósitos.
+- **Extrato de Movimentação**: mesmo filtro de Tipo de operação.
+- **Controle de Placas**: card "Controle de Placas" em Relatórios. Filtros: Safra, Placa (opcional) e Lavoura (opcional).
+  Três opções: **Extrato da Placa** (cargas por lavoura e dia, com romaneio, bruto, sacos, descontos, líquido, inscrição e produtor),
+  **Resumo por Granja** (totais por placa com subtotais de veículos Próprios e Terceiros) e **Resumo Geral**. Exporta PDF e Excel.
+  Só entram cargas de colheita que têm placa informada; cargas sem placa não aparecem.
+- Outros: Colheita diária, Resumo por lavoura, Saldo disponível, Entrega por variedade, Vendas, Custos da lavoura, IR.
 
 ### Saldos
 Não existe estoque gravado: o saldo é calculado a partir de colheitas, transferências, notas de depósito,

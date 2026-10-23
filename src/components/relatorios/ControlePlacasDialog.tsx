@@ -20,7 +20,7 @@ export interface ControlePlacasDialogProps {
 
 interface ColheitaRow {
   data_colheita: string | null; romaneio: number | null;
-  peso_bruto: number | null; producao_kg: number | null; kg_desconto_total: number | null; producao_liquida_kg: number | null;
+  peso_bruto: number | null; peso_tara: number | null; producao_kg: number | null; kg_desconto_total: number | null; producao_liquida_kg: number | null;
   placas: { placa: string; propriedade: string | null } | null;
   controle_lavouras: { lavouras: { nome: string } | null; granjas: { razao_social: string; nome_fantasia: string | null } | null } | null;
   inscricoes_produtor: { inscricao_estadual: string | null; nome: string | null; produtores: { nome: string } | null } | null;
@@ -32,7 +32,7 @@ async function buscarMovimentos(safraId: string): Promise<PlacaMovimento[]> {
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from("colheitas")
-      .select(`data_colheita, romaneio, peso_bruto, producao_kg, kg_desconto_total, producao_liquida_kg,
+      .select(`data_colheita, romaneio, peso_bruto, peso_tara, producao_kg, kg_desconto_total, producao_liquida_kg,
         placas!inner(placa, propriedade),
         controle_lavouras(lavouras(nome), granjas(razao_social, nome_fantasia)),
         inscricoes_produtor(inscricao_estadual, nome, produtores(nome))`)
@@ -42,8 +42,12 @@ async function buscarMovimentos(safraId: string): Promise<PlacaMovimento[]> {
     if (error) throw error;
     for (const r of (data ?? []) as unknown as ColheitaRow[]) {
       const g = r.controle_lavouras?.granjas;
-      const liquido = Number(r.producao_liquida_kg ?? 0);
-      const bruto = Number(r.producao_kg ?? r.peso_bruto ?? 0);
+      // Bruto da carga = peso do produto na balança (bruto - tara), antes dos descontos.
+      // peso_bruto sozinho inclui o caminhão e inflaria os totais.
+      const pesoBalanca = r.peso_bruto != null ? Number(r.peso_bruto) - Number(r.peso_tara ?? 0) : 0;
+      const bruto = Number(r.producao_kg ?? (pesoBalanca > 0 ? pesoBalanca : 0));
+      const descontoBase = Number(r.kg_desconto_total ?? 0);
+      const liquido = Number(r.producao_liquida_kg ?? Math.max(bruto - descontoBase, 0));
       out.push({
         placa: (r.placas?.placa ?? "").toUpperCase(),
         propriedade: r.placas?.propriedade ?? null,

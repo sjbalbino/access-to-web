@@ -62,6 +62,17 @@ const estilo = {
   headStyles: { fillColor: [46, 125, 50] as [number, number, number] },
   margin: { left: 14, right: 14 },
 };
+
+type HAlign = "left" | "center" | "right";
+/** Gera columnStyles + didParseCell para que o cabeçalho siga o alinhamento da coluna. */
+function alinhar(map: Record<number, HAlign>) {
+  return {
+    columnStyles: Object.fromEntries(Object.entries(map).map(([k, v]) => [k, { halign: v }])),
+    didParseCell: (d: { section: string; column: { index: number }; cell: { styles: { halign: HAlign } } }) => {
+      if (d.section === "head" && map[d.column.index]) d.cell.styles.halign = map[d.column.index];
+    },
+  };
+}
 const negrito = (row: (string | number)[]) =>
   row.map((c) => ({ content: String(c), styles: { fontStyle: "bold" as const } }));
 
@@ -91,7 +102,7 @@ export function gerarExtratoPlacaPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo
     ...estilo, startY: 29,
     head: [["Data", "Romaneio", "Bruto", "Sacos", "Desc.", "Líquido", "Sc. Líq.", "Inscrição", "Produtor", "Granja/Local"]],
     body: body as never,
-    columnStyles: { 0: { halign: "center" }, 1: { halign: "center" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" } },
+    ...(alinhar({ 0: "center", 1: "center", 2: "right", 3: "right", 4: "right", 5: "right", 6: "right" }) as object),
   });
   doc.save(`extrato_placas_${f.safra.replace(/\W+/g, "_")}.pdf`);
 }
@@ -127,7 +138,7 @@ export function gerarResumoPlacasPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo
     ...estilo, startY: 29,
     head: [["Placa", "Bruto", "Sacos", "Desc.", "Líquido", "Sc. Líq."]],
     body: body as never,
-    columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" } },
+    ...(alinhar({ 1: "right", 2: "right", 3: "right", 4: "right", 5: "right" }) as object),
   });
   doc.save(`resumo_placas_${f.safra.replace(/\W+/g, "_")}.pdf`);
 }
