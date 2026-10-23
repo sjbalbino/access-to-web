@@ -9,11 +9,12 @@ import {
   Truck, Package, MapPin, Warehouse, Users, ClipboardList, DollarSign, LucideIcon,
 } from "lucide-react";
 import { RelatorioDialog } from "@/components/relatorios/RelatorioDialog";
+import { ControlePlacasDialog } from "@/components/relatorios/ControlePlacasDialog";
 
 type TipoRelatorio =
   | "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "custos_lavoura" | "extrato_depositos" | "vendas"
   | "extrato_venda_producao" | "demonstrativo_gerencial" | "dre" | "bens_moveis"
-  | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
+  | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf" | "controle_placas";
 
 
 
@@ -68,6 +69,9 @@ const GRUPOS: Grupo[] = [
       { tipo: "extrato_depositos", titulo: "Extrato de Depósitos", descricao: "Recebimento detalhado por produtor e IE",
         detalhe: "Agrupado por Local -> Inscrição -> Dia com acumulados, médias ponderadas e totais gerais. Filtro opcional por IE.",
         icon: Wheat, iconBg: "bg-emerald-500/10", iconColor: "text-emerald-600", primario: true },
+      { tipo: "controle_placas", titulo: "Controle de Placas", descricao: "Caminhões que transportaram os depósitos",
+        detalhe: "Extrato por placa/lavoura/dia, resumo por granja (próprias e terceiros) e resumo geral. PDF e Excel.",
+        icon: Truck, iconBg: "bg-primary/10", iconColor: "text-primary", primario: true },
 
 
       { tipo: "saldo_disponivel", titulo: "Saldo Disponível", descricao: "Estoque geral por produtor",
@@ -133,7 +137,9 @@ export default function Relatorios() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [tipoRelatorio, setTipoRelatorio] = useState<TipoRelatorio>("extrato");
 
+  const [placasOpen, setPlacasOpen] = useState(false);
   const abrirRelatorio = (tipo: TipoRelatorio) => {
+    if (tipo === "controle_placas") { setPlacasOpen(true); return; }
     setTipoRelatorio(tipo);
     setDialogOpen(true);
   };
@@ -187,7 +193,8 @@ export default function Relatorios() {
         </div>
       ))}
 
-      <RelatorioDialog tipo={tipoRelatorio} open={dialogOpen} onOpenChange={setDialogOpen} />
+      {tipoRelatorio !== "controle_placas" && <RelatorioDialog tipo={tipoRelatorio as Exclude<TipoRelatorio, "controle_placas">} open={dialogOpen} onOpenChange={setDialogOpen} />}
+      <ControlePlacasDialog open={placasOpen} onOpenChange={setPlacasOpen} />
     </AppLayout>
   );
 }
