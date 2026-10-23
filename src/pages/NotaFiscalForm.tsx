@@ -866,8 +866,10 @@ export default function NotaFiscalForm() {
     }
 
     // Provedor fiscal configurado no emitente (Focus NFe ou ACBr API)
-    const isAcbr = (emitente as { api_provider?: string | null }).api_provider === "acbrapi";
-    const nomeProvedor = isAcbr ? "ACBr API" : "Focus NFe";
+    const providerEmit = (emitente as { api_provider?: string | null }).api_provider;
+    // Somente a Focus NFe tem verificação prévia de habilitação; ACBr e Unimake validam na emissão.
+    const isAcbr = providerEmit === "acbrapi" || providerEmit === "unimake";
+    const nomeProvedor = providerEmit === "unimake" ? "Unimake" : providerEmit === "acbrapi" ? "ACBr API" : "Focus NFe";
 
     // Open emission dialog
     setIsEmissionDialogOpen(true);
@@ -3197,8 +3199,9 @@ export default function NotaFiscalForm() {
             {existingNota.motivo_status && (() => {
               const motivo = existingNota.motivo_status.toLowerCase();
               const emitenteNota = emitentes.find((e) => e.id === formData.emitente_id);
-              const isAcbrNota = (emitenteNota as { api_provider?: string | null } | undefined)?.api_provider === "acbrapi";
-              const nomeProvedorNota = isAcbrNota ? "ACBr API" : "Focus NFe";
+              const providerNota = (emitenteNota as { api_provider?: string | null } | undefined)?.api_provider;
+              const isAcbrNota = providerNota === "acbrapi" || providerNota === "unimake";
+              const nomeProvedorNota = providerNota === "unimake" ? "Unimake" : providerNota === "acbrapi" ? "ACBr API" : "Focus NFe";
               const isEmitenteNaoAutorizado =
                 motivo.includes("cnpj do emitente não autorizado") ||
                 motivo.includes("cnpj do emitente nao autorizado") ||

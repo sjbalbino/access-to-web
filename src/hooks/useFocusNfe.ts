@@ -15,10 +15,11 @@ export interface FocusNfeResult {
 }
 
 // Roteamento multi-provedor: resolve o nome da edge function conforme o
-// api_provider do emitente da nota ("focusnfe" → focus-nfe-*, "acbrapi" → acbr-api-*).
+// api_provider do emitente da nota ("focusnfe" → focus-nfe-*, "acbrapi" → acbr-api-*, "unimake" → unimake-api-*).
 const providerCache = new Map<string, string>();
 
 function nomeFuncaoParaProvider(focusName: string, provider: string): string {
+  if (provider === "unimake") return focusName.replace("focus-nfe", "unimake-api");
   return provider === "acbrapi" ? focusName.replace("focus-nfe", "acbr-api") : focusName;
 }
 
