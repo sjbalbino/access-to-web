@@ -2126,10 +2126,21 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
   const localTotIdx: number[] = [];
   let grandEntradas = 0, grandSaidas = 0;
 
+  // Saídas exibidas em valor absoluto; Saldo = Entradas − Saídas; Sacos derivados do saldo em kg.
+  const fmtKg = (v: number) => formatNumber(Math.abs(v), 0);
+  const numCell = (v: string, bold = false) => ({ content: v, styles: { halign: "right", ...(bold ? { fontStyle: "bold" } : {}) } });
+  const totalRow = (label: string, ent: number, sai: number) => [
+    { content: label, colSpan: 2, styles: { fontStyle: "bold", halign: "right" } },
+    numCell(fmtKg(ent), true),
+    numCell(fmtKg(sai), true),
+    numCell(formatNumber(ent + sai, 0), true),
+    numCell(formatNumber(Math.round((ent + sai) / 60), 0), true),
+  ];
+
   Array.from(porLocal.entries())
     .sort(([a], [b]) => a.localeCompare(b, "pt-BR"))
     .forEach(([local, items]) => {
-      resumoBody.push([{ content: `Local Entrega:   ${local}`, colSpan: 5, styles: { fontStyle: "bold" } }]);
+      resumoBody.push([{ content: `Local Entrega:   ${local}`, colSpan: 6, styles: { fontStyle: "bold" } }]);
       localHeaderIdx.push(resumoBody.length - 1);
 
       let ent = 0, sai = 0;
@@ -2137,59 +2148,46 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
         .sort((a, b) => a.opLabel.localeCompare(b.opLabel, "pt-BR") || a.produto.localeCompare(b.produto, "pt-BR"))
         .forEach((r) => {
           ent += r.entradas; sai += r.saidas;
+          const saldo = r.entradas + r.saidas;
           resumoBody.push([
-            "",
             r.opLabel,
             r.produto,
-            { content: formatNumber(r.entradas, 0), styles: { halign: "right" } },
-            { content: formatNumber(r.saidas, 0), styles: { halign: "right" } },
+            numCell(fmtKg(r.entradas)),
+            numCell(fmtKg(r.saidas)),
+            numCell(formatNumber(saldo, 0)),
+            numCell(formatNumber(Math.round(saldo / 60), 0)),
           ]);
         });
-      resumoBody.push([
-        { content: "Total do Local -->", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
-        { content: formatNumber(ent, 0), styles: { fontStyle: "bold", halign: "right" } },
-        { content: formatNumber(sai, 0), styles: { fontStyle: "bold", halign: "right" } },
-      ]);
-      localTotIdx.push(resumoBody.length - 1);
-      resumoBody.push([
-        { content: "Saldo do Local -->", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
-        { content: formatNumber(ent + sai, 0), colSpan: 2, styles: { fontStyle: "bold", halign: "right" } },
-      ]);
+      resumoBody.push(totalRow("Total do Local -->", ent, sai));
       localTotIdx.push(resumoBody.length - 1);
 
       grandEntradas += ent; grandSaidas += sai;
     });
 
-  resumoBody.push([
-    { content: "Total Geral -->", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
-    { content: formatNumber(grandEntradas, 0), styles: { fontStyle: "bold", halign: "right" } },
-    { content: formatNumber(grandSaidas, 0), styles: { fontStyle: "bold", halign: "right" } },
-  ]);
+  resumoBody.push(totalRow("Total Geral -->", grandEntradas, grandSaidas));
   const gTot1 = resumoBody.length - 1;
-  resumoBody.push([
-    { content: "Saldo Geral -->", colSpan: 3, styles: { fontStyle: "bold", halign: "right" } },
-    { content: formatNumber(grandEntradas + grandSaidas, 0), colSpan: 2, styles: { fontStyle: "bold", halign: "right" } },
-  ]);
-  const gTot2 = resumoBody.length - 1;
+  const gTot2 = gTot1;
 
   autoTable(doc, {
     startY: yPos + 2,
     head: [[
-      "",
       "Operação",
       "Produto",
       { content: "Entradas", styles: { halign: "right" } },
       { content: "Saídas", styles: { halign: "right" } },
+      { content: "Saldo", styles: { halign: "right" } },
+      { content: "Sacos", styles: { halign: "right" } },
     ]],
     body: resumoBody,
     styles: { fontSize: 8, cellPadding: 1.5 },
     headStyles: { fillColor: [66, 66, 66], textColor: 255 },
     columnStyles: {
-      0: { cellWidth: 14 },
-      1: { cellWidth: 40 },
-      2: { cellWidth: "auto" },
-      3: { cellWidth: 32, halign: "right" },
-      4: { cellWidth: 32, halign: "right" },
+      0: { cellWidth: 40 },
+      1: { cellWidth: "auto" },
+      2: { cellWidth: 28, halign: "right" },
+      3: { cellWidth: 28, halign: "right" },
+      4: { cellWidth: 28, halign: "right" },
+      5: { cellWidth: 22, halign: "right" },
     },
     didParseCell: (d) => {
       if (d.section !== "body") return;
