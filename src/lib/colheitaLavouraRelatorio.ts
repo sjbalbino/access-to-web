@@ -48,7 +48,7 @@ const nomeTipo = (c: ColheitaRel) => (c.tipo_colheita ?? "industria").toUpperCas
 
 function linhaTotal(rot: string, t: Tot, comCargas = true) {
   return [
-    { content: rot, colSpan: 2 }, comCargas ? String(t.cargas) : "", kg(t.bruto), kg(t.tara), kg(t.liq),
+    { content: rot, colSpan: 2, styles: { halign: "left" } }, comCargas ? String(t.cargas) : "", kg(t.bruto), kg(t.tara), kg(t.liq),
     dec(media(t.sImp, t)), kg(t.kImp), dec(media(t.sUmi, t)), "", kg(t.kUmi), "", kg(t.kAv), "", kg(t.kOut),
     kg(t.kDesc), kg(t.final), kg(t.final / KG_SACO), "", "", "", dec(media(t.sPh, t)), "",
   ];
@@ -58,9 +58,9 @@ export function gerarColheitaLavouraPdf(colheitas: ColheitaRel[], info: Colheita
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const ordenadas = [...colheitas].sort((a, b) => (a.data_colheita ?? "").localeCompare(b.data_colheita ?? "") || n(a.romaneio) - n(b.romaneio));
   const mediaHa = (t: Tot) => (info.haPlantado > 0 ? t.final / KG_SACO / info.haPlantado : 0);
-  const linhaMedia = (t: Tot) => [{ content: `MÉDIA Sc/Ha: ${dec(mediaHa(t))}`, colSpan: 23, styles: { fontStyle: "italic" } }];
-  const grupo = (txt: string, fill: [number, number, number]) => [{ content: txt, colSpan: 23, styles: { fontStyle: "bold", fillColor: fill } }];
-  const negrito = (row: unknown[]) => row.map((c) => (typeof c === "object" && c ? { ...(c as object), styles: { fontStyle: "bold" } } : { content: c, styles: { fontStyle: "bold" } }));
+  const linhaMedia = (t: Tot) => [{ content: `MÉDIA Sc/Ha: ${dec(mediaHa(t))}`, colSpan: 23, styles: { fontStyle: "italic", halign: "left" } }];
+  const grupo = (txt: string, fill: [number, number, number]) => [{ content: txt, colSpan: 23, styles: { fontStyle: "bold", fillColor: fill, halign: "left" } }];
+  const negrito = (row: unknown[]) => row.map((c) => (typeof c === "object" && c ? { ...(c as object), styles: { ...((c as { styles?: object }).styles ?? {}), fontStyle: "bold" } } : { content: c, styles: { fontStyle: "bold" } }));
 
   const body: unknown[][] = [];
   const geral = zero();
