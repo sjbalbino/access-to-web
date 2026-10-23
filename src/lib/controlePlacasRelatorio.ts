@@ -109,13 +109,15 @@ export function gerarExtratoPlacaPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo
 
 /** 2/3. Resumo por placa — por Granja (com totais Próprias/Terceiros) ou geral. */
 function linhasResumo(movs: PlacaMovimento[]) {
-  const linhas: string[][] = [];
+  const linhasProprias: string[][] = [], linhasTerceiros: string[][] = [];
   const proprias = zero(), terceiros = zero(), total = zero();
-  for (const [placa, lp] of agrupar(movs, (m) => m.placa)) {
-    const t = zero(); lp.forEach((m) => { somar(t, m); somar(total, m); somar(lp[0].propriedade === "propria" ? proprias : terceiros, m); });
-    linhas.push(linhaTot(placa, t));
+  const placas = [...agrupar(movs, (m) => m.placa)].sort(([a], [b]) => a.localeCompare(b, "pt-BR", { sensitivity: "base" }));
+  for (const [placa, lp] of placas) {
+    const propria = lp[0].propriedade === "propria";
+    const t = zero(); lp.forEach((m) => { somar(t, m); somar(total, m); somar(propria ? proprias : terceiros, m); });
+    (propria ? linhasProprias : linhasTerceiros).push(linhaTot(placa, t));
   }
-  return { linhas, proprias, terceiros, total };
+  return { linhasProprias, linhasTerceiros, proprias, terceiros, total };
 }
 
 export function gerarResumoPlacasPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo, porGranja: boolean) {
@@ -127,9 +129,14 @@ export function gerarResumoPlacasPdf(movs: PlacaMovimento[], f: PlacasFiltroInfo
   for (const [granja, lg] of grupos) {
     if (porGranja) body.push([{ content: granja, colSpan: 6, styles: { fontStyle: "bold", fillColor: [232, 245, 233] } }]);
     const r = linhasResumo(lg);
-    body.push(...r.linhas);
-    if (r.proprias.cargas) body.push(negrito(linhaTot("PRÓPRIAS", r.proprias)));
-    if (r.terceiros.cargas) body.push(negrito(linhaTot("TERCEIROS", r.terceiros)));
+    if (r.linhasProprias.length) {
+      body.push(...r.linhasProprias);
+      body.push(negrito(linhaTot("PRÓPRIA", r.proprias)));
+    }
+    if (r.linhasTerceiros.length) {
+      body.push(...r.linhasTerceiros);
+      body.push(negrito(linhaTot("TERCEIROS", r.terceiros)));
+    }
     if (porGranja) body.push(negrito(linhaTot("TOTAL GRANJA ===>", r.total)));
     lg.forEach((m) => somar(geral, m));
   }
