@@ -347,6 +347,7 @@ export function EmitirNfeDevolucaoDialog({
         dest_email: notaFiscalData.dest_email,
         dest_telefone: notaFiscalData.dest_telefone,
         inscricaoProdutor: {
+          telefone: (((inscricaoEmitente as unknown) as { telefone?: string | null } | null)?.telefone) || null,
           cpf_cnpj: inscricaoEmitente.cpf_cnpj,
           inscricao_estadual: inscricaoEmitente.inscricao_estadual,
           logradouro: inscricaoEmitente.logradouro,

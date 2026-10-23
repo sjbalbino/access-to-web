@@ -692,6 +692,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
         dest_tipo: inscricaoSelecionada?.cpf_cnpj && inscricaoSelecionada.cpf_cnpj.replace(/\D/g, '').length > 11 ? '1' : '0',
         // Emitente (sócio principal da granja)
         inscricaoProdutor: {
+          telefone: (((inscricaoPrincipal as unknown) as { telefone?: string | null } | null)?.telefone) || null,
           cpf_cnpj: inscricaoPrincipal?.cpf_cnpj || null,
           inscricao_estadual: inscricaoPrincipal?.inscricao_estadual || null,
           logradouro: inscricaoPrincipal?.logradouro || null,

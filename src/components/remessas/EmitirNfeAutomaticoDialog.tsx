@@ -430,6 +430,7 @@ export function EmitirNfeAutomaticoDialog({
         veiculo_placa: notaFiscalData.veiculo_placa,
         veiculo_uf: notaFiscalData.veiculo_uf,
         inscricaoProdutor: {
+          telefone: (((inscricao as unknown) as { telefone?: string | null } | null)?.telefone) || null,
           cpf_cnpj: inscricao.cpf_cnpj,
           inscricao_estadual: inscricao.inscricao_estadual,
           logradouro: inscricao.logradouro,

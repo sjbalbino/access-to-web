@@ -281,6 +281,30 @@ serve(async (req) => {
 
     normalizeReformaTributariaPayload(notaData as Record<string, unknown>);
 
+    // Telefone do emitente (tag <fone>): se a tela não enviou, busca na inscrição emitente
+    {
+      const nd = notaData as Record<string, unknown>;
+      if (!nd.telefone_emitente) {
+        const docEmit = String(nd.cpf_emitente || nd.cnpj_emitente || "").replace(/\D/g, "");
+        const ieEmit = String(nd.inscricao_estadual_emitente || "").replace(/\D/g, "");
+        if (docEmit) {
+          const { data: inscs } = await supabase
+            .from("inscricoes_produtor")
+            .select("telefone, inscricao_estadual")
+            .eq("cpf_cnpj", docEmit)
+            .not("telefone", "is", null)
+            .limit(20);
+          const lista = (inscs ?? []) as Array<{ telefone: string | null; inscricao_estadual: string | null }>;
+          const achada = lista.find((i) => String(i.inscricao_estadual ?? "").replace(/\D/g, "") === ieEmit) ?? lista[0];
+          const fone = String(achada?.telefone ?? "").replace(/\D/g, "");
+          if (fone.length >= 10 && fone.length <= 14) nd.telefone_emitente = fone;
+        }
+      } else {
+        const fone = String(nd.telefone_emitente).replace(/\D/g, "");
+        nd.telefone_emitente = fone.length >= 10 && fone.length <= 14 ? fone : undefined;
+      }
+    }
+
     // Validar série preenchida (vazia gera Rejeição 236 - DV da chave inválido)
     // Fallback: se a nota está sem série, usa a série configurada no emitente
     let serieNota = (notaData as Record<string, unknown>).serie;
