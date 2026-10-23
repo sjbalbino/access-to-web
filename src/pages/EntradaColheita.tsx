@@ -854,6 +854,7 @@ export default function EntradaColheita() {
             dest_telefone: null,
             // Dados do emitente (sócio principal)
             inscricaoProdutor: {
+              telefone: (((inscricaoPrincipal as unknown) as { telefone?: string | null } | null)?.telefone) || null,
               cpf_cnpj: inscricaoPrincipal?.cpf_cnpj || null,
               inscricao_estadual: inscricaoPrincipal?.inscricao_estadual || null,
               logradouro: inscricaoPrincipal?.logradouro || null,

@@ -976,6 +976,7 @@ export default function NotaFiscalForm() {
         dest_email: formData.dest_email || null,
         dest_telefone: formData.dest_telefone || null,
         inscricaoProdutor: {
+          telefone: (((inscricao as unknown) as { telefone?: string | null } | null)?.telefone) || null,
           cpf_cnpj: inscricao.cpf_cnpj,
           inscricao_estadual: inscricao.inscricao_estadual,
           logradouro: inscricao.logradouro,

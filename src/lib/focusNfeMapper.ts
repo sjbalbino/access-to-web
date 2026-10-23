@@ -48,6 +48,7 @@ export interface FocusNfeNota {
   municipio_emitente: string;
   uf_emitente: string;
   cep_emitente: string;
+  telefone_emitente?: string;
   regime_tributario_emitente: number; // 1=Simples, 2=Excesso sublimite, 3=Normal
   
   // Destinatário
@@ -249,6 +250,7 @@ export interface NotaFiscalData {
   
   // Inscrição do Produtor (emitente) - dados fiscais vêm daqui
   inscricaoProdutor?: {
+    telefone?: string | null;
     cpf_cnpj: string | null;
     inscricao_estadual: string | null;
     logradouro: string | null;
@@ -483,6 +485,7 @@ export async function mapNotaToFocusNfe(
     municipio_emitente: municipioEmitenteNome || inscricao.cidade || "",
     uf_emitente: inscricao.uf || "",
     cep_emitente: inscricao.cep?.replace(/\D/g, "") || "",
+    telefone_emitente: inscricao.telefone?.replace(/\D/g, "") || undefined,
     regime_tributario_emitente: emitente?.crt ?? 3, // Default: Normal
     
     // Destinatário

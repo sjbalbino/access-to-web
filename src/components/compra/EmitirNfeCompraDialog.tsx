@@ -446,6 +446,7 @@ export function EmitirNfeCompraDialog({
         dest_email: notaFiscalData.dest_email,
         dest_telefone: notaFiscalData.dest_telefone,
         inscricaoProdutor: {
+          telefone: (((inscricaoComprador as unknown) as { telefone?: string | null } | null)?.telefone) || null,
           cpf_cnpj: inscricaoComprador.cpf_cnpj,
           inscricao_estadual: inscricaoComprador.inscricao_estadual,
           logradouro: inscricaoComprador.logradouro,

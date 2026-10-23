@@ -615,6 +615,7 @@ export function CompraDialog({ open, onOpenChange, compra, readOnly = false }: C
         dest_tipo: inscricaoVendedor?.cpf_cnpj && inscricaoVendedor.cpf_cnpj.replace(/\D/g, '').length > 11 ? '1' : '0',
         // Emitente (COMPRADOR - sócio principal da granja)
         inscricaoProdutor: {
+          telefone: (((inscricaoPrincipal as unknown) as { telefone?: string | null } | null)?.telefone) || null,
           cpf_cnpj: inscricaoPrincipal?.cpf_cnpj || null,
           inscricao_estadual: inscricaoPrincipal?.inscricao_estadual || null,
           logradouro: inscricaoPrincipal?.logradouro || null,
