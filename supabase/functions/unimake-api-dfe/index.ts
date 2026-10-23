@@ -43,7 +43,7 @@ interface NfeItem {
 /** Valor da última ocorrência de uma tag (sem namespace) no XML. */
 function tagUltimo(xml: string, tag: string): string {
   let out = "";
-  for (const m of xml.matchAll(new RegExp(`<(?:\\w+:)?${tag}[^>]*>([^<]*)</(?:\\w+:)?${tag}>`, "i"))) {
+  for (const m of xml.matchAll(new RegExp(`<(?:\\w+:)?${tag}[^>]*>([^<]*)</(?:\\w+:)?${tag}>`, "gi"))) {
     out = (m[1] ?? "").trim();
   }
   return out;
