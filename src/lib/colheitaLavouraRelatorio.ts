@@ -58,8 +58,8 @@ export function gerarColheitaLavouraPdf(colheitas: ColheitaRel[], info: Colheita
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const ordenadas = [...colheitas].sort((a, b) => (a.data_colheita ?? "").localeCompare(b.data_colheita ?? "") || n(a.romaneio) - n(b.romaneio));
   const mediaHa = (t: Tot) => (info.haPlantado > 0 ? t.final / KG_SACO / info.haPlantado : 0);
-  const linhaMedia = (t: Tot) => [{ content: `MÉDIA Sc/Ha: ${dec(mediaHa(t))}`, colSpan: 22, styles: { fontStyle: "italic" } }];
-  const grupo = (txt: string, fill: [number, number, number]) => [{ content: txt, colSpan: 22, styles: { fontStyle: "bold", fillColor: fill } }];
+  const linhaMedia = (t: Tot) => [{ content: `MÉDIA Sc/Ha: ${dec(mediaHa(t))}`, colSpan: 23, styles: { fontStyle: "italic" } }];
+  const grupo = (txt: string, fill: [number, number, number]) => [{ content: txt, colSpan: 23, styles: { fontStyle: "bold", fillColor: fill } }];
   const negrito = (row: unknown[]) => row.map((c) => (typeof c === "object" && c ? { ...(c as object), styles: { fontStyle: "bold" } } : { content: c, styles: { fontStyle: "bold" } }));
 
   const body: unknown[][] = [];
@@ -87,7 +87,7 @@ export function gerarColheitaLavouraPdf(colheitas: ColheitaRel[], info: Colheita
             dec(n(c.percentual_avariados)), kg(n(c.kg_avariados)), dec(n(c.percentual_outros)), kg(n(c.kg_outros)),
             kg(n(c.kg_desconto_total)), kg(n(c.producao_liquida_kg)), kg(n(c.producao_liquida_kg) / KG_SACO),
             kg(acKg), kg(acKg / KG_SACO), c.romaneio ?? "", dec(n(c.ph)), c.semente?.nome ?? "",
-          ].filter((_, i) => i !== 2 || true));
+          ]);
           excel.push([local, prod, tipo, data, c.placas?.placa ?? "", n(c.peso_bruto), n(c.peso_tara), n(c.producao_kg),
             n(c.impureza), n(c.kg_impureza), n(c.umidade), n(c.percentual_desconto), n(c.kg_umidade), n(c.percentual_avariados),
             n(c.kg_avariados), n(c.percentual_outros), n(c.kg_outros), n(c.kg_desconto_total), n(c.producao_liquida_kg),
@@ -105,7 +105,6 @@ export function gerarColheitaLavouraPdf(colheitas: ColheitaRel[], info: Colheita
   body.push(negrito(linhaTotal("GERAL LAV. --->", geral)));
   body.push(linhaMedia(geral));
 
-  // Remove a coluna auxiliar (índice 2) das linhas de detalhe: o cabeçalho usa "Cargas" apenas nos totais.
   const pageW = doc.internal.pageSize.getWidth();
   const cab = () => {
     doc.setFontSize(9); doc.setFont("helvetica", "bold");
