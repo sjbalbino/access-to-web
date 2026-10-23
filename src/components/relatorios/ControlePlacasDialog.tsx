@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileSpreadsheet, FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
+import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
+import type { RelatorioPayload } from "@/lib/relatorioViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useSafras } from "@/hooks/useSafras";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { ComboboxFilter } from "@/components/ui/combobox-filter";
 import { toast } from "sonner";
 import {
-  exportarPlacasExcel, gerarExtratoPlacaPdf, gerarResumoPlacasPdf,
+  gerarExtratoPlacaPdf, gerarResumoPlacasPdf,
   type PlacaMovimento, type PlacasFiltroInfo,
 } from "@/lib/controlePlacasRelatorio";
 
@@ -84,12 +86,15 @@ export function ControlePlacasDialog({ open, onOpenChange }: ControlePlacasDialo
   const safra = safras.find((s) => s.id === safraId) as { nome: string; culturas?: { nome: string } | null } | undefined;
   const info: PlacasFiltroInfo = { safra: safra?.nome ?? "", cultura: safra?.culturas?.nome ?? "", placa: placa || undefined, lavoura: lavoura || undefined };
 
-  const executar = (fn: () => void) => {
+  const [preview, setPreview] = useState<RelatorioPayload | null>(null);
+  const executar = (fn: () => RelatorioPayload) => {
     if (!filtrados.length) { toast.error("Nenhuma entrada com placa para os filtros selecionados."); return; }
-    try { fn(); } catch (e) { toast.error(`Erro ao gerar relatório: ${(e as Error).message}`); }
+    try { setPreview(fn()); } catch (e) { toast.error(`Erro ao gerar relatório: ${(e as Error).message}`); }
   };
 
   return (
+    <>
+    <PreviewRelatorioDialog payload={preview} open={!!preview} onOpenChange={(o) => { if (!o) setPreview(null); }} />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -120,10 +125,10 @@ export function ControlePlacasDialog({ open, onOpenChange }: ControlePlacasDialo
             <Button disabled={isFetching || !safraId} onClick={() => executar(() => gerarExtratoPlacaPdf(filtrados, info))}><FileText className="h-4 w-4 mr-2" />Extrato da Placa</Button>
             <Button variant="outline" disabled={isFetching || !safraId} onClick={() => executar(() => gerarResumoPlacasPdf(filtrados, info, true))}><FileText className="h-4 w-4 mr-2" />Resumo por Granja</Button>
             <Button variant="outline" disabled={isFetching || !safraId} onClick={() => executar(() => gerarResumoPlacasPdf(filtrados, info, false))}><FileText className="h-4 w-4 mr-2" />Resumo Geral</Button>
-            <Button variant="secondary" disabled={isFetching || !safraId} onClick={() => executar(() => exportarPlacasExcel(filtrados, info))}><FileSpreadsheet className="h-4 w-4 mr-2" />Excel</Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
