@@ -8,7 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { Plus, Pencil, Trash2, AlertCircle, Search, Printer } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle, Search, Printer, FileText } from 'lucide-react';
+import { gerarColheitaLavouraPdf, type ColheitaRel } from '@/lib/colheitaLavouraRelatorio';
+import { PreviewRelatorioDialog } from '@/components/relatorios/PreviewRelatorioDialog';
+import type { RelatorioPayload } from '@/lib/relatorioViewer';
 import { gerarTicketDepositoPdf } from '@/lib/ticketDepositoPdf';
 import { toast } from 'sonner';
 import { useColheitas, useCreateColheita, useUpdateColheita, useDeleteColheita, ColheitaInput } from '@/hooks/useColheitas';
@@ -94,6 +97,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [previewRel, setPreviewRel] = useState<RelatorioPayload | null>(null);
 
   const createMutation = useCreateColheita();
   const updateMutation = useUpdateColheita();
@@ -350,6 +354,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
 
   return (
     <div className="space-y-4">
+      <PreviewRelatorioDialog payload={previewRel} open={!!previewRel} onOpenChange={(o) => { if (!o) setPreviewRel(null); }} />
       {/* Filtros e botão */}
       <div className="flex flex-col sm:flex-row gap-3 items-end">
         <div className="relative flex-1">
@@ -371,6 +376,21 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
             <Input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="w-36" />
           </div>
         </div>
+        <Button variant="outline" className="gap-2 whitespace-nowrap" onClick={() => {
+          if (!filteredColheitas.length) { toast.error('Nenhuma colheita para os filtros selecionados.'); return; }
+          const lav = controleLavoura?.lavouras;
+          const g = lav?.granjas;
+          try {
+            setPreviewRel(gerarColheitaLavouraPdf(filteredColheitas as ColheitaRel[], {
+              lavoura: lav?.nome ?? '', safra: controleLavoura?.safras?.nome ?? '',
+              granja: g ? (g.razao_social ?? '') : '',
+              haPlantado: Number(controleLavoura?.ha_plantado ?? 0),
+            }));
+          } catch (e) { toast.error(`Erro ao gerar relatório: ${(e as Error).message}`); }
+        }}>
+          <FileText className="h-4 w-4" />
+          Relatório
+        </Button>
         {canEdit && (
           <Button onClick={handleNew} className="gap-2 whitespace-nowrap">
             <Plus className="h-4 w-4" />
