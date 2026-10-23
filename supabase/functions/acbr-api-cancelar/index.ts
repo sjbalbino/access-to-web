@@ -109,24 +109,30 @@ serve(async (req) => {
       );
     }
 
-    const response = await acbrFetch(cred, `/nfe/${ref}`, {
-      method: "DELETE",
+    // ACBr API v3: POST /nfe/{id}/cancelamento → DfeCancelamento
+    const response = await acbrFetch(cred, `/nfe/${ref}/cancelamento`, {
+      method: "POST",
       body: { justificativa },
     });
 
-    const responseData = await response.json().catch(() => ({}));
-    console.log("Resposta ACBr API:", JSON.stringify(responseData, null, 2));
+    const responseText = await response.text();
+    // deno-lint-ignore no-explicit-any
+    let responseData: any = {};
+    try { responseData = responseText ? JSON.parse(responseText) : {}; } catch { responseData = { mensagem: responseText }; }
+    console.log("Resposta ACBr API (HTTP", response.status, "):", JSON.stringify(responseData, null, 2));
 
-    // Só consideramos cancelado quando a ACBr/SEFAZ confirma
-    const statusApi: string = typeof responseData?.status === "string" ? responseData.status : "";
-    const cancelamentoConfirmado =
-      response.ok && statusApi !== "" && !statusApi.startsWith("erro");
+    // Só consideramos cancelado quando o evento foi registrado na SEFAZ
+    const statusApi: string = typeof responseData?.status === "string" ? responseData.status.toLowerCase() : "";
+    const cancelamentoConfirmado = response.ok && statusApi === "registrado";
 
     const mensagemErro =
-      responseData?.mensagem_sefaz ||
+      responseData?.motivo_status ||
       responseData?.mensagem ||
+      responseData?.error?.message ||
       responseData?.erros?.[0]?.mensagem ||
-      (statusApi ? `Cancelamento não homologado (status: ${statusApi})` : "Erro ao cancelar NF-e");
+      (statusApi === "pendente"
+        ? "Cancelamento enviado e ainda pendente na SEFAZ. Consulte novamente em instantes."
+        : statusApi ? `Cancelamento não homologado (status: ${statusApi})` : `Erro ao cancelar NF-e (HTTP ${response.status})`);
 
     if (!cancelamentoConfirmado) {
       console.error("Cancelamento NÃO confirmado pela SEFAZ:", mensagemErro);
@@ -158,8 +164,8 @@ serve(async (req) => {
       } catch (_) { /* ignore */ }
 
       const updateData: Record<string, unknown> = {
-        status: statusApi || "cancelada",
-        motivo_status: justificativa,
+        status: "cancelada",
+        motivo_status: `Cancelada${responseData?.numero_protocolo ? ` - protocolo ${responseData.numero_protocolo}` : ""}: ${justificativa}`,
         cancelado_por: _userData.user.id,
         cancelado_por_nome: canceladoPorNome,
         cancelado_em: new Date().toISOString(),
