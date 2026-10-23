@@ -1,0 +1,1 @@
+COMMENT ON TABLE public.import_colheita_placa IS 'DEPRECATED: tabela temporária da importação romaneio x placa (out/2026), pode ser removida.';
