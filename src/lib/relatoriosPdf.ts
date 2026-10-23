@@ -1831,6 +1831,8 @@ export interface ExtratoMovParams {
   cpfCnpj: string | null;
   safraNome: string;
   filtroInscricao: string | null;
+  /** Rótulo do filtro por tipo de operação (null = todas). */
+  filtroOperacao?: string | null;
   /** Título do relatório (padrão: EXTRATO DE MOVIMENTAÇÃO). */
   titulo?: string;
   orientation?: "portrait" | "landscape";
@@ -1878,6 +1880,10 @@ export function gerarExtratoMovimentacaoPdf(params: ExtratoMovParams): void {
     if (params.filtroInscricao) {
       doc.setFontSize(8);
       doc.text(`Filtro por IE: ${params.filtroInscricao}`, 14, 46);
+    }
+    if (params.filtroOperacao) {
+      doc.setFontSize(8);
+      doc.text(`Operação: ${params.filtroOperacao}`, pageWidth - 14, 46, { align: "right" });
     }
     if (cont) {
       doc.setFontSize(8);

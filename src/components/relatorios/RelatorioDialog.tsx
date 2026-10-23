@@ -66,6 +66,17 @@ import { PreviewRelatorioDialog } from "./PreviewRelatorioDialog";
 
 export type TipoRelatorio = "extrato" | "extrato_movimentacao" | "resumo_produtor" | "colheitas" | "colheita_diaria" | "entrega_variedade" | "resumo_colheita_lavoura" | "custos_lavoura" | "extrato_depositos" | "vendas" | "extrato_venda_producao" | "demonstrativo_gerencial" | "dre" | "bens_moveis" | "saldo_disponivel" | "depositos_geral" | "resumo_local" | "extrato_cf";
 
+/** Opções do filtro "Tipo de operação" do Extrato do Produtor / Movimentação. */
+const OPERACOES_EXTRATO: { value: string; label: string; ops: ExtratoMovRow["operacao"][] }[] = [
+  { value: "deposito", label: "Depósitos", ops: ["deposito"] },
+  { value: "transferencias", label: "Transferências (entrada e saída)", ops: ["transf_entrada", "transf_saida"] },
+  { value: "transf_entrada", label: "Transferências - Entrada", ops: ["transf_entrada"] },
+  { value: "transf_saida", label: "Transferências - Saída", ops: ["transf_saida"] },
+  { value: "devolucao", label: "Devoluções", ops: ["devolucao"] },
+  { value: "venda", label: "Vendas", ops: ["venda"] },
+  { value: "compra", label: "Compras", ops: ["compra"] },
+];
+
 
 interface Props {
   tipo: TipoRelatorio;
@@ -76,6 +87,7 @@ interface Props {
 export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
   const [safraId, setSafraId] = useState("");
   const [inscricaoId, setInscricaoId] = useState("");
+  const [operacaoFiltro, setOperacaoFiltro] = useState("");
   const [produtorId, setProdutorId] = useState("");
   const [produtoId, setProdutoId] = useState("");
   const [siloId, setSiloId] = useState("");
@@ -1751,6 +1763,9 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       return;
     }
 
+    // Filtro opcional por tipo de operação (aplicado após calcular o local canônico da IE)
+    const opSel = OPERACOES_EXTRATO.find(o => o.value === operacaoFiltro);
+
     // Normaliza o Local por IE: cada Inscrição aparece sob um único "Local de Entrega"
     // (o local dos depósitos/colheitas; fallback = transferências/compras; senão sede).
     // Isso evita que Vendas e Compras criem sub-grupos separados por local dentro da mesma IE.
@@ -1770,15 +1785,22 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
     });
 
 
+    const rowsFinais = opSel ? rows.filter(r => opSel.ops.includes(r.operacao)) : rows;
+    if (rowsFinais.length === 0) {
+      toast({ title: "Sem dados", description: `Nenhuma movimentação do tipo "${opSel?.label}" para os filtros.` });
+      return;
+    }
+
     const inscSel = inscricaoId ? inscricoesDoProdutor.find(i => i.id === inscricaoId) : null;
     const filtroInscLabel = inscSel ? `${inscSel.inscricao_estadual}${(inscSel as any).nome_fantasia ? ' - ' + (inscSel as any).nome_fantasia : ''}` : null;
 
     gerarExtratoMovimentacaoPdf({
       produtorNome, cpfCnpj: produtorCpf, safraNome,
       filtroInscricao: filtroInscLabel,
+      filtroOperacao: opSel?.label || null,
       titulo,
       orientation: vendasOrientacao, format: vendasTamanho,
-      rows,
+      rows: rowsFinais,
     });
   };
 
@@ -2390,6 +2412,21 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
                 allLabel="Todas"
                 disabled={!produtorId}
                 popoverWidth="w-[400px]"
+              />
+            </div>
+          )}
+
+          {/* Tipo de operação - extrato / extrato_movimentacao */}
+          {(tipo === "extrato" || tipo === "extrato_movimentacao") && (
+            <div>
+              <Label>Tipo de operação</Label>
+              <ComboboxFilter
+                value={operacaoFiltro}
+                onValueChange={setOperacaoFiltro}
+                options={OPERACOES_EXTRATO.map(o => ({ value: o.value, label: o.label }))}
+                placeholder="Todas as operações"
+                searchPlaceholder="Buscar operação..."
+                allLabel="Todas"
               />
             </div>
           )}
