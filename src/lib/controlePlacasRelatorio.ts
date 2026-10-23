@@ -61,6 +61,13 @@ const estilo = {
   styles: { fontSize: 7.5, cellPadding: 1.2 },
   headStyles: { fillColor: [46, 125, 50] as [number, number, number] },
   margin: { left: 14, right: 14 },
+  // Cabeçalho segue o alinhamento da coluna (numéricos à direita, data/romaneio centralizados).
+  didParseCell: (d: { section: string; cell: { styles: { halign?: string } }; column: { raw?: unknown }; table: { columns: { index: number }[] }; column_index?: number } & { column: { index: number } }) => {
+    if (d.section !== "head") return;
+    const cs = (d as unknown as { table: { settings: { columnStyles: Record<number, { halign?: string }> } } }).table.settings.columnStyles;
+    const h = cs?.[d.column.index]?.halign;
+    if (h) d.cell.styles.halign = h;
+  },
 };
 const negrito = (row: (string | number)[]) =>
   row.map((c) => ({ content: String(c), styles: { fontStyle: "bold" as const } }));
