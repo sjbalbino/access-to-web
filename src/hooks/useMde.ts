@@ -36,7 +36,8 @@ export function useMde() {
 
   /**
    * Escolhe a função de DF-e conforme o provedor fiscal do emitente da inscrição:
-   * ACBr API Nuvem → acbr-api-dfe; demais (Focus NFe) → focus-nfe-mde.
+   * ACBr API Nuvem → acbr-api-dfe; Unimake (UniNFe Cloud) → unimake-api-dfe;
+   * demais (Focus NFe) → focus-nfe-mde.
    */
   const rotaDfe = async (inscricaoId: string): Promise<{ fn: string; inscricaoId: string }> => {
     // O DF-e é por CPF/CNPJ: se a IE selecionada não tem emitente ACBr, usa
@@ -54,11 +55,19 @@ export function useMde() {
       ? await supabase.from("emitentes_nfe").select("id, api_provider").in("id", emitIds)
       : { data: [], error: null };
     if (e2) console.error("DF-e: falha ao ler emitentes:", e2.message);
-    const acbrEmit = new Set(((emits as any[]) || []).filter((e) => e.api_provider === "acbrapi").map((e) => e.id));
+    const provPorEmit = new Map<string, string>();
+    for (const e of (emits as any[]) || []) provPorEmit.set(e.id, String(e.api_provider ?? "focusnfe"));
+    const provDe = (r: { emitente_id: string | null }) =>
+      (r.emitente_id ? provPorEmit.get(r.emitente_id) : undefined) || "focusnfe";
     const lista = ((inscs as any[]) || []) as Array<{ id: string; emitente_id: string | null }>;
-    const ehAcbr = (r: { emitente_id: string | null }) => !!r.emitente_id && acbrEmit.has(r.emitente_id);
-    const acbr = lista.find((r) => r.id === inscricaoId && ehAcbr(r)) ?? lista.find(ehAcbr);
-    return acbr ? { fn: "acbr-api-dfe", inscricaoId: acbr.id } : { fn: "focus-nfe-mde", inscricaoId };
+    const alvo = lista.find((r) => r.id === inscricaoId && ["acbrapi", "unimake"].includes(provDe(r)))
+      ?? lista.find((r) => ["acbrapi", "unimake"].includes(provDe(r)));
+    if (!alvo) return { fn: "focus-nfe-mde", inscricaoId };
+    const prov = provDe(alvo);
+    return {
+      fn: prov === "acbrapi" ? "acbr-api-dfe" : "unimake-api-dfe",
+      inscricaoId: alvo.id,
+    };
   };
   let rota: { fn: string; inscricaoId: string };
 
@@ -236,7 +245,13 @@ export function useMde() {
   const consultarDestinatarias = async (inscricaoId: string) => {
     setIsLoading(true);
     try {
-      const result = await invokeAction({ action: "consultar", inscricaoId });
+      // Consulta por NSU: o último NSU devolvido pela SEFAZ é guardado localmente
+      // para não repetir documentos já baixados (e não estourar limites da SEFAZ).
+      const ultNsu = Number(localStorage.getItem(`mde_ult_nsu_${inscricaoId}`) ?? 0) || 0;
+      const result = await invokeAction({ action: "consultar", inscricaoId, ultNsu });
+      if (result?.ult_nsu != null) {
+        try { localStorage.setItem(`mde_ult_nsu_${inscricaoId}`, String(result.ult_nsu)); } catch { /* ignore */ }
+      }
       const raw: any[] = Array.isArray(result.data) ? result.data : [];
       const items: NfeRecebida[] = raw.map((r) => mapRaw(r));
       // Atualiza cache com o que veio da SEFAZ

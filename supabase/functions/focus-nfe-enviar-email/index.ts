@@ -142,6 +142,16 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+    // Emitentes Unimake (UniNFe Cloud): a API não oferece envio de e-mail de DF-e.
+    if (String(emit?.api_provider ?? "").toLowerCase() === "unimake") {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "A Unimake (UniNFe Cloud) não oferece envio de e-mail pela API. Baixe o DANFE e o XML da nota e envie manualmente para os destinatários.",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const ambiente: number | null = emit?.ambiente ?? null;
     const cred = Array.isArray(emit?.emitentes_nfe_credentials)
       ? emit?.emitentes_nfe_credentials?.[0]
