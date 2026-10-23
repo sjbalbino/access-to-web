@@ -117,7 +117,7 @@ serve(async (req) => {
     };
     console.log("Inutilizando numeração via ACBr API:", body);
 
-    const response = await acbrFetch(cred, `/nfe/inutilizacao`, {
+    const response = await acbrFetch(cred, `/nfe/inutilizacoes`, {
       method: "POST",
       body,
     });
