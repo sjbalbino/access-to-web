@@ -101,7 +101,7 @@ serve(async (req) => {
       );
     }
 
-    const response = await acbrFetch(cred, `/nfe/${ref}/carta_correcao`, {
+    const response = await acbrFetch(cred, `/nfe/${ref}/carta-correcao`, {
       method: "POST",
       body: { correcao },
     });
