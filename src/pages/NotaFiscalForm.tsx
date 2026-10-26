@@ -1127,11 +1127,18 @@ export default function NotaFiscalForm() {
         const r = result as { error?: string; details?: Record<string, unknown> };
         const motivoSefaz = (r.details?.mensagem_sefaz as string) || (r.details?.motivo_status as string);
         const motivo = motivoSefaz && motivoSefaz !== r.error ? motivoSefaz : undefined;
+        const errosValidacao = Array.isArray(r.details?.errors)
+          ? (r.details?.errors as unknown[]).map(String)
+          : [];
         setEmissionStatus({ 
           step: "error", 
-          message: "NF-e não emitida", 
+          message: errosValidacao.length > 0
+            ? "NF-e não enviada à SEFAZ — corrija as pendências abaixo"
+            : "NF-e não emitida", 
           progress: 100,
-          details: [r.error, motivo].filter(Boolean).join("\n") || "Verifique os dados informados e tente novamente."
+          details: errosValidacao.length > 0
+            ? errosValidacao.join("\n")
+            : [r.error, motivo].filter(Boolean).join("\n") || "Verifique os dados informados e tente novamente."
         });
       }
     } catch (error) {
