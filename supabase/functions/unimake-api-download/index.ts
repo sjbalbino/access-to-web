@@ -19,9 +19,6 @@ serve(async (req) => {
     const { notaFiscalId, tipo } = await req.json();
     if (!notaFiscalId) return jsonResp({ success: false, error: "notaFiscalId é obrigatório" }, 400);
     if (!TIPOS.includes(tipo)) return jsonResp({ success: false, error: "tipo inválido" }, 400);
-    if (tipo !== "xml" && tipo !== "danfe") {
-      return jsonResp({ success: false, error: "Este arquivo ainda não está disponível para emitentes Unimake. Baixe o XML ou o DANFE da nota." }, 400);
-    }
     const caller = await getCallerTenant(admin, auth.userId);
     const guard = await assertNotaFiscalTenant(admin, notaFiscalId, caller);
     if (!guard.ok) return tenantErrorResponse(guard, corsUnimake);
@@ -88,6 +85,29 @@ serve(async (req) => {
     });
     const texto = await resp.text();
     if (!resp.ok) throw new Error(`XML não disponível na Unimake: ${unimakeErroTexto(texto, resp.status)}`);
+
+    // Eventos (cancelamento / CC-e) vêm como procEventoNFe dentro da consulta de situação.
+    if (tipo !== "xml") {
+      const tpEvento = tipo === "xml_cancelamento" ? "110111" : "110110";
+      const eventos = [...texto.matchAll(/<(?:\w+:)?procEventoNFe[\s\S]*?<\/(?:\w+:)?procEventoNFe>/gi)]
+        .map((m) => m[0])
+        .filter((x) => new RegExp(`<(?:\\w+:)?tpEvento>${tpEvento}<`).test(x));
+      const evento = eventos[eventos.length - 1]; // último evento (CC-e mais recente)
+      if (!evento) {
+        const nome = tipo === "xml_cancelamento" ? "cancelamento" : "carta de correção";
+        return jsonResp({ success: false, error: `A SEFAZ ainda não retornou o evento de ${nome} desta nota.` }, 404);
+      }
+      const xmlEvento = `<?xml version="1.0" encoding="UTF-8"?>${evento}`;
+      if (tipo !== "cce_pdf") {
+        return new Response(xmlEvento, {
+          headers: { ...corsUnimake, "Content-Type": "application/xml", "Content-Disposition": `attachment; filename="${tipo}_${ctx.chave}.xml"` },
+        });
+      }
+      const pdf = await gerarPdfCce(evento, ctx.chave);
+      return new Response(pdf, {
+        headers: { ...corsUnimake, "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="cce_${ctx.chave}.pdf"` },
+      });
+    }
     return new Response(texto, {
       headers: { ...corsUnimake, "Content-Type": "application/xml", "Content-Disposition": `attachment; filename="nfe_${ctx.chave}.xml"` },
     });
