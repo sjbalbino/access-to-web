@@ -79,10 +79,10 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
   };
 
   const isUnimake = provider === "unimake";
-  const providerLabel = provider.startsWith("acbr") ? "ACBr API" : "Focus NFe";
+  const providerLabel = provider.startsWith("acbr") ? "ACBr API" : provider === "unimake" ? "Unimake" : "Focus NFe";
 
   const handleEnviar = async () => {
-    if (!nota || isUnimake) return;
+    if (!nota) return;
     const lista = buildEmailList();
     if (lista.length === 0) {
       toast.error("Selecione ao menos um destinatário válido");
@@ -106,8 +106,8 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
           </DialogTitle>
           <DialogDescription>
             {isUnimake ? (
-              <>O provedor fiscal deste emitente (Unimake) não envia e-mail. Baixe o <strong>DANFE</strong> e o <strong>XML</strong> da nota
-              {nota?.numero ? ` nº ${nota.numero}` : ""} e envie manualmente aos destinatários.</>
+              <>O <strong>SisAgro</strong> enviará a <strong>DANFE (PDF)</strong> e o <strong>XML</strong> da NFe
+              {nota?.numero ? ` nº ${nota.numero}` : ""} como anexos, por e-mail próprio, aos destinatários selecionados.</>
             ) : (
               <>A {providerLabel} enviará a <strong>DANFE (PDF)</strong>, o <strong>XML</strong> e, se houver, a <strong>última Carta de Correção</strong> da NFe
               {nota?.numero ? ` nº ${nota.numero}` : ""} para os destinatários selecionados.</>
@@ -194,7 +194,7 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleEnviar} disabled={isUnimake || focusNfe.isLoading || totalPreview === 0}>
+          <Button onClick={handleEnviar} disabled={focusNfe.isLoading || totalPreview === 0}>
             <Mail className="h-4 w-4 mr-2" />
             {focusNfe.isLoading ? "Enviando..." : "Enviar"}
           </Button>

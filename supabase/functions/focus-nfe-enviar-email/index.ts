@@ -147,14 +147,87 @@ serve(async (req) => {
       );
     }
     // Emitentes Unimake (UniNFe Cloud): a API não oferece envio de e-mail de DF-e.
+    // O SisAgro baixa o DANFE (PDF) e o XML autorizado e envia por conta própria via Resend.
     if (String(emit?.api_provider ?? "").toLowerCase() === "unimake") {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "A Unimake (UniNFe Cloud) não oferece envio de e-mail pela API. Baixe o DANFE e o XML da nota e envie manualmente para os destinatários.",
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      try {
+        const ctx = await carregarContextoNota(supabase, notaFiscalId);
+        if (!ctx.chave) {
+          return new Response(
+            JSON.stringify({ success: false, error: "A nota não possui chave de acesso para buscar o DANFE/XML na Unimake." }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        const token = await obterTokenUnimake(ctx.cred);
+        const base = `${unimakeBaseUrl(ctx.cred.ambiente)}/api/v1/${ctx.docEmitente}/NFe`;
+
+        // XML autorizado (nfeProc) — devolvido pela consulta da Unimake
+        const cons = await fetch(`${base}/Consultar/${ctx.chave}?tpAmb=${tpAmbUnimake(ctx.cred.ambiente)}`, {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/xml" },
+        });
+        const procXml = await cons.text();
+        if (!cons.ok || !/<nfeProc[\s>]/i.test(procXml)) {
+          throw new Error(`Não foi possível obter o XML autorizado da nota na Unimake: ${unimakeErroTexto(procXml, cons.status)}`);
+        }
+
+        // DANFE: PDF armazenado na Unimake ou gerado a partir do procNFe
+        const extrairPdf = async (r: Response): Promise<Uint8Array | null> => {
+          const buf = new Uint8Array(await r.arrayBuffer());
+          if (buf.length > 4 && String.fromCharCode(...buf.slice(0, 4)) === "%PDF") return buf;
+          const txt = new TextDecoder().decode(buf);
+          const m = txt.match(/JVBERi0[A-Za-z0-9+/=\r\n]+/);
+          if (!m) return null;
+          try {
+            const bin = atob(m[0].replace(/[\r\n]/g, ""));
+            return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+          } catch { return null; }
+        };
+        let pdf: Uint8Array | null = null;
+        const danfeResp = await fetch(`${base}/DANFE/${ctx.chave}`, {
+          headers: { Authorization: `Bearer ${token}`, Accept: "application/pdf" },
+        });
+        if (danfeResp.ok) pdf = await extrairPdf(danfeResp);
+        if (!pdf) {
+          const ger = await fetch(`${base}/DANFE/${ctx.chave}?regerar=true`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xml", Accept: "application/pdf" },
+            body: procXml.replace(/^\uFEFF/, ""),
+          });
+          if (ger.ok) pdf = await extrairPdf(ger);
+        }
+        if (!pdf) {
+          throw new Error("A Unimake não retornou o DANFE da nota; tente novamente em alguns minutos.");
+        }
+
+        const anexos = [
+          { filename: `nfe_${ctx.chave}.xml`, content: bytesParaBase64(new TextEncoder().encode(procXml)) },
+          { filename: `danfe_${ctx.chave}.pdf`, content: bytesParaBase64(pdf) },
+        ];
+        const numeroLabel = ctx.nota?.numero ? ` ${ctx.nota.numero}` : "";
+        const serieLabel = ctx.nota?.serie ? `/ ${ctx.nota.serie}` : "";
+        const html = `<p>Prezado(a),</p><p>Segue em anexo a <strong>DANFE (PDF)</strong> e o <strong>XML</strong> da NF-e${numeroLabel}${serieLabel}, emitida pelo SisAgro.</p><p>Este é um e-mail automático; não responda.</p>`;
+
+        const r = await enviarEmailResend({
+          to: emailsLimpos,
+          subject: `NF-e${numeroLabel}${serieLabel} - DANFE e XML em anexo`,
+          html,
+          attachments: anexos,
+        });
+        if (!r.ok) {
+          const detalhe = r.body?.message ?? r.body?.name ?? JSON.stringify(r.body ?? {});
+          throw new Error(`O serviço de envio de e-mail recusou o envio: ${String(detalhe).slice(0, 300)}`);
+        }
+        console.log("Email NFe enviado via Resend (emitente Unimake):", ctx.chave, "Para:", emailsLimpos);
+        return new Response(
+          JSON.stringify({ success: true, emails: emailsLimpos, provider: "unimake-resend" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Erro ao enviar email pela Unimake";
+        return new Response(
+          JSON.stringify({ success: false, error: msg }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
     const ambiente: number | null = emit?.ambiente ?? null;
     const cred = Array.isArray(emit?.emitentes_nfe_credentials)
