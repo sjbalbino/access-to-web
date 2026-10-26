@@ -59,8 +59,10 @@ export async function obterTokenUnimake(cred: UnimakeCredentials): Promise<strin
     body: JSON.stringify({ appId: cred.appId, secret: cred.secret }),
   });
   if (!resp.ok) {
+    // Inclui o motivo real devolvido pela Unimake (ex.: "Aplicação não encontrada.")
+    const motivo = unimakeErroTexto(await resp.text().catch(() => ""), resp.status);
     throw new Error(
-      `A Unimake recusou as credenciais (HTTP ${resp.status}). Confira o App ID e o Secret no cadastro do emitente.`,
+      `A Unimake recusou as credenciais (${motivo}). Confira o App ID e o Secret no cadastro do emitente (ambiente ${unimakeAmbienteLabel(cred.ambiente)}).`,
     );
   }
   const data = await resp.json();
