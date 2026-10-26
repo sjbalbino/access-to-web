@@ -194,7 +194,7 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleEnviar} disabled={focusNfe.isLoading || totalPreview === 0}>
+          <Button onClick={handleEnviar} disabled={isUnimake || focusNfe.isLoading || totalPreview === 0}>
             <Mail className="h-4 w-4 mr-2" />
             {focusNfe.isLoading ? "Enviando..." : "Enviar"}
           </Button>
