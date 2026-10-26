@@ -3951,7 +3951,11 @@ export default function NotaFiscalForm() {
                       <div className="space-y-1">
                         <p>{emissionStatus.message}</p>
                         {emissionStatus.details && (
-                          <p className="text-xs opacity-80">{emissionStatus.details}</p>
+                          <ul className="list-disc pl-4 space-y-1 text-xs max-h-48 overflow-y-auto">
+                            {emissionStatus.details.split("\n").filter(Boolean).map((linha) => (
+                              <li key={linha}>{linha}</li>
+                            ))}
+                          </ul>
                         )}
                       </div>
                     </AlertDescription>
