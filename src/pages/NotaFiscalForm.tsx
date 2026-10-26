@@ -3871,7 +3871,7 @@ export default function NotaFiscalForm() {
               <div className="flex justify-between gap-2">
                 <span className="text-muted-foreground">Nota</span>
                 <span className="font-semibold">
-                  Nº {formData.numero || "—"}{formData.serie ? ` · Série ${formData.serie}` : ""}
+                  Nº {existingNota?.numero ?? "—"}{existingNota?.serie ? ` · Série ${existingNota.serie}` : ""}
                 </span>
               </div>
               <div className="flex justify-between gap-2">
