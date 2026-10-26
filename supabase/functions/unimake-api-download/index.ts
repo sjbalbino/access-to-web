@@ -116,3 +116,39 @@ serve(async (req) => {
     return jsonResp({ success: false, error: error instanceof Error ? error.message : "Erro desconhecido" }, 500);
   }
 });
+
+/** Gera um PDF simples da Carta de Correção a partir do procEventoNFe. */
+async function gerarPdfCce(evento: string, chave: string): Promise<Uint8Array> {
+  const { PDFDocument, StandardFonts } = await import("https://esm.sh/pdf-lib@1.17.1");
+  const tag = (n: string) => evento.match(new RegExp(`<(?:\\w+:)?${n}>([^<]*)<`, "i"))?.[1] ?? "";
+  const dec = (s: string) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const page = doc.addPage([595, 842]);
+  let y = 800;
+  // deno-lint-ignore no-explicit-any
+  const linha = (t: string, f: any = font, size = 10) => {
+    const limpo = t.replace(/[^\x20-\x7E\u00A0-\u00FF]/g, "");
+    let atual = "";
+    for (const p of limpo.split(" ")) {
+      const teste = atual ? `${atual} ${p}` : p;
+      if (f.widthOfTextAtSize(teste, size) > 515) { page.drawText(atual, { x: 40, y, size, font: f }); y -= size + 4; atual = p; }
+      else atual = teste;
+    }
+    page.drawText(atual, { x: 40, y, size, font: f }); y -= size + 6;
+  };
+  linha("CARTA DE CORREÇÃO ELETRÔNICA (CC-e)", bold, 14);
+  y -= 6;
+  linha(`Chave de acesso: ${chave}`);
+  linha(`Sequência do evento: ${tag("nSeqEvento")}`);
+  linha(`Data do evento: ${tag("dhEvento")}`);
+  linha(`Protocolo: ${tag("nProt")}   Situação: ${tag("cStat")} - ${dec(tag("xMotivo"))}`);
+  y -= 8;
+  linha("Correção:", bold, 11);
+  linha(dec(tag("xCorrecao")));
+  y -= 8;
+  linha("Condições de uso:", bold, 11);
+  linha(dec(tag("xCondUso")), font, 8);
+  return await doc.save();
+}
