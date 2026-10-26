@@ -3867,6 +3867,22 @@ export default function NotaFiscalForm() {
               </DialogDescription>
             </DialogHeader>
 
+            <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
+              <div className="flex justify-between gap-2">
+                <span className="text-muted-foreground">Nota</span>
+                <span className="font-semibold">
+                  Nº {formData.numero || "—"}{formData.serie ? ` · Série ${formData.serie}` : ""}
+                </span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="text-muted-foreground">Destinatário</span>
+                <span className="font-medium text-right truncate max-w-[70%]" title={formData.dest_nome}>
+                  {formData.dest_nome || "—"}
+                </span>
+              </div>
+            </div>
+
+
             <div className="space-y-6 py-4">
               {/* Progress bar */}
               <div className="space-y-2">
