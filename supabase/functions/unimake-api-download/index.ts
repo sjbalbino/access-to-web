@@ -33,16 +33,53 @@ serve(async (req) => {
     const base = `${unimakeBaseUrl(ctx.cred.ambiente)}/api/v1/${ctx.docEmitente}/NFe`;
 
     if (tipo === "danfe") {
+      const pdfResp = (buf: Uint8Array) => new Response(buf, {
+        headers: { ...corsUnimake, "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="danfe_${ctx.chave}.pdf"` },
+      });
+      // Extrai PDF da resposta: binário (%PDF) ou base64 (puro, JSON ou XML).
+      const extrairPdf = async (r: Response): Promise<Uint8Array | null> => {
+        const buf = new Uint8Array(await r.arrayBuffer());
+        if (buf.length > 4 && String.fromCharCode(...buf.slice(0, 4)) === "%PDF") return buf;
+        const txt = new TextDecoder().decode(buf);
+        const m = txt.match(/JVBERi0[A-Za-z0-9+/=\r\n]+/);
+        if (!m) return null;
+        try {
+          const bin = atob(m[0].replace(/[\r\n]/g, ""));
+          return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+        } catch { return null; }
+      };
+
+      // 1) PDF já armazenado na Unimake
       const resp = await fetch(`${base}/DANFE/${ctx.chave}`, {
         headers: { Authorization: `Bearer ${token}`, Accept: "application/pdf" },
       });
-      if (!resp.ok) {
-        const t = await resp.text();
-        throw new Error(`DANFE não disponível na Unimake: ${unimakeErroTexto(t, resp.status)}`);
+      if (resp.ok) {
+        const pdf = await extrairPdf(resp);
+        if (pdf) return pdfResp(pdf);
+      } else {
+        await resp.text();
       }
-      return new Response(await resp.arrayBuffer(), {
-        headers: { ...corsUnimake, "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="danfe_${ctx.chave}.pdf"` },
+
+      // 2) Não armazenado: obtém o procNFe pela consulta e pede para gerar o DANFE.
+      const cons = await fetch(`${base}/Consultar/${ctx.chave}?tpAmb=${tpAmbUnimake(ctx.cred.ambiente)}`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/xml" },
       });
+      const procXml = await cons.text();
+      if (!cons.ok || !/<nfeProc[\s>]/i.test(procXml)) {
+        throw new Error(`DANFE não disponível na Unimake: não foi possível obter o XML autorizado da nota (${unimakeErroTexto(procXml, cons.status)}).`);
+      }
+      const ger = await fetch(`${base}/DANFE/${ctx.chave}?regerar=true`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/xml", Accept: "application/pdf" },
+        body: procXml.replace(/^\uFEFF/, ""),
+      });
+      if (!ger.ok) {
+        const t = await ger.text();
+        throw new Error(`A Unimake não conseguiu gerar o DANFE: ${unimakeErroTexto(t, ger.status)}`);
+      }
+      const pdf = await extrairPdf(ger);
+      if (!pdf) throw new Error("A Unimake respondeu, mas não devolveu um PDF de DANFE válido.");
+      return pdfResp(pdf);
     }
 
     // XML: a consulta da Unimake devolve o XML de protocolo/distribuição da nota
