@@ -2,6 +2,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { acbrFetch, buscarCredenciaisAcbr } from "../_shared/acbr-api.ts";
 import { assertNotaFiscalTenant, getCallerTenant, tenantErrorResponse } from "../_shared/tenant-guard.ts";
+import {
+  carregarContextoNota, obterTokenUnimake, tpAmbUnimake, unimakeBaseUrl, unimakeErroTexto,
+} from "../_shared/unimake-api.ts";
+import { bytesParaBase64, enviarEmailResend } from "../_shared/resend-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
