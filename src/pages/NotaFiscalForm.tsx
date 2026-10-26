@@ -1127,11 +1127,18 @@ export default function NotaFiscalForm() {
         const r = result as { error?: string; details?: Record<string, unknown> };
         const motivoSefaz = (r.details?.mensagem_sefaz as string) || (r.details?.motivo_status as string);
         const motivo = motivoSefaz && motivoSefaz !== r.error ? motivoSefaz : undefined;
+        const errosValidacao = Array.isArray(r.details?.errors)
+          ? (r.details?.errors as unknown[]).map(String)
+          : [];
         setEmissionStatus({ 
           step: "error", 
-          message: "NF-e não emitida", 
+          message: errosValidacao.length > 0
+            ? "NF-e não enviada à SEFAZ — corrija as pendências abaixo"
+            : "NF-e não emitida", 
           progress: 100,
-          details: [r.error, motivo].filter(Boolean).join("\n") || "Verifique os dados informados e tente novamente."
+          details: errosValidacao.length > 0
+            ? errosValidacao.join("\n")
+            : [r.error, motivo].filter(Boolean).join("\n") || "Verifique os dados informados e tente novamente."
         });
       }
     } catch (error) {
@@ -3860,6 +3867,22 @@ export default function NotaFiscalForm() {
               </DialogDescription>
             </DialogHeader>
 
+            <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
+              <div className="flex justify-between gap-2">
+                <span className="text-muted-foreground">Nota</span>
+                <span className="font-semibold">
+                  Nº {existingNota?.numero ?? "—"}{existingNota?.serie ? ` · Série ${existingNota.serie}` : ""}
+                </span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="text-muted-foreground">Destinatário</span>
+                <span className="font-medium text-right truncate max-w-[70%]" title={formData.dest_nome}>
+                  {formData.dest_nome || "—"}
+                </span>
+              </div>
+            </div>
+
+
             <div className="space-y-6 py-4">
               {/* Progress bar */}
               <div className="space-y-2">
@@ -3928,7 +3951,11 @@ export default function NotaFiscalForm() {
                       <div className="space-y-1">
                         <p>{emissionStatus.message}</p>
                         {emissionStatus.details && (
-                          <p className="text-xs opacity-80">{emissionStatus.details}</p>
+                          <ul className="list-disc pl-4 space-y-1 text-xs max-h-48 overflow-y-auto">
+                            {emissionStatus.details.split("\n").filter(Boolean).map((linha) => (
+                              <li key={linha}>{linha}</li>
+                            ))}
+                          </ul>
                         )}
                       </div>
                     </AlertDescription>
