@@ -34,6 +34,7 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
   const focusNfe = useFocusNfe();
   const [emailEmitente, setEmailEmitente] = useState<string | null>(null);
   const [emailContador, setEmailContador] = useState<string | null>(null);
+  const [provider, setProvider] = useState<string>("");
   const [sendDest, setSendDest] = useState(true);
   const [sendEmitente, setSendEmitente] = useState(true);
   const [sendContador, setSendContador] = useState(true);
@@ -43,16 +44,18 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
     if (!open || !nota?.emitente_id) {
       setEmailEmitente(null);
       setEmailContador(null);
+      setProvider("");
       return;
     }
     (async () => {
       const { data } = await supabase
         .from("emitentes_nfe")
-        .select("email_emitente, email_contador")
+        .select("email_emitente, email_contador, api_provider")
         .eq("id", nota.emitente_id)
         .maybeSingle();
       setEmailEmitente((data as any)?.email_emitente ?? null);
       setEmailContador((data as any)?.email_contador ?? null);
+      setProvider(String((data as any)?.api_provider ?? "").toLowerCase());
     })();
     setSendDest(true);
     setSendEmitente(true);
@@ -75,8 +78,11 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
     return Array.from(new Set(list.map((e) => e.toLowerCase()))).filter((e) => EMAIL_RE.test(e));
   };
 
+  const isUnimake = provider === "unimake";
+  const providerLabel = provider.startsWith("acbr") ? "ACBr API" : "Focus NFe";
+
   const handleEnviar = async () => {
-    if (!nota) return;
+    if (!nota || isUnimake) return;
     const lista = buildEmailList();
     if (lista.length === 0) {
       toast.error("Selecione ao menos um destinatário válido");
@@ -99,10 +105,14 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
             Enviar NFe por Email
           </DialogTitle>
           <DialogDescription>
-            A Focus NFe enviará a <strong>DANFE (PDF)</strong>, o <strong>XML</strong> e, se houver, a <strong>última Carta de Correção</strong> da NFe
-            {nota?.numero ? ` nº ${nota.numero}` : ""} para os destinatários selecionados.
+            {isUnimake ? (
+              <>O provedor fiscal deste emitente (Unimake) não envia e-mail. Baixe o <strong>DANFE</strong> e o <strong>XML</strong> da nota
+              {nota?.numero ? ` nº ${nota.numero}` : ""} e envie manualmente aos destinatários.</>
+            ) : (
+              <>A {providerLabel} enviará a <strong>DANFE (PDF)</strong>, o <strong>XML</strong> e, se houver, a <strong>última Carta de Correção</strong> da NFe
+              {nota?.numero ? ` nº ${nota.numero}` : ""} para os destinatários selecionados.</>
+            )}
           </DialogDescription>
-
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -184,7 +194,7 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleEnviar} disabled={focusNfe.isLoading || totalPreview === 0}>
+          <Button onClick={handleEnviar} disabled={isUnimake || focusNfe.isLoading || totalPreview === 0}>
             <Mail className="h-4 w-4 mr-2" />
             {focusNfe.isLoading ? "Enviando..." : "Enviar"}
           </Button>
