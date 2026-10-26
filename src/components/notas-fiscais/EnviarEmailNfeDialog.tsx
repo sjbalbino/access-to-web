@@ -78,8 +78,11 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
     return Array.from(new Set(list.map((e) => e.toLowerCase()))).filter((e) => EMAIL_RE.test(e));
   };
 
+  const isUnimake = provider === "unimake";
+  const providerLabel = provider.startsWith("acbr") ? "ACBr API" : "Focus NFe";
+
   const handleEnviar = async () => {
-    if (!nota) return;
+    if (!nota || isUnimake) return;
     const lista = buildEmailList();
     if (lista.length === 0) {
       toast.error("Selecione ao menos um destinatário válido");
@@ -102,10 +105,14 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
             Enviar NFe por Email
           </DialogTitle>
           <DialogDescription>
-            A Focus NFe enviará a <strong>DANFE (PDF)</strong>, o <strong>XML</strong> e, se houver, a <strong>última Carta de Correção</strong> da NFe
-            {nota?.numero ? ` nº ${nota.numero}` : ""} para os destinatários selecionados.
+            {isUnimake ? (
+              <>O provedor fiscal deste emitente (Unimake) não envia e-mail. Baixe o <strong>DANFE</strong> e o <strong>XML</strong> da nota
+              {nota?.numero ? ` nº ${nota.numero}` : ""} e envie manualmente aos destinatários.</>
+            ) : (
+              <>A {providerLabel} enviará a <strong>DANFE (PDF)</strong>, o <strong>XML</strong> e, se houver, a <strong>última Carta de Correção</strong> da NFe
+              {nota?.numero ? ` nº ${nota.numero}` : ""} para os destinatários selecionados.</>
+            )}
           </DialogDescription>
-
         </DialogHeader>
 
         <div className="space-y-4 py-2">
