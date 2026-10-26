@@ -34,6 +34,7 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
   const focusNfe = useFocusNfe();
   const [emailEmitente, setEmailEmitente] = useState<string | null>(null);
   const [emailContador, setEmailContador] = useState<string | null>(null);
+  const [provider, setProvider] = useState<string>("");
   const [sendDest, setSendDest] = useState(true);
   const [sendEmitente, setSendEmitente] = useState(true);
   const [sendContador, setSendContador] = useState(true);
@@ -43,16 +44,18 @@ export function EnviarEmailNfeDialog({ open, onOpenChange, nota }: EnviarEmailNf
     if (!open || !nota?.emitente_id) {
       setEmailEmitente(null);
       setEmailContador(null);
+      setProvider("");
       return;
     }
     (async () => {
       const { data } = await supabase
         .from("emitentes_nfe")
-        .select("email_emitente, email_contador")
+        .select("email_emitente, email_contador, api_provider")
         .eq("id", nota.emitente_id)
         .maybeSingle();
       setEmailEmitente((data as any)?.email_emitente ?? null);
       setEmailContador((data as any)?.email_contador ?? null);
+      setProvider(String((data as any)?.api_provider ?? "").toLowerCase());
     })();
     setSendDest(true);
     setSendEmitente(true);
