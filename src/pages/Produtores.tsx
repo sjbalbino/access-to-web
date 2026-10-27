@@ -174,6 +174,15 @@ export default function Produtores() {
         if (doc.length > 0 && !validateCnpj(doc)) { toast.error("CNPJ inválido!"); return; }
       }
     }
+    // Granja é exigida pela regra de segurança do banco; usa a única granja disponível como padrão
+    if (!formData.granja_id) {
+      if (granjas && granjas.length === 1) {
+        formData.granja_id = granjas[0].id;
+      } else {
+        toast.error("Selecione a Granja do produtor antes de salvar.");
+        return;
+      }
+    }
     if (editingItem) {
       await updateProdutor.mutateAsync({ id: editingItem.id, ...formData });
       toast.success("Produtor atualizado com sucesso!");
@@ -469,7 +478,7 @@ export default function Produtores() {
                     <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
                   </div>
                   <div className="space-y-2">
-                    <Label>Granja</Label>
+                    <Label>Granja <span className="text-destructive">*</span></Label>
                     <Select isSearchable value={formData.granja_id || ""} onValueChange={(v) => setFormData({ ...formData, granja_id: v || null })}>
                       <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
