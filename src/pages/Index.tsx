@@ -108,7 +108,7 @@ export default function Index() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            Acesso Rápido
+            <span className="text-blue-600 dark:text-blue-400">Lotes em Leilões</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
