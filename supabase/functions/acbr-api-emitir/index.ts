@@ -211,11 +211,11 @@ serve(async (req) => {
       emitentes_nfe?: { id?: string; ambiente: number | null; numero_atual_nfe?: number | null; serie_nfe?: number | string | null; certificado_validade?: string | null };
     })?.emitentes_nfe;
     // Bloqueio: certificado A1 vencido impede a emissão
-    if (emitenteData?.certificado_validade && new Date(emitenteData.certificado_validade) < new Date()) {
+    if (emitenteData?.certificado_validade && new Date(`${String(emitenteData.certificado_validade).slice(0, 10)}T23:59:59.999-03:00`) < new Date()) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `O certificado digital A1 deste emitente venceu em ${new Date(emitenteData.certificado_validade).toLocaleDateString("pt-BR")}. Envie um novo certificado na tela de Emitentes NF-e (botão da chave) para liberar a emissão.`,
+          error: `O certificado digital A1 deste emitente venceu em ${String(emitenteData.certificado_validade).slice(0, 10).split("-").reverse().join("/")}. Envie um novo certificado na tela de Emitentes NF-e (botão da chave) para liberar a emissão.`,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
