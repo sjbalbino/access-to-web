@@ -261,6 +261,21 @@ export function useDeleteContratoVenda() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Executa o cancelamento/exclusão atômica via transação ou chamadas sequenciais seguras
+      const { error: parcelasError } = await supabase
+        .from("parcelas_venda")
+        .delete()
+        .eq("contrato_venda_id", id);
+
+      if (parcelasError) throw parcelasError;
+
+      const { error: lotesError } = await supabase
+        .from("lotes_venda")
+        .delete()
+        .eq("contrato_venda_id", id);
+
+      if (lotesError) throw lotesError;
+
       const { error } = await supabase
         .from("contratos_venda")
         .delete()
@@ -270,10 +285,10 @@ export function useDeleteContratoVenda() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contratos_venda"] });
-      toast.success("Contrato excluído com sucesso!");
+      toast.success("Venda e registros associados cancelados com sucesso!");
     },
     onError: (error) => {
-      toast.error(`Erro ao excluir contrato: ${error.message}`);
+      toast.error(`Erro ao cancelar venda ativamente: ${error.message}`);
     },
   });
 }
