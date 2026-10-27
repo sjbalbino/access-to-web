@@ -261,37 +261,19 @@ export function useDeleteContratoVenda() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // Executa o cancelamento/exclusão atômica via função RPC do Supabase ou transação robusta
-      const { error: rpcError } = await supabase.rpc("cancelar_venda_atomica", { _contrato_id: id });
-      
-      if (rpcError) {
-        // Fallback caso a RPC atômica específica não exista ainda no banco, executando validação e exclusão encadeada segura
-        const { data: remessas } = await supabase
-          .from("remessas_venda")
-          .select("id")
-          .eq("contrato_venda_id", id);
+      const { error } = await supabase
+        .from("contratos_venda")
+        .delete()
+        .eq("id", id);
 
-        if (remessas && remessas.length > 0) {
-          const remessaIds = remessas.map(r => r.id);
-          // Remover dependências de parcelas/baixas/contas vinculadas se houver
-          await supabase.from("contas_receber").delete().eq("contrato_venda_id", id);
-          await supabase.from("remessas_venda").delete().in("id", remessaIds);
-        }
-
-        const { error: deleteError } = await supabase
-          .from("contratos_venda")
-          .delete()
-          .eq("id", id);
-
-        if (deleteError) throw deleteError;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contratos_venda"] });
-      toast.success("Venda e registros associados cancelados com sucesso!");
+      toast.success("Contrato excluído com sucesso!");
     },
     onError: (error) => {
-      toast.error(`Erro ao realizar cancelamento atômico da venda: ${error.message}`);
+      toast.error(`Erro ao excluir contrato: ${error.message}`);
     },
   });
 }
