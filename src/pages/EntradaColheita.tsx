@@ -190,6 +190,7 @@ export default function EntradaColheita() {
   const { data: sementes = [] } = useProdutosSementes();
   const { data: tabelaUmidades = [] } = useTabelaUmidades();
   const { data: controleLavouras = [] } = useControleLavouras(safraId || null);
+  // Observação: a lista só é exibida após a seleção da safra (ver lavourasFiltradasPorTipo)
   const { data: cargasPendentes = [], isLoading: loadingPendentes } = useColheitasPendentes(safraId || null);
   const { cfops = [] } = useCfops();
 
@@ -338,6 +339,8 @@ export default function EntradaColheita() {
   // - Sócio ou sem seleção: mostra todas
   // - Ordena alfabeticamente pelo nome da lavoura
   const lavourasFiltradasPorTipo = useMemo(() => {
+    // Sem safra selecionada não exibe nenhuma lavoura
+    if (!safraId) return [];
     return [...controleLavouras]
       .filter(cl => cl.lavoura_id && cl.lavouras)
       .filter(cl => tipoProdutor === "produtor" ? cl.lavouras?.recebe_terceiros === true : true)
@@ -1044,7 +1047,7 @@ export default function EntradaColheita() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div className="space-y-2">
                 <Label>Safra *</Label>
-                <Select isSearchable value={safraId} onValueChange={setSafraId}>
+                <Select isSearchable value={safraId} onValueChange={(v) => { setSafraId(v); setSelectedLavouraId(null); setSelectedPendente(null); }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
@@ -1194,7 +1197,9 @@ export default function EntradaColheita() {
                         {lavourasFiltradasPorTipo.length === 0 ? (
                           <TableRow>
                             <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                              Nenhuma lavoura cadastrada para esta safra
+                              {safraId
+                                ? "Nenhuma lavoura cadastrada para esta safra"
+                                : "Selecione uma safra acima para visualizar as lavouras"}
                             </TableCell>
                           </TableRow>
                         ) : (
