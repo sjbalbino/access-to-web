@@ -74,7 +74,7 @@ export default function Index() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <DataCard
-          title={<span className="text-blue-600 dark:text-blue-400">Granjas</span>}
+          title="Granjas"
           value={loadingGranjas ? "..." : granjas?.length || 0}
           description="Cadastradas no sistema"
           icon={<Building2 className="h-5 w-5" />}
