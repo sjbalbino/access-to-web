@@ -14,7 +14,11 @@ export interface ColheitaPendente {
   tipo_colheita: string | null;
   variedade_id: string | null;
   created_at: string;
+  hora_entrada?: string | null;
+  kg_desconto_total?: number | null;
+  inscricao_produtor_id?: string | null;
   placas?: { id: string; placa: string } | null;
+  inscricoes_produtor?: { id: string; nome: string | null; produtores?: { nome: string | null } | null } | null;
 }
 
 export interface ColheitaEntradaInput {
@@ -74,7 +78,11 @@ export function useColheitasPendentes(safraId: string | null) {
           tipo_colheita,
           variedade_id,
           created_at,
-          placas (id, placa)
+          hora_entrada,
+          kg_desconto_total,
+          inscricao_produtor_id,
+          placas (id, placa),
+          inscricoes_produtor (id, nome, produtores (nome))
         `)
         .eq("safra_id", safraId)
         .gt("peso_bruto", 0)
