@@ -1169,8 +1169,7 @@ export default function EntradaColheita() {
         </Card>
 
         <div className="grid lg:grid-cols-2 gap-6">
-            {/* Coluna Esquerda: Lavouras e Pesagem Entrada */}
-            <div className="space-y-6">
+            <div className="contents">
               {/* Lista de Lavouras */}
               <Card className="border-l-4 border-l-emerald-500 bg-emerald-500/5">
                 <CardHeader className="pb-3">
@@ -1187,13 +1186,14 @@ export default function EntradaColheita() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Lavoura</TableHead>
+                          <TableHead>Granja</TableHead>
                           <TableHead className="text-right">Área (ha)</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {lavourasFiltradasPorTipo.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
                               Nenhuma lavoura cadastrada para esta safra
                             </TableCell>
                           </TableRow>
@@ -1217,6 +1217,9 @@ export default function EntradaColheita() {
                                   )}
                                   {cl.lavouras?.nome}
                                 </div>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {cl.lavouras?.granjas?.nome_fantasia || cl.lavouras?.granjas?.razao_social || cl.granja?.nome_fantasia || cl.granja?.razao_social || "-"}
                               </TableCell>
                               <TableCell className="text-right">
                                 {cl.ha_plantado?.toFixed(2) || cl.lavouras?.total_hectares?.toFixed(2) || "-"}
@@ -1412,40 +1415,46 @@ export default function EntradaColheita() {
               </Card>
             </div>
 
-            {/* Coluna Direita: Cargas Pendentes e Pesagem Saída */}
-            <div className="space-y-6">
+        </div>
+        <div className="space-y-6">
               {/* Cargas Pendentes */}
               <Card className="border-l-4 border-l-amber-500 bg-amber-500/5">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2 text-amber-700 dark:text-amber-400">
                     <Truck className="h-4 w-4" />
-                    Cargas Pendentes (Aguardando Saída)
+                    Selecione a carga que está sendo descarregada para dar Saída
                     {cargasPendentes.length > 0 && (
                       <Badge variant="secondary">{cargasPendentes.length}</Badge>
                     )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="max-h-48 overflow-y-auto">
+                  <div className="max-h-64 overflow-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Lavoura</TableHead>
-                          <TableHead>Placa</TableHead>
+                          <TableHead className="text-center">Data</TableHead>
+                          <TableHead className="text-center">Hora</TableHead>
                           <TableHead className="text-right">Bruto</TableHead>
+                          <TableHead className="text-right">Tara</TableHead>
+                          <TableHead className="text-right">Kg Desc.</TableHead>
+                          <TableHead>Produtor</TableHead>
+                          <TableHead>Placa</TableHead>
                           <TableHead className="w-10"></TableHead>
+                        </TableRow>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {loadingPendentes ? (
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center py-8">
+                            <TableCell colSpan={10} className="text-center py-8">
                               <Loader2 className="h-5 w-5 animate-spin mx-auto" />
                             </TableCell>
                           </TableRow>
                         ) : cargasPendentes.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                            <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                               Nenhuma carga pendente
                             </TableCell>
                           </TableRow>
@@ -1470,11 +1479,26 @@ export default function EntradaColheita() {
                                   {controleLavouras.find(cl => cl.id === carga.controle_lavoura_id)?.lavouras?.nome || "-"}
                                 </div>
                               </TableCell>
-                              <TableCell>
-                                {carga.placas?.placa || "-"}
+                              <TableCell className="text-center whitespace-nowrap">
+                                {carga.data_colheita ? new Date(carga.data_colheita + "T00:00:00").toLocaleDateString("pt-BR") : "-"}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {carga.hora_entrada?.slice(0, 5) || new Date(carga.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                               </TableCell>
                               <TableCell className="text-right font-mono">
                                 {carga.peso_bruto?.toLocaleString("pt-BR")}
+                              </TableCell>
+                              <TableCell className="text-right font-mono">
+                                {(carga.peso_tara || 0).toLocaleString("pt-BR")}
+                              </TableCell>
+                              <TableCell className="text-right font-mono">
+                                {Math.round(carga.kg_desconto_total || 0).toLocaleString("pt-BR")}
+                              </TableCell>
+                              <TableCell className="uppercase">
+                                {carga.inscricoes_produtor?.produtores?.nome || carga.inscricoes_produtor?.nome || "-"}
+                              </TableCell>
+                              <TableCell>
+                                {carga.placas?.placa || "-"}
                               </TableCell>
                               <TableCell>
                                 <Button
@@ -1513,7 +1537,10 @@ export default function EntradaColheita() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid lg:grid-cols-3 gap-4">
+                  <div className="space-y-4 rounded-md border bg-background/60 p-3">
+                  <h3 className="text-sm font-bold text-center">Pesagem da Saída</h3>
+                  <div className="grid grid-cols-1 gap-3">
                     <div className="space-y-2">
                       <Label className="text-base">Kgs Entrada</Label>
                       <Input
@@ -1545,9 +1572,11 @@ export default function EntradaColheita() {
                     </div>
                   </div>
 
-                  <Separator />
+                  </div>
+                  <div className="space-y-4 rounded-md border bg-background/60 p-3">
+                  <h3 className="text-sm font-bold text-center">Descontos</h3>
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label>Impureza %</Label>
                       <Input
@@ -1631,7 +1660,9 @@ export default function EntradaColheita() {
                     </div>
                   </div>
 
-                  <Separator />
+                  </div>
+                  <div className="space-y-4 rounded-md border bg-background/60 p-3">
+                  <h3 className="text-sm font-bold text-center">Contra Nota / Resultado</h3>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -1652,7 +1683,7 @@ export default function EntradaColheita() {
                     </div>
                   </div>
 
-                  <Separator />
+
 
                   {/* Seção Contra Nota - apenas para produtores externos */}
                   {tipoProdutor === "produtor" ? (
@@ -1751,6 +1782,8 @@ export default function EntradaColheita() {
                       </CardContent>
                     </Card>
                   ) : null}
+                  </div>
+                  </div>
 
                   <Button 
                     onClick={handleConfirmarSaida}
