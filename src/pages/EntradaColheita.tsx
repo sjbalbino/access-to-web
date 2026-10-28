@@ -1800,7 +1800,6 @@ export default function EntradaColheita() {
                 </CardContent>
               </Card>
             </div>
-          </div>
 
       </div>
 
