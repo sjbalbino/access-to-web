@@ -218,7 +218,7 @@ export async function gerarTicketDepositoPdf(colheitaId: string): Promise<void> 
     orientation: "portrait",
   });
   doc.setFont("courier", "normal");
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setTextColor(0, 0, 0);
 
   let y = topPad;

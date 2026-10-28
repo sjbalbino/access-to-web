@@ -56,7 +56,7 @@ export function TicketDepositoPreview() {
           <style>
             @page { size: 80mm auto; margin: 3mm; }
             body { margin: 0; background: #fff; color: #000; }
-            pre { margin: 0; font-family: "Courier New", monospace; font-size: 8pt; line-height: 1.35; white-space: pre; }
+            pre { margin: 0; font-family: "Courier New", monospace; font-size: 8pt; line-height: 1.35; font-weight: 700; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; white-space: pre; }
           </style>
         </head>
         <body><pre>${escapeHtml(previewText)}</pre></body>

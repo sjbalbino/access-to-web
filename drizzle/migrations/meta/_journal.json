@@ -22,13 +22,6 @@
       "when": 1793210893838,
       "tag": "0002_migration",
       "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1793211455332,
-      "tag": "0003_colheita_umidade_cascata",
-      "breakpoints": true
     }
   ]
 }
