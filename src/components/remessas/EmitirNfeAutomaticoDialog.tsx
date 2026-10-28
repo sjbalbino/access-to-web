@@ -326,7 +326,9 @@ export function EmitirNfeAutomaticoDialog({
       try {
         await supabase
           .from("remessas_venda")
-          .update({ nota_fiscal_id: notaFiscal.id })
+          // nota_fiscal_tentativa_id nunca é limpo: permite ao banco religar a
+          // remessa se a SEFAZ autorizar depois de um falso timeout.
+          .update({ nota_fiscal_id: notaFiscal.id, nota_fiscal_tentativa_id: notaFiscal.id })
           .eq("id", remessa.id);
       } catch (linkError) {
         console.error("Falha ao vincular NFe à remessa:", linkError);
@@ -500,7 +502,26 @@ export function EmitirNfeAutomaticoDialog({
       const emitResult = await focusNfe.emitirNfe(notaFiscal.id, notaDataForEmission, itensDataForEmission);
 
       if (!emitResult.success) {
-        // Não foi para a SEFAZ: desfazer o vínculo para permitir nova tentativa
+        // Antes de desfazer, conferir se a nota não foi autorizada mesmo assim
+        // (resposta lenta/timeout do provedor).
+        const { data: notaAtual } = await supabase
+          .from("notas_fiscais")
+          .select("status")
+          .eq("id", notaFiscal.id)
+          .maybeSingle();
+        const st = String(notaAtual?.status || "").toLowerCase();
+        if (st === "autorizada" || st === "autorizado") {
+          await supabase
+            .from("remessas_venda")
+            .update({ nota_fiscal_id: notaFiscal.id, status: "carregado_nfe" })
+            .eq("id", remessa.id);
+          setStatus({ step: "success", message: "NFe autorizada com sucesso!", progress: 100, notaFiscalId: notaFiscal.id });
+          toast.success("NFe autorizada (confirmada após demora do provedor).");
+          onSuccess();
+          return;
+        }
+        // Não autorizada: desfazer o vínculo para permitir nova tentativa.
+        // Se a SEFAZ autorizar depois, o banco religa automaticamente.
         await supabase
           .from("remessas_venda")
           .update({ nota_fiscal_id: null, status: "carregado" })

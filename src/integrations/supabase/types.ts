@@ -5199,6 +5199,7 @@ export type Database = {
           motorista: string | null
           motorista_cpf: string | null
           nota_fiscal_id: string | null
+          nota_fiscal_tentativa_id: string | null
           numero_nota_legado: string | null
           observacoes: string | null
           peso_bruto: number | null
@@ -5249,6 +5250,7 @@ export type Database = {
           motorista?: string | null
           motorista_cpf?: string | null
           nota_fiscal_id?: string | null
+          nota_fiscal_tentativa_id?: string | null
           numero_nota_legado?: string | null
           observacoes?: string | null
           peso_bruto?: number | null
@@ -5299,6 +5301,7 @@ export type Database = {
           motorista?: string | null
           motorista_cpf?: string | null
           nota_fiscal_id?: string | null
+          nota_fiscal_tentativa_id?: string | null
           numero_nota_legado?: string | null
           observacoes?: string | null
           peso_bruto?: number | null
