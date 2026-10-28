@@ -218,11 +218,13 @@ export async function gerarTicketDepositoPdf(colheitaId: string): Promise<void> 
     orientation: "portrait",
   });
   doc.setFont("courier", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(8.5);
+  doc.setTextColor(0, 0, 0);
 
   let y = topPad;
   for (const l of lines) {
-    doc.setFont("courier", l.bold ? "bold" : "normal");
+    // Tudo em negrito: impressora térmica deixa a fonte fina muito apagada
+    doc.setFont("courier", "bold");
     if (l.center) {
       doc.text(l.text, PAGE_W / 2, y, { align: "center" });
     } else {
