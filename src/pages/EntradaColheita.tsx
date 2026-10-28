@@ -1443,7 +1443,6 @@ export default function EntradaColheita() {
                           <TableHead>Placa</TableHead>
                           <TableHead className="w-10"></TableHead>
                         </TableRow>
-                        </TableRow>
                       </TableHeader>
                       <TableBody>
                         {loadingPendentes ? (
