@@ -380,7 +380,8 @@ export default function EntradaColheita() {
            formSaida.umidade <= t.umidade_maxima
     );
     const percentualDescontoUmidade = faixaUmidade?.desconto_percentual || 0;
-    const kgUmidade = pesoLiquido * (percentualDescontoUmidade / 100);
+    // Cascata (igual à balança): umidade incide sobre o peso já sem impureza
+    const kgUmidade = (pesoLiquido - kgImpureza) * (percentualDescontoUmidade / 100);
     
     // Avariados e Outros
     const kgAvariados = pesoLiquido * (formSaida.percentual_avariados / 100);
