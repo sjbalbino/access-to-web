@@ -23,18 +23,37 @@ function nomeFuncaoParaProvider(focusName: string, provider: string): string {
   return provider === "acbrapi" ? focusName.replace("focus-nfe", "acbr-api") : focusName;
 }
 
+// Referência gerada pela Focus NFe: nfe_<uuid da nota>_<timestamp>_<sufixo>.
+// ACBr usa "nfe_<hash 32 hex>" e Unimake usa a chave de acesso.
+const FOCUS_REF_REGEX = /^nfe_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_\d+_/i;
+
+/**
+ * Identifica o provedor que EMITIU a nota (pode diferir do provedor atual do
+ * emitente, quando houve troca de provedor). Retorna null se não for possível
+ * deduzir pela própria nota.
+ */
+export function detectarProvedorOrigemNota(uuidApi: string | null | undefined): string | null {
+  if (uuidApi && FOCUS_REF_REGEX.test(uuidApi)) return "focusnfe";
+  return null;
+}
+
 export async function resolverFuncaoPorNota(notaFiscalId: string | undefined, focusName: string): Promise<string> {
   if (!notaFiscalId) return focusName;
-  const cached = providerCache.get(notaFiscalId);
+  const isDownload = focusName === "focus-nfe-download";
+  const cacheKey = isDownload ? `dl:${notaFiscalId}` : notaFiscalId;
+  const cached = providerCache.get(cacheKey);
   if (cached) return nomeFuncaoParaProvider(focusName, cached);
   try {
     const { data } = await supabase
       .from("notas_fiscais")
-      .select("emitente_id, emitentes_nfe!notas_fiscais_emitente_id_fkey(api_provider)")
+      .select("emitente_id, uuid_api, emitentes_nfe!notas_fiscais_emitente_id_fkey(api_provider)")
       .eq("id", notaFiscalId)
       .maybeSingle();
-    const provider = (data as { emitentes_nfe?: { api_provider?: string | null } | null } | null)?.emitentes_nfe?.api_provider || "focusnfe";
-    providerCache.set(notaFiscalId, provider);
+    const row = data as { uuid_api?: string | null; emitentes_nfe?: { api_provider?: string | null } | null } | null;
+    const atual = row?.emitentes_nfe?.api_provider || "focusnfe";
+    // Downloads de notas antigas vão ao provedor de origem (ex.: emitida na Focus antes da troca).
+    const provider = isDownload ? (detectarProvedorOrigemNota(row?.uuid_api) ?? atual) : atual;
+    providerCache.set(cacheKey, provider);
     return nomeFuncaoParaProvider(focusName, provider);
   } catch {
     return focusName;
