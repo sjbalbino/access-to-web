@@ -1,3 +1,4 @@
+import { notaTemCce, contarCce } from "./notaFiscalAcoes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,6 +104,11 @@ export function NotasFiscaisMobileList({
                             {" "}
                             / Série {nota.serie || "-"}
                           </span>
+                          {notaTemCce(nota) && (
+                            <Badge variant="outline" className="ml-1 px-1 py-0 text-[10px] border-primary text-primary">
+                              CC-e{contarCce(nota.info_complementar) > 1 ? ` ${contarCce(nota.info_complementar)}` : ""}
+                            </Badge>
+                          )}
                         </div>
                         <div className="font-medium text-sm break-words">
                           {nota.dest_nome || "-"}
