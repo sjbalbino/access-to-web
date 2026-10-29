@@ -78,6 +78,7 @@ const formatDataEmissao = (dataEmissao: string | null | undefined, createdAt: st
   }
   return `${dataPart} ${horaPart}`;
 };
+import { notaTemCce, contarCce } from "@/components/notas-fiscais/notaFiscalAcoes";
 import { useFocusNfe, resolverFuncaoPorNota } from "@/hooks/useFocusNfe";
 import { toast } from "sonner";
 import { formatCpfCnpj } from "@/lib/formatters";
@@ -168,6 +169,7 @@ export default function NotasFiscais() {
   const [numeroNotaInput, setNumeroNotaInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [emitenteFilter, setEmitenteFilter] = useState("todos");
+  const [somenteCce, setSomenteCce] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [alsoInutilizar, setAlsoInutilizar] = useState(false);
   const [inutJustificativa, setInutJustificativa] = useState("");
@@ -379,7 +381,8 @@ export default function NotasFiscais() {
 
     const matchesStatus = statusFilter === "todos" || nota.status === statusFilter;
     const matchesEmitente = emitenteFilter === "todos" || nota.emitente_id === emitenteFilter;
-    return matchesSearch && matchesNumeroNota && matchesStatus && matchesEmitente;
+    const matchesCce = !somenteCce || notaTemCce(nota as any);
+    return matchesSearch && matchesNumeroNota && matchesStatus && matchesEmitente && matchesCce;
   });
 
   const handleDelete = async () => {
@@ -610,6 +613,15 @@ export default function NotasFiscais() {
               emptyText="Nenhum emitente encontrado."
               className="w-full sm:w-64"
             />
+            <Button
+              type="button"
+              variant={somenteCce ? "default" : "outline"}
+              onClick={() => setSomenteCce((v) => !v)}
+              aria-pressed={somenteCce}
+              className="w-full sm:w-auto"
+            >
+              Somente com CC-e
+            </Button>
 
           </div>
           {canEdit && (
@@ -718,6 +730,11 @@ export default function NotasFiscais() {
                           <TableCell className="font-mono whitespace-nowrap px-2">
                             {nota.numero || "-"}
                             <span className="text-xs text-muted-foreground"> / {nota.serie || "-"}</span>
+                            {notaTemCce(nota) && (
+                              <Badge variant="outline" className="ml-1 px-1 py-0 text-[10px] border-primary text-primary" title={`${contarCce(nota.info_complementar)} Carta(s) de Correção`}>
+                                CC-e{contarCce(nota.info_complementar) > 1 ? ` ${contarCce(nota.info_complementar)}` : ""}
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className="px-2">
                             <div className="min-w-0">

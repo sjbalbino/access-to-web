@@ -247,3 +247,17 @@ export function buildNotaFiscalAcoes(
 
   return acoes;
 }
+
+/** Indica se a NF-e possui Carta de Correção registrada (ignora rascunhos duplicados). */
+export function notaTemCce(nota: { status?: string | null; info_complementar?: string | null }): boolean {
+  return (
+    nota.status !== "rascunho" &&
+    typeof nota.info_complementar === "string" &&
+    nota.info_complementar.includes("Carta de Correção")
+  );
+}
+
+/** Quantidade de CC-e registradas no texto complementar. */
+export function contarCce(info: string | null | undefined): number {
+  return (info?.match(/Carta de Correção \(/g) || []).length;
+}
