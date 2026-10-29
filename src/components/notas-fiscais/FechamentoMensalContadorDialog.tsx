@@ -23,7 +23,7 @@ interface Props {
 }
 
 interface NotaFechamento {
-  id: string; numero: number | null; serie: string | null; status: string | null;
+  id: string; numero: number | null; serie: string | number | null; status: string | null;
   total_nota: number | null; uuid_api: string | null; info_complementar: string | null; data_emissao: string | null;
 }
 

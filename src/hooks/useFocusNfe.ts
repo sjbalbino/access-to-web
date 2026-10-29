@@ -742,6 +742,7 @@ export function useFocusNfe() {
     cancelarNfe,
     emitirCartaCorrecao,
     downloadArquivo,
+    obterArquivo,
     pollStatus,
     enviarEmail,
     inutilizarNumeracao,
