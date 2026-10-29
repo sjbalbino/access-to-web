@@ -144,6 +144,37 @@ serve(async (req) => {
     }
 
     if (!downloadUrl) {
+      // CC-e: endpoints diretos da ACBr API (/nfe/{ref}/carta-correcao/pdf|xml)
+      if (tipo === "cce_pdf" || tipo === "cce_xml" || tipo === "xml_cancelamento") {
+        const caminho = tipo === "cce_pdf"
+          ? "carta-correcao/pdf"
+          : tipo === "cce_xml" ? "carta-correcao/xml" : "cancelamento/xml";
+        const resp = await acbrFetch(cred, `/nfe/${ref}/${caminho}`, {
+          accept: tipo === "cce_pdf" ? "application/pdf" : "application/xml",
+        });
+        if (resp.ok) {
+          const buf = await resp.arrayBuffer();
+          return new Response(buf, {
+            headers: {
+              ...corsHeaders,
+              "Content-Type": contentType,
+              "Content-Disposition": `attachment; filename="${filename}"`,
+            },
+          });
+        }
+        const corpo = await resp.text().catch(() => "");
+        console.log(`Endpoint ${caminho} falhou:`, resp.status, corpo);
+        const rotuloEvt = tipo === "xml_cancelamento" ? "O XML do cancelamento" : "A Carta de Correção";
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: resp.status === 404
+              ? `${rotuloEvt} desta nota não foi encontrada no provedor ACBr. Ela pode ter sido registrada por outro provedor ou ainda não foi homologada.`
+              : `${rotuloEvt} não pôde ser baixada agora (ACBr HTTP ${resp.status}). Tente novamente em instantes.`,
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       // Fallback: endpoints diretos da ACBr API (/nfe/{ref}/pdf e /nfe/{ref}/xml)
       if (tipo === "danfe" || tipo === "xml") {
         const direto = tipo === "danfe" ? "pdf" : "xml";
