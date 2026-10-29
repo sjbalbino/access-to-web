@@ -463,6 +463,29 @@ export function useFocusNfe() {
     }
   };
 
+  /**
+   * Obtém o arquivo (DANFE/XML/eventos) como Blob, sem disparar download.
+   * Usado no compartilhamento por WhatsApp e no pacote mensal do contador.
+   */
+  const obterArquivo = async (
+    ref: string,
+    tipo: "xml" | "danfe" | "xml_cancelamento" | "cce_pdf" | "cce_xml",
+    notaFiscalId: string
+  ): Promise<Blob> => {
+    const fnDownload = await resolverFuncaoPorNota(notaFiscalId, "focus-nfe-download");
+    const { data, error } = await supabase.functions.invoke(fnDownload, {
+      body: { ref, tipo, notaFiscalId },
+    });
+    if (error) throw new Error(error.message);
+    if (data && typeof data === "object" && !(data instanceof Blob) && "error" in data) {
+      throw new Error(String((data as { error: unknown }).error));
+    }
+    if (data instanceof Blob) return data;
+    return new Blob([data], {
+      type: tipo === "danfe" || tipo === "cce_pdf" ? "application/pdf" : "application/xml",
+    });
+  };
+
   const downloadArquivo = async (
     ref: string,
     tipo: "xml" | "danfe" | "xml_cancelamento" | "cce_pdf" | "cce_xml",
