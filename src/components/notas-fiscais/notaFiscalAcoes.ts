@@ -11,6 +11,7 @@ import {
   FileEdit,
   XCircle,
   Trash2,
+  MessageCircle,
 } from "lucide-react";
 
 export type TipoDownloadNfe = "xml" | "danfe" | "xml_cancelamento" | "cce_pdf" | "cce_xml";
@@ -36,6 +37,7 @@ export interface NotaFiscalAcoesHandlers {
   onVisualizarDanfe: () => void;
   onDownload: (tipo: TipoDownloadNfe) => void;
   onEnviarEmail: () => void;
+  onEnviarWhatsapp?: () => void;
   onCartaCorrecao: () => void;
   onCancelar: () => void;
   onConsultarRejeicao: () => void;
@@ -172,6 +174,16 @@ export function buildNotaFiscalAcoes(
         onClick: h.onEnviarEmail,
         group: "secondary",
       },
+      ...(h.onEnviarWhatsapp
+        ? [{
+            key: "whatsapp",
+            label: "Enviar por WhatsApp",
+            icon: MessageCircle,
+            iconClass: "text-emerald-600",
+            onClick: h.onEnviarWhatsapp,
+            group: "secondary" as const,
+          }]
+        : []),
       {
         key: "cce",
         label: "Carta de Correção",

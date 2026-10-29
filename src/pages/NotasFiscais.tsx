@@ -42,6 +42,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEmitentesNfe } from "@/hooks/useEmitentesNfe";
 import { ContraNotaDialog, ContraNotaData } from "@/components/notas-fiscais/ContraNotaDialog";
 import { EnviarEmailNfeDialog } from "@/components/notas-fiscais/EnviarEmailNfeDialog";
+import { EnviarWhatsappNfeDialog } from "@/components/notas-fiscais/EnviarWhatsappNfeDialog";
+import { FechamentoMensalContadorDialog } from "@/components/notas-fiscais/FechamentoMensalContadorDialog";
 import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
 import { buildNotaFiscalAcoes } from "@/components/notas-fiscais/notaFiscalAcoes";
 import { NotasFiscaisMobileList, type GrupoEmitenteNotas } from "@/components/notas-fiscais/NotasFiscaisMobileList";
@@ -177,6 +179,8 @@ export default function NotasFiscais() {
   const [isCartaCorrecaoDialogOpen, setIsCartaCorrecaoDialogOpen] = useState(false);
   const [isContraNotaDialogOpen, setIsContraNotaDialogOpen] = useState(false);
   const [isEnviarEmailDialogOpen, setIsEnviarEmailDialogOpen] = useState(false);
+  const [isWhatsappDialogOpen, setIsWhatsappDialogOpen] = useState(false);
+  const [isFechamentoOpen, setIsFechamentoOpen] = useState(false);
   const [isInutilizarDialogOpen, setIsInutilizarDialogOpen] = useState(false);
   const [selectedNota, setSelectedNota] = useState<any>(null);
   const [justificativa, setJustificativa] = useState("");
@@ -467,6 +471,7 @@ export default function NotasFiscais() {
       onVisualizarDanfe: () => handleVisualizarDanfe(nota),
       onDownload: (tipo) => handleDownload(nota, tipo),
       onEnviarEmail: () => { setSelectedNota(nota); setIsEnviarEmailDialogOpen(true); },
+      onEnviarWhatsapp: () => { setSelectedNota(nota); setIsWhatsappDialogOpen(true); },
       onCartaCorrecao: () => { setSelectedNota(nota); setIsCartaCorrecaoDialogOpen(true); },
       onCancelar: () => { setSelectedNota(nota); setIsCancelDialogOpen(true); },
       onConsultarRejeicao: () => handleConsultarRejeicao(nota),
@@ -626,6 +631,10 @@ export default function NotasFiscais() {
           </div>
           {canEdit && (
             <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" onClick={() => setIsFechamentoOpen(true)}>
+                <FileText className="h-4 w-4 mr-2" />
+                Fechamento do Mês
+              </Button>
               <Button variant="outline" onClick={() => setIsContraNotaDialogOpen(true)}>
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Contra-Nota
@@ -1075,6 +1084,17 @@ export default function NotasFiscais() {
           open={isEnviarEmailDialogOpen}
           onOpenChange={setIsEnviarEmailDialogOpen}
           nota={selectedNota}
+        />
+        <EnviarWhatsappNfeDialog
+          open={isWhatsappDialogOpen}
+          onOpenChange={setIsWhatsappDialogOpen}
+          nota={selectedNota}
+          emitenteNome={(() => { const e: any = emitentes.find((x: any) => x.id === selectedNota?.emitente_id); return e?.inscricao?.nome || e?.granja?.razao_social || null; })()}
+        />
+        <FechamentoMensalContadorDialog
+          open={isFechamentoOpen}
+          onOpenChange={setIsFechamentoOpen}
+          emitentes={emitentes as any}
         />
 
         {/* Dialog de Inutilização de Numeração */}

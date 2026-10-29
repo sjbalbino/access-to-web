@@ -58,6 +58,7 @@
     "input-otp": "^1.4.2",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.2",
+    "jszip": "^3.10.2",
     "lucide-react": "^0.556.0",
     "motion": "^13.2.0",
     "nanoid": "^6.0.1",
