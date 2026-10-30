@@ -1324,7 +1324,7 @@ export function NotaDepositoFormDialog({ open, onOpenChange, onSuccess, editNota
 
       {/* Painel de Progresso da Emissão */}
       <Dialog open={isEmissionDialogOpen} onOpenChange={handleCloseEmissionDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md grid-cols-[minmax(0,1fr)] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {emissionStatus.step === "success" ? (
