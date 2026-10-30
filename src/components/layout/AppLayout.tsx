@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Wheat } from "lucide-react";
 import { loadPdfBrand } from "@/lib/pdfBrand";
 import { AssistenteWidget } from "@/components/assistente/AssistenteWidget";
+import { DemoBanner } from "./DemoBanner";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -25,6 +26,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
 
         <div className="flex-1 flex flex-col min-w-0">
+          <DemoBanner />
           {/* Mobile Header */}
           <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-background sticky top-0 z-40">
             <MobileNav />
