@@ -326,9 +326,34 @@ serve(async (req) => {
 
     const payloadAcbr = await montarPayloadAcbr(supabase, notaData as Record<string, unknown>, ambiente, ref);
     console.log("Payload ACBr infNFe:", JSON.stringify(payloadAcbr));
-    const response = await acbrFetch(cred, `/nfe`, { method: "POST", body: payloadAcbr });
+    let response = await acbrFetch(cred, `/nfe`, { method: "POST", body: payloadAcbr });
+    let responseText = await response.text();
 
-    const responseText = await response.text();
+    // A empresa existe na ACBr, mas sem configuração de NF-e (ConfigNfeNotFound):
+    // registra automaticamente (PUT /empresas/{doc}/nfe) e reenvia uma única vez.
+    if (!response.ok && responseText.includes("ConfigNfeNotFound")) {
+      const nd = notaData as Record<string, unknown>;
+      const docEmit = String(nd.cnpj_emitente || nd.cpf_emitente || "").replace(/\D/g, "");
+      const crtRaw = Number((emitenteData as { crt?: number | null } | undefined)?.crt ?? nd.regime_tributario ?? 3);
+      const configBody = {
+        CRT: [1, 2, 3, 4].includes(crtRaw) ? crtRaw : 3,
+        ambiente: ambiente === 2 ? "homologacao" : "producao",
+      };
+      console.log(`ConfigNfeNotFound — configurando NF-e na ACBr para ${docEmit}:`, JSON.stringify(configBody));
+      if (docEmit) {
+        const cfg = await acbrFetch(cred, `/empresas/${docEmit}/nfe`, {
+          method: "PUT",
+          body: configBody,
+          scope: "empresa nfe",
+        });
+        const cfgText = await cfg.text();
+        console.log(`Resposta PUT config NF-e (HTTP ${cfg.status}):`, cfgText.substring(0, 500));
+        if (cfg.ok) {
+          response = await acbrFetch(cred, `/nfe`, { method: "POST", body: payloadAcbr });
+          responseText = await response.text();
+        }
+      }
+    }
     console.log("Resposta bruta ACBr API:", responseText);
 
     let responseData;
