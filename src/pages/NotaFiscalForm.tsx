@@ -3850,7 +3850,7 @@ export default function NotaFiscalForm() {
 
         {/* Emission Progress Dialog */}
         <Dialog open={isEmissionDialogOpen} onOpenChange={handleCloseEmissionDialog}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg grid-cols-[minmax(0,1fr)] overflow-hidden">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 {emissionStatus.step === "success" ? (
@@ -3867,20 +3867,21 @@ export default function NotaFiscalForm() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
-              <div className="flex justify-between gap-2">
-                <span className="text-muted-foreground">Nota</span>
-                <span className="font-semibold">
+            <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1 min-w-0 w-full">
+              <div className="flex justify-between items-center gap-2 min-w-0">
+                <span className="text-muted-foreground shrink-0">Nota</span>
+                <span className="font-semibold truncate">
                   Nº {existingNota?.numero ?? "—"}{existingNota?.serie ? ` · Série ${existingNota.serie}` : ""}
                 </span>
               </div>
-              <div className="flex justify-between gap-2">
-                <span className="text-muted-foreground">Destinatário</span>
-                <span className="font-medium text-right truncate max-w-[70%]" title={formData.dest_nome}>
+              <div className="flex justify-between items-center gap-2 min-w-0">
+                <span className="text-muted-foreground shrink-0">Destinatário</span>
+                <span className="font-medium text-right truncate min-w-0 flex-1" title={formData.dest_nome}>
                   {formData.dest_nome || "—"}
                 </span>
               </div>
             </div>
+
 
 
             <div className="space-y-6 py-4">
