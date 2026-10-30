@@ -20,6 +20,7 @@ import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Seo } from "@/components/portal/Seo";
 import { CotacaoCard } from "@/components/portal/CotacaoCard";
 import { LeadForm } from "@/components/portal/LeadForm";
+import { DemoAccessDialog } from "@/components/portal/DemoAccessDialog";
 import { useCotacoesAtuais, useUltimaColetaCotacoes } from "@/hooks/useCotacoes";
 import { PORTAL_NOME, PORTAL_URL } from "@/config/portal";
 import heroImg from "@/assets/portal-hero.jpg";
@@ -193,6 +194,11 @@ export default function PortalHome() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
+              <DemoAccessDialog
+                trigger={
+                  <Button size="lg" variant="secondary">Testar agora grátis</Button>
+                }
+              />
               <Button asChild size="lg" variant="outline">
                 <Link to="/indicadores">Ver indicadores do mercado</Link>
               </Button>
