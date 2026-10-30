@@ -76,7 +76,7 @@ async function ensureTenant(admin: SupabaseClient): Promise<string> {
   ];
   for (const [i, p] of produtores.entries()) {
     const { data: prod } = await admin.from("produtores").insert({
-      tenant_id: tenantId, granja_id: granjaId, codigo: String(i + 1), nome: p.nome,
+      granja_id: granjaId, codigo: String(i + 1), nome: p.nome,
       tipo_pessoa: "fisica", cpf_cnpj: p.cpf, cidade: "Santo Ângelo", uf: "RS",
       tipo_produtor: i === 0 ? "socio" : "produtor", percentual_participacao: i === 0 ? 100 : 0,
     }).select("id").single();
