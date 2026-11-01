@@ -135,13 +135,14 @@ export function useCreateColheitaEntrada() {
       if (error) throw error;
       return data;
     },
+    // Reenvia automaticamente até 2 vezes apenas em falhas de conexão
+    retry: (count, error) => count < 2 && isErroConexao(error),
+    retryDelay: (attempt) => 1000 * 2 ** attempt,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colheitas_pendentes"] });
       queryClient.invalidateQueries({ queryKey: ["colheitas"] });
     },
-    onError: (error) => {
-      toast.error("Erro ao registrar entrada: " + error.message);
-    },
+    // Mensagem exibida pela tela (evita aviso duplicado)
   });
 }
 
