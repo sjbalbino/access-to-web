@@ -484,6 +484,7 @@ export default function EntradaColheita() {
       await createColheitaEntrada.mutateAsync({
         controle_lavoura_id: controleLavouraId,
         safra_id: safraId,
+        // Data definitiva é carimbada pelo servidor (trigger trg_colheita_data_servidor, fuso de Brasília)
         data_colheita: format(new Date(), "yyyy-MM-dd"),
         peso_bruto: formEntrada.peso_bruto,
         placa_id: formEntrada.placa_id || null,
