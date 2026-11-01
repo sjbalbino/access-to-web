@@ -499,7 +499,7 @@ export default function EntradaColheita() {
       setFormEntrada(initialFormEntrada);
       setSelectedLavouraId(null);
     } catch (error: any) {
-      toast.error("Erro ao registrar entrada: " + error.message);
+      toast.error(mensagemErro("Erro ao registrar entrada", error), { duration: 10000 });
     }
   };
 
