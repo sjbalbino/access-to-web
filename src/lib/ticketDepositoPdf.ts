@@ -195,7 +195,17 @@ export async function gerarTicketDepositoPdf(colheitaId: string): Promise<void> 
   // Balanceiro
   add(`Balanceiro: ${balanceiro || "-"}`);
 
-  // Assinatura
+  // Assinatura do produtor/entregador (linhas em branco para espaço da caneta)
+  add(" ");
+  add(" ");
+  add(" ");
+  add("_".repeat(COLS - 4), { center: true });
+  add("Assinatura do Produtor / Entregador", { center: true });
+
+  // Assinatura do recebedor
+  add(" ");
+  add(" ");
+  add(" ");
   add("_".repeat(COLS - 4), { center: true });
   add("Recebedor", { center: true });
   add(
