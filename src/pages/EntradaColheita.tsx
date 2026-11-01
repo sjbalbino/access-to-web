@@ -1,3 +1,4 @@
+import { mensagemErro } from "@/lib/erroConexao";
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -499,7 +500,7 @@ export default function EntradaColheita() {
       setFormEntrada(initialFormEntrada);
       setSelectedLavouraId(null);
     } catch (error: any) {
-      toast.error("Erro ao registrar entrada: " + error.message);
+      toast.error(mensagemErro("Erro ao registrar entrada", error), { duration: 10000 });
     }
   };
 

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isErroConexao } from "@/lib/erroConexao";
 
 export interface ColheitaPendente {
   id: string;
@@ -135,13 +136,14 @@ export function useCreateColheitaEntrada() {
       if (error) throw error;
       return data;
     },
+    // Reenvia automaticamente até 2 vezes apenas em falhas de conexão
+    retry: (count, error) => count < 2 && isErroConexao(error),
+    retryDelay: (attempt) => 1000 * 2 ** attempt,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colheitas_pendentes"] });
       queryClient.invalidateQueries({ queryKey: ["colheitas"] });
     },
-    onError: (error) => {
-      toast.error("Erro ao registrar entrada: " + error.message);
-    },
+    // Mensagem exibida pela tela (evita aviso duplicado)
   });
 }
 
