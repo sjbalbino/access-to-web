@@ -56,7 +56,9 @@ export function TicketDepositoPreview() {
           <style>
             @page { size: 80mm auto; margin: 3mm; }
             body { margin: 0; background: #fff; color: #000; }
-            pre { margin: 0; font-family: "Courier New", monospace; font-size: 8pt; line-height: 1.35; font-weight: 700; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; white-space: pre; }
+            /* Térmica: Courier New é fina demais mesmo em bold. Usa fontes mono mais
+               encorpadas + contorno (text-stroke) para engrossar o traço impresso. */
+            pre { margin: 0; font-family: "Lucida Console", Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace; font-size: 8pt; line-height: 1.35; font-weight: 900; color: #000; -webkit-text-stroke: 0.35px #000; text-rendering: geometricPrecision; -webkit-font-smoothing: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; white-space: pre; }
           </style>
         </head>
         <body><pre>${escapeHtml(previewText)}</pre></body>

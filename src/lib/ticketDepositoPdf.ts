@@ -230,15 +230,18 @@ export async function gerarTicketDepositoPdf(colheitaId: string): Promise<void> 
   doc.setFont("courier", "normal");
   doc.setFontSize(8);
   doc.setTextColor(0, 0, 0);
+  // Contorno preto sobre o preenchimento: engrossa o traço do Courier na térmica
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.12);
 
   let y = topPad;
   for (const l of lines) {
     // Tudo em negrito: impressora térmica deixa a fonte fina muito apagada
     doc.setFont("courier", "bold");
     if (l.center) {
-      doc.text(l.text, PAGE_W / 2, y, { align: "center" });
+      doc.text(l.text, PAGE_W / 2, y, { align: "center", renderingMode: "fillThenStroke" });
     } else {
-      doc.text(l.text, MARGIN_X, y);
+      doc.text(l.text, MARGIN_X, y, { renderingMode: "fillThenStroke" });
     }
     y += lineH;
   }
