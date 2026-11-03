@@ -20,15 +20,15 @@ const kg = (v: number) => Math.round(v).toLocaleString("pt-BR");
 const dec = (v: number, d = 2) => v.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
 const dataBR = (d: string | null) => (d ? format(parseISO(d.length === 10 ? `${d}T00:00:00` : d), "dd/MM/yyyy") : "");
 
-interface Tot { cargas: number; bruto: number; tara: number; liq: number; kImp: number; kUmi: number; kAv: number; kOut: number; kDesc: number; final: number; sImp: number; sUmi: number; sPh: number }
-const zero = (): Tot => ({ cargas: 0, bruto: 0, tara: 0, liq: 0, kImp: 0, kUmi: 0, kAv: 0, kOut: 0, kDesc: 0, final: 0, sImp: 0, sUmi: 0, sPh: 0 });
+interface Tot { cargas: number; bruto: number; tara: number; liq: number; kImp: number; kUmi: number; kAv: number; kOut: number; kDesc: number; final: number; sImp: number; sUmi: number; sPh: number; sPhc: number }
+const zero = (): Tot => ({ cargas: 0, bruto: 0, tara: 0, liq: 0, kImp: 0, kUmi: 0, kAv: 0, kOut: 0, kDesc: 0, final: 0, sImp: 0, sUmi: 0, sPh: 0, sPhc: 0 });
 function somar(t: Tot, c: ColheitaRel) {
   const liq = n(c.producao_kg);
   t.cargas++; t.bruto += n(c.peso_bruto); t.tara += n(c.peso_tara); t.liq += liq;
   t.kImp += n(c.kg_impureza); t.kUmi += n(c.kg_umidade); t.kAv += n(c.kg_avariados); t.kOut += n(c.kg_outros);
   t.kDesc += n(c.kg_desconto_total); t.final += n(c.producao_liquida_kg);
   // médias ponderadas pelo peso líquido de cada carga
-  t.sImp += n(c.impureza) * liq; t.sUmi += n(c.umidade) * liq; t.sPh += n(c.ph) * liq;
+  t.sImp += n(c.impureza) * liq; t.sUmi += n(c.umidade) * liq; t.sPh += n(c.ph) * liq; t.sPhc += n(c.ph_corrigido ?? c.ph) * liq;
 }
 const media = (s: number, t: Tot) => (t.liq ? s / t.liq : 0);
 
@@ -50,7 +50,7 @@ function linhaTotal(rot: string, t: Tot, comCargas = true) {
   return [
     { content: rot, colSpan: 2, styles: { halign: "left" } }, comCargas ? String(t.cargas) : "", kg(t.bruto), kg(t.tara), kg(t.liq),
     dec(media(t.sImp, t)), kg(t.kImp), dec(media(t.sUmi, t)), "", kg(t.kUmi), "", kg(t.kAv), "", kg(t.kOut),
-    kg(t.kDesc), kg(t.final), kg(t.final / KG_SACO), "", "", "", dec(media(t.sPh, t)), "",
+    kg(t.kDesc), kg(t.final), kg(t.final / KG_SACO), "", "", "", dec(media(t.sPh, t)), dec(media(t.sPhc, t)), "",
   ];
 }
 
@@ -58,8 +58,8 @@ export function gerarColheitaLavouraPdf(colheitas: ColheitaRel[], info: Colheita
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const ordenadas = [...colheitas].sort((a, b) => (a.data_colheita ?? "").localeCompare(b.data_colheita ?? "") || n(a.romaneio) - n(b.romaneio));
   const mediaHa = (t: Tot) => (info.haPlantado > 0 ? t.final / KG_SACO / info.haPlantado : 0);
-  const linhaMedia = (t: Tot) => [{ content: `MÉDIA Sc/Ha: ${dec(mediaHa(t))}`, colSpan: 23, styles: { fontStyle: "italic", halign: "left" } }];
-  const grupo = (txt: string, fill: [number, number, number]) => [{ content: txt, colSpan: 23, styles: { fontStyle: "bold", fillColor: fill, halign: "left" } }];
+  const linhaMedia = (t: Tot) => [{ content: `MÉDIA Sc/Ha: ${dec(mediaHa(t))}`, colSpan: 24, styles: { fontStyle: "italic", halign: "left" } }];
+  const grupo = (txt: string, fill: [number, number, number]) => [{ content: txt, colSpan: 24, styles: { fontStyle: "bold", fillColor: fill, halign: "left" } }];
   const negrito = (row: unknown[]) => row.map((c) => (typeof c === "object" && c ? { ...(c as object), styles: { ...((c as { styles?: object }).styles ?? {}), fontStyle: "bold" } } : { content: c, styles: { fontStyle: "bold" } }));
 
   const body: unknown[][] = [];
@@ -86,12 +86,12 @@ export function gerarColheitaLavouraPdf(colheitas: ColheitaRel[], info: Colheita
             dec(n(c.impureza)), kg(n(c.kg_impureza)), dec(n(c.umidade), 1), dec(n(c.percentual_desconto)), kg(n(c.kg_umidade)),
             dec(n(c.percentual_avariados)), kg(n(c.kg_avariados)), dec(n(c.percentual_outros)), kg(n(c.kg_outros)),
             kg(n(c.kg_desconto_total)), kg(n(c.producao_liquida_kg)), kg(n(c.producao_liquida_kg) / KG_SACO),
-            kg(acKg), kg(acKg / KG_SACO), c.romaneio ?? "", dec(n(c.ph)), c.semente?.nome ?? "",
+            kg(acKg), kg(acKg / KG_SACO), c.romaneio ?? "", dec(n(c.ph)), c.ph_corrigido != null ? dec(n(c.ph_corrigido)) : "", c.semente?.nome ?? "",
           ]);
           excel.push([local, prod, tipo, data, c.placas?.placa ?? "", n(c.peso_bruto), n(c.peso_tara), n(c.producao_kg),
             n(c.impureza), n(c.kg_impureza), n(c.umidade), n(c.percentual_desconto), n(c.kg_umidade), n(c.percentual_avariados),
             n(c.kg_avariados), n(c.percentual_outros), n(c.kg_outros), n(c.kg_desconto_total), n(c.producao_liquida_kg),
-            Math.round(n(c.producao_liquida_kg) / KG_SACO), Math.round(acKg), Math.round(acKg / KG_SACO), c.romaneio ?? "", n(c.ph), c.semente?.nome ?? ""]);
+            Math.round(n(c.producao_liquida_kg) / KG_SACO), Math.round(acKg), Math.round(acKg / KG_SACO), c.romaneio ?? "", n(c.ph), c.ph_corrigido ?? "", c.semente?.nome ?? ""]);
           ultimaData = data;
         }
         body.push(negrito(linhaTotal(tipo, tTipo)));
@@ -125,10 +125,10 @@ export function gerarColheitaLavouraPdf(colheitas: ColheitaRel[], info: Colheita
     headStyles: { fillColor: [46, 125, 50], fontSize: 5.6 },
     head: [[
       "Data", "Placa", "Cargas", "Bruto", "Tara", "Líquido", "Imp.%", "Kgs", "Umi.", "%Um.", "Kgs", "%Av.", "Kgs", "%Out.", "Kgs",
-      "Kg.Desc.", "Líq.Final", "Sacos", "Acum. Kg", "Acum. Sc", "Rom.", "PH", "Variedade",
-    ].map((h, i) => ({ content: h, styles: { halign: i === 0 || i === 20 ? "center" : i >= 2 && i <= 21 ? "right" : "left" } }))] as never,
+      "Kg.Desc.", "Líq.Final", "Sacos", "Acum. Kg", "Acum. Sc", "Rom.", "PH", "PHC", "Variedade",
+    ].map((h, i) => ({ content: h, styles: { halign: i === 0 || i === 20 ? "center" : i >= 2 && i <= 22 ? "right" : "left" } }))] as never,
     body: body as never,
-    columnStyles: { ...direita, 0: { halign: "center" }, 20: { halign: "center" }, 21: { halign: "right" } } as never,
+    columnStyles: { ...direita, 0: { halign: "center" }, 20: { halign: "center" }, 21: { halign: "right" }, 22: { halign: "right" } } as never,
     didDrawPage: () => {
       cab();
       doc.setFontSize(7);
@@ -139,7 +139,7 @@ export function gerarColheitaLavouraPdf(colheitas: ColheitaRel[], info: Colheita
   const sheets: RelatorioSheet[] = [{
     name: "Colheita",
     header: ["Local Entrega", "Produtor", "Tipo", "Data", "Placa", "Bruto", "Tara", "Líquido", "Imp. %", "Kg Imp.", "Umidade %",
-      "% Desc. Um.", "Kg Um.", "% Avar.", "Kg Avar.", "% Outros", "Kg Outros", "Kg Desc.", "Líq. Final", "Sacos", "Acum. Kg", "Acum. Sacos", "Romaneio", "PH", "Variedade"],
+      "% Desc. Um.", "Kg Um.", "% Avar.", "Kg Avar.", "% Outros", "Kg Outros", "Kg Desc.", "Líq. Final", "Sacos", "Acum. Kg", "Acum. Sacos", "Romaneio", "PH", "PHC", "Variedade"],
     rows: excel,
   }];
   const arquivo = `colheita_lavoura_${info.lavoura}_${info.safra}`.replace(/\W+/g, "_");
