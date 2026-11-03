@@ -1048,6 +1048,8 @@ export interface RelColheitaDiariaRow {
   total_sacos: number;
   romaneio: string;
   ph: number;
+  /** PH corrigido (PHC); null quando a carga não tem correção registrada */
+  ph_corrigido: number | null;
   ha: number;
   controle_lavoura_id: string | null;
   tipo_colheita: string;      // industria / semente
@@ -1084,7 +1086,7 @@ export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
   const rows = params.rows;
   const body: any[] = [];
 
-  const numCols = 19; // qtd colunas
+  const numCols = 20; // qtd colunas
   const spacerCells = (label: string, indexOfLabel = 0): any[] => {
     const arr: any[] = new Array(numCols).fill("");
     arr[indexOfLabel] = label;
@@ -1109,6 +1111,7 @@ export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
     formatNumber(r.total_sacos, 0),
     r.romaneio || "",
     r.ph ? formatNumber(r.ph, 2) : "0,00",
+    r.ph_corrigido != null ? formatNumber(r.ph_corrigido, 2) : "",
     "",
     "",
 
@@ -1131,24 +1134,32 @@ export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
         totHa += r.ha || 0;
       }
     });
+    // Médias ponderadas pelo peso líquido de cada carga (mesmo critério do
+    // relatório Colheita por Lavoura). PHC usa o PH quando a carga não tem PHC.
+    const media = (fn: (r: RelColheitaDiariaRow) => number): string => {
+      if (totLiq <= 0) return "";
+      const v = list.reduce((a, r) => a + (fn(r) || 0) * (r.producao_liquida_kg || 0), 0) / totLiq;
+      return formatNumber(v, 2);
+    };
     return [
       label,
       String(list.length),
       formatNumber(s(r => r.peso_bruto), 0),
-      "",
+      media(r => r.perc_impureza),
       formatNumber(s(r => r.kg_impureza), 0),
-      "",
-      "",
+      media(r => r.perc_umidade),
+      media(r => r.perc_desconto),
       formatNumber(s(r => r.kg_umidade), 0),
-      "",
+      media(r => r.perc_avariados),
       formatNumber(s(r => r.kg_avariados), 0),
-      "",
+      media(r => r.perc_outros),
       formatNumber(s(r => r.kg_outros), 0),
       formatNumber(s(r => r.kg_desconto_total), 0),
       formatNumber(totLiq, 0),
       formatNumber(totSacos, 0),
       "",
-      "",
+      media(r => r.ph),
+      media(r => r.ph_corrigido ?? r.ph),
       totHa > 0 ? formatNumber(totHa, 2) : "",
       totHa > 0 ? formatNumber(totSacos / totHa, 2) : "",
     ];
@@ -1222,11 +1233,12 @@ export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
       { content: "SACOS", styles: { halign: "right" } },
       { content: "Romaneio", styles: { halign: "center" } },
       { content: "PH", styles: { halign: "right" } },
+      { content: "PHC", styles: { halign: "right" } },
       { content: "HA", styles: { halign: "right" } },
       { content: "MÉDIA", styles: { halign: "right" } },
     ]],
     body,
-    styles: { fontSize: 6.5, cellPadding: 1 },
+    styles: { fontSize: 6.3, cellPadding: 1 },
     headStyles: { fillColor: [66, 66, 66], textColor: 255, fontSize: 7 },
     columnStyles: {
       0: { halign: "left", cellWidth: 34 },
@@ -1236,7 +1248,7 @@ export function gerarColheitaDiariaPdf(params: RelColheitaDiariaParams): void {
       8: { halign: "right" }, 9: { halign: "right" }, 10: { halign: "right" },
       11: { halign: "right" }, 12: { halign: "right" }, 13: { halign: "right" },
       14: { halign: "right" }, 15: { halign: "center" }, 16: { halign: "right" },
-      17: { halign: "right" }, 18: { halign: "right" },
+      17: { halign: "right" }, 18: { halign: "right" }, 19: { halign: "right" },
     },
     didParseCell: (d) => {
       if (d.section !== "body") return;

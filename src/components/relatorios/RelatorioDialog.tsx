@@ -1147,7 +1147,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
       .select(`
         data_colheita, peso_bruto, peso_tara, producao_kg, kg_impureza, impureza, umidade, percentual_desconto,
         kg_umidade, percentual_avariados, kg_avariados, percentual_outros, kg_outros,
-        kg_desconto_total, producao_liquida_kg, total_sacos, romaneio, ph, tipo_colheita, controle_lavoura_id,
+        kg_desconto_total, producao_liquida_kg, total_sacos, romaneio, ph, ph_corrigido, tipo_colheita, controle_lavoura_id,
 
         local_entrega_terceiro_id, inscricao_produtor_id,
         variedade:produtos!colheitas_variedade_id_fkey(nome),
@@ -1215,6 +1215,7 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
         total_sacos: Number(c.total_sacos) || 0,
         romaneio: c.romaneio != null ? String(c.romaneio) : "",
         ph: Number(c.ph) || 0,
+        ph_corrigido: c.ph_corrigido != null ? Number(c.ph_corrigido) : null,
         ha,
         controle_lavoura_id: c.controle_lavoura_id || null,
         tipo_colheita: c.tipo_colheita || "-",
@@ -1230,12 +1231,12 @@ export function RelatorioDialog({ tipo, open, onOpenChange }: Props) {
 
     setPendingSheets([{
       name: "Colheita Diária",
-      header: ["Data", "Local", "Produtor/CPF", "Variedade", "Kgs.Bruto", "%Imp", "Kgs.Imp", "%Um", "%Desc", "Kgs.Umid", "%Avar", "Avar", "%Outr", "Outros", "Kgs.Desc", "Kgs.Líquido", "SACOS", "Romaneio", "PH", "HA", "MÉDIA"],
+      header: ["Data", "Local", "Produtor/CPF", "Variedade", "Kgs.Bruto", "%Imp", "Kgs.Imp", "%Um", "%Desc", "Kgs.Umid", "%Avar", "Avar", "%Outr", "Outros", "Kgs.Desc", "Kgs.Líquido", "SACOS", "Romaneio", "PH", "PHC", "HA", "MÉDIA"],
       rows: rows.map(r => [
         r.data_colheita ?? "", r.local_nome, r.lavoura_ie, r.variedade,
         r.peso_bruto, r.perc_impureza, r.kg_impureza, r.perc_umidade, r.perc_desconto,
         r.kg_umidade, r.perc_avariados, r.kg_avariados, r.perc_outros, r.kg_outros,
-        r.kg_desconto_total, r.producao_liquida_kg, r.total_sacos, r.romaneio, r.ph, r.ha,
+        r.kg_desconto_total, r.producao_liquida_kg, r.total_sacos, r.romaneio, r.ph, r.ph_corrigido ?? "", r.ha,
         r.ha > 0 ? Math.round(r.producao_liquida_kg / r.ha) : 0,
       ]),
     }]);
