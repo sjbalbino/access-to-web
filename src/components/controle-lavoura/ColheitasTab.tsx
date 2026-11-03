@@ -205,10 +205,15 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
     const totalSacos = colheitas.reduce((sum, c) => sum + (c.total_sacos || 0), 0);
     const totalAreaColhida = colheitas.reduce((sum, c) => sum + (c.area_colhida || 0), 0);
     
-    const mediaImpureza = colheitas.reduce((sum, c) => sum + (c.impureza || 0), 0) / colheitas.length;
-    const mediaUmidade = colheitas.reduce((sum, c) => sum + (c.umidade || 0), 0) / colheitas.length;
-    const mediaPh = colheitas.reduce((sum, c) => sum + (c.ph || 0), 0) / colheitas.length;
-    const mediaPhc = colheitas.reduce((sum, c) => sum + Number(c.ph_corrigido ?? c.ph ?? 0), 0) / colheitas.length;
+    // Médias ponderadas pelo peso da carga (producao_kg), igual ao relatório PDF
+    const ponderada = (val: (c: typeof colheitas[number]) => number) =>
+      totalProducao > 0
+        ? colheitas.reduce((sum, c) => sum + val(c) * Number(c.producao_kg || 0), 0) / totalProducao
+        : 0;
+    const mediaImpureza = ponderada((c) => Number(c.impureza || 0));
+    const mediaUmidade = ponderada((c) => Number(c.umidade || 0));
+    const mediaPh = ponderada((c) => Number(c.ph || 0));
+    const mediaPhc = ponderada((c) => Number(c.ph_corrigido ?? c.ph ?? 0));
     const mediaPorHa = totalAreaColhida > 0 ? totalSacos / totalAreaColhida : 0;
 
     return {
