@@ -588,6 +588,8 @@ export interface RelColheita {
   kg_desconto_total: number | null;
   producao_liquida_kg: number | null;
   total_sacos: number | null;
+  ph?: number | null;
+  ph_corrigido?: number | null;
 }
 
 export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosTexto: string): void {
@@ -602,6 +604,8 @@ export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosText
   doc.setFont("helvetica", "normal");
   doc.text(filtrosTexto, pageWidth / 2, 40, { align: "center" });
 
+  const fmtPh = (v: number | null | undefined) => (v != null && v > 0 ? formatNumber(v, 1) : "-");
+
   const body = colheitas.map(c => [
     formatDate(c.data_colheita),
     c.produtor_nome || "-",
@@ -612,6 +616,8 @@ export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosText
     formatNumber(c.producao_kg, 0),
     c.umidade != null ? formatNumber(c.umidade, 1) + "%" : "-",
     c.impureza != null ? formatNumber(c.impureza, 1) + "%" : "-",
+    fmtPh(c.ph),
+    fmtPh(c.ph_corrigido),
     formatNumber(c.kg_desconto_total, 0),
     formatNumber(c.producao_liquida_kg, 0),
     formatNumber(c.total_sacos, 1),
@@ -621,9 +627,24 @@ export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosText
   const totProdLiq = colheitas.reduce((s, c) => s + (c.producao_liquida_kg || 0), 0);
   const totSacas = colheitas.reduce((s, c) => s + (c.total_sacos || 0), 0);
 
+  // Média ponderada pelo peso líquido (mesmo critério dos demais relatórios).
+  // PHC ausente usa o PH da carga como fallback.
+  const mediaPond = (getV: (c: RelColheita) => number | null | undefined): number | null => {
+    let soma = 0, peso = 0;
+    for (const c of colheitas) {
+      const v = getV(c);
+      const w = c.producao_kg || 0;
+      if (v != null && v > 0 && w > 0) { soma += v * w; peso += w; }
+    }
+    return peso > 0 ? soma / peso : null;
+  };
+  const mediaPh = mediaPond(c => c.ph);
+  const mediaPhc = mediaPond(c => (c.ph_corrigido && c.ph_corrigido > 0 ? c.ph_corrigido : c.ph));
+
   body.push([
     "TOTAL", "", "", "",
     formatNumber(totPesoBruto, 0), "", "", "", "",
+    fmtPh(mediaPh), fmtPh(mediaPhc),
     "",
     formatNumber(totProdLiq, 0),
     formatNumber(totSacas, 1),
@@ -639,6 +660,8 @@ export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosText
       { content: "Líquido", styles: { halign: "right" } },
       { content: "Umid.", styles: { halign: "right" } },
       { content: "Imp.", styles: { halign: "right" } },
+      { content: "PH", styles: { halign: "right" } },
+      { content: "PHC", styles: { halign: "right" } },
       { content: "Desc.", styles: { halign: "right" } },
       { content: "Prod.Líq.", styles: { halign: "right" } },
       { content: "Sacas", styles: { halign: "right" } },
@@ -653,7 +676,8 @@ export function gerarRelatorioColheitasPdf(colheitas: RelColheita[], filtrosText
       3: { halign: "left", cellWidth: 18 },
       4: { halign: "right" }, 5: { halign: "right" }, 6: { halign: "right" },
       7: { halign: "right" }, 8: { halign: "right" }, 9: { halign: "right" },
-      10: { halign: "right" }, 11: { halign: "right" },
+      10: { halign: "right" }, 11: { halign: "right" }, 12: { halign: "right" },
+      13: { halign: "right" },
     },
     didParseCell: (data) => {
       if (data.row.index === body.length - 1 && data.section === "body") {
