@@ -492,8 +492,8 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                         <TableCell className="text-right text-sm font-medium">{formatNumber(colheita.producao_liquida_kg, 0)}</TableCell>
                         <TableCell className="text-right text-sm font-medium">{formatNumber(colheita.total_sacos, 2)}</TableCell>
                         <TableCell className="text-right text-sm">{formatNumber(colheita.produtividade_sacas_ha, 2)}</TableCell>
-                        {informarPh && <TableCell className="text-right text-sm">{formatNumber(colheita.ph, 1)}</TableCell>}
-                        {informarPh && <TableCell className="text-right text-sm font-medium">{colheita.ph_corrigido != null ? formatNumber(colheita.ph_corrigido, 1) : '-'}</TableCell>}
+                        {informarPh && <TableCell className="text-right text-sm">{formatNumber(colheita.ph, 2)}</TableCell>}
+                        {informarPh && <TableCell className="text-right text-sm font-medium">{colheita.ph_corrigido != null ? formatNumber(colheita.ph_corrigido, 2) : '-'}</TableCell>}
                         <TableCell className="text-sm">
                           {colheita.local_entrega_terceiro?.nome || colheita.silos?.nome || '-'}
                         </TableCell>
@@ -909,7 +909,7 @@ export function ColheitasTab({ controleLavouraId, canEdit }: ColheitasTabProps) 
                   {editingId && (() => {
                     const atual = colheitas.find((c) => c.id === editingId);
                     return atual?.ph_corrigido != null ? (
-                      <p className="text-xs text-muted-foreground">PH Corrigido (gravado): <span className="font-semibold text-foreground">{formatNumber(atual.ph_corrigido, 1)}</span></p>
+                      <p className="text-xs text-muted-foreground">PH Corrigido (gravado): <span className="font-semibold text-foreground">{formatNumber(atual.ph_corrigido, 2)}</span></p>
                     ) : null;
                   })()}
                 </div>

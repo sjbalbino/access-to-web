@@ -717,7 +717,7 @@ export default function EntradaColheita() {
               // PH e PHC (se produto tiver PH informado)
               if (exigePh && formSaida.ph && formSaida.ph > 0) {
                 const phCorrigido = formSaida.ph + calculos.melhoriaPh;
-                partes.push(`PH: ${formSaida.ph} / PHC: ${phCorrigido.toFixed(1)}`);
+                partes.push(`PH: ${formSaida.ph} / PHC: ${phCorrigido.toFixed(2)}`);
               }
               
               return partes.join(" | ");
@@ -1660,7 +1660,7 @@ export default function EntradaColheita() {
                       />
                       <p className="text-xs text-muted-foreground">
                         PHC (corrigido): {calculos.phCorrigido != null
-                          ? calculos.phCorrigido.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 2 })
+                          ? calculos.phCorrigido.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                           : "-"}
                         {calculos.melhoriaPh > 0 && ` (+${calculos.melhoriaPh.toLocaleString("pt-BR")})`}
                       </p>
