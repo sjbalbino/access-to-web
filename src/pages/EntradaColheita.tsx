@@ -365,8 +365,7 @@ export default function EntradaColheita() {
         .map((p: any) => p.variedade_id)
         .filter((id): id is string => !!id)
     );
-    // Sem plantio com variedade: mostra todas as sementes para não travar a pesagem
-    if (ids.size === 0) return sementes;
+    // Sem plantio com variedade: lista vazia (aviso orienta informar o plantio)
     return sementes.filter(s => ids.has(s.id));
   }, [sementes, plantiosDaLavoura, controleLavouraSelecionado]);
 
@@ -1394,6 +1393,11 @@ export default function EntradaColheita() {
 
                     <div className="space-y-2">
                       <Label>Variedade <span className="text-destructive">*</span></Label>
+                      {controleLavouraSelecionado && sementesFiltradas.length === 0 ? (
+                        <p role="alert" className="rounded-md border border-destructive bg-destructive/10 p-2 text-sm text-destructive">
+                          Nenhum plantio com variedade informado nesta lavoura. Primeiro informe o plantio (Controle de Lavoura &gt; aba Plantios) para liberar a pesagem.
+                        </p>
+                      ) : (
                       <Select isSearchable 
                         value={formEntrada.variedade_id || undefined} 
                         onValueChange={v => setFormEntrada(prev => ({ ...prev, variedade_id: v }))}
@@ -1407,6 +1411,7 @@ export default function EntradaColheita() {
                           ))}
                         </SelectContent>
                       </Select>
+                      )}
                     </div>
                   </div>
 
