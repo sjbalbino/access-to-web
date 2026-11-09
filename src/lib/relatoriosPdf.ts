@@ -1593,7 +1593,10 @@ export interface RelExtratoDepRow {
   kg_desconto_total: number;
   producao_liquida_kg: number;
   total_sacos: number;
+  /** PH de entrada */
   ph: number;
+  /** PH corrigido; null quando a carga não tem correção */
+  ph_corrigido?: number | null;
   variedade: string;
 }
 
@@ -1628,7 +1631,7 @@ export function gerarExtratoDepositosProdutorPdf(params: RelExtratoDepParams): v
     doc.text(`Filtro por IE: ${params.filtroInscricao}`, 14, 46);
   }
 
-  const numCols = 20; // total de colunas
+  const numCols = 21; // total de colunas
   const spacerCells = (label: string): any[] => {
     const arr: any[] = new Array(numCols).fill("");
     arr[0] = label;
@@ -1652,6 +1655,20 @@ export function gerarExtratoDepositosProdutorPdf(params: RelExtratoDepParams): v
     return acc / totPeso;
   };
 
+  // Média de PH ponderada pelo peso líquido, ignorando cargas sem PH.
+  // PHC ausente usa o PH da carga como fallback (mesma regra dos demais relatórios).
+  const mediaPhList = (list: RelExtratoDepRow[], fn: (r: RelExtratoDepRow) => number): number => {
+    let peso = 0, acc = 0;
+    list.forEach(r => {
+      const v = fn(r) || 0;
+      if (v <= 0) return;
+      const w = r.producao_liquida_kg || 0;
+      peso += w; acc += v * w;
+    });
+    return peso > 0 ? acc / peso : 0;
+  };
+  const fmtMediaPh = (v: number) => (v > 0 ? formatNumber(v, 2) : "");
+
   const somaRow = (label: string, list: RelExtratoDepRow[]): any[] => {
     const s = (fn: (r: RelExtratoDepRow) => number) => list.reduce((a, r) => a + (fn(r) || 0), 0);
     return [
@@ -1673,7 +1690,8 @@ export function gerarExtratoDepositosProdutorPdf(params: RelExtratoDepParams): v
       formatNumber(s(r => r.total_sacos), 0),
       "",
       "",
-      "",
+      fmtMediaPh(mediaPhList(list, r => r.ph)),
+      fmtMediaPh(mediaPhList(list, r => (r.ph_corrigido && r.ph_corrigido > 0 ? r.ph_corrigido : r.ph))),
       "",
     ];
   };
@@ -1746,6 +1764,7 @@ export function gerarExtratoDepositosProdutorPdf(params: RelExtratoDepParams): v
             formatNumber(acumKg, 0),
             formatNumber(acumSc, 0),
             r.ph ? formatNumber(r.ph, 2) : "0,00",
+            r.ph_corrigido ? formatNumber(r.ph_corrigido, 2) : "",
             r.variedade || "",
           ]);
         });
@@ -1790,6 +1809,7 @@ export function gerarExtratoDepositosProdutorPdf(params: RelExtratoDepParams): v
       { content: "Acum.Kg", styles: { halign: "right" } },
       { content: "Acum.Sc", styles: { halign: "right" } },
       { content: "PH", styles: { halign: "right" } },
+      { content: "PHC", styles: { halign: "right" } },
       { content: "Variedade", styles: { halign: "left" } },
     ]],
     body,
@@ -1804,7 +1824,7 @@ export function gerarExtratoDepositosProdutorPdf(params: RelExtratoDepParams): v
       9: { halign: "right" }, 10: { halign: "right" }, 11: { halign: "right" },
       12: { halign: "right" }, 13: { halign: "right" }, 14: { halign: "right" },
       15: { halign: "right" }, 16: { halign: "right" }, 17: { halign: "right" },
-      18: { halign: "right" }, 19: { halign: "left" },
+      18: { halign: "right" }, 19: { halign: "right" }, 20: { halign: "left" },
     },
     didParseCell: (d) => {
       if (d.section !== "body") return;
