@@ -359,7 +359,7 @@ export default function EntradaColheita() {
   // Buscar plantios do controle da lavoura selecionada para filtrar variedades
   const { data: plantiosDaLavoura = [] } = usePlantios(controleLavouraSelecionado?.id || null);
   const sementesFiltradas = useMemo(() => {
-    if (!controleLavouraSelecionado) return sementes;
+    if (!controleLavouraSelecionado) return [];
     const ids = new Set(
       plantiosDaLavoura
         .map((p: any) => p.variedade_id)
@@ -1393,7 +1393,7 @@ export default function EntradaColheita() {
 
                     <div className="space-y-2">
                       <Label>Variedade <span className="text-destructive">*</span></Label>
-                      {controleLavouraSelecionado && sementesFiltradas.length === 0 ? (
+                      {sementesFiltradas.length === 0 ? (
                         <p role="alert" className="rounded-md border border-destructive bg-destructive/10 p-2 text-sm text-destructive">
                           Nenhum plantio com variedade informado nesta lavoura. Primeiro informe o plantio (Controle de Lavoura &gt; aba Plantios) para liberar a pesagem.
                         </p>
