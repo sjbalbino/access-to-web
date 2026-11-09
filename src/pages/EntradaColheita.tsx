@@ -365,7 +365,8 @@ export default function EntradaColheita() {
         .map((p: any) => p.variedade_id)
         .filter((id): id is string => !!id)
     );
-    if (ids.size === 0) return [];
+    // Sem plantio com variedade: mostra todas as sementes para não travar a pesagem
+    if (ids.size === 0) return sementes;
     return sementes.filter(s => ids.has(s.id));
   }, [sementes, plantiosDaLavoura, controleLavouraSelecionado]);
 
@@ -455,6 +456,11 @@ export default function EntradaColheita() {
     }
     if (!selectedLavouraId) {
       toast.error("Selecione uma lavoura");
+      return;
+    }
+    // Variedade é obrigatória na pesagem de entrada
+    if (!formEntrada.variedade_id) {
+      toast.error("Selecione a variedade");
       return;
     }
     if (formEntrada.peso_bruto <= 0) {
@@ -1387,16 +1393,15 @@ export default function EntradaColheita() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Variedade</Label>
+                      <Label>Variedade <span className="text-destructive">*</span></Label>
                       <Select isSearchable 
-                        value={formEntrada.variedade_id || "_none"} 
-                        onValueChange={v => setFormEntrada(prev => ({ ...prev, variedade_id: v === "_none" ? "" : v }))}
+                        value={formEntrada.variedade_id || undefined} 
+                        onValueChange={v => setFormEntrada(prev => ({ ...prev, variedade_id: v }))}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                        <SelectTrigger className={cn(!formEntrada.variedade_id && "border-destructive")}>
+                          <SelectValue placeholder="Selecione a variedade" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="_none">Nenhuma</SelectItem>
                           {sementesFiltradas.map(s => (
                             <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
                           ))}
@@ -1408,7 +1413,7 @@ export default function EntradaColheita() {
                   <Button 
                     data-tour="acao-principal"
                     onClick={handleConfirmarEntrada}
-                    disabled={!selectedLavouraId || formEntrada.peso_bruto <= 0 || createColheitaEntrada.isPending}
+                    disabled={!selectedLavouraId || !formEntrada.variedade_id || formEntrada.peso_bruto <= 0 || createColheitaEntrada.isPending}
                     className="w-full"
                   >
                     {createColheitaEntrada.isPending ? (
