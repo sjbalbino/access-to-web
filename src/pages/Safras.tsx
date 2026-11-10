@@ -74,6 +74,7 @@ export default function Safras() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [somentePrincipais, setSomentePrincipais] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSafra, setSelectedSafra] = useState<any>(null);
@@ -94,7 +95,8 @@ export default function Safras() {
         s.nome.toLowerCase().includes(search.toLowerCase()) ||
         s.codigo?.toLowerCase().includes(search.toLowerCase());
       const matchStatus = !statusFilter || s.status === statusFilter;
-      return matchSearch && matchStatus;
+      const matchPrincipal = !somentePrincipais || !!s.is_principal;
+      return matchSearch && matchStatus && matchPrincipal;
     }
   );
 
@@ -214,6 +216,16 @@ export default function Safras() {
                 allLabel="Todos os status"
                 className="w-full sm:w-48"
               />
+              <Button
+                type="button"
+                variant={somentePrincipais ? "default" : "outline"}
+                onClick={() => setSomentePrincipais((v) => !v)}
+                aria-pressed={somentePrincipais}
+                className="gap-2"
+              >
+                <Star className={somentePrincipais ? "h-4 w-4 fill-current" : "h-4 w-4"} />
+                Somente principais
+              </Button>
             </div>
           </div>
         </CardHeader>
