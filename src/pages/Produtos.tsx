@@ -59,6 +59,7 @@ import { CST_IBS_CBS, CST_IS } from "@/lib/cstReformaTributaria";
 import { CLASSIFICACAO_TRIBUTARIA, getClassificacoesPorCst } from "@/lib/classificacaoTributaria";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { ExtratoProdutosDialog } from '@/components/produtos/ExtratoProdutosDialog';
 import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 
 export default function Produtos() {
@@ -84,6 +85,7 @@ export default function Produtos() {
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [extratoOpen, setExtratoOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [errorDialog, setErrorDialog] = useState<{ open: boolean; message: string; detail: string }>({ open: false, message: '', detail: '' });
   const [formData, setFormData] = useState<ProdutoInsert>({
@@ -383,6 +385,11 @@ export default function Produtos() {
               </SelectContent>
             </Select>
           </div>
+          <Button variant="outline" className="gap-2" onClick={() => setExtratoOpen(true)}>
+            <FileText className="h-4 w-4" />
+            Extrato
+          </Button>
+          <ExtratoProdutosDialog open={extratoOpen} onOpenChange={setExtratoOpen} />
           {canEdit && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
               <DialogTrigger asChild>
