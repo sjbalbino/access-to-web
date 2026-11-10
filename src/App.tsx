@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CabecalhoPdfSync } from "@/components/layout/CabecalhoPdfSync";
+import "@/lib/pdfCabecalhoPadrao";
 import { TabsProvider } from "@/contexts/TabsContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
@@ -84,6 +86,7 @@ const App = () => (
       <TicketDepositoPreview />
       <BrowserRouter>
         <AuthProvider>
+          <CabecalhoPdfSync />
           <TabsProvider>
             <ErrorBoundary>
             <Routes>

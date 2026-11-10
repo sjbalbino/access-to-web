@@ -1,3 +1,4 @@
+import { semCabecalhoPadrao } from "@/lib/pdfCabecalhoPadrao";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format, parseISO } from "date-fns";
@@ -83,6 +84,7 @@ export interface ReciboData {
 
 export function gerarReciboPDF(d: ReciboData) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  semCabecalhoPadrao(doc);
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
 

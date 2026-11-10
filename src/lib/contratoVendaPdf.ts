@@ -1,3 +1,4 @@
+import { semCabecalhoPadrao } from "@/lib/pdfCabecalhoPadrao";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
@@ -127,6 +128,7 @@ const getStatusRemessa = (status: string | null | undefined): string => {
 
 export function gerarExtratoContrato(contrato: ContratoData, remessas: RemessaData[]): void {
   const doc = new jsPDF();
+  semCabecalhoPadrao(doc);
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPos = 20;
 
