@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -59,15 +60,25 @@ export default function PlanoContasGerencial() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...formData });
-    else await createMutation.mutateAsync(formData);
+    // Código informado pelo usuário; se vazio, não envia (mantém o atual / padrão do banco)
+    const codigo = formData.codigo?.trim();
+    const payload = { ...formData, codigo: codigo || undefined };
+    if (!codigo) delete (payload as { codigo?: string }).codigo;
+    if (codigo && contas?.some(c => c.codigo === codigo && c.id !== editingItem?.id)) {
+      toast.error(`Já existe um centro de custo com o código ${codigo}.`);
+      return;
+    }
+    try {
+      if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
+      else await createMutation.mutateAsync(payload);
+    } catch { return; }
     setIsDialogOpen(false);
     resetForm();
   };
 
   const handleEdit = async (item: any) => {
     setEditingItem(item);
-    setFormData({ descricao: item.descricao, tipo: item.tipo || 'despesa', ativo: item.ativo ?? true });
+    setFormData({ codigo: item.codigo ?? '', descricao: item.descricao, tipo: item.tipo || 'despesa', ativo: item.ativo ?? true });
     setIsDialogOpen(true);
   };
 
@@ -130,6 +141,7 @@ export default function PlanoContasGerencial() {
                   <DialogContent>
                     <DialogHeader><DialogTitle>{editingItem ? 'Editar' : 'Novo'} Centro de Custo</DialogTitle></DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
+                      <div className="space-y-2"><Label>Código da Conta</Label><Input value={formData.codigo ?? ''} onChange={e => setFormData({ ...formData, codigo: e.target.value })} placeholder="Ex.: 3.01" maxLength={20} /></div>
                       <div className="space-y-2"><Label>Descrição *</Label><Input value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })} required /></div>
                       <div className="space-y-2">
                         <Label>Tipo *</Label>
@@ -167,6 +179,7 @@ export default function PlanoContasGerencial() {
                       <div className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 cursor-pointer" onClick={() => toggleExpand(conta.id)}>
                         <div className="flex items-center gap-3">
                           {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                          {conta.codigo && <span className="font-mono text-sm text-muted-foreground">{conta.codigo}</span>}
                           <span className="font-medium">{conta.descricao}</span>
                           <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', conta.tipo === 'receita' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive')}>
                             {conta.tipo === 'receita' ? 'Receita' : 'Despesa'}

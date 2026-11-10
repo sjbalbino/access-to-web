@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2, FolderOpen, Search, Check } from 'lucide-react';
 import { useGruposProdutos, useCreateGrupoProduto, useUpdateGrupoProduto, useDeleteGrupoProduto, GrupoProdutoInput } from '@/hooks/useGruposProdutos';
-import { useSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
+import { useAllSubCentrosCusto } from '@/hooks/useSubCentrosCusto';
 import { useDreContas } from '@/hooks/useDreContas';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,7 @@ import { confirmarExclusao } from '@/components/ui/confirm-dialog-provider';
 export default function GruposProdutos() {
   const { canEdit } = useAuth();
   const { data: grupos, isLoading } = useGruposProdutos();
-  const { data: subCentros } = useSubCentrosCusto();
+  const { data: subCentros } = useAllSubCentrosCusto();
   const { data: dreContas } = useDreContas();
   const createMutation = useCreateGrupoProduto();
   const updateMutation = useUpdateGrupoProduto();
@@ -173,6 +173,9 @@ export default function GruposProdutos() {
                             {subCentrosAtivos.map((sub: any) => (
                               <SelectItem key={sub.id} value={sub.id}>
                                 {sub.descricao}
+                                {sub.plano_contas_gerencial?.descricao && (
+                                  <span className="text-muted-foreground"> — {sub.plano_contas_gerencial.codigo ? `${sub.plano_contas_gerencial.codigo} ` : ''}{sub.plano_contas_gerencial.descricao}</span>
+                                )}
                               </SelectItem>
                             ))}
                           </SelectContent>
