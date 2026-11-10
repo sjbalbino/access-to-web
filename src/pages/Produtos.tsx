@@ -261,6 +261,8 @@ export default function Produtos() {
         return <Badge className="bg-sky-500">Semente</Badge>;
       case 'maquina_equipamento':
         return <Badge className="bg-slate-600">Máq./Equip./Implementos</Badge>;
+      case 'pecuaria':
+        return <Badge variant="secondary">Pecuária</Badge>;
       case 'servico':
         return <Badge className="bg-purple-600">Serviços</Badge>;
       default:
@@ -354,7 +356,8 @@ export default function Produtos() {
                 <SelectItem value="insumo">Insumo</SelectItem>
                 <SelectItem value="maquina_equipamento">Máquinas, Equipamentos e Implementos Agrícolas</SelectItem>
                 <SelectItem value="produto">Produto</SelectItem>
-                <SelectItem value="semente">Semente</SelectItem>
+                <SelectItem value="pecuaria">Pecuária</SelectItem>
+<SelectItem value="semente">Semente</SelectItem>
                 <SelectItem value="servico">Serviços</SelectItem>
               </SelectContent>
             </Select>
@@ -416,7 +419,8 @@ export default function Produtos() {
                             <SelectItem value="insumo">Insumo</SelectItem>
                             <SelectItem value="maquina_equipamento">Máquinas, Equipamentos e Implementos Agrícolas</SelectItem>
                             <SelectItem value="produto">Produto</SelectItem>
-                            <SelectItem value="semente">Semente</SelectItem>
+                            <SelectItem value="pecuaria">Pecuária</SelectItem>
+<SelectItem value="semente">Semente</SelectItem>
                             <SelectItem value="servico">Serviços</SelectItem>
                           </SelectContent>
                         </Select>
