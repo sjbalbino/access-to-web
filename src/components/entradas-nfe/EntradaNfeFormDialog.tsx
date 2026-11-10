@@ -685,6 +685,8 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
           xmlDescricao={itens[vincularIdx]?.produto_xml_descricao || ''}
           xmlCodigo={itens[vincularIdx]?.produto_xml_codigo || ''}
           xmlNcm={itens[vincularIdx]?.produto_xml_ncm || ''}
+          xmlUnidade={itens[vincularIdx]?.unidade_medida || ''}
+          xmlValorUnitario={Number(itens[vincularIdx]?.valor_unitario) || 0}
           onVincular={(produtoId) => handleVincular(vincularIdx, produtoId)}
         />
       )}
