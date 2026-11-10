@@ -11,6 +11,8 @@ import { ComboboxFilter } from '@/components/ui/combobox-filter';
 import { Loader2, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import jsPDF from 'jspdf';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTenant } from '@/hooks/useTenants';
 import autoTable from 'jspdf-autotable';
 import { formatNumber } from '@/lib/formatters';
 import { usePaginacao } from '@/hooks/usePaginacao';
@@ -120,6 +122,8 @@ const fmtMoeda = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', c
 export interface ExtratoProdutosDialogProps { open: boolean; onOpenChange: (open: boolean) => void; produtoInicialId?: string; }
 
 export function ExtratoProdutosDialog({ open, onOpenChange, produtoInicialId }: ExtratoProdutosDialogProps) {
+  const { profile } = useAuth();
+  const { data: tenant } = useTenant(profile?.tenant_id ?? null);
   const [dataIni, setDataIni] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [safraId, setSafraId] = useState('todas');
@@ -177,16 +181,20 @@ export function ExtratoProdutosDialog({ open, onOpenChange, produtoInicialId }: 
   const gerarPdf = () => {
     const doc = new jsPDF({ orientation: 'landscape' });
     const w = doc.internal.pageSize.getWidth();
-    doc.setFontSize(14); doc.text('Extrato de Produtos', w / 2, 14, { align: 'center' });
-    doc.setFontSize(9);
+    const empresa = tenant ? (tenant.nome_fantasia ? `${tenant.razao_social} (${tenant.nome_fantasia})` : tenant.razao_social) : '';
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text(empresa, 14, 10);
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+    doc.text('AgroGestão - Sistema de Gerenciamento Agropecuário', w - 14, 10, { align: 'right' });
+    doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.text('Extrato de Produtos', w / 2, 16, { align: 'center' });
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
     const filtros = [
       `Produto: ${produtoId === 'todos' ? 'Todos' : nomeProduto.get(produtoId) ?? ''}`,
       `Período: ${dataIni ? fmtData(dataIni) : 'início'} a ${dataFim ? fmtData(dataFim) : 'hoje'}`,
       `Safra: ${safraId === 'todas' ? 'Todas' : safras.find((s) => s.id === safraId)?.nome ?? ''}`,
       `Operação: ${tipoOp === 'todos' ? 'Todas' : ROTULO[tipoOp]}`,
     ].join('   |   ');
-    doc.text(filtros, w / 2, 20, { align: 'center' });
-    let y = 25;
+    doc.text(filtros, w / 2, 22, { align: 'center' });
+    let y = 27;
     if (produtoId !== 'todos' && dataIni) {
       doc.text(`Saldo anterior a ${fmtData(dataIni)}: ${formatNumber(saldoAnterior.get(produtoId) ?? 0, 2)}`, 14, y); y += 4;
     }
