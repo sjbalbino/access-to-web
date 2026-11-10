@@ -86,6 +86,8 @@ export default function Produtos() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [extratoOpen, setExtratoOpen] = useState(false);
+  const [extratoProduto, setExtratoProduto] = useState<{ id?: string; k: number }>({ k: 0 });
+  const abrirExtrato = (id?: string) => { setExtratoProduto((p) => ({ id, k: p.k + 1 })); setExtratoOpen(true); };
   const [editingItem, setEditingItem] = useState<any>(null);
   const [errorDialog, setErrorDialog] = useState<{ open: boolean; message: string; detail: string }>({ open: false, message: '', detail: '' });
   const [formData, setFormData] = useState<ProdutoInsert>({
@@ -385,11 +387,11 @@ export default function Produtos() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" className="gap-2" onClick={() => setExtratoOpen(true)}>
+          <Button variant="outline" className="gap-2" onClick={() => abrirExtrato()}>
             <FileText className="h-4 w-4" />
             Extrato
           </Button>
-          <ExtratoProdutosDialog open={extratoOpen} onOpenChange={setExtratoOpen} />
+          <ExtratoProdutosDialog key={extratoProduto.k} produtoInicialId={extratoProduto.id} open={extratoOpen} onOpenChange={setExtratoOpen} />
           {canEdit && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
               <DialogTrigger asChild>
@@ -814,7 +816,7 @@ export default function Produtos() {
                 <TableHead className="text-right hidden sm:table-cell">Estoque</TableHead>
                 <TableHead className="text-right hidden lg:table-cell">Preço Venda</TableHead>
                 <TableHead className="hidden sm:table-cell">Status</TableHead>
-                {canEdit && <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>}
+                <TableHead className="text-right sticky right-0 bg-background">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -830,11 +832,12 @@ export default function Produtos() {
                   <TableCell className="hidden sm:table-cell">
                     <Badge variant={item.ativo ? 'default' : 'secondary'}>{item.ativo ? 'Ativo' : 'Inativo'}</Badge>
                   </TableCell>
-                  {canEdit && (
+                  {true && (
                     <TableCell className="text-right sticky right-0 bg-background">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}><Pencil className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        <Button variant="ghost" size="icon" title="Extrato do produto" aria-label="Extrato do produto" onClick={() => abrirExtrato(item.id)}><FileText className="h-4 w-4" /></Button>
+                        {canEdit && <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}><Pencil className="h-4 w-4" /></Button>}
+                        {canEdit && <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
                       </div>
                     </TableCell>
                   )}
