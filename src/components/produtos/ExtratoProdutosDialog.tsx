@@ -190,7 +190,7 @@ export function ExtratoProdutosDialog({ open, onOpenChange, produtoInicialId }: 
           </div>
           <div><Label>Produto</Label>
             <ComboboxFilter value={produtoId === 'todos' ? '' : produtoId} onValueChange={(v) => setProdutoId(v || 'todos')}
-              options={produtos.map((p) => ({ value: p.id, label: p.nome, sublabel: p.codigo ?? undefined }))}
+              options={produtos.map((p) => ({ value: p.id, label: p.nome, sublabel: p.codigo != null ? String(p.codigo) : undefined }))}
               searchPlaceholder="Digite o nome do produto..." popoverWidth="w-[360px]" />
           </div>
           <div><Label>Tipo de operação</Label>
