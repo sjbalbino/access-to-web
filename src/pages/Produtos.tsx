@@ -387,10 +387,6 @@ export default function Produtos() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" className="gap-2" onClick={() => abrirExtrato()}>
-            <FileText className="h-4 w-4" />
-            Extrato
-          </Button>
           <ExtratoProdutosDialog key={extratoProduto.k} produtoInicialId={extratoProduto.id} open={extratoOpen} onOpenChange={setExtratoOpen} />
           {canEdit && (
             <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
