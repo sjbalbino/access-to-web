@@ -62,6 +62,10 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
   const { cfops } = useCfops();
   const { data: inscricoes } = useInscricoesCompletas();
   const { data: safras } = useSafras();
+  // Pré-seleciona a safra principal (em colheita/plantio no momento)
+  useEffect(() => {
+    if (!safraId) { const p = (safras as any[] | undefined)?.find((x) => x.is_principal); if (p) setSafraId(p.id); }
+  }, [safras, safraId]);
   const { data: contasBancarias } = useContasBancarias({ ativo: true });
   const { data: grupos } = useGruposProdutos();
   const createMutation = useCreateEntradaNfe();
