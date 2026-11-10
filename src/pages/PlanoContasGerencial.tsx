@@ -233,13 +233,6 @@ export default function PlanoContasGerencial() {
                               ))}
                             </TableBody>
                           </Table>
-            <TablePagination
-              paginaAtual={paginaAtual}
-              totalPaginas={totalPaginas}
-              totalRegistros={totalRegistros}
-              setPaginaAtual={setPaginaAtual}
-              gerarNumerosPaginas={gerarNumerosPaginas}
-            />
                         </div>
                       )}
                       {isExpanded && subs.length === 0 && (
@@ -251,6 +244,13 @@ export default function PlanoContasGerencial() {
                     </div>
                   );
                 })}
+                <TablePagination
+                  paginaAtual={paginaAtual}
+                  totalPaginas={totalPaginas}
+                  totalRegistros={totalRegistros}
+                  setPaginaAtual={setPaginaAtual}
+                  gerarNumerosPaginas={gerarNumerosPaginas}
+                />
               </div>
             ) : (
               <div className="text-center py-12">
