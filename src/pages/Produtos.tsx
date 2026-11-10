@@ -85,6 +85,7 @@ export default function Produtos() {
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [extratoOpen, setExtratoOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [errorDialog, setErrorDialog] = useState<{ open: boolean; message: string; detail: string }>({ open: false, message: '', detail: '' });
   const [formData, setFormData] = useState<ProdutoInsert>({
