@@ -425,8 +425,27 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         }
       }
 
+      // CFOP da entrada = inverso do CFOP mais usado nos itens (5102 → 1102, 6102 → 2102)
+      const contCfop = new Map<string, number>();
+      for (const it of parsed.itens) {
+        const c = String(it.cfop || '').replace(/\D/g, '').slice(0, 4);
+        if (c.length !== 4) continue;
+        const k = (({ '5': '1', '6': '2', '7': '3' } as Record<string, string>)[c[0]] ?? c[0]) + c.slice(1);
+        contCfop.set(k, (contCfop.get(k) ?? 0) + 1);
+      }
+      const cfopEntradaCodigo = [...contCfop.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+      let cfopEntradaId: string | null = null;
+      if (cfopEntradaCodigo) {
+        const { data: cf } = await supabase.from("cfops").select("id").eq("codigo", cfopEntradaCodigo).eq("tipo", "entrada").limit(1);
+        cfopEntradaId = cf?.[0]?.id ?? null;
+      }
+      // Safra = safra principal da empresa (a que está sendo colhida/plantada)
+      const { data: safraPrinc } = await supabase.from("safras").select("id").eq("tenant_id", tenantId).eq("is_principal", true).limit(1);
+
       const header: Record<string, unknown> = {
         granja_id: granjaId,
+        cfop_id: cfopEntradaId,
+        safra_id: safraPrinc?.[0]?.id ?? null,
         inscricao_produtor_id: inscricaoDestinoId,
         fornecedor_id: fornecedorId,
         numero_nfe: parsed.numero,
