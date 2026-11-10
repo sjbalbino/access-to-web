@@ -234,6 +234,26 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
     if (!safraId && safraPrincipal?.id) setSafraId(safraPrincipal.id);
   }, [safraPrincipal, isEdit]);
 
+  // Entradas vindas do XML/DFe sem CFOP ou safra: CFOP = inverso do CFOP dos itens
+  // da nota (5102 → 1102, 6102 → 2102) e safra = safra principal (em colheita/plantio).
+  useEffect(() => {
+    if (!open || !isEdit || !entradaData || entradaData.status === 'finalizado') return;
+    if (!cfopId && cfops?.length) {
+      const cont = new Map<string, number>();
+      for (const it of itens) {
+        const c = String(it.cfop || '').replace(/\D/g, '').slice(0, 4);
+        if (c.length !== 4) continue;
+        const inv = ({ '5': '1', '6': '2', '7': '3' } as Record<string, string>)[c[0]] ?? c[0];
+        const k = inv + c.slice(1);
+        cont.set(k, (cont.get(k) ?? 0) + 1);
+      }
+      const maisUsado = [...cont.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+      const match = maisUsado && (cfops as any[]).find((c) => String(c.codigo) === maisUsado && c.tipo === 'entrada');
+      if (match) setCfopId(match.id);
+    }
+    if (!safraId && safraPrincipal?.id) setSafraId(safraPrincipal.id);
+  }, [open, isEdit, entradaData, cfops, itens, safraPrincipal]);
+
   // CFOP padrão 1101 no modo criação
   useEffect(() => {
     if (isEdit || cfopId || !cfops?.length) return;
