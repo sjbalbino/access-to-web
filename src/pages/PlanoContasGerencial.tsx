@@ -48,12 +48,17 @@ export default function PlanoContasGerencial() {
   // Filtra contas DRE acima do nível 2 (nível 3+)
   const dreContasFiltered = dreContas?.filter(c => c.nivel > 2 && c.ativo) || [];
 
-  const filteredContas = contas?.filter(c =>
-    c.codigo.toLowerCase().includes(search.toLowerCase()) ||
-    c.descricao.toLowerCase().includes(search.toLowerCase())
-  );
+  // Exibição em ordem alfabética pela descrição (pt-BR, ignora acentos/maiúsculas)
+  const porDescricao = (a: { descricao: string }, b: { descricao: string }) =>
+    a.descricao.localeCompare(b.descricao, 'pt-BR', { sensitivity: 'base' });
 
-  const getSubCentros = (centroId: string) => allSubCentros?.filter(s => s.centro_custo_id === centroId) || [];
+  const filteredContas = contas?.filter(c =>
+    (c.codigo ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    c.descricao.toLowerCase().includes(search.toLowerCase())
+  ).sort(porDescricao);
+
+  const getSubCentros = (centroId: string) =>
+    (allSubCentros?.filter(s => s.centro_custo_id === centroId) || []).sort(porDescricao);
 
   const resetForm = () => { setFormData({ descricao: '', tipo: 'despesa', ativo: true }); setEditingItem(null); };
   const resetSubForm = () => { setSubFormData({ centro_custo_id: '', descricao: '', codigo_dre: null, ativo: true }); setEditingSub(null); };
