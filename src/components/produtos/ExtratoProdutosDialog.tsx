@@ -8,7 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ComboboxFilter } from '@/components/ui/combobox-filter';
-import { Loader2 } from 'lucide-react';
+import { Loader2, FileDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { formatNumber } from '@/lib/formatters';
 import { usePaginacao } from '@/hooks/usePaginacao';
 import { TablePagination } from '@/components/ui/table-pagination';
@@ -171,6 +174,44 @@ export function ExtratoProdutosDialog({ open, onOpenChange, produtoInicialId }: 
   const totalSaidas = linhas.reduce((s, l) => s + Math.max(-l.quantidade, 0), 0);
   const pag = usePaginacao(linhas, 20);
 
+  const gerarPdf = () => {
+    const doc = new jsPDF({ orientation: 'landscape' });
+    const w = doc.internal.pageSize.getWidth();
+    doc.setFontSize(14); doc.text('Extrato de Produtos', w / 2, 14, { align: 'center' });
+    doc.setFontSize(9);
+    const filtros = [
+      `Produto: ${produtoId === 'todos' ? 'Todos' : nomeProduto.get(produtoId) ?? ''}`,
+      `Período: ${dataIni ? fmtData(dataIni) : 'início'} a ${dataFim ? fmtData(dataFim) : 'hoje'}`,
+      `Safra: ${safraId === 'todas' ? 'Todas' : safras.find((s) => s.id === safraId)?.nome ?? ''}`,
+      `Operação: ${tipoOp === 'todos' ? 'Todas' : ROTULO[tipoOp]}`,
+    ].join('   |   ');
+    doc.text(filtros, w / 2, 20, { align: 'center' });
+    let y = 25;
+    if (produtoId !== 'todos' && dataIni) {
+      doc.text(`Saldo anterior a ${fmtData(dataIni)}: ${formatNumber(saldoAnterior.get(produtoId) ?? 0, 2)}`, 14, y); y += 4;
+    }
+    autoTable(doc, {
+      startY: y,
+      head: [['Data', 'Produto', 'Operação', 'Documento', 'Fornecedor / Destino', 'Entrada', 'Saída', 'Saldo', 'Valor']],
+      body: linhas.map((l) => [fmtData(l.data), nomeProduto.get(l.produtoId) ?? '', ROTULO[l.tipo], l.documento, l.participante,
+        l.quantidade > 0 ? formatNumber(l.quantidade, 2) : '', l.quantidade < 0 ? formatNumber(-l.quantidade, 2) : '',
+        formatNumber(l.saldo, 2), fmtMoeda(l.valor)]),
+      foot: [['', '', '', '', 'Totais', formatNumber(totalEntradas, 2), formatNumber(totalSaidas, 2), '', '']],
+      styles: { fontSize: 7.5, cellPadding: 1.5 },
+      headStyles: { fillColor: [46, 125, 50] }, footStyles: { fillColor: [230, 230, 230], textColor: 20, fontStyle: 'bold' },
+      columnStyles: { 0: { halign: 'center' }, 5: { halign: 'right' }, 6: { halign: 'right' }, 7: { halign: 'right' }, 8: { halign: 'right' } },
+      didParseCell: (d) => { if ((d.section === 'head' || d.section === 'foot') && d.column.index >= 5) d.cell.styles.halign = 'right'; if (d.section === 'head' && d.column.index === 0) d.cell.styles.halign = 'center'; },
+      didDrawPage: () => {
+        const h = doc.internal.pageSize.getHeight();
+        doc.setFontSize(7);
+        doc.text(`Emitido em ${new Date().toLocaleString('pt-BR')}`, 14, h - 6);
+        doc.text(`Página ${doc.getNumberOfPages()}`, w - 14, h - 6, { align: 'right' });
+      },
+    });
+    const nome = produtoId === 'todos' ? 'todos' : (nomeProduto.get(produtoId) ?? 'produto').replace(/[^\w]+/g, '_');
+    doc.save(`extrato_${nome}.pdf`);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto">
@@ -239,7 +280,8 @@ export function ExtratoProdutosDialog({ open, onOpenChange, produtoInicialId }: 
               </Table>
             </div>
             <TablePagination {...pag} />
-            <div className="flex flex-wrap justify-end gap-6 text-sm">
+            <div className="flex flex-wrap items-center justify-end gap-6 text-sm">
+              <Button variant="outline" size="sm" className="gap-2 mr-auto" onClick={gerarPdf} disabled={linhas.length === 0}><FileDown className="h-4 w-4" />Gerar PDF</Button>
               <span>Total entradas: <strong>{formatNumber(totalEntradas, 2)}</strong></span>
               <span>Total saídas: <strong>{formatNumber(totalSaidas, 2)}</strong></span>
             </div>
