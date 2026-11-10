@@ -113,13 +113,13 @@ async function carregarMovimentos(): Promise<Movimento[]> {
 const fmtData = (d: string) => { const [y, m, dd] = d.slice(0, 10).split('-'); return `${dd}/${m}/${y}`; };
 const fmtMoeda = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export interface ExtratoProdutosDialogProps { open: boolean; onOpenChange: (open: boolean) => void; }
+export interface ExtratoProdutosDialogProps { open: boolean; onOpenChange: (open: boolean) => void; produtoInicialId?: string; }
 
-export function ExtratoProdutosDialog({ open, onOpenChange }: ExtratoProdutosDialogProps) {
+export function ExtratoProdutosDialog({ open, onOpenChange, produtoInicialId }: ExtratoProdutosDialogProps) {
   const [dataIni, setDataIni] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [safraId, setSafraId] = useState('todas');
-  const [produtoId, setProdutoId] = useState('todos');
+  const [produtoId, setProdutoId] = useState(produtoInicialId ?? 'todos');
   const [tipoOp, setTipoOp] = useState<'todos' | TipoOperacao>('todos');
 
   const { data: produtos = [] } = useQuery({
