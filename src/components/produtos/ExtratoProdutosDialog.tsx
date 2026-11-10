@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { ComboboxFilter } from '@/components/ui/combobox-filter';
 import { Loader2 } from 'lucide-react';
 import { formatNumber } from '@/lib/formatters';
 import { usePaginacao } from '@/hooks/usePaginacao';
@@ -60,7 +61,7 @@ async function buscarTudo<T>(montar: (de: number, ate: number) => PromiseLike<{ 
 async function carregarMovimentos(): Promise<Movimento[]> {
   const [entradas, notas, aplics] = await Promise.all([
     buscarTudo<any>((a, b) => supabase.from('entradas_nfe_itens')
-      .select('id, produto_id, cfop, quantidade, valor_total, entradas_nfe!inner(numero_nfe, data_entrada, data_emissao, status, safra_id, clientes_fornecedores:fornecedor_id(razao_social))')
+      .select('id, produto_id, cfop, quantidade, valor_total, entradas_nfe!inner(numero_nfe, data_entrada, data_emissao, status, safra_id, clientes_fornecedores:fornecedor_id(nome))')
       .not('produto_id', 'is', null).eq('entradas_nfe.status', 'finalizado').range(a, b)),
     buscarTudo<any>((a, b) => supabase.from('notas_fiscais_itens')
       .select('id, produto_id, cfop, quantidade, valor_total, notas_fiscais!inner(numero, serie, data_emissao, status, operacao, finalidade, dest_nome)')
@@ -77,7 +78,7 @@ async function carregarMovimentos(): Promise<Movimento[]> {
     movs.push({
       id: 'e' + i.id, produtoId: i.produto_id, data: e.data_entrada ?? e.data_emissao,
       tipo: CFOP_DEV_VENDA.test(cfop) ? 'devolucao_venda' : CFOP_TRANSF.test(cfop) ? 'transferencia' : 'compra',
-      documento: `NF-e ${e.numero_nfe ?? ''}`, participante: e.clientes_fornecedores?.razao_social ?? '',
+      documento: `NF-e ${e.numero_nfe ?? ''}`, participante: e.clientes_fornecedores?.nome ?? '',
       safraId: e.safra_id, quantidade: Number(i.quantidade) || 0, valor: Number(i.valor_total) || 0,
     });
   }
@@ -188,10 +189,9 @@ export function ExtratoProdutosDialog({ open, onOpenChange, produtoInicialId }: 
             </Select>
           </div>
           <div><Label>Produto</Label>
-            <Select value={produtoId} onValueChange={setProdutoId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="todos">Todos</SelectItem>{produtos.map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}</SelectContent>
-            </Select>
+            <ComboboxFilter value={produtoId === 'todos' ? '' : produtoId} onValueChange={(v) => setProdutoId(v || 'todos')}
+              options={produtos.map((p) => ({ value: p.id, label: p.nome, sublabel: p.codigo != null ? String(p.codigo) : undefined }))}
+              searchPlaceholder="Digite o nome do produto..." popoverWidth="w-[360px]" />
           </div>
           <div><Label>Tipo de operação</Label>
             <Select value={tipoOp} onValueChange={(v) => setTipoOp(v as typeof tipoOp)}>
