@@ -36,6 +36,13 @@
       "when": 1795010251661,
       "tag": "0004_entradas_nfe_auto_cfop_safra",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795010289420,
+      "tag": "0005_entradas_nfe_cfop_st_combustivel",
+      "breakpoints": true
     }
   ]
 }
