@@ -29,6 +29,13 @@
       "when": 1793540805487,
       "tag": "0003_colheita_data_servidor",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795010251661,
+      "tag": "0004_entradas_nfe_auto_cfop_safra",
+      "breakpoints": true
     }
   ]
 }

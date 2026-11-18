@@ -6019,6 +6019,10 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      fn_entrada_nfe_cfop_cabecalho: {
+        Args: { _entrada: string }
+        Returns: undefined
+      }
       gerar_rateio_socios: {
         Args: { _origem_id: string; _origem_tipo: string }
         Returns: undefined
