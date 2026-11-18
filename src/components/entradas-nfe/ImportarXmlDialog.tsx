@@ -17,6 +17,7 @@ import { parseNfeXml, NfeParsed } from "@/lib/nfeXmlParser";
 import { suggestCfopEntrada } from "@/lib/cfopEntradaSuggest";
 import { resolverInscricaoDestinatario } from "@/lib/inscricaoDestinatarioXml";
 import { toast } from "sonner";
+import { resolverOuCriarProdutos } from "@/lib/autoProdutoEntrada";
 import { Upload, CheckCircle2, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -123,13 +124,14 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
     return (map[cfop[0]] || cfop[0]) + cfop.slice(1);
   };
 
-  const vincularProdutos = (nfe: NfeParsed, ufDestOverride?: string | null) => {
+  const vincularProdutos = async (nfe: NfeParsed, ufDestOverride?: string | null) => {
     const ufEmit = nfe.emitente.uf || '';
     const ufDest = (ufDestOverride || nfe.destinatario.uf || '').toUpperCase();
-    return nfe.itens.map((item) => {
-      // Vínculo automático somente por código do fornecedor. NCM é genérico
-      // (vários produtos distintos compartilham o mesmo NCM) e NÃO pode ser critério.
-      const prod: any = produtos?.find((p: any) => p.cod_fornecedor && p.cod_fornecedor === item.codigoProduto) || null;
+    // Localiza por código do fornecedor ou nome; se não existir, cadastra automaticamente.
+    const { ids, criados } = await resolverOuCriarProdutos(nfe.itens);
+    if (criados) toast.info(`NF-e ${nfe.numero}: ${criados} produto(s) cadastrado(s) automaticamente.`);
+    return nfe.itens.map((item, i) => {
+      const prod: any = produtos?.find((p: any) => p.id === ids[i]) || (ids[i] ? { id: ids[i] } : null);
       const grupo = prod?.grupo_id ? grupos?.find((g: any) => g.id === prod.grupo_id) : null;
       const temClassificacao = !!(grupo && (grupo.insumos || grupo.maquinas_implementos || grupo.bens_benfeitorias));
       const cfopFinal = temClassificacao
@@ -190,7 +192,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
           toast.info(`NF-e ${nfe.numero}: vinculada à IE ${resolucao.ieXml} informada no XML.`);
         }
         const ufDestInsc = inscricaoDestino?.uf || '';
-        const itens = vincularProdutos(nfe, ufDestInsc);
+        const itens = await vincularProdutos(nfe, ufDestInsc);
         // Deriva CFOP do cabeçalho a partir do CFOP mais frequente nos itens
         const cfopCounts: Record<string, number> = {};
         itens.forEach((it: any) => {

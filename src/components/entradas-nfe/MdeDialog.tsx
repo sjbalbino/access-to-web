@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { resolverOuCriarProdutos } from "@/lib/autoProdutoEntrada";
 import { usePaginacao } from "@/hooks/usePaginacao";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -472,14 +473,10 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
       };
 
       // 3. Preparar itens e tentar auto-vincular produtos
-      const itens = await Promise.all(parsed.itens.map(async (item) => {
-        const { data: existingProd } = await supabase
-          .from("produtos")
-          .select("id")
-          .or(`cod_fornecedor.eq.${item.codigoProduto},nome.ilike.${item.descricao}`)
-          .eq('ativo', true)
-          .maybeSingle();
-
+      const { ids: prodIds, criados } = await resolverOuCriarProdutos(parsed.itens);
+      if (criados) toast.info(`${criados} produto(s) cadastrado(s) automaticamente.`);
+      const itens = parsed.itens.map((item, i) => {
+        const existingProd = prodIds[i] ? { id: prodIds[i] } : null;
         return {
           produto_id: existingProd?.id || null,
           produto_xml_codigo: item.codigoProduto,
@@ -509,7 +506,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
           valor_cofins: item.valorCofins,
           vinculado: !!existingProd?.id,
         };
-      }));
+      });
 
       await createEntrada.mutateAsync({ ...header, itens });
     } catch (error) {
