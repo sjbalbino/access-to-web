@@ -588,6 +588,12 @@ export function EntradaNfeFormDialog({ open, onOpenChange, entradaId }: Props) {
                                   </SelectContent>
                                 </Select>
                               )}
+                              {!isFinalizado && !(isEdit && entradaData?.modo_entrada === 'xml') && !item.produto_id && item.produto_xml_descricao && (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  Item da nota: <span className="font-medium text-foreground">{item.produto_xml_descricao}</span>
+                                  {item.produto_xml_codigo ? ` (Cód: ${item.produto_xml_codigo})` : ''} — sem produto vinculado
+                                </p>
+                              )}
                             </TableCell>
                             <TableCell>
                               <Input tabIndex={-1} value={item.cfop} onChange={(e) => updateItem(idx, 'cfop', e.target.value)} className="w-16" disabled={isFinalizado} />
