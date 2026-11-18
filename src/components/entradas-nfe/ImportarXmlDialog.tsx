@@ -14,6 +14,7 @@ import { useSafras } from "@/hooks/useSafras";
 import { useContasBancarias } from "@/hooks/useContasBancarias";
 import { useGruposProdutos } from "@/hooks/useGruposProdutos";
 import { parseNfeXml, NfeParsed } from "@/lib/nfeXmlParser";
+import { EntradaProgressoDialog } from "@/components/entradas-nfe/EntradaProgressoDialog";
 import { suggestCfopEntrada } from "@/lib/cfopEntradaSuggest";
 import { resolverInscricaoDestinatario } from "@/lib/inscricaoDestinatarioXml";
 import { toast } from "sonner";
@@ -55,6 +56,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
   const [numeroCheque, setNumeroCheque] = useState('');
   const [parsedFiles, setParsedFiles] = useState<ParsedFile[]>([]);
   const [importing, setImporting] = useState(false);
+  const [progresso, setProgresso] = useState<{ etapa: number; numero: string | null; emitente: string | null } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: granjas } = useGranjas();
@@ -178,6 +180,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
     let success = 0;
     for (const pf of validFiles) {
       const nfe = pf.nfe!;
+      setProgresso({ etapa: 2, numero: nfe.numero, emitente: nfe.emitente.nome });
       try {
         // A nota pertence à IE indicada no destinatário do XML, não à IE
         // pré-selecionada na tela (o titular pode ter várias granjas/IEs).
@@ -192,7 +195,9 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
           toast.info(`NF-e ${nfe.numero}: vinculada à IE ${resolucao.ieXml} informada no XML.`);
         }
         const ufDestInsc = inscricaoDestino?.uf || '';
+        setProgresso((p) => (p ? { ...p, etapa: 3 } : p));
         const itens = await vincularProdutos(nfe, ufDestInsc);
+        setProgresso((p) => (p ? { ...p, etapa: 4 } : p));
         // Deriva CFOP do cabeçalho a partir do CFOP mais frequente nos itens
         const cfopCounts: Record<string, number> = {};
         itens.forEach((it: any) => {
@@ -248,6 +253,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
       }
     }
     setImporting(false);
+    setProgresso(null);
     toast.success(`${success} de ${validFiles.length} NF-e(s) importada(s)!`);
     resetAll();
     onOpenChange(false);
@@ -255,6 +261,7 @@ export function ImportarXmlDialog({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!importing) { if (!v) resetAll(); onOpenChange(v); } }}>
+      <EntradaProgressoDialog etapa={progresso?.etapa ?? null} numero={progresso?.numero} emitente={progresso?.emitente} />
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Importar XML de NF-e</DialogTitle>
