@@ -28,6 +28,7 @@ import { useCreateEntradaNfe, useEntradasPorChaves, normalizarChaveAcesso } from
 import { supabase } from "@/integrations/supabase/client";
 import { DanfePdfViewer } from "@/components/notas-fiscais/DanfePdfViewer";
 import { XmlViewerDialog, xmlViewerInitialState, type XmlViewerState } from "@/components/entradas-nfe/XmlViewerDialog";
+import { EntradaProgressoDialog } from "@/components/entradas-nfe/EntradaProgressoDialog";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 
@@ -65,6 +66,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const { isLoading, nfesRecebidas, returnMessage, clearReturnMessage, consultarDestinatarias, consultarPorChave, carregarCache, manifestar, obterXml, downloadXml, downloadDanfe } = useMde();
   const createEntrada = useCreateEntradaNfe();
   const [importingChave, setImportingChave] = useState<string | null>(null);
+  const [progresso, setProgresso] = useState<{ etapa: number; numero: string | null; emitente: string | null } | null>(null);
   const [chaveBusca, setChaveBusca] = useState("");
   const RECENT_KEYS_STORAGE = "mde:chaves-recentes";
   const [chavesRecentes, setChavesRecentes] = useState<string[]>(() => {
@@ -330,6 +332,8 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
   const handleImportar = async (nfe: NfeRecebida) => {
     if (!inscricaoId) return;
     setImportingChave(nfe.chave);
+    setProgresso({ etapa: 0, numero: nfe.numero ?? null, emitente: (nfe as any).nome ?? null });
+    const etapa = (n: number) => setProgresso((p) => (p ? { ...p, etapa: n } : p));
     try {
       // Guarda anti-duplicidade: já existe entrada com esta chave?
       const chaveLimpa = (nfe.chave || "").replace(/\D/g, "");
@@ -353,10 +357,13 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         }
       }
 
+      etapa(1);
       const xmlText = await downloadXml(inscricaoId, nfe.chave);
       if (!xmlText) return;
 
       const parsed = parseNfeXml(xmlText);
+      etapa(2);
+      setProgresso((p) => (p ? { ...p, numero: parsed.numero, emitente: parsed.emitente.nome } : p));
 
       // 1. A nota pertence à IE informada no destinatário do XML (a consulta do
       // DFe é feita pelo CPF/CNPJ do titular e traz notas de todas as granjas).
@@ -473,6 +480,7 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
       };
 
       // 3. Preparar itens e tentar auto-vincular produtos
+      etapa(3);
       const { ids: prodIds, criados } = await resolverOuCriarProdutos(parsed.itens);
       if (criados) toast.info(`${criados} produto(s) cadastrado(s) automaticamente.`);
       const itens = parsed.itens.map((item, i) => {
@@ -508,16 +516,19 @@ export function MdeDialog({ open, onOpenChange }: MdeDialogProps) {
         };
       });
 
+      etapa(4);
       await createEntrada.mutateAsync({ ...header, itens });
     } catch (error) {
       console.error("Erro ao importar NF-e:", error);
     } finally {
       setImportingChave(null);
+      setProgresso(null);
     }
   };
 
   return (
     <>
+    <EntradaProgressoDialog etapa={progresso?.etapa ?? null} numero={progresso?.numero} emitente={progresso?.emitente} />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
